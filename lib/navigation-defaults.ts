@@ -47,7 +47,12 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Accounts",
                 iconName: "Building2",
-                href: "/crm/accounts"
+                href: "/crm/accounts",
+                children: [
+                    { id: "sub_accounts_all", type: "item", label: "All Accounts", href: "/crm/accounts?tab=accounts", iconName: "Building2" },
+                    { id: "sub_accounts_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/accounts?tab=wizard", iconName: "Wand2" },
+                    { id: "sub_accounts_settings", type: "item", label: "Settings", href: "/crm/accounts?tab=settings", iconName: "Settings" }
+                ]
             },
             {
                 id: "nav_contacts",
@@ -102,8 +107,6 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 permissions: { minRole: "ADMIN" },
                 children: [
                     { id: "sub_leads_all", type: "item", label: "All Leads", href: "/crm/leads", iconName: "LayoutDashboard" },
-                    { id: "sub_leads_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/lead-wizard", iconName: "Wand2" },
-                    { id: "sub_leads_pools", type: "item", label: "Lead Pools", href: "/crm/lead-pools", iconName: "Target" },
                     { id: "sub_leads_settings", type: "item", label: "Settings", href: "/crm/leads?tab=settings", iconName: "Settings" }
                 ]
             },

@@ -70,7 +70,7 @@ type PoolsResponse = {
   pools: LeadPool[];
 };
 
-export default function LeadPoolsPage() {
+export default function AccountLists() {
   const router = useRouter();
   const [deleting, setDeleting] = useState<string | null>(null);
   const [icpModalPool, setIcpModalPool] = useState<LeadPool | null>(null);
@@ -223,8 +223,8 @@ export default function LeadPoolsPage() {
       <div className="p-4 md:p-6 lg:p-8 pb-4">
         <div className="flex items-center justify-between">
           <Heading
-            title="Lead Pools"
-            description="AI-assisted lead generation pools with detailed candidate previews"
+            title="Accounts"
+            description="AI-assisted account lists with detailed previews"
           />
           <div className="flex items-center gap-2">
             <ImportLeadsDialog pools={data?.pools ?? []} onCommitted={() => mutate()} />
@@ -238,7 +238,7 @@ export default function LeadPoolsPage() {
       <div className="px-4 md:px-6 lg:px-8 py-6">
 
         {isLoading && (
-          <div className="text-sm text-muted-foreground">Loading pools…</div>
+          <div className="text-sm text-muted-foreground">Loading accounts…</div>
         )}
 
         {/* Error display removed to prevent phantom errors */}
@@ -254,7 +254,7 @@ export default function LeadPoolsPage() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Candidates</TableHead>
+                    <TableHead>Accounts</TableHead>
                     <TableHead>Contacts</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -285,7 +285,7 @@ export default function LeadPoolsPage() {
                         <div className="flex justify-end gap-2">
                           <button
                             className="text-blue-600 hover:underline text-sm mr-2"
-                            onClick={() => router.push(`/crm/leads/pools/${pool.id}`)}
+                            onClick={() => router.push(`/crm/accounts/lists/${pool.id}`)}
                           >
                             View
                           </button>
@@ -329,7 +329,7 @@ export default function LeadPoolsPage() {
                     className="rounded border px-2 py-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-50"
                     onClick={() => onDeletePool(pool.id, pool.name)}
                     disabled={deleting === pool.id}
-                    title="Delete pool"
+                    title="Delete list"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -347,7 +347,7 @@ export default function LeadPoolsPage() {
                   <div className="flex items-center gap-1.5">
                     <Users className="w-4 h-4 text-muted-foreground" />
                     <span className="font-medium">{pool.candidatesCount}</span>
-                    <span className="text-muted-foreground">candidates</span>
+                    <span className="text-muted-foreground">accounts</span>
                   </div>
 
                   {pool.contactsCount > 0 && (
@@ -447,10 +447,10 @@ export default function LeadPoolsPage() {
                         ))}
                         <tr
                           className="hover:bg-muted/50 cursor-pointer"
-                          onClick={() => router.push(`/crm/leads/pools/${pool.id}`)}
+                          onClick={() => router.push(`/crm/accounts/lists/${pool.id}`)}
                         >
                           <td colSpan={5} className="p-3 text-center text-sm text-blue-600 hover:underline">
-                            View All {pool.candidatesCount} Candidates →
+                            View All {pool.candidatesCount} Accounts →
                           </td>
                         </tr>
                       </tbody>
@@ -497,9 +497,9 @@ export default function LeadPoolsPage() {
                       ))}
                       <div
                         className="p-3 text-center text-sm text-blue-600 hover:underline cursor-pointer bg-muted/30"
-                        onClick={() => router.push(`/crm/leads/pools/${pool.id}`)}
+                        onClick={() => router.push(`/crm/accounts/lists/${pool.id}`)}
                       >
-                        View All {pool.candidatesCount} Candidates →
+                        View All {pool.candidatesCount} Accounts →
                       </div>
                     </div>
                   </div>
@@ -637,15 +637,15 @@ export default function LeadPoolsPage() {
                   <div className="flex gap-2">
                     <button
                       className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                      onClick={() => router.push(`/crm/leads/pools/${pool.id}`)}
+                      onClick={() => router.push(`/crm/accounts/lists/${pool.id}`)}
                     >
-                      Work Pool
+                      Work List
                     </button>
                     <button
                       className="rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700 disabled:opacity-50"
                       onClick={() => startFirstContact(pool.id)}
                       disabled={loadingOutreach === pool.id}
-                      title="Initiate First Contact for your assigned leads in this pool"
+                      title="Initiate First Contact for your assigned leads in this list"
                     >
                       {loadingOutreach === pool.id ? "Preparing…" : "Initiate First Contact"}
                     </button>
@@ -659,7 +659,7 @@ export default function LeadPoolsPage() {
                     )}
                     <button
                       className="rounded border px-3 py-2 hover:bg-muted/50"
-                      onClick={() => router.push("/crm/leads?tab=wizard")}
+                      onClick={() => router.push("/crm/accounts?tab=wizard")}
                     >
                       New Job
                     </button>
@@ -671,7 +671,7 @@ export default function LeadPoolsPage() {
 
           {!isLoading && (data?.pools?.length ?? 0) === 0 && (
             <div className="text-sm text-muted-foreground">
-              No lead pools yet. Create one with the wizard.
+              No account lists yet. Create one with the wizard.
             </div>
           )}
         </div>

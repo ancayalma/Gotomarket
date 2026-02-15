@@ -20,7 +20,7 @@ type Props = {
 export default function TabsContainer({ title, description, managerSlot, wizardSlot, poolsSlot, settingsSlot, isMember = false }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const selected = searchParams.get("tab") || "manager";
+  const selected = searchParams.get("tab") || "accounts";
   const [isCollapsed, setIsCollapsed] = useState(true); // Default to collapsed for Layer 3
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
   const [layer2Expanded, setLayer2Expanded] = useState(false);
@@ -59,17 +59,16 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
     [router, searchParams]
   );
 
-  // Layer 3: Leads Manager Tabs
+  // Layer 3: Accounts Manager Tabs
   const allNavItems = [
-    { id: "manager", label: "All Leads", icon: LayoutDashboard },
+    { id: "accounts", label: "All Accounts", icon: Users },
+    { id: "wizard", label: "LeadGen Wizard", icon: Wand2 },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
   const leadsNavItems = isMember
-    ? allNavItems.filter(item => item.id === "manager")
+    ? allNavItems.filter(item => item.id === "accounts")
     : allNavItems;
-
-
 
   return (
     <div className="flex flex-col md:flex-row h-full w-full">
@@ -205,7 +204,9 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
         </div>
 
         <div className="flex-1 px-4 md:px-6 lg:px-8 pb-20 md:pb-4">
-          {selected === "manager" && managerSlot}
+          {selected === "accounts" && managerSlot}
+          {selected === "wizard" && wizardSlot}
+          {selected === "pools" && poolsSlot}
           {selected === "settings" && settingsSlot}
         </div>
       </div>

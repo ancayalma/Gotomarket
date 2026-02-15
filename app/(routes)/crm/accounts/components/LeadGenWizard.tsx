@@ -6,7 +6,7 @@ import { Bot, FileText, Settings, Sparkles, Wand2, Zap, Globe, Code, Loader2, Sl
 import { toast } from "react-hot-toast";
 import useSWR from "swr";
 import fetcher from "@/lib/fetcher";
-import AIWriterModal from "../components/modals/AIWriterModal";
+import AIWriterModal from "../../leads/components/modals/AIWriterModal";
 
 type WizardMode = "ai-only" | "step-by-step" | "advanced";
 
@@ -193,7 +193,7 @@ export default function LeadGenWizardPage() {
             } catch (err) { console.error(err); }
 
             toast.success("AI Agent started successfully!");
-            router.push("/crm/leads/pools");
+            router.push("/crm/accounts?tab=pools");
             return;
           }
         } catch (parseErr) {
@@ -240,7 +240,7 @@ export default function LeadGenWizardPage() {
       } catch (err) { console.error(err); }
 
       toast.success("Lead generation started successfully!");
-      router.push("/crm/leads/pools");
+      router.push("/crm/accounts?tab=accounts");
 
     } catch (err: any) {
       toast.error(err.message || "Failed to start job");

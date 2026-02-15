@@ -1,126 +1,122 @@
 "use client";
 
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Wand2, X } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, X, Check, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-interface AIWriterModalProps {
+type AIWriterModalProps = {
     isOpen: boolean;
     onClose: () => void;
     onInsert: (text: string) => void;
-}
+    initialPrompt?: string;
+    context?: string;
+};
 
-export default function AIWriterModal({ isOpen, onClose, onInsert }: AIWriterModalProps) {
-    const [prompt, setPrompt] = useState("");
-    const [generatedText, setGeneratedText] = useState("");
-    const [isGenerating, setIsGenerating] = useState(false);
+export default function AIWriterModal({ isOpen, onClose, onInsert, initialPrompt = "", context = "content" }: AIWriterModalProps) {
+    const [prompt, setPrompt] = useState(initialPrompt);
+    const [result, setResult] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    if (!isOpen) return null;
 
     const handleGenerate = async () => {
-        if (!prompt.trim()) {
-            toast.error("Please enter a prompt");
-            return;
+        if (!prompt.trim()) return;
+        setLoading(true);
+        setResult(""); // Clear previous result
+
+        try {
+            const res = await fetch("/api/ai/generate-text", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt, context }),
+            });
+
+            if (!res.ok) throw new Error(await res.text());
+            const data = await res.json();
+            setResult(data.text || "No content generated.");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to generate text");
+        } finally {
+            setLoading(false);
         }
-
-        setIsGenerating(true);
-        // Simulation for now
-        setTimeout(() => {
-            setGeneratedText(`[AI Generated based on: "${prompt}"]\n\nHi there,\n\nI noticed your interest in our solutions. I'd love to connect and discuss how we can help optimize your workflow.\n\nBest,\n[Your Name]`);
-            setIsGenerating(false);
-            toast.success("Text generated!");
-        }, 1500);
-    };
-
-    const handleInsert = () => {
-        if (!generatedText) return;
-        onInsert(generatedText);
-        onClose();
-        // Reset state after closing
-        setTimeout(() => {
-            setPrompt("");
-            setGeneratedText("");
-        }, 300);
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[600px] border-none shadow-2xl bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl">
-                <DialogHeader className="pb-4 border-b">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
-                            <Wand2 className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <DialogTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
-                                AI Writer
-                            </DialogTitle>
-                            <DialogDescription className="text-xs font-medium">
-                                Describe what you want to say, and let AI draft it for you.
-                            </DialogDescription>
-                        </div>
-                    </div>
-                </DialogHeader>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 
-                <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Your Instruction</label>
-                        <Textarea
-                            placeholder="E.g., Write a polite follow-up email to a lead who hasn't clicked my link yet..."
-                            className="resize-none border-muted-foreground/20 focus-visible:ring-indigo-500/30 min-h-[80px]"
+                {/* Header */}
+                <div className="p-4 border-b flex items-center justify-between bg-muted/30">
+                    <div className="flex items-center gap-2 text-indigo-500">
+                        <Sparkles className="w-5 h-5" />
+                        <h3 className="font-semibold text-foreground">AI Writer</h3>
+                    </div>
+                    <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="p-5 space-y-4">
+                    <div>
+                        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 block">
+                            What should I write?
+                        </label>
+                        <textarea
+                            className="w-full h-24 rounded-lg bg-background border border-input p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                            placeholder="e.g. Write a friendly follow-up email to a lead who hasn't responded in 3 days..."
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
+                            autoFocus
                         />
                     </div>
 
-                    {generatedText && (
-                        <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
-                                <span>Result</span>
-                                <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded">Preview</span>
-                            </label>
-                            <div className="p-3 rounded-md bg-muted/30 border border-muted text-sm whitespace-pre-wrap">
-                                {generatedText}
+                    <button
+                        onClick={handleGenerate}
+                        disabled={loading || !prompt.trim()}
+                        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-500/10"
+                    >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                        {loading ? "Generating..." : "Generate Draft"}
+                    </button>
+
+                    {/* Result Area */}
+                    {result && (
+                        <div className="mt-4 space-y-3 animate-in slide-in-from-bottom-2">
+                            <div className="rounded-lg border bg-muted/30 p-4 relative group">
+                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={handleGenerate}
+                                        className="p-1.5 hover:bg-background rounded-md text-muted-foreground hover:text-foreground"
+                                        title="Regenerate"
+                                    >
+                                        <RefreshCw className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                                <p className="text-sm whitespace-pre-wrap leading-relaxed">{result}</p>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={onClose}
+                                    className="flex-1 py-2 rounded-lg border border-input hover:bg-muted/50 text-sm font-medium transition-colors"
+                                >
+                                    Discard
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        onInsert(result);
+                                        onClose();
+                                    }}
+                                    className="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                >
+                                    <Check className="w-4 h-4" /> Insert
+                                </button>
                             </div>
                         </div>
                     )}
                 </div>
-
-                <DialogFooter className="flex items-center justify-between sm:justify-between gap-2 border-t pt-4">
-                    <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground hover:text-foreground">
-                        Cancel
-                    </Button>
-                    <div className="flex items-center gap-2">
-                        {!generatedText ? (
-                            <Button
-                                onClick={handleGenerate}
-                                disabled={isGenerating}
-                                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/20"
-                            >
-                                {isGenerating ? (
-                                    <>
-                                        <Sparkles className="w-4 h-4 mr-2 animate-spin" /> Generating...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles className="w-4 h-4 mr-2" /> Generate
-                                    </>
-                                )}
-                            </Button>
-                        ) : (
-                            <>
-                                <Button variant="outline" size="sm" onClick={handleGenerate} title="Regenerate">
-                                    <Wand2 className="w-4 h-4" />
-                                </Button>
-                                <Button onClick={handleInsert} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                                    Insert Text
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+            </div>
+        </div>
     );
 }
