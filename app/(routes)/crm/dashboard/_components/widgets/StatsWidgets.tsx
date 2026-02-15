@@ -6,9 +6,12 @@ import DashboardCard from "../DashboardCard";
 import { useRouter } from "next/navigation";
 import { getRevenueSparkline } from "@/actions/dashboard/get-revenue-sparkline";
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import { cn } from "@/lib/utils";
 
 // --- REVENUE WIDGET ---
-export const RevenueWidget = ({ revenue }: { revenue: number }) => {
+import { MetricDeepDiveWidget } from "./MetricDeepDiveWidget";
+
+export const RevenueWidget = ({ revenue, teamData }: { revenue: number, teamData?: any }) => {
     const router = useRouter();
     const [sparklineData, setSparklineData] = useState<any[]>([]);
 
@@ -20,80 +23,139 @@ export const RevenueWidget = ({ revenue }: { revenue: number }) => {
         fetchSparkline();
     }, []);
 
+    const leaderboard = teamData?.leaderboard || [];
+
     return (
-        <DashboardCard
+        <MetricDeepDiveWidget
+            title="Projected Revenue"
+            value={revenue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
+            description="Total value of all active deals"
             icon={DollarSign}
-            label="Projected Revenue"
-            count={revenue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
-            description="From all invoices"
+            iconColor="text-emerald-400"
             variant="success"
-            hideIcon={true}
-            onClick={() => router.push("/crm/opportunities")}
-            className="cursor-pointer hover:ring-1 hover:ring-emerald-500/50 h-full overflow-hidden"
-        >
-            {sparklineData.length > 0 && (
-                <div className="absolute bottom-0 left-0 right-0 h-16 opacity-30 pointer-events-none">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={sparklineData}>
-                            <Line
-                                type="monotone"
-                                dataKey="value"
-                                stroke="#10b981"
-                                strokeWidth={2}
-                                dot={false}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-            )}
-        </DashboardCard>
+            deepDiveTitle="Revenue Leaderboard"
+            deepDiveData={leaderboard}
+            deepDiveColumns={[
+                { header: "User", key: "name" },
+                { header: "Points", key: "points" },
+                {
+                    header: "Closed Deals",
+                    key: "closedCount",
+                    render: (val) => <span className="text-emerald-400 font-bold">{val}</span>
+                },
+                {
+                    header: "Progress",
+                    key: "points",
+                    render: (val) => (
+                        <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, (val / 1000) * 100)}%` }} />
+                        </div>
+                    )
+                }
+            ]}
+        />
     );
 };
 
 // --- ACTIVE PIPELINE WIDGET ---
-export const ActivePipelineWidget = ({ count, description }: { count: number; description: string }) => {
-    const router = useRouter();
+export const ActivePipelineWidget = ({ count, description, teamData }: { count: number; description: string, teamData?: any }) => {
+    const stageData = teamData?.team?.stageCounts ? Object.entries(teamData.team.stageCounts).map(([stage, count]) => ({
+        stage: stage.replace("_", " "),
+        count: count
+    })) : [];
+
     return (
-        <DashboardCard
-            icon={TrendingUp}
-            label="Active Pipeline"
-            count={count}
+        <MetricDeepDiveWidget
+            title="Active Pipeline"
+            value={count}
             description={description}
+            icon={TrendingUp}
+            iconColor="text-cyan-400"
             variant="info"
-            onClick={() => router.push("/crm/opportunities")}
-            className="cursor-pointer hover:ring-1 hover:ring-cyan-500/50 h-full"
+            deepDiveTitle="Pipeline Distribution"
+            deepDiveData={stageData}
+            deepDiveColumns={[
+                { header: "Sales Stage", key: "stage" },
+                {
+                    header: "Lead Count",
+                    key: "count",
+                    render: (val) => <span className="text-cyan-400 font-bold">{val}</span>
+                },
+                {
+                    header: "Velocity",
+                    key: "count",
+                    render: (val: any) => (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <TrendingUp size={12} className="text-emerald-400" />
+                            Good
+                        </div>
+                    )
+                }
+            ]}
         />
     );
 };
 
 // --- ACTIVE USERS WIDGET ---
-export const ActiveUsersWidget = ({ count }: { count: number }) => {
-    const router = useRouter();
+export const ActiveUsersWidget = ({ count, teamData }: { count: number, teamData?: any }) => {
+    const users = teamData?.leaderboard || [];
+
     return (
-        <DashboardCard
-            icon={Users2}
-            label="Active Users"
-            count={count}
+        <MetricDeepDiveWidget
+            title="Active Users"
+            value={count}
             description="Team members active"
+            icon={Users2}
+            iconColor="text-violet-400"
             variant="violet"
-            onClick={() => router.push("/settings/team")}
-            className="cursor-pointer hover:ring-1 hover:ring-violet-500/50 h-full"
+            deepDiveTitle="Team Performance"
+            deepDiveData={users}
+            deepDiveColumns={[
+                { header: "Member", key: "name" },
+                { header: "Email", key: "email" },
+                {
+                    header: "Activity Score",
+                    key: "points",
+                    render: (val) => <span className="text-violet-400 font-bold">{val} pts</span>
+                }
+            ]}
         />
     );
 };
 
 // --- SYSTEM HEALTH WIDGET ---
 export const SystemHealthWidget = () => {
-    const router = useRouter();
     return (
-        <DashboardCard
-            icon={Activity}
-            label="System Health"
-            count="98%"
+        <MetricDeepDiveWidget
+            title="System Health"
+            value="98%"
             description="Operational"
+            icon={Activity}
+            iconColor="text-amber-400"
             variant="warning"
-            onClick={() => router.push("/partners/plans")}
-            className="cursor-pointer hover:ring-1 hover:ring-amber-500/50 h-full"
+            deepDiveTitle="System Diagnostics"
+            deepDiveData={[
+                { service: "API Engine", status: "Operational", latency: "42ms" },
+                { service: "Database Cluster", status: "Operational", latency: "12ms" },
+                { service: "AI Command", status: "Operational", latency: "156ms" },
+                { service: "Mail Server", status: "Warning", latency: "2.4s" },
+            ]}
+            deepDiveColumns={[
+                { header: "Service Component", key: "service" },
+                {
+                    header: "Status",
+                    key: "status",
+                    render: (val) => (
+                        <span className={cn(
+                            "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
+                            val === "Operational" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
+                        )}>
+                            {val}
+                        </span>
+                    )
+                },
+                { header: "Latency", key: "latency" }
+            ]}
         />
     );
 };

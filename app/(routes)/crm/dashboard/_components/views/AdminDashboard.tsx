@@ -43,6 +43,7 @@ interface AdminDashboardProps {
     allTasksCount: number;
     messagesCount: number;
     initialLayout?: any[];
+    teamData?: any;
 }
 
 const AdminDashboard = ({
@@ -74,7 +75,8 @@ const AdminDashboard = ({
     newProjectsCount = 0,
     allTasksCount = 0,
     messagesCount = 0,
-    initialLayout
+    initialLayout,
+    teamData
 }: AdminDashboardProps) => {
     const router = useRouter();
     const greeting = useGreeting();
@@ -119,6 +121,7 @@ const AdminDashboard = ({
                         myPipeline={myPipeline}
                         teamPipeline={teamPipeline}
                         crmEntities={crmEntities}
+                        teamData={teamData}
                     />
                 </div>
             </div>

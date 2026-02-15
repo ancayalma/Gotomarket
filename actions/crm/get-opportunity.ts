@@ -60,6 +60,12 @@ export const getOpportunity = async (opportunityId: string) => {
           document_name: true,
         },
       },
+      assigned_project: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
     },
   });
   return data;

@@ -64,6 +64,7 @@ type Props = {
     poolId?: string;
     campaignId?: string;
     campaign?: Campaign;
+    isOpen?: boolean;
     onClose?: () => void;
 };
 
@@ -118,6 +119,7 @@ export default function OutreachCampaignWizard({
     poolId,
     campaignId,
     campaign,
+    isOpen,
     onClose
 }: Props) {
     const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
@@ -703,6 +705,8 @@ export default function OutreachCampaignWizard({
             setLoading(false);
         }
     };
+
+    if (isOpen === false) return null;
 
     return (
         <div className="w-full min-h-screen p-6 space-y-6">

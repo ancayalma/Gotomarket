@@ -195,6 +195,7 @@ const DashboardRoleManager = async () => {
                     </Suspense>
                 }
                 initialLayout={initialLayout as any}
+                teamData={unifiedData?.teamData}
             />
         );
     }

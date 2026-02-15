@@ -89,6 +89,33 @@ export const columns: ColumnDef<Task>[] = [
     enableSorting: false,
     enableHiding: true,
   },
+  {
+    accessorKey: "opportunities",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Opportunity" />
+    ),
+    cell: ({ row }) => {
+      const opportunities = (row.original as any).opportunities || [];
+      if (opportunities.length === 0) return <div className="text-muted-foreground italic text-xs">Direct</div>;
+
+      return (
+        <div className="flex flex-col gap-1">
+          {opportunities.map((opp: any) => (
+            <a
+              key={opp.id}
+              href={`/crm/opportunities/${opp.id}`}
+              className="text-[11px] font-medium text-blue-500 hover:underline truncate max-w-[150px]"
+              title={opp.name}
+            >
+              {opp.name}
+            </a>
+          ))}
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: true,
+  },
   /*   {
     accessorKey: "users",
     header: ({ column }) => (

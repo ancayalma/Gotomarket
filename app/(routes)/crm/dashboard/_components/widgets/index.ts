@@ -13,3 +13,4 @@ export * from "./LeadWizardQuickModal";
 export * from "./AIInsightsWidget";
 export * from "./StatsWidgets";
 export * from "./MyScheduleWidget";
+export * from "./MetricDeepDiveWidget";

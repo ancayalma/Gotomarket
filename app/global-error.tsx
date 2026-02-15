@@ -79,11 +79,12 @@ export default function GlobalError({
 
                             <div className="pt-8">
                                 <Link
-                                    href="https://discord.gg/basalt"
+                                    href="https://discord.gg/gcgNugyWkg"
                                     target="_blank"
-                                    className="text-xs text-muted-foreground hover:text-white transition-colors flex items-center justify-center gap-2"
+                                    className="px-8 py-4 rounded-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-lg tracking-wide shadow-lg hover:shadow-[#5865F2]/50 transition-all duration-300 flex items-center justify-center gap-3 group mx-auto w-fit"
                                 >
-                                    Need assistance? Contact support on Discord <span className="text-primary">→</span>
+                                    Need assistance? Contact support on Discord
+                                    <span className="group-hover:translate-x-1 transition-transform">→</span>
                                 </Link>
                             </div>
                         </motion.div>

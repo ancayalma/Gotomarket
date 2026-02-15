@@ -155,17 +155,24 @@ export async function BasicView({ data }: OppsViewProps) {
             <Landmark className="mt-px h-5 w-5" />
             <div className="space-y-1">
               <p className="text-sm font-medium leading-none">Lead source</p>
-              <p className="text-sm text-muted-foreground">
-                Will be added in the future
-              </p>
+              <p className="text-sm text-muted-foreground">{data.lead_source || "Direct"}</p>
             </div>
           </div>
           <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
             <Clapperboard className="mt-px h-5 w-5" />
             <div className="space-y-1">
-              <p className="text-sm font-medium leading-none">Project</p>
+              <p className="text-sm font-medium leading-none">Project Board</p>
               <p className="text-sm text-muted-foreground">
-                Will be added in the future
+                {(data as any).assigned_project ? (
+                  <a
+                    href={`/projects/boards/${(data as any).assigned_project.id}`}
+                    className="text-blue-500 hover:underline font-semibold flex items-center gap-1"
+                  >
+                    {(data as any).assigned_project.title}
+                  </a>
+                ) : (
+                  "No project board created yet"
+                )}
               </p>
             </div>
           </div>

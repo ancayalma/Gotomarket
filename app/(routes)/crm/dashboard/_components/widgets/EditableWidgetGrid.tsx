@@ -206,6 +206,7 @@ interface EditableWidgetGridProps {
     myPipeline?: React.ReactNode;
     teamPipeline?: React.ReactNode;
     crmEntities?: any[];
+    teamData?: any;
 }
 
 export const EditableWidgetGrid = ({
@@ -230,7 +231,8 @@ export const EditableWidgetGrid = ({
     activeUsersCount = 0,
     myPipeline,
     teamPipeline,
-    crmEntities = []
+    crmEntities = [],
+    teamData = null
 }: EditableWidgetGridProps) => {
     const { widgets, updateLayout, isEditMode, toggleWidgetVisibility } = useDashboardLayout();
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -326,19 +328,23 @@ export const EditableWidgetGrid = ({
             case "revenue":
                 return (
                     <div className="h-full flex flex-col justify-start">
-                        <RevenueWidget revenue={revenue} />
+                        <RevenueWidget revenue={revenue} teamData={teamData} />
                     </div>
                 );
             case "active_pipeline":
                 return (
                     <div className="h-full flex flex-col justify-start">
-                        <ActivePipelineWidget count={activePipelineCount} description={`${totalLeads} Leads, ${totalOpportunities} Opportunities`} />
+                        <ActivePipelineWidget
+                            count={activePipelineCount}
+                            description={`${totalLeads} Leads, ${totalOpportunities} Opportunities`}
+                            teamData={teamData}
+                        />
                     </div>
                 );
             case "active_users":
                 return (
                     <div className="h-full flex flex-col justify-start">
-                        <ActiveUsersWidget count={activeUsersCount} />
+                        <ActiveUsersWidget count={activeUsersCount} teamData={teamData} />
                     </div>
                 );
             case "system_health":

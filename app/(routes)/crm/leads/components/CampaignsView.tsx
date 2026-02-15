@@ -184,6 +184,8 @@ export default function CampaignsView() {
             </Card>
 
             <OutreachCampaignWizard
+                // For now, new campaigns from this view start without specific leads selected
+                selectedLeads={[]}
                 isOpen={isWizardOpen}
                 onClose={() => setIsWizardOpen(false)}
             />

@@ -22,6 +22,12 @@ export const getInvoices = async () => {
           name: true,
         },
       },
+      opportunities: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
     orderBy: {
       date_created: "desc",
