@@ -18,14 +18,13 @@ const CrmModuleMenu = ({ open, localizations, isMobile = false }: Props) => {
   const isPath =
     /^\/([a-z]{2}\/)?crm\/leads/.test(pathname) ||
     /^\/([a-z]{2}\/)?crm\/lead-wizard/.test(pathname) ||
-    /^\/([a-z]{2}\/)?crm\/lead-pools/.test(pathname) ||
-    /^\/([a-z]{2}\/)?crm\/campaigns/.test(pathname);
+    /^\/([a-z]{2}\/)?crm\/lead-pools/.test(pathname);
 
   // Sub-menu items matching screenshot
   const subItems: SubMenuItemType[] = [
     { label: "LeadGen Wizard", href: "/crm/lead-wizard", icon: Wand2 },
     { label: "Lead Pools", href: "/crm/lead-pools", icon: Target },
-    { label: "Outreach", href: "/crm/outreach", icon: Megaphone },
+    { label: "Outreach", href: "/campaigns", icon: Megaphone },
     { label: "Settings", href: "/crm/leads?tab=settings", icon: Settings },
   ];
 

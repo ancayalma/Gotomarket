@@ -35,7 +35,7 @@ export function OpportunityActions({ opportunityId, status, hasAccount }: Opport
                 });
                 router.refresh();
                 if (res.data?.projectId) {
-                    router.push(`/campaigns/boards/${res.data.projectId}`);
+                    router.push(`/projects/boards/${res.data.projectId}`);
                 }
             } else {
                 toast({

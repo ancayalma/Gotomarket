@@ -15,7 +15,7 @@ const ProjectModuleMenu = ({ open, title, isMobile = false }: Props) => {
 
   return (
     <MenuItem
-      href="/campaigns"
+      href="/projects"
       icon={ServerIcon}
       title={title}
       isOpen={open}

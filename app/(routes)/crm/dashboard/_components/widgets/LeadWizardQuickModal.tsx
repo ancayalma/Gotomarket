@@ -46,7 +46,7 @@ export const LeadWizardQuickModal = ({
     // Fetch projects for the optional selector
     const { data: campaignsData } = useSWR<{
         projects: { id: string; title: string }[];
-    }>(open ? "/api/campaigns" : null, fetcher);
+    }>(open ? "/api/projects" : null, fetcher);
 
     const resetForm = () => {
         setPoolName("");

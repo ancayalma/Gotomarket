@@ -112,7 +112,7 @@ const AccountsTasksView = ({ data, account }: TasksViewProps) => {
         <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0">
           <div>
             <CardTitle
-              onClick={() => router.push("/campaigns/tasks")}
+              onClick={() => router.push("/projects/tasks")}
               className="cursor-pointer"
             >
               Tasks

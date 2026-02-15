@@ -88,21 +88,21 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
   const isPath = (pattern: RegExp) => pattern.test(pathname);
   const startsWithPath = (path: string) => pathname.startsWith(path);
   const isDashboard = pathname === "/dashboard" || /^\/[a-zA-Z0-9-]+\/dashboard(\/|$)/.test(pathname);
-  const isCrmLeads = isPath(/^\/([a-z]{2}\/)?crm\/leads/) || isPath(/^\/([a-z]{2}\/)?crm\/lead-wizard/) || isPath(/^\/([a-z]{2}\/)?crm\/lead-pools/) || isPath(/^\/([a-z]{2}\/)?crm\/campaigns/);
+  const isCrmLeads = isPath(/^\/([a-z]{2}\/)?crm\/leads/) || isPath(/^\/([a-z]{2}\/)?crm\/lead-wizard/) || isPath(/^\/([a-z]{2}\/)?crm\/lead-pools/);
   const isCrmOpps = isPath(/^\/([a-z]{2}\/)?crm\/opportunities/);
   const isCrmCommand = isPath(/^\/([a-z]{2}\/)?crm\/sales-command/);
   const isCrmDialer = isPath(/^\/([a-z]{2}\/)?crm\/dialer/);
   const isCrmQuotes = isPath(/^\/([a-z]{2}\/)?crm\/quotes/);
   const isCrmProducts = isPath(/^\/([a-z]{2}\/)?crm\/products/);
   const isCrmCases = isPath(/^\/([a-z]{2}\/)?crm\/cases/);
-  const isCrmOutreach = isPath(/^\/([a-z]{2}\/)?crm\/outreach/);
+  const isCrmOutreach = isPath(/^\/([a-z]{2}\/)?campaigns/);
   const isCrmWizard = isPath(/^\/([a-z]{2}\/)?crm\/lead-wizard/);
   const isCrmForms = isPath(/^\/([a-z]{2}\/)?messages\/forms/);
   const isCrmAccounts = isPath(/^\/([a-z]{2}\/)?crm\/accounts/);
   const isCrmContacts = isPath(/^\/([a-z]{2}\/)?crm\/contacts/);
   const isCrmContracts = isPath(/^\/([a-z]{2}\/)?crm\/contracts/);
-  const isCrmProjects = isPath(/^\/([a-z]{2}\/)?crm\/my-campaigns/) || isPath(/^\/([a-z]{2}\/)?campaigns/);
-  const isCrmTasks = isPath(/^\/([a-z]{2}\/)?campaigns\/tasks/);
+  const isCrmProjects = isPath(/^\/([a-z]{2}\/)?crm\/my-projects/) || isPath(/^\/([a-z]{2}\/)?projects/);
+  const isCrmTasks = isPath(/^\/([a-z]{2}\/)?projects\/tasks/);
   const isInvoice = isPath(/^\/([a-z]{2}\/)?invoice/);
   const isReports = isPath(/^\/([a-z]{2}\/)?reports/);
   const isEmployees = isPath(/^\/([a-z]{2}\/)?employees/);
@@ -119,7 +119,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
   const leadsSubItems: SubMenuItemType[] = [
     { label: "LeadGen Wizard", href: "/crm/lead-wizard", icon: Wand2 },
     { label: "Lead Pools", href: "/crm/lead-pools", icon: Target },
-    { label: "Outreach", href: "/crm/outreach", icon: Megaphone },
+    { label: "Outreach", href: "/campaigns", icon: Megaphone },
   ];
 
   const oppsSubItems: SubMenuItemType[] = [
@@ -266,6 +266,25 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
                 isActive={isCrmQuotes}
               />
 
+              <ExpandableMenuItem
+                href="/crm/leads"
+                icon={Users}
+                title="Leads"
+                isOpen={open}
+                isActive={isCrmLeads}
+                items={leadsSubItems}
+              />
+
+              {hasModule("projects") && hasFeature("projects") && (
+                <MenuItem
+                  href="/projects"
+                  icon={ServerIcon}
+                  title="Projects"
+                  isOpen={open}
+                  isActive={isCrmProjects}
+                />
+              )}
+
               {/* ══════ SERVICE HUB ══════ */}
               <HubLabel label="Service Hub" isOpen={open} />
 
@@ -289,10 +308,25 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
                 />
               )}
 
-              {/* ══════ MARKETING HUB ══════ */}
               {isNonMember && (
                 <>
                   <HubLabel label="Marketing Hub" isOpen={open} />
+
+                  <MenuItem
+                    href="/crm/accounts"
+                    icon={Building2}
+                    title="Accounts"
+                    isOpen={open}
+                    isActive={isCrmAccounts}
+                  />
+
+                  <MenuItem
+                    href="/crm/contacts"
+                    icon={Contact}
+                    title="Contacts"
+                    isOpen={open}
+                    isActive={isCrmContacts}
+                  />
 
                   {hasModule("messages") && hasFeature("messages") && (
                     <MenuItem
@@ -304,44 +338,19 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
                     />
                   )}
 
-                  <ExpandableMenuItem
-                    href="/crm/leads"
-                    icon={Users}
-                    title="Leads"
+                  <MenuItem
+                    href="/campaigns"
+                    icon={Megaphone}
+                    title="Campaigns"
                     isOpen={open}
-                    isActive={isCrmLeads}
-                    items={leadsSubItems}
+                    isActive={isCrmOutreach}
                   />
-
-                  {hasModule("projects") && hasFeature("projects") && (
-                    <MenuItem
-                      href="/campaigns"
-                      icon={ServerIcon}
-                      title="Campaigns"
-                      isOpen={open}
-                      isActive={isCrmProjects}
-                    />
-                  )}
                 </>
               )}
 
               {/* ══════ OPERATIONS ══════ */}
               <HubLabel label="Operations" isOpen={open} />
 
-              <MenuItem
-                href="/crm/accounts"
-                icon={Building2}
-                title="Accounts"
-                isOpen={open}
-                isActive={isCrmAccounts}
-              />
-              <MenuItem
-                href="/crm/contacts"
-                icon={Contact}
-                title="Contacts"
-                isOpen={open}
-                isActive={isCrmContacts}
-              />
               <ExpandableMenuItem
                 href="/crm/contracts"
                 icon={FileText}

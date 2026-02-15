@@ -66,17 +66,16 @@ export async function getUserAiTasks(session: any) {
     case "en":
       prompt = `Hi, Iam ${process.env.NEXT_PUBLIC_APP_URL} API Bot.
       \n\n
-      There are ${getTaskPastDue.length} tasks past due and ${
-        getTaskPastDueInSevenDays.length
-      } tasks due in the next 7 days.
+      There are ${getTaskPastDue.length} tasks past due and ${getTaskPastDueInSevenDays.length
+        } tasks due in the next 7 days.
       \n\n
       Details today tasks: ${JSON.stringify(getTaskPastDue, null, 2)}
       \n\n
       Details next 7 days tasks: ${JSON.stringify(
-        getTaskPastDueInSevenDays,
-        null,
-        2
-      )}
+          getTaskPastDueInSevenDays,
+          null,
+          2
+        )}
       \n\n
       As a personal assistant, write a message  to remind tasks and write detail summary. And also do not forget to send them a some positive vibes.
       \n\n
@@ -84,34 +83,30 @@ export async function getUserAiTasks(session: any) {
       `;
       break;
     case "cz":
-      prompt = `Jako profesionální asistentka Emma s perfektní znalostí projektového řízení, který má na starosti projekty na adrese${
-        process.env.NEXT_PUBLIC_APP_URL
-      }, připrave manažerské shrnutí o úkolech včetně jejich detailů a termínů. Vše musí být perfektně česky a výstižně.
+      prompt = `Jako profesionální asistentka Emma s perfektní znalostí projektového řízení, který má na starosti projekty na adrese${process.env.NEXT_PUBLIC_APP_URL
+        }, připrave manažerské shrnutí o úkolech včetně jejich detailů a termínů. Vše musí být perfektně česky a výstižně.
       \n\n
       Zde jsou informace k úkolům:
       \n\n
-      Informace o projektu: Počet úkolů které jsou k řešení dnes: ${
-        getTaskPastDue.length
-      }, Počet úkolů, které musí být vyřešeny nejpozději do sedmi dnů: ${
-        getTaskPastDueInSevenDays.length
-      }.
+      Informace o projektu: Počet úkolů které jsou k řešení dnes: ${getTaskPastDue.length
+        }, Počet úkolů, které musí být vyřešeny nejpozději do sedmi dnů: ${getTaskPastDueInSevenDays.length
+        }.
       \n\n
       Detailní informace v JSON formátu k úkolům, které musí být hotové dnes: ${JSON.stringify(
-        getTaskPastDue,
-        null,
-        2
-      )}
+          getTaskPastDue,
+          null,
+          2
+        )}
       \n\n
       Detailní informace k úkolům, které musí být hotové během následujících sedmi dní: ${JSON.stringify(
-        getTaskPastDueInSevenDays,
-        null,
-        2
-      )}
+          getTaskPastDueInSevenDays,
+          null,
+          2
+        )}
     
       \n\n
-      Na konec napiš manažerské shrnutí a přidej odkaz ${
-        process.env.NEXT_PUBLIC_APP_URL + "/campaigns/dashboard"
-      } jako odkaz na detail k úkolům . Na konci manažerského shrnutí přidej. 1 tip na manažerskou dovednost z oblasti projektového řízení a timemanagementu, 2-3 věty s pozitivním naladěním a podporou, nakonec popřej hezký pracovní den a infomaci, že tato zpráva byla vygenerována pomocí umělé inteligence OpenAi.
+      Na konec napiš manažerské shrnutí a přidej odkaz ${process.env.NEXT_PUBLIC_APP_URL + "/projects/dashboard"
+        } jako odkaz na detail k úkolům . Na konci manažerského shrnutí přidej. 1 tip na manažerskou dovednost z oblasti projektového řízení a timemanagementu, 2-3 věty s pozitivním naladěním a podporou, nakonec popřej hezký pracovní den a infomaci, že tato zpráva byla vygenerována pomocí umělé inteligence OpenAi.
       \n\n
       Finální výsledek musí být v MDX formátu.
       `;

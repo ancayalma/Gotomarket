@@ -111,7 +111,7 @@ function ProgressBar({ value }: { value: number }) {
 
 export default function LeadsView({ data, isMember = false }: Props) {
   // Fetch active projects for assignment
-  const { data: campaignsData } = useSWR('/api/campaigns', fetcher);
+  const { data: campaignsData } = useSWR('/api/projects', fetcher);
   const campaigns = useMemo(() => campaignsData?.projects || [], [campaignsData]);
 
   async function assignPoolCampaign(campaignId: string) {
@@ -246,7 +246,7 @@ export default function LeadsView({ data, isMember = false }: Props) {
   }, [selectedPoolId, pools]);
 
   const { data: brandResponse } = useSWR(
-    selectedPoolCampaign ? `/api/campaigns/${encodeURIComponent(selectedPoolCampaign)}/brand` : null,
+    selectedPoolCampaign ? `/api/projects/${encodeURIComponent(selectedPoolCampaign)}/brand` : null,
     fetcher
   );
 
@@ -807,7 +807,7 @@ export default function LeadsView({ data, isMember = false }: Props) {
                               <img src={url} alt="Project" className="h-8 w-auto rounded object-contain inline-block hover:opacity-90 transition-opacity" />
                             );
                             return projectId ? (
-                              <Link href={`/campaigns/boards/${projectId}`} prefetch={false}>{img}</Link>
+                              <Link href={`/projects/boards/${projectId}`} prefetch={false}>{img}</Link>
                             ) : img;
                           })()}
                         </td>
@@ -933,7 +933,7 @@ export default function LeadsView({ data, isMember = false }: Props) {
                       }
                       if (!url) return null;
                       const img = <img src={url} alt="Project" className="h-8 w-auto rounded object-contain" />;
-                      return projectId ? <Link href={`/campaigns/boards/${projectId}`} prefetch={false}>{img}</Link> : img;
+                      return projectId ? <Link href={`/projects/boards/${projectId}`} prefetch={false}>{img}</Link> : img;
                     })()}
                   </div>
                 </div>

@@ -53,7 +53,41 @@ const SideBar = async () => {
   const isPartnerAdmin = (user as any).is_admin || teamRole === "PLATFORM_ADMIN" || (user as any).assigned_team?.slug === "basalt" || (user as any).assigned_team?.slug === "basalthq";
 
   // Resolve Navigation Structure
-  const activeNavStructure = (dbNavConfig as NavItem[]) || DEFAULT_NAV_STRUCTURE;
+  const rawNavStructure = (dbNavConfig as NavItem[]) || DEFAULT_NAV_STRUCTURE;
+
+  // Patch: Ensure Projects doesn't route to Campaigns due to outdated DB config
+  const activeNavStructure = rawNavStructure.map(item => {
+    if (item.id === "nav_projects" && (item.href?.startsWith("/campaigns") || item.href === "/crm/outreach")) {
+      return { ...item, href: "/projects" };
+    }
+    if (item.children) {
+      return {
+        ...item,
+        children: item.children
+          .filter(child => !["sub_projects_gantt", "sub_projects_calendar", "sub_projects_docs"].includes(child.id))
+          .map(child => {
+            // Fix main All Projects link
+            if (child.id === "sub_projects_all" && (child.href?.startsWith("/campaigns") || child.href === "/projects" || child.href === "/crm/outreach")) {
+              return { ...child, href: "/projects/all" };
+            }
+            // Fix Overview link
+            if (child.id === "sub_projects_overview" && (child.href?.startsWith("/campaigns") || child.href === "/crm/outreach")) {
+              return { ...child, href: "/projects" };
+            }
+            // Fix other project links that might have leaked from old config
+            if (child.id.startsWith("sub_projects_") && child.href?.startsWith("/campaigns")) {
+              return { ...child, href: child.href.replace("/campaigns", "/projects") };
+            }
+            // Fix parent link if it appears in children list accidentally
+            if (child.id === "nav_projects" && (child.href?.startsWith("/campaigns") || child.href === "/crm/outreach")) {
+              return { ...child, href: "/projects" };
+            }
+            return child;
+          })
+      };
+    }
+    return item;
+  });
 
   return <DynamicModuleMenu
     navStructure={activeNavStructure}

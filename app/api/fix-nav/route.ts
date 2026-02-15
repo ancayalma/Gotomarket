@@ -1,0 +1,1 @@
+import { NextResponse } from 'next/server'; import { prismadb } from '@/lib/prisma'; export async function GET(req: Request) { await prismadb.navigationConfig.deleteMany({}); return NextResponse.json({ message: 'Reset' }); }

@@ -13,12 +13,11 @@ type Props = {
   managerSlot: React.ReactNode;
   wizardSlot: React.ReactNode;
   poolsSlot: React.ReactNode;
-  campaignsSlot?: React.ReactNode;
   settingsSlot?: React.ReactNode;
   isMember?: boolean;
 };
 
-export default function TabsContainer({ title, description, managerSlot, wizardSlot, poolsSlot, campaignsSlot, settingsSlot, isMember = false }: Props) {
+export default function TabsContainer({ title, description, managerSlot, wizardSlot, poolsSlot, settingsSlot, isMember = false }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selected = searchParams.get("tab") || "manager";
@@ -62,10 +61,9 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
 
   // Layer 3: Leads Manager Tabs
   const allNavItems = [
-    { id: "manager", label: "Calendar", icon: LayoutDashboard },
+    { id: "manager", label: "All Leads", icon: LayoutDashboard },
     { id: "wizard", label: "LeadGen Wizard", icon: Wand2 },
     { id: "pools", label: "Lead Pools", icon: Users },
-    { id: "campaigns", label: "Sequences", icon: Mail },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
@@ -212,7 +210,6 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
           {selected === "manager" && managerSlot}
           {selected === "wizard" && wizardSlot}
           {selected === "pools" && poolsSlot}
-          {selected === "campaigns" && campaignsSlot}
           {selected === "settings" && settingsSlot}
         </div>
       </div>

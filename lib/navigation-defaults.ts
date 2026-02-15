@@ -43,30 +43,28 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
         permissions: { minRole: "ADMIN" },
         children: [
             {
-                id: "nav_projects",
+                id: "nav_accounts",
                 type: "item",
-                label: "Projects",
-                iconName: "ServerIcon",
-                href: "/campaigns",
-                permissions: { module: "projects", feature: "projects" },
-                children: [
-                    { id: "sub_projects_all", type: "item", label: "All Campaigns", href: "/campaigns", iconName: "Folder" },
-                    { id: "sub_projects_tasks", type: "item", label: "Tasks", href: "/campaigns/tasks", iconName: "CheckSquare" }
-                ]
+                label: "Accounts",
+                iconName: "Building2",
+                href: "/crm/accounts"
             },
             {
-                id: "nav_leads",
+                id: "nav_contacts",
                 type: "item",
-                label: "Leads",
-                iconName: "Users",
-                href: "/crm/leads",
+                label: "Contacts",
+                iconName: "Contact",
+                href: "/crm/contacts"
+            },
+            {
+                id: "nav_campaigns",
+                type: "item",
+                label: "Campaigns",
+                iconName: "Megaphone",
+                href: "/campaigns",
                 permissions: { minRole: "ADMIN" },
                 children: [
-                    { id: "sub_leads_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/lead-wizard", iconName: "Wand2" },
-                    { id: "sub_leads_pools", type: "item", label: "Lead Pools", href: "/crm/lead-pools", iconName: "Target" },
-                    { id: "sub_leads_outreach", type: "item", label: "Outreach", href: "/crm/outreach", iconName: "Megaphone" },
-                    { id: "sub_leads_sequences", type: "item", label: "Sequences", href: "/crm/leads?tab=campaigns", iconName: "List" },
-                    { id: "sub_leads_settings", type: "item", label: "Settings", href: "/crm/leads?tab=settings", iconName: "Settings" }
+                    { id: "sub_campaigns_outreach", type: "item", label: "Outreach", href: "/campaigns", iconName: "Megaphone" }
                 ]
             },
             {
@@ -96,6 +94,20 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
         label: "Sales Hub",
         children: [
             {
+                id: "nav_leads",
+                type: "item",
+                label: "Leads",
+                iconName: "Users",
+                href: "/crm/leads",
+                permissions: { minRole: "ADMIN" },
+                children: [
+                    { id: "sub_leads_all", type: "item", label: "All Leads", href: "/crm/leads", iconName: "LayoutDashboard" },
+                    { id: "sub_leads_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/lead-wizard", iconName: "Wand2" },
+                    { id: "sub_leads_pools", type: "item", label: "Lead Pools", href: "/crm/lead-pools", iconName: "Target" },
+                    { id: "sub_leads_settings", type: "item", label: "Settings", href: "/crm/leads?tab=settings", iconName: "Settings" }
+                ]
+            },
+            {
                 id: "nav_command",
                 type: "item",
                 label: "Command",
@@ -115,6 +127,19 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 children: [
                     { id: "sub_deals_pipeline", type: "item", label: "Pipeline View", href: "/crm/opportunities" },
                     { id: "sub_deals_closed", type: "item", label: "Won / Lost", href: "/crm/opportunities?view=closed" }
+                ]
+            },
+            {
+                id: "nav_projects",
+                type: "item",
+                label: "Projects",
+                iconName: "ServerIcon",
+                href: "/projects",
+                permissions: { module: "projects", feature: "projects" },
+                children: [
+                    { id: "sub_projects_overview", type: "item", label: "Overview", href: "/projects", iconName: "FolderKanban" },
+                    { id: "sub_projects_all", type: "item", label: "All Projects", href: "/projects/all", iconName: "Folder" },
+                    { id: "sub_projects_tasks", type: "item", label: "Tasks", href: "/projects/tasks", iconName: "ListTodo" }
                 ]
             },
             {
@@ -215,20 +240,6 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
         type: "group",
         label: "Operations",
         children: [
-            {
-                id: "nav_accounts",
-                type: "item",
-                label: "Accounts",
-                iconName: "Building2",
-                href: "/crm/accounts"
-            },
-            {
-                id: "nav_contacts",
-                type: "item",
-                label: "Contacts",
-                iconName: "Contact",
-                href: "/crm/contacts"
-            },
             {
                 id: "nav_contracts",
                 type: "item",

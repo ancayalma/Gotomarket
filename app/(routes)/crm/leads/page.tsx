@@ -9,7 +9,6 @@ import LeadGenWizardPage from "./autogen/page";
 import LeadPoolsPage from "./pools/page";
 import SettingsTabs from "./components/SettingsTabs";
 import LeadsManagerTabs from "./components/LeadsManagerTabs";
-import CampaignsView from "./components/CampaignsView";
 
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getLeads } from "@/actions/crm/get-leads";
@@ -60,26 +59,23 @@ const LeadsPage = async ({ searchParams }: LeadsPageProps) => {
           title: "Leads Wizard",
           description: "Generate and manage leads using AI-powered tools"
         };
-      case "pools":
         return {
           title: "Leads Pools",
           description: "Manage and organize your lead pools efficiently"
         };
-      case "campaigns":
-        return {
-          title: "Sequences",
-          description: "Track and manage your marketing sequences"
-        };
+
+
       case "settings":
         return {
           title: "Settings",
           description: "Configure your lead management preferences"
         };
+
       case "manager":
       default:
         return {
           title: "Leads",
-          description: "Manage your schedule and lead interactions"
+          description: "View and manage all leads"
         };
     }
   };
@@ -101,7 +97,6 @@ const LeadsPage = async ({ searchParams }: LeadsPageProps) => {
         }
         wizardSlot={!isMember && tab === "wizard" ? <LeadGenWizardPage /> : null}
         poolsSlot={!isMember && tab === "pools" ? <LeadPoolsPage /> : null}
-        campaignsSlot={!isMember && tab === "campaigns" ? <CampaignsView /> : null}
         settingsSlot={!isMember && tab === "settings" ? (
           <SettingsTabs />
         ) : null}

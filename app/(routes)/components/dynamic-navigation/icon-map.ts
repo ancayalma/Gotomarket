@@ -29,6 +29,12 @@ import {
     Mail,
     ServerIcon,
     MessageSquare,
+    Calendar,
+    LayoutDashboard,
+    BarChart2,
+    ListTodo,
+    FolderKanban,
+    CalendarDays,
     // Fallbacks
     Grid
 } from "lucide-react";
@@ -60,7 +66,13 @@ export const ICON_MAP: Record<string, any> = {
     Globe,
     Mail,
     ServerIcon,
-    MessageSquare
+    MessageSquare,
+    Calendar,
+    LayoutDashboard,
+    BarChart2,
+    ListTodo,
+    FolderKanban,
+    CalendarDays
 };
 
 export const getIcon = (name?: string) => {

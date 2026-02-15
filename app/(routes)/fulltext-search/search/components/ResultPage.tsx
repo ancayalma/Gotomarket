@@ -131,7 +131,7 @@ const ResultPage = ({ results, search }: Props) => {
         renderItem={(item) => ({
           title: item.title,
           subtitle: item.description,
-          href: `/campaigns/boards/${item.id}`,
+          href: `/projects/boards/${item.id}`,
         })}
       />
 
@@ -142,7 +142,7 @@ const ResultPage = ({ results, search }: Props) => {
         renderItem={(item) => ({
           title: item.title,
           subtitle: item.content,
-          href: `/crm/tasks`,
+          href: `/projects/tasks`,
         })}
       />
 

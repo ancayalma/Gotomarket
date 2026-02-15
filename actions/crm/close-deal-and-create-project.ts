@@ -91,7 +91,7 @@ export async function closeDealAndCreateProject(opportunityId: string): Promise<
         });
 
         revalidatePath(`/crm/opportunities/${opportunityId}`);
-        revalidatePath("/campaigns");
+        revalidatePath("/projects");
 
         return {
             success: true,

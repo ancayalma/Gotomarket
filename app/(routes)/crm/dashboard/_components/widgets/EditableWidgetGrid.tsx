@@ -26,7 +26,7 @@ import DashboardCard from "../DashboardCard";
 import {
     LeadsWidget,
     TasksWidget,
-    CampaignsWidget,
+    ProjectsWidget,
     MessagesWidget,
     TeamActivityWidget,
     RecentFilesWidget,
@@ -82,7 +82,7 @@ const widgetTooltips: Record<string, string> = {
     collaboration_feed: "Recent mentions and activity in campaign threads you're part of.",
     leads: "Newest leads added to your pipeline. Review and assign them quickly.",
     tasks: "Your daily task list. Stay productive and on track with your priorities.",
-    projects: "Recently created or updated campaigns. Jump straight into campaign work.",
+    projects: "Recently created or updated projects. Jump straight into project work.",
     messages: "Your latest messages and notifications. Stay in the loop with your team.",
     team_activity: "Recent actions taken by team members across the CRM.",
     recent_files: "Files recently uploaded or modified. Quick access to your documents.",
@@ -299,7 +299,7 @@ export const EditableWidgetGrid = ({
             case "tasks":
                 return <TasksWidget tasks={dailyTasks} userId={userId} />;
             case "projects":
-                return <CampaignsWidget projects={newProjects} />;
+                return <ProjectsWidget projects={newProjects} />;
             case "messages":
                 return <MessagesWidget messages={messages} />;
             case "team_activity":

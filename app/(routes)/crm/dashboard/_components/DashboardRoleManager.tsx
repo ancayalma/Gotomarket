@@ -124,7 +124,7 @@ const DashboardRoleManager = async () => {
 
             // Insert Campaigns here to match sidebar order
             if (projectsModule?.enabled) {
-                crmEntities.push({ id: "entity:projects", name: "Campaigns", value: counts.boards, href: "/campaigns", iconName: "FolderKanban", color: "cyan", tooltip: "Organize work into campaign boards. Track tasks, progress, and collaborate with your team." });
+                crmEntities.push({ id: "entity:projects", name: "Projects", value: counts.boards, href: "/projects", iconName: "FolderKanban", color: "cyan", tooltip: "Organize work into project boards. Track tasks, progress, and collaborate with your team." });
             }
 
             crmEntities.push(
@@ -140,10 +140,10 @@ const DashboardRoleManager = async () => {
                 // Outreach & Optimization (Phase 4)
                 { id: "entity:lead_wizard", name: "Lead Wizard", value: 0, href: "/crm/lead-wizard", iconName: "Wand2", color: "cyan", tooltip: "Discover and generate new leads using AI. Define your ideal customer profile and let the wizard find matches." },
                 { id: "entity:lead_pools", name: "Lead Pools", value: 0, href: "/crm/lead-pools", iconName: "Target", color: "violet", tooltip: "Organize leads into targeted segments. Group leads by criteria for focused outreach and follow-up." },
-                { id: "entity:outreach", name: "Outreach", value: 0, href: "/crm/outreach", iconName: "Megaphone", color: "orange", tooltip: "Launch and manage outreach campaigns. Reach prospects through automated sequences and track engagement." },
+                { id: "entity:outreach", name: "Outreach", value: 0, href: "/campaigns", iconName: "Megaphone", color: "orange", tooltip: "Launch and manage outreach campaigns. Reach prospects through automated sequences and track engagement." },
 
                 // Tasks & Supplementary
-                { id: "entity:my_tasks", name: "My Tasks", value: usersTasks, href: `/campaigns/tasks/${userId}`, iconName: "Target", color: "emerald", tooltip: "View all tasks assigned to you. Stay on top of your to-dos, deadlines, and priorities." },
+                { id: "entity:my_tasks", name: "My Tasks", value: usersTasks, href: `/projects/tasks/${userId}`, iconName: "Target", color: "emerald", tooltip: "View all tasks assigned to you. Stay on top of your to-dos, deadlines, and priorities." },
                 { id: "entity:invoices", name: "Invoices", value: counts.invoices, href: "/invoice", iconName: "FileText", color: "blue", tooltip: "Create and manage invoices. Track payment statuses, send reminders, and manage billing." },
                 { id: "entity:reports", name: "Reports", value: reportCount, href: "/reports", iconName: "BarChart3", color: "amber", tooltip: "Build and view custom reports. Analyze data across your CRM with charts, tables, and filters." },
                 { id: "entity:products", name: "Products", value: productCount, href: "/crm/products", iconName: "Package", color: "teal", tooltip: "Manage your product catalog. Add products, set pricing, and link them to quotes and opportunities." },

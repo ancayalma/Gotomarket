@@ -304,7 +304,7 @@ export default function OutreachCampaignWizard({
         const fetchCampaign = async () => {
             setLoadingCampaign(true);
             try {
-                const res = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/summary`);
+                const res = await fetch(`/api/projects/${encodeURIComponent(campaignId)}/summary`);
                 if (res.ok) {
                     const data = await res.json();
                     setFetchedCampaign(data);
@@ -445,7 +445,7 @@ export default function OutreachCampaignWizard({
                 }
             };
 
-            const res = await fetch("/api/outreach/sequences", {
+            const res = await fetch("/api/campaigns", {
                 method: draftCampaignId ? "PUT" : "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -670,7 +670,7 @@ export default function OutreachCampaignWizard({
             const requiresApproval = fetchedCampaign?.require_approval ?? false;
             const campaignStatus = requiresApproval ? "PENDING_APPROVAL" : "ACTIVE";
 
-            const res = await fetch("/api/outreach/sequences", {
+            const res = await fetch("/api/campaigns", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

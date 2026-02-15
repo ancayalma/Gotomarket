@@ -36,7 +36,7 @@ export const OutreachROIWidget = ({ data }: OutreachROIWidgetProps) => {
             title="Outreach ROI"
             icon={Megaphone}
             iconColor="text-orange-400"
-            footerHref="/crm/outreach"
+            footerHref="/campaigns"
             footerLabel="Manage Campaigns"
         >
             <div className="space-y-6 pt-2">

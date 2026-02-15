@@ -37,8 +37,13 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: "/projects/:path*",
-        destination: "/campaigns/:path*",
+        source: "/campaigns/boards/:path*",
+        destination: "/projects/boards/:path*",
+        permanent: true,
+      },
+      {
+        source: "/campaigns/tasks/:path*",
+        destination: "/projects/tasks/:path*",
         permanent: true,
       },
       {
