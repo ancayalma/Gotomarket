@@ -33,21 +33,16 @@ export function MessageBubble({ role, content, createdAt }: MessageBubbleProps) 
             )}
         >
             {/* Avatar */}
+            {/* Avatar */}
             <Avatar className="h-8 w-8 shrink-0 border">
                 {isUser ? (
-                    <>
-                        <AvatarImage src="/images/user-placeholder.png" />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                            <User className="h-4 w-4" />
-                        </AvatarFallback>
-                    </>
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                        <User className="h-4 w-4" />
+                    </AvatarFallback>
                 ) : (
-                    <>
-                        <AvatarImage src="/images/bot-avatar.png" />
-                        <AvatarFallback className="bg-cyan-600 text-white">
-                            <Bot className="h-4 w-4" />
-                        </AvatarFallback>
-                    </>
+                    <AvatarFallback className="bg-cyan-600 text-white">
+                        <Bot className="h-4 w-4" />
+                    </AvatarFallback>
                 )}
             </Avatar>
 

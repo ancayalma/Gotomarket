@@ -1,10 +1,22 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, Check, X, RefreshCw, Menu, MessageSquare, MoreVertical, Search } from "lucide-react";
 import ChatBoard from "./ChatBoard";
+
+import React, { useEffect, useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { ChatScore } from "./ChatScore";
+import { Plus, Trash2, Pencil, Check, X, RefreshCw, Menu, MessageSquare, MoreVertical, Search, Download, Circle } from "lucide-react";
+
+// Token estimation helper
+function estimateTokens(text: string): number {
+  if (!text) return 0;
+  const c = text.trim().length;
+  // Rough estimate: ~4 characters per token
+  return Math.ceil(c / 4);
+}
+
+const MAX_TOKENS = 275000;
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -354,29 +366,6 @@ export default function ChatApp() {
 
       {/* Main Content */}
       < main className="flex-1 flex flex-col min-w-0 bg-background/50" >
-        <div className="h-14 border-b border-border flex items-center px-4 justify-between bg-background/80 backdrop-blur-sm sticky top-0 z-20">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="sm:hidden"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
-            <div className="flex flex-col">
-              <h1 className="font-semibold text-sm sm:text-base">
-                {activeSession?.title || "Varuni AI Assistant"}
-              </h1>
-              {activeSession && activeSession.isTemporary && (
-                <span className="text-[10px] text-amber-500 font-medium flex items-center gap-1">
-                  History Off (Not Saved)
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
         {
           activeSessionId ? (
             <ChatBoard
@@ -385,6 +374,8 @@ export default function ChatApp() {
               initialMessages={messages as any[]}
               isTemporary={activeSession?.isTemporary || false}
               onRefresh={() => loadMessages(activeSessionId)}
+              onToggleSidebar={() => setSidebarOpen(true)}
+              sessionTitle={activeSession?.title}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { toast } from "sonner";
-import { Loader, Send, Square, RefreshCw, ArrowDown, Download, MoreVertical } from "lucide-react";
+import { Loader, Send, Square, RefreshCw, ArrowDown, Download, MoreVertical, Menu } from "lucide-react";
 import { MessageBubble } from "./MessageBubble";
 import { ChatScore } from "./ChatScore";
 import { Button } from "@/components/ui/button";
@@ -37,9 +37,11 @@ interface ChatBoardProps {
     initialMessages: ChatMessage[];
     isTemporary: boolean;
     onRefresh: () => void;
+    onToggleSidebar?: () => void;
+    sessionTitle?: string | null;
 }
 
-export default function ChatBoard({ sessionId, initialMessages, isTemporary, onRefresh }: ChatBoardProps) {
+export default function ChatBoard({ sessionId, initialMessages, isTemporary, onRefresh, onToggleSidebar, sessionTitle }: ChatBoardProps) {
     const [localInput, setLocalInput] = useState("");
     const [showScrollButton, setShowScrollButton] = useState(false);
 
@@ -177,33 +179,61 @@ export default function ChatBoard({ sessionId, initialMessages, isTemporary, onR
     return (
         <div className="flex-1 flex flex-col min-h-0 relative bg-background/50">
             {/* Header (Context & Refresh) */}
-            <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-background/80 backdrop-blur-sm p-2 rounded-full border shadow-sm">
-                <ChatScore sessionId={sessionId} />
-                <div className="w-px h-4 bg-border mx-1" />
-                <div className="flex items-center gap-2 px-2 text-xs text-muted-foreground">
-                    <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div
-                            className={`h-full transition-all ${percentUsed >= 90 ? "bg-red-500" : percentUsed >= 75 ? "bg-yellow-500" : "bg-blue-500"}`}
-                            style={{ width: `${Math.min(100, percentUsed)}%` }}
-                        />
+            {/* Header (Context & Refresh) - Now positioned relative in the flow */}
+            {/* Header (Context & Refresh) - Now positioned relative in the flow */}
+            <div className="flex items-center justify-between px-4 py-2 border-b bg-background/95 backdrop-blur z-20 sticky top-0 h-14">
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="sm:hidden"
+                        onClick={onToggleSidebar}
+                    >
+                        <Menu className="w-5 h-5" />
+                    </Button>
+                    <div className="flex flex-col">
+                        <h1 className="font-semibold text-sm sm:text-base flex items-center gap-2">
+                            {sessionTitle || "Varuni AI Assistant"}
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        </h1>
+                        {isTemporary && (
+                            <span className="text-[10px] text-amber-500 font-medium flex items-center gap-1">
+                                History Off
+                            </span>
+                        )}
                     </div>
-                    <span>{percentUsed}% Context</span>
                 </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full">
-                            <MoreVertical className="w-3 h-3" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={onRefresh}>
-                            <RefreshCw className="w-3 h-3 mr-2" /> Refresh
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleExport}>
-                            <Download className="w-3 h-3 mr-2" /> Export Chat
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+
+                <div className="flex items-center gap-2">
+                    <ChatScore sessionId={sessionId} />
+                    <div className="h-4 w-px bg-border mx-1" />
+
+                    <div className="flex items-center gap-2 px-2 text-xs text-muted-foreground hidden md:flex">
+                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                                className={`h-full transition-all ${percentUsed >= 90 ? "bg-red-500" : percentUsed >= 75 ? "bg-yellow-500" : "bg-blue-500"}`}
+                                style={{ width: `${Math.min(100, percentUsed)}%` }}
+                            />
+                        </div>
+                        <span>{percentUsed}%</span>
+                    </div>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                <MoreVertical className="w-4 h-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={onRefresh}>
+                                <RefreshCw className="w-3 h-3 mr-2" /> Refresh Context
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleExport}>
+                                <Download className="w-3 h-3 mr-2" /> Export Chat
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
 
             {/* Messages list */}

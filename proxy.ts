@@ -138,11 +138,11 @@ function applySecurityHeaders(response: NextResponse): void {
         "Content-Security-Policy",
         [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "font-src 'self' https://fonts.gstatic.com",
-            "img-src 'self' data: blob: https: http:",
-            "connect-src 'self' https: wss:",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://use.typekit.net",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://use.typekit.net https://p.typekit.net",
+            "font-src 'self' https://fonts.gstatic.com https://use.typekit.net https://p.typekit.net data:",
+            "img-src 'self' data: blob: https: http: https://p.typekit.net",
+            "connect-src 'self' https: wss: https://*.typekit.net",
             "frame-src 'self' https://accounts.google.com",
             "object-src 'none'",
             "base-uri 'self'",
@@ -185,6 +185,11 @@ export function proxy(request: NextRequest) {
         const preflightResponse = new NextResponse(null, { status: 204 });
         applyCors(request, preflightResponse);
         return preflightResponse;
+    }
+
+    // FIX: Rewrite POST /campaigns to /api/campaigns to handle incorrect client requests
+    if (method === "POST" && pathname === "/campaigns") {
+        return NextResponse.rewrite(new URL("/api/campaigns", request.url));
     }
 
     // ── Rate limiting (API routes only, not exempt paths) ──
