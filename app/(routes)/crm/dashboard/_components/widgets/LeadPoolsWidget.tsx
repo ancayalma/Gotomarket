@@ -2,7 +2,7 @@
 
 import React from "react";
 import { WidgetWrapper } from "./WidgetWrapper";
-import { Target, Users, Zap, TrendingUp } from "lucide-react";
+import { List, Users, Zap, TrendingUp } from "lucide-react";
 
 interface LeadPoolsWidgetProps {
     pools: any[];
@@ -11,10 +11,10 @@ interface LeadPoolsWidgetProps {
 export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
     if (pools.length === 0) {
         return (
-            <WidgetWrapper title="Lead Pools" icon={Target} iconColor="text-violet-400">
+            <WidgetWrapper title="Lists" icon={List} iconColor="text-violet-400">
                 <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground/30">
-                    <Target className="h-10 w-10 mb-2 opacity-10" />
-                    <p className="text-[11px] font-medium italic">No active pools</p>
+                    <List className="h-10 w-10 mb-2 opacity-10" />
+                    <p className="text-[11px] font-medium italic">No active lists</p>
                 </div>
             </WidgetWrapper>
         );
@@ -24,11 +24,11 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
 
     return (
         <WidgetWrapper
-            title="Lead Pools"
-            icon={Target}
+            title="Lists"
+            icon={List}
             iconColor="text-violet-400"
             footerHref="/crm/lead-pools"
-            footerLabel="View All Pools"
+            footerLabel="View All Lists"
         >
             <div className="space-y-4 pt-2">
                 {/* Visual Distribution Summary */}

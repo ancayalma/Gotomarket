@@ -179,16 +179,15 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="h-full px-10 space-y-4">
-          {/* First Name & Last Name */}
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="first_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">First Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="First name" {...field} />
+                    <Input placeholder="First name" {...field} className="h-8" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -199,9 +198,9 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
               name="last_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Last Name *</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Last Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Last name" {...field} />
+                    <Input placeholder="Last name" {...field} className="h-8" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -209,16 +208,15 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
             />
           </div>
 
-          {/* Company & Job Title */}
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="company"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Company</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Company</FormLabel>
                   <FormControl>
-                    <Input placeholder="Company name" {...field} />
+                    <Input placeholder="Company" {...field} className="h-8" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -229,9 +227,9 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
               name="jobTitle"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Job Title</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Job Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Job title" {...field} />
+                    <Input placeholder="Job title" {...field} className="h-8" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -239,16 +237,15 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
             />
           </div>
 
-          {/* Email & Phone */}
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="email@example.com" {...field} />
+                    <Input type="email" placeholder="email@example.com" {...field} className="h-8" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -259,14 +256,17 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Phone</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="+1XXXXXXXXXX"
+                      placeholder="+15550000000"
                       {...field}
-                      onChange={(e) => {
-                        const formatted = formatPhoneNumber(e.target.value);
-                        field.onChange(formatted);
+                      className="h-8"
+                      onBlur={(e) => {
+                        const formatted = e.target.value.replace(/\D/g, "");
+                        if (formatted.length === 10) field.onChange(`+1${formatted}`);
+                        else if (formatted.length === 11 && formatted.startsWith("1")) field.onChange(`+${formatted}`);
+                        else if (e.target.value.startsWith("+")) field.onChange(`+${formatted}`);
                       }}
                     />
                   </FormControl>
@@ -276,17 +276,16 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
             />
           </div>
 
-          {/* Lead Source & Referred By */}
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="lead_source"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lead Source</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Source</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-8 text-xs">
                         <SelectValue placeholder="Select source" />
                       </SelectTrigger>
                     </FormControl>
@@ -300,7 +299,6 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -309,24 +307,22 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
               name="refered_by"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Referred By</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Referred By</FormLabel>
                   <FormControl>
-                    <Input placeholder="Referrer name" {...field} />
+                    <Input placeholder="Referer" {...field} className="h-8" />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
 
-          {/* Assigned To, Account & Project */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="assigned_to"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Assigned To</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Assigned To</FormLabel>
                   <FormControl>
                     <Combobox
                       options={users?.map((user: any) => ({
@@ -338,7 +334,6 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
                       placeholder="Select user"
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -347,7 +342,7 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
               name="accountIDs"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Account</FormLabel>
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Account</FormLabel>
                   <FormControl>
                     <Combobox
                       options={accounts?.map((account: any) => ({
@@ -359,111 +354,77 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
                       placeholder="Select account"
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
+
+          <div className="space-y-3 pt-2 border-t border-white/5">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">Social & Context</h3>
+            <div className="grid grid-cols-3 gap-2">
+              <FormField
+                control={form.control}
+                name="social_linkedin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="flex items-center gap-2 border border-white/10 rounded-md px-2 bg-background/50 h-8">
+                        <Linkedin className="h-3 w-3 text-muted-foreground" />
+                        <Input placeholder="LinkedIn" {...field} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="social_facebook"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="flex items-center gap-2 border border-white/10 rounded-md px-2 bg-background/50 h-8">
+                        <Facebook className="h-3 w-3 text-muted-foreground" />
+                        <Input placeholder="Facebook" {...field} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="social_twitter"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="flex items-center gap-2 border border-white/10 rounded-md px-2 bg-background/50 h-8">
+                        <Twitter className="h-3 w-3 text-muted-foreground" />
+                        <Input placeholder="Twitter" {...field} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
-              name="project"
+              name="description"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Project</FormLabel>
+                <FormItem>
                   <FormControl>
-                    <Combobox
-                      options={projects?.map((project: any) => ({
-                        label: project.title,
-                        value: project.id,
-                      })) || []}
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select project"
+                    <Textarea
+                      placeholder="Lead description or notes..."
+                      className="min-h-[60px] text-xs bg-background/50"
+                      {...field}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
 
-          {/* Social Links */}
-          <div className="space-y-3">
-            <FormLabel className="text-sm font-medium">Social Profiles</FormLabel>
-            <FormField
-              control={form.control}
-              name="social_linkedin"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="flex items-center gap-2">
-                      <Linkedin className="h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="LinkedIn URL or username" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="social_facebook"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="flex items-center gap-2">
-                      <Facebook className="h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Facebook URL or username" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="social_twitter"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="flex items-center gap-2">
-                      <Twitter className="h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="X/Twitter handle (e.g., @username)" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Description */}
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Additional notes about this lead..."
-                    className="min-h-[80px]"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid gap-2 py-5">
-            <Button disabled={isLoading} type="submit">
-              {isLoading ? (
-                <span className="flex items-center animate-pulse">
-                  Saving data ...
-                </span>
-              ) : (
-                "Create lead"
-              )}
+          <div className="pt-2">
+            <Button disabled={isLoading} type="submit" className="w-full">
+              {isLoading ? "Saving..." : "Create lead"}
             </Button>
           </div>
         </form>

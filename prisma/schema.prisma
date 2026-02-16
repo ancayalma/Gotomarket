@@ -715,6 +715,7 @@ model Documents {
   crm_accounts_tasksIDs  String[]            @db.ObjectId
   leadsIDs               String[]            @db.ObjectId
   accountsIDs            String[]            @db.ObjectId
+  leadPoolsIDs           String[]            @db.ObjectId
   invoices               Invoices[]          @relation(fields: [invoiceIDs], references: [id])
   opportunities          crm_Opportunities[] @relation(fields: [opportunityIDs], references: [id])
   contacts               crm_Contacts[]      @relation(fields: [contactsIDs], references: [id])
@@ -722,6 +723,7 @@ model Documents {
   crm_accounts_tasks     crm_Accounts_Tasks? @relation(fields: [crm_accounts_tasksIDs], references: [id])
   leads                  crm_Leads[]         @relation(fields: [leadsIDs], references: [id])
   accounts               crm_Accounts[]      @relation(fields: [accountsIDs], references: [id])
+  lead_pools             crm_Lead_Pools[]    @relation(fields: [leadPoolsIDs], references: [id])
   created_by             Users?              @relation(name: "created_by_user", fields: [created_by_user], references: [id], onDelete: SetNull)
   assigned_to_user       Users?              @relation(name: "assigned_to_user", fields: [assigned_user], references: [id], onDelete: SetNull)
   documents_type         Documents_Types?    @relation(fields: [document_type], references: [id])
@@ -1480,6 +1482,11 @@ model crm_Lead_Pools {
 
   // Members assigned to work on this pool
   assigned_members String[] @db.ObjectId
+
+  // Campaign management features
+  color               String?
+  documentsIDs        String[]      @db.ObjectId
+  assigned_documents  Documents[]   @relation(fields: [documentsIDs], references: [id])
 }
 
 model crm_Lead_Gen_Jobs {

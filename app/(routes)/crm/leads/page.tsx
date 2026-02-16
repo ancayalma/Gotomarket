@@ -1,3 +1,4 @@
+
 import { Suspense } from "react";
 import SuspenseLoading from "@/components/loadings/suspense";
 import LeadsManagerTabs from "./components/LeadsManagerTabs";

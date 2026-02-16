@@ -21,7 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
 import RightViewModalNoTrigger from "@/components/modals/right-view-notrigger";
 import { UpdateAccountForm } from "../components/UpdateAccountForm";
-import { Eye, EyeOff, Mail } from "lucide-react";
+import { Eye, EyeOff, Mail, Users } from "lucide-react";
 import { SmartEmailModal } from "@/components/modals/SmartEmailModal";
 
 interface DataTableRowActionsProps<TData> {
@@ -41,20 +41,23 @@ export function DataTableRowActions<TData>({
 
   const { toast } = useToast();
 
+  const isLead = (row.original as any).type === "Lead";
+  const apiEndpoint = isLead ? `/api/crm/leads/${account.id}` : `/api/crm/account/${account.id}`;
+
   const onDelete = async () => {
     setLoading(true);
     try {
-      await axios.delete(`/api/crm/account/${account.id}`);
+      await axios.delete(apiEndpoint);
       toast({
         title: "Success",
-        description: "Opportunity has been deleted",
+        description: isLead ? "Lead has been deleted" : "Account has been deleted",
       });
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
         description:
-          "Something went wrong while deleting opportunity. Please try again.",
+          "Something went wrong while deleting. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -78,6 +81,35 @@ export function DataTableRowActions<TData>({
         title: "Success",
         description: `You are now Account: ${account.name}, watcher`,
       });
+      setLoading(false);
+    }
+  };
+
+  const onPushToLeads = async () => {
+    setLoading(true);
+    try {
+      const payload = {
+        first_name: "Direct",
+        last_name: account.name,
+        company: account.name,
+        email: (row.original as any).email,
+        phone: (row.original as any).office_phone,
+        description: (row.original as any).description,
+        accountIDs: account.id,
+      };
+      await axios.post("/api/crm/leads", payload);
+      toast({
+        title: "Success",
+        description: "Account pushed to leads successfully",
+      });
+      router.push("/crm/leads");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to push account to leads",
+      });
+    } finally {
       setLoading(false);
     }
   };
@@ -147,6 +179,10 @@ export function DataTableRowActions<TData>({
           <DropdownMenuItem onClick={() => setEmailOpen(true)}>
             <Mail className="mr-2 w-4 h-4" />
             Send Email
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onPushToLeads}>
+            <Users className="mr-2 w-4 h-4" />
+            Convert to Lead
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onWatch}>

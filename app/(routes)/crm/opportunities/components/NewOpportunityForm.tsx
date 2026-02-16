@@ -178,6 +178,7 @@ export function NewOpportunityForm({
                       disabled={isLoading}
                       placeholder="New BasaltCRM functionality"
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -236,6 +237,7 @@ export function NewOpportunityForm({
                       disabled={isLoading}
                       placeholder="New BasaltCRM functionality"
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -249,14 +251,14 @@ export function NewOpportunityForm({
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sales type</FormLabel>
+                      <FormLabel>Disposition</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Choose type " />
+                            <SelectValue placeholder="Choose disposition " />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="flex overflow-y-auto h-56">
@@ -287,11 +289,18 @@ export function NewOpportunityForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="flex overflow-y-auto h-56">
-                          {saleStages.map((stage) => (
-                            <SelectItem key={stage.id} value={stage.id}>
-                              {stage.name}
-                            </SelectItem>
-                          ))}
+                          {(() => {
+                            const selectedType = salesType.find((t: any) => t.id === form.watch("type"));
+                            const isLost = selectedType?.name === "Closed LOST";
+                            const filteredStages = isLost
+                              ? saleStages.filter((s: any) => ["Follow-up", "Rehash", "No Show", "Reschedule"].includes(s.name))
+                              : saleStages.filter((s: any) => !["Follow-up", "Rehash", "No Show", "Reschedule"].includes(s.name));
+                            return filteredStages.map((stage) => (
+                              <SelectItem key={stage.id} value={stage.id}>
+                                {stage.name}
+                              </SelectItem>
+                            ));
+                          })()}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -310,6 +319,7 @@ export function NewOpportunityForm({
                           disabled={isLoading}
                           placeholder="1000000"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -327,6 +337,7 @@ export function NewOpportunityForm({
                           disabled={isLoading}
                           placeholder="USD"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -345,6 +356,7 @@ export function NewOpportunityForm({
                           disabled={isLoading}
                           placeholder="500000"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -362,6 +374,7 @@ export function NewOpportunityForm({
                           disabled={isLoading}
                           placeholder="Describe the next step"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -406,6 +419,28 @@ export function NewOpportunityForm({
                           value={field.value}
                           onChange={field.onChange}
                           placeholder="Select project"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="account"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Assigned Account</FormLabel>
+                      <FormControl>
+                        <Combobox
+                          options={accounts.map((account) => ({
+                            label: account.name,
+                            value: account.id,
+                          }))}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select account"
                         />
                       </FormControl>
                       <FormMessage />

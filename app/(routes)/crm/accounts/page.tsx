@@ -8,10 +8,7 @@ import { prismadb } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
 // Components
-import TabsContainer from "./components/TabsContainer";
-import AccountsView from "../components/AccountsView";
-import LeadGenWizardPage from "./components/LeadGenWizard";
-import SettingsTabs from "./components/SettingsTabs";
+import AccountsManagerTabs from "./components/AccountsManagerTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -68,20 +65,11 @@ const AccountsPage = async ({ searchParams }: AccountsPageProps) => {
 
   return (
     <div className="h-full w-full">
-      <TabsContainer
-        title={title}
-        description={description}
+      <AccountsManagerTabs
+        accounts={accounts || []}
+        crmData={crmData}
         isMember={isMember}
-        managerSlot={
-          tab === "accounts" ? (
-            <Suspense fallback={<SuspenseLoading />}>
-              <AccountsView crmData={crmData} data={accounts} />
-            </Suspense>
-          ) : null
-        }
-        wizardSlot={!isMember && tab === "wizard" ? <LeadGenWizardPage /> : null}
-        poolsSlot={null} // Removed 'pools' slot concept as it's merged into main Accounts logic if needed, or strictly separate
-        settingsSlot={!isMember && tab === "settings" ? <SettingsTabs /> : null}
+        defaultTab={tab as "accounts" | "wizard" | "settings"}
       />
     </div>
   );

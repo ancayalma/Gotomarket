@@ -100,7 +100,60 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
       },
     });
 
-    const candidateLeads = candidates.map((c: any) => {
+    // Separate candidates
+    const activeCandidates = candidates.filter((c: any) => c.status !== "CONVERTED");
+    const convertedCandidates = candidates.filter((c: any) => c.status === "CONVERTED" && c.accountsIDs);
+
+    // Fetch Converted Accounts
+    const accountIds = convertedCandidates.map((c: any) => c.accountsIDs);
+    const convertedAccounts = await (prismadbCrm as any).crm_Accounts.findMany({
+      where: { id: { in: accountIds } },
+      include: { contacts: true }
+    });
+
+    const accountItems = [];
+    for (const acc of convertedAccounts) {
+      if (acc.contacts && acc.contacts.length > 0) {
+        for (const contact of acc.contacts) {
+          accountItems.push({
+            id: contact.id,
+            firstName: contact.first_name || "",
+            lastName: contact.last_name || "",
+            company: acc.name,
+            jobTitle: contact.job_title || "",
+            email: contact.email || "",
+            phone: contact.mobile_phone || contact.phone || "",
+            description: acc.description || "",
+            lead_source: "POOL_ACCOUNT",
+            status: "CONVERTED",
+            type: "CLIENT", // It's an account now
+            outreach_status: "IDLE",
+            pipeline_stage: "Closed", // or appropriate stage
+            createdAt: acc.createdAt,
+            updatedAt: acc.updatedAt
+          });
+        }
+      } else {
+        // Account with no contacts
+        accountItems.push({
+          id: acc.id,
+          firstName: "",
+          lastName: acc.name, // Use company name as fallback
+          company: acc.name,
+          jobTitle: "",
+          email: acc.email || "",
+          phone: acc.phone || "",
+          description: acc.description || "",
+          lead_source: "POOL_ACCOUNT",
+          status: "CONVERTED",
+          type: "CLIENT",
+          createdAt: acc.createdAt,
+          updatedAt: acc.updatedAt
+        });
+      }
+    }
+
+    const candidateItems = activeCandidates.map((c: any) => {
       const contact = c.contacts?.[0];
       const nameParts = contact?.fullName?.split(" ") || [];
       const lastName = nameParts.length > 1 ? nameParts.pop() : (contact?.fullName || c.companyName || "Candidate");
@@ -125,8 +178,8 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
       };
     });
 
-    // Merge and sort
-    const allLeads = [...leads, ...candidateLeads].sort((a: any, b: any) => {
+    // Merge and sort (Legacy Leads + New Account Items + Unconverted Candidates)
+    const allLeads = [...leads, ...accountItems, ...candidateItems].sort((a: any, b: any) => {
       return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
     });
 

@@ -58,20 +58,54 @@ const SideBar = async () => {
   // Patch: Ensure Projects doesn't route to Campaigns due to outdated DB config
   const activeNavStructure = rawNavStructure.map(item => {
     // 1. Inject Accounts into Marketing Hub if missing
+    // 1. Marketing Hub Patches
     if (item.id === "group_marketing") {
-      const hasAccounts = item.children?.some(c => c.id === "nav_accounts");
+      let newChildren = [...(item.children || [])];
+
+      // Inject Accounts if missing
+      const hasAccounts = newChildren.some(c => c.id === "nav_accounts");
       if (!hasAccounts) {
         const defaultAccounts = DEFAULT_NAV_STRUCTURE
           .find(g => g.id === "group_marketing")
           ?.children?.find(c => c.id === "nav_accounts");
-
-        if (defaultAccounts) {
-          return {
-            ...item,
-            children: [...(item.children || []), defaultAccounts]
-          };
-        }
+        if (defaultAccounts) newChildren.push(defaultAccounts);
       }
+
+      // Inject Lists if missing
+      const hasLists = newChildren.some(c => c.id === "nav_lists");
+      if (!hasLists) {
+        newChildren.push({
+          id: "nav_lists",
+          type: "item",
+          label: "Lists",
+          iconName: "List",
+          href: "/lists",
+          badge: undefined,
+          permissions: { minRole: "ADMIN" }
+        } as any);
+      }
+
+      // Inject Campaigns if missing
+      const hasCampaigns = newChildren.some(c => c.id === "nav_campaigns");
+      if (!hasCampaigns) {
+        newChildren.push({
+          id: "nav_campaigns",
+          type: "item",
+          label: "Campaigns",
+          iconName: "Megaphone",
+          href: "/campaigns",
+          badge: undefined,
+          permissions: { minRole: "ADMIN" }
+        } as any);
+      }
+
+      // Remove deprecated Outreach if it exists
+      newChildren = newChildren.filter(c => c.id !== "nav_outreach");
+
+      return {
+        ...item,
+        children: newChildren
+      };
     }
 
     // 2. Clean up Leads (remove Wizard/Pools)

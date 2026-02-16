@@ -139,7 +139,7 @@ const DashboardRoleManager = async () => {
 
                 // Outreach & Optimization (Phase 4)
                 { id: "entity:lead_wizard", name: "Lead Wizard", value: 0, href: "/crm/lead-wizard", iconName: "Wand2", color: "cyan", tooltip: "Discover and generate new leads using AI. Define your ideal customer profile and let the wizard find matches." },
-                { id: "entity:lead_pools", name: "Lead Pools", value: 0, href: "/crm/lead-pools", iconName: "Target", color: "violet", tooltip: "Organize leads into targeted segments. Group leads by criteria for focused outreach and follow-up." },
+                { id: "entity:lead_pools", name: "Lists", value: 0, href: "/crm/lead-pools", iconName: "List", color: "violet", tooltip: "Organize records into targeted segments. Group items by criteria for focused outreach and follow-up." },
                 { id: "entity:outreach", name: "Outreach", value: 0, href: "/campaigns", iconName: "Megaphone", color: "orange", tooltip: "Launch and manage outreach campaigns. Reach prospects through automated sequences and track engagement." },
 
                 // Tasks & Supplementary

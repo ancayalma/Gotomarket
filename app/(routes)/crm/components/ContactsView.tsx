@@ -56,7 +56,7 @@ const ContactsView = ({ data, crmData }: any) => {
           <div onClick={() => setOpen(true)}>
             <NavigationCard card={card} />
           </div>
-          <SheetContent className="min-w-[1000px] space-y-2">
+          <SheetContent className="sm:max-w-[850px] w-full space-y-2">
             <SheetHeader>
               <SheetTitle>Create new Contact</SheetTitle>
             </SheetHeader>

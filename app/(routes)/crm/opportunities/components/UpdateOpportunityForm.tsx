@@ -39,6 +39,7 @@ import { Calendar } from "@/components/ui/calendar";
 import SuspenseLoading from "@/components/loadings/suspense";
 import fetcher from "@/lib/fetcher";
 import useSWR from "swr";
+import { Combobox } from "@/components/ui/combobox";
 
 //TODO: fix all the types
 type NewTaskFormProps = {
@@ -153,6 +154,7 @@ export function UpdateOpportunityForm({
                       disabled={isLoading}
                       placeholder="New BasaltCRM functionality"
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -211,6 +213,7 @@ export function UpdateOpportunityForm({
                       disabled={isLoading}
                       placeholder="New BasaltCRM functionality"
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -224,14 +227,14 @@ export function UpdateOpportunityForm({
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sales type</FormLabel>
+                      <FormLabel>Disposition</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Choose type " />
+                            <SelectValue placeholder="Choose disposition " />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="flex overflow-y-auto h-56">
@@ -262,11 +265,18 @@ export function UpdateOpportunityForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="flex overflow-y-auto h-56">
-                          {saleStages.map((stage: any) => (
-                            <SelectItem key={stage.id} value={stage.id}>
-                              {stage.name}
-                            </SelectItem>
-                          ))}
+                          {(() => {
+                            const selectedType = saleTypes.find((t: any) => t.id === form.watch("type"));
+                            const isLost = selectedType?.name === "Closed LOST";
+                            const filteredStages = isLost
+                              ? saleStages.filter((s: any) => ["Follow-up", "Rehash", "No Show", "Reschedule"].includes(s.name))
+                              : saleStages.filter((s: any) => !["Follow-up", "Rehash", "No Show", "Reschedule"].includes(s.name));
+                            return filteredStages.map((stage: any) => (
+                              <SelectItem key={stage.id} value={stage.id}>
+                                {stage.name}
+                              </SelectItem>
+                            ));
+                          })()}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -285,6 +295,7 @@ export function UpdateOpportunityForm({
                           disabled={isLoading}
                           placeholder="1000000"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -302,6 +313,7 @@ export function UpdateOpportunityForm({
                           disabled={isLoading}
                           placeholder="USD"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -320,6 +332,7 @@ export function UpdateOpportunityForm({
                           disabled={isLoading}
                           placeholder="500000"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -337,6 +350,7 @@ export function UpdateOpportunityForm({
                           disabled={isLoading}
                           placeholder="Describe the next step"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -378,23 +392,17 @@ export function UpdateOpportunityForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Assigned Account</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose account " />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="flex overflow-y-auto h-56">
-                          {accounts.map((account: any) => (
-                            <SelectItem key={account.id} value={account.id}>
-                              {account.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Combobox
+                          options={accounts.map((account: any) => ({
+                            label: account.name,
+                            value: account.id,
+                          }))}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Choose account"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -405,23 +413,17 @@ export function UpdateOpportunityForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Assigned Contact</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a user to assign the account" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="flex overflow-y-auto h-56">
-                          {contacts.map((contact: any) => (
-                            <SelectItem key={contact.id} value={contact.id}>
-                              {contact.first_name + " " + contact.last_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Combobox
+                          options={contacts.map((contact: any) => ({
+                            label: contact.first_name + " " + contact.last_name,
+                            value: contact.id,
+                          }))}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Choose contact"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -438,7 +440,7 @@ export function UpdateOpportunityForm({
                 Saving data ...
               </span>
             ) : (
-              "Updates opportunity"
+              "Update opportunity"
             )}
           </Button>
         </div>

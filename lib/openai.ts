@@ -13,36 +13,65 @@ export function isReasoningModel(modelId: string | undefined | null): boolean {
         modelId.toLowerCase().includes("deepseek-reasoner");
 }
 
+// Temporary fix for Azure OpenAI "unable to get local issuer certificate" in dev
+if (process.env.NODE_ENV === "development") {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+}
+
 export async function getAiSdkModel(userId: string | "system") {
     const DEBUG_PREFIX = "[getAiSdkModel]";
 
+    // Helper to clean URL (remove trailing slash)
+    const cleanUrl = (url: string | undefined): string | undefined => {
+        if (!url) return undefined;
+        return url.endsWith('/') ? url.slice(0, -1) : url;
+    };
+
     // --- Provider Factory Helper ---
-    const createProviderModel = (provider: AiProvider, modelId: string, apiKey?: string) => {
+    const createProviderModel = (provider: AiProvider, modelId: string, apiKey?: string, resourceName?: string, baseURL?: string) => {
         switch (provider) {
             case "OPENAI": {
                 const openai = createOpenAI({
                     apiKey: apiKey || process.env.OPENAI_API_KEY,
+                    baseURL: baseURL || cleanUrl(process.env.OPENAI_BASE_URL),
                 });
                 return openai(modelId);
             }
             case "AZURE": {
-                // Azure typically requires resource name + deployment (modelId here)
-                // Fallback to env vars if no specific key provided
+                const effectiveResourceName = resourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
+                const apiVersion = process.env.AZURE_OPENAI_API_VERSION || "2024-05-01-preview";
+
+                // FORCE URL Construction:
+                // The SDK was defaulting to /openai/v1/chat/completions which is invalid for this Azure resource.
+                // We will manually construct the deployment endpoint to ensure it's correct.
+                // Format: https://{resource}.openai.azure.com/openai/deployments/{deployment}
+
+                let forcedBaseURL = baseURL;
+                if (!forcedBaseURL && effectiveResourceName) {
+                    forcedBaseURL = `https://${effectiveResourceName}.openai.azure.com/openai/deployments/${modelId}`;
+                }
+
+                console.log(`[AZURE_DEBUG] Force-Constructed URL: ${forcedBaseURL} (Version: ${apiVersion})`);
+
                 const azure = createAzure({
                     apiKey: apiKey || process.env.AZURE_OPENAI_API_KEY,
-                    resourceName: process.env.AZURE_OPENAI_RESOURCE_NAME, // Assuming env usage for base
+                    baseURL: forcedBaseURL,
+                    resourceName: undefined, // Disable SDK internal resource logic to rely on our forced URL
+                    apiVersion: apiVersion,
                 });
                 return azure(modelId);
             }
             case "GOOGLE": {
                 const google = createGoogleGenerativeAI({
                     apiKey: apiKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+                    baseURL: baseURL, // Google might not use this standard prop, but good to have
                 });
                 return google(modelId);
             }
             case "ANTHROPIC": {
                 const anthropic = createAnthropic({
                     apiKey: apiKey || process.env.ANTHROPIC_API_KEY,
+                    baseURL: baseURL,
                 });
                 return anthropic(modelId);
             }
@@ -50,7 +79,7 @@ export async function getAiSdkModel(userId: string | "system") {
                 // xAI (Grok) uses an OpenAI-compatible API
                 const grok = createOpenAI({
                     name: 'grok',
-                    baseURL: 'https://api.x.ai/v1',
+                    baseURL: baseURL || 'https://api.x.ai/v1',
                     apiKey: apiKey || process.env.XAI_API_KEY,
                 });
                 return grok(modelId);
@@ -59,7 +88,7 @@ export async function getAiSdkModel(userId: string | "system") {
                 // DeepSeek uses an OpenAI-compatible API
                 const deepseek = createOpenAI({
                     name: 'deepseek',
-                    baseURL: 'https://api.deepseek.com',
+                    baseURL: baseURL || 'https://api.deepseek.com',
                     apiKey: apiKey || process.env.DEEPSEEK_API_KEY,
                 });
                 return deepseek(modelId);
@@ -67,12 +96,16 @@ export async function getAiSdkModel(userId: string | "system") {
             case "MISTRAL": {
                 const mistral = createMistral({
                     apiKey: apiKey || process.env.MISTRAL_API_KEY,
+                    baseURL: baseURL,
                 });
                 return mistral(modelId);
             }
             default:
                 console.warn(`${DEBUG_PREFIX} Unknown provider ${provider}, falling back to OpenAI`);
-                const fallback = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+                const fallback = createOpenAI({
+                    apiKey: process.env.OPENAI_API_KEY,
+                    baseURL: cleanUrl(process.env.OPENAI_BASE_URL)
+                });
                 return fallback(modelId);
         }
     };
@@ -108,6 +141,21 @@ export async function getAiSdkModel(userId: string | "system") {
     let finalProvider = systemProvider;
     let finalModelId = systemModelId;
     let finalApiKey: string | undefined = systemConfig?.apiKey ?? undefined;
+    let finalResourceName: string | undefined = undefined;
+    let finalBaseURL: string | undefined = systemConfig?.baseUrl ?? undefined;
+
+    // Helper to extract resourceName from config JSON
+    const extractResourceName = (config: any): string | undefined => {
+        if (config && typeof config === 'object' && config.resourceName) {
+            return config.resourceName as string;
+        }
+        return undefined;
+    };
+
+    // Initialize from default system config
+    if (systemConfig?.configuration) {
+        finalResourceName = extractResourceName(systemConfig.configuration);
+    }
 
     if (teamConfig) {
         // Override with team pref if set
@@ -120,10 +168,6 @@ export async function getAiSdkModel(userId: string | "system") {
 
         if (teamConfig.useSystemKey) {
             // Find system config for the TEAM'S provider? 
-            // Currently schema structure: SystemAiConfig is per provider (unique).
-            // We fetched `findFirst({ isActive: true })` above which is just ONE default system config.
-            // We should fetch the system key specifically for the requested provider.
-
             if (finalProvider !== systemProvider) {
                 const specificSystemConfig = await prismadb.systemAiConfig.findUnique({
                     where: { provider: finalProvider }
@@ -131,18 +175,32 @@ export async function getAiSdkModel(userId: string | "system") {
                 if (specificSystemConfig?.apiKey) {
                     finalApiKey = specificSystemConfig.apiKey;
                 } else {
-                    // No system key for this provider? Fallback to env vars handled inside createProviderModel
                     finalApiKey = undefined;
                 }
+
+                // Also update resourceName/baseUrl from the specific system config
+                if (specificSystemConfig?.baseUrl) {
+                    finalBaseURL = specificSystemConfig.baseUrl;
+                }
+                if (specificSystemConfig?.configuration) {
+                    finalResourceName = extractResourceName(specificSystemConfig.configuration);
+                }
+            } else {
+                // Using default system provider, key and resourceName already set above
             }
         } else {
             // Use custom team key
             if (teamConfig.apiKey) {
                 finalApiKey = teamConfig.apiKey;
             }
+            // Note: TeamAiConfig currently doesn't support storing resourceName, 
+            // so if they use a custom key for Azure, they might still rely on System resourceName or Env var.
         }
     }
 
+    // Sanitize baseURL
+    finalBaseURL = cleanUrl(finalBaseURL);
+
     console.debug(`${DEBUG_PREFIX} Selected: Provider=${finalProvider} | Model=${finalModelId} | User=${userId}`);
-    return createProviderModel(finalProvider, finalModelId, finalApiKey);
+    return createProviderModel(finalProvider, finalModelId, finalApiKey, finalResourceName, finalBaseURL);
 }

@@ -137,27 +137,22 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="h-full px-10">
-        {/*        <div>
-          <pre>
-            <code>{JSON.stringify(form.watch(), null, 2)}</code>
-            <code>{JSON.stringify(form.formState.errors, null, 2)}</code>
-          </pre>
-        </div> */}
-        <div className=" w-full max-w-[800px] text-sm">
-          <div className="pb-5 space-y-2">
+        <div className="w-full max-w-[800px] text-sm">
+          <div className="pb-4 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First name</FormLabel>
+                    <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">First name</FormLabel>
                     <FormControl>
                       <Input
                         disabled={isLoading}
                         placeholder="Johny"
                         {...field}
                         value={field.value ?? ""}
+                        className="h-8"
                       />
                     </FormControl>
                     <FormMessage />
@@ -169,12 +164,13 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last name</FormLabel>
+                    <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Last name *</FormLabel>
                     <FormControl>
                       <Input
                         disabled={isLoading}
                         placeholder="Walker"
                         {...field}
+                        className="h-8"
                       />
                     </FormControl>
                     <FormMessage />
@@ -189,13 +185,14 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                 name="company"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Company</FormLabel>
+                    <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Company</FormLabel>
                     <FormControl>
                       <Input
                         disabled={isLoading}
                         placeholder="BasaltCRM Inc."
                         {...field}
                         value={field.value ?? ""}
+                        className="h-8"
                       />
                     </FormControl>
                     <FormMessage />
@@ -207,9 +204,9 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                 name="jobTitle"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Job Title</FormLabel>
+                    <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Job Title</FormLabel>
                     <FormControl>
-                      <Input disabled={isLoading} placeholder="CTO" {...field} value={field.value ?? ""} />
+                      <Input disabled={isLoading} placeholder="CTO" {...field} value={field.value ?? ""} className="h-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -223,13 +220,14 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>E-mail</FormLabel>
+                    <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">E-mail</FormLabel>
                     <FormControl>
                       <Input
                         disabled={isLoading}
                         placeholder="johny@domain.com"
                         {...field}
                         value={field.value ?? ""}
+                        className="h-8"
                       />
                     </FormControl>
                     <FormMessage />
@@ -241,13 +239,20 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Phone</FormLabel>
                     <FormControl>
                       <Input
                         disabled={isLoading}
-                        placeholder="+11 123 456 789"
+                        placeholder="+15550000000"
                         {...field}
                         value={field.value ?? ""}
+                        className="h-8"
+                        onBlur={(e) => {
+                          const formatted = e.target.value.replace(/\D/g, "");
+                          if (formatted.length === 10) field.onChange(`+1${formatted}`);
+                          else if (formatted.length === 11 && formatted.startsWith("1")) field.onChange(`+${formatted}`);
+                          else if (e.target.value.startsWith("+")) field.onChange(`+${formatted}`);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -262,13 +267,14 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                 name="refered_by"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Refered by</FormLabel>
+                    <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Refered by</FormLabel>
                     <FormControl>
                       <Input
                         disabled={isLoading}
-                        placeholder="Referral Name"
+                        placeholder="Referer"
                         {...field}
                         value={field.value ?? ""}
+                        className="h-8"
                       />
                     </FormControl>
                     <FormMessage />
@@ -277,121 +283,43 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
               />
               <FormField
                 control={form.control}
-                name="lead_source"
+                name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website</FormLabel>
-                    <FormControl>
-                      <Input
-                        disabled={isLoading}
-                        placeholder="Website URL"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
+                    <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Source</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value ?? undefined}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Select source" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Website">Website</SelectItem>
+                        <SelectItem value="Referral">Referral</SelectItem>
+                        <SelectItem value="Social Media">Social Media</SelectItem>
+                        <SelectItem value="Cold Call">Cold Call</SelectItem>
+                        <SelectItem value="Advertisement">Advertisement</SelectItem>
+                        <SelectItem value="Event">Event</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      disabled={isLoading}
-                      placeholder="Description"
-                      {...field}
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Social Profiles */}
-            <div className="space-y-4 pt-4">
-              <h3 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Social Profiles</h3>
-              <div className="grid grid-cols-1 gap-4">
-                <FormField
-                  control={form.control}
-                  name="social_linkedin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <div className="relative">
-                          <Linkedin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            className="pl-9"
-                            disabled={isLoading}
-                            placeholder="LinkedIn Profile URL"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="social_facebook"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <div className="relative">
-                          <Facebook className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            className="pl-9"
-                            disabled={isLoading}
-                            placeholder="Meta (Facebook) Profile URL"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="social_twitter"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <div className="relative">
-                          <Twitter className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            className="pl-9"
-                            disabled={isLoading}
-                            placeholder="X (Twitter) Profile URL"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            <div className="flex w-full space-x-5 pt-4">
-              <div className="w-1/2 space-y-4">
+            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/5">
+              <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="assigned_to"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Assigned to</FormLabel>
+                      <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Assigned to</FormLabel>
                       <FormControl>
                         <Combobox
                           options={users.map((user: any) => ({
@@ -403,7 +331,6 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                           placeholder="Select a user"
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -413,7 +340,7 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                   name="project"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Assign to Project</FormLabel>
+                      <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Project</FormLabel>
                       <FormControl>
                         <Combobox
                           options={projects.map((project: any) => ({
@@ -425,47 +352,24 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                           placeholder="Choose a project"
                         />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="accountIDs"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Assign an Account</FormLabel>
-                      <FormControl>
-                        <Combobox
-                          options={Array.isArray(accounts) ? accounts.map((account: any) => ({
-                            label: account.name,
-                            value: account.id,
-                          })) : []}
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Choose assigned account"
-                        />
-                      </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <div className="w-1/2 space-y-4">
+              <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Lead status</FormLabel>
+                      <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Lead status</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs">
                             <SelectValue placeholder="Select lead status" />
                           </SelectTrigger>
                         </FormControl>
@@ -477,52 +381,101 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
                 <FormField
                   control={form.control}
-                  name="type"
+                  name="accountIDs"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Lead Source</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value ?? undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select source" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Website">Website</SelectItem>
-                          <SelectItem value="Referral">Referral</SelectItem>
-                          <SelectItem value="Social Media">Social Media</SelectItem>
-                          <SelectItem value="Cold Call">Cold Call</SelectItem>
-                          <SelectItem value="Advertisement">Advertisement</SelectItem>
-                          <SelectItem value="Event">Event</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Account</FormLabel>
+                      <FormControl>
+                        <Combobox
+                          options={Array.isArray(accounts) ? accounts.map((account: any) => ({
+                            label: account.name,
+                            value: account.id,
+                          })) : []}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Choose account"
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />
               </div>
             </div>
+
+            <div className="space-y-3 pt-2 border-t border-white/5">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">Social & Context</h3>
+              <div className="grid grid-cols-3 gap-2">
+                <FormField
+                  control={form.control}
+                  name="social_linkedin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="flex items-center gap-2 border border-white/10 rounded-md px-2 bg-background/50 h-8">
+                          <Linkedin className="h-3 w-3 text-muted-foreground" />
+                          <Input placeholder="LinkedIn" {...field} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="social_facebook"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="flex items-center gap-2 border border-white/10 rounded-md px-2 bg-background/50 h-8">
+                          <Facebook className="h-3 w-3 text-muted-foreground" />
+                          <Input placeholder="Facebook" {...field} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="social_twitter"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="flex items-center gap-2 border border-white/10 rounded-md px-2 bg-background/50 h-8">
+                          <Twitter className="h-3 w-3 text-muted-foreground" />
+                          <Input placeholder="Twitter" {...field} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea
+                        disabled={isLoading}
+                        placeholder="Lead description or notes..."
+                        {...field}
+                        value={field.value ?? ""}
+                        className="min-h-[60px] text-xs bg-background/50"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         </div>
-        <div className="grid gap-2 py-5">
-          <Button disabled={isLoading} type="submit">
-            {isLoading ? (
-              <span className="flex items-center animate-pulse">
-                Saving data ...
-              </span>
-            ) : (
-              "Update lead"
-            )}
+        <div className="pt-2">
+          <Button disabled={isLoading} type="submit" className="w-full">
+            {isLoading ? "Saving..." : "Update lead"}
           </Button>
         </div>
       </form>

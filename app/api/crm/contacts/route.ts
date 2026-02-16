@@ -47,6 +47,42 @@ export async function POST(req: Request) {
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
 
+    const existingContact = await (prismadb.crm_Contacts as any).findFirst({
+      where: {
+        team_id: teamId,
+        OR: [
+          ...(email ? [{ email: { equals: email, mode: "insensitive" } }] : []),
+          ...(mobile_phone ? [{ mobile_phone: { equals: mobile_phone, mode: "insensitive" } }] : []),
+          ...(office_phone ? [{ office_phone: { equals: office_phone, mode: "insensitive" } }] : []),
+        ],
+      },
+    });
+
+    if (existingContact) {
+      // Merge: Update existing contact with new data if current fields are empty
+      const updatedContact = await (prismadb.crm_Contacts as any).update({
+        where: { id: existingContact.id },
+        data: {
+          first_name: existingContact.first_name || first_name,
+          last_name: existingContact.last_name || last_name,
+          description: existingContact.description || description,
+          personal_email: existingContact.personal_email || personal_email,
+          office_phone: existingContact.office_phone || office_phone,
+          mobile_phone: existingContact.mobile_phone || mobile_phone,
+          website: existingContact.website || website,
+          social_twitter: existingContact.social_twitter || social_twitter,
+          social_facebook: existingContact.social_facebook || social_facebook,
+          social_linkedin: existingContact.social_linkedin || social_linkedin,
+          social_skype: existingContact.social_skype || social_skype,
+          social_instagram: existingContact.social_instagram || social_instagram,
+          social_youtube: existingContact.social_youtube || social_youtube,
+          social_tiktok: existingContact.social_tiktok || social_tiktok,
+          updatedBy: userId,
+        },
+      });
+      return NextResponse.json({ newContact: updatedContact }, { status: 200 });
+    }
+
     const newContact = await (prismadb.crm_Contacts as any).create({
       data: {
         v: 0,

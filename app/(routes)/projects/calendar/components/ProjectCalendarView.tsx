@@ -147,10 +147,10 @@ export default function ProjectCalendarView({ userId }: Props) {
     );
 
     // Fetch users and boards for full dialog
-    const { data: usersData } = useSWR("/api/user", fetcher);
+    const { data: userResponse } = useSWR("/api/team/members", fetcher);
     const { data: boardsData } = useSWR("/api/projects", fetcher);
 
-    const users = usersData?.users || [];
+    const users = userResponse?.members || [];
     const boards = boardsData?.data || [];
 
     // Transform tasks into events

@@ -53,10 +53,12 @@ export function DataTableRowActions<TData>({
     fetcher
   );
 
-  const { data: users, isLoading: isLoadingUsers } = useSWR(
-    "/api/user",
+  const { data: userResponse, isLoading: isLoadingUsers } = useSWR(
+    "/api/team/members",
     fetcher
   );
+
+  const users = userResponse?.members || [];
 
   const { toast } = useToast();
 

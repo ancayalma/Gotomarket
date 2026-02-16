@@ -100,7 +100,7 @@ const OpportunityView = async (
     <Container
       title={`Opportunity ${opportunity.name} - detail view`}
       description={"Description - " + opportunity.description}
-      action={<OpportunityActions opportunityId={opportunity.id} status={opportunity.status} hasAccount={!!opportunity.account} />}
+      action={<OpportunityActions opportunityId={opportunity.id} data={opportunity} status={opportunity.status} hasAccount={!!opportunity.account} />}
     >
       <div className="space-y-5">
         {hasAccess('opportunities.detail.info') && <BasicView data={opportunity} />}

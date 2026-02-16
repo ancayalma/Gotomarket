@@ -24,7 +24,10 @@ type WizardState = {
   maxContactsPerCompany: number;
   serpFallback?: boolean; // Allow SERP to run only if AI finds 0 companies
   aiPrompt?: string; // For AI-only mode
-  campaignId?: string; // Link pool to a campaign
+  campaignId?: string; // Link to a campaign (project) - Deprecated in UI, now mapping to existing pool if needed? 
+  // User wants "Lists" dropdown. If selecting a list, do we append? Or just link?
+  // User said: "dropdown for projects this should be changed to lists"
+  existingListId?: string;
 };
 
 export default function LeadGenWizardPage() {
@@ -35,8 +38,8 @@ export default function LeadGenWizardPage() {
   const [aiWriterOpen, setAiWriterOpen] = useState(false);
   const [currentAiField, setCurrentAiField] = useState<keyof WizardState | null>(null);
 
-  // Fetch campaigns for selector
-  const { data: campaignsData } = useSWR<{ projects: { id: string; title: string }[] }>("/api/projects", fetcher);
+  // Fetch campaigns (projects) for selector
+  const { data: projectsData } = useSWR<{ projects: { id: string; title: string }[] }>("/api/projects", fetcher);
 
   // Common State (Top Level)
   const [state, setState] = useState<WizardState>({
@@ -54,6 +57,7 @@ export default function LeadGenWizardPage() {
     serpFallback: true, // Default to true per plan
     aiPrompt: "",
     campaignId: "",
+    existingListId: "",
   });
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -223,7 +227,9 @@ export default function LeadGenWizardPage() {
           maxCompanies: state.maxCompanies,
           maxContactsPerCompany: state.maxContactsPerCompany,
         },
+
         projectId: state.campaignId || undefined,
+        existingPoolId: undefined, // Explicitly undefined as we creates new lists per run
       };
 
       const res = await fetch("/api/leads/autogen", {
@@ -278,10 +284,9 @@ export default function LeadGenWizardPage() {
 
   const renderTopConfiguration = () => (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      {/* Project Selector */}
       <div className="relative group overflow-hidden rounded-xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 p-4 backdrop-blur-md shadow-sm transition-all hover:border-indigo-500/40">
         <label className="text-[10px] uppercase tracking-wider font-semibold text-indigo-400 mb-1.5 block flex items-center gap-1.5">
-          <FolderKanban className="w-3 h-3" /> Link to Project
+          <FolderKanban className="w-3 h-3" /> Assign to Campaign
         </label>
         <select
           name="campaignId"
@@ -289,12 +294,12 @@ export default function LeadGenWizardPage() {
           onChange={(e) => setState(prev => ({ ...prev, campaignId: e.target.value }))}
           className="w-full bg-transparent border-none text-sm font-medium focus:ring-0 px-0 cursor-pointer"
         >
-          <option value="">— No Project —</option>
-          {(campaignsData?.projects || []).map(p => (
+          <option value="">— Select Campaign (Optional) —</option>
+          {(projectsData?.projects || []).map(p => (
             <option key={p.id} value={p.id}>{p.title}</option>
           ))}
         </select>
-        <div className="text-[10px] text-muted-foreground mt-1">Pool will inherit project ICP</div>
+        <div className="text-[10px] text-muted-foreground mt-1">Generated list will be linked to this campaign</div>
       </div>
 
       {/* Campaign Name */}

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Users, Wand2, Target, Megaphone, Settings } from "lucide-react";
+import { Users, Wand2, List, Megaphone, Settings, Target } from "lucide-react";
 import { usePathname } from "next/navigation";
 import ExpandableMenuItem, { SubMenuItemType } from "./ExpandableMenuItem";
 
@@ -23,7 +23,7 @@ const CrmModuleMenu = ({ open, localizations, isMobile = false }: Props) => {
   // Sub-menu items matching screenshot
   const subItems: SubMenuItemType[] = [
     { label: "LeadGen Wizard", href: "/crm/lead-wizard", icon: Wand2 },
-    { label: "Lead Pools", href: "/crm/lead-pools", icon: Target },
+    { label: "Lists", href: "/crm/lead-pools", icon: List },
     { label: "Outreach", href: "/campaigns", icon: Megaphone },
     { label: "Settings", href: "/crm/leads?tab=settings", icon: Settings },
   ];

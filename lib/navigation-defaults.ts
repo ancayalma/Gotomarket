@@ -62,15 +62,20 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 href: "/crm/contacts"
             },
             {
+                id: "nav_lists",
+                type: "item",
+                label: "Lists",
+                iconName: "List",
+                href: "/lists",
+                permissions: { minRole: "ADMIN" }
+            },
+            {
                 id: "nav_campaigns",
                 type: "item",
                 label: "Campaigns",
                 iconName: "Megaphone",
                 href: "/campaigns",
-                permissions: { minRole: "ADMIN" },
-                children: [
-                    { id: "sub_campaigns_outreach", type: "item", label: "Outreach", href: "/campaigns", iconName: "Megaphone" }
-                ]
+                permissions: { minRole: "ADMIN" }
             },
             {
                 id: "nav_forms",

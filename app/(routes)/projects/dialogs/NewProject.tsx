@@ -53,9 +53,10 @@ import {
 
 type Props = {
   customTrigger?: React.ReactNode;
+  entityName?: string;
 }
 
-const NewProjectDialog = ({ customTrigger }: Props) => {
+const NewProjectDialog = ({ customTrigger, entityName = "Project" }: Props) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("basics");
@@ -234,17 +235,17 @@ const NewProjectDialog = ({ customTrigger }: Props) => {
         {customTrigger ? (
           <div className="cursor-pointer" onClick={() => setOpen(true)}>{customTrigger}</div>
         ) : (
-          <Button className="px-2">New project</Button>
+          <Button className="px-2">New {entityName}</Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FolderKanban className="w-5 h-5" />
-            New Project
+            New {entityName}
           </DialogTitle>
           <DialogDescription>
-            Create a project board with context for your team.
+            Create a {entityName.toLowerCase()} board with context for your team.
           </DialogDescription>
         </DialogHeader>
         {isLoading ? (
@@ -280,7 +281,7 @@ const NewProjectDialog = ({ customTrigger }: Props) => {
                       name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Project name *</FormLabel>
+                          <FormLabel>{entityName} name *</FormLabel>
                           <FormControl>
                             <Input
                               disabled={isLoading}
@@ -400,11 +401,11 @@ const NewProjectDialog = ({ customTrigger }: Props) => {
                       name="campaign_brief"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Project Brief</FormLabel>
+                          <FormLabel>{entityName} Brief</FormLabel>
                           <FormControl>
                             <Textarea
                               disabled={isLoading}
-                              placeholder="Describe the overall project objectives"
+                              placeholder={`Describe the overall ${entityName.toLowerCase()} objectives`}
                               className="min-h-[100px]"
                               {...field}
                             />
@@ -514,7 +515,7 @@ const NewProjectDialog = ({ customTrigger }: Props) => {
                       name="brand_logo_url"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Project Logo</FormLabel>
+                          <FormLabel>{entityName} Logo</FormLabel>
                           <FormControl>
                             <div className="space-y-3">
                               {field.value && (
@@ -571,7 +572,7 @@ const NewProjectDialog = ({ customTrigger }: Props) => {
                 <DialogTrigger asChild>
                   <Button type="button" variant="outline">Cancel</Button>
                 </DialogTrigger>
-                <Button type="submit">Create Project</Button>
+                <Button type="submit">Create {entityName}</Button>
               </div>
             </form>
           </Form>

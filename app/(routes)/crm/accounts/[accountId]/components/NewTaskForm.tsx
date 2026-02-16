@@ -55,10 +55,12 @@ const NewTaskForm = ({ account, onFinish }: NewTaskFormProps) => {
   const [date, setDate] = useState<Date>();
   //  const [userSearch, setUserSearch] = useState<string>("");
 
-  const { data: users, isLoading: isLoadingUsers } = useSWR(
-    "/api/user",
+  const { data: userResponse, isLoading: isLoadingUsers } = useSWR(
+    "/api/team/members",
     fetcher
   );
+
+  const users = userResponse?.members || [];
 
   const router = useRouter();
 

@@ -76,21 +76,36 @@ export async function POST(req: Request) {
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
 
-    // Check for duplicate email in the same team
-    if (email) {
-      const existingLead = await (prismadb.crm_Leads as any).findFirst({
-        where: {
-          email: email,
-          team_id: teamId,
+    const existingLead = await (prismadb.crm_Leads as any).findFirst({
+      where: {
+        team_id: teamId,
+        OR: [
+          ...(email ? [{ email: { equals: email, mode: "insensitive" } }] : []),
+          ...(phone ? [{ phone: { equals: phone, mode: "insensitive" } }] : []),
+        ],
+      },
+    });
+
+    if (existingLead) {
+      // Merge: Update existing lead with new data if current fields are empty
+      const updatedLead = await (prismadb.crm_Leads as any).update({
+        where: { id: existingLead.id },
+        data: {
+          firstName: existingLead.firstName || first_name,
+          lastName: existingLead.lastName || last_name,
+          company: existingLead.company || company,
+          jobTitle: existingLead.jobTitle || jobTitle,
+          phone: existingLead.phone || phone,
+          description: existingLead.description || description,
+          lead_source: existingLead.lead_source || lead_source,
+          refered_by: existingLead.refered_by || refered_by,
+          social_twitter: existingLead.social_twitter || social_twitter,
+          social_facebook: existingLead.social_facebook || social_facebook,
+          social_linkedin: existingLead.social_linkedin || social_linkedin,
+          updatedBy: userId,
         },
       });
-
-      if (existingLead) {
-        return new NextResponse(
-          JSON.stringify({ message: "Lead already exists", leadId: existingLead.id }),
-          { status: 409 }
-        );
-      }
+      return NextResponse.json({ newLead: updatedLead }, { status: 200 });
     }
 
     const newLead = await (prismadb.crm_Leads as any).create({

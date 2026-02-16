@@ -10,22 +10,25 @@ export const getAccounts = async () => {
   const teamInfo = await getCurrentUserTeamId();
   if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
 
-  const whereClause: any = {};
+  const baseWhere: any = {};
   if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
+    baseWhere.team_id = teamInfo?.teamId;
   }
 
-  // Filter out tasks/events that might be incorrectly stored as accounts
-  whereClause.NOT = [
-    { name: { startsWith: "Email -" } },
-    { name: { startsWith: "Meeting" } },
-    { name: { startsWith: "Call" } },
-    { name: { startsWith: "Amazon SES" } },
-    { name: { startsWith: "Project Documents" } },
-  ];
+  // Account-specific filters
+  const accountWhere = {
+    ...baseWhere,
+    NOT: [
+      { name: { startsWith: "Email -" } },
+      { name: { startsWith: "Meeting" } },
+      { name: { startsWith: "Call" } },
+      { name: { startsWith: "Amazon SES" } },
+      { name: { startsWith: "Project Documents" } },
+    ],
+  };
 
   const data = await (prismadb.crm_Accounts as any).findMany({
-    where: whereClause,
+    where: accountWhere,
     include: {
       assigned_to_user: {
         select: {
@@ -43,5 +46,6 @@ export const getAccounts = async () => {
       createdAt: "desc",
     },
   });
+
   return data;
 };

@@ -96,12 +96,12 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
     }
     if (createNewPool) {
       if (!newPoolName.trim()) {
-        setError("Please enter a name for the new Lead Pool.");
+        setError("Please enter a name for the new List.");
         return;
       }
     } else {
       if (!poolId) {
-        setError("Please select a target Lead Pool.");
+        setError("Please select a target List.");
         return;
       }
     }
@@ -190,7 +190,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
       </DialogTrigger>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Import Leads into a Pool</DialogTitle>
+          <DialogTitle>Import Leads into a List</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -198,14 +198,14 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Target Lead Pool</label>
+                  <label className="text-sm font-medium">Target List</label>
                   <div className="mt-1 mb-2 flex items-center gap-2">
                     <Switch
                       id="createNewPool"
                       checked={createNewPool}
                       onCheckedChange={setCreateNewPool}
                     />
-                    <label htmlFor="createNewPool" className="text-sm">Create new pool</label>
+                    <label htmlFor="createNewPool" className="text-sm">Create new list</label>
                   </div>
                   {!createNewPool ? (
                     <>
@@ -222,7 +222,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                       </select>
                       {!pools.length && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          No pools found. You can create a new pool with the checkbox above.
+                          No lists found. You can create a new list with the checkbox above.
                         </p>
                       )}
                     </>
@@ -230,7 +230,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                     <div className="space-y-2">
                       <input
                         className="w-full rounded border p-2"
-                        placeholder="New pool name"
+                        placeholder="New list name"
                         value={newPoolName}
                         onChange={(e) => setNewPoolName(e.target.value)}
                       />
@@ -309,8 +309,8 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                         {c.companyName || c.domain}:{" "}
                         {c.changes
                           ? Object.keys(c.changes)
-                              .map((k) => `${k}: "${c.changes![k].from ?? ""}" → "${c.changes![k].to ?? ""}"`)
-                              .join(", ")
+                            .map((k) => `${k}: "${c.changes![k].from ?? ""}" → "${c.changes![k].to ?? ""}"`)
+                            .join(", ")
                           : "no changes"}
                       </li>
                     ))}
@@ -324,8 +324,8 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                         {c.email || c.fullName}:{" "}
                         {c.changes
                           ? Object.keys(c.changes)
-                              .map((k) => `${k}: "${c.changes![k].from ?? ""}" → "${c.changes![k].to ?? ""}"`)
-                              .join(", ")
+                            .map((k) => `${k}: "${c.changes![k].from ?? ""}" → "${c.changes![k].to ?? ""}"`)
+                            .join(", ")
                           : "no changes"}
                       </li>
                     ))}

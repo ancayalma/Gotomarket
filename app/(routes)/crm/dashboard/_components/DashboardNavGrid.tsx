@@ -77,10 +77,10 @@ const navItems = [
         iconColor: "text-cyan-400",
     },
     {
-        title: "Lead Pools",
-        description: "Organize lead segments",
+        title: "Lists",
+        description: "Organize record segments",
         href: "/crm/leads?tab=pools",
-        icon: Target,
+        icon: LayoutList,
         color: "from-indigo-500/20 to-violet-500/20",
         iconColor: "text-indigo-400",
     },
@@ -122,7 +122,7 @@ export default function DashboardNavGrid({ isMember = false }: Props) {
     const filteredNavItems = navItems.filter((item) => {
         if (isMember) {
             // Hide specific items for Members (Campaigns is now shown since members can access their own)
-            if (["Lead Wizard", "Lead Pools"].includes(item.title)) {
+            if (["Lead Wizard", "Lists"].includes(item.title)) {
                 return false;
             }
         }

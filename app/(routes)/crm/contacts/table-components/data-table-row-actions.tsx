@@ -118,6 +118,25 @@ export function DataTableRowActions<TData>({
           <DropdownMenuItem onClick={() => setEmailOpen(true)}>
             Send Email
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={async () => {
+            try {
+              // Assuming contact.id is available as per existing code
+              await axios.post(`/api/contacts/${contact?.id}/convert-to-lead`);
+              toast({
+                title: "Success",
+                description: "Contact converted to Lead",
+              });
+              router.refresh();
+            } catch (e) {
+              toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to convert contact to lead"
+              });
+            }
+          }}>
+            Convert to Lead
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setOpen(true)}>
             Delete

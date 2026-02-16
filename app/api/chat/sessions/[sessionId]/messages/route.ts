@@ -51,11 +51,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ sessionI
     });
 
     if (!chatSession) {
+      console.warn(`[CHAT_MESSAGES_GET] Session not found: ${sessionId}`);
       return new NextResponse("Not Found", { status: 404 });
     }
 
     const hasAccess = await checkAccess(session.user.id, chatSession.user);
     if (!hasAccess) {
+      console.warn(`[CHAT_MESSAGES_GET] Access denied for user ${session.user.id} to session ${sessionId} (owner: ${chatSession.user})`);
       return new NextResponse("Not Found", { status: 404 });
     }
 

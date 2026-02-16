@@ -41,6 +41,48 @@ export async function POST(req: Request) {
       industry,
     } = body;
 
+    const existingAccount = await (prismadb.crm_Accounts as any).findFirst({
+      where: {
+        team_id: teamId,
+        OR: [
+          { name: { equals: name, mode: "insensitive" } },
+          ...(email ? [{ email: { equals: email, mode: "insensitive" } }] : []),
+          ...(office_phone ? [{ office_phone: { equals: office_phone, mode: "insensitive" } }] : []),
+        ],
+      },
+    });
+
+    if (existingAccount) {
+      // Merge: Update existing account with new data if current fields are empty
+      const updatedAccount = await (prismadb.crm_Accounts as any).update({
+        where: { id: existingAccount.id },
+        data: {
+          office_phone: existingAccount.office_phone || office_phone,
+          website: existingAccount.website || website,
+          fax: existingAccount.fax || fax,
+          company_id: existingAccount.company_id || company_id,
+          vat: existingAccount.vat || vat,
+          email: existingAccount.email || email,
+          billing_street: existingAccount.billing_street || billing_street,
+          billing_postal_code: existingAccount.billing_postal_code || billing_postal_code,
+          billing_city: existingAccount.billing_city || billing_city,
+          billing_state: existingAccount.billing_state || billing_state,
+          billing_country: existingAccount.billing_country || billing_country,
+          shipping_street: existingAccount.shipping_street || shipping_street,
+          shipping_postal_code: existingAccount.shipping_postal_code || shipping_postal_code,
+          shipping_city: existingAccount.shipping_city || shipping_city,
+          shipping_state: existingAccount.shipping_state || shipping_state,
+          shipping_country: existingAccount.shipping_country || shipping_country,
+          description: existingAccount.description || description,
+          annual_revenue: existingAccount.annual_revenue || annual_revenue,
+          member_of: existingAccount.member_of || member_of,
+          industry: existingAccount.industry || industry,
+          updatedBy: session.user.id,
+        },
+      });
+      return NextResponse.json({ newAccount: updatedAccount }, { status: 200 });
+    }
+
     const newAccount = await (prismadb.crm_Accounts as any).create({
       data: {
         v: 0,

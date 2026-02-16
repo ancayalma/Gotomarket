@@ -7,6 +7,16 @@ import React, { useEffect, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { ChatScore } from "./ChatScore";
 import { Plus, Trash2, Pencil, Check, X, RefreshCw, Menu, MessageSquare, MoreVertical, Search, Download, Circle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Token estimation helper
 function estimateTokens(text: string): number {
@@ -61,6 +71,7 @@ export default function ChatApp() {
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameTitle, setRenameTitle] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
 
   async function loadSessions() {
     try {
@@ -122,8 +133,10 @@ export default function ChatApp() {
     }
   }
 
-  async function deleteSession(sessionId: string) {
-    if (!confirm("Are you sure you want to delete this chat? This action cannot be undone.")) return;
+  async function deleteSession() {
+    if (!sessionToDelete) return;
+    const sessionId = sessionToDelete;
+
     try {
       const res = await fetch(`/api/chat/sessions/${sessionId}`, { method: "DELETE" });
       if (!res.ok && res.status !== 204) throw new Error(`Failed to delete session`);
@@ -137,6 +150,8 @@ export default function ChatApp() {
     } catch (e: any) {
       console.error("[DELETE_SESSION]", e);
       toast.error("Failed to delete session");
+    } finally {
+      setSessionToDelete(null);
     }
   }
 
@@ -352,7 +367,7 @@ export default function ChatApp() {
                       className="text-destructive focus:text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteSession(s.id);
+                        setSessionToDelete(s.id);
                       }}
                     >
                       <Trash2 className="w-3 h-3 mr-2" /> Delete
@@ -362,10 +377,10 @@ export default function ChatApp() {
               </div>
             ))}
         </div>
-      </aside >
+      </aside>
 
       {/* Main Content */}
-      < main className="flex-1 flex flex-col min-w-0 bg-background/50" >
+      <main className="flex-1 flex flex-col min-w-0 bg-background/50">
         {
           activeSessionId ? (
             <ChatBoard
@@ -397,7 +412,24 @@ export default function ChatApp() {
             </div>
           )
         }
-      </main >
-    </div >
+      </main>
+
+      <AlertDialog open={!!sessionToDelete} onOpenChange={(open) => !open && setSessionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your chat session and remove all associated history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteSession} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }

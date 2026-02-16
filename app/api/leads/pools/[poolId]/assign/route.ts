@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
 import { safeContactDisplayName, normalizeName } from "@/lib/scraper/normalize";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 /**
  * POST /api/leads/pools/[poolId]/assign
@@ -90,57 +91,94 @@ export async function POST(
           continue;
         }
 
-        // Compute a safe person/company display name and split into first/last safely
-        const displayName = safeContactDisplayName(
-          contact.fullName,
-          contact.email,
-          candidate.companyName,
-          candidate.domain || candidate.homepageUrl
-        );
-        const normalized = normalizeName(displayName) || displayName;
-        const parts = normalized.split(" ").filter(Boolean);
-        const computedFirstName = parts.length >= 2 ? parts[0] : "";
-        const computedLastName = parts.length >= 2 ? parts.slice(1).join(" ") : (normalized || "Unknown");
+        // Check if Account already exists (by domain or name)
+        let accountId = null;
+        const domain = candidate.domain || (candidate.homepageUrl ? new URL(candidate.homepageUrl).hostname : null);
 
-        // Create new Lead
-        const lead = await (prismadbCrm as any).crm_Leads.create({
-          data: {
-            firstName: computedFirstName,
-            lastName: computedLastName,
-            company: candidate.companyName || "",
-            email: contact.email || "",
-            phone: contact.phone || "",
-            description: candidate.description || "",
-            status: "NEW",
-            assigned_to: userId,
-            createdBy: session.user.id,
-          },
+        if (domain) {
+          const existingAccount = await (prismadbCrm as any).crm_Accounts.findFirst({
+            where: {
+              OR: [
+                { website: { contains: domain } },
+                { email: { contains: domain } } // rudimentary check
+              ]
+            }
+          });
+          if (existingAccount) accountId = existingAccount.id;
+        }
+
+        if (!accountId && candidate.companyName) {
+          const existingAccount = await (prismadbCrm as any).crm_Accounts.findFirst({
+            where: { name: candidate.companyName }
+          });
+          if (existingAccount) accountId = existingAccount.id;
+        }
+
+        if (!accountId) {
+          // Create new Account
+          const newAccount = await (prismadbCrm as any).crm_Accounts.create({
+            data: {
+              name: candidate.companyName || "Unknown Company",
+              description: candidate.description,
+              industry: candidate.industry,
+              website: candidate.homepageUrl,
+              team_id: (await getCurrentUserTeamId())?.teamId, // Assign to current team
+              status: "Active",
+              assigned_to: userId,
+              createdBy: session.user.id
+            }
+          });
+          accountId = newAccount.id;
+        }
+
+        // Create Contact linked to Account
+        // Check if contact exists?
+        let contactId = null;
+        const existingContact = await (prismadbCrm as any).crm_Contacts.findFirst({
+          where: { email: contact.email }
         });
 
-        // Create mapping
-        await (prismadbCrm as any).crm_Contact_Candidate_Leads.create({
+        if (existingContact) {
+          contactId = existingContact.id;
+          // Link to account if not linked?
+          if (!existingContact.account_id) {
+            await (prismadbCrm as any).crm_Contacts.update({
+              where: { id: contactId },
+              data: { account_id: accountId }
+            });
+          }
+        } else {
+          const parts = (contact.fullName || "").split(" ");
+          const firstName = parts[0] || "";
+          const lastName = parts.slice(1).join(" ") || "";
+
+          const newContact = await (prismadbCrm as any).crm_Contacts.create({
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+              email: contact.email,
+              mobile_phone: contact.phone,
+              job_title: contact.title,
+              account_id: accountId,
+              status: true,
+              assigned_to: userId,
+              created_by: session.user.id
+            }
+          });
+          contactId = newContact.id;
+        }
+
+        // Update Candidate with Account Link
+        await (prismadbCrm as any).crm_Lead_Candidates.update({
+          where: { id: candidateId },
           data: {
-            candidate: contact.id,
-            lead: lead.id,
-          },
+            accountsIDs: accountId,
+            status: "CONVERTED"
+          }
         });
 
-        // Create pool-lead mapping
-        await (prismadbCrm as any).crm_Lead_Pools_Leads.create({
-          data: {
-            pool: poolId,
-            lead: lead.id,
-          },
-        });
-
-        results.push({ candidateId, contactId: contact.id, leadId: lead.id });
+        results.push({ candidateId, contactId, accountId });
       }
-
-      // Update candidate status
-      await (prismadbCrm as any).crm_Lead_Candidates.update({
-        where: { id: candidateId },
-        data: { status: "CONVERTED" },
-      });
     }
 
     return NextResponse.json({

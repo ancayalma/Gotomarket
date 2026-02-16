@@ -33,6 +33,7 @@ import {
   Mail,
   ServerIcon,
   MessageSquare,
+  List,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -118,7 +119,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
   // ─── Flyout sub-items ────────────────────
   const leadsSubItems: SubMenuItemType[] = [
     { label: "LeadGen Wizard", href: "/crm/lead-wizard", icon: Wand2 },
-    { label: "Lead Pools", href: "/crm/lead-pools", icon: Target },
+    { label: "Lists", href: "/crm/lead-pools", icon: List },
     { label: "Outreach", href: "/campaigns", icon: Megaphone },
   ];
 

@@ -45,9 +45,10 @@ export default function ChatBoard({ sessionId, initialMessages, isTemporary, onR
     const [localInput, setLocalInput] = useState("");
     const [showScrollButton, setShowScrollButton] = useState(false);
 
-    const apiEndpoint = "/api/chat";
+    const apiEndpoint = `/api/chat/sessions/${sessionId}/messages`;
 
     const chatHelpers = useChat({
+        api: apiEndpoint,
         id: sessionId,
         messages: initialMessages as any[],
         onError: (err: unknown) => {
@@ -79,7 +80,7 @@ export default function ChatBoard({ sessionId, initialMessages, isTemporary, onR
             }
             onRefresh();
         }
-    });
+    } as any);
 
     const {
         messages,
@@ -179,8 +180,6 @@ export default function ChatBoard({ sessionId, initialMessages, isTemporary, onR
     return (
         <div className="flex-1 flex flex-col min-h-0 relative bg-background/50">
             {/* Header (Context & Refresh) */}
-            {/* Header (Context & Refresh) - Now positioned relative in the flow */}
-            {/* Header (Context & Refresh) - Now positioned relative in the flow */}
             <div className="flex items-center justify-between px-4 py-2 border-b bg-background/95 backdrop-blur z-20 sticky top-0 h-14">
                 <div className="flex items-center gap-3">
                     <Button

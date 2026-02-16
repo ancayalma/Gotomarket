@@ -7,7 +7,7 @@ export const accountSchema = z.object({
   id: z.string(),
   createdAt: z.date().optional(),
   name: z.string(),
-  assigned_to_user: z.object({}).optional(),
+  assigned_to_user: z.any().nullable().optional(),
   contacts: z
     .array(
       z.object({
@@ -16,6 +16,9 @@ export const accountSchema = z.object({
       })
     )
     .optional(),
+  email: z.string().optional(),
+  status: z.string().optional(),
+  type: z.string().optional(),
 });
 
 export type Account = z.infer<typeof accountSchema>;
