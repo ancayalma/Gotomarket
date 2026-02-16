@@ -2,11 +2,11 @@
 
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import CalendarIntegrationPanel from "./CalendarIntegrationPanel";
-import CalendarAvailabilityPanel from "./CalendarAvailabilityPanel";
-import CalendarEventsPanel from "./CalendarEventsPanel";
-import SignaturesResourcesPanel from "./SignaturesResourcesPanel";
-import PortalSettingsPanel from "./PortalSettingsPanel";
+import CalendarIntegrationPanel from "../../leads/components/CalendarIntegrationPanel";
+import CalendarAvailabilityPanel from "../../leads/components/CalendarAvailabilityPanel";
+import CalendarEventsPanel from "../../leads/components/CalendarEventsPanel";
+import SignaturesResourcesPanel from "../../leads/components/SignaturesResourcesPanel";
+import PortalSettingsPanel from "../../leads/components/PortalSettingsPanel";
 import { Link, Clock, Calendar, PenTool, MessageSquare, LucideIcon } from "lucide-react";
 import DashboardCard from "../../dashboard/_components/DashboardCard";
 

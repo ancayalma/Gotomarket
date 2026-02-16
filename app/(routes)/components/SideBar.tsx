@@ -57,6 +57,42 @@ const SideBar = async () => {
 
   // Patch: Ensure Projects doesn't route to Campaigns due to outdated DB config
   const activeNavStructure = rawNavStructure.map(item => {
+    // 1. Inject Accounts into Marketing Hub if missing
+    if (item.id === "group_marketing") {
+      const hasAccounts = item.children?.some(c => c.id === "nav_accounts");
+      if (!hasAccounts) {
+        const defaultAccounts = DEFAULT_NAV_STRUCTURE
+          .find(g => g.id === "group_marketing")
+          ?.children?.find(c => c.id === "nav_accounts");
+
+        if (defaultAccounts) {
+          return {
+            ...item,
+            children: [...(item.children || []), defaultAccounts]
+          };
+        }
+      }
+    }
+
+    // 2. Clean up Leads (remove Wizard/Pools)
+    if (item.id === "group_sales") {
+      if (item.children) {
+        return {
+          ...item,
+          children: item.children.map(child => {
+            if (child.id === "nav_leads") {
+              // Return clean leads structure from defaults to ensure no stale children
+              const defaultLeads = DEFAULT_NAV_STRUCTURE
+                .find(g => g.id === "group_sales")
+                ?.children?.find(c => c.id === "nav_leads");
+              return defaultLeads || child;
+            }
+            return child;
+          })
+        };
+      }
+    }
+
     if (item.id === "nav_projects" && (item.href?.startsWith("/campaigns") || item.href === "/crm/outreach")) {
       return { ...item, href: "/projects" };
     }
