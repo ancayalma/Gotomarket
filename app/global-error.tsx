@@ -62,7 +62,7 @@ export default function GlobalError({
 
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
                                 <button
-                                    onClick={() => reset()}
+                                    onClick={() => reset?.()}
                                     className="h-14 px-10 flex items-center justify-center text-sm font-black tracking-[0.2em] rounded-xl bg-primary text-black hover:bg-primary/90 shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_0_50px_rgba(var(--primary-rgb),0.5)] transition-all duration-300 group"
                                 >
                                     <span className="mr-2">↻</span> REBOOT SYSTEM
