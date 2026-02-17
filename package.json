@@ -149,7 +149,6 @@
     "@types/bcrypt": "^6.0.0",
     "@types/imap": "^0.8.43",
     "@types/mailparser": "^3.4.6",
-    "@types/next-auth": "^3.13.0",
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^7.0.4",
     "@types/pdf-parse": "^1.1.5",
