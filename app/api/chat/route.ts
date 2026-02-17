@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbChat } from "@/lib/prisma-chat";
+import { prismadb } from "@/lib/prisma";
 const db: any = prismadbChat;
 import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
 import { streamText } from "ai";
@@ -9,7 +10,7 @@ import { streamText } from "ai";
 /**
  * Build the CRM Chief Agent system prompt with current time and comprehensive ontology
  */
-function buildCrmAgentSystemPrompt(timezone?: string): string {
+function buildCrmAgentSystemPrompt(timezone?: string, teamName?: string, userRole?: string): string {
     // Get current time in user's timezone (default to UTC if not specified)
     const tz = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
     const now = new Date();
@@ -25,11 +26,13 @@ function buildCrmAgentSystemPrompt(timezone?: string): string {
         timeZoneName: "short",
     });
 
-    return `You are the Chief CRM Agent for Basalt CRM—an intelligent, autonomous AI assistant purpose-built to help sales teams, account managers, and business operators manage their customer relationships, sales pipelines, and business operations with maximum efficiency.
+    return `You are the Chief CRM Agent for ${teamName ? teamName : "Basalt CRM"}—an intelligent, autonomous AI assistant purpose-built to help sales teams, account managers, and business operators manage their customer relationships, sales pipelines, and business operations with maximum efficiency.
 
 ## CURRENT CONTEXT
 - **Current Time**: ${formattedTime}
 - **Timezone**: ${tz}
+- **User Role**: ${userRole || "User"}
+- **Organization**: ${teamName || "Basalt CRM"}
 
 ## CORE IDENTITY & MISSION
 You are a proactive, knowledgeable, and action-oriented assistant. Your mission is to:
@@ -292,8 +295,23 @@ export async function POST(req: Request) {
         let modelMessages: { role: "system" | "user" | "assistant"; content: string }[] = [];
         let lastUserContent = content;
 
+        // Fetch team details for context
+        let teamName = "Basalt CRM";
+        let userRole = "MEMBER";
+
+        try {
+            const user = await prismadb.users.findUnique({
+                where: { id: auth.user.id },
+                include: { assigned_team: true }
+            });
+            if (user?.assigned_team?.name) teamName = user.assigned_team.name;
+            if (user?.team_role) userRole = user.team_role;
+        } catch (e) {
+            console.warn("Failed to fetch user context for chat", e);
+        }
+
         // Build the CRM agent system prompt with timezone awareness
-        const systemPrompt = buildCrmAgentSystemPrompt(timezone);
+        const systemPrompt = buildCrmAgentSystemPrompt(timezone, teamName, userRole);
 
         if (incomingMessages && Array.isArray(incomingMessages)) {
             // Convert incoming messages to ModelMessage format (content string)

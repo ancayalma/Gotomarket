@@ -22,6 +22,7 @@ import {
     CheckCircle2,
     Zap,
     Calendar,
+    Lock,
 } from "lucide-react";
 
 interface CrmSidebarProps {
@@ -80,7 +81,7 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
         { id: 'guard-rules', label: "Guard Rules", href: "/crm/validation-rules", icon: Shield },
         { id: 'approvals', label: "Approval Chains", href: "/crm/approvals", icon: CheckCircle2 },
         { id: 'workflows', label: "FlowState Builder", href: "/crm/workflows", icon: Zap },
-    ];
+    ] as { id: string; label: string; href: string; icon: any; isPremium?: boolean }[];
 
     // Filter items
     const navItems = allNavItems.filter(item => hasAccess(item.id));
@@ -131,7 +132,12 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                                 title={isCollapsed ? item.label : undefined}
                             >
                                 <item.icon className="w-4 h-4 shrink-0" />
-                                {!isCollapsed && <span className="truncate">{item.label}</span>}
+                                {!isCollapsed && (
+                                    <div className="flex items-center gap-2 truncate">
+                                        <span>{item.label}</span>
+                                        {item.isPremium && <Lock className="w-3 h-3 text-amber-500/70" />}
+                                    </div>
+                                )}
                             </button>
                         );
                     })}
