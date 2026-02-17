@@ -220,16 +220,7 @@ export async function GET(req: Request) {
     }
 
     const accounts = await (prismadb.crm_Accounts as any).findMany({
-      where: {
-        ...where,
-        NOT: [
-          { name: { startsWith: "Email -" } },
-          { name: { startsWith: "Meeting" } },
-          { name: { startsWith: "Call" } },
-          { name: { startsWith: "Amazon SES" } },
-          { name: { startsWith: "Project Documents" } },
-        ]
-      }
+      where: where
     });
 
     return NextResponse.json(accounts, { status: 200 });

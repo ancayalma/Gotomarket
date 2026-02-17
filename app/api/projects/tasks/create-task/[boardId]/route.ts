@@ -127,15 +127,12 @@ export async function POST(req: Request, props: { params: Promise<{ boardId: str
               process.env.EMAIL_FROM +
               ">",
             to: notifyRecipient?.email!,
-            subject:
-              session.user.userLanguage === "en"
-                ? `New task -  ${title}.`
-                : `Nový úkol - ${title}.`,
+            subject: `New task - ${title}.`,
             text: "", // Add this line to fix the types issue
             react: NewTaskFromProject({
               taskFromUser: session.user.name!,
               username: notifyRecipient?.name!,
-              userLanguage: notifyRecipient?.userLanguage!,
+              userLanguage: "en",
               taskData: task,
               boardData: boardData,
             }),

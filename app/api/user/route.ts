@@ -63,7 +63,7 @@ export async function POST(req: Request) {
         name,
         username,
         email,
-        userLanguage: language,
+        userLanguage: "en",
         password: hashedPassword,
         userStatus: initialStatus === "PENDING" ? "PENDING" : "ACTIVE",
         is_admin: false, // Default to false

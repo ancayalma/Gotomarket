@@ -6,7 +6,11 @@ import { prismadb } from "@/lib/prisma";
 const MOCK_SERVICES: Record<string, { price: string, resource: string }> = {
     "service-consulting-1h": { price: "150.00", resource: "https://cal.com/meeting-link" },
     "service-api-access-mo": { price: "49.99", resource: "sk_live_agent_key_xyz" },
-    "data-contact-enrichment": { price: "25.00", resource: "{ enriched_data: [] }" }
+    "data-contact-enrichment": { price: "25.00", resource: "{ enriched_data: [] }" },
+    "agent-sdr-01": { price: "99.00", resource: "https://agents.basalthq.com/deploy/sdr-01" },
+    "agent-csm-x": { price: "79.00", resource: "https://agents.basalthq.com/deploy/csm-x" },
+    "agent-data-9": { price: "49.00", resource: "https://agents.basalthq.com/deploy/data-9" },
+    "agent-ae-prime": { price: "149.00", resource: "https://agents.basalthq.com/deploy/ae-prime" }
 };
 
 export async function GET(req: Request, props: { params: Promise<{ sku: string }> }) {
@@ -21,7 +25,7 @@ export async function GET(req: Request, props: { params: Promise<{ sku: string }
             return NextResponse.json({
                 error: "Invalid SKU",
                 message: "You are using the ':sku' placeholder. Please replace it with a real SKU from the catalog.",
-                hint: "Try /api/v1/agent/purchase/service-consulting-1h",
+                hint: "Try /api/v1/agent/purchase/agent-sdr-01",
                 available_mocks: Object.keys(MOCK_SERVICES)
             }, { status: 400 });
         }
@@ -40,6 +44,17 @@ export async function GET(req: Request, props: { params: Promise<{ sku: string }
                     price: dbProduct.price.toString(),
                     resource: dbProduct.description || `product_resource_${dbProduct.id}`
                 };
+            }
+        }
+
+        // 3. Dynamic Fallback for known prefixes to prevent 404s in deployment flows
+        if (!service) {
+            if (sku.startsWith("agent-")) {
+                service = { price: "99.00", resource: `https://agents.basalthq.com/deploy/${sku.replace("agent-", "")}` };
+                console.log(`[AgentAPI] Using dynamic fallback for agent SKU: ${sku}`);
+            } else if (sku.startsWith("service-")) {
+                service = { price: "49.99", resource: `https://api.basalthq.com/access/${sku}` };
+                console.log(`[AgentAPI] Using dynamic fallback for service SKU: ${sku}`);
             }
         }
 

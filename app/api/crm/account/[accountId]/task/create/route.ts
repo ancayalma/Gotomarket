@@ -58,15 +58,12 @@ export async function POST(req: Request) {
             process.env.EMAIL_FROM +
             ">",
           to: notifyRecipient?.email!,
-          subject:
-            session.user.userLanguage === "en"
-              ? `New task -  ${title}.`
-              : `Nový úkol - ${title}.`,
+          subject: `New task - ${title}.`,
           text: "", // Add this line to fix the types issue
           react: NewTaskFromCRMEmail({
             taskFromUser: session.user.name!,
             username: notifyRecipient?.name!,
-            userLanguage: notifyRecipient?.userLanguage!,
+            userLanguage: "en",
             taskData: task,
           }),
         });
@@ -104,15 +101,12 @@ export async function POST(req: Request) {
             process.env.EMAIL_FROM +
             ">",
           to: user?.email!,
-          subject:
-            session.user.userLanguage === "en"
-              ? `New task -  ${title}.`
-              : `Nový úkol - ${title}.`,
+          subject: `New task - ${title}.`,
           text: "", // Add this line to fix the types issue
           react: NewTaskFromCRMToWatchersEmail({
             taskFromUser: session.user.name!,
             username: user?.name!,
-            userLanguage: user?.userLanguage!,
+            userLanguage: "en",
             taskData: task,
           }),
         });

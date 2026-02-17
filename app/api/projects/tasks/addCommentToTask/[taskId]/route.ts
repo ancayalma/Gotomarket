@@ -118,15 +118,12 @@ export async function POST(
             process.env.EMAIL_FROM +
             ">",
           to: user?.email!,
-          subject:
-            session.user.userLanguage === "en"
-              ? `New comment  on task ${task.title}.`
-              : `Nový komentář k úkolu ${task.title}.`,
+          subject: `New comment on task ${task.title}.`,
           text: "", // Add this line to fix the types issue
           react: NewTaskCommentEmail({
             commentFromUser: session.user.name!,
             username: user?.name!,
-            userLanguage: user?.userLanguage!,
+            userLanguage: "en",
             taskId: task.id,
             comment: comment,
           }),

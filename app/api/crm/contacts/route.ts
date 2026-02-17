@@ -138,14 +138,8 @@ export async function POST(req: Request) {
       await sendEmail({
         from: process.env.EMAIL_FROM as string,
         to: notifyRecipient.email || "info@softbase.com",
-        subject:
-          notifyRecipient.userLanguage === "en"
-            ? `New contact ${first_name} ${last_name} has been added to the system and assigned to you.`
-            : `Nový kontakt ${first_name} ${last_name} byla přidána do systému a přidělena vám.`,
-        text:
-          notifyRecipient.userLanguage === "en"
-            ? `New contact ${first_name} ${last_name} has been added to the system and assigned to you. You can click here for detail: ${process.env.NEXT_PUBLIC_APP_URL}/crm/contacts/${newContact.id}`
-            : `Nový kontakt ${first_name} ${last_name} byla přidán do systému a přidělena vám. Detaily naleznete zde: ${process.env.NEXT_PUBLIC_APP_URL}/crm/contact/${newContact.id}`,
+        subject: `New contact ${first_name} ${last_name} has been added to the system and assigned to you.`,
+        text: `New contact ${first_name} ${last_name} has been added to the system and assigned to you. You can click here for detail: ${process.env.NEXT_PUBLIC_APP_URL}/crm/contacts/${newContact.id}`,
       });
     }
 

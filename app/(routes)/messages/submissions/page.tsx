@@ -10,8 +10,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const FormSubmissionsPage = async ({ params, searchParams }: { params: Promise<{ locale: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
-    const { locale } = await params;
+const FormSubmissionsPage = async ({ params, searchParams }: { params: Promise<{}>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
     const session = await getServerSession(authOptions);
 
     if (!session) {
@@ -76,7 +75,7 @@ const FormSubmissionsPage = async ({ params, searchParams }: { params: Promise<{
             description="View and manage form submissions from your website forms"
         >
             <div className="mb-4">
-                <Link href={`/${locale}/messages`}>
+                <Link href={`/messages`}>
                     <Button variant="ghost" size="sm" className="gap-2">
                         <ArrowLeft className="h-4 w-4" />
                         Back to Messages

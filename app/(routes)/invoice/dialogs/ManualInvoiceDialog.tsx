@@ -24,7 +24,7 @@ export function ManualInvoiceDialog() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const params = useParams();
-    const locale = params?.locale as string;
+    // const locale = params?.locale as string; // Removed as it's no longer used
 
     const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -37,7 +37,7 @@ export function ManualInvoiceDialog() {
             if (result.success && result.invoiceId) {
                 toast.success("Invoice created!");
                 setOpen(false);
-                router.push(`/${locale}/invoice/detail/${result.invoiceId}`);
+                router.push(`/invoice/detail/${result.invoiceId}`);
             } else {
                 toast.error(result.error || "Failed");
             }

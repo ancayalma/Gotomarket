@@ -73,7 +73,7 @@ export async function POST(req: Request) {
               avatar: user.avatar,
               email: user.email,
               password: password,
-              userLanguage: user.userLanguage,
+              userLanguage: "en",
             }),
           });
           console.log(data, "data");

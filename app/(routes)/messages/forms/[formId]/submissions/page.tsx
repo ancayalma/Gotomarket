@@ -12,8 +12,8 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExportButton } from "./components/ExportButton";
 
-const SingleFormSubmissionsPage = async ({ params, searchParams }: { params: Promise<{ locale: string, formId: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
-    const { locale, formId } = await params;
+const SingleFormSubmissionsPage = async ({ params, searchParams }: { params: Promise<{ formId: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
+    const { formId } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session) {
@@ -43,7 +43,7 @@ const SingleFormSubmissionsPage = async ({ params, searchParams }: { params: Pro
         return (
             <Container title="Form Not Found" description="The requested form could not be found.">
                 <div className="mb-4">
-                    <Link href={`/${locale}/messages/forms`}>
+                    <Link href={`/messages/forms`}>
                         <Button variant="ghost" size="sm" className="gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             Back to Forms
@@ -70,7 +70,7 @@ const SingleFormSubmissionsPage = async ({ params, searchParams }: { params: Pro
         return (
             <Container title="Access Denied" description="You do not have permission to view submissions for this form.">
                 <div className="mb-4">
-                    <Link href={`/${locale}/messages/forms`}>
+                    <Link href={`/messages/forms`}>
                         <Button variant="ghost" size="sm" className="gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             Back to Forms
@@ -112,7 +112,7 @@ const SingleFormSubmissionsPage = async ({ params, searchParams }: { params: Pro
             description={`View and manage submissions for ${form.name}`}
         >
             <div className="mb-4 flex items-center justify-between">
-                <Link href={`/${locale}/messages/forms`}>
+                <Link href={`/messages/forms`}>
                     <Button variant="ghost" size="sm" className="gap-2">
                         <ArrowLeft className="h-4 w-4" />
                         Back to Forms

@@ -11,8 +11,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
-const FormsPage = async ({ params }: { params: Promise<{ locale: string }> }) => {
-    const { locale } = await params;
+const FormsPage = async () => {
     const session = await getServerSession(authOptions);
 
     if (!session) {
@@ -66,7 +65,7 @@ const FormsPage = async ({ params }: { params: Promise<{ locale: string }> }) =>
             description="Create and manage lead capture forms for your websites"
         >
             <div className="mb-4">
-                <Link href={`/${locale}/messages`}>
+                <Link href={`/messages`}>
                     <Button variant="ghost" size="sm" className="gap-2">
                         <ArrowLeft className="h-4 w-4" />
                         Back to Messages
