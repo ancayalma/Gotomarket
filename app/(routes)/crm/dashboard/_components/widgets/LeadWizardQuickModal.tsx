@@ -74,7 +74,7 @@ export const LeadWizardQuickModal = ({
             // Step 1: Try to parse the AI prompt into structured ICP
             let icpData: any = {};
             try {
-                const parseRes = await fetch("/api/leads/parse-icp", {
+                const parseRes = await fetch("/api/crm/leads/parse-icp", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ prompt: aiPrompt }),
@@ -111,7 +111,7 @@ export const LeadWizardQuickModal = ({
             };
 
             // Step 3: Create the job
-            const res = await fetch("/api/leads/autogen", {
+            const res = await fetch("/api/crm/leads/autogen", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -122,7 +122,7 @@ export const LeadWizardQuickModal = ({
 
             // Step 4: Auto-trigger pipeline
             try {
-                await fetch(`/api/leads/autogen/run/${data.jobId}`, {
+                await fetch(`/api/crm/leads/autogen/run/${data.jobId}`, {
                     method: "POST",
                 });
             } catch (err) {

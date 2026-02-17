@@ -74,7 +74,7 @@ export default function AccountLists() {
   const router = useRouter();
   const [deleting, setDeleting] = useState<string | null>(null);
   const [icpModalPool, setIcpModalPool] = useState<LeadPool | null>(null);
-  const { data, error, isLoading, mutate } = useSWR<PoolsResponse>("/api/leads/pools", fetcher, {
+  const { data, error, isLoading, mutate } = useSWR<PoolsResponse>("/api/crm/leads/pools", fetcher, {
     refreshInterval: 30000,
   });
   const { data: projectsData } = useSWR<{ projects: { id: string; title: string }[] }>("/api/projects", fetcher, { refreshInterval: 120000 });
@@ -156,7 +156,7 @@ export default function AccountLists() {
   const startFirstContact = async (poolId: string) => {
     try {
       setLoadingOutreach(poolId);
-      const res = await fetch(`/api/leads/pools/${encodeURIComponent(poolId)}/leads?mine=true`);
+      const res = await fetch(`/api/crm/leads/pools/${encodeURIComponent(poolId)}/leads?mine=true`);
       if (!res.ok) throw new Error(await res.text());
       const j = await res.json();
       const ids: string[] = Array.isArray(j?.leads) ? (j.leads as any[]).filter(l => !!l.email).map(l => l.id) : [];
@@ -177,7 +177,7 @@ export default function AccountLists() {
 
     setDeleting(poolId);
     try {
-      const res = await fetch(`/api/leads/pools?poolId=${poolId}`, {
+      const res = await fetch(`/api/crm/leads/pools?poolId=${poolId}`, {
         method: "DELETE"
       });
 
@@ -517,7 +517,7 @@ export default function AccountLists() {
                         if (!projectId) return;
                         setAssigningProject(pool.id);
                         try {
-                          const res = await fetch(`/api/leads/pools/${pool.id}/assign-project`, {
+                          const res = await fetch(`/api/crm/leads/pools/${pool.id}/assign-project`, {
                             method: "PATCH",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ projectId })
@@ -613,7 +613,7 @@ export default function AccountLists() {
                           if (!pid || !sid) { alert("Select a project and button set"); return; }
                           setSavingButtonSet(pool.id);
                           try {
-                            const res = await fetch(`/api/leads/pools/${pool.id}/assign-button-set`, {
+                            const res = await fetch(`/api/crm/leads/pools/${pool.id}/assign-button-set`, {
                               method: "PATCH",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ projectId: pid, buttonSetId: sid })

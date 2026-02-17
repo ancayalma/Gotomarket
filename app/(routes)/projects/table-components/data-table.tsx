@@ -115,7 +115,7 @@ export function ProjectsDataTable<TData, TValue>({
     // Lazy-load pools data when expanding for the first time
     if (!projectPools[projectId]) {
       try {
-        const res = await fetch("/api/leads/pools", { cache: "no-store" as any });
+        const res = await fetch("/api/crm/leads/pools", { cache: "no-store" as any });
         const j = await res.json().catch(() => null);
         const pools: any[] = Array.isArray(j?.pools) ? j.pools : [];
         const assigned = pools.filter((p) => (p?.icpConfig?.assignedProjectId === projectId));
@@ -123,7 +123,7 @@ export function ProjectsDataTable<TData, TValue>({
         const items: { poolId: string; name: string; stageData: StageDatum[]; total: number }[] = [];
         for (const p of assigned) {
           try {
-            const rl = await fetch(`/api/leads/pools/${encodeURIComponent(p.id)}/leads?mine=true`, { cache: "no-store" as any });
+            const rl = await fetch(`/api/crm/leads/pools/${encodeURIComponent(p.id)}/leads?mine=true`, { cache: "no-store" as any });
             const jl = await rl.json().catch(() => null);
             const leads: any[] = Array.isArray(jl?.leads) ? jl.leads : [];
             const counts: Record<string, number> = {};

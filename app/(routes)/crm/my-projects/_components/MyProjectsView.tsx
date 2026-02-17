@@ -68,7 +68,7 @@ export default function MyProjectsView({ userId }: Props) {
                 }
 
                 // Fetch assigned pools
-                const poolsRes = await fetch("/api/leads/pools/my-assignments");
+                const poolsRes = await fetch("/api/crm/leads/pools/my-assignments");
                 if (poolsRes.ok) {
                     const data = await poolsRes.json();
                     setPools(data.pools || []);

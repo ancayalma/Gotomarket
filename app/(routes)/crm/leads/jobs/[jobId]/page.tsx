@@ -38,7 +38,7 @@ export default function LeadGenJobDetailPage({
   const router = useRouter();
   const [controlling, setControlling] = useState(false);
   const { data, error, isLoading, mutate } = useSWR<JobStatusResponse>(
-    `/api/leads/autogen/status/${jobId}`,
+    `/api/crm/leads/autogen/status/${jobId}`,
     fetcher,
     { refreshInterval: 5000 }
   );
@@ -46,7 +46,7 @@ export default function LeadGenJobDetailPage({
   const handleControl = async (action: "pause" | "resume" | "stop") => {
     setControlling(true);
     try {
-      const res = await fetch(`/api/leads/autogen/control/${jobId}`, {
+      const res = await fetch(`/api/crm/leads/autogen/control/${jobId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action })

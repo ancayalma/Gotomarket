@@ -46,12 +46,12 @@ export default function AccountListDetailsPage() {
     const listId = params.listId as string;
 
     const { data: poolInfo, error: poolError, isLoading: poolLoading } = useSWR<Omit<PoolDetails, "leads">>(
-        listId ? `/api/leads/pools/${listId}` : null,
+        listId ? `/api/crm/leads/pools/${listId}` : null,
         fetcher
     );
 
     const { data: leadsData, error: leadsError, isLoading: leadsLoading, mutate: mutateLeads } = useSWR<{ leads: Lead[] }>(
-        listId ? `/api/leads/pools/${listId}/leads` : null,
+        listId ? `/api/crm/leads/pools/${listId}/leads` : null,
         fetcher
     );
 
@@ -69,7 +69,7 @@ export default function AccountListDetailsPage() {
 
         setDeleting(leadId);
         try {
-            const res = await fetch(`/api/leads/${leadId}`, {
+            const res = await fetch(`/api/crm/leads/${leadId}`, {
                 method: "DELETE" // Verify if DELETE leads/${id} removes from pool or deletes lead entirely. Assuming standard REST.
             });
 
@@ -96,7 +96,7 @@ export default function AccountListDetailsPage() {
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
                 <p className="text-red-500">Failed to load account details</p>
-                <Button variant="outline" onClick={() => router.push("/crm/accounts?tab=accounts")}>
+                <Button variant="outline" onClick={() => router.push("/crm/accounts?tab=pools")}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Accounts
                 </Button>
@@ -108,7 +108,7 @@ export default function AccountListDetailsPage() {
         <div className="flex flex-col h-full bg-background">
             <div className="p-4 md:p-6 lg:p-8 space-y-4">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.push("/crm/accounts?tab=accounts")}>
+                    <Button variant="ghost" size="icon" onClick={() => router.push("/crm/accounts?tab=pools")}>
                         <ArrowLeft className="w-4 h-4" />
                     </Button>
                     <div className="flex-1">

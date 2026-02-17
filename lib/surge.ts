@@ -113,6 +113,17 @@ export async function createSurgeCheckoutSession(tenantId: string, invoice: any)
 
         console.log(`[BasaltSurge] Generated Receipt ID: ${receiptId}`);
 
+        // 4. Mercury Handshake (No-Exit)
+        // Auto-create receivable in Mercury *if* integration is enabled
+        // We do this asynchronously so as not to block the checkout redirect
+        import('./mercury').then(({ createMercuryReceivable }) => {
+            createMercuryReceivable(tenantId, invoice).then((res) => {
+                if (res) console.log(`[MercuryHandshake] Created receivable: ${res.id}`);
+            }).catch(err => {
+                console.error("[MercuryHandshake] Failed to create receivable:", err);
+            });
+        });
+
         const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invoice/detail/${invoice.id}?payment=success`;
         console.log(`[BasaltSurge] Using Return URL: ${returnUrl}`);
 

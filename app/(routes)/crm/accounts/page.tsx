@@ -42,6 +42,11 @@ const AccountsPage = async ({ searchParams }: AccountsPageProps) => {
 
   const getTabInfo = (currentTab: string) => {
     switch (currentTab) {
+      case "pools":
+        return {
+          title: "Lists",
+          description: "Manage lead lists and pools"
+        };
       case "wizard":
         return {
           title: "LeadGen Wizard",
@@ -69,7 +74,7 @@ const AccountsPage = async ({ searchParams }: AccountsPageProps) => {
         accounts={accounts || []}
         crmData={crmData}
         isMember={isMember}
-        defaultTab={tab as "accounts" | "wizard" | "settings"}
+        defaultTab={tab as "accounts" | "wizard" | "settings" | "pools"}
       />
     </div>
   );

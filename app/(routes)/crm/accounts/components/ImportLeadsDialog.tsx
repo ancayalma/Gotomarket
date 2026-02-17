@@ -120,7 +120,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
         form.append("poolId", poolId);
       }
 
-      const res = await fetch("/api/leads/pools/import/preview", {
+      const res = await fetch("/api/crm/leads/pools/import/preview", {
         method: "POST",
         body: form,
       });
@@ -147,7 +147,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
     setCommitResult(null);
 
     try {
-      const res = await fetch("/api/leads/pools/import/commit", {
+      const res = await fetch("/api/crm/leads/pools/import/commit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

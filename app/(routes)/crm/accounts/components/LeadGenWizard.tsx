@@ -149,7 +149,7 @@ export default function LeadGenWizardPage() {
       if (mode === "ai-only" && state.aiPrompt && state.aiPrompt.trim().length > 0) {
         console.log("[AUTOGEN] AI-only mode detected, parsing prompt...");
         try {
-          const parseRes = await fetch("/api/leads/parse-icp", {
+          const parseRes = await fetch("/api/crm/leads/parse-icp", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ prompt: state.aiPrompt }),
@@ -182,7 +182,7 @@ export default function LeadGenWizardPage() {
               projectId: state.campaignId || undefined,
             };
 
-            const res = await fetch("/api/leads/autogen", {
+            const res = await fetch("/api/crm/leads/autogen", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload),
@@ -193,7 +193,7 @@ export default function LeadGenWizardPage() {
 
             // Auto-trigger pipeline
             try {
-              await fetch(`/api/leads/autogen/run/${data.jobId}`, { method: "POST" });
+              await fetch(`/api/crm/leads/autogen/run/${data.jobId}`, { method: "POST" });
             } catch (err) { console.error(err); }
 
             toast.success("AI Agent started successfully!");
@@ -232,7 +232,7 @@ export default function LeadGenWizardPage() {
         existingPoolId: undefined, // Explicitly undefined as we creates new lists per run
       };
 
-      const res = await fetch("/api/leads/autogen", {
+      const res = await fetch("/api/crm/leads/autogen", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -242,11 +242,11 @@ export default function LeadGenWizardPage() {
       const data = await res.json();
 
       try {
-        await fetch(`/api/leads/autogen/run/${data.jobId}`, { method: "POST" });
+        await fetch(`/api/crm/leads/autogen/run/${data.jobId}`, { method: "POST" });
       } catch (err) { console.error(err); }
 
       toast.success("Lead generation started successfully!");
-      router.push("/crm/accounts?tab=accounts");
+      router.push("/crm/accounts?tab=pools");
 
     } catch (err: any) {
       toast.error(err.message || "Failed to start job");

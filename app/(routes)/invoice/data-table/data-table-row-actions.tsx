@@ -60,7 +60,7 @@ export function DataTableRowActions<TData>({
   const [openTestSheet, setOpenTestSheet] = useState(false);
 
   //zustand
-  const { setIsOpen, setNotionUrl } = useAppStore();
+  const { setIsOpen } = useAppStore();
 
   const router = useRouter();
   const { toast } = useToast();
@@ -273,17 +273,7 @@ export function DataTableRowActions<TData>({
                   Preview invoice in new window
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                onClick={() => {
-                  setIsOpen(true);
-                  setNotionUrl(
-                    `${process.env.NEXT_PUBLIC_APP_URL}/invoice/detail/${invoice.id}`
-                  );
-                }}
-              >
-                <Edit className="mr-2 w-4 h-4" />
-                Create task from Invoice
-              </DropdownMenuItem>
+
               <DropdownMenuItem
                 onClick={() => setOpenAssignOpportunity(true)}
               >

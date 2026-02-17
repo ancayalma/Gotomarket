@@ -5,7 +5,7 @@ import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
 
 /**
- * GET /api/leads/team-members
+ * GET /api/crm/leads/team-members
  * Returns list of active team members for assignment with persistent colors
  */
 export async function GET() {

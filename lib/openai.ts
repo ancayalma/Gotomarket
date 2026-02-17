@@ -41,22 +41,11 @@ export async function getAiSdkModel(userId: string | "system") {
                 const effectiveResourceName = resourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
                 const apiVersion = process.env.AZURE_OPENAI_API_VERSION || "2024-05-01-preview";
 
-                // FORCE URL Construction:
-                // The SDK was defaulting to /openai/v1/chat/completions which is invalid for this Azure resource.
-                // We will manually construct the deployment endpoint to ensure it's correct.
-                // Format: https://{resource}.openai.azure.com/openai/deployments/{deployment}
-
-                let forcedBaseURL = baseURL;
-                if (!forcedBaseURL && effectiveResourceName) {
-                    forcedBaseURL = `https://${effectiveResourceName}.openai.azure.com/openai/deployments/${modelId}`;
-                }
-
-                console.log(`[AZURE_DEBUG] Force-Constructed URL: ${forcedBaseURL} (Version: ${apiVersion})`);
+                console.log(`[AZURE_DEBUG] Using Resource: ${effectiveResourceName} (Version: ${apiVersion})`);
 
                 const azure = createAzure({
                     apiKey: apiKey || process.env.AZURE_OPENAI_API_KEY,
-                    baseURL: forcedBaseURL,
-                    resourceName: undefined, // Disable SDK internal resource logic to rely on our forced URL
+                    resourceName: effectiveResourceName,
                     apiVersion: apiVersion,
                 });
                 return azure(modelId);
@@ -120,7 +109,7 @@ export async function getAiSdkModel(userId: string | "system") {
         }
     };
     const systemConfig = await getSystemConfig();
-    const systemModelId = systemConfig?.defaultModelId || "gpt-5";
+    const systemModelId = systemConfig?.defaultModelId || "gpt-4o";
     const systemProvider = systemConfig?.provider || "OPENAI";
 
     // 2. Resolve User's Team Config

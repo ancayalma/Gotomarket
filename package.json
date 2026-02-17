@@ -40,7 +40,6 @@
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@napi-rs/canvas": "^0.1.88",
     "@next-auth/prisma-adapter": "^1.0.7",
-    "@notionhq/client": "^5.6.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",

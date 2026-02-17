@@ -905,7 +905,6 @@ model Users {
   assigned_opportunity crm_Opportunities[]      @relation(name: "assigned_to_user_relation")
   assigned_contacts    crm_Contacts[]           @relation(name: "assigned_contacts")
   crated_contacts      crm_Contacts[]           @relation(name: "created_contacts")
-  notion_account       secondBrain_notions[]
   openAi_key           openAi_keys[]
   gmail_tokens         gmail_Tokens[]
   microsoft_tokens     microsoft_Tokens[]
@@ -1145,15 +1144,6 @@ model system_Modules_Enabled {
   name     String
   enabled  Boolean
   position Int
-}
-
-model secondBrain_notions {
-  id             String @id @default(auto()) @map("_id") @db.ObjectId
-  v              Int    @map("__v")
-  user           String @db.ObjectId
-  notion_api_key String
-  notion_db_id   String
-  assigned_user  Users? @relation(fields: [user], references: [id], onDelete: Cascade)
 }
 
 model openAi_keys {

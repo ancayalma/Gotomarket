@@ -1,5 +1,6 @@
 import { prismadb } from "@/lib/prisma";
 import Tesseract from "tesseract.js";
+import { createMercuryReceivable } from "@/lib/mercury";
 
 // Lazy load dependencies to prevent module load crashes
 let pdfParse: any;
@@ -188,6 +189,15 @@ export async function processInvoiceFromDocument(
         });
 
         console.log("[INVOICE_PROCESSOR] Invoice created successfully:", invoice.id);
+
+        if (teamId) {
+            try {
+                await createMercuryReceivable(teamId, invoice);
+            } catch (err) {
+                console.warn("[INVOICE_PROCESSOR] Mercury handshake failed:", err);
+            }
+        }
+
         return invoice;
 
     } catch (error) {

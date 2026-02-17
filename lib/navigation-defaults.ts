@@ -50,7 +50,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 href: "/crm/accounts",
                 children: [
                     { id: "sub_accounts_all", type: "item", label: "All Accounts", href: "/crm/accounts?tab=accounts", iconName: "Building2" },
-                    { id: "sub_accounts_leads", type: "item", label: "Leads", href: "/crm/leads", iconName: "Users" },
+
                     { id: "sub_accounts_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/accounts?tab=wizard", iconName: "Wand2" },
                     { id: "sub_accounts_settings", type: "item", label: "Settings", href: "/crm/accounts?tab=settings", iconName: "Settings" }
                 ]
@@ -191,7 +191,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
         ]
     },
 
-    // 5. FINANCE
+    // 5. INSIGHTS & FINANCE
     {
         id: "group_management",
         type: "group",

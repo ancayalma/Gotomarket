@@ -264,17 +264,23 @@ const DynamicModuleMenu = ({
                         .filter(isVisible)
                         .filter(item => item.href && item.href !== '#')
                         .slice(0, 5)
-                        .map((item) => (
-                            <MenuItem
-                                key={item.id}
-                                href={item.href || "#"}
-                                icon={getIcon(item.iconName)}
-                                title={item.label}
-                                isOpen={false}
-                                isActive={pathname.startsWith(item.href || "")}
-                                isMobile
-                            />
-                        ))}
+                        .map((item) => {
+                            const hasAccess = checkPermission(item);
+                            const isLocked = item.isPremium && !hasAccess;
+
+                            return (
+                                <MenuItem
+                                    key={item.id}
+                                    href={isLocked ? "#" : (item.href || "#")}
+                                    icon={getIcon(item.iconName)}
+                                    title={item.label}
+                                    isOpen={false}
+                                    isActive={pathname.startsWith(item.href || "")}
+                                    isMobile
+                                    isLocked={isLocked}
+                                />
+                            );
+                        })}
 
                     {/* Always show settings link if Admin */}
                     {isPartnerAdmin && !navStructure.some(i => i.href === "/partners") && (

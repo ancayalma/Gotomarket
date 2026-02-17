@@ -69,7 +69,7 @@ export default function AssignPoolMembersModal({
                 }
 
                 // Fetch current pool members
-                const membersRes = await fetch(`/api/leads/pools/${poolId}/assign-member`);
+                const membersRes = await fetch(`/api/crm/leads/pools/${poolId}/assign-member`);
                 if (membersRes.ok) {
                     const data = await membersRes.json();
                     setAssignedMembers(data.members || []);
@@ -96,7 +96,7 @@ export default function AssignPoolMembersModal({
     const handleAssign = async (userId: string) => {
         setSaving(true);
         try {
-            const res = await fetch(`/api/leads/pools/${poolId}/assign-member`, {
+            const res = await fetch(`/api/crm/leads/pools/${poolId}/assign-member`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId }),
@@ -130,7 +130,7 @@ export default function AssignPoolMembersModal({
         setSaving(true);
         try {
             const res = await fetch(
-                `/api/leads/pools/${poolId}/assign-member?userId=${userId}`,
+                `/api/crm/leads/pools/${poolId}/assign-member?userId=${userId}`,
                 { method: "DELETE" }
             );
 

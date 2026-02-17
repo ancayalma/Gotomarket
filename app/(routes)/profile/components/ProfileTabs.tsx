@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileForm } from "./ProfileForm";
 import { ProfilePhotoForm } from "./ProfilePhotoForm";
 import { PasswordChangeForm } from "./PasswordChange";
-import { NotionForm } from "./NotionForm";
+
 import { OpenAiForm } from "./OpenAiForm";
 import SignatureBuilder from "@/components/SignatureBuilder";
 import { Users } from "@prisma/client";

@@ -22,7 +22,7 @@ type Props = {
 
 export default function LeadsManagerTabs({ leads: initialLeads, crmData, defaultTab = "all", isMember = false }: Props) {
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const { data: leadsData } = useSWR('/api/leads/list', fetcher, {
+  const { data: leadsData } = useSWR('/api/crm/leads/list', fetcher, {
     fallbackData: initialLeads
   });
 

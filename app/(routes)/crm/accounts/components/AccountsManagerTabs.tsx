@@ -7,13 +7,14 @@ import LeadGenWizardPage from "./LeadGenWizard";
 import SettingsTabs from "./SettingsTabs";
 import RightViewModal from "@/components/modals/right-view-modal";
 import { NewAccountForm } from "./NewAccountForm"; // Assuming this is exported from NewAccountForm.tsx in the same dir
-import { LayoutList, Wand2, Settings, Plus, Building2 } from "lucide-react";
+import { LayoutList, Wand2, Settings, Plus, Building2, List } from "lucide-react";
 import DashboardCard from "../../dashboard/_components/DashboardCard";
+import AccountLists from "./AccountLists";
 
 type Props = {
     accounts: any[];
     crmData: any;
-    defaultTab?: "accounts" | "wizard" | "settings";
+    defaultTab?: "accounts" | "wizard" | "settings" | "pools";
     isMember?: boolean;
 };
 
@@ -30,6 +31,15 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
             color: "from-blue-500/20 to-indigo-500/20",
             iconColor: "text-blue-400",
             permission: "accounts.view" // Placeholder permission logic 
+        },
+        {
+            id: "pools",
+            title: "Lists",
+            description: "Manage lead lists and pools",
+            icon: List,
+            color: "from-orange-500/20 to-red-500/20",
+            iconColor: "text-orange-400",
+            permission: "accounts.lists"
         },
         {
             id: "wizard",
@@ -71,6 +81,7 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
                 {visibleCards.map((card) => {
                     let variant: "info" | "violet" | "warning" | "default" = "default";
                     if (card.id === "accounts") variant = "info";
+                    if (card.id === "pools") variant = "warning";
                     if (card.id === "wizard") variant = "violet";
                     if (card.id === "settings") variant = "default";
 
@@ -129,6 +140,9 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
                     <>
                         <TabsContent value="wizard" className="flex-1 mt-0">
                             <LeadGenWizardPage />
+                        </TabsContent>
+                        <TabsContent value="pools" className="flex-1 mt-0">
+                            <AccountLists />
                         </TabsContent>
                         <TabsContent value="settings" className="flex-1 mt-0">
                             <SettingsTabs />

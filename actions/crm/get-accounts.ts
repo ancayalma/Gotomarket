@@ -15,16 +15,9 @@ export const getAccounts = async () => {
     baseWhere.team_id = teamInfo?.teamId;
   }
 
-  // Account-specific filters
+  // Account-specific filters (Removed hardcoded filters)
   const accountWhere = {
     ...baseWhere,
-    NOT: [
-      { name: { startsWith: "Email -" } },
-      { name: { startsWith: "Meeting" } },
-      { name: { startsWith: "Call" } },
-      { name: { startsWith: "Amazon SES" } },
-      { name: { startsWith: "Project Documents" } },
-    ],
   };
 
   const data = await (prismadb.crm_Accounts as any).findMany({

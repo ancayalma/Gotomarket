@@ -25,7 +25,6 @@ export async function POST(req: Request) {
     board,
     priority,
     content,
-    notionUrl,
     dueDateAt,
     accountId,
     opportunityId,
@@ -72,10 +71,6 @@ export async function POST(req: Request) {
     });
 
     let contentUpdated = content;
-
-    if (notionUrl) {
-      contentUpdated = content + "\n\n" + notionUrl;
-    }
 
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;

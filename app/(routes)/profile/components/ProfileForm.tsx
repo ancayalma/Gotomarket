@@ -71,7 +71,7 @@ export function ProfileForm({ data }: ProfileFormProps) {
         variant: "destructive",
         title: "Error",
         description:
-          "Something went wrong while activating your notion integration.",
+          "Something went wrong while updating your profile.",
       });
     } finally {
       setIsLoading(false);
