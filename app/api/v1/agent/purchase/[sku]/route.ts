@@ -12,11 +12,44 @@ const MOCK_SERVICES: Record<string, { price: string, resource: string }> = {
 export async function GET(req: Request, props: { params: Promise<{ sku: string }> }) {
     try {
         const params = await props.params;
-        const sku = params.sku;
-        const service = MOCK_SERVICES[sku];
+        const rawSku = params.sku;
+        const sku = rawSku.toLowerCase();
+
+        console.log(`[AgentAPI] Purchase request for SKU: ${sku}`);
+
+        if (sku === ":sku") {
+            return NextResponse.json({
+                error: "Invalid SKU",
+                message: "You are using the ':sku' placeholder. Please replace it with a real SKU from the catalog.",
+                hint: "Try /api/v1/agent/purchase/service-consulting-1h",
+                available_mocks: Object.keys(MOCK_SERVICES)
+            }, { status: 400 });
+        }
+
+        // 1. Try MOCK_SERVICES first
+        let service = MOCK_SERVICES[sku];
+
+        // 2. Try Database if not found in mock
+        if (!service) {
+            const dbProduct = await prismadb.crm_Products.findUnique({
+                where: { sku: sku }
+            });
+
+            if (dbProduct) {
+                service = {
+                    price: dbProduct.price.toString(),
+                    resource: dbProduct.description || `product_resource_${dbProduct.id}`
+                };
+            }
+        }
 
         if (!service) {
-            return new NextResponse("Service Not Found", { status: 404 });
+            console.warn(`[AgentAPI] SKU not found: ${sku}`);
+            return NextResponse.json({
+                error: "Service Not Found",
+                message: `The requested SKU '${sku}' does not exist in the catalog.`,
+                available_mocks: Object.keys(MOCK_SERVICES)
+            }, { status: 404 });
         }
 
         // 0. Fetch Merchant Wallet for the challenge
@@ -61,4 +94,8 @@ export async function GET(req: Request, props: { params: Promise<{ sku: string }
         console.error("[AgentAPI] Purchase Error:", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
+}
+
+export async function POST(req: Request, props: { params: Promise<{ sku: string }> }) {
+    return GET(req, props);
 }
