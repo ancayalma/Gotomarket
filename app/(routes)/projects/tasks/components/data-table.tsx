@@ -15,6 +15,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useTableSettings } from "@/hooks/use-table-settings";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 
 import {
   Table,
@@ -43,16 +45,28 @@ export function TasksDataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  // Mobile detection using shared hook
+  const isMobile = useIsMobile();
+
+  const {
+    columnVisibility,
+    setColumnVisibility,
+    sorting,
+    setSorting,
+    columnSizing,
+    setColumnSizing,
+    viewMode: savedViewMode,
+    setViewMode,
+  } = useTableSettings("crm-tasks-list-table-settings", isMobile);
+
   const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const [hide, setHide] = React.useState(false);
-  const [viewMode, setViewMode] = React.useState<ViewMode>("table");
+
+  const viewMode = savedViewMode as ViewMode;
 
   const table = useReactTable({
     data,
@@ -62,19 +76,30 @@ export function TasksDataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
+      columnSizing,
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnSizingChange: setColumnSizing,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    columnResizeMode: "onChange",
+    enableColumnResizing: true,
   });
+
+  // Force grid view on mobile
+  React.useEffect(() => {
+    if (isMobile) {
+      setViewMode("card");
+    }
+  }, [isMobile, setViewMode]);
 
   return (
     <div className="space-y-4 w-full overflow-hidden">
@@ -97,20 +122,35 @@ export function TasksDataTable<TData, TValue>({
           {viewMode === "table" && (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block rounded-md border overflow-x-auto">
-                <Table>
+              <div className="hidden md:block rounded-md border overflow-x-auto bg-background/50 backdrop-blur-sm">
+                <Table className="table-fixed w-full border-collapse">
                   <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow key={headerGroup.id}>
                         {headerGroup.headers.map((header) => {
                           return (
-                            <TableHead key={header.id} className="whitespace-nowrap">
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
+                            <TableHead
+                              key={header.id}
+                              className="relative min-w-0 h-10 px-2 group overflow-visible"
+                              style={{ width: header.getSize() }}
+                            >
+                              <div className="flex items-center h-full w-full">
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                              </div>
+                              {header.column.getCanResize() && (
+                                <div
+                                  onMouseDown={header.getResizeHandler()}
+                                  onTouchStart={header.getResizeHandler()}
+                                  className={`absolute right-0 top-0 h-full w-4 cursor-col-resize select-none touch-none z-10 flex justify-center items-center group-hover:opacity-100 transition-opacity ${header.column.getIsResizing() ? "opacity-100" : "opacity-0"}`}
+                                >
+                                  <div className={`w-[2px] h-full ${header.column.getIsResizing() ? "bg-primary" : "bg-border group-hover:bg-primary/50"}`} />
+                                </div>
+                              )}
                             </TableHead>
                           );
                         })}
@@ -125,7 +165,11 @@ export function TasksDataTable<TData, TValue>({
                           data-state={row.getIsSelected() && "selected"}
                         >
                           {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id} className="py-2">
+                            <TableCell
+                              key={cell.id}
+                              className="py-2 truncate min-w-0"
+                              style={{ width: cell.column.getSize() }}
+                            >
                               {flexRender(
                                 cell.column.columnDef.cell,
                                 cell.getContext()

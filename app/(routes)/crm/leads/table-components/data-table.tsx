@@ -34,6 +34,7 @@ import { LeadCard } from "./lead-card";
 import { Lead } from "../table-data/schema";
 import { Row } from "@tanstack/react-table";
 import { useIsMobile } from "@/hooks/use-is-mobile";
+import { useTableSettings } from "@/hooks/use-table-settings";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -44,18 +45,27 @@ export function LeadDataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  // Mobile detection using shared hook
+  const isMobile = useIsMobile();
+
+  const {
+    columnVisibility,
+    setColumnVisibility,
+    sorting,
+    setSorting,
+    columnSizing,
+    setColumnSizing,
+    viewMode: savedViewMode,
+    setViewMode,
+  } = useTableSettings("crm-leads-table-settings", isMobile);
+
   const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [viewMode, setViewMode] = React.useState<ViewMode>("table");
   const [hide, setHide] = React.useState(false);
 
-  // Mobile detection using shared hook
-  const isMobile = useIsMobile();
+  const viewMode = savedViewMode as ViewMode;
 
   const table = useReactTable({
     data,
@@ -66,12 +76,14 @@ export function LeadDataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
+      columnSizing,
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnSizingChange: setColumnSizing,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -80,6 +92,13 @@ export function LeadDataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
     enableColumnResizing: true,
   });
+
+  // Force grid view on mobile
+  React.useEffect(() => {
+    if (isMobile) {
+      setViewMode("card");
+    }
+  }, [isMobile, setViewMode]);
 
   // Force grid view on mobile
   // Map grid to card for ViewToggle consistency
@@ -133,8 +152,8 @@ export function LeadDataTable<TData, TValue>({
             </div>
           ) : (
             <>
-              <div className="rounded-md border overflow-x-auto">
-                <Table style={{ width: table.getCenterTotalSize() }} className="table-fixed">
+              <div className="rounded-md border overflow-x-auto bg-background/50 backdrop-blur-sm">
+                <Table className="table-fixed w-full border-collapse">
                   <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow key={headerGroup.id}>
@@ -142,22 +161,26 @@ export function LeadDataTable<TData, TValue>({
                           return (
                             <TableHead
                               key={header.id}
-                              className={viewMode === "compact" ? "h-8 py-1 relative" : "relative"}
+                              className={`${viewMode === "compact" ? "h-8 py-1" : ""} relative min-w-0 h-10 px-2 group overflow-visible`}
                               style={{ width: header.getSize() }}
                             >
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                              {/* Resize Handle */}
-                              <div
-                                onMouseDown={header.getResizeHandler()}
-                                onTouchStart={header.getResizeHandler()}
-                                className={`absolute right-0 top-0 h-full w-1 bg-border cursor-col-resize touch-none select-none opacity-0 hover:opacity-100 ${header.column.getIsResizing() ? "bg-primary opacity-100" : ""
-                                  }`}
-                              />
+                              <div className="flex items-center h-full w-full">
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                              </div>
+                              {header.column.getCanResize() && (
+                                <div
+                                  onMouseDown={header.getResizeHandler()}
+                                  onTouchStart={header.getResizeHandler()}
+                                  className={`absolute right-0 top-0 h-full w-4 cursor-col-resize select-none touch-none z-10 flex justify-center items-center group-hover:opacity-100 transition-opacity ${header.column.getIsResizing() ? "opacity-100" : "opacity-0"}`}
+                                >
+                                  <div className={`w-[2px] h-full ${header.column.getIsResizing() ? "bg-primary" : "bg-border group-hover:bg-primary/50"}`} />
+                                </div>
+                              )}
                             </TableHead>
                           );
                         })}
@@ -174,7 +197,7 @@ export function LeadDataTable<TData, TValue>({
                           {row.getVisibleCells().map((cell) => (
                             <TableCell
                               key={cell.id}
-                              className={viewMode === "compact" ? "py-1" : ""}
+                              className={`${viewMode === "compact" ? "py-1" : ""} truncate min-w-0`}
                               style={{ width: cell.column.getSize() }}
                             >
                               {flexRender(

@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { Bug } from "lucide-react";
+import { useTableSettings } from "@/hooks/use-table-settings";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -45,24 +46,27 @@ export function InvoiceDataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [viewMode, setViewMode] = React.useState<ViewMode>("table");
+  // Mobile detection using shared hook
   const isMobile = useIsMobile();
   const router = useRouter();
 
-  // Set grid view which acts as card view here for mobile
-  React.useEffect(() => {
-    if (isMobile) {
-      setViewMode("card");
-    }
-  }, [isMobile]);
+  const {
+    columnVisibility,
+    setColumnVisibility,
+    sorting,
+    setSorting,
+    columnSizing,
+    setColumnSizing,
+    viewMode: savedViewMode,
+    setViewMode,
+  } = useTableSettings("crm-invoices-table-settings", isMobile);
 
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+
+  const viewMode = savedViewMode as ViewMode;
   const currentView = isMobile ? "card" : viewMode;
 
   const table = useReactTable({
@@ -73,12 +77,14 @@ export function InvoiceDataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
+      columnSizing,
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnSizingChange: setColumnSizing,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -87,6 +93,13 @@ export function InvoiceDataTable<TData, TValue>({
     columnResizeMode: "onChange",
     enableColumnResizing: true,
   });
+
+  // Force grid view on mobile
+  React.useEffect(() => {
+    if (isMobile) {
+      setViewMode("card");
+    }
+  }, [isMobile, setViewMode]);
 
   // ... inside component ...
 
@@ -115,26 +128,34 @@ export function InvoiceDataTable<TData, TValue>({
           )}
         </div>
       ) : (
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
+        <div className="rounded-md border overflow-x-auto bg-background/50 backdrop-blur-sm">
+          <Table className="table-fixed w-full border-collapse">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     return (
-                      <TableHead key={header.id} className={`${currentView === "compact" ? "py-1 h-8" : ""} relative`} style={{ width: header.getSize() }}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                      <TableHead
+                        key={header.id}
+                        className={`${currentView === "compact" ? "py-1 h-8" : ""} relative min-w-0 h-10 px-2 group overflow-visible`}
+                        style={{ width: header.getSize() }}
+                      >
+                        <div className="flex items-center h-full w-full">
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        </div>
                         {header.column.getCanResize() && (
                           <div
                             onMouseDown={header.getResizeHandler()}
                             onTouchStart={header.getResizeHandler()}
-                            className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none ${header.column.getIsResizing() ? "bg-primary" : "bg-border opacity-0 hover:opacity-100"}`}
-                          />
+                            className={`absolute right-0 top-0 h-full w-4 cursor-col-resize select-none touch-none z-10 flex justify-center items-center group-hover:opacity-100 transition-opacity ${header.column.getIsResizing() ? "opacity-100" : "opacity-0"}`}
+                          >
+                            <div className={`w-[2px] h-full ${header.column.getIsResizing() ? "bg-primary" : "bg-border group-hover:bg-primary/50"}`} />
+                          </div>
                         )}
                       </TableHead>
                     );
@@ -150,7 +171,11 @@ export function InvoiceDataTable<TData, TValue>({
                     data-state={row.getIsSelected() && "selected"}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className={currentView === "compact" ? "py-1" : ""}>
+                      <TableCell
+                        key={cell.id}
+                        className={`${currentView === "compact" ? "py-1" : ""} truncate min-w-0`}
+                        style={{ width: cell.column.getSize() }}
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()

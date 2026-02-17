@@ -22,6 +22,7 @@ export const columns: ColumnDef<Account>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
+    size: 140,
   },
   {
     accessorKey: "assigned_to_user",
@@ -30,7 +31,7 @@ export const columns: ColumnDef<Account>[] = [
     ),
 
     cell: ({ row }) => (
-      <div className="w-[150px]">
+      <div className="truncate">
         {
           //@ts-ignore
           //TODO: fix this
@@ -40,6 +41,7 @@ export const columns: ColumnDef<Account>[] = [
     ),
     enableSorting: true,
     enableHiding: true,
+    size: 150,
   },
   {
     accessorKey: "name",
@@ -49,7 +51,7 @@ export const columns: ColumnDef<Account>[] = [
 
     cell: ({ row }) => (
       <Link href={`/crm/accounts/${row.original?.id}`}>
-        <div className="w-[250px]">
+        <div className="truncate font-medium">
           {
             //@ts-ignore
             //TODO: fix this
@@ -60,6 +62,7 @@ export const columns: ColumnDef<Account>[] = [
     ),
     enableSorting: false,
     enableHiding: true,
+    size: 250,
   },
   {
     accessorKey: "email",
@@ -67,9 +70,10 @@ export const columns: ColumnDef<Account>[] = [
       <DataTableColumnHeader column={column} title="E-mail" />
     ),
 
-    cell: ({ row }) => <div className="w-[150px]">{row.getValue("email")}</div>,
+    cell: ({ row }) => <div className="truncate">{row.getValue("email")}</div>,
     enableSorting: true,
     enableHiding: true,
+    size: 200,
   },
   {
     accessorKey: "contacts",
@@ -78,22 +82,23 @@ export const columns: ColumnDef<Account>[] = [
     ),
 
     cell: ({ row }) => (
-      <div className="w-[150px]">
+      <div className="truncate">
         {row.original.contacts && row.original.contacts.length > 0 ? (
-          <div className="flex flex-col">
-            <span className="font-medium text-xs text-muted-foreground">{row.original.contacts.length} Contacts</span>
+          <div className="flex flex-col truncate">
+            <span className="font-medium text-xs text-muted-foreground truncate">{row.original.contacts.length} Contacts</span>
             <span className="truncate text-xs">
               {row.original.contacts[0].first_name} {row.original.contacts[0].last_name}
               {row.original.contacts.length > 1 && ` +${row.original.contacts.length - 1}`}
             </span>
           </div>
         ) : (
-          <span className="text-muted-foreground text-xs italic">No contacts</span>
+          <span className="text-muted-foreground text-xs italic truncate">No contacts</span>
         )}
       </div>
     ),
     enableSorting: false,
     enableHiding: true,
+    size: 180,
   },
   {
     accessorKey: "status",
@@ -110,20 +115,22 @@ export const columns: ColumnDef<Account>[] = [
       }
 
       return (
-        <div className="flex w-[100px] items-center">
+        <div className="flex items-center truncate">
           {status.icon && (
-            <status.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+            <status.icon className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
           )}
-          <span>{status.label}</span>
+          <span className="truncate">{status.label}</span>
         </div>
       );
     },
+    size: 120,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
   },
   {
     id: "actions",
+    size: 120,
     cell: ({ row }) => <DataTableRowActions row={row} />,
   },
 ];

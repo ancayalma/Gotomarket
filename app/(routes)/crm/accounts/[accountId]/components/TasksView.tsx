@@ -183,7 +183,7 @@ const AccountsTasksView = ({ data, account }: TasksViewProps) => {
             {view === 'all' ? "No assigned tasks found" : `No tasks found for ${getViewLabel()}`}
           </div>
         ) : (
-          <TasksDataTable data={filteredData} columns={columns} />
+          <TasksDataTable data={filteredData} columns={columns} accountId={account?.id} />
         )}
       </CardContent>
     </Card>
