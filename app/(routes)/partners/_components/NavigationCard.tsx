@@ -30,25 +30,29 @@ export const NavigationCard = ({ card, loading = false, className, isActive, onC
             className
         )}
     >
+        {/* Background Gradient Tint */}
+        <div className={cn(
+            "absolute inset-0 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity bg-gradient-to-br",
+            card.color
+        )} />
+
         {/* Giant Watermark Icon - Positioned Right */}
         <card.icon
             className={cn(
-                "absolute -right-6 -bottom-6 w-36 h-36 -rotate-12 transition-all duration-500 pointer-events-none opacity-5 group-hover:opacity-15 group-hover:scale-110",
-                isActive ? cn(card.iconColor, "opacity-20 scale-105") : "text-zinc-500",
-                "group-hover:" + card.iconColor
+                "absolute -right-6 -bottom-6 w-36 h-36 -rotate-12 transition-all duration-500 pointer-events-none opacity-10 group-hover:opacity-20 group-hover:scale-110",
+                card.iconColor
             )}
         />
 
         <div className="absolute top-5 left-6 right-6 z-10 space-y-1">
             <span className={cn(
                 "block text-[11px] font-bold uppercase tracking-wider transition-colors leading-none",
-                isActive ? "text-primary" : "text-muted-foreground/90 group-hover:text-foreground/80"
+                card.iconColor
             )}>
                 {card.title}
             </span>
             <span className={cn(
-                "block text-sm font-bold tracking-tight leading-tight transition-colors",
-                isActive ? "text-white" : "text-zinc-400 group-hover:text-zinc-100"
+                "block text-sm font-bold tracking-tight leading-tight transition-colors text-white truncate",
             )}>
                 {card.description}
             </span>
@@ -61,4 +65,3 @@ export const NavigationCard = ({ card, loading = false, className, isActive, onC
         )} />
     </div>
 );
-

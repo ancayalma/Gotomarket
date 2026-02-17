@@ -3,7 +3,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Key, DollarSign, List, ChevronLeft, Mail } from "lucide-react";
+import { Key, DollarSign, List, ChevronLeft, Mail, BarChart } from "lucide-react";
 import { NavigationCard } from "./NavigationCard";
 import { CreateTeamCard } from "./CreateTeamCard";
 import { SeedTeamCard } from "./SeedTeamCard";
@@ -66,6 +66,16 @@ export const PartnersNavigation = ({
             iconColor: "text-purple-500",
             href: "/partners/plans",
             hidden: hideManagePlans
+        },
+        {
+            key: 'usage-hub',
+            title: "Usage Hub",
+            description: "AI Intelligence",
+            icon: BarChart,
+            color: "from-orange-500/20 to-lime-500/20",
+            iconColor: "text-orange-500",
+            href: "/partners/ai-usage",
+            hidden: hideSystemKeys
         }
     ];
 
@@ -85,7 +95,7 @@ export const PartnersNavigation = ({
             )}
 
             {(visibleCards.length > 0 || !hideCreateTeam) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
                     {!hideCreateTeam && <CreateTeamCard availablePlans={availablePlans} />}
                     {!hideCreateTeam && <SeedTeamCard />}
                     {visibleCards.map((card) => (

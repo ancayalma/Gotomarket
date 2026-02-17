@@ -18,6 +18,7 @@ import {
     Layout,
     Zap,
     Receipt,
+    BarChart,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -58,6 +59,7 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
         { label: "Email Settings", href: "/admin/settings", icon: Mail },
         { label: "SMS Configuration", href: "/admin/sms-config", icon: MessageSquare },
         { label: "AI Settings", href: "/admin/ai-settings", icon: Bot },
+        { label: "AI Usage", href: "/admin/ai-usage", icon: BarChart },
         { label: "Navigation", href: "/admin/navigation", icon: Layout },
         { label: "Integrations", href: "/admin/integrations", icon: Zap },
         { label: "Billing", href: "/admin/billing", icon: Receipt },

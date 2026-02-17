@@ -392,7 +392,7 @@ export async function POST(req: Request) {
                 model,
                 messages: modelMessages,
                 temperature,
-                onFinish: async ({ text: completion }) => {
+                onFinish: async ({ text: completion, usage }) => {
                     try {
                         if (!chatSession.isTemporary) {
                             await db.chat_Messages.create({
@@ -401,8 +401,9 @@ export async function POST(req: Request) {
                                     parent: userMessageId || parentId || undefined,
                                     role: "assistant",
                                     content: completion,
-                                    model: undefined,
+                                    model: model.modelId,
                                     deployment: process.env.AZURE_OPENAI_DEPLOYMENT || undefined,
+                                    tokenUsage: usage || undefined,
                                 },
                             });
                             await db.chat_Sessions.update({
