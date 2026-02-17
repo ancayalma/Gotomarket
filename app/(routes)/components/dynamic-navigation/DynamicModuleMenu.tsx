@@ -170,9 +170,7 @@ const DynamicModuleMenu = ({
                     isActive={isActive}
                     items={subItems}
                     badge={item.badge === "serviceBadge" ? serviceBadge : undefined}
-                // isLocked logic for Expandable needs definition if sub-items are locked or parent is locked
-                // For now, let's assume grouping handles this differently, usually parent isn't locked if children exist?
-                // Or maybe the whole group is locked? Let's leave expandable unlocked for now unless specified
+                    isLocked={isLocked}
                 />
             );
         }

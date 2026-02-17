@@ -1,7 +1,9 @@
+"use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { CheckCircle2, Hash, Calendar, Wallet, CreditCard, ShieldCheck, Clock, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PaymentModal } from './PaymentModal';
 
 interface StaticReceiptProps {
     data: any;
@@ -10,6 +12,7 @@ interface StaticReceiptProps {
 }
 
 const StaticReceipt = ({ data, status, paymentUrl }: StaticReceiptProps) => {
+    const [modalOpen, setModalOpen] = useState(false);
     const isPaid = status === "PAID";
     const receipt = data?.receipt || data;
     const date = receipt?.createdAt ? new Date(receipt.createdAt).toLocaleString() : new Date().toLocaleString();
@@ -42,12 +45,22 @@ const StaticReceipt = ({ data, status, paymentUrl }: StaticReceiptProps) => {
                     </div>
 
                     {!isPaid && paymentUrl && (
-                        <Button
-                            className="w-full bg-blue-600 hover:bg-blue-500 text-white mb-8 py-6 rounded-xl font-bold text-lg shadow-lg shadow-blue-600/20"
-                            onClick={() => window.open(paymentUrl, '_blank')}
-                        >
-                            Pay via Apple Pay / Crypto <ArrowUpRight className="ml-2 w-5 h-5" />
-                        </Button>
+                        <>
+                            <Button
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white mb-8 py-6 rounded-xl font-bold text-lg shadow-lg shadow-blue-600/20"
+                                onClick={() => setModalOpen(true)}
+                            >
+                                Pay via Apple Pay / Crypto <ArrowUpRight className="ml-2 w-5 h-5" />
+                            </Button>
+
+                            <PaymentModal
+                                open={modalOpen}
+                                onOpenChange={setModalOpen}
+                                url={paymentUrl}
+                                amount={receipt?.invoice_amount || receipt?.totalUsd || "0.00"}
+                                currency={receipt?.invoice_currency || "USD"}
+                            />
+                        </>
                     )}
 
                     {/* Receipt Details Grid */}

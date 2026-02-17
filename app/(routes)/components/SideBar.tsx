@@ -62,13 +62,20 @@ const SideBar = async () => {
     if (item.id === "group_marketing") {
       let newChildren = [...(item.children || [])];
 
-      // Inject Accounts if missing
-      const hasAccounts = newChildren.some(c => c.id === "nav_accounts");
-      if (!hasAccounts) {
-        const defaultAccounts = DEFAULT_NAV_STRUCTURE
-          .find(g => g.id === "group_marketing")
-          ?.children?.find(c => c.id === "nav_accounts");
+      // Inject Accounts with its children (including Leads) from defaults if missing or incomplete
+      const accountsIndex = newChildren.findIndex(c => c.id === "nav_accounts");
+      const defaultAccounts = DEFAULT_NAV_STRUCTURE
+        .find(g => g.id === "group_marketing")
+        ?.children?.find(c => c.id === "nav_accounts");
+
+      if (accountsIndex === -1) {
         if (defaultAccounts) newChildren.push(defaultAccounts);
+      } else if (defaultAccounts) {
+        // Sync children to ensure Leads sub-item is there
+        newChildren[accountsIndex] = {
+          ...newChildren[accountsIndex],
+          children: defaultAccounts.children
+        };
       }
 
       // Inject Lists if missing
@@ -108,21 +115,12 @@ const SideBar = async () => {
       };
     }
 
-    // 2. Clean up Leads (remove Wizard/Pools)
+    // 2. Clean up Leads from Sales Hub
     if (item.id === "group_sales") {
       if (item.children) {
         return {
           ...item,
-          children: item.children.map(child => {
-            if (child.id === "nav_leads") {
-              // Return clean leads structure from defaults to ensure no stale children
-              const defaultLeads = DEFAULT_NAV_STRUCTURE
-                .find(g => g.id === "group_sales")
-                ?.children?.find(c => c.id === "nav_leads");
-              return defaultLeads || child;
-            }
-            return child;
-          })
+          children: item.children.filter(child => child.id !== "nav_leads")
         };
       }
     }

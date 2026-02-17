@@ -50,6 +50,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 href: "/crm/accounts",
                 children: [
                     { id: "sub_accounts_all", type: "item", label: "All Accounts", href: "/crm/accounts?tab=accounts", iconName: "Building2" },
+                    { id: "sub_accounts_leads", type: "item", label: "Leads", href: "/crm/leads", iconName: "Users" },
                     { id: "sub_accounts_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/accounts?tab=wizard", iconName: "Wand2" },
                     { id: "sub_accounts_settings", type: "item", label: "Settings", href: "/crm/accounts?tab=settings", iconName: "Settings" }
                 ]
@@ -103,18 +104,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
         type: "group",
         label: "Sales Hub",
         children: [
-            {
-                id: "nav_leads",
-                type: "item",
-                label: "Leads",
-                iconName: "Users",
-                href: "/crm/leads",
-                permissions: { minRole: "ADMIN" },
-                children: [
-                    { id: "sub_leads_all", type: "item", label: "All Leads", href: "/crm/leads", iconName: "LayoutDashboard" },
-                    { id: "sub_leads_settings", type: "item", label: "Settings", href: "/crm/leads?tab=settings", iconName: "Settings" }
-                ]
-            },
+
             {
                 id: "nav_command",
                 type: "item",
@@ -205,7 +195,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
     {
         id: "group_management",
         type: "group",
-        label: "Finance",
+        label: "Insights & Finance",
         permissions: { minRole: "ADMIN" },
         children: [
             {

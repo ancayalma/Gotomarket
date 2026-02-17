@@ -122,8 +122,8 @@ export async function createSurgeCheckoutSession(tenantId: string, invoice: any)
         // 3. layout=invoice optimizes for the user's specific use case
         const params = new URLSearchParams({
             returnUrl: returnUrl,
-            layout: 'invoice',
-            invoice: '1',
+            layout: 'widget',
+            origin: process.env.NEXT_PUBLIC_APP_URL || '',
             preferredChain: integration?.preferred_chain || process.env.SURGE_CHAIN || 'BASE'
         });
 
@@ -134,9 +134,19 @@ export async function createSurgeCheckoutSession(tenantId: string, invoice: any)
             params.append('merchantId', merchantId);
         }
 
-        const paymentUrl = `https://surge.basalthq.com/portal/${receiptId}?${params.toString()}`;
+        // Determine payment URL strategy
+        const useProxy = process.env.SURGE_USE_PROXY !== 'false'; // Default to true for now
+        let paymentUrl = '';
 
-        console.log(`[BasaltSurge] Final Link: ${paymentUrl}`);
+        if (useProxy) {
+            // Return internal proxy URL to bypass iFrame blocking (Current strategy)
+            paymentUrl = `/api/surge-portal/${receiptId}?${params.toString()}`;
+            console.log(`[BasaltSurge] Proxy link generated (Secure Handshake active): ${paymentUrl}`);
+        } else {
+            // Return direct Surge URL (Target "Gold Standard" strategy)
+            paymentUrl = `https://surge.basalthq.com/portal/${receiptId}?${params.toString()}`;
+            console.log(`[BasaltSurge] Direct link generated (Production whitelisting active): ${paymentUrl}`);
+        }
 
         return {
             id: receiptId,

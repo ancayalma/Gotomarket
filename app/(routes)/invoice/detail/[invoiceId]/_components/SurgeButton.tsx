@@ -5,7 +5,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Coins, CheckCircle2 } from "lucide-react";
 import { generateSurgeLink } from "@/actions/invoice/generate-surge-link";
-import { toast } from "sonner"; // Assuming sonner is installed
+import { PaymentModal } from "./PaymentModal";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface Props {
     invoiceId: string;
@@ -17,6 +19,13 @@ interface Props {
 
 export const SurgeButton = ({ invoiceId, paymentLink, paymentStatus, amount, currency }: Props) => {
     const [loading, setLoading] = useState(false);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [activeLink, setActiveLink] = useState<string | null>(paymentLink || null);
+
+    // Sync activeLink if props change (e.g. from server revalidation)
+    if (paymentLink && paymentLink !== activeLink) {
+        setActiveLink(paymentLink);
+    }
 
     if (paymentStatus === "PAID") {
         return (
@@ -27,28 +36,16 @@ export const SurgeButton = ({ invoiceId, paymentLink, paymentStatus, amount, cur
         );
     }
 
-    if (paymentLink) {
-        return (
-            <Button
-                variant="default"
-                className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white w-full sm:w-auto" // Coinbase Blue
-                onClick={() => window.open(paymentLink, "_blank")}
-            >
-                <Coins className="w-4 h-4 mr-2" />
-                Pay {amount} {currency || "USDC"}
-            </Button>
-        );
-    }
-
     const handleGenerate = async () => {
         setLoading(true);
         try {
-            const result = await generateSurgeLink(invoiceId); // Calls server action
-            if (result.success) {
-                toast.success("Payment link generated!");
-                // UI will update via server revalidation or router refresh
+            const result = await generateSurgeLink(invoiceId);
+            if (result.success && result.url) {
+                setActiveLink(result.url);
+                setModalOpen(true);
+                toast.success("Payment session initialized");
             } else {
-                toast.error("Failed to generate link.");
+                toast.error(result.error || "Failed to generate link.");
             }
         } catch (error) {
             toast.error("Something went wrong.");
@@ -58,14 +55,35 @@ export const SurgeButton = ({ invoiceId, paymentLink, paymentStatus, amount, cur
     };
 
     return (
-        <Button
-            onClick={handleGenerate}
-            disabled={loading}
-            variant="outline"
-            className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 w-full sm:w-auto"
-        >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Coins className="w-4 h-4 mr-2" />}
-            Enable Crypto Payments (Base)
-        </Button>
+        <>
+            <Button
+                onClick={() => activeLink ? setModalOpen(true) : handleGenerate()}
+                disabled={loading}
+                variant="default"
+                className={cn(
+                    "font-bold py-5 px-6 rounded-xl transition-all duration-300 shadow-lg",
+                    activeLink
+                        ? "bg-[#0052FF] hover:bg-[#0052FF]/90 text-white shadow-blue-600/20"
+                        : "bg-blue-600/10 border border-blue-500/50 text-blue-400 hover:bg-blue-600/20 shadow-none"
+                )}
+            >
+                {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                ) : (
+                    <Coins className="w-5 h-5 mr-2" />
+                )}
+                {activeLink ? `Pay ${amount} ${currency || "USDC"}` : "Pay Invoice (Surge/Crypto)"}
+            </Button>
+
+            {activeLink && (
+                <PaymentModal
+                    open={modalOpen}
+                    onOpenChange={setModalOpen}
+                    url={activeLink}
+                    amount={amount || "0"}
+                    currency={currency || "USDC"}
+                />
+            )}
+        </>
     );
 };

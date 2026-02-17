@@ -25,11 +25,12 @@ type ExpandableMenuItemProps = {
     isMobile?: boolean;
     /** Optional notification badge count */
     badge?: number;
+    isLocked?: boolean;
     onMouseEnter?: () => void;
     onMouseLeave?: () => void;
 };
 
-const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, isMobile = false, badge, onMouseEnter, onMouseLeave }: ExpandableMenuItemProps) => {
+const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, isMobile = false, badge, isLocked, onMouseEnter, onMouseLeave }: ExpandableMenuItemProps) => {
     const pathname = usePathname();
     const router = useRouter();
 
@@ -84,8 +85,12 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
 
     if (isMobile) {
         return (
-            <Link href={href} className="flex-shrink-0">
-                <div className={cn("relative flex items-center justify-center p-5 rounded-xl transition-all duration-200", isActive ? "bg-primary/20 text-primary" : "text-muted-foreground")}>
+            <Link href={isLocked ? "#" : href} onClick={isLocked ? (e) => e.preventDefault() : undefined} className="flex-shrink-0">
+                <div className={cn(
+                    "relative flex items-center justify-center p-5 rounded-xl transition-all duration-200",
+                    isActive ? "bg-primary/20 text-primary" : "text-muted-foreground",
+                    isLocked && "opacity-60 grayscale cursor-not-allowed"
+                )}>
                     <Icon className={cn("w-7 h-7", isActive && "text-primary")} />
                 </div>
             </Link>
@@ -102,15 +107,16 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
         >
             {/* Main Item */}
             <div
-                onClick={() => router.push(href)}
-                className="cursor-pointer"
+                onClick={() => !isLocked && router.push(href)}
+                className={cn(isLocked ? "cursor-not-allowed" : "cursor-pointer")}
             >
                 <div className={cn(
                     "relative w-full flex items-center rounded-xl transition-all duration-200 text-sm font-medium",
                     isOpen ? "py-1.5 px-2" : "flex-col py-2 px-1 justify-center gap-0.5",
                     isActive
                         ? "text-primary"
-                        : cn("text-muted-foreground", isOpen && "hover:text-foreground hover:bg-white/5")
+                        : cn("text-muted-foreground", isOpen && !isLocked && "hover:text-foreground hover:bg-white/5"),
+                    isLocked && "opacity-70"
                 )}>
                     {/* Active indicator */}
                     {isActive && (
@@ -135,7 +141,14 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                         }}
                         className="ml-2.5 flex-1 items-center justify-between overflow-hidden whitespace-nowrap z-10"
                     >
-                        <span className="truncate">{title}</span>
+                        <span className="truncate flex items-center gap-2">
+                            {title}
+                            {isLocked && (
+                                <span className="text-[10px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded flex items-center gap-1">
+                                    🔒 <span className="hidden xl:inline">Upgrade</span>
+                                </span>
+                            )}
+                        </span>
                         <div className="flex items-center gap-2 ml-auto shrink-0">
                             {!!badge && badge > 0 && (
                                 <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-0.5 rounded-full bg-primary/20 text-primary text-[9px] font-bold leading-none">
@@ -155,7 +168,7 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                             "text-[9px] uppercase tracking-wider mt-0.5 truncate max-w-[60px] text-center",
                             isActive ? "text-primary font-semibold" : "text-muted-foreground"
                         )}>
-                            {title.split(' ')[0]}
+                            {isLocked ? "🔒" : title.split(' ')[0]}
                         </span>
                     )}
                 </div>
