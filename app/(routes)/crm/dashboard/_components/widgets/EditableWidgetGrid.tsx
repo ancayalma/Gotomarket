@@ -427,13 +427,13 @@ export const EditableWidgetGrid = ({
                     />
                 );
             case "conversion_rate":
-                return <DashboardCard icon={ArrowUpRight} label="Conv. Rate" count={`${intelligenceStats?.conversionRate || 0}%`} description="Last 30 days" variant="success" />;
+                return <DashboardCard icon={ArrowUpRight} label="Conv. Rate" count={`${intelligenceStats?.conversionRate || 0}%`} description="Last 30 days" variant="success" hideIcon={true} />;
             case "avg_deal_size":
                 return <DashboardCard icon={Target} label="Actual Revenue" count={`$${(actualRevenue || 0).toLocaleString()}`} description="From paid invoices" variant="info" hideIcon={true} />;
             case "response_time":
-                return <DashboardCard icon={Timer} label="Resp. Time" count={`${intelligenceStats?.responseTime || 1.2}h`} description="Goal: < 2.0h" variant="warning" />;
+                return <DashboardCard icon={Timer} label="Resp. Time" count={`${intelligenceStats?.responseTime || 1.2}h`} description="Goal: < 2.0h" variant="warning" hideIcon={true} />;
             case "system_uptime":
-                return <DashboardCard icon={CloudLightning} label="Uptime" count="99.99%" description="All systems green" variant="success" />;
+                return <DashboardCard icon={CloudLightning} label="Uptime" count="99.99%" description="All systems green" variant="success" hideIcon={true} />;
 
             case "personal_pipeline":
                 return (

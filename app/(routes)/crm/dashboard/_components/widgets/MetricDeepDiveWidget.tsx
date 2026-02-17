@@ -77,6 +77,7 @@ interface MetricDeepDiveWidgetProps {
     deepDiveData: any[];
     deepDiveColumns: { header: string; key: string; render?: (val: any) => React.ReactNode }[];
     description?: string;
+    centered?: boolean;
 }
 
 export const MetricDeepDiveWidget = ({
@@ -89,7 +90,8 @@ export const MetricDeepDiveWidget = ({
     deepDiveTitle,
     deepDiveData,
     deepDiveColumns,
-    description
+    description,
+    centered = false
 }: MetricDeepDiveWidgetProps) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -109,7 +111,7 @@ export const MetricDeepDiveWidget = ({
                     )}
                 />
 
-                <div className="relative z-10 flex flex-col">
+                <div className={cn("relative z-10 flex flex-col", centered ? "items-center text-center gap-1" : "items-start pl-1")}>
                     <h3 className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground/90 mb-0.5">
                         {title}
                     </h3>
