@@ -79,8 +79,16 @@ export const columns: ColumnDef<Account>[] = [
 
     cell: ({ row }) => (
       <div className="w-[150px]">
-        {row.original.contacts?.map(
-          (contact: any) => contact.first_name + " " + contact.last_name
+        {row.original.contacts && row.original.contacts.length > 0 ? (
+          <div className="flex flex-col">
+            <span className="font-medium text-xs text-muted-foreground">{row.original.contacts.length} Contacts</span>
+            <span className="truncate text-xs">
+              {row.original.contacts[0].first_name} {row.original.contacts[0].last_name}
+              {row.original.contacts.length > 1 && ` +${row.original.contacts.length - 1}`}
+            </span>
+          </div>
+        ) : (
+          <span className="text-muted-foreground text-xs italic">No contacts</span>
         )}
       </div>
     ),

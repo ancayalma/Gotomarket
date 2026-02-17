@@ -51,12 +51,12 @@ export async function BasicView({ data }: OppsViewProps) {
               <CardDescription>ID:{data.id}</CardDescription>
             </div>
             <div>
-              <BasicViewActions module="accounts" entityId={data.id} />
+              <BasicViewActions module="accounts" entityId={data.id} initialData={data} />
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 w-full gap-5 ">
+          <div className="grid grid-cols-1 w-full gap-y-1">
             <div>
               <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
                 <CoinsIcon className="mt-px h-5 w-5" />
@@ -98,18 +98,15 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start justify-between space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-                <div className="flex mt-px gap-5">
-                  <EnvelopeClosedIcon className="mt-px h-5 w-5" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">Email</p>
-                    <EmailClickWrapper
-                      email={data.email}
-                      accountName={data.name}
-                    />
-                  </div>
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+                <EnvelopeClosedIcon className="mt-px h-5 w-5 shrink-0" />
+                <div className="space-y-1 min-w-0 flex-1">
+                  <p className="text-sm font-medium leading-none">Email</p>
+                  <EmailClickWrapper
+                    email={data.email}
+                    accountName={data.name}
+                  />
                 </div>
-                <p className="pr-20"></p>
               </div>
               <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
                 <Globe2 className="mt-px h-5 w-5" />
@@ -225,120 +222,6 @@ export async function BasicView({ data }: OppsViewProps) {
           </div>
         </CardContent>
       </Card>
-      <div className="grid grid-cols-2 gap-3 w-full">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Billing Address</CardTitle>
-          </CardHeader>
-          <CardContent className="gap-1">
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Billing street
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {data.billing_street}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Billing postal code
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {data.billing_postal_code}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">Billing city</p>
-                <p className="text-sm text-muted-foreground">
-                  {data.billing_city}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Billing state
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {data.billing_state}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Billing country
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {data.billing_country}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Shipping Address</CardTitle>
-          </CardHeader>
-          <CardContent className="gap-1">
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Shipping street
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {data.shipping_street}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Shipping postal code
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {data.shipping_postal_code}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Shipping city
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {data.shipping_city}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Shipping state
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {data.shipping_state}
-                </p>
-              </div>
-            </div>
-            <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Shipping country
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {data.shipping_country}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

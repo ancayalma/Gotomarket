@@ -23,10 +23,11 @@ export function EmailClickWrapper({ email, contactName, accountName }: EmailClic
             <button
                 type="button"
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-5 text-sm text-muted-foreground hover:text-primary transition-colors group cursor-pointer"
+                title={email || ""}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group cursor-pointer max-w-[180px] overflow-hidden"
             >
-                {email}
-                <EnvelopeClosedIcon className="group-hover:scale-110 transition-transform" />
+                <span className="truncate">{email}</span>
+                <EnvelopeClosedIcon className="group-hover:scale-110 transition-transform shrink-0" />
             </button>
 
             <EmailComposeSheet

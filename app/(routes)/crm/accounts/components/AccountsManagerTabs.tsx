@@ -107,6 +107,7 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
                         }
                         title="Create New Account"
                         description="Fill out the form below to add a new account."
+                        width="w-[800px]"
                     >
                         <div className="h-full overflow-y-auto p-1">
                             <NewAccountForm

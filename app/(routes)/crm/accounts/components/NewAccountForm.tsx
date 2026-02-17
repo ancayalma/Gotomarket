@@ -413,14 +413,10 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Industry</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value ?? undefined}>
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="Select industry" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {industries.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Input disabled={isLoading} placeholder="Software, Healthcare, etc." {...field} value={field.value ?? ""} className="h-8 shadow-none bg-background/50 border-white/10" />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />

@@ -14,14 +14,18 @@ import { MoreHorizontal, Edit, Trash, FileText } from "lucide-react";
 import { usePermission } from "@/components/providers/permissions-provider";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import RightViewModal from "@/components/modals/right-view-modal";
+import { UpdateAccountForm } from "../accounts/components/UpdateAccountForm";
 
 interface BasicViewActionsProps {
     module: "accounts" | "contacts" | "opportunities" | "leads";
     entityId: string;
+    initialData?: any;
 }
 
-export function BasicViewActions({ module, entityId }: BasicViewActionsProps) {
+export function BasicViewActions({ module, entityId, initialData }: BasicViewActionsProps) {
     const { hasAccess } = usePermission();
+    const [isEditOpen, setIsEditOpen] = React.useState(false);
     const router = useRouter();
 
     // Define permission keys based on module
@@ -60,32 +64,56 @@ export function BasicViewActions({ module, entityId }: BasicViewActionsProps) {
     if (!canEdit && !canDelete) return null;
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-                {canEdit && (
-                    <DropdownMenuItem onClick={handleEdit}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                    </DropdownMenuItem>
-                )}
+                    {canEdit && (
+                        <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                        </DropdownMenuItem>
+                    )}
 
-                {canEdit && canDelete && <DropdownMenuSeparator />}
+                    {canEdit && canDelete && <DropdownMenuSeparator />}
 
-                {canDelete && (
-                    <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
-                    </DropdownMenuItem>
-                )}
-            </DropdownMenuContent>
-        </DropdownMenu>
+                    {canDelete && (
+                        <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
+                        </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            {module === "accounts" && initialData && (
+                <RightViewModal
+                    open={isEditOpen}
+                    onOpenChange={setIsEditOpen}
+                    title="Edit Account"
+                    description="Update account details"
+                    width="w-[800px]"
+                    customTrigger
+                    label={<span className="hidden" />}
+                >
+                    <div className="h-full overflow-y-auto p-1">
+                        <UpdateAccountForm
+                            initialData={initialData}
+                            onFinish={() => {
+                                setIsEditOpen(false);
+                                router.refresh();
+                            }}
+                        />
+                    </div>
+                </RightViewModal>
+            )}
+        </>
     );
 }

@@ -10,14 +10,21 @@ export const getContactsByAccountId = async (accountId: string) => {
   if (!session || (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin)) return [];
 
   const whereClause: any = {
-    accountsIDs: accountId,
+    OR: [
+      { account: accountId },
+      { accountsIDs: accountId }
+    ],
   };
   if (!teamInfo?.isGlobalAdmin) {
     whereClause.team_id = teamInfo?.teamId;
   }
+  /* 
   if (teamInfo?.teamRole === "MEMBER" || teamInfo?.teamRole === "VIEWER") {
-    whereClause.assigned_to = teamInfo?.userId;
+    // If they can see the account, they should see its contacts?
+    // Start with strict: can only see contacts assigned to them?
+    // whereClause.assigned_to = teamInfo?.userId;
   }
+  */
 
   const data = await (prismadb.crm_Contacts as any).findMany({
     where: whereClause,
