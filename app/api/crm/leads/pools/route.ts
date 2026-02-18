@@ -59,7 +59,7 @@ export async function GET() {
 
     if (isGlobalAdmin) {
       // All pools
-      pools = await (prismadbCrm as any).crm_Lead_Pools.findMany({
+      pools = await (prismadb.crm_Lead_Pools as any).findMany({
         orderBy: { createdAt: "desc" },
         select: poolSelect,
       });
@@ -68,7 +68,7 @@ export async function GET() {
       console.log("[LEADS_POOLS_GET] Member query - fetching pools for user:", session.user.id);
 
       // Query 1: Pools created by member
-      const createdPools = await (prismadbCrm as any).crm_Lead_Pools.findMany({
+      const createdPools = await (prismadb.crm_Lead_Pools as any).findMany({
         where: { user: session.user.id },
         orderBy: { createdAt: "desc" },
         select: poolSelect,
@@ -76,7 +76,7 @@ export async function GET() {
       console.log("[LEADS_POOLS_GET] Created pools count:", createdPools.length);
 
       // Query 2: Pools where member is assigned
-      const assignedPools = await (prismadbCrm as any).crm_Lead_Pools.findMany({
+      const assignedPools = await (prismadb.crm_Lead_Pools as any).findMany({
         where: { assigned_members: { has: session.user.id } },
         orderBy: { createdAt: "desc" },
         select: poolSelect,
@@ -94,7 +94,7 @@ export async function GET() {
     } else {
       // Admins/Team Owners: Team + Own
       if (teamId) {
-        pools = await (prismadbCrm as any).crm_Lead_Pools.findMany({
+        pools = await (prismadb.crm_Lead_Pools as any).findMany({
           where: {
             OR: [
               { team_id: teamId },
@@ -105,7 +105,7 @@ export async function GET() {
           select: poolSelect,
         });
       } else {
-        pools = await (prismadbCrm as any).crm_Lead_Pools.findMany({
+        pools = await (prismadb.crm_Lead_Pools as any).findMany({
           where: { user: session.user.id },
           orderBy: { createdAt: "desc" },
           select: poolSelect,
@@ -158,7 +158,7 @@ export async function DELETE(req: Request) {
     }
 
     // Verify ownership or admin
-    const pool = await (prismadbCrm as any).crm_Lead_Pools.findUnique({
+    const pool = await (prismadb.crm_Lead_Pools as any).findUnique({
       where: { id: poolId },
       select: { user: true, team_id: true }
     });
@@ -184,10 +184,10 @@ export async function DELETE(req: Request) {
     }
 
     // Delete associated data
-    await (prismadbCrm as any).crm_Contact_Candidates.deleteMany({
+    await (prismadb.crm_Contact_Candidates as any).deleteMany({
       where: {
         leadCandidate: {
-          in: await (prismadbCrm as any).crm_Lead_Candidates.findMany({
+          in: await (prismadb.crm_Lead_Candidates as any).findMany({
             where: { pool: poolId },
             select: { id: true }
           }).then((candidates: any[]) => candidates.map(c => c.id))
@@ -195,14 +195,14 @@ export async function DELETE(req: Request) {
       }
     });
 
-    await (prismadbCrm as any).crm_Lead_Candidates.deleteMany({
+    await (prismadb.crm_Lead_Candidates as any).deleteMany({
       where: { pool: poolId }
     });
 
-    await (prismadbCrm as any).crm_Lead_Source_Events.deleteMany({
+    await (prismadb.crm_Lead_Source_Events as any).deleteMany({
       where: {
         job: {
-          in: await (prismadbCrm as any).crm_Lead_Gen_Jobs.findMany({
+          in: await (prismadb.crm_Lead_Gen_Jobs as any).findMany({
             where: { pool: poolId },
             select: { id: true }
           }).then((jobs: any[]) => jobs.map(j => j.id))
@@ -210,11 +210,11 @@ export async function DELETE(req: Request) {
       }
     });
 
-    await (prismadbCrm as any).crm_Lead_Gen_Jobs.deleteMany({
+    await (prismadb.crm_Lead_Gen_Jobs as any).deleteMany({
       where: { pool: poolId }
     });
 
-    await (prismadbCrm as any).crm_Lead_Pools.delete({
+    await (prismadb.crm_Lead_Pools as any).delete({
       where: { id: poolId }
     });
 

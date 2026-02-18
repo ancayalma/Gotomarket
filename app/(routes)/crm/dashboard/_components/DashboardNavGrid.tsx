@@ -79,7 +79,7 @@ const navItems = [
     {
         title: "Lists",
         description: "Organize record segments",
-        href: "/crm/leads?tab=pools",
+        href: "/lists",
         icon: LayoutList,
         color: "from-indigo-500/20 to-violet-500/20",
         iconColor: "text-indigo-400",

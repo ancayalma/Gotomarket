@@ -17,6 +17,7 @@ export type DashboardCounts = {
   revenue: number; // Projected Revenue (All Invoices)
   actualRevenue: number; // Actual Revenue (Paid Invoices)
   storageMB: number; // total storage in MB (rounded to 2 decimals)
+  leadPools: number;
 };
 
 export const getSummaryCounts = async (from?: Date, to?: Date): Promise<DashboardCounts> => {
@@ -109,6 +110,15 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     return { ...base, ...dateQuery };
   };
 
+  const getLeadPoolFilter = () => {
+    const base = isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
+    // For members, maybe restrict? For now, team-wide.
+    return {
+      ...base,
+      status: "ACTIVE"
+    };
+  };
+
   const [
     leads,
     tasks,
@@ -124,6 +134,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     crmRevenueAgg,
     projectRevenueAgg,
     storageAgg,
+    leadPools,
   ] = await Promise.all([
     prismadb.crm_Leads.count({ where: getFilter("assigned_to") }),
     prismadb.tasks.count({ where: getFilter("user") }),
@@ -158,6 +169,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
       _sum: { valueEstimate: true }
     }),
     prismadb.documents.aggregate({ where: getDocumentFilter(), _sum: { size: true } }),
+    prismadb.crm_Lead_Pools.count({ where: getLeadPoolFilter() }),
   ]);
 
   // Combine opportunities from both CRM and Project systems
@@ -205,5 +217,6 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     revenue, // Projected
     actualRevenue, // Actual
     storageMB,
+    leadPools,
   };
 };

@@ -18,6 +18,9 @@ const AccountsPage = async ({ searchParams }: AccountsPageProps) => {
   const sp = searchParams ? await searchParams : undefined;
   const tabParam = sp?.tab;
   let tab = typeof tabParam === "string" ? tabParam : Array.isArray(tabParam) ? tabParam[0] ?? "accounts" : "accounts";
+  if (tab === "pools") {
+    return redirect("/lists");
+  }
 
   const session = await getServerSession(authOptions);
   let isMember = false;

@@ -11,14 +11,14 @@ export const accountSchema = z.object({
   contacts: z
     .array(
       z.object({
-        first_name: z.string().optional(),
+        first_name: z.string().nullable().optional(),
         last_name: z.string(),
       })
     )
     .optional(),
-  email: z.string().optional(),
-  status: z.string().optional(),
-  type: z.string().optional(),
+  email: z.string().nullable().optional(),
+  status: z.string().nullable().optional(),
+  type: z.string().nullable().optional(),
 });
 
 export type Account = z.infer<typeof accountSchema>;

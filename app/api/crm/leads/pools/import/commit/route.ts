@@ -1,21 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
 import { z } from "zod";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
-
-type CandidateInput = {
-  dedupeKey: string;
-  domain?: string;
-  companyName?: string;
-  homepageUrl?: string;
-  description?: string;
-  industry?: string;
-  techStack?: string[];
-  existingId?: string | null;
-};
+import phoneNormalizer from "@/lib/scraper/quality/phone-normalizer";
 
 type ContactInput = {
   dedupeKey: string;
@@ -28,107 +17,56 @@ type ContactInput = {
   existingId?: string | null;
 };
 
-const bodySchema = z
-  .object({
-    poolId: z.string().optional(),
-    newPool: z
-      .object({
-        name: z.string().min(1),
-        description: z.string().optional(),
-      })
-      .optional(),
-    creates: z.object({
-      candidates: z.array(
-        z.object({
-          dedupeKey: z.string().min(1),
-          domain: z.string().optional(),
-          companyName: z.string().optional(),
-          homepageUrl: z.string().optional(),
-          description: z.string().optional(),
-          industry: z.string().optional(),
-          techStack: z.array(z.string()).optional(),
-          existingId: z.string().nullable().optional(),
-        })
-      ),
-      contacts: z.array(
-        z.object({
-          dedupeKey: z.string().min(1),
-          candidateKey: z.string().optional(),
-          fullName: z.string().optional(),
-          title: z.string().optional(),
-          email: z.string().optional(),
-          phone: z.string().optional(),
-          linkedinUrl: z.string().optional(),
-          existingId: z.string().nullable().optional(),
-        })
-      ),
-    }),
-    updates: z.object({
-      candidates: z.array(
-        z.object({
-          dedupeKey: z.string().min(1),
-          domain: z.string().optional(),
-          companyName: z.string().optional(),
-          homepageUrl: z.string().optional(),
-          description: z.string().optional(),
-          industry: z.string().optional(),
-          techStack: z.array(z.string()).optional(),
-          existingId: z.string().nullable().optional(),
-        })
-      ),
-      contacts: z.array(
-        z.object({
-          dedupeKey: z.string().min(1),
-          candidateKey: z.string().optional(),
-          fullName: z.string().optional(),
-          title: z.string().optional(),
-          email: z.string().optional(),
-          phone: z.string().optional(),
-          linkedinUrl: z.string().optional(),
-          existingId: z.string().nullable().optional(),
-        })
-      ),
-    }),
-  })
-  .refine((d) => !!d.poolId || !!d.newPool, {
-    message: "Provide either poolId or newPool",
-  });
+const commitSchema = z.object({
+  poolName: z.string().min(1).optional(),
+  poolDescription: z.string().optional(),
+  poolId: z.string().optional(),
+  accounts: z.array(z.object({
+    name: z.string().min(1),
+    type: z.string().optional(),
+    location: z.string().optional(),
+    domain: z.string().optional(),
+    email: z.string().optional(),
+  })).optional(),
+  contacts: z.array(z.object({
+    fullName: z.string().min(1),
+    title: z.string().optional(),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    accountName: z.string().optional(),
+  })).optional(),
+  // Compatibility with old Leads import structure if needed
+  creates: z.object({
+    candidates: z.array(z.any()),
+    contacts: z.array(z.any()),
+  }).optional(),
+  updates: z.object({
+    candidates: z.array(z.any()),
+    contacts: z.array(z.any()),
+  }).optional(),
+});
 
-async function ensureCandidateId(poolId: string, key?: string, contact?: ContactInput): Promise<string> {
-  // Prefer provided candidateKey
+async function ensureCandidateId(poolId: string, key?: string, contact?: any): Promise<string> {
   let dedupeKey = (key || "").trim().toLowerCase();
-
-  // Fallback: email domain
   if (!dedupeKey && contact?.email) {
     const parts = contact.email.toLowerCase().split("@");
-    if (parts.length === 2) {
-      dedupeKey = parts[1];
-    }
+    if (parts.length === 2) dedupeKey = parts[1];
   }
+  if (!dedupeKey) dedupeKey = `import:${contact?.fullName || 'unknown'}`;
 
-  // Final fallback: synthesize a placeholder key
-  if (!dedupeKey) {
-    dedupeKey = `import:${contact?.dedupeKey}`;
-  }
-
-  // Try to find existing candidate
-  const existing = await (prismadbCrm as any).crm_Lead_Candidates.findFirst({
+  const existing = await (prismadb.crm_Lead_Candidates as any).findFirst({
     where: { pool: poolId, dedupeKey },
     select: { id: true },
   });
   if (existing?.id) return existing.id;
 
-  // Create a minimal stub candidate so the contact can link
-  const created = await (prismadbCrm as any).crm_Lead_Candidates.create({
+  const created = await (prismadb.crm_Lead_Candidates as any).create({
     data: {
       pool: poolId,
       dedupeKey,
       domain: dedupeKey.includes(".") ? dedupeKey : undefined,
-      companyName: undefined,
-      homepageUrl: undefined,
       description: "Auto-created stub from import",
-      industry: undefined,
-      techStack: undefined,
+      v: 0,
     },
     select: { id: true },
   });
@@ -137,256 +75,186 @@ async function ensureCandidateId(poolId: string, key?: string, contact?: Contact
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
+  if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
   try {
     const json = await req.json();
-    const parsed = bodySchema.safeParse(json);
-    if (!parsed.success) {
-      return new NextResponse(parsed.error.message, { status: 400 });
-    }
-    const { poolId, newPool, creates, updates } = parsed.data;
+    const parsed = commitSchema.safeParse(json);
+    if (!parsed.success) return new NextResponse(parsed.error.message, { status: 400 });
 
-    // If creating a new pool, check if user is admin
-    if (newPool && !poolId) {
-      const user = await prismadb.users.findUnique({
-        where: { id: session.user.id },
-        select: {
-          is_admin: true,
-          is_account_admin: true,
-          assigned_role: { select: { name: true } },
-        },
-      });
+    const { poolName, poolDescription, poolId, accounts, contacts } = parsed.data;
+    const teamInfo = await getCurrentUserTeamId();
+    const teamId = teamInfo?.teamId;
 
-      const isSuperAdmin = user?.assigned_role?.name === "SuperAdmin";
-      const isAdmin = user?.is_admin || user?.is_account_admin;
-
-      if (!isSuperAdmin && !isAdmin) {
-        return NextResponse.json(
-          { error: "Only admins can create lead pools" },
-          { status: 403 }
-        );
-      }
-    }
-
-    // Resolve target pool: verify ownership if existing, or create new pool
     let targetPoolId: string;
     if (poolId) {
-      const pool = await (prismadbCrm as any).crm_Lead_Pools.findFirst({
-        where: { id: poolId, user: session.user.id },
-        select: { id: true },
-      });
-      if (!pool) {
-        return new NextResponse("Lead Pool not found", { status: 404 });
-      }
-      targetPoolId = pool.id;
+      targetPoolId = poolId;
     } else {
-      const teamInfo = await getCurrentUserTeamId();
-      const teamId = teamInfo?.teamId;
-
-      const created = await (prismadbCrm as any).crm_Lead_Pools.create({
+      const created = await (prismadb.crm_Lead_Pools as any).create({
         data: {
-          name: newPool!.name,
-          description: newPool?.description,
+          name: poolName || "New Import",
+          description: poolDescription,
           user: session.user.id,
-          team_id: teamId, // Assign team
+          team_id: teamId,
           status: "ACTIVE",
+          v: 0,
         },
         select: { id: true },
       });
       targetPoolId = created.id;
     }
 
-    let createdCandidates = 0;
-    let updatedCandidates = 0;
-    let createdContacts = 0;
-    let updatedContacts = 0;
+    let createdAccountsCount = 0;
+    let updatedAccountsCount = 0;
+    let createdContactsCount = 0;
+    let updatedContactsCount = 0;
 
-    // Apply Candidate Creates
-    for (const c of creates.candidates as CandidateInput[]) {
-      const existing = await (prismadbCrm as any).crm_Lead_Candidates.findFirst({
-        where: { pool: targetPoolId, dedupeKey: c.dedupeKey.toLowerCase() },
-        select: { id: true },
-      });
-      if (existing?.id) {
-        // Treat as update to avoid duplicate
-        await (prismadbCrm as any).crm_Lead_Candidates.update({
-          where: { id: existing.id },
-          data: {
-            domain: c.domain,
-            companyName: c.companyName,
-            homepageUrl: c.homepageUrl,
-            description: c.description,
-            industry: c.industry,
-            techStack: c.techStack,
-          },
-        });
-        updatedCandidates++;
-      } else {
-        await (prismadbCrm as any).crm_Lead_Candidates.create({
-          data: {
-            pool: targetPoolId,
-            dedupeKey: c.dedupeKey.toLowerCase(),
-            domain: c.domain,
-            companyName: c.companyName,
-            homepageUrl: c.homepageUrl,
-            description: c.description,
-            industry: c.industry,
-            techStack: c.techStack,
-          },
-        });
-        createdCandidates++;
-      }
-    }
+    const accountMap = new Map<string, string>();
 
-    // Apply Candidate Updates
-    for (const c of updates.candidates as CandidateInput[]) {
-      let targetId = c.existingId || null;
-      if (!targetId) {
-        const existing = await (prismadbCrm as any).crm_Lead_Candidates.findFirst({
-          where: { pool: targetPoolId, dedupeKey: c.dedupeKey.toLowerCase() },
-          select: { id: true },
-        });
-        targetId = existing?.id ?? null;
-      }
-      if (targetId) {
-        await (prismadbCrm as any).crm_Lead_Candidates.update({
-          where: { id: targetId },
-          data: {
-            domain: c.domain,
-            companyName: c.companyName,
-            homepageUrl: c.homepageUrl,
-            description: c.description,
-            industry: c.industry,
-            techStack: c.techStack,
-          },
-        });
-        updatedCandidates++;
-      } else {
-        // No existing found; create instead
-        await (prismadbCrm as any).crm_Lead_Candidates.create({
-          data: {
-            pool: targetPoolId,
-            dedupeKey: c.dedupeKey.toLowerCase(),
-            domain: c.domain,
-            companyName: c.companyName,
-            homepageUrl: c.homepageUrl,
-            description: c.description,
-            industry: c.industry,
-            techStack: c.techStack,
-          },
-        });
-        createdCandidates++;
-      }
-    }
+    // Process Accounts
+    if (accounts) {
+      for (const acc of accounts) {
+        const name = acc.name.trim();
+        const domain = acc.domain?.toLowerCase().trim();
 
-    // Apply Contact Creates
-    for (const c of creates.contacts as ContactInput[]) {
-      const candidateId = await ensureCandidateId(targetPoolId, c.candidateKey, c);
-
-      // Check for existing by dedupeKey (and candidate if present)
-      const existing = await (prismadbCrm as any).crm_Contact_Candidates.findFirst({
-        where: {
-          dedupeKey: c.dedupeKey.toLowerCase(),
-          leadCandidate: candidateId,
-        },
-        select: { id: true },
-      });
-
-      if (existing?.id) {
-        await (prismadbCrm as any).crm_Contact_Candidates.update({
-          where: { id: existing.id },
-          data: {
-            fullName: c.fullName,
-            title: c.title,
-            email: c.email?.toLowerCase(),
-            phone: c.phone,
-            linkedinUrl: c.linkedinUrl,
-          },
-        });
-        updatedContacts++;
-      } else {
-        await (prismadbCrm as any).crm_Contact_Candidates.create({
-          data: {
-            leadCandidate: candidateId,
-            dedupeKey: c.dedupeKey.toLowerCase(),
-            fullName: c.fullName,
-            title: c.title,
-            email: c.email?.toLowerCase(),
-            phone: c.phone,
-            linkedinUrl: c.linkedinUrl,
-          },
-        });
-        createdContacts++;
-      }
-    }
-
-    // Apply Contact Updates
-    for (const c of updates.contacts as ContactInput[]) {
-      let targetId = c.existingId || null;
-      let candidateId: string | null = null;
-
-      if (c.candidateKey) {
-        const cand = await (prismadbCrm as any).crm_Lead_Candidates.findFirst({
-          where: { pool: targetPoolId, dedupeKey: c.candidateKey.toLowerCase() },
-          select: { id: true },
-        });
-        candidateId = cand?.id ?? null;
-      }
-
-      if (!targetId) {
-        const existing = await (prismadbCrm as any).crm_Contact_Candidates.findFirst({
+        let existingAccount = await (prismadb.crm_Accounts as any).findFirst({
           where: {
-            dedupeKey: c.dedupeKey.toLowerCase(),
-            ...(candidateId ? { leadCandidate: candidateId } : {}),
-          },
-          select: { id: true },
+            team_id: teamId,
+            OR: [
+              { name: { equals: name, mode: "insensitive" } },
+              ...(domain ? [{ website: { contains: domain, mode: "insensitive" } }] : [])
+            ]
+          }
         });
-        targetId = existing?.id ?? null;
-      }
 
-      if (targetId) {
-        await (prismadbCrm as any).crm_Contact_Candidates.update({
-          where: { id: targetId },
+        let accountId: string;
+        if (existingAccount) {
+          await (prismadb.crm_Accounts as any).update({
+            where: { id: existingAccount.id },
+            data: {
+              type: acc.type || existingAccount.type,
+              billing_city: acc.location || existingAccount.billing_city,
+              website: acc.domain || existingAccount.website,
+              email: acc.email || existingAccount.email,
+              updatedBy: session.user.id,
+            }
+          });
+          accountId = existingAccount.id;
+          updatedAccountsCount++;
+        } else {
+          const created = await (prismadb.crm_Accounts as any).create({
+            data: {
+              name,
+              type: acc.type || "Analyst",
+              billing_city: acc.location,
+              website: acc.domain,
+              email: acc.email,
+              status: "Active",
+              v: 0,
+              createdBy: session.user.id,
+              team_id: teamId,
+            }
+          });
+          accountId = created.id;
+          createdAccountsCount++;
+        }
+        accountMap.set(name.toLowerCase(), accountId);
+
+        await (prismadb.crm_Lead_Candidates as any).create({
           data: {
-            fullName: c.fullName,
-            title: c.title,
-            email: c.email?.toLowerCase(),
-            phone: c.phone,
-            linkedinUrl: c.linkedinUrl,
-          },
+            pool: targetPoolId,
+            companyName: name,
+            domain: domain,
+            industry: acc.type,
+            accountsIDs: accountId,
+            dedupeKey: domain || name.toLowerCase(),
+            v: 0
+          }
         });
-        updatedContacts++;
-      } else {
-        // No existing found; create instead (ensuring a candidate link)
-        const ensuredCandidateId = await ensureCandidateId(targetPoolId, c.candidateKey, c);
-        await (prismadbCrm as any).crm_Contact_Candidates.create({
-          data: {
-            leadCandidate: ensuredCandidateId,
-            dedupeKey: c.dedupeKey.toLowerCase(),
-            fullName: c.fullName,
-            title: c.title,
-            email: c.email?.toLowerCase(),
-            phone: c.phone,
-            linkedinUrl: c.linkedinUrl,
-          },
-        });
-        createdContacts++;
       }
     }
 
-    return NextResponse.json(
-      {
-        poolId: targetPoolId,
-        created: { candidates: createdCandidates, contacts: createdContacts },
-        updated: { candidates: updatedCandidates, contacts: updatedContacts },
-      },
-      { status: 200 }
-    );
+    // Process Contacts
+    if (contacts) {
+      for (const con of contacts) {
+        const email = con.email?.toLowerCase().trim();
+        const phoneRaw = con.phone?.trim();
+        const { normalized: phone } = phoneNormalizer.normalizePhone(phoneRaw, { preferUS: true });
+
+        const linkedAccountId = con.accountName ? accountMap.get(con.accountName.toLowerCase()) : null;
+
+        let existingContact = await (prismadb.crm_Contacts as any).findFirst({
+          where: {
+            team_id: teamId,
+            OR: [
+              ...(email ? [{ email: { equals: email, mode: "insensitive" } }] : []),
+              ...(phone ? [{ mobile_phone: phone }] : [])
+            ]
+          }
+        });
+
+        if (existingContact) {
+          await (prismadb.crm_Contacts as any).update({
+            where: { id: existingContact.id },
+            data: {
+              position: con.title || existingContact.position,
+              accountsIDs: linkedAccountId || existingContact.accountsIDs,
+              updatedBy: session.user.id,
+            }
+          });
+          updatedContactsCount++;
+        } else {
+          const names = con.fullName.split(" ");
+          const firstName = names[0];
+          const lastName = names.slice(1).join(" ") || "Contact";
+
+          await (prismadb.crm_Contacts as any).create({
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+              email: email,
+              mobile_phone: phone,
+              position: con.title,
+              accountsIDs: linkedAccountId,
+              createdBy: session.user.id,
+              team_id: teamId,
+              v: 0
+            }
+          });
+          createdContactsCount++;
+        }
+
+        if (con.accountName) {
+          const leadCand = await (prismadb.crm_Lead_Candidates as any).findFirst({
+            where: { pool: targetPoolId, companyName: con.accountName }
+          });
+          if (leadCand) {
+            await (prismadb.crm_Contact_Candidates as any).create({
+              data: {
+                leadCandidate: leadCand.id,
+                fullName: con.fullName,
+                title: con.title,
+                email: email,
+                phone: phone,
+                dedupeKey: email || con.fullName.toLowerCase(),
+                v: 0
+              }
+            });
+          }
+        }
+      }
+    }
+
+    return NextResponse.json({
+      poolId: targetPoolId,
+      stats: {
+        accounts: { created: createdAccountsCount, updated: updatedAccountsCount },
+        contacts: { created: createdContactsCount, updated: updatedContactsCount }
+      }
+    });
+
   } catch (error: any) {
-    console.error("[LEADS_POOLS_IMPORT_COMMIT]", error);
-    return new NextResponse(error?.message || "Failed to commit import", { status: 500 });
+    console.error("[IMPORT_COMMIT]", error);
+    return new NextResponse(error.message || "Failed to commit import", { status: 500 });
   }
 }

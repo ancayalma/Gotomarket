@@ -197,7 +197,7 @@ export default function LeadGenWizardPage() {
             } catch (err) { console.error(err); }
 
             toast.success("AI Agent started successfully!");
-            router.push("/crm/accounts?tab=pools");
+            router.push("/lists");
             return;
           }
         } catch (parseErr) {

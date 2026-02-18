@@ -1,5 +1,6 @@
 import Container from "@/app/(routes)/components/ui/Container";
-
+import React from "react";
+import { Separator } from "@/components/ui/separator";
 import { BasicView } from "./components/BasicView";
 
 import { getContact } from "@/actions/crm/get-contact";
@@ -13,6 +14,7 @@ import OpportunitiesView from "../../components/OpportunitiesView";
 import DocumentsView from "../../components/DocumentsView";
 import { LeadTimeline } from "../../leads/[leadId]/components/LeadTimeline";
 import { History, Info } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -66,11 +68,12 @@ const ContactViewPage = async (props: any) => {
 
   return (
     <Container
-      title={`Contact detail view: ${contact?.first_name} ${contact?.last_name}`}
-      description={"Everything you need to know about sales potential"}
+      title={`Contact: ${contact?.first_name} ${contact?.last_name}`}
+      description={"Everything you need to know about this contact"}
     >
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
-        <div className="xl:col-span-5 space-y-6">
+        {/* Left Sidebar: Contact Info */}
+        <div className="xl:col-span-4 space-y-6">
           <div className="flex items-center gap-2 mb-2">
             <div className="h-6 w-6 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20 text-orange-400">
               <Info size={14} />
@@ -78,24 +81,81 @@ const ContactViewPage = async (props: any) => {
             <h3 className="text-xs font-bold uppercase tracking-widest text-white/40">Contact Information</h3>
           </div>
           {hasAccess('contacts.detail.info') && <BasicView data={contact} />}
-
-          {hasAccess('accounts.view') && <AccountsView data={accounts} crmData={crmData} />}
-          {hasAccess('contacts.detail.opportunities') && <OpportunitiesView data={opportunities} crmData={crmData} />}
-          {hasAccess('contacts.detail.documents') && <DocumentsView data={documents} />}
         </div>
 
-        <div className="xl:col-span-7 space-y-6">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-6 w-6 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
-              <History size={14} />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/40">Communication History</h3>
-          </div>
-          <LeadTimeline
-            contactId={contactId}
-            leadEmail={contact?.email || ""}
-            leadName={`${contact?.first_name} ${contact?.last_name}`}
-          />
+        {/* Right Main Content: Tabs */}
+        <div className="xl:col-span-8">
+          <Tabs defaultValue="activity" className="w-full">
+            <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent space-x-6 mb-6">
+              <TabsTrigger
+                value="activity"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+              >
+                Activity
+              </TabsTrigger>
+              {hasAccess('accounts.view') && (
+                <TabsTrigger
+                  value="accounts"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+                >
+                  Accounts ({accounts?.length || 0})
+                </TabsTrigger>
+              )}
+              {hasAccess('contacts.detail.opportunities') && (
+                <TabsTrigger
+                  value="opportunities"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+                >
+                  Opportunities ({opportunities?.length || 0})
+                </TabsTrigger>
+              )}
+              {hasAccess('contacts.detail.documents') && (
+                <TabsTrigger
+                  value="documents"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+                >
+                  Documents ({documents?.length || 0})
+                </TabsTrigger>
+              )}
+            </TabsList>
+
+            <TabsContent value="activity" className="space-y-6 animate-in fade-in-50 duration-500">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-6 w-6 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+                  <History size={14} />
+                </div>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-white/40">Communication History</h3>
+              </div>
+              <LeadTimeline
+                contactId={contactId}
+                leadEmail={contact?.email || ""}
+                leadName={`${contact?.first_name} ${contact?.last_name}`}
+              />
+            </TabsContent>
+
+            {hasAccess('accounts.view') && (
+              <TabsContent value="accounts" className="animate-in fade-in-50 duration-500">
+                <AccountsView data={accounts} crmData={crmData} />
+              </TabsContent>
+            )}
+
+            {hasAccess('contacts.detail.opportunities') && (
+              <TabsContent value="opportunities" className="animate-in fade-in-50 duration-500">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Opportunities
+                  </h3>
+                  <OpportunitiesView data={opportunities} crmData={crmData} />
+                </div>
+              </TabsContent>
+            )}
+
+            {hasAccess('contacts.detail.documents') && (
+              <TabsContent value="documents" className="animate-in fade-in-50 duration-500">
+                <DocumentsView data={documents} />
+              </TabsContent>
+            )}
+          </Tabs>
         </div>
       </div>
     </Container>

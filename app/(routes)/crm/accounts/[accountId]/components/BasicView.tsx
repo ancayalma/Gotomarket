@@ -148,7 +148,7 @@ export async function BasicView({ data }: OppsViewProps) {
                     Assigned to
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {data.assigned_to_user.name}
+                    {data.assigned_to_user?.name || "Unassigned"}
                   </p>
                 </div>
               </div>

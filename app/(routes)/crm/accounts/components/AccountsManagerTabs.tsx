@@ -10,6 +10,7 @@ import { NewAccountForm } from "./NewAccountForm"; // Assuming this is exported 
 import { LayoutList, Wand2, Settings, Plus, Building2, List } from "lucide-react";
 import DashboardCard from "../../dashboard/_components/DashboardCard";
 import AccountLists from "./AccountLists";
+import { useRouter } from "next/navigation";
 
 type Props = {
     accounts: any[];
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "accounts", isMember = false }: Props) {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState(defaultTab);
 
     // Define Cards
@@ -93,7 +95,13 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
                             description={card.description}
                             variant={variant}
                             hideIcon={true}
-                            onClick={() => setActiveTab(card.id as any)}
+                            onClick={() => {
+                                if (card.id === "pools") {
+                                    router.push("/lists");
+                                } else {
+                                    setActiveTab(card.id as any);
+                                }
+                            }}
                             className={activeTab === card.id ? "ring-2 ring-primary border-primary/50 bg-accent/10" : ""}
                             labelClassName="text-sm md:text-base"
                             descriptionClassName="text-[10px] md:text-xs"
@@ -140,9 +148,6 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
                     <>
                         <TabsContent value="wizard" className="flex-1 mt-0">
                             <LeadGenWizardPage />
-                        </TabsContent>
-                        <TabsContent value="pools" className="flex-1 mt-0">
-                            <AccountLists />
                         </TabsContent>
                         <TabsContent value="settings" className="flex-1 mt-0">
                             <SettingsTabs />
