@@ -148,6 +148,7 @@ export function ThemeEditor({
     }, [colors, radius, motion]);
 
     const updateColor = (key: keyof typeof colors, value: string) => {
+        if (colors[key] === value) return;
         setColors((prev) => ({ ...prev, [key]: value }));
     };
 

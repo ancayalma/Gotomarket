@@ -200,7 +200,11 @@ export function ColorPicker({ label, description, value, onChange }: ColorPicker
 
     // Sync if external value changes (e.g. preset loaded)
     useEffect(() => {
-        setHex(hslToHex(value));
+        const newHex = hslToHex(value).toLowerCase();
+        setHex(prev => {
+            if (prev.toLowerCase() === newHex) return prev;
+            return newHex;
+        });
     }, [value]);
 
     // Load custom swatches from local storage on mount
@@ -221,8 +225,13 @@ export function ColorPicker({ label, description, value, onChange }: ColorPicker
     }, []);
 
     const handleColorChange = (newHex: string) => {
-        setHex(newHex);
-        onChange(hexToHsl(newHex));
+        const normalizedHex = newHex.toLowerCase();
+        setHex(normalizedHex);
+
+        const newHsl = hexToHsl(normalizedHex);
+        if (newHsl !== value) {
+            onChange(newHsl);
+        }
     };
 
     const copyToClipboard = () => {
