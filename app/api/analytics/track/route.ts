@@ -19,15 +19,15 @@ export async function POST(req: Request) {
         const city = req.headers.get('x-vercel-ip-city') || req.headers.get('cf-ipcity') || null;
         const country = req.headers.get('x-vercel-ip-country') || req.headers.get('cf-ipcountry') || null;
 
-        // @ts-ignore
+        // Store the page view
         await prismadb.pageView.create({
             data: {
-                path,
-                userAgent,
-                ipHash,
-                city,
-                country
-            }
+                path: String(path),
+                userAgent: userAgent ? String(userAgent) : null,
+                ipHash: String(ipHash),
+                city: city ? String(city) : null,
+                country: country ? String(country) : null,
+            },
         });
 
         return NextResponse.json({ success: true });

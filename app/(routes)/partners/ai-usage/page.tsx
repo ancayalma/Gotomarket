@@ -9,18 +9,38 @@ import { ModelDistributionChart } from "@/app/(routes)/partners/_components/Mode
 import Container from "@/app/(routes)/components/ui/Container";
 import { AiUsageCharts } from "@/app/(routes)/partners/_components/AiUsageCharts";
 import { AiUsageReportTable } from "@/app/(routes)/partners/_components/AiUsageReportTable";
+import { AiUsageTrends } from "@/app/(routes)/partners/_components/AiUsageTrends";
+import { DateRangeSelector } from "@/app/(routes)/partners/_components/DateRangeSelector";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Calendar } from "lucide-react";
 import Link from "next/link";
+import { startOfDay, endOfDay, parseISO, subDays } from "date-fns";
 
 // Type wrapper for prisma-chat
 const db: any = prismadbChat;
 
 export const dynamic = 'force-dynamic';
 
-export default async function PartnersAiUsagePage() {
+interface PageProps {
+    searchParams: {
+        from?: string;
+        to?: string;
+    }
+}
+
+export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return redirect("/");
+
+    const fromDate = searchParams.from ? startOfDay(parseISO(searchParams.from)) : startOfDay(subDays(new Date(), 30));
+    const toDate = searchParams.to ? endOfDay(parseISO(searchParams.to)) : endOfDay(new Date());
+
+    const dateFilter = {
+        createdAt: {
+            gte: fromDate,
+            lte: toDate
+        }
+    };
 
     // 1. Check Platform Admin Permissions
     const currentUser = await prismadb.users.findUnique({
@@ -42,11 +62,9 @@ export default async function PartnersAiUsagePage() {
         );
     }
 
-    // 2. Fetch Chat Messages with Usage
+    // 2. Fetch Chat Messages (Include all for request count, even if tokens are zero/null)
     const messagesWithUsage = await db.chat_Messages.findMany({
-        where: {
-            tokenUsage: { not: null }
-        },
+        where: dateFilter,
         select: {
             session: true,
             model: true,
@@ -57,6 +75,7 @@ export default async function PartnersAiUsagePage() {
 
     // 2b. NEW: Fetch Global AI Usage Logs (for non-chat AI like email, Varuni, etc.)
     const aiUsageLogs = await prismadb.crm_AiUsageLog.findMany({
+        where: dateFilter,
         select: {
             tenant_id: true,
             user_id: true,
@@ -142,8 +161,13 @@ export default async function PartnersAiUsagePage() {
     // 4. Aggregate Data
     const teamUsage: Record<string, { id: string, name: string, team_type: string, totalTokens: number, promptTokens: number, completionTokens: number, requestCount: number }> = {};
     const modelUsage: Record<string, number> = {};
+    const temporalUsage: Record<string, { date: string, tokens: number, requests: number }> = {};
     const UNKNOWN_TEAM_ID = "unknown-team";
     const UNKNOWN_TEAM_NAME = "Unknown / Deleted Team";
+
+    const formatDate = (date: Date) => {
+        return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
 
     // Map each team to its top-level organization for roll-up
     const teamToOrgMap = new Map<string, string>();
@@ -203,7 +227,7 @@ export default async function PartnersAiUsagePage() {
             };
         }
 
-        const usage = msg.tokenUsage as { promptTokens?: number, completionTokens?: number, totalTokens?: number };
+        const usage = (msg.tokenUsage || {}) as { promptTokens?: number, completionTokens?: number, totalTokens?: number };
         const tokens = (usage.totalTokens || 0);
         teamUsage[targetId].totalTokens += tokens;
         teamUsage[targetId].promptTokens += (usage.promptTokens || 0);
@@ -213,6 +237,12 @@ export default async function PartnersAiUsagePage() {
         // Model Distribution
         const modelName = msg.model || "Unknown Model";
         modelUsage[modelName] = (modelUsage[modelName] || 0) + tokens;
+
+        // Temporal Aggregation
+        const dateKey = formatDate(msg.createdAt);
+        if (!temporalUsage[dateKey]) temporalUsage[dateKey] = { date: dateKey, tokens: 0, requests: 0 };
+        temporalUsage[dateKey].tokens += tokens;
+        temporalUsage[dateKey].requests += 1;
     });
 
     // B. Parse Global AI Logs
@@ -248,6 +278,12 @@ export default async function PartnersAiUsagePage() {
         // Model Distribution
         const modelName = log.model_used || "Platform AI (Internal)";
         modelUsage[modelName] = (modelUsage[modelName] || 0) + tokens;
+
+        // Temporal Aggregation
+        const dateKey = formatDate(log.createdAt);
+        if (!temporalUsage[dateKey]) temporalUsage[dateKey] = { date: dateKey, tokens: 0, requests: 0 };
+        temporalUsage[dateKey].tokens += tokens;
+        temporalUsage[dateKey].requests += 1;
     });
 
     // C. Initialize any teams with zero usage so they still appear if they are Top-Level Orgs
@@ -275,10 +311,10 @@ export default async function PartnersAiUsagePage() {
         .sort((a, b) => b.totalTokens - a.totalTokens);
 
     // Roll-up logic for Active Organizations KPI
-    // An organization is "active" if it OR any of its departments have usage
+    // An organization is "active" if it OR any of its departments have activity (requests)
     const orgsWithActivity = new Set<string>();
     Object.values(teamUsage).forEach(t => {
-        if (t.totalTokens > 0) {
+        if (t.requestCount > 0) {
             const orgId = teamToOrgMap.get(t.id);
             if (orgId) orgsWithActivity.add(orgId);
         }
@@ -290,31 +326,92 @@ export default async function PartnersAiUsagePage() {
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
+    // Sort temporal data by date (simple approach for now)
+    const trendData = Object.values(temporalUsage);
     const totalPlatformTokens = chartData.reduce((acc, curr) => acc + curr.totalTokens, 0);
+    const totalRequests = chartData.reduce((acc, curr) => acc + curr.requestCount, 0);
+    const avgTokensPerRequest = totalRequests > 0 ? Math.round(totalPlatformTokens / totalRequests) : 0;
+    const promptToOutputRatio = chartData.reduce((acc, curr) => acc + curr.promptTokens, 0) / (chartData.reduce((acc, curr) => acc + curr.completionTokens, 0) || 1);
 
     return (
-        <Container title="Global AI Usage" description="Platform-wide tracking of AI token consumption across all teams.">
-            <div className="dark space-y-6">
+        <Container
+            title="Global AI Usage"
+            description="Platform-wide tracking of AI token consumption across all teams."
+            action={<DateRangeSelector />}
+        >
+            <div className="space-y-6">
                 <div className="grid gap-6">
                     {/* KPI Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="indigo">
-                            <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">Total Token Consumption</p>
-                            <p className="text-3xl text-tremor-content-strong dark:text-dark-tremor-content-strong font-semibold">
+                        <Card className="bg-card border-border/50" decoration="top" decorationColor="primary">
+                            <p className="text-tremor-default text-muted-foreground uppercase tracking-widest font-semibold">Total Token Consumption</p>
+                            <p className="text-3xl text-foreground font-bold mt-2">
                                 {totalPlatformTokens.toLocaleString()}
                             </p>
                         </Card>
-                        <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="fuchsia">
-                            <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">Active Organizations</p>
-                            <p className="text-3xl text-tremor-content-strong dark:text-dark-tremor-content-strong font-semibold">
+                        <Card className="bg-card border-border/50" decoration="top" decorationColor="fuchsia">
+                            <p className="text-tremor-default text-muted-foreground uppercase tracking-widest font-semibold">Active Organizations</p>
+                            <p className="text-3xl text-foreground font-bold mt-2">
                                 {activeOrgCount}
                             </p>
                         </Card>
-                        <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="amber">
-                            <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">Total AI Requests</p>
-                            <p className="text-3xl text-tremor-content-strong dark:text-dark-tremor-content-strong font-semibold">
-                                {chartData.reduce((acc, curr) => acc + curr.requestCount, 0).toLocaleString()}
+                        <Card className="bg-card border-border/50" decoration="top" decorationColor="amber">
+                            <p className="text-tremor-default text-muted-foreground uppercase tracking-widest font-semibold">Total AI Requests</p>
+                            <p className="text-3xl text-foreground font-bold mt-2">
+                                {totalRequests.toLocaleString()}
                             </p>
+                        </Card>
+                    </div>
+
+                    {/* Usage Intelligence Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <Card className="bg-card border-border/30 p-4">
+                            <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-widest">Avg Tokens / Request</p>
+                            <p className="text-xl text-foreground font-mono mt-1">{avgTokensPerRequest.toLocaleString()}</p>
+                        </Card>
+                        <Card className="bg-card border-border/30 p-4">
+                            <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-widest">Prompt/Output Ratio</p>
+                            <p className="text-xl text-foreground font-mono mt-1">{promptToOutputRatio.toFixed(1)}x</p>
+                        </Card>
+                        <Card className="bg-card border-border/30 p-4">
+                            <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-widest">Leading Model</p>
+                            <p className="text-xl text-foreground font-semibold mt-1 truncate">{modelChartData[0]?.name || "N/A"}</p>
+                        </Card>
+                        <Card className="bg-card border-border/30 p-4">
+                            <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-widest">Peak Daily Activity</p>
+                            <p className="text-xl text-foreground font-mono mt-1">{trendData.length > 0 ? Math.max(...trendData.map(d => d.requests)).toLocaleString() : 0} reqs</p>
+                        </Card>
+                    </div>
+
+                    {/* Pattern Analysis */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <AiUsageTrends data={trendData} />
+                        <Card className="bg-card border-border/50">
+                            <Title className="text-foreground text-base">Usage Efficiency & Patterns</Title>
+                            <div className="mt-4 space-y-4">
+                                <div className="flex items-start justify-between p-3 bg-accent/10 rounded-lg border border-border/30">
+                                    <div className="space-y-1">
+                                        <p className="text-foreground font-medium">Model Efficiency</p>
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                            {avgTokensPerRequest < 500 ? "Highly efficient: many short interactions." : "Detailed usage: long context and complex prompts."}
+                                        </p>
+                                    </div>
+                                    <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${avgTokensPerRequest < 500 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                                        {avgTokensPerRequest < 500 ? "Compact" : "Deep"}
+                                    </div>
+                                </div>
+                                <div className="flex items-start justify-between p-3 bg-accent/10 rounded-lg border border-border/30">
+                                    <div className="space-y-1">
+                                        <p className="text-foreground font-medium">Output Characteristics</p>
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                            {promptToOutputRatio > 2 ? "High Input Ratio: Analyzing large amounts of text." : "Generative Heavy: Producing significant creative content."}
+                                        </p>
+                                    </div>
+                                    <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${promptToOutputRatio > 2 ? 'bg-blue-500/10 text-blue-400' : 'bg-fuchsia-500/10 text-fuchsia-400'}`}>
+                                        {promptToOutputRatio > 2 ? "Analytical" : "Creative"}
+                                    </div>
+                                </div>
+                            </div>
                         </Card>
                     </div>
 

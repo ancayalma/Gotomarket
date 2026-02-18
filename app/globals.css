@@ -1012,3 +1012,326 @@
     height: 8rem;
   }
 }
+
+/* ========================================
+   NUCLEAR THEME-AWARE PORTAL RESET v2
+   Absolute zero tolerance for white.
+   ======================================== */
+
+/* 1. Target all Portal roots and their direct panels with extreme specificity */
+div[data-radix-portal],
+div.headlessui-portal,
+.headlessui-popover-panel,
+.tremor-DateRangePicker-panel,
+.tremor-DateRangePicker-calendar {
+  --tremor-bg: hsl(var(--card)) !important;
+  --tremor-border: hsla(var(--border), 0.5) !important;
+  --tremor-content: hsl(var(--foreground)) !important;
+  --tremor-content-strong: hsl(var(--foreground)) !important;
+  --tremor-brand: hsl(var(--primary)) !important;
+
+  /* Kill Tailwind Rings at the source */
+  --tw-ring-offset-width: 0px !important;
+  --tw-ring-width: 0px !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-color: transparent !important;
+
+  background-color: transparent !important;
+}
+
+/* 2. Deep recursive override for ANY element inside a portal or picker panel */
+div[data-radix-portal] *,
+div.headlessui-portal *,
+.tremor-DateRangePicker-panel,
+.tremor-DateRangePicker-panel *,
+.tremor-DateRangePicker-calendar,
+.tremor-DateRangePicker-calendar * {
+  background-color: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsla(var(--border), 0.2) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* 3. Re-apply thematic backgrounds to the actual containers only */
+div[data-radix-portal]>div,
+div.headlessui-portal>div,
+.headlessui-popover-panel,
+.tremor-DateRangePicker-panel {
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsla(var(--border), 0.5) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+/* 4. Thematic Highlights (Hover/Selected) - NO WHITE */
+/* This covers dropdown options and calendar day hovers */
+[role="option"]:hover,
+[role="option"][aria-selected="true"],
+[role="option"][data-headlessui-state*="selected"],
+[data-headlessui-state*="active"],
+.tremor-Select-item:hover,
+.tremor-Select-item[aria-selected="selected"],
+.tremor-DateRangePicker-panel button:hover:not([class*="bg-primary"]),
+.tremor-DateRangePicker-panel [data-headlessui-state*="active"] {
+  background-color: hsla(var(--primary), 0.8) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+/* 5. Primary Active Selection (The intense theme color) */
+.tremor-DateRangePicker-panel [class*="bg-blue-"],
+.tremor-DateRangePicker-panel [class*="bg-indigo-"],
+.tremor-DateRangePicker-panel [class*="bg-primary"],
+.active-range,
+.tremor-DateRangePicker-panel button[class*="bg-"] {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+/* 6. Text visibility for all specific labels */
+.tremor-DateRangePicker-panel span,
+.tremor-DateRangePicker-panel div,
+.tremor-DateRangePicker-panel button,
+.tremor-DateRangePicker-panel p,
+.tremor-DateRangePicker-panel h3 {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* 7. Specific fix for the calendar table to ensure it's themed */
+.tremor-DateRangePicker-calendar table,
+.tremor-DateRangePicker-calendar thead,
+.tremor-DateRangePicker-calendar tbody,
+.tremor-DateRangePicker-calendar tr {
+  background-color: hsl(var(--card)) !important;
+  border: none !important;
+}
+
+/* 9. Tremor Chart Theme Correction - CRITICAL FIX */
+/* Force all chart bars, areas, and lines to respect our theme primary */
+.recharts-rectangle.recharts-bar-rectangle,
+.recharts-area-area,
+.recharts-curve.recharts-area-curve,
+.recharts-pie-sector,
+.recharts-sector {
+  fill: hsl(var(--primary)) !important;
+  stroke: hsl(var(--primary)) !important;
+  opacity: 1 !important;
+}
+
+/* Specific colors for multi-category charts if needed (overriding the above) */
+.recharts-layer.recharts-bar-rectangles:nth-child(2) path,
+.recharts-layer.recharts-area:nth-child(2) path {
+  fill: hsl(var(--primary) / 0.8) !important;
+}
+
+.recharts-layer.recharts-bar-rectangles:nth-child(3) path,
+.recharts-layer.recharts-area:nth-child(3) path {
+  fill: hsl(var(--primary) / 0.6) !important;
+}
+
+/* Tooltip Styling - Critical for dark/purple themes */
+.tremor-ChartingTooltip,
+.recharts-tooltip-wrapper,
+.recharts-default-tooltip {
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsla(var(--border), 0.5) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  padding: 8px !important;
+}
+
+.tremor-ChartingTooltip span,
+.tremor-ChartingTooltip p,
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-value,
+.recharts-default-tooltip * {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Legend items text */
+.tremor-Legend-itemText,
+.recharts-legend-item-text {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Axis and Grid visibility */
+.recharts-cartesian-axis-tick text,
+.recharts-text.recharts-cartesian-axis-tick-value {
+  fill: hsl(var(--muted-foreground)) !important;
+  font-size: 10px !important;
+}
+
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: hsla(var(--border), 0.1) !important;
+}
+
+/* 10. Aggressive Fix for White Dropdowns and Portals */
+div[data-radix-portal],
+div.headlessui-portal,
+[role="listbox"],
+ul[role="listbox"],
+.tremor-Dropdown {
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsla(var(--border), 0.5) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+[role="option"],
+.tremor-Select-item,
+[data-headlessui-state*="selected"] {
+  background-color: transparent !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+[role="option"]:hover,
+[role="option"][data-headlessui-state*="active"],
+.tremor-Select-item:hover {
+  background-color: hsla(var(--primary), 0.2) !important;
+  color: hsl(var(--primary)) !important;
+}
+
+/* DateRangePicker specific list fix */
+.tremor-DateRangePicker-panel ul {
+  background-color: hsl(var(--card)) !important;
+  border: none !important;
+}
+
+.tremor-DateRangePicker-panel li:hover {
+  background-color: hsla(var(--primary), 0.2) !important;
+}
+
+.tremor-DateRangePicker-panel li span {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* 11. Force all Tremor Inputs/Buttons to use Card Background - NO MORE WHITE */
+.tremor-DateRangePicker,
+.tremor-Select,
+.tremor-DatePicker,
+.tremor-MultiSelect,
+.tremor-TextInput-root,
+.tremor-NumberInput-root,
+.tremor-DateRangePicker>button,
+.tremor-Select>button {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsla(var(--border), 0.5) !important;
+}
+
+/* Specific fix for the trigger text and icons */
+.tremor-DateRangePicker button span,
+.tremor-Select button span,
+.tremor-DateRangePicker svg,
+.tremor-Select svg {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Tooltip Background - Re-asserting with more specificity */
+div.recharts-tooltip-wrapper .recharts-default-tooltip,
+div.recharts-default-tooltip,
+.tremor-ChartingTooltip {
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsla(var(--border), 0.5) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Ensure text inside tooltips is also themed */
+.recharts-default-tooltip span,
+.recharts-default-tooltip p,
+.recharts-tooltip-item,
+.tremor-ChartingTooltip * {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Final fix for any rogue white backgrounds in the picker panel */
+.tremor-DateRangePicker-panel,
+.tremor-DateRangePicker-panel * {
+  --background: transparent;
+}
+
+/* 12. Ultra-Nuclear Portal & Library Override - Fix for White pop-outs */
+/* Target EVERY possible container that might be white from Recharts or Tremor */
+
+/* Tooltips - Target all levels of nesting */
+div.recharts-tooltip-wrapper,
+div.recharts-default-tooltip,
+.recharts-default-tooltip,
+.recharts-default-tooltip *,
+.recharts-tooltip-item-list,
+.recharts-default-tooltip-content,
+.recharts-tooltip-label,
+.recharts-tooltip-item,
+.tremor-ChartingTooltip,
+.tremor-ChartingTooltip * {
+  background-color: #27272a !important;
+  /* Zinc-800 Gray */
+  color: #ffffff !important;
+  /* Pure White Font */
+  background: #27272a !important;
+  /* Kill any gradients */
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Date Pickers, Select Panels, and all Portals */
+.tremor-DateRangePicker-panel,
+.tremor-DateRangePicker-panel *,
+.tremor-Select-panel,
+.tremor-Select-panel *,
+.tremor-MultiSelect-panel,
+.tremor-MultiSelect-panel *,
+div[data-radix-portal]>div,
+div.headlessui-portal>div {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsla(var(--border), 0.5) !important;
+}
+
+/* Force Hover and Selection states in themed panels to use Primary */
+.tremor-DateRangePicker-panel button:hover,
+.tremor-Select-item:hover,
+.tremor-Select-item[data-selected="true"],
+.tremor-DateRangePicker-panel [data-selected="true"],
+.tremor-DateRangePicker-panel [aria-selected="true"] {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.tremor-DateRangePicker-panel button:hover:not([data-selected="true"]) {
+  background-color: hsla(var(--primary), 0.2) !important;
+  color: hsl(var(--primary)) !important;
+}
+
+/* Axis and Grid visibility fallback */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: hsla(var(--border), 0.15) !important;
+}
+
+.recharts-cartesian-axis-tick text {
+  fill: hsl(var(--muted-foreground)) !important;
+}
+
+/* Target ANY element with inline white background specifically */
+[style*="background-color: rgb(255, 255, 255)"],
+[style*="background-color: #fff"],
+[style*="background-color:#fff"],
+[style*="background-color: white"] {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Dropdown list items and text */
+[role="option"],
+[role="menuitem"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Ensure Legend items are themed */
+.tremor-Legend-itemText,
+.recharts-legend-item-text {
+  color: hsl(var(--muted-foreground)) !important;
+}

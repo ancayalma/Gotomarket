@@ -66,11 +66,38 @@ export function InvoiceDataTable<TData, TValue>({
     []
   );
 
+  const [dateRange, setDateRange] = React.useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined
+  });
+
   const viewMode = savedViewMode as ViewMode;
   const currentView = isMobile ? "card" : viewMode;
 
+  const filteredData = React.useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return data;
+
+    return data.filter((item: any) => {
+      const date = item.date_created ? new Date(item.date_created) :
+        item.date_due ? new Date(item.date_due) : null;
+
+      if (!date) return true;
+
+      if (dateRange.from && dateRange.to) {
+        return date >= dateRange.from && date <= dateRange.to;
+      }
+      if (dateRange.from) {
+        return date >= dateRange.from;
+      }
+      if (dateRange.to) {
+        return date <= dateRange.to;
+      }
+      return true;
+    });
+  }, [data, dateRange]);
+
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     state: {
       sorting,
@@ -109,7 +136,7 @@ export function InvoiceDataTable<TData, TValue>({
     <div className="space-y-4">
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1 w-full">
-          <DataTableToolbar table={table} />
+          <DataTableToolbar table={table} onDateFilterChange={setDateRange} />
         </div>
         <div className="flex items-center ml-4 gap-2">
           <ViewToggle value={viewMode} onChange={setViewMode} />

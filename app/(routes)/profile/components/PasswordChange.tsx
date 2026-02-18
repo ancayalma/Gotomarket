@@ -44,7 +44,6 @@ export function PasswordChangeForm({ userId }: { userId: string }) {
     try {
       setIsLoading(true);
       await axios.put(`/api/user/${userId}/setnewpass`, data);
-      //TODO: send data to the server
       toast({
         title: "Password changed  successfully",
       });

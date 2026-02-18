@@ -9,7 +9,7 @@ import { DataTableRowActions } from "./data-table-row-actions";
 import moment from "moment";
 
 export const columns: ColumnDef<Task>[] = [
-  /*   {
+  {
     accessorKey: "date_created",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Date Created" />
@@ -21,7 +21,7 @@ export const columns: ColumnDef<Task>[] = [
     ),
     enableSorting: true,
     enableHiding: true,
-  }, */
+  },
   {
     accessorKey: "date_due",
     header: ({ column }) => (

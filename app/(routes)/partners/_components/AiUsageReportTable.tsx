@@ -54,31 +54,31 @@ export const AiUsageReportTable = ({ data, basaltTeamId, unknownTeamId }: AiUsag
     }, [data, searchQuery, showOrgs, showDepts, showZeroUsage]);
 
     return (
-        <Card className="bg-[#09090b] border-[#27272a]">
+        <Card className="bg-card border-border/50">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
-                    <Title className="text-tremor-content-strong dark:text-dark-tremor-content-strong">Detailed Usage Report</Title>
-                    <Subtitle className="text-tremor-content dark:text-dark-tremor-content">Complete breakdown by team and department.</Subtitle>
+                    <Title className="text-foreground">Detailed Usage Report</Title>
+                    <Subtitle className="text-muted-foreground">Complete breakdown by team and department.</Subtitle>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Search entities..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 bg-[#18181b] border-[#27272a] text-zinc-300 h-9 transition-all focus:ring-1 focus:ring-indigo-500"
+                            className="pl-9 bg-accent/5 border-border/50 text-foreground h-9 transition-all focus:ring-1 focus:ring-primary"
                         />
                     </div>
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="bg-[#18181b] border-[#27272a] text-zinc-400 hover:text-white">
+                            <Button variant="outline" size="sm" className="bg-accent/10 border-border/50 text-muted-foreground hover:text-foreground">
                                 <Filter className="h-4 w-4 mr-2" />
                                 Filter
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-[#18181b] border-[#27272a] text-zinc-300">
+                        <DropdownMenuContent align="end" className="bg-popover border-border text-popover-foreground">
                             <DropdownMenuLabel>Entity Types</DropdownMenuLabel>
                             <DropdownMenuCheckboxItem
                                 checked={showOrgs}
@@ -92,7 +92,7 @@ export const AiUsageReportTable = ({ data, basaltTeamId, unknownTeamId }: AiUsag
                             >
                                 Departments
                             </DropdownMenuCheckboxItem>
-                            <DropdownMenuSeparator className="bg-[#27272a]" />
+                            <DropdownMenuSeparator className="bg-border" />
                             <DropdownMenuLabel>Usage Status</DropdownMenuLabel>
                             <DropdownMenuCheckboxItem
                                 checked={showZeroUsage}
@@ -113,7 +113,7 @@ export const AiUsageReportTable = ({ data, basaltTeamId, unknownTeamId }: AiUsag
                                 setShowDepts(true);
                                 setShowZeroUsage(false);
                             }}
-                            className="text-zinc-500 hover:text-zinc-300 text-xs"
+                            className="text-muted-foreground hover:text-foreground text-xs"
                         >
                             Reset
                         </Button>
@@ -123,40 +123,40 @@ export const AiUsageReportTable = ({ data, basaltTeamId, unknownTeamId }: AiUsag
 
             <div className="mt-6 overflow-x-auto">
                 <table className="mt-4 w-full text-left">
-                    <thead className="border-b border-tremor-border dark:border-dark-tremor-border">
+                    <thead className="border-b border-border/50">
                         <tr>
-                            <th className="py-2 pr-4 pl-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-xs uppercase tracking-wider">Entity Name</th>
-                            <th className="py-2 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-right text-xs uppercase tracking-wider">Requests</th>
-                            <th className="py-2 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-right text-xs uppercase tracking-wider">Prompt</th>
-                            <th className="py-2 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-right text-xs uppercase tracking-wider">Output</th>
-                            <th className="py-2 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-right text-xs uppercase tracking-wider">Total Tokens</th>
-                            <th className="py-2 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-right"></th>
+                            <th className="py-2 pr-4 pl-4 font-semibold text-foreground text-xs uppercase tracking-wider">Entity Name</th>
+                            <th className="py-2 pr-4 font-semibold text-foreground text-right text-xs uppercase tracking-wider">Requests</th>
+                            <th className="py-2 pr-4 font-semibold text-foreground text-right text-xs uppercase tracking-wider">Prompt</th>
+                            <th className="py-2 pr-4 font-semibold text-foreground text-right text-xs uppercase tracking-wider">Output</th>
+                            <th className="py-2 pr-4 font-semibold text-foreground text-right text-xs uppercase tracking-wider">Total Tokens</th>
+                            <th className="py-2 pr-4 font-semibold text-foreground text-right"></th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredData.map((item) => (
-                            <tr key={item.id} className="border-b border-tremor-border dark:border-dark-tremor-border hover:bg-[#18181b]/50 transition-colors group">
+                            <tr key={item.id} className="border-b border-border/30 hover:bg-accent/5 transition-colors group">
                                 <td className="py-3 pl-4 pr-4">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+                                        <span className="text-foreground font-medium">
                                             {item.name}
                                         </span>
                                         {item.team_type === 'DEPARTMENT' && (
-                                            <span className="px-1.5 py-0.5 text-[8px] font-bold bg-zinc-800/50 text-zinc-400 border border-zinc-700 rounded uppercase tracking-widest">Dept</span>
+                                            <span className="px-1.5 py-0.5 text-[8px] font-bold bg-accent/20 text-muted-foreground border border-border/30 rounded uppercase tracking-widest">Dept</span>
                                         )}
                                         {item.id === basaltTeamId && (
-                                            <span className="px-1.5 py-0.5 text-[8px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded uppercase tracking-widest">Internal</span>
+                                            <span className="px-1.5 py-0.5 text-[8px] font-bold bg-primary/10 text-primary border border-primary/20 rounded uppercase tracking-widest">Internal</span>
                                         )}
                                     </div>
                                 </td>
-                                <td className="py-3 pr-4 text-right font-mono text-tremor-content-strong dark:text-dark-tremor-content-strong text-sm">{item.requestCount.toLocaleString()}</td>
-                                <td className="py-3 pr-4 text-right font-mono text-tremor-content dark:text-dark-tremor-content text-sm">{item.promptTokens.toLocaleString()}</td>
-                                <td className="py-3 pr-4 text-right font-mono text-tremor-content dark:text-dark-tremor-content text-sm">{item.completionTokens.toLocaleString()}</td>
-                                <td className="py-3 pr-4 text-right font-bold font-mono text-tremor-content-strong dark:text-dark-tremor-content-strong text-sm">{item.totalTokens.toLocaleString()}</td>
+                                <td className="py-3 pr-4 text-right font-mono text-foreground text-sm">{item.requestCount.toLocaleString()}</td>
+                                <td className="py-3 pr-4 text-right font-mono text-muted-foreground text-sm">{item.promptTokens.toLocaleString()}</td>
+                                <td className="py-3 pr-4 text-right font-mono text-muted-foreground text-sm">{item.completionTokens.toLocaleString()}</td>
+                                <td className="py-3 pr-4 text-right font-bold font-mono text-foreground text-sm">{item.totalTokens.toLocaleString()}</td>
                                 <td className="py-3 pr-4 text-right">
                                     {item.id !== unknownTeamId && (
                                         <Link href={`/partners/ai-usage/${item.id}`}>
-                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity hover:bg-indigo-500/10 hover:text-indigo-400">
+                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity hover:bg-primary/10 hover:text-primary">
                                                 <ExternalLink className="h-4 w-4" />
                                             </Button>
                                         </Link>
@@ -166,7 +166,7 @@ export const AiUsageReportTable = ({ data, basaltTeamId, unknownTeamId }: AiUsag
                         ))}
                         {filteredData.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="py-12 text-center text-zinc-500 font-medium">
+                                <td colSpan={6} className="py-12 text-center text-muted-foreground font-medium">
                                     No records found matching your filters.
                                 </td>
                             </tr>

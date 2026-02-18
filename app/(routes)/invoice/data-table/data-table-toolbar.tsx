@@ -9,13 +9,16 @@ import { DataTableViewOptions } from "./data-table-view-options";
 
 import { statuses } from "../data/data";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
+import { InvoiceDateFilter } from "../components/InvoiceDateFilter";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
+  onDateFilterChange: (range: { from: Date | undefined; to: Date | undefined }) => void;
 }
 
 export function DataTableToolbar<TData>({
   table,
+  onDateFilterChange,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
@@ -35,6 +38,7 @@ export function DataTableToolbar<TData>({
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
+        <InvoiceDateFilter onFilterChange={onDateFilterChange} />
         {/*         {table.getColumn("taskStatus") && (
           <DataTableFacetedFilter
             column={table.getColumn("taskStatus")}

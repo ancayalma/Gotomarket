@@ -175,7 +175,7 @@ function applyCors(request: NextRequest, response: NextResponse): NextResponse {
 
 // ─── Main Middleware (Proxy) ─────────────────────────────────────────────────
 
-export function proxy(request: NextRequest) {
+export default function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const method = request.method;
     const isApiRoute = pathname.startsWith("/api/");

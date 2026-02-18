@@ -13,6 +13,14 @@ export async function PUT(req: Request, props: { params: Promise<{ userId: strin
     return new NextResponse("Unauthenticated", { status: 401 });
   }
 
+  // RBAC: Only the user themselves or an admin can change the password
+  const isSelf = session.user.id === params.userId;
+  const isAdmin = (session.user as any).isAdmin || (session.user as any).role === "PLATFORM_ADMIN";
+
+  if (!isSelf && !isAdmin) {
+    return new NextResponse("Forbidden: You can only change your own password", { status: 403 });
+  }
+
   if (!params.userId) {
     return new NextResponse("No user ID provided", { status: 400 });
   }

@@ -8,18 +8,35 @@ import { Card, Title, Subtitle, Legend } from "@tremor/react";
 import { ModelDistributionChart } from "@/app/(routes)/partners/_components/ModelDistributionChart";
 import Container from "@/app/(routes)/components/ui/Container";
 import { AiUsageCharts } from "@/app/(routes)/partners/_components/AiUsageCharts";
-import { ChevronLeft } from "lucide-react";
+import { DateRangeSelector } from "@/app/(routes)/partners/_components/DateRangeSelector";
+import { ChevronLeft, Calendar, User } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { startOfDay, endOfDay, parseISO, subDays } from "date-fns";
 
 // Type wrapper for prisma-chat
 const db: any = prismadbChat;
 
 export const dynamic = 'force-dynamic';
 
-export default async function TeamAiUsageDrilldownPage({ params }: { params: { teamId: string } }) {
+interface PageProps {
+    params: { teamId: string };
+    searchParams: { from?: string; to?: string };
+}
+
+export default async function TeamAiUsageDrilldownPage({ params, searchParams }: PageProps) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return redirect("/");
+
+    const fromDate = searchParams.from ? startOfDay(parseISO(searchParams.from)) : startOfDay(subDays(new Date(), 30));
+    const toDate = searchParams.to ? endOfDay(parseISO(searchParams.to)) : endOfDay(new Date());
+
+    const dateFilter = {
+        createdAt: {
+            gte: fromDate,
+            lte: toDate
+        }
+    };
 
     // 1. Check Platform Admin Permissions
     const currentUser = await prismadb.users.findUnique({
@@ -69,11 +86,11 @@ export default async function TeamAiUsageDrilldownPage({ params }: { params: { t
     const sessionToUserMap = new Map();
     teamSessions.forEach((s: any) => sessionToUserMap.set(s.id, s.user));
 
-    // 5. Fetch Messages with Usage
+    // 5. Fetch Messages (Include all for request count)
     const messagesWithUsage = await db.chat_Messages.findMany({
         where: {
             session: { in: teamSessionIds },
-            tokenUsage: { not: null }
+            ...dateFilter
         },
         select: {
             session: true,
@@ -86,9 +103,14 @@ export default async function TeamAiUsageDrilldownPage({ params }: { params: { t
     // 6. Fetch Global AI Usage Logs
     const aiUsageLogs = await prismadb.crm_AiUsageLog.findMany({
         where: {
-            OR: [
-                { tenant_id: params.teamId },
-                { user_id: { in: teamMemberIds } }
+            AND: [
+                {
+                    OR: [
+                        { tenant_id: params.teamId },
+                        { user_id: { in: teamMemberIds } }
+                    ]
+                },
+                dateFilter
             ]
         },
         select: {
@@ -115,7 +137,7 @@ export default async function TeamAiUsageDrilldownPage({ params }: { params: { t
 
     // A. Parse Chat
     messagesWithUsage.forEach((msg: any) => {
-        const usage = msg.tokenUsage as any;
+        const usage = (msg.tokenUsage || {}) as any;
         const tokens = (usage.totalTokens || 0);
         totalTokens += tokens;
         promptTokens += (usage.promptTokens || 0);
@@ -170,13 +192,25 @@ export default async function TeamAiUsageDrilldownPage({ params }: { params: { t
             description={`Detailed AI usage analytics for ${targetTeam.slug}.`}
         >
             <div className="dark space-y-6">
-                <div className="flex items-center gap-4 mb-2">
-                    <Link href="/partners/ai-usage">
-                        <Button variant="outline" size="sm" className="bg-[#09090b] border-[#27272a] hover:bg-zinc-800">
-                            <ChevronLeft className="w-4 h-4 mr-1" />
-                            Back to Global Usage
-                        </Button>
-                    </Link>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#09090b] p-6 rounded-xl border border-[#27272a] shadow-sm">
+                    <div className="flex items-center gap-4 shrink-0">
+                        <Link href="/partners/ai-usage">
+                            <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hover:bg-zinc-800 transition-colors">
+                                <ChevronLeft className="h-6 w-6" />
+                            </Button>
+                        </Link>
+                        <div className="h-10 w-[1px] bg-zinc-800 mx-1" />
+                        <div className="flex items-center gap-3">
+                            <Calendar className="h-5 w-5 text-indigo-400" />
+                            <div>
+                                <p className="text-zinc-100 font-semibold">Usage Period</p>
+                                <p className="text-xs text-zinc-500 mt-0.5">Filtering analytics by date range</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="w-full md:w-auto">
+                        <DateRangeSelector />
+                    </div>
                 </div>
 
                 <div className="grid gap-6">

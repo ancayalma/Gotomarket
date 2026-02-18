@@ -64,14 +64,36 @@ export const getUsers = async () => {
   return enrichedData;
 };
 
-//Get active users for Selects in app etc
+//Get active users for Selects in app etc (Scoped to Team)
 export const getActiveUsers = async () => {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return [];
+
+  const teamInfo = await getCurrentUserTeamId();
+  const teamId = teamInfo?.teamId;
+
+  if (!teamId) {
+    // Fallback for platform admins who might not be in a specific team but need access
+    const isAdmin = (session.user as any).isAdmin || (session.user as any).role === "PLATFORM_ADMIN";
+    if (isAdmin) {
+      return await prismadb.users.findMany({
+        where: { userStatus: "ACTIVE" },
+        orderBy: { created_on: "desc" }
+      });
+    }
+    return [];
+  }
+
   const data = await prismadb.users.findMany({
     orderBy: {
       created_on: "desc",
     },
     where: {
       userStatus: "ACTIVE",
+      OR: [
+        { team_id: teamId },
+        { assigned_team: { parent_id: teamId } }
+      ]
     },
   });
   return data;
@@ -79,7 +101,18 @@ export const getActiveUsers = async () => {
 
 //Get new users by month for chart
 export const getUsersByMonthAndYear = async (year: number) => {
+  const teamInfo = await getCurrentUserTeamId();
+  const teamId = teamInfo?.teamId;
+
+  if (!teamId) return [];
+
   const users = await prismadb.users.findMany({
+    where: {
+      OR: [
+        { team_id: teamId },
+        { assigned_team: { parent_id: teamId } }
+      ]
+    },
     select: {
       created_on: true,
     },
@@ -114,7 +147,17 @@ export const getUsersByMonthAndYear = async (year: number) => {
 
 //Get new users by month for chart with dynamic date range
 export const getUsersByMonth = async (startDate?: Date, endDate?: Date) => {
-  const whereClause: any = {};
+  const teamInfo = await getCurrentUserTeamId();
+  const teamId = teamInfo?.teamId;
+
+  if (!teamId) return [];
+
+  const whereClause: any = {
+    OR: [
+      { team_id: teamId },
+      { assigned_team: { parent_id: teamId } }
+    ]
+  };
 
   if (startDate && endDate) {
     whereClause.created_on = {
@@ -171,7 +214,17 @@ export const getUsersByMonth = async (startDate?: Date, endDate?: Date) => {
 };
 
 export const getUsersCountOverall = async (startDate?: Date, endDate?: Date) => {
-  const whereClause: any = {};
+  const teamInfo = await getCurrentUserTeamId();
+  const teamId = teamInfo?.teamId;
+
+  if (!teamId) return [];
+
+  const whereClause: any = {
+    OR: [
+      { team_id: teamId },
+      { assigned_team: { parent_id: teamId } }
+    ]
+  };
 
   if (startDate && endDate) {
     whereClause.created_on = {

@@ -21,61 +21,61 @@ module.exports = {
         //Tremor theme
         tremor: {
           brand: {
-            faint: "#f5f3ff", // violet-50
-            muted: "#ddd6fe", // violet-200
-            subtle: "#a78bfa", // violet-400
-            DEFAULT: "#8b5cf6", // violet-500
-            emphasis: "#6d28d9", // violet-700
-            inverted: "#ffffff", // white
+            faint: "hsl(var(--primary) / 0.1)",
+            muted: "hsl(var(--primary) / 0.2)",
+            subtle: "hsl(var(--primary) / 0.4)",
+            DEFAULT: "hsl(var(--primary))",
+            emphasis: "hsl(var(--primary))",
+            inverted: "hsl(var(--background))",
           },
           background: {
-            muted: "#f9fafb", // gray-50
-            subtle: "#f3f4f6", // gray-100
-            DEFAULT: "#ffffff", // white
-            emphasis: "#374151", // gray-700
+            muted: "hsl(var(--muted))",
+            subtle: "hsl(var(--muted))",
+            DEFAULT: "hsl(var(--card))",
+            emphasis: "hsl(var(--foreground))",
           },
           border: {
-            DEFAULT: "#e5e7eb", // gray-200
+            DEFAULT: "hsl(var(--border) / 0.4)",
           },
           ring: {
-            DEFAULT: "#e5e7eb", // gray-200
+            DEFAULT: "hsl(var(--ring) / 0.4)",
           },
           content: {
-            subtle: "#9ca3af", // gray-400
-            DEFAULT: "#6b7280", // gray-500
-            emphasis: "#374151", // gray-700
-            strong: "#111827", // gray-900
-            inverted: "#ffffff", // white
+            subtle: "hsl(var(--muted-foreground))",
+            DEFAULT: "hsl(var(--foreground) / 0.8)",
+            emphasis: "hsl(var(--foreground))",
+            strong: "hsl(var(--foreground))",
+            inverted: "hsl(var(--background))",
           },
         },
         // dark mode
         "dark-tremor": {
           brand: {
-            faint: "#062a2a", // deep teal
-            muted: "#0f2b31", // teal-950-ish
-            subtle: "#146d7a", // turquoise-700
-            DEFAULT: "#33b1c6", // turquoise-500
-            emphasis: "#7bd3e6", // turquoise-300
-            inverted: "#030712", // gray-950
+            faint: "hsl(var(--primary) / 0.1)",
+            muted: "hsl(var(--primary) / 0.2)",
+            subtle: "hsl(var(--primary) / 0.4)",
+            DEFAULT: "hsl(var(--primary))",
+            emphasis: "hsl(var(--primary))",
+            inverted: "hsl(var(--background))",
           },
           background: {
-            muted: "#0a1e21", // deep teal surface
-            subtle: "#0f2b31", // teal-950-ish
-            DEFAULT: "#0c2024", // teal/blue-black
-            emphasis: "#d1d5db", // gray-300
+            muted: "hsl(var(--muted))",
+            subtle: "hsl(var(--muted))",
+            DEFAULT: "hsl(var(--card))",
+            emphasis: "hsl(var(--foreground))",
           },
           border: {
-            DEFAULT: "#13323a", // unified teal border
+            DEFAULT: "hsl(var(--border) / 0.4)",
           },
           ring: {
-            DEFAULT: "#13323a", // unified teal ring
+            DEFAULT: "hsl(var(--ring) / 0.4)",
           },
           content: {
-            subtle: "#4b5563", // gray-600
-            DEFAULT: "#6b7280", // gray-600
-            emphasis: "#e5e7eb", // gray-200
-            strong: "#f9fafb", // gray-50
-            inverted: "#000000", // black
+            subtle: "hsl(var(--muted-foreground))",
+            DEFAULT: "hsl(var(--foreground) / 0.8)",
+            emphasis: "hsl(var(--foreground))",
+            strong: "hsl(var(--foreground))",
+            inverted: "hsl(var(--background))",
           },
         },
         //End Tremor theme

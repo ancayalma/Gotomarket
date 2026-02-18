@@ -171,7 +171,7 @@ export default function UniversityDashboard() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
-                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 2xl:grid-cols-9 gap-3 md:gap-4 mb-8 bg-transparent"
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 xl:grid-cols-9 2xl:grid-cols-9 gap-3 md:gap-4 mb-8 bg-transparent"
             >
                 {tabs.map((tab, index) => (
                     <TabNavigationCard
