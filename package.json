@@ -87,8 +87,6 @@
     "diff": "^8.0.2",
     "encoding": "^0.1.13",
     "entities": "^7.0.0",
-    "eslint": "^9.39.2",
-    "eslint-config-next": "^16.1.2",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.23.26",
     "geist": "^1.5.1",
@@ -168,7 +166,9 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.51.0"
+    "typescript-eslint": "^8.51.0",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "^16.1.2"
   },
   "overrides": {
     "react": "$react",
@@ -176,6 +176,7 @@
     "utf7": {
       "semver": "^5.7.2"
     },
-    "tar": "^7.5.7"
+    "tar": "^7.5.9",
+    "fast-xml-parser": "^5.3.6"
   }
 }
