@@ -12,6 +12,8 @@ import { ViewToggle, type ViewMode } from '@/components/ViewToggle';
 import { ExternalLink, Mail, TrendingUp, Target, X, User, Info, ArrowRightCircle } from 'lucide-react';
 import { convertLeadToOpportunity } from "@/actions/crm/convert-lead";
 import { SmartEmailModal } from '@/components/modals/SmartEmailModal';
+import { EnhancedDateFilter } from '@/components/date-filter/EnhancedDateFilter';
+import { isWithinInterval } from 'date-fns';
 
 type Lead = {
   id: string;
@@ -75,9 +77,66 @@ export default function LeadsView({ data }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [selectedEmailLead, setSelectedEmailLead] = useState<Lead | null>(null);
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined
+  });
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Lead; direction: 'asc' | 'desc' } | null>({
+    key: 'createdAt',
+    direction: 'desc'
+  });
+
+  const handleSort = (key: keyof Lead) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   const selectedIds = useMemo(() => Object.entries(selected).filter(([, v]) => v).map(([k]) => k), [selected]);
-  const visibleLeads = data;
+
+  const visibleLeads = useMemo(() => {
+    let filtered = data;
+    if (dateRange.from || dateRange.to) {
+      filtered = data.filter((lead) => {
+        if (!lead.createdAt) return true;
+        const createdAt = new Date(lead.createdAt);
+
+        if (dateRange.from && dateRange.to) {
+          return createdAt >= dateRange.from && createdAt <= dateRange.to;
+        }
+        if (dateRange.from) {
+          return createdAt >= dateRange.from;
+        }
+        if (dateRange.to) {
+          return createdAt <= dateRange.to;
+        }
+        return true;
+      });
+    }
+
+    if (sortConfig) {
+      filtered = [...filtered].sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (!aValue && !bValue) return 0;
+        if (!aValue) return 1;
+        if (!bValue) return -1;
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [data, dateRange, sortConfig]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -151,8 +210,13 @@ export default function LeadsView({ data }: Props) {
               checked={allSelected}
               onCheckedChange={toggleAll}
             />
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Select Current Page</span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mr-2">Select Current Page</span>
           </div>
+          <EnhancedDateFilter
+            onFilterChange={setDateRange}
+            storageKey="crm-leads-view-date-filter"
+            initialType="all-time"
+          />
           <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Total Selected: {selectedIds.length}</span>
         </div>
         <div className="flex items-center gap-4">
@@ -181,11 +245,36 @@ export default function LeadsView({ data }: Props) {
                 <th className="p-3 w-[50px] text-center">
                   <Switch checked={allSelected} onCheckedChange={toggleAll} />
                 </th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Lead</th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Email</th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Company</th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Stage</th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('lastName')}>
+                  <div className="flex items-center gap-1">
+                    Lead
+                    {sortConfig?.key === 'lastName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </div>
+                </th>
+                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('email')}>
+                  <div className="flex items-center gap-1">
+                    Email
+                    {sortConfig?.key === 'email' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </div>
+                </th>
+                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('company')}>
+                  <div className="flex items-center gap-1">
+                    Company
+                    {sortConfig?.key === 'company' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </div>
+                </th>
+                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('pipeline_stage' as any)}>
+                  <div className="flex items-center gap-1">
+                    Stage
+                    {sortConfig?.key === 'pipeline_stage' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </div>
+                </th>
+                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('outreach_status' as any)}>
+                  <div className="flex items-center gap-1">
+                    Status
+                    {sortConfig?.key === 'outreach_status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </div>
+                </th>
                 <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Progress</th>
                 <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Actions</th>
               </tr>

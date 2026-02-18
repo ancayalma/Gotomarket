@@ -19,6 +19,8 @@ interface SalesCommandContextType {
     selectedUserData: UserSpecificSalesData | null;
     handleUserSelect: (userId: string | null) => Promise<void>;
     isMember: boolean;
+    refreshData: (from?: Date, to?: Date) => Promise<void>;
+    isRefreshing: boolean;
 }
 
 const SalesCommandContext = createContext<SalesCommandContextType | undefined>(undefined);
@@ -49,9 +51,26 @@ export function SalesCommandProvider({
     const [viewMode, setViewMode] = useState<ViewMode>(effectiveDefaultView);
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [selectedUserData, setSelectedUserData] = useState<UserSpecificSalesData | null>(null);
+    const [data, setData] = useState<UnifiedSalesData>(initialData);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // Simple heuristic for manager role based on initial data (can be refined)
     const isManager = initialData.meta.isGlobalAdmin;
+
+    const refreshData = async (from?: Date, to?: Date) => {
+        setIsRefreshing(true);
+        try {
+            const { getUnifiedSalesData } = await import("@/actions/crm/get-unified-sales-data");
+            const newData = await getUnifiedSalesData(from, to);
+            if (newData) {
+                setData(newData);
+            }
+        } catch (error) {
+            console.error("Failed to refresh sales data", error);
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
 
     const handleUserSelect = async (userId: string | null) => {
         if (!userId) {
@@ -90,7 +109,7 @@ export function SalesCommandProvider({
     return (
         <SalesCommandContext.Provider
             value={{
-                data: initialData,
+                data,
                 leads: initialLeads,
                 crmData: initialCrmData,
                 boards: initialBoards,
@@ -101,7 +120,9 @@ export function SalesCommandProvider({
                 selectedUserId,
                 selectedUserData,
                 handleUserSelect,
-                isMember
+                isMember,
+                refreshData,
+                isRefreshing
             }}
         >
             {children}

@@ -32,7 +32,7 @@ export const columns: ColumnDef<Lead>[] = [
         {moment(row.getValue("createdAt")).format("YY-MM-DD")}
       </div>
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: false,
   },
   {
@@ -45,7 +45,7 @@ export const columns: ColumnDef<Lead>[] = [
         {moment(row.getValue("updatedAt")).format("YY-MM-DD")}
       </div>
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: false,
   },
   {

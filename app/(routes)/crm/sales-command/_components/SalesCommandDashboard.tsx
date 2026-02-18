@@ -8,15 +8,32 @@ import TeamCommandView from "./TeamCommandView";
 
 import { cn } from "@/lib/utils";
 import Container from "../../../components/ui/Container"; // Adjust path if needed
+import { EnhancedDateFilter } from "@/components/date-filter/EnhancedDateFilter";
 
 export default function SalesCommandDashboard() {
-    const { data, viewMode, setViewMode, isManager, selectedUserData, isMember } = useSalesCommand();
+    const { data, viewMode, setViewMode, isManager, selectedUserData, isMember, refreshData, isRefreshing } = useSalesCommand();
+    const [dateRange, setDateRange] = React.useState<{ from: Date | undefined; to: Date | undefined }>({
+        from: undefined,
+        to: undefined
+    });
+
+    React.useEffect(() => {
+        refreshData(dateRange.from, dateRange.to);
+    }, [dateRange, refreshData]);
+
     const { summary, userData } = data;
 
     return (
         <Container
             title="Unified Sales Command"
             description="Centralized control for pipeline, tasks, and team analytics."
+            action={
+                <EnhancedDateFilter
+                    onFilterChange={setDateRange}
+                    storageKey="crm-sales-command-date-filter"
+                    initialType="monthly"
+                />
+            }
         >
             <div className="space-y-8">
 
@@ -91,8 +108,14 @@ export default function SalesCommandDashboard() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-2">
+                        {isRefreshing && (
+                            <div className="flex items-center gap-2 mr-2">
+                                <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                <span className="text-xs text-muted-foreground">Refreshing...</span>
+                            </div>
+                        )}
                         <span className="text-xs text-muted-foreground">
-                            Last updated: {new Date(data.meta.serverTime).toLocaleTimeString()}
+                            Last active: {new Date(data.meta.serverTime).toLocaleTimeString()}
                         </span>
                         {isManager && (
                             <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded border border-primary/20">

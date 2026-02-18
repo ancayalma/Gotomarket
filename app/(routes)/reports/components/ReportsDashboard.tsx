@@ -1,6 +1,7 @@
 "use client";
 
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { EnhancedDateFilter } from "@/components/date-filter/EnhancedDateFilter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, BarChart } from "@tremor/react";
 import { Activity, DollarSign, TrendingUp, Filter, Printer, Plus } from "lucide-react";
@@ -97,9 +98,10 @@ export default function ReportsDashboard({
             {/* Utility Bar */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 gap-4">
                 <div className="flex flex-col sm:flex-row gap-4">
-                    <DateRangePicker
-                        date={date}
-                        setDate={setDate}
+                    <EnhancedDateFilter
+                        onFilterChange={(range) => setDate(range)}
+                        storageKey="crm-reports-dashboard-date-filter"
+                        initialType="monthly"
                     />
                     <Select value={departmentId} onValueChange={setDepartmentId}>
                         <SelectTrigger className="w-[180px]">

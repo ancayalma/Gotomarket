@@ -9,13 +9,16 @@ import { DataTableViewOptions } from "./data-table-view-options";
 
 import { priorities, statuses } from "../data/data";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
+import { EnhancedDateFilter } from "@/components/date-filter/EnhancedDateFilter";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
+  onDateFilterChange: (range: { from: Date | undefined; to: Date | undefined }) => void;
 }
 
 export function DataTableToolbar<TData>({
   table,
+  onDateFilterChange,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
@@ -29,6 +32,11 @@ export function DataTableToolbar<TData>({
             table.getColumn("title")?.setFilterValue(event.target.value)
           }
           className="h-8 w-[150px] lg:w-[250px]"
+        />
+        <EnhancedDateFilter
+          onFilterChange={onDateFilterChange}
+          storageKey="crm-account-tasks-view-date-filter"
+          initialType="all-time"
         />
         {table.getColumn("taskStatus") && (
           <DataTableFacetedFilter

@@ -45,7 +45,7 @@ export const columns: ColumnDef<Opportunity>[] = [
         {moment(row.getValue("close_date")).format("YY-MM-DD")}
       </div>
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: false,
   },
   {
@@ -81,7 +81,7 @@ export const columns: ColumnDef<Opportunity>[] = [
         }
       </div>
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: true,
   },
   {
@@ -110,9 +110,9 @@ export const columns: ColumnDef<Opportunity>[] = [
         <div>
           {row.original.budget
             ? row.original.budget.toLocaleString("en-US", {
-                style: "currency",
-                currency: "USD",
-              })
+              style: "currency",
+              currency: "USD",
+            })
             : "N/A"}
         </div>
       );

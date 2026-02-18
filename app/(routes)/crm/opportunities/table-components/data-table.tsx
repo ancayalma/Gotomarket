@@ -64,11 +64,35 @@ export function OpportunitiesDataTable<TData, TValue>({
     []
   );
   const [hide, setHide] = React.useState(false);
+  const [dateRange, setDateRange] = React.useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined
+  });
 
   const viewMode = savedViewMode as ViewMode;
 
+  const filteredData = React.useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return data;
+
+    return data.filter((opportunity: any) => {
+      if (!opportunity.createdAt) return true;
+      const createdAt = new Date(opportunity.createdAt);
+
+      if (dateRange.from && dateRange.to) {
+        return createdAt >= dateRange.from && createdAt <= dateRange.to;
+      }
+      if (dateRange.from) {
+        return createdAt >= dateRange.from;
+      }
+      if (dateRange.to) {
+        return createdAt <= dateRange.to;
+      }
+      return true;
+    });
+  }, [data, dateRange]);
+
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     state: {
       sorting,
@@ -106,7 +130,7 @@ export function OpportunitiesDataTable<TData, TValue>({
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-start gap-3">
         <div className="flex-1 w-full">
-          <DataTableToolbar table={table} />
+          <DataTableToolbar table={table} onDateFilterChange={setDateRange} />
         </div>
 
         <div className="flex items-center gap-2 self-end md:self-auto">

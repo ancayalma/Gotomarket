@@ -71,11 +71,35 @@ export function ProjectsDataTable<TData, TValue>({
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
   const [projectPools, setProjectPools] = React.useState<Record<string, { poolId: string; name: string; stageData: StageDatum[]; total: number }[]>>({});
   const [hide, setHide] = React.useState(false);
+  const [dateRange, setDateRange] = React.useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined
+  });
 
   const viewMode = (savedViewMode || "card") as ViewMode;
 
+  const filteredData = React.useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return data;
+
+    return data.filter((project: any) => {
+      const date = project.date_created ? new Date(project.date_created) : null;
+      if (!date) return true;
+
+      if (dateRange.from && dateRange.to) {
+        return date >= dateRange.from && date <= dateRange.to;
+      }
+      if (dateRange.from) {
+        return date >= dateRange.from;
+      }
+      if (dateRange.to) {
+        return date <= dateRange.to;
+      }
+      return true;
+    });
+  }, [data, dateRange]);
+
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     state: {
       sorting,
@@ -190,7 +214,7 @@ export function ProjectsDataTable<TData, TValue>({
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row justify-between items-start gap-3">
         <div className="flex-1 w-full">
-          <DataTableToolbar table={table} />
+          <DataTableToolbar table={table} onDateFilterChange={setDateRange} />
         </div>
 
         <div className="flex items-center gap-2 self-end md:self-auto">

@@ -129,8 +129,8 @@ export const columns: ColumnDef<Opportunity>[] = [
         {moment(row.getValue("created_on")).format("YY-MM-DD")}
       </div>
     ),
-    enableSorting: false,
-    enableHiding: false,
+    enableSorting: true,
+    enableHiding: true,
   },
   {
     id: "actions",

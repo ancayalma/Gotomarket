@@ -55,6 +55,7 @@ export const columns: ColumnDef<Task>[] = [
         </div>
       </Link>
     ),
+    enableSorting: true,
   },
   {
     accessorKey: "description",

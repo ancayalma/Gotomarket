@@ -17,64 +17,74 @@ export type DashboardCounts = {
   storageMB: number; // total storage in MB (rounded to 2 decimals)
 };
 
-export const getSummaryCounts = async (): Promise<DashboardCounts> => {
+export const getSummaryCounts = async (from?: Date, to?: Date): Promise<DashboardCounts> => {
   // Get team context for filtering
   const teamInfo = await getCurrentUserTeamId();
-  console.log('[getSummaryCounts] teamInfo:', teamInfo);
+  if (from || to) {
+    console.log('[getSummaryCounts] applying date filter:', { from, to });
+  }
+
   const teamId = teamInfo?.teamId;
   const isGlobalAdmin = teamInfo?.isGlobalAdmin;
 
-  // Build team filter - global admins see all, others see only their team
-  const teamRole = teamInfo?.teamRole;
-  const assignmentsFilter = teamRole === "MEMBER" ? {
-    OR: [
-      { assigned_to: teamInfo?.userId },
-      { user: teamInfo?.userId } // For models using 'user' instead of 'assigned_to'
-    ]
-  } : {};
+  const dateFilter: any = {};
+  if (from) dateFilter.gte = from;
+  if (to) dateFilter.lte = to;
+
+  const getCreatedAtFilter = () => {
+    return Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
+  };
 
   // Helper to merge team filter with member restriction
   const getFilter = (modelField: "assigned_to" | "user" | "none" = "none") => {
-    let base = isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
+    let base: any = isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
 
     if (teamRole === "MEMBER") {
       if (modelField === "assigned_to") {
-        return { ...base, assigned_to: teamInfo?.userId };
+        base.assigned_to = teamInfo?.userId;
       } else if (modelField === "user") {
-        return { ...base, user: teamInfo?.userId };
+        base.user = teamInfo?.userId;
       }
     }
-    return base;
+
+    // Merge date filter for most models
+    return { ...base, ...getCreatedAtFilter() };
   };
+
+  const teamRole = teamInfo?.teamRole;
 
   // For documents: members see only their assigned or created docs
   const getDocumentFilter = () => {
-    if (isGlobalAdmin) return {};
-    const base = teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
+    const base = isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
+    const dateQuery = getCreatedAtFilter();
+
     if (teamRole === "MEMBER") {
       return {
         ...base,
+        ...dateQuery,
         OR: [
           { created_by_user: teamInfo?.userId },
           { assigned_user: teamInfo?.userId }
         ]
       };
     }
-    return base;
+    return { ...base, ...dateQuery };
   };
 
   // For project opportunities: members see only their created/assigned ones
   const getProjectOpportunityFilter = () => {
+    const dateQuery = Object.keys(dateFilter).length > 0 ? { dateCreated: dateFilter } : {};
     if (teamRole === "MEMBER") {
       return {
         status: "OPEN",
+        ...dateQuery,
         OR: [
           { createdBy: teamInfo?.userId },
           { assignedTo: teamInfo?.userId }
         ]
       };
     }
-    return { status: "OPEN" };
+    return { status: "OPEN", ...dateQuery };
   };
 
   const getAccountFilter = () => {
@@ -89,6 +99,12 @@ export const getSummaryCounts = async (): Promise<DashboardCounts> => {
         { name: { startsWith: "Project Documents" } },
       ]
     };
+  };
+
+  const getInvoiceFilter = () => {
+    const base = isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
+    const dateQuery = Object.keys(dateFilter).length > 0 ? { date_created: dateFilter } : {};
+    return { ...base, ...dateQuery };
   };
 
   const [
@@ -115,7 +131,7 @@ export const getSummaryCounts = async (): Promise<DashboardCounts> => {
     prismadb.crm_Contracts.count({ where: getFilter("assigned_to") }),
     // Fetch all invoices with amount and status for revenue calculation
     prismadb.invoices.findMany({
-      where: isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" },
+      where: getInvoiceFilter(),
       select: { invoice_amount: true, payment_status: true }
     }),
     prismadb.documents.count({ where: getDocumentFilter() }), // Member-specific document filter

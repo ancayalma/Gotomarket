@@ -1,9 +1,7 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DateRangePicker, DateRangePickerValue } from "@tremor/react";
 import { format, subDays, startOfMonth, startOfYear } from "date-fns";
+import { EnhancedDateFilter, DateFilterType } from "@/components/date-filter/EnhancedDateFilter";
 
 export const DateRangeSelector = () => {
     const router = useRouter();
@@ -13,32 +11,29 @@ export const DateRangeSelector = () => {
     const from = searchParams.get("from");
     const to = searchParams.get("to");
 
-    const [value, setValue] = useState<DateRangePickerValue>({
-        from: from ? new Date(from) : subDays(new Date(), 30),
-        to: to ? new Date(to) : new Date(),
-    });
-
-    const handleValueChange = (newValue: DateRangePickerValue) => {
-        setValue(newValue);
-
-        if (newValue.from && newValue.to) {
+    const handleFilterChange = (range: { from: Date | undefined; to: Date | undefined }, type: DateFilterType) => {
+        if (range.from && range.to) {
             const params = new URLSearchParams(searchParams.toString());
-            params.set("from", format(newValue.from, "yyyy-MM-dd"));
-            params.set("to", format(newValue.to, "yyyy-MM-dd"));
-            router.push(`?${params.toString()}`);
+            params.set("from", format(range.from, "yyyy-MM-dd"));
+            params.set("to", format(range.to, "yyyy-MM-dd"));
+
+            // Only push if different from current query to avoid infinite loops if storage and URL conflict
+            if (params.get("from") !== from || params.get("to") !== to) {
+                router.push(`?${params.toString()}`);
+            }
         }
     };
 
     return (
         <div className="w-full md:w-auto">
-            <DateRangePicker
-                value={value}
-                onValueChange={handleValueChange}
-                className="bg-card border-border/50 text-foreground"
-                enableSelect={true}
-                selectPlaceholder="Select range"
-                color="violet"
+            <EnhancedDateFilter
+                onFilterChange={handleFilterChange}
+                storageKey="partners-ai-usage-date-filter"
+                initialType={from ? "custom" : "monthly"}
+                initialRange={from && to ? { from: new Date(from), to: new Date(to) } : undefined}
+                showAllTime={false}
             />
         </div>
     );
 };
+

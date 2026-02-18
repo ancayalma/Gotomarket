@@ -20,7 +20,7 @@ export const columns: ColumnDef<Account>[] = [
         {moment(row.getValue("createdAt")).format("YY/MM/DD-HH:mm")}
       </div>
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: false,
     size: 140,
   },
@@ -60,7 +60,7 @@ export const columns: ColumnDef<Account>[] = [
         </div>
       </Link>
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: true,
     size: 250,
   },

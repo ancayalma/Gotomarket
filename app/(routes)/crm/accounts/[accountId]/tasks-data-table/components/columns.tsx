@@ -22,8 +22,9 @@ export const columns: ColumnDef<Task>[] = [
         {moment(row.getValue("dueDateAt")).format("YY-MM-DD")}
       </div>
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: false,
+    size: 110,
   },
   {
     accessorKey: "assigned_user",
@@ -40,7 +41,7 @@ export const columns: ColumnDef<Task>[] = [
         }
       </div>
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: false,
   },
   {

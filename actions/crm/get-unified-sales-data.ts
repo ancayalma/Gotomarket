@@ -33,7 +33,7 @@ export type UnifiedSalesData = {
     };
 };
 
-export const getUnifiedSalesData = async (): Promise<UnifiedSalesData | null> => {
+export const getUnifiedSalesData = async (from?: Date, to?: Date): Promise<UnifiedSalesData | null> => {
     const session = await getServerSession(authOptions);
     if (!session) return null;
 
@@ -41,8 +41,8 @@ export const getUnifiedSalesData = async (): Promise<UnifiedSalesData | null> =>
 
     // Parallel fetch for maximum performance
     const [summaryCounts, teamAnalytics, userStageCounts] = await Promise.all([
-        getSummaryCounts(),
-        getTeamAnalytics(),
+        getSummaryCounts(from, to),
+        getTeamAnalytics(), // Can later extend teamAnalytics as well
         getLeadsStageCounts(userId),
     ]);
 

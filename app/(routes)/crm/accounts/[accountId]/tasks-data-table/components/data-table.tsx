@@ -57,9 +57,33 @@ export function TasksDataTable<TData, TValue>(props: DataTableProps<TData, TValu
   );
 
   const [hide, setHide] = React.useState(false);
+  const [dateRange, setDateRange] = React.useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined
+  });
+
+  const filteredData = React.useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return data;
+
+    return data.filter((task: any) => {
+      const date = task.dueDateAt ? new Date(task.dueDateAt) : null;
+      if (!date) return true;
+
+      if (dateRange.from && dateRange.to) {
+        return date >= dateRange.from && date <= dateRange.to;
+      }
+      if (dateRange.from) {
+        return date >= dateRange.from;
+      }
+      if (dateRange.to) {
+        return date <= dateRange.to;
+      }
+      return true;
+    });
+  }, [data, dateRange]);
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     state: {
       sorting,
@@ -109,7 +133,7 @@ export function TasksDataTable<TData, TValue>(props: DataTableProps<TData, TValu
         </div>
       ) : (
         <>
-          <DataTableToolbar table={table} />
+          <DataTableToolbar table={table} onDateFilterChange={setDateRange} />
           <div className="rounded-md border overflow-x-auto bg-background/50 backdrop-blur-sm">
             <Table className="table-fixed w-full border-collapse">
               <TableHeader>
