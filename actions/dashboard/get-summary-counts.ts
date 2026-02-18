@@ -1,3 +1,5 @@
+"use server";
+
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
@@ -31,12 +33,12 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
   if (from) dateFilter.gte = from;
   if (to) dateFilter.lte = to;
 
-  const getCreatedAtFilter = () => {
-    return Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
+  const getCreatedAtFilter = (fieldName: string = "createdAt") => {
+    return Object.keys(dateFilter).length > 0 ? { [fieldName]: dateFilter } : {};
   };
 
   // Helper to merge team filter with member restriction
-  const getFilter = (modelField: "assigned_to" | "user" | "none" = "none") => {
+  const getFilter = (modelField: "assigned_to" | "user" | "none" = "none", dateFieldName: string = "createdAt") => {
     let base: any = isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
 
     if (teamRole === "MEMBER") {
@@ -48,7 +50,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     }
 
     // Merge date filter for most models
-    return { ...base, ...getCreatedAtFilter() };
+    return { ...base, ...getCreatedAtFilter(dateFieldName) };
   };
 
   const teamRole = teamInfo?.teamRole;
@@ -73,7 +75,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
 
   // For project opportunities: members see only their created/assigned ones
   const getProjectOpportunityFilter = () => {
-    const dateQuery = Object.keys(dateFilter).length > 0 ? { dateCreated: dateFilter } : {};
+    const dateQuery = Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
     if (teamRole === "MEMBER") {
       return {
         status: "OPEN",
@@ -126,7 +128,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     prismadb.crm_Leads.count({ where: getFilter("assigned_to") }),
     prismadb.tasks.count({ where: getFilter("user") }),
     prismadb.boards.count({ where: getFilter("user") }),
-    prismadb.crm_Contacts.count({ where: getFilter("assigned_to") }),
+    prismadb.crm_Contacts.count({ where: getFilter("assigned_to", "cratedAt") }),
     prismadb.crm_Accounts.count({ where: getAccountFilter() }),
     prismadb.crm_Contracts.count({ where: getFilter("assigned_to") }),
     // Fetch all invoices with amount and status for revenue calculation

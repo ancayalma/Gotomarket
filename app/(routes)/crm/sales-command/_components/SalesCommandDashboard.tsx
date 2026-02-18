@@ -17,9 +17,13 @@ export default function SalesCommandDashboard() {
         to: undefined
     });
 
+    const fromStr = dateRange.from?.toISOString();
+    const toStr = dateRange.to?.toISOString();
+
     React.useEffect(() => {
         refreshData(dateRange.from, dateRange.to);
-    }, [dateRange, refreshData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fromStr, toStr, refreshData]);
 
     const { summary, userData } = data;
 

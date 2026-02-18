@@ -57,7 +57,7 @@ export function SalesCommandProvider({
     // Simple heuristic for manager role based on initial data (can be refined)
     const isManager = initialData.meta.isGlobalAdmin;
 
-    const refreshData = async (from?: Date, to?: Date) => {
+    const refreshData = React.useCallback(async (from?: Date, to?: Date) => {
         setIsRefreshing(true);
         try {
             const { getUnifiedSalesData } = await import("@/actions/crm/get-unified-sales-data");
@@ -70,9 +70,9 @@ export function SalesCommandProvider({
         } finally {
             setIsRefreshing(false);
         }
-    };
+    }, []);
 
-    const handleUserSelect = async (userId: string | null) => {
+    const handleUserSelect = React.useCallback(async (userId: string | null) => {
         if (!userId) {
             setSelectedUserId(null);
             setSelectedUserData(null);
@@ -104,7 +104,7 @@ export function SalesCommandProvider({
         } catch (error) {
             console.error("Failed to fetch user data", error);
         }
-    };
+    }, [initialData, setViewMode]);
 
     return (
         <SalesCommandContext.Provider

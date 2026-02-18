@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import KnowledgeBaseView from "./KnowledgeBaseView";
 import { useToast } from "@/components/ui/use-toast";
 
 interface CasesClientProps {
@@ -43,6 +44,8 @@ interface CasesClientProps {
     teamMembers: any[];
     contacts: any[];
     accounts: any[];
+    initialView: string;
+    initialArticles: any[];
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
@@ -69,6 +72,8 @@ export default function CasesClient({
     teamMembers,
     contacts,
     accounts,
+    initialView,
+    initialArticles,
 }: CasesClientProps) {
     const router = useRouter();
     const { toast } = useToast();
@@ -78,7 +83,9 @@ export default function CasesClient({
     const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
-    const [activeView, setActiveView] = useState<"list" | "board">("list");
+    const [activeView, setActiveView] = useState(initialView);
+
+
 
     // New case form state
     const [newCase, setNewCase] = useState({
@@ -155,6 +162,10 @@ export default function CasesClient({
         const days = Math.floor(hours / 24);
         return `${days}d ago`;
     };
+
+    if (activeView === "kb") {
+        return <KnowledgeBaseView initialArticles={initialArticles} />;
+    }
 
     return (
         <div className="flex flex-col h-full bg-background">

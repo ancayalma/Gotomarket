@@ -9,14 +9,33 @@ import CasesClient from "./components/CasesClient";
 
 export const dynamic = "force-dynamic";
 
-const CasesPage = async () => {
+const CasesPage = async (props: { searchParams: Promise<any> }) => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return null;
 
+    const searchParams = await props.searchParams;
+    const view = searchParams.view || "list";
+
+    // Common data
     const [cases, stats] = await Promise.all([
         getCases(),
         getCaseStats(),
     ]);
+
+    // Fetch KB articles if in KB view
+    let kbArticles: any[] = [];
+    if (view === "kb") {
+        kbArticles = await (prismadb as any).knowledgeArticle.findMany({
+            where: { status: "PUBLISHED" },
+            include: {
+                category: { select: { id: true, name: true, icon: true } },
+                author: { select: { id: true, name: true } },
+                _count: { select: { article_links: true } },
+            },
+            take: 50,
+            orderBy: { helpful_count: "desc" },
+        });
+    }
 
     // Get team members for assignment dropdown
     const user = await prismadb.users.findUnique({
@@ -53,6 +72,8 @@ const CasesPage = async () => {
                 teamMembers={teamMembers}
                 contacts={contacts}
                 accounts={accounts}
+                initialView={view}
+                initialArticles={kbArticles}
             />
         </Suspense>
     );

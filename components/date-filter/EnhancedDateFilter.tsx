@@ -61,6 +61,8 @@ export function EnhancedDateFilter({
         setIsLoaded(true);
     }, [storageKey]);
 
+    const lastEmitted = React.useRef<{ from: string | undefined; to: string | undefined; type: string } | null>(null);
+
     // Apply filter when type or range changes
     React.useEffect(() => {
         if (!isLoaded) return;
@@ -94,6 +96,19 @@ export function EnhancedDateFilter({
                 break;
         }
 
+        const fromStr = from?.toISOString();
+        const toStr = to?.toISOString();
+
+        // Prevent infinite loops by checking if values actually changed
+        if (
+            lastEmitted.current?.from === fromStr &&
+            lastEmitted.current?.to === toStr &&
+            lastEmitted.current?.type === filterType
+        ) {
+            return;
+        }
+
+        lastEmitted.current = { from: fromStr, to: toStr, type: filterType };
         onFilterChange({ from, to }, filterType);
 
         // Save to localStorage

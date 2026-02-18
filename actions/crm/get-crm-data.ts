@@ -1,3 +1,5 @@
+"use server";
+
 import { prismadb } from "@/lib/prisma";
 
 import { getServerSession } from "next-auth";
