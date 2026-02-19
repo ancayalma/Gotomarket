@@ -86,6 +86,15 @@ const AdminDashboard = ({
     const greeting = useGreeting();
 
     // ─── Quick Launch Checklist logic ───────────────────────────────────
+    const [isLocallyDismissed, setIsLocallyDismissed] = React.useState(false);
+
+    React.useEffect(() => {
+        const locallyDismissed = localStorage.getItem("crm_quick_launch_dismissed_v1") === "true";
+        if (locallyDismissed) {
+            setIsLocallyDismissed(true);
+        }
+    }, []);
+
     // Derive completion signals from existing data already passed to this component.
     // "Campaigns" are tracked as boards/projects; outreachStats.totalSent > 0 means outreach is live.
     const checklistCounts: ChecklistCounts = {
@@ -98,7 +107,7 @@ const AdminDashboard = ({
 
     // Only show checklist to admins who are clearly just getting started AND haven't dismissed it
     const isNewishAdmin =
-        !quickLaunchDismissed && (
+        !isLocallyDismissed && !quickLaunchDismissed && (
             checklistCounts.campaigns === 0 ||
             checklistCounts.lists === 0 ||
             !checklistCounts.outreachStarted

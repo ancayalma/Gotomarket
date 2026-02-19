@@ -65,6 +65,10 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
     const [isDismissing, setIsDismissing] = useState(false);
 
     useEffect(() => {
+        const isLocallyDismissed = localStorage.getItem(DISMISS_KEY) === "true";
+        if (isLocallyDismissed) {
+            setDismissed(true);
+        }
         setMounted(true);
     }, []);
 
@@ -132,17 +136,20 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
         if (isDismissing) return;
         setIsDismissing(true);
 
+        // Optimistically dismiss in UI
+        setDismissed(true);
+        localStorage.setItem(DISMISS_KEY, "true");
+
         try {
             const res = await dismissQuickLaunch();
-            if (res.success) {
-                setDismissed(true);
-                // Also update localStorage for immediate fallback on other pages if needed
-                localStorage.setItem(DISMISS_KEY, "true");
-            } else {
-                toast.error("Failed to save dismissal preference");
+            if (!res.success) {
+                console.error("Failed to dismiss on server:", res.error);
+                // We keep it dismissed locally anyway to not annoy the user, 
+                // but we might want to show a toast if we really care about the sync.
+                // toast.error("Could not sync dismissal to database, but will remember locally.");
             }
         } catch (error) {
-            console.error(error);
+            console.error("Error in handleDismiss:", error);
         } finally {
             setIsDismissing(false);
         }

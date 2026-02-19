@@ -38,16 +38,30 @@ const DashboardRoleManager = async () => {
     // 1. Determine Role
     let user: any;
     try {
+        // We use 'as any' and a try-catch to safely handle the new field while Prisma client catches up
         user = await (prismadb.users as any).findUnique({
             where: { id: userId },
             select: { team_role: true, email: true, is_admin: true, quickLaunchDismissed: true }
         });
-    } catch (error) {
-        // Fallback if Prisma client is stale and doesn't know about the new field yet
+    } catch (e) {
+        // Fallback for when the field doesn't exist in the generated client yet (Next.js/Turbopack cache)
+        // We fetch the basic info first
         user = await prismadb.users.findUnique({
             where: { id: userId },
             select: { team_role: true, email: true, is_admin: true }
         });
+
+        // Then we try to get the dismissal status using a raw query to bypass Prisma's stale validation
+        try {
+            const rawResult = await (prismadb.users as any).findRaw({
+                filter: { _id: { $oid: userId } }
+            });
+            if (Array.isArray(rawResult) && rawResult.length > 0) {
+                user.quickLaunchDismissed = rawResult[0].quickLaunchDismissed;
+            }
+        } catch (rawError) {
+            console.error("Raw query fallback failed:", rawError);
+        }
     }
 
     const role = (user?.team_role || "VIEWER").trim().toUpperCase();
