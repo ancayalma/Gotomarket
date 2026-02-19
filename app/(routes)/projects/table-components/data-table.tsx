@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -43,12 +44,24 @@ interface DataTableProps<TData, TValue> {
     activeTasks: number;
     documents: number;
   };
+  entityName?: string;
+  statsLinks?: {
+    total: string;
+    tasks: string;
+    documents: string;
+  };
 }
 
 export function ProjectsDataTable<TData, TValue>({
   columns,
   data,
   stats,
+  entityName = "Project",
+  statsLinks = {
+    total: "/projects/all",
+    tasks: "/projects/tasks",
+    documents: "/documents",
+  },
 }: DataTableProps<TData, TValue>) {
   // Mobile detection using shared hook
   const isMobile = useIsMobile();
@@ -62,7 +75,7 @@ export function ProjectsDataTable<TData, TValue>({
     setColumnSizing,
     viewMode: savedViewMode,
     setViewMode,
-  } = useTableSettings("crm-projects-table-settings", isMobile);
+  } = useTableSettings(`${entityName.toLowerCase()}-projects-table-settings`, isMobile);
 
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -82,7 +95,8 @@ export function ProjectsDataTable<TData, TValue>({
     if (!dateRange.from && !dateRange.to) return data;
 
     return data.filter((project: any) => {
-      const date = project.date_created ? new Date(project.date_created) : null;
+      const dateVal = project.createdAt || project.date_created;
+      const date = dateVal ? new Date(dateVal) : null;
       if (!date) return true;
 
       if (dateRange.from && dateRange.to) {
@@ -176,39 +190,45 @@ export function ProjectsDataTable<TData, TValue>({
     <div className="space-y-6">
       {/* Stats Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/20 rounded-lg">
-              <FolderOpen className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{calculatedStats.total}</p>
-              <p className="text-xs text-muted-foreground">Total Projects</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/20 rounded-lg">
-              <ListTodo className="h-5 w-5 text-blue-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{calculatedStats.activeTasks}</p>
-              <p className="text-xs text-muted-foreground">Active Tasks</p>
+        <Link href={statsLinks.total} className="block">
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-4 hover:opacity-80 transition-opacity cursor-pointer h-full">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/20 rounded-lg">
+                <FolderOpen className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{calculatedStats.total}</p>
+                <p className="text-xs text-muted-foreground">Total {entityName}s</p>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-500/20 rounded-lg">
-              <FileText className="h-5 w-5 text-green-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{calculatedStats.documents}</p>
-              <p className="text-xs text-muted-foreground">Documents</p>
+        </Link>
+        <Link href={statsLinks.tasks} className="block">
+          <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-lg p-4 hover:opacity-80 transition-opacity cursor-pointer h-full">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <ListTodo className="h-5 w-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{calculatedStats.activeTasks}</p>
+                <p className="text-xs text-muted-foreground">Active Tasks</p>
+              </div>
             </div>
           </div>
-        </div>
+        </Link>
+        <Link href={statsLinks.documents} className="block">
+          <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-lg p-4 hover:opacity-80 transition-opacity cursor-pointer h-full">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-500/20 rounded-lg">
+                <FileText className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{calculatedStats.documents}</p>
+                <p className="text-xs text-muted-foreground">Documents</p>
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Toolbar */}

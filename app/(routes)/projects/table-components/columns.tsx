@@ -13,13 +13,15 @@ import Link from "next/link";
 
 export const columns: ColumnDef<Task>[] = [
   {
-    accessorKey: "date_created",
+    accessorKey: "createdAt",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Date Created" />
     ),
     cell: ({ row }) => (
       <div className="min-w-[80px]">
-        {moment(row.getValue("date_created")).format("YY-MM-DD")}
+        {row.getValue("createdAt")
+          ? moment(row.getValue("createdAt")).format("YY-MM-DD")
+          : "-"}
       </div>
     ),
     enableSorting: true,
@@ -33,7 +35,7 @@ export const columns: ColumnDef<Task>[] = [
 
     cell: ({ row }) => (
       <div className="min-w-[100px]">
-        {row.original.assigned_user.name ?? "Unassigned"}
+        {row.original.assigned_user?.name ?? "Unassigned"}
       </div>
     ),
     enableSorting: true,

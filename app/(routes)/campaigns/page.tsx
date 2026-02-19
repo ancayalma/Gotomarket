@@ -7,8 +7,7 @@ import { getBoards } from "@/actions/projects/get-boards";
 import { getProjectStats } from "@/actions/projects/get-project-stats";
 
 import NewProjectDialog from "../projects/dialogs/NewProject";
-import { ProjectsDataTable } from "../projects/table-components/data-table";
-import { columns } from "../projects/table-components/columns"; // Using project columns for now
+import CampaignsTableWrapper from "./_components/CampaignsTableWrapper";
 import { FolderPlus, CheckSquare, Target } from "lucide-react";
 import { ProjectCard, ProjectCardData } from "../projects/_components/ProjectCard";
 import AiAssistantCardWrapper from "../projects/_components/AiAssistantCardWrapper";
@@ -19,9 +18,24 @@ const CampaignsPage = async () => {
     if (!session || !session.user?.id) return null;
 
     const users = await getActiveUsers();
-    // Fetch boards (campaigns)
-    const boards: any = await getBoards(session.user.id);
-    const stats = await getProjectStats();
+
+    let boards: any[] = [];
+    let stats: any = { activeTasks: 0, documents: 0 };
+
+    try {
+        const rawBoards = await getBoards(session.user.id);
+        if (rawBoards && Array.isArray(rawBoards)) {
+            boards = JSON.parse(JSON.stringify(rawBoards));
+        }
+    } catch (error) {
+        console.error("Error fetching boards:", error);
+    }
+
+    try {
+        stats = await getProjectStats();
+    } catch (error) {
+        console.error("Error fetching project stats:", error);
+    }
 
     // Define Campaign Cards
     const cards: ProjectCardData[] = [
@@ -49,6 +63,7 @@ const CampaignsPage = async () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 flex-shrink-0 sticky top-0 z-40 pb-4 pt-2">
                 <NewProjectDialog
                     entityName="Campaign"
+                    apiEndpoint="/api/campaigns"
                     customTrigger={<ProjectCard card={cards[0]} />}
                 />
 
@@ -58,8 +73,7 @@ const CampaignsPage = async () => {
             </div>
 
             <div className="pt-2 space-y-3">
-                {/* Reusing ProjectsDataTable but it handles 'boards' which are campaigns */}
-                <ProjectsDataTable data={boards} columns={columns} stats={stats} />
+                <CampaignsTableWrapper data={boards} stats={stats} />
             </div>
         </div>
     );

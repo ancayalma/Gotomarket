@@ -101,10 +101,7 @@ const UpdateProjectForm = ({ initialData, openEdit }: Props) => {
   return (
     <div className="flex w-full py-5 ">
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="h-full w-full space-y-3"
-        >
+        <div className="h-full w-full space-y-3">
           <div className="flex flex-col space-y-3">
             {/* Project logo (optional) */}
             <FormField
@@ -236,7 +233,14 @@ const UpdateProjectForm = ({ initialData, openEdit }: Props) => {
             <DialogTrigger asChild>
               <Button variant={"destructive"}>Cancel</Button>
             </DialogTrigger>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="button"
+              disabled={isLoading}
+              onClick={(e) => {
+                e.preventDefault();
+                form.handleSubmit(onSubmit)(e);
+              }}
+            >
               {isLoading ? (
                 <Icons.spinner className="animate-spin" />
               ) : (
@@ -244,7 +248,7 @@ const UpdateProjectForm = ({ initialData, openEdit }: Props) => {
               )}
             </Button>
           </div>
-        </form>
+        </div>
       </Form>
     </div>
   );

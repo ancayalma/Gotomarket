@@ -54,9 +54,10 @@ import {
 type Props = {
   customTrigger?: React.ReactNode;
   entityName?: string;
+  apiEndpoint?: string; // Override POST target (e.g. "/api/campaigns")
 }
 
-const NewProjectDialog = ({ customTrigger, entityName = "Project" }: Props) => {
+const NewProjectDialog = ({ customTrigger, entityName = "Project", apiEndpoint = "/api/projects/" }: Props) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("basics");
@@ -154,16 +155,20 @@ const NewProjectDialog = ({ customTrigger, entityName = "Project" }: Props) => {
     console.log(data);
     setIsLoading(true);
     try {
-      await axios.post("/api/projects/", data);
+      // Normalize payload: campaigns API expects `name`, projects API expects `title`
+      const payload = apiEndpoint.startsWith("/api/campaigns")
+        ? { name: data.title, description: data.description, status: "Active" }
+        : data;
+      await axios.post(apiEndpoint, payload);
       toast({
         title: "Success",
-        description: `New project: ${data.title}, created successfully`,
+        description: `New ${entityName.toLowerCase()}: ${data.title}, created successfully`,
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error?.response?.data,
+        description: error?.response?.data?.message || error?.response?.data || "An error occurred",
       });
     } finally {
       setIsLoading(false);
@@ -252,7 +257,7 @@ const NewProjectDialog = ({ customTrigger, entityName = "Project" }: Props) => {
           <LoadingComponent />
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-4">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="basics" className="text-xs">
@@ -572,9 +577,17 @@ const NewProjectDialog = ({ customTrigger, entityName = "Project" }: Props) => {
                 <DialogTrigger asChild>
                   <Button type="button" variant="outline">Cancel</Button>
                 </DialogTrigger>
-                <Button type="submit">Create {entityName}</Button>
+                <Button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    form.handleSubmit(onSubmit)(e);
+                  }}
+                >
+                  Create {entityName}
+                </Button>
               </div>
-            </form>
+            </div>
           </Form>
         )}
       </DialogContent>

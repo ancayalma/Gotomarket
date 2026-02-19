@@ -187,10 +187,6 @@ export default function proxy(request: NextRequest) {
         return preflightResponse;
     }
 
-    // FIX: Rewrite POST /campaigns to /api/campaigns to handle incorrect client requests
-    if (method === "POST" && pathname === "/campaigns") {
-        return NextResponse.rewrite(new URL("/api/campaigns", request.url));
-    }
 
     // ── Rate limiting (API routes only, not exempt paths) ──
     if (isApiRoute && !isRateLimitExempt(pathname)) {

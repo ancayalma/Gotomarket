@@ -125,6 +125,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         const {
             name,
+            title, // Accept title as alias for name (from project-style forms)
             description,
             channels,
             leadIds,
@@ -135,15 +136,36 @@ export async function POST(req: Request) {
             resourceLinks,
             meetingLink,
             includeResearch,
-            status, // Accept status from request for approval workflow
+            status,
         } = body;
 
-        // Validation
-        if (!name || !leadIds || leadIds.length === 0) {
+        // Resolve name from either field
+        const campaignName = name || title;
+
+        if (!campaignName) {
             return NextResponse.json(
-                { message: "Sequence name and at least one lead are required" },
+                { message: "Campaign name is required" },
                 { status: 400 }
             );
+        }
+
+        // ── Simple campaign creation (no leads — creates a crm_campaigns record) ──
+        if (!leadIds || leadIds.length === 0) {
+            const campaign = await prisma.crm_campaigns.create({
+                data: {
+                    v: 0,
+                    name: campaignName,
+                    description: description || null,
+                    status: status || "Active",
+                },
+            });
+
+            return NextResponse.json({
+                id: campaign.id,
+                name: campaign.name,
+                status: campaign.status,
+                message: "Campaign created successfully",
+            });
         }
 
         // Get user's team
