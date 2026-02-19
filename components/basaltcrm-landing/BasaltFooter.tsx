@@ -26,9 +26,9 @@ const socialLinks = [
 
 export default function BasaltFooter() {
     return (
-        <footer className="relative py-10 px-6 border-t border-white/10">
+        <footer className="relative pt-6 pb-4 px-6 border-t border-white/10">
             <div className="max-w-7xl mx-auto">
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-6">
                     {/* Brand Column */}
                     <div>
                         <div className="flex items-center gap-3 mb-6">
@@ -53,10 +53,12 @@ export default function BasaltFooter() {
                         </p>
                         <a
                             href="mailto:info@basalthq.com"
-                            className="text-cyan-500 text-sm hover:underline"
+                            className="text-cyan-500 text-sm hover:underline block mb-8"
                         >
                             info@basalthq.com
                         </a>
+
+
                     </div>
 
                     {/* Navigation */}
@@ -126,6 +128,25 @@ export default function BasaltFooter() {
                     <p className="text-gray-500 text-xs">
                         © {new Date().getFullYear()} BasaltHQ Inc. All rights reserved.
                     </p>
+
+                    {/* ElevenLabs Grant Badge */}
+                    <div className="flex justify-center">
+                        <a
+                            href="https://elevenlabs.io/startup-grants"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group relative transition-all duration-500 hover:scale-105"
+                        >
+                            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 blur opacity-0 group-hover:opacity-100 transition duration-500" />
+                            <Image
+                                src="/elevenlabs-grant.webp"
+                                alt="ElevenLabs Startup Grant"
+                                width={160}
+                                height={40}
+                                className="relative object-contain w-[140px] opacity-70 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0"
+                            />
+                        </a>
+                    </div>
                     <div className="flex items-center gap-6">
                         <Link href="/privacy" className="text-gray-500 text-xs hover:text-white transition-colors">
                             Privacy Policy

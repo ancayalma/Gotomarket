@@ -113,8 +113,8 @@ export default function BasaltAbout() {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                        {/* Placeholder tech logos text for now */}
-                        {['OpenAI', 'Anthropic', 'Supabase', 'Vercel'].map((tech) => (
+                        {/* tech logos text */}
+                        {['OpenAI', 'Anthropic', 'ElevenLabs', 'Vercel'].map((tech) => (
                             <div key={tech} className="group text-center p-6 glass-panel rounded-xl hover:bg-white/5 transition-all">
                                 <h4 className="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">{tech}</h4>
                             </div>

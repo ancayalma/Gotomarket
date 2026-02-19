@@ -181,6 +181,7 @@ export default async function MarketingFooter() {
                         <p className="text-sm text-center lg:text-left leading-relaxed max-w-[200px]">
                             {tagline}
                         </p>
+
                     </div>
 
                     {/* Navigation Sections - Right side, evenly spaced */}
@@ -218,6 +219,25 @@ export default async function MarketingFooter() {
                                 {social.icon}
                             </a>
                         ))}
+                    </div>
+
+                    {/* ElevenLabs Grant Badge */}
+                    <div className="py-2">
+                        <a
+                            href="https://elevenlabs.io/startup-grants"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group relative transition-all duration-500 hover:scale-105"
+                        >
+                            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 blur opacity-0 group-hover:opacity-100 transition duration-500" />
+                            <Image
+                                src="/elevenlabs-grant.webp"
+                                alt="ElevenLabs Startup Grant"
+                                width={140}
+                                height={35}
+                                className="relative object-contain w-[120px] opacity-60 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0"
+                            />
+                        </a>
                     </div>
 
                     {/* Copyright */}
