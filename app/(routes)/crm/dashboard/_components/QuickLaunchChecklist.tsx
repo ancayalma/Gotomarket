@@ -54,6 +54,7 @@ interface QuickLaunchChecklistProps {
 }
 
 const DISMISS_KEY = "crm_quick_launch_dismissed_v1";
+const TOUR_KEY = "crm_product_tour_v2";
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
@@ -132,13 +133,21 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
     // Tier 5: When all done, show Mastery Paths promotion for 5s then dismiss
     const [showMasteryPromo, setShowMasteryPromo] = useState(false);
 
-    const handleDismiss = useCallback(async () => {
+    const handleSessionDismiss = () => {
+        setDismissed(true);
+        sessionStorage.setItem("crm_onboarding_session_dismissed", "true");
+        // Dispatch custom event to tell the tour to stop for this session
+        window.dispatchEvent(new Event("crm_session_dismiss_onboarding"));
+    };
+
+    const handleForeverDismiss = useCallback(async () => {
         if (isDismissing) return;
         setIsDismissing(true);
 
         // Optimistically dismiss in UI
         setDismissed(true);
         localStorage.setItem(DISMISS_KEY, "true");
+        localStorage.setItem(TOUR_KEY, "true");
 
         try {
             const res = await dismissQuickLaunch();
@@ -149,7 +158,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                 // toast.error("Could not sync dismissal to database, but will remember locally.");
             }
         } catch (error) {
-            console.error("Error in handleDismiss:", error);
+            console.error("Error in handleForeverDismiss:", error);
         } finally {
             setIsDismissing(false);
         }
@@ -160,13 +169,13 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
             // Phase 1: switch to promo view after 1s
             const t1 = setTimeout(() => setShowMasteryPromo(true), 1000);
             // Phase 2: auto-dismiss after 7s total
-            const t2 = setTimeout(() => handleDismiss(), 7000);
+            const t2 = setTimeout(() => handleForeverDismiss(), 7000);
             return () => {
                 clearTimeout(t1);
                 clearTimeout(t2);
             };
         }
-    }, [allDone, mounted, handleDismiss]);
+    }, [allDone, mounted, handleForeverDismiss]);
 
     // Don't render until hydrated (avoids SSR mismatch with localStorage)
     if (!mounted || dismissed) return null;
@@ -247,12 +256,12 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                             {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                         </button>
                         <button
-                            onClick={handleDismiss}
+                            onClick={handleSessionDismiss}
                             disabled={isDismissing}
                             className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors disabled:opacity-50"
-                            title="Dismiss checklist"
+                            title="Hide for now"
                         >
-                            {isDismissing ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                            <X className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
@@ -293,7 +302,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                         </p>
                                     </div>
                                     <button
-                                        onClick={() => { router.push("/crm/university"); handleDismiss(); }}
+                                        onClick={() => { router.push("/crm/university"); handleForeverDismiss(); }}
                                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold hover:opacity-90 transition-opacity flex-shrink-0 shadow-lg shadow-violet-500/20"
                                     >
                                         <GraduationCap className="w-3.5 h-3.5" />
@@ -389,12 +398,12 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                     Click any step to navigate there. The checklist disappears once everything is set up.
                                 </p>
                                 <button
-                                    onClick={handleDismiss}
+                                    onClick={handleForeverDismiss}
                                     disabled={isDismissing}
-                                    className="text-[10px] text-white/25 hover:text-white/50 transition-colors underline underline-offset-2 disabled:opacity-50 flex items-center gap-1"
+                                    className="text-[10px] text-white/25 hover:text-white/50 transition-colors capitalize underline underline-offset-2 disabled:opacity-50 flex items-center gap-1"
                                 >
                                     {isDismissing && <Loader2 className="w-2.5 h-2.5 animate-spin" />}
-                                    Dismiss forever
+                                    DISMISS FOREVER
                                 </button>
                             </div>
                         </motion.div>

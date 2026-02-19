@@ -225,13 +225,21 @@ const DashboardRoleManager = async () => {
     }
 
     if (isMember) {
-        const [dailyTasks, newLeads, newProjects, messages, userTasksCount] = await Promise.all([
+        const [dailyTasks, newLeads, newProjects, messages, userTasksCount, activeUsersCount] = await Promise.all([
             getDailyTasks(),
             getNewLeads(),
             getNewProjects(),
             getUserMessages(),
-            getUsersTasksCount(userId)
+            getUsersTasksCount(userId),
+            prismadb.users.count()
         ]);
+
+        const checklistCounts = {
+            campaigns: newProjects.length,
+            lists: 0, // Members might not see pools yet
+            teamMembers: activeUsersCount,
+            outreachStarted: false,
+        };
 
         return (
             <MemberDashboard
@@ -242,6 +250,8 @@ const DashboardRoleManager = async () => {
                 newProjects={newProjects}
                 messages={messages}
                 userTasksCount={userTasksCount}
+                quickLaunchDismissed={user?.quickLaunchDismissed || false}
+                checklistCounts={checklistCounts as any}
             />
         );
     }

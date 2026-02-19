@@ -1,10 +1,13 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Sparkles, Inbox, GraduationCap, ArrowRight, Zap, Folder } from "lucide-react";
+import { useGreeting } from "@/app/hooks/use-greeting";
 import { LeadsWidget, TasksWidget, ProjectsWidget, MessagesWidget } from "../widgets";
 import DashboardCard from "../DashboardCard";
-import { Folder, Zap, Sparkles, Inbox, GraduationCap, ArrowRight } from "lucide-react";
-import { useGreeting } from "@/app/hooks/use-greeting";
-import { useRouter } from "next/navigation";
+import { QuickLaunchChecklist, type ChecklistCounts } from "../QuickLaunchChecklist";
+import { ProductTour } from "@/components/ui/ProductTour";
 
 interface MemberDashboardProps {
     userId: string;
@@ -14,6 +17,8 @@ interface MemberDashboardProps {
     newProjects: any[];
     messages: any[];
     userTasksCount: number;
+    quickLaunchDismissed?: boolean;
+    checklistCounts?: ChecklistCounts;
 }
 
 const MemberDashboard = ({
@@ -24,12 +29,31 @@ const MemberDashboard = ({
     newProjects,
     messages,
     userTasksCount,
+    quickLaunchDismissed = false,
+    checklistCounts,
 }: MemberDashboardProps) => {
     const greeting = useGreeting();
     const router = useRouter();
 
+    // ─── Quick Launch Checklist local state ───
+    const [isLocallyDismissed, setIsLocallyDismissed] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        const locallyDismissed = localStorage.getItem("crm_quick_launch_dismissed_v1") === "true";
+        if (locallyDismissed) {
+            setIsLocallyDismissed(locallyDismissed);
+        }
+    }, []);
+
     // Show the "waiting for assignment" banner when the member has nothing yet
     const hasNoWork = newProjects.length === 0 && newLeads.length === 0 && userTasksCount === 0;
+
+    const isNewishMember =
+        !isLocallyDismissed && !quickLaunchDismissed && hasNoWork;
+
+    if (!mounted) return null;
 
     return (
         <div className="flex flex-col space-y-10 p-4">
@@ -40,6 +64,16 @@ const MemberDashboard = ({
                     <h2 className="text-3xl font-bold tracking-tight text-white/90">{greeting}{userName ? `, ${userName}` : ""}</h2>
                 </div>
                 <p className="text-muted-foreground mb-6 font-medium">Here is what's on your plate today.</p>
+
+                {/* Quick Launch Checklist — only visible for new members who have no assignments yet */}
+                {isNewishMember && checklistCounts && (
+                    <div className="mb-8" data-tour-id="tour-checklist">
+                        <QuickLaunchChecklist
+                            counts={checklistCounts}
+                            initiallyDismissed={quickLaunchDismissed}
+                        />
+                    </div>
+                )}
 
                 {/* Waiting-for-assignment banner */}
                 {hasNoWork && (
@@ -71,7 +105,6 @@ const MemberDashboard = ({
                 </div>
             </div>
 
-
             {/* Quick Stats Row (Personal Performance) */}
             <div>
                 <h3 className="text-lg font-semibold mb-4">My Performance</h3>
@@ -98,6 +131,9 @@ const MemberDashboard = ({
                     </div>
                 </div>
             </div>
+
+            {/* First-login product tour */}
+            <ProductTour dismissed={quickLaunchDismissed} />
         </div>
     );
 };

@@ -172,7 +172,7 @@ const AdminDashboard = ({
             </DashboardLayoutProvider>
 
             {/* First-login product tour — portal-style, outside layout so z-index is clean */}
-            <ProductTour />
+            <ProductTour dismissed={quickLaunchDismissed} />
         </>
     );
 };

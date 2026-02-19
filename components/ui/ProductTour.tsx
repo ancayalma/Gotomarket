@@ -56,7 +56,7 @@ const STEPS: TourStep[] = [
         body: "This 5-step guide walks you through activating your first outreach campaign. It disappears once you're set up — or you can dismiss it anytime.",
         icon: ClipboardList,
         iconGradient: "from-violet-500 to-cyan-500",
-        prefer: "bottom",
+        prefer: "bottom", // Standard for top checklist
     },
     {
         id: "step-campaigns",
@@ -66,7 +66,7 @@ const STEPS: TourStep[] = [
         body: "Your strategic container. Create a Campaign first — it groups your Lists, outreach sequences, and team assignments under one goal.",
         icon: Megaphone,
         iconGradient: "from-orange-500 to-red-500",
-        prefer: "bottom",
+        prefer: "top",
     },
     {
         id: "step-wizard",
@@ -75,7 +75,7 @@ const STEPS: TourStep[] = [
         body: "Tell it your Ideal Customer Profile in plain English — industry, company size, geography. It finds matching companies and contacts automatically.",
         icon: Wand2,
         iconGradient: "from-cyan-500 to-blue-500",
-        prefer: "bottom",
+        prefer: "top",
     },
     {
         id: "step-lists",
@@ -84,7 +84,7 @@ const STEPS: TourStep[] = [
         body: "After the Wizard runs, leads are organized into Lists. Assign a List to a team member and they'll work those accounts for outreach.",
         icon: List,
         iconGradient: "from-violet-500 to-indigo-500",
-        prefer: "bottom",
+        prefer: "top",
     },
     {
         id: "step-learn",
@@ -118,9 +118,6 @@ function getElementRect(targetId: string, fallback?: string): Rect | null {
 // ─── Sub-component: Spotlight overlay (4 rects that frame the target) ────────
 
 function Spotlight({ rect }: { rect: Rect }) {
-    const vw = typeof window !== "undefined" ? window.innerWidth : 1920;
-    const vh = typeof window !== "undefined" ? window.innerHeight : 1080;
-
     const t = rect.top - PADDING;
     const l = rect.left - PADDING;
     const w = rect.width + PADDING * 2;
@@ -138,17 +135,31 @@ function Spotlight({ rect }: { rect: Rect }) {
             <div className={baseStyle} style={{ top: t, left: 0, width: Math.max(0, l), height: h }} />
             {/* Right */}
             <div className={baseStyle} style={{ top: t, left: l + w, right: 0, height: h }} />
-            {/* Glow ring around target */}
-            <div
-                className="fixed z-[9999] pointer-events-none transition-all duration-500"
+            {/* Pulsing glow ring around target */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{
+                    opacity: 1,
+                    scale: 1,
+                    boxShadow: [
+                        "0 0 0 2px rgba(139,92,246,0.6), 0 0 20px 2px rgba(139,92,246,0.3)",
+                        "0 0 0 4px rgba(139,92,246,0.9), 0 0 40px 8px rgba(139,92,246,0.5)",
+                        "0 0 0 2px rgba(139,92,246,0.6), 0 0 20px 2px rgba(139,92,246,0.3)"
+                    ]
+                }}
+                transition={{
+                    opacity: { duration: 0.3 },
+                    scale: { duration: 0.3 },
+                    boxShadow: { repeat: Infinity, duration: 2, ease: "easeInOut" }
+                }}
+                className="fixed z-[9999] pointer-events-none"
                 style={{
                     top: t,
                     left: l,
                     width: w,
                     height: h,
-                    borderRadius: 12,
-                    boxShadow: "0 0 0 2px rgba(139,92,246,0.6), 0 0 30px 4px rgba(139,92,246,0.2)",
-                    border: "2px solid rgba(139,92,246,0.5)",
+                    borderRadius: 14,
+                    border: "2px solid rgba(139,92,246,0.6)",
                 }}
             />
         </>
@@ -296,24 +307,42 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
 
 // ─── Main export ─────────────────────────────────────────────────────────────
 
-export function ProductTour() {
+export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
     const [mounted, setMounted] = useState(false);
     const [active, setActive] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
     const [rect, setRect] = useState<Rect | null>(null);
     const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Check on mount whether tour has been seen
+    // 1. Hydration / Mount check
     useEffect(() => {
         setMounted(true);
+    }, []);
+
+    // 2. One-time check for tour eligibility
+    useEffect(() => {
+        if (!mounted) return;
+
         try {
             const seen = localStorage.getItem(TOUR_KEY);
-            if (!seen) {
+            const sessionDismissed = sessionStorage.getItem("crm_onboarding_session_dismissed") === "true";
+
+            // If shown once, explicitly dismissed on server, or dismissed for this session, don't show
+            if (!seen && !dismissed && !sessionDismissed) {
                 // Small delay to let the dashboard fully render before measuring
                 const t = setTimeout(() => setActive(true), 1400);
                 return () => clearTimeout(t);
             }
         } catch { /* ignore */ }
+    }, [mounted, dismissed]);
+
+    // 3. Listen for session dismissal events (e.g. from the checklist 'X' button)
+    useEffect(() => {
+        const handler = () => {
+            setActive(false);
+        };
+        window.addEventListener("crm_session_dismiss_onboarding", handler);
+        return () => window.removeEventListener("crm_session_dismiss_onboarding", handler);
     }, []);
 
     // Measure the target element whenever step changes
@@ -321,9 +350,20 @@ export function ProductTour() {
         const step = STEPS[idx];
         if (!step) return;
 
-        const measured = getElementRect(step.targetId, step.fallbackSelector);
-        if (measured) {
-            setRect(measured);
+        const el =
+            document.querySelector(`[data-tour-id="${step.targetId}"]`) ||
+            (step.fallbackSelector ? document.querySelector(step.fallbackSelector) : null);
+
+        if (el) {
+            // Priority: Scroll element into view first
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            // Small delay for scroll to settle before measuring rect
+            setTimeout(() => {
+                const r = el.getBoundingClientRect();
+                setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+            }, 350);
+
             if (retryRef.current) clearTimeout(retryRef.current);
         } else {
             // Element not yet rendered — retry up to 10 times × 200ms
