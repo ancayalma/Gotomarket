@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -644,6 +645,12 @@ export default function GettingStarted() {
                     </div>
                 )}
             </div>
+
+            <LearnLink
+                tab="getting-started"
+                tooltipLabel="Detailed onboarding for Admins and Team Members"
+                dismissKey="learnlink_university_gs"
+            />
         </motion.div>
     );
 }

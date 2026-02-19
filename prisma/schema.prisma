@@ -978,6 +978,7 @@ model Users {
   dashboard_preference       DashboardPreference?
   navigation_preferences     NavigationConfig[]
   ai_usage_logs              crm_AiUsageLog[]    @relation(name: "AiUsageUser")
+  quickLaunchDismissed       Boolean             @default(false)
 }
 
 model Team {

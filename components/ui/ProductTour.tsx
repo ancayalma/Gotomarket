@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     GraduationCap,
@@ -179,22 +180,29 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
     let cardTop: number;
     let cardLeft: number;
 
-    if (step.prefer === "bottom" && t + h + 20 + 200 < vh) {
+    // Safety margins
+    const MARGIN = 12;
+
+    if (step.prefer === "bottom" && t + h + 20 + 220 < vh) {
         // Below the spotlight
         cardTop = t + h + 20;
-        cardLeft = Math.min(Math.max(l + w / 2 - CARD_W / 2, 12), vw - CARD_W - 12);
-    } else if (step.prefer === "top" && t - 20 - 200 > 0) {
+        cardLeft = Math.min(Math.max(l + w / 2 - CARD_W / 2, MARGIN), vw - CARD_W - MARGIN);
+    } else if (step.prefer === "top" && t - 20 - 220 > 0) {
         // Above
-        cardTop = t - 230;
-        cardLeft = Math.min(Math.max(l + w / 2 - CARD_W / 2, 12), vw - CARD_W - 12);
+        cardTop = t - 240;
+        cardLeft = Math.min(Math.max(l + w / 2 - CARD_W / 2, MARGIN), vw - CARD_W - MARGIN);
     } else if (step.prefer === "right" && l + w + 20 + CARD_W < vw) {
         // Right side
-        cardTop = Math.min(Math.max(t + h / 2 - 100, 12), vh - 220);
+        cardTop = Math.min(Math.max(t + h / 2 - 110, MARGIN), vh - 240);
         cardLeft = l + w + 20;
-    } else {
+    } else if (l - CARD_W - 20 > MARGIN) {
         // Left side
-        cardTop = Math.min(Math.max(t + h / 2 - 100, 12), vh - 220);
+        cardTop = Math.min(Math.max(t + h / 2 - 110, MARGIN), vh - 240);
         cardLeft = l - CARD_W - 20;
+    } else {
+        // Fallback: Center of viewport if everything else fails
+        cardTop = vh / 2 - 110;
+        cardLeft = vw / 2 - CARD_W / 2;
     }
 
     const Icon = step.icon;
@@ -357,7 +365,7 @@ export function ProductTour() {
 
     const step = STEPS[stepIndex];
 
-    return (
+    const portalContent = (
         <AnimatePresence>
             <Spotlight key={`spotlight-${stepIndex}`} rect={rect} />
             <TooltipCard
@@ -371,4 +379,6 @@ export function ProductTour() {
             />
         </AnimatePresence>
     );
+
+    return createPortal(portalContent, document.body);
 }

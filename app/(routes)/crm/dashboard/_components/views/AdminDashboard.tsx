@@ -46,6 +46,7 @@ interface AdminDashboardProps {
     messagesCount: number;
     initialLayout?: any[];
     teamData?: any;
+    quickLaunchDismissed?: boolean;
 }
 
 const AdminDashboard = ({
@@ -78,7 +79,8 @@ const AdminDashboard = ({
     allTasksCount = 0,
     messagesCount = 0,
     initialLayout,
-    teamData
+    teamData,
+    quickLaunchDismissed = false
 }: AdminDashboardProps) => {
     const router = useRouter();
     const greeting = useGreeting();
@@ -94,11 +96,13 @@ const AdminDashboard = ({
             || (Array.isArray(outreachStats?.campaigns) && outreachStats.campaigns.length > 0),
     };
 
-    // Only show checklist to admins who are clearly just getting started
+    // Only show checklist to admins who are clearly just getting started AND haven't dismissed it
     const isNewishAdmin =
-        checklistCounts.campaigns === 0 ||
-        checklistCounts.lists === 0 ||
-        !checklistCounts.outreachStarted;
+        !quickLaunchDismissed && (
+            checklistCounts.campaigns === 0 ||
+            checklistCounts.lists === 0 ||
+            !checklistCounts.outreachStarted
+        );
 
 
     return (
@@ -124,7 +128,10 @@ const AdminDashboard = ({
                         {/* Quick Launch Checklist — only visible for new admins */}
                         {isNewishAdmin && (
                             <div data-tour-id="tour-checklist">
-                                <QuickLaunchChecklist counts={checklistCounts} />
+                                <QuickLaunchChecklist
+                                    counts={checklistCounts}
+                                    initiallyDismissed={quickLaunchDismissed}
+                                />
                             </div>
                         )}
 

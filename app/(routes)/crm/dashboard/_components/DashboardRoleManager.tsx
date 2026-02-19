@@ -36,10 +36,19 @@ const DashboardRoleManager = async () => {
     const userId = session.user.id;
 
     // 1. Determine Role
-    const user = await prismadb.users.findUnique({
-        where: { id: userId },
-        select: { team_role: true, email: true, is_admin: true } // Email might be needed for hardcoded super admins if any
-    });
+    let user: any;
+    try {
+        user = await (prismadb.users as any).findUnique({
+            where: { id: userId },
+            select: { team_role: true, email: true, is_admin: true, quickLaunchDismissed: true }
+        });
+    } catch (error) {
+        // Fallback if Prisma client is stale and doesn't know about the new field yet
+        user = await prismadb.users.findUnique({
+            where: { id: userId },
+            select: { team_role: true, email: true, is_admin: true }
+        });
+    }
 
     const role = (user?.team_role || "VIEWER").trim().toUpperCase();
 
@@ -196,6 +205,7 @@ const DashboardRoleManager = async () => {
                 }
                 initialLayout={initialLayout as any}
                 teamData={unifiedData?.teamData}
+                quickLaunchDismissed={user?.quickLaunchDismissed || false}
             />
         );
     }

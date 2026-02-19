@@ -12,11 +12,16 @@ import {
     Maximize2,
     Minimize2,
     ChevronRight,
-    Calendar
+    Calendar,
+    GraduationCap,
+    Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useLearn } from "@/components/providers/learn-provider";
+import { TAB_LABELS, TAB_COLORS } from "@/components/ui/LearnLink";
 import {
     Popover,
     PopoverContent,
@@ -29,6 +34,31 @@ export default function UtilityBar() {
     const [notes, setNotes] = useState("");
     const [tasks, setTasks] = useState<{ id: string, text: string, completed: boolean }[]>([]);
     const [isDialerOpen, setIsDialerOpen] = useState(false);
+    const { activeTab, tooltipLabel, dismissKey } = useLearn();
+    const router = useRouter();
+    const [isLearnDismissed, setIsLearnDismissed] = useState(false);
+
+    useEffect(() => {
+        if (!activeTab) {
+            setIsLearnDismissed(false);
+            return;
+        }
+        const storageKey = dismissKey ?? `crm_learnlink_${activeTab}`;
+        try {
+            if (localStorage.getItem(storageKey) === "true") {
+                setIsLearnDismissed(true);
+            } else {
+                setIsLearnDismissed(false);
+            }
+        } catch { /* ignore */ }
+    }, [activeTab, dismissKey]);
+
+    const handleDismissLearn = () => {
+        if (!activeTab) return;
+        const storageKey = dismissKey ?? `crm_learnlink_${activeTab}`;
+        setIsLearnDismissed(true);
+        try { localStorage.setItem(storageKey, "true"); } catch { /* ignore */ }
+    };
 
     useEffect(() => {
         const savedNotes = localStorage.getItem("crm-utility-notes");
@@ -185,6 +215,53 @@ export default function UtilityBar() {
                     </div>
 
                     <div className="flex items-center gap-4">
+                        {/* Learn About This Page - Integrated into Utility Bar */}
+                        {activeTab && !isLearnDismissed && (
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <div className={cn(
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all cursor-pointer group",
+                                        "bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 hover:text-blue-400 border border-blue-500/20 hover:border-blue-500/50"
+                                    )}>
+                                        <GraduationCap className="h-3.5 w-3.5" />
+                                        <span className="text-xs font-semibold">Learn about this page</span>
+                                    </div>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80 p-4 border-blue-500/20 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden shadow-blue-500/10" side="top" align="center" sideOffset={12}>
+                                    {/* Top gradient line */}
+                                    <div className={`absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r ${TAB_COLORS[activeTab]}`} />
+
+                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${TAB_COLORS[activeTab]} flex items-center justify-center flex-shrink-0`}>
+                                                <GraduationCap className="w-4 h-4 text-white" />
+                                            </div>
+                                            <p className="text-xs font-bold text-white/90">CRM University</p>
+                                        </div>
+                                        <button
+                                            onClick={handleDismissLearn}
+                                            className="text-white/25 hover:text-white/60 transition-colors p-0.5"
+                                            title="Don't show again"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                    <p className="text-[11px] text-white/50 leading-relaxed mb-3">
+                                        {tooltipLabel ?? `Learn how ${TAB_LABELS[activeTab]} works in the CRM ecosystem.`}
+                                    </p>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => router.push(`/crm/university?tab=${activeTab}`)}
+                                        className={`w-full h-8 text-xs font-bold text-white bg-gradient-to-r ${TAB_COLORS[activeTab]} hover:opacity-90 transition-opacity border-none`}
+                                    >
+                                        Open University →
+                                    </Button>
+                                </PopoverContent>
+                            </Popover>
+                        )}
+
+                        <div className="h-4 w-px bg-border mx-1 hidden lg:block" />
+
                         <Popover open={isDialerOpen} onOpenChange={setIsDialerOpen}>
                             <PopoverTrigger asChild>
                                 <div className={cn(

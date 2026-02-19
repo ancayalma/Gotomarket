@@ -19,7 +19,10 @@ import {
     GraduationCap,
     Medal,
     ArrowRight,
+    Loader2
 } from "lucide-react";
+import { dismissQuickLaunch } from "../_actions/dismiss-quick-launch";
+import { toast } from "sonner";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -47,27 +50,22 @@ interface Step {
 
 interface QuickLaunchChecklistProps {
     counts: ChecklistCounts;
+    initiallyDismissed?: boolean;
 }
 
 const DISMISS_KEY = "crm_quick_launch_dismissed_v1";
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-export function QuickLaunchChecklist({ counts }: QuickLaunchChecklistProps) {
+export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: QuickLaunchChecklistProps) {
     const router = useRouter();
-    const [dismissed, setDismissed] = useState(false);
+    const [dismissed, setDismissed] = useState(initiallyDismissed);
     const [collapsed, setCollapsed] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [isDismissing, setIsDismissing] = useState(false);
 
-    // Read dismiss state from localStorage on mount
     useEffect(() => {
         setMounted(true);
-        try {
-            if (typeof window !== "undefined") {
-                const saved = localStorage.getItem(DISMISS_KEY);
-                if (saved === "true") setDismissed(true);
-            }
-        } catch { /* ignore */ }
     }, []);
 
     const steps: Step[] = [
@@ -114,9 +112,9 @@ export function QuickLaunchChecklist({ counts }: QuickLaunchChecklistProps) {
         {
             id: "outreach",
             label: "Launch your first Outreach",
-            description: "Kick off an email or call sequence from the Outreach page.",
+            description: "Kick off an email or call sequence from your Lists.",
             tip: "Your member launches outreach directly from their assigned List.",
-            href: "/campaigns",
+            href: "/lists",
             icon: Rocket,
             iconColor: "text-pink-400",
             done: counts.outreachStarted,
@@ -130,12 +128,25 @@ export function QuickLaunchChecklist({ counts }: QuickLaunchChecklistProps) {
     // Tier 5: When all done, show Mastery Paths promotion for 5s then dismiss
     const [showMasteryPromo, setShowMasteryPromo] = useState(false);
 
-    const handleDismiss = useCallback(() => {
-        setDismissed(true);
+    const handleDismiss = useCallback(async () => {
+        if (isDismissing) return;
+        setIsDismissing(true);
+
         try {
-            localStorage.setItem(DISMISS_KEY, "true");
-        } catch { /* ignore */ }
-    }, []);
+            const res = await dismissQuickLaunch();
+            if (res.success) {
+                setDismissed(true);
+                // Also update localStorage for immediate fallback on other pages if needed
+                localStorage.setItem(DISMISS_KEY, "true");
+            } else {
+                toast.error("Failed to save dismissal preference");
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsDismissing(false);
+        }
+    }, [isDismissing]);
 
     useEffect(() => {
         if (allDone && mounted) {
@@ -230,10 +241,11 @@ export function QuickLaunchChecklist({ counts }: QuickLaunchChecklistProps) {
                         </button>
                         <button
                             onClick={handleDismiss}
-                            className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors"
+                            disabled={isDismissing}
+                            className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors disabled:opacity-50"
                             title="Dismiss checklist"
                         >
-                            <X className="w-4 h-4" />
+                            {isDismissing ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
                         </button>
                     </div>
                 </div>
@@ -371,8 +383,10 @@ export function QuickLaunchChecklist({ counts }: QuickLaunchChecklistProps) {
                                 </p>
                                 <button
                                     onClick={handleDismiss}
-                                    className="text-[10px] text-white/25 hover:text-white/50 transition-colors underline underline-offset-2"
+                                    disabled={isDismissing}
+                                    className="text-[10px] text-white/25 hover:text-white/50 transition-colors underline underline-offset-2 disabled:opacity-50 flex items-center gap-1"
                                 >
+                                    {isDismissing && <Loader2 className="w-2.5 h-2.5 animate-spin" />}
                                     Dismiss forever
                                 </button>
                             </div>
