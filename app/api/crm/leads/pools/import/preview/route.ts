@@ -5,26 +5,7 @@ import { prismadbCrm } from "@/lib/prisma-crm";
 import ExcelJS from "exceljs";
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
-
-type CandidateNorm = {
-  dedupeKey: string;
-  domain?: string;
-  companyName?: string;
-  homepageUrl?: string;
-  description?: string;
-  industry?: string;
-  techStack?: string[];
-};
-
-type ContactNorm = {
-  dedupeKey: string; // email lowercased or synthesized
-  candidateKey?: string; // candidate dedupeKey
-  fullName?: string;
-  title?: string;
-  email?: string;
-  phone?: string;
-  linkedinUrl?: string;
-};
+import { CandidateNorm, ContactNorm, normalizeRow } from "@/lib/import-utils";
 
 const candidateSchema = z.object({
   dedupeKey: z.string().min(1),
@@ -34,6 +15,7 @@ const candidateSchema = z.object({
   description: z.string().optional(),
   industry: z.string().optional(),
   techStack: z.array(z.string()).optional(),
+  additional_emails: z.array(z.string()).optional(),
 });
 
 const contactSchema = z.object({
@@ -45,110 +27,6 @@ const contactSchema = z.object({
   phone: z.string().optional(),
   linkedinUrl: z.string().optional(),
 });
-
-// column mapping synonyms (lowercased)
-const COLS = {
-  companyName: ["company", "companyname", "org", "organization", "business", "account"],
-  domain: ["domain", "website", "site", "companydomain", "company_domain"],
-  homepageUrl: ["homepage", "url", "websiteurl", "companyurl", "company_url"],
-  description: ["description", "about", "summary", "notes"],
-  industry: ["industry", "sector"],
-  techStack: ["techstack", "technology", "stack", "technologies"],
-  fullName: ["name", "fullname", "contact", "person"],
-  title: ["title", "role", "jobtitle", "position"],
-  email: ["email", "emailaddress,contactemail", "contactemail"],
-  phone: ["phone", "phonenumber", "contactphone", "mobile"],
-  linkedinUrl: ["linkedin", "linkedinurl", "linkedin_profile"],
-};
-
-function lc(s: any): string {
-  return typeof s === "string" ? s.trim() : "";
-}
-function getFromRow(row: Record<string, any>, keys: string[]): any {
-  for (const k of keys) {
-    for (const rk of Object.keys(row)) {
-      if (rk.toLowerCase() === k) return row[rk];
-    }
-  }
-  return undefined;
-}
-
-function normalizeRow(row: Record<string, any>): { candidate?: CandidateNorm; contact?: ContactNorm; usedCols: string[] } {
-  const usedCols: string[] = [];
-
-  const companyName = lc(getFromRow(row, COLS.companyName));
-  if (companyName) usedCols.push("companyName");
-  const domain = lc(getFromRow(row, COLS.domain)).toLowerCase();
-  if (domain) usedCols.push("domain");
-  const homepageUrl = lc(getFromRow(row, COLS.homepageUrl));
-  if (homepageUrl) usedCols.push("homepageUrl");
-  const description = lc(getFromRow(row, COLS.description));
-  if (description) usedCols.push("description");
-  const industry = lc(getFromRow(row, COLS.industry));
-  if (industry) usedCols.push("industry");
-  const techStackRaw = getFromRow(row, COLS.techStack);
-  const techStack =
-    typeof techStackRaw === "string"
-      ? techStackRaw
-        .split(/[;,]/)
-        .map((s: string) => s.trim())
-        .filter(Boolean)
-      : Array.isArray(techStackRaw)
-        ? techStackRaw.map((s: any) => String(s).trim()).filter(Boolean)
-        : undefined;
-  if (techStack && techStack.length) usedCols.push("techStack");
-
-  // dedupeKey for candidate: prefer domain; else companyName|homepageUrl; else companyName
-  let candidateKey = "";
-  if (domain) candidateKey = domain;
-  else if (companyName && homepageUrl) candidateKey = `${companyName.toLowerCase()}|${homepageUrl.toLowerCase()}`;
-  else if (companyName) candidateKey = companyName.toLowerCase();
-
-  const candidate =
-    candidateKey
-      ? {
-        dedupeKey: candidateKey,
-        domain: domain || undefined,
-        companyName: companyName || undefined,
-        homepageUrl: homepageUrl || undefined,
-        description: description || undefined,
-        industry: industry || undefined,
-        techStack,
-      }
-      : undefined;
-
-  const fullName = lc(getFromRow(row, COLS.fullName));
-  if (fullName) usedCols.push("fullName");
-  const title = lc(getFromRow(row, COLS.title));
-  if (title) usedCols.push("title");
-  const email = lc(getFromRow(row, COLS.email)).toLowerCase();
-  if (email) usedCols.push("email");
-  const phone = lc(getFromRow(row, COLS.phone));
-  if (phone) usedCols.push("phone");
-  const linkedinUrl = lc(getFromRow(row, COLS.linkedinUrl));
-  if (linkedinUrl) usedCols.push("linkedinUrl");
-
-  // contact dedupeKey: prefer email; else fullName|linkedin; else fullName|candidateKey
-  let contactKey = "";
-  if (email) contactKey = email;
-  else if (fullName && linkedinUrl) contactKey = `${fullName.toLowerCase()}|${linkedinUrl.toLowerCase()}`;
-  else if (fullName && candidateKey) contactKey = `${fullName.toLowerCase()}|${candidateKey}`;
-
-  const contact =
-    contactKey
-      ? {
-        dedupeKey: contactKey,
-        candidateKey: candidateKey || undefined,
-        fullName: fullName || undefined,
-        title: title || undefined,
-        email: email || undefined,
-        phone: phone || undefined,
-        linkedinUrl: linkedinUrl || undefined,
-      }
-      : undefined;
-
-  return { candidate, contact, usedCols };
-}
 
 async function bufferToRows(fileName: string | undefined, buffer: Buffer): Promise<Record<string, any>[]> {
   const name = (fileName || "").toLowerCase();
@@ -245,7 +123,7 @@ export async function POST(req: Request) {
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      const { candidate, contact, usedCols } = normalizeRow(row);
+      const { candidate, contacts, usedCols } = normalizeRow(row);
       usedCols.forEach((c) => usedColsSet.add(c));
 
       const rowErrors: string[] = [];
@@ -274,11 +152,12 @@ export async function POST(req: Request) {
                   description: true,
                   industry: true,
                   techStack: true,
+                  additional_emails: true,
                 },
               });
               const changes: Record<string, { from: any; to: any }> = {};
               if (existing) {
-                const fields: (keyof CandidateNorm)[] = ["domain", "companyName", "homepageUrl", "description", "industry", "techStack"];
+                const fields: (keyof CandidateNorm)[] = ["domain", "companyName", "homepageUrl", "description", "industry", "techStack", "additional_emails"];
                 for (const f of fields) {
                   const fromVal = (existing as any)[f];
                   const toVal = (candidate as any)[f];
@@ -303,64 +182,66 @@ export async function POST(req: Request) {
         }
       }
 
-      // Contact
-      if (contact) {
-        const parsed = contactSchema.safeParse(contact);
-        if (!parsed.success) {
-          rowErrors.push("Invalid contact row: " + parsed.error.message);
-        } else {
-          const key = contact.dedupeKey;
-          if (seenContact.has(key)) {
-            dupContacts++;
+      // Contacts
+      if (contacts) {
+        for (const contact of contacts) {
+          const parsed = contactSchema.safeParse(contact);
+          if (!parsed.success) {
+            rowErrors.push("Invalid contact row: " + parsed.error.message);
           } else {
-            seenContact.add(key);
+            const key = contact.dedupeKey;
+            if (seenContact.has(key)) {
+              dupContacts++;
+            } else {
+              seenContact.add(key);
 
-            if (!isNewPool) {
-              // If contact maps to a candidateKey, check if candidate exists
-              let candidateId: string | null = null;
-              if (contact.candidateKey) {
-                const candExisting = await (prismadbCrm as any).crm_Lead_Candidates.findFirst({
-                  where: { pool: poolId, dedupeKey: contact.candidateKey },
-                  select: { id: true },
-                });
-                candidateId = candExisting?.id ?? null;
-              }
-
-              const existing = await (prismadbCrm as any).crm_Contact_Candidates.findFirst({
-                where: {
-                  dedupeKey: key,
-                  ...(candidateId ? { leadCandidate: candidateId } : {}),
-                },
-                select: {
-                  id: true,
-                  fullName: true,
-                  title: true,
-                  email: true,
-                  phone: true,
-                  linkedinUrl: true,
-                },
-              });
-
-              const changes: Record<string, { from: any; to: any }> = {};
-              if (existing) {
-                const fields: (keyof ContactNorm)[] = ["fullName", "title", "email", "phone", "linkedinUrl"];
-                for (const f of fields) {
-                  const fromVal = (existing as any)[f];
-                  const toVal = (contact as any)[f];
-                  const same = (fromVal ?? "") === (toVal ?? "");
-                  if (!same) {
-                    changes[f as string] = { from: fromVal, to: toVal };
-                  }
+              if (!isNewPool) {
+                // If contact maps to a candidateKey, check if candidate exists
+                let candidateId: string | null = null;
+                if (contact.candidateKey) {
+                  const candExisting = await (prismadbCrm as any).crm_Lead_Candidates.findFirst({
+                    where: { pool: poolId, dedupeKey: contact.candidateKey },
+                    select: { id: true },
+                  });
+                  candidateId = candExisting?.id ?? null;
                 }
-                updates.contacts.push({ ...contact, existingId: existing.id, changes });
+
+                const existing = await (prismadbCrm as any).crm_Contact_Candidates.findFirst({
+                  where: {
+                    dedupeKey: key,
+                    ...(candidateId ? { leadCandidate: candidateId } : {}),
+                  },
+                  select: {
+                    id: true,
+                    fullName: true,
+                    title: true,
+                    email: true,
+                    phone: true,
+                    linkedinUrl: true,
+                  },
+                });
+
+                const changes: Record<string, { from: any; to: any }> = {};
+                if (existing) {
+                  const fields: (keyof ContactNorm)[] = ["fullName", "title", "email", "phone", "linkedinUrl"];
+                  for (const f of fields) {
+                    const fromVal = (existing as any)[f];
+                    const toVal = (contact as any)[f];
+                    const same = (fromVal ?? "") === (toVal ?? "");
+                    if (!same) {
+                      changes[f as string] = { from: fromVal, to: toVal };
+                    }
+                  }
+                  updates.contacts.push({ ...contact, existingId: existing.id, changes });
+                } else {
+                  creates.contacts.push({ ...contact, existingId: null });
+                }
               } else {
+                // new pool => no existing data
                 creates.contacts.push({ ...contact, existingId: null });
               }
-            } else {
-              // new pool => no existing data
-              creates.contacts.push({ ...contact, existingId: null });
+              validContacts++;
             }
-            validContacts++;
           }
         }
       }

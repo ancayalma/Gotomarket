@@ -73,6 +73,7 @@ model crm_Accounts {
   // Service Cloud: Cases linked to this account
   cases                crm_Cases[]
   account_subscriptions crm_Subscriptions[]
+  additional_emails    String[]
 }
 
 model crm_Leads {
@@ -148,6 +149,7 @@ model crm_Leads {
 
   // Department assignment for scoped access
   assigned_department_id String? @db.ObjectId
+  additional_emails      String[]
 }
 
 enum crm_Lead_Status {
@@ -1536,6 +1538,7 @@ model crm_Lead_Candidates {
   contacts          crm_Contact_Candidates[]
   assigned_pool     crm_Lead_Pools?          @relation(fields: [pool], references: [id])
   assigned_accounts crm_Accounts?            @relation(name: "LeadCandidatesAssignedAccounts", fields: [accountsIDs], references: [id])
+  additional_emails String[]
 }
 
 model crm_Contact_Candidates {
