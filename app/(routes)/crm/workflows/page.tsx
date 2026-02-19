@@ -7,6 +7,7 @@ import { WorkflowList } from "./components/WorkflowList";
 import { CreateWorkflowDialog } from "./components/CreateWorkflowDialog";
 import { Workflow, Plus, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export const metadata = {
     title: "FlowState | Visual Automation",
@@ -72,6 +73,12 @@ export default async function WorkflowsPage() {
                     </Suspense>
                 )}
             </div>
+
+            <LearnLink
+                tab="architecture"
+                tooltipLabel="Learn how FlowState automation fits into the CRM architecture"
+                dismissKey="learnlink_workflows"
+            />
         </div>
     );
 }

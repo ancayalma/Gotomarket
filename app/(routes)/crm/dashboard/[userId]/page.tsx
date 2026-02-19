@@ -78,12 +78,12 @@ export default async function UserCRMDashboard() {
             </div>
           </div>
 
-          {/* Per-pool summary */}
+          {/* Per-list summary */}
           <div className="space-y-4 p-4 rounded-lg border bg-card shadow-sm">
-            <h2 className="text-lg font-semibold">Lead Batches</h2>
+            <h2 className="text-lg font-semibold">Lists</h2>
             <div className="space-y-4 max-h-[900px] lg:max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
               {stageData.pools.length === 0 && (
-                <div className="text-sm text-muted-foreground">No lead pools found. Use the LeadGen Wizard to create a pool.</div>
+                <div className="text-sm text-muted-foreground">No lists found. Use the LeadGen Wizard on Accounts to generate one.</div>
               )}
               {stageData.pools.map((p) => (
                 <div key={p.poolId} className="space-y-2 p-3 rounded-lg border bg-card shadow-sm">

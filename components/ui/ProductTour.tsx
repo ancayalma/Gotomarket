@@ -1,0 +1,374 @@
+"use client";
+
+/**
+ * ProductTour — One-time, first-login guided spotlight tour.
+ *
+ * Pattern:
+ *   1. Check localStorage for completion flag.
+ *   2. If unseen, wait for DOM to settle, then find target elements by their
+ *      `data-tour-id` attribute (or a custom id).
+ *   3. Render a full-screen overlay with a "spotlight" cutout over the target.
+ *   4. Show a positioned tooltip with an arrow + blurb + Next / Skip controls.
+ *   5. User clicks through all steps (or skips) — mark complete in localStorage.
+ *
+ * To target an element from any component, give it the attribute:
+ *   data-tour-id="tour-campaigns"
+ */
+
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+    GraduationCap,
+    Megaphone,
+    Wand2,
+    List,
+    ClipboardList,
+    X,
+    ChevronRight,
+    Sparkles,
+} from "lucide-react";
+
+// ─── Config ─────────────────────────────────────────────────────────────────
+
+const TOUR_KEY = "crm_product_tour_v2";
+const PADDING = 12; // px of glow padding around the spotlight target
+
+interface TourStep {
+    id: string;
+    /** matches data-tour-id attribute on the target DOM element */
+    targetId: string;
+    /** fallback selector if data-tour-id not found */
+    fallbackSelector?: string;
+    title: string;
+    body: string;
+    icon: React.ElementType;
+    iconGradient: string;
+    /** Preferred tooltip position relative to the spotlight */
+    prefer: "bottom" | "top" | "right" | "left";
+}
+
+const STEPS: TourStep[] = [
+    {
+        id: "step-checklist",
+        targetId: "tour-checklist",
+        title: "Your Quick Launch Checklist",
+        body: "This 5-step guide walks you through activating your first outreach campaign. It disappears once you're set up — or you can dismiss it anytime.",
+        icon: ClipboardList,
+        iconGradient: "from-violet-500 to-cyan-500",
+        prefer: "bottom",
+    },
+    {
+        id: "step-campaigns",
+        targetId: "tour-campaigns",
+        fallbackSelector: "[data-tour-id='tour-campaigns']",
+        title: "Campaigns",
+        body: "Your strategic container. Create a Campaign first — it groups your Lists, outreach sequences, and team assignments under one goal.",
+        icon: Megaphone,
+        iconGradient: "from-orange-500 to-red-500",
+        prefer: "bottom",
+    },
+    {
+        id: "step-wizard",
+        targetId: "tour-lead-wizard",
+        title: "Lead Wizard",
+        body: "Tell it your Ideal Customer Profile in plain English — industry, company size, geography. It finds matching companies and contacts automatically.",
+        icon: Wand2,
+        iconGradient: "from-cyan-500 to-blue-500",
+        prefer: "bottom",
+    },
+    {
+        id: "step-lists",
+        targetId: "tour-lists",
+        title: "Lists",
+        body: "After the Wizard runs, leads are organized into Lists. Assign a List to a team member and they'll work those accounts for outreach.",
+        icon: List,
+        iconGradient: "from-violet-500 to-indigo-500",
+        prefer: "bottom",
+    },
+    {
+        id: "step-learn",
+        targetId: "tour-learn-nav",
+        title: "CRM University",
+        body: "The Learn tab is always here in the sidebar. When you're ready to go deeper — Mastery Paths, Compliance Academy, and more are waiting.",
+        icon: GraduationCap,
+        iconGradient: "from-amber-500 to-orange-500",
+        prefer: "right",
+    },
+];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+interface Rect {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+}
+
+function getElementRect(targetId: string, fallback?: string): Rect | null {
+    const el =
+        document.querySelector(`[data-tour-id="${targetId}"]`) ||
+        (fallback ? document.querySelector(fallback) : null);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { top: r.top, left: r.left, width: r.width, height: r.height };
+}
+
+// ─── Sub-component: Spotlight overlay (4 rects that frame the target) ────────
+
+function Spotlight({ rect }: { rect: Rect }) {
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1920;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 1080;
+
+    const t = rect.top - PADDING;
+    const l = rect.left - PADDING;
+    const w = rect.width + PADDING * 2;
+    const h = rect.height + PADDING * 2;
+
+    const baseStyle = "fixed bg-black/70 backdrop-blur-[1px] transition-all duration-500 z-[9998]";
+
+    return (
+        <>
+            {/* Top */}
+            <div className={baseStyle} style={{ top: 0, left: 0, right: 0, height: Math.max(0, t) }} />
+            {/* Bottom */}
+            <div className={baseStyle} style={{ top: t + h, left: 0, right: 0, bottom: 0 }} />
+            {/* Left */}
+            <div className={baseStyle} style={{ top: t, left: 0, width: Math.max(0, l), height: h }} />
+            {/* Right */}
+            <div className={baseStyle} style={{ top: t, left: l + w, right: 0, height: h }} />
+            {/* Glow ring around target */}
+            <div
+                className="fixed z-[9999] pointer-events-none transition-all duration-500"
+                style={{
+                    top: t,
+                    left: l,
+                    width: w,
+                    height: h,
+                    borderRadius: 12,
+                    boxShadow: "0 0 0 2px rgba(139,92,246,0.6), 0 0 30px 4px rgba(139,92,246,0.2)",
+                    border: "2px solid rgba(139,92,246,0.5)",
+                }}
+            />
+        </>
+    );
+}
+
+// ─── Sub-component: Tooltip card ─────────────────────────────────────────────
+
+interface TooltipCardProps {
+    step: TourStep;
+    stepIndex: number;
+    totalSteps: number;
+    rect: Rect;
+    onNext: () => void;
+    onSkip: () => void;
+}
+
+function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: TooltipCardProps) {
+    const CARD_W = 320;
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1920;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 1080;
+
+    const t = rect.top - PADDING;
+    const l = rect.left - PADDING;
+    const w = rect.width + PADDING * 2;
+    const h = rect.height + PADDING * 2;
+
+    // Determine card position
+    let cardTop: number;
+    let cardLeft: number;
+
+    if (step.prefer === "bottom" && t + h + 20 + 200 < vh) {
+        // Below the spotlight
+        cardTop = t + h + 20;
+        cardLeft = Math.min(Math.max(l + w / 2 - CARD_W / 2, 12), vw - CARD_W - 12);
+    } else if (step.prefer === "top" && t - 20 - 200 > 0) {
+        // Above
+        cardTop = t - 230;
+        cardLeft = Math.min(Math.max(l + w / 2 - CARD_W / 2, 12), vw - CARD_W - 12);
+    } else if (step.prefer === "right" && l + w + 20 + CARD_W < vw) {
+        // Right side
+        cardTop = Math.min(Math.max(t + h / 2 - 100, 12), vh - 220);
+        cardLeft = l + w + 20;
+    } else {
+        // Left side
+        cardTop = Math.min(Math.max(t + h / 2 - 100, 12), vh - 220);
+        cardLeft = l - CARD_W - 20;
+    }
+
+    const Icon = step.icon;
+    const isLast = stepIndex === totalSteps - 1;
+
+    return (
+        <motion.div
+            key={step.id}
+            initial={{ opacity: 0, scale: 0.92, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: 8 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="fixed z-[10000] rounded-2xl border border-white/12 bg-[#141418]/95 backdrop-blur-2xl shadow-2xl shadow-black/60 overflow-hidden"
+            style={{ top: cardTop, left: cardLeft, width: CARD_W }}
+        >
+            {/* Gradient top line */}
+            <div className={`h-[2px] w-full bg-gradient-to-r ${step.iconGradient}`} />
+
+            <div className="p-5 space-y-4">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${step.iconGradient} flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                            <Icon className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-0.5">
+                                Step {stepIndex + 1} of {totalSteps}
+                            </p>
+                            <h3 className="text-sm font-bold text-white/90 leading-tight">{step.title}</h3>
+                        </div>
+                    </div>
+                    <button
+                        onClick={onSkip}
+                        className="text-white/20 hover:text-white/60 transition-colors flex-shrink-0 p-0.5"
+                        title="Skip tour"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <p className="text-xs text-white/55 leading-relaxed">{step.body}</p>
+
+                {/* Progress dots */}
+                <div className="flex items-center gap-1.5">
+                    {Array.from({ length: totalSteps }).map((_, i) => (
+                        <div
+                            key={i}
+                            className={[
+                                "h-1.5 rounded-full transition-all duration-300",
+                                i === stepIndex
+                                    ? `flex-1 bg-gradient-to-r ${step.iconGradient}`
+                                    : i < stepIndex
+                                        ? "w-3 bg-white/30"
+                                        : "w-3 bg-white/10",
+                            ].join(" ")}
+                        />
+                    ))}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onSkip}
+                        className="flex-1 py-2 rounded-xl text-xs font-semibold text-white/35 hover:text-white/60 border border-white/8 hover:border-white/15 transition-all"
+                    >
+                        Skip tour
+                    </button>
+                    <button
+                        onClick={onNext}
+                        className={`flex-[2] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r ${step.iconGradient} hover:opacity-90 transition-opacity shadow-lg`}
+                    >
+                        {isLast ? (
+                            <>
+                                <Sparkles className="w-3.5 h-3.5" />
+                                Let's go!
+                            </>
+                        ) : (
+                            <>
+                                Next
+                                <ChevronRight className="w-3.5 h-3.5" />
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
+// ─── Main export ─────────────────────────────────────────────────────────────
+
+export function ProductTour() {
+    const [mounted, setMounted] = useState(false);
+    const [active, setActive] = useState(false);
+    const [stepIndex, setStepIndex] = useState(0);
+    const [rect, setRect] = useState<Rect | null>(null);
+    const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Check on mount whether tour has been seen
+    useEffect(() => {
+        setMounted(true);
+        try {
+            const seen = localStorage.getItem(TOUR_KEY);
+            if (!seen) {
+                // Small delay to let the dashboard fully render before measuring
+                const t = setTimeout(() => setActive(true), 1400);
+                return () => clearTimeout(t);
+            }
+        } catch { /* ignore */ }
+    }, []);
+
+    // Measure the target element whenever step changes
+    const measureStep = useCallback(function measure(idx: number) {
+        const step = STEPS[idx];
+        if (!step) return;
+
+        const measured = getElementRect(step.targetId, step.fallbackSelector);
+        if (measured) {
+            setRect(measured);
+            if (retryRef.current) clearTimeout(retryRef.current);
+        } else {
+            // Element not yet rendered — retry up to 10 times × 200ms
+            retryRef.current = setTimeout(() => measure(idx), 200);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!active) return;
+        measureStep(stepIndex);
+        return () => {
+            if (retryRef.current) clearTimeout(retryRef.current);
+        };
+    }, [active, stepIndex, measureStep]);
+
+    // Re-measure on window resize
+    useEffect(() => {
+        if (!active) return;
+        const handler = () => measureStep(stepIndex);
+        window.addEventListener("resize", handler, { passive: true });
+        return () => window.removeEventListener("resize", handler);
+    }, [active, stepIndex, measureStep]);
+
+    const complete = useCallback(() => {
+        setActive(false);
+        try { localStorage.setItem(TOUR_KEY, "true"); } catch { /* ignore */ }
+    }, []);
+
+    const handleNext = useCallback(() => {
+        if (stepIndex < STEPS.length - 1) {
+            setRect(null); // clear so spotlight can animate to next
+            setStepIndex((i) => i + 1);
+        } else {
+            complete();
+        }
+    }, [stepIndex, complete]);
+
+    if (!mounted || !active || !rect) return null;
+
+    const step = STEPS[stepIndex];
+
+    return (
+        <AnimatePresence>
+            <Spotlight key={`spotlight-${stepIndex}`} rect={rect} />
+            <TooltipCard
+                key={`card-${stepIndex}`}
+                step={step}
+                stepIndex={stepIndex}
+                totalSteps={STEPS.length}
+                rect={rect}
+                onNext={handleNext}
+                onSkip={complete}
+            />
+        </AnimatePresence>
+    );
+}

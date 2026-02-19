@@ -173,7 +173,7 @@ export const LeadWizardQuickModal = ({
                     <div className="space-y-1.5">
                         <label className="text-[10px] uppercase tracking-wider font-bold text-cyan-400/80 flex items-center gap-1.5">
                             <Target size={10} />
-                            Pool Name
+                            List Name
                         </label>
                         <input
                             id="quickwizard-pool-name"
@@ -345,7 +345,7 @@ export const LeadWizardQuickModal = ({
                     <p className="text-[10px] text-center text-white/20">
                         Need more control?{" "}
                         <Link
-                            href="/crm/lead-wizard"
+                            href="/crm/accounts"
                             className="text-cyan-500/60 hover:text-cyan-400 underline underline-offset-2 transition-colors"
                         >
                             Open the full wizard

@@ -7,6 +7,7 @@ import OpportunitiesView from "../components/OpportunitiesView";
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getOpportunitiesFull } from "@/actions/crm/get-opportunities-with-includes";
 import ProjectOpportunitiesPanel from "../dashboard/_components/ProjectOpportunitiesPanel";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 const AccountsPage = async () => {
   const crmData = await getAllCrmData();
@@ -31,6 +32,12 @@ const AccountsPage = async () => {
         <Suspense fallback={<SuspenseLoading />}>
           <OpportunitiesView crmData={crmData} data={opportunities} />
         </Suspense>
+
+        <LearnLink
+          tab="reference"
+          tooltipLabel="Understand how Opportunities work in the CRM pipeline"
+          dismissKey="learnlink_opportunities"
+        />
       </div>
     </Container>
   );

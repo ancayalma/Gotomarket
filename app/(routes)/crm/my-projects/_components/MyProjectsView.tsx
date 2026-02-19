@@ -223,7 +223,7 @@ export default function MyProjectsView({ userId }: Props) {
                             </div>
                             <h3 className="text-lg font-semibold mb-2">No Assignments Yet</h3>
                             <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                                Your admin hasn&apos;t assigned any projects or lead pools to you yet.
+                                Your admin hasn&apos;t assigned any projects or lists to you yet.
                                 Check back later or contact your admin for access.
                             </p>
                         </CardContent>
@@ -330,7 +330,7 @@ export default function MyProjectsView({ userId }: Props) {
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold flex items-center gap-2">
                                 <Users className="w-5 h-5 text-muted-foreground" />
-                                Assigned Lead Pools ({pools.length})
+                                Assigned Lists ({pools.length})
                             </h3>
 
                             {viewMode === "table" ? (
@@ -438,7 +438,7 @@ export default function MyProjectsView({ userId }: Props) {
                             My Assignments
                         </CardTitle>
                         <CardDescription className="text-sm">
-                            Projects and lead pools assigned to you by your admin. Start outreach from here.
+                            Projects and lists assigned to you by your admin. Start outreach from here.
                         </CardDescription>
                     </CardHeader>
                 </Card>
@@ -451,7 +451,7 @@ export default function MyProjectsView({ userId }: Props) {
                             Need More Leads?
                         </CardTitle>
                         <CardDescription className="text-sm">
-                            Contact your admin to request access to more lead pools or projects.
+                            Contact your admin to request access to more lists or projects.
                         </CardDescription>
                     </CardHeader>
                 </Card>

@@ -38,7 +38,7 @@ export const PROJECT_WORKFLOW_DESKTOP = `
 }%%
 graph LR
     Start((Start)):::startNode --> Campaign[Create Campaign<br/>Define Context]:::projectNode
-    Campaign --> Pool[Create Lead Pool<br/>Target Audience]:::poolNode
+    Campaign --> Pool[Create List<br/>Target Audience]:::poolNode
     Pool --> Assign[Assign Members<br/>Team Allocation]:::assignNode
     Assign --> Outreach[Launch Outreach<br/>Auto-Populated]:::outreachNode
     
@@ -67,7 +67,7 @@ export const PROJECT_WORKFLOW_MOBILE = `
 }%%
 graph TB
     Start((Start)):::startNode --> Campaign[Create Campaign]:::projectNode
-    Campaign --> Pool[Create Lead Pool]:::poolNode
+    Campaign --> Pool[Create List]:::poolNode
     Pool --> Assign[Assign Members]:::assignNode
     Assign --> Outreach[Launch Outreach]:::outreachNode
     

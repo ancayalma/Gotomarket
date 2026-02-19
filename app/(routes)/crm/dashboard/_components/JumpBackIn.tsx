@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 // Helper to get color based on label (matching Dashboard colors)
 function getBreadcrumbColor(label: string) {
     const l = label.toLowerCase();
-    if (l.includes('lead pool')) return "blue";
+    if (l.includes('list')) return "violet";
     if (l.includes('lead wizard')) return "cyan";
     if (l.includes('lead')) return "emerald";
     if (l.includes('campaign')) return "orange";
@@ -90,7 +90,6 @@ export default function JumpBackIn({ align = "left", className, userId }: JumpBa
 
                     // Tailwind dynamic classes based on color
                     let colorClasses = "bg-emerald-500/10 text-emerald-100 border-emerald-500/20 group-hover:border-emerald-500/50 group-hover:bg-emerald-500/20";
-                    if (color === 'blue') colorClasses = "bg-blue-500/10 text-blue-100 border-blue-500/20 group-hover:border-blue-500/50 group-hover:bg-blue-500/20";
                     if (color === 'cyan') colorClasses = "bg-cyan-500/10 text-cyan-100 border-cyan-500/20 group-hover:border-cyan-500/50 group-hover:bg-cyan-500/20";
                     if (color === 'orange') colorClasses = "bg-orange-500/10 text-orange-100 border-orange-500/20 group-hover:border-orange-500/50 group-hover:bg-orange-500/20";
                     if (color === 'violet') colorClasses = "bg-violet-500/10 text-violet-100 border-violet-500/20 group-hover:border-violet-500/50 group-hover:bg-violet-500/20";

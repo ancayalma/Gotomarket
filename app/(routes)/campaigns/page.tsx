@@ -8,9 +8,9 @@ import { getProjectStats } from "@/actions/projects/get-project-stats";
 
 import NewProjectDialog from "../projects/dialogs/NewProject";
 import CampaignsTableWrapper from "./_components/CampaignsTableWrapper";
-import { FolderPlus, CheckSquare, Target } from "lucide-react";
+import { Target } from "lucide-react";
 import { ProjectCard, ProjectCardData } from "../projects/_components/ProjectCard";
-import AiAssistantCardWrapper from "../projects/_components/AiAssistantCardWrapper";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 const CampaignsPage = async () => {
     const session = await getServerSession(authOptions);
@@ -37,18 +37,14 @@ const CampaignsPage = async () => {
         console.error("Error fetching project stats:", error);
     }
 
-    // Define Campaign Cards
     const cards: ProjectCardData[] = [
         {
             title: "New Campaign",
             description: "Launch a new strategic campaign",
-            icon: Target, // Changed to Target icon for Campaigns
+            icon: Target,
             color: "from-indigo-500/20 to-purple-500/20",
             iconColor: "text-indigo-400"
         },
-        // We can keep 'New Task' or remove it. Let's keep it but label it relevantly?
-        // Actually, tasks are associated with projects.
-        // Let's just keep the main 'New Campaign' button prominent.
     ];
 
     return (
@@ -66,15 +62,17 @@ const CampaignsPage = async () => {
                     apiEndpoint="/api/campaigns"
                     customTrigger={<ProjectCard card={cards[0]} />}
                 />
-
-                {/* <AiAssistantCardWrapper session={session} /> */}
-
-                {/* Stats or other cards could go here */}
             </div>
 
             <div className="pt-2 space-y-3">
                 <CampaignsTableWrapper data={boards} stats={stats} />
             </div>
+
+            <LearnLink
+                tab="project-workflow"
+                tooltipLabel="Campaigns are the top-level container for your outreach strategy"
+                dismissKey="learnlink_campaigns"
+            />
         </div>
     );
 };

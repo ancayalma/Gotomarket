@@ -92,8 +92,8 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                 title="Lead Wizard"
                 icon={Wand2}
                 iconColor="text-cyan-400"
-                footerHref="/crm/lead-wizard"
-                footerLabel="Open Wizard"
+                footerHref="/crm/accounts"
+                footerLabel="Open Accounts"
                 rightAction={
                     <button
                         onClick={() => setQuickModalOpen(true)}
@@ -187,8 +187,8 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                                             key={job.id}
                                             href={
                                                 poolId
-                                                    ? `/crm/lead-pools/${poolId}`
-                                                    : "/crm/lead-pools"
+                                                    ? `/lists/${poolId}`
+                                                    : "/lists"
                                             }
                                             className="block group/job"
                                         >

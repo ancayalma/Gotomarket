@@ -138,8 +138,8 @@ const DashboardRoleManager = async () => {
                 { id: "entity:flowstate_builder", name: "FlowState Builder", value: workflowCount, href: "/crm/workflows", iconName: "Zap", color: "indigo", tooltip: "Build and automate workflows visually. Create triggers, conditions, and actions to streamline processes." },
 
                 // Outreach & Optimization (Phase 4)
-                { id: "entity:lead_wizard", name: "Lead Wizard", value: 0, href: "/crm/lead-wizard", iconName: "Wand2", color: "cyan", tooltip: "Discover and generate new leads using AI. Define your ideal customer profile and let the wizard find matches." },
-                { id: "entity:lead_pools", name: "Lists", value: counts.leadPools || 0, href: "/crm/lead-pools", iconName: "List", color: "violet", tooltip: "Organize records into targeted segments. Group items by criteria for focused outreach and follow-up." },
+                { id: "entity:lead_wizard", name: "Lead Wizard", value: 0, href: "/crm/accounts", iconName: "Wand2", color: "cyan", tooltip: "Run the LeadGen Wizard to discover companies and build targeted account lists. Found on the Accounts page." },
+                { id: "entity:lead_pools", name: "Lists", value: counts.leadPools || 0, href: "/lists", iconName: "List", color: "violet", tooltip: "View and manage your targeted lists of accounts. Assign lists to team members to start outreach." },
                 { id: "entity:outreach", name: "Outreach", value: 0, href: "/campaigns", iconName: "Megaphone", color: "orange", tooltip: "Launch and manage outreach campaigns. Reach prospects through automated sequences and track engagement." },
 
                 // Tasks & Supplementary

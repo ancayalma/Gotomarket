@@ -111,7 +111,7 @@ export default function AssignPoolMembersModal({
 
             toast({
                 title: "Member Assigned",
-                description: "Team member can now work on this lead pool.",
+                description: "Team member can now work on this list.",
             });
 
             onUpdate?.();
@@ -140,7 +140,7 @@ export default function AssignPoolMembersModal({
 
             toast({
                 title: "Member Removed",
-                description: "Team member removed from this lead pool.",
+                description: "Team member removed from this list.",
             });
 
             onUpdate?.();
@@ -173,7 +173,7 @@ export default function AssignPoolMembersModal({
                         <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-green-500/20">
                             <Database className="w-5 h-5 text-emerald-400" />
                         </div>
-                        Assign Pool Members
+                        Assign List Members
                     </DialogTitle>
                     <DialogDescription>
                         Assign team members to work on <strong>{poolName}</strong>
@@ -195,7 +195,7 @@ export default function AssignPoolMembersModal({
                             {assignedMembers.length === 0 ? (
                                 <div className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg bg-gradient-to-br from-amber-500/5 to-transparent">
                                     <Sparkles className="w-5 h-5 mx-auto mb-2 text-amber-400" />
-                                    No members assigned — Only assigned members can run campaigns on this pool
+                                    No members assigned — Only assigned members can run campaigns on this list
                                 </div>
                             ) : (
                                 <ScrollArea className="max-h-[180px]">

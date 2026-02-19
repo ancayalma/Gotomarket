@@ -18,7 +18,7 @@ const MyProjectsPage = async () => {
     return (
         <Container
             title="My Projects"
-            description={"Projects and lead pools assigned to you"}
+            description={"Projects and lists assigned to you"}
         >
             <Suspense fallback={<SuspenseLoading />}>
                 <MyProjectsView userId={session.user.id} />

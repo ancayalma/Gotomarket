@@ -52,7 +52,7 @@ export default function ProjectWorkflowGuide() {
             permissions: [
                 "View and manage campaigns within your team only",
                 "Create campaigns for your team",
-                "Create and assign lead pools to members",
+                "Create and assign lists to members",
                 "Assign members to campaigns",
                 "Toggle outreach approval on/off per campaign",
             ],
@@ -65,8 +65,8 @@ export default function ProjectWorkflowGuide() {
             iconColor: "text-emerald-400",
             permissions: [
                 "View only campaigns assigned to you",
-                "Execute outreach on assigned lead pools",
-                "Cannot create lead pools",
+                "Execute outreach on assigned lists",
+                "Cannot create lists",
                 "Cannot modify campaign settings",
             ],
         },
@@ -90,15 +90,15 @@ export default function ProjectWorkflowGuide() {
         },
         {
             phase: "Phase 2",
-            title: "Lead Pool & Assignment",
+            title: "List & Assignment",
             actor: "Admin",
             icon: Users,
             color: "bg-card border-violet-500/20",
             iconColor: "text-violet-400",
             steps: [
-                "Admin creates a lead pool (collection of leads to contact)",
-                "Admin imports or generates leads into the pool",
-                "Admin assigns the lead pool to one or more members",
+                "Admin creates a list (collection of accounts to outreach)",
+                "Outreach to companies in the list to discover contacts",
+                "Admin assigns the list to one or more members",
                 "Admin assigns members to the campaign",
                 "Members receive a notification that they've been assigned",
             ],
@@ -157,7 +157,7 @@ export default function ProjectWorkflowGuide() {
         },
         {
             title: "Pool Restrictions",
-            description: "Only admins can create lead pools. Members work with pools assigned to them by their admin.",
+            description: "Only admins can create lists. Members work with lists assigned to them by their admin.",
             icon: ShieldCheck,
         },
         {
@@ -187,7 +187,7 @@ export default function ProjectWorkflowGuide() {
                             </h2>
                         </div>
                         <p className="text-sm text-muted-foreground w-full">
-                            How campaigns, lead pools, and outreach flow from admin setup to member execution.
+                            How campaigns, lists, and outreach flow from admin setup to member execution.
                         </p>
                     </div>
                 </Card>
@@ -251,7 +251,7 @@ export default function ProjectWorkflowGuide() {
                         <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-medium">
                             {[
                                 { label: "Admin creates Campaign", color: "border-blue-500 text-blue-500 hover:bg-blue-500" },
-                                { label: "Admin creates Lead Pool", color: "border-violet-500 text-violet-500 hover:bg-violet-500" },
+                                { label: "Admin creates List", color: "border-violet-500 text-violet-500 hover:bg-violet-500" },
                                 { label: "Admin assigns to Member", color: "border-indigo-500 text-indigo-500 hover:bg-indigo-500" },
                                 { label: "Member runs Outreach", color: "border-emerald-500 text-emerald-500 hover:bg-emerald-500" },
                             ].map((step, i) => (

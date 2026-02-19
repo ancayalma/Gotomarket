@@ -89,7 +89,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
   const isPath = (pattern: RegExp) => pattern.test(pathname);
   const startsWithPath = (path: string) => pathname.startsWith(path);
   const isDashboard = pathname === "/dashboard" || /^\/[a-zA-Z0-9-]+\/dashboard(\/|$)/.test(pathname);
-  const isCrmLeads = isPath(/^\/([a-z]{2}\/)?crm\/leads/) || isPath(/^\/([a-z]{2}\/)?crm\/lead-wizard/) || isPath(/^\/([a-z]{2}\/)?crm\/lead-pools/);
+  const isCrmLeads = isPath(/^\/([a-z]{2}\/)?crm\/leads/) || isPath(/^\/([a-z]{2}\/)?lists/);
   const isCrmOpps = isPath(/^\/([a-z]{2}\/)?crm\/opportunities/);
   const isCrmCommand = isPath(/^\/([a-z]{2}\/)?crm\/sales-command/);
   const isCrmDialer = isPath(/^\/([a-z]{2}\/)?crm\/dialer/);
@@ -97,7 +97,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
   const isCrmProducts = isPath(/^\/([a-z]{2}\/)?crm\/products/);
   const isCrmCases = isPath(/^\/([a-z]{2}\/)?crm\/cases/);
   const isCrmOutreach = isPath(/^\/([a-z]{2}\/)?campaigns/);
-  const isCrmWizard = isPath(/^\/([a-z]{2}\/)?crm\/lead-wizard/);
+  const isCrmWizard = isPath(/^\/([a-z]{2}\/)?crm\/accounts/);
   const isCrmForms = isPath(/^\/([a-z]{2}\/)?messages\/forms/);
   const isCrmAccounts = isPath(/^\/([a-z]{2}\/)?crm\/accounts/);
   const isCrmContacts = isPath(/^\/([a-z]{2}\/)?crm\/contacts/);
@@ -118,8 +118,8 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
 
   // ─── Flyout sub-items ────────────────────
   const leadsSubItems: SubMenuItemType[] = [
-    { label: "LeadGen Wizard", href: "/crm/lead-wizard", icon: Wand2 },
-    { label: "Lists", href: "/crm/lead-pools", icon: List },
+    { label: "LeadGen Wizard", href: "/crm/accounts", icon: Wand2 },
+    { label: "Lists", href: "/lists", icon: List },
     { label: "Outreach", href: "/campaigns", icon: Megaphone },
   ];
 
@@ -446,15 +446,23 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
                     isOpen={open}
                     isActive={isAdmin}
                   />
-                  <MenuItem
-                    href="/crm/university"
-                    icon={GraduationCap}
-                    title="Learn"
-                    isOpen={open}
-                    isActive={isUniversity}
-                  />
                 </>
               )}
+
+              {/* Learn — visible to ALL roles */}
+              {!isNonMember && (
+                <HubLabel label="System" isOpen={open} />
+              )}
+              <div data-tour-id="tour-learn-nav">
+                <MenuItem
+                  href="/crm/university"
+                  icon={GraduationCap}
+                  title="Learn"
+                  isOpen={open}
+                  isActive={isUniversity}
+                />
+              </div>
+
 
               {/* ══════ PLATFORM (Partner Admin only) ══════ */}
               {isPartnerAdmin && (

@@ -52,8 +52,10 @@ import FlowStatsCharts from "./FlowStatsCharts";
 import ProjectWorkflowGuide from "./ProjectWorkflowGuide";
 import { PROJECT_WORKFLOW_DESKTOP, PROJECT_WORKFLOW_MOBILE, PROJECT_WORKFLOW_LEGEND } from "./ProjectWorkflowDiagrams";
 import TabNavigationCard from "./TabNavigationCard";
+import GettingStarted from "./GettingStarted";
+import { Rocket } from "lucide-react";
 
-type TabId = "flow" | "reference" | "project-workflow" | "compliance" | "data-health" | "roi-modeler" | "architecture" | "certification" | "prompt-lab";
+type TabId = "getting-started" | "flow" | "reference" | "project-workflow" | "compliance" | "data-health" | "roi-modeler" | "architecture" | "certification" | "prompt-lab";
 
 // Page transition variants
 const pageVariants = {
@@ -62,93 +64,124 @@ const pageVariants = {
     exit: { opacity: 0, y: -10 },
 };
 
+const UNIVERSITY_TABS = [
+    {
+        id: "getting-started" as TabId,
+        label: "Getting Started",
+        title: "CRM University",
+        description: "Master the complete lead-to-sale flow, track your performance, and level up your sales game.",
+        icon: Rocket,
+        color: "text-amber-400 group-hover:text-amber-300",
+        gradient: "from-amber-600/30 via-amber-500/10 to-transparent",
+        borderColor: "border-amber-500/50 ring-amber-500/20",
+        shadowColor: "shadow-amber-500/20"
+    },
+    {
+        id: "project-workflow" as TabId,
+        label: "Project Workflow",
+        title: "Project Workflow",
+        description: "Master the end-to-end process of setting up lead pools, launching campaigns, and managing automated outreach.",
+        icon: FolderKanban,
+        color: "text-indigo-400 group-hover:text-indigo-300",
+        gradient: "from-indigo-600/30 via-indigo-500/10 to-transparent",
+        borderColor: "border-indigo-500/50 ring-indigo-500/20",
+        shadowColor: "shadow-indigo-500/20"
+    },
+    {
+        id: "flow" as TabId,
+        label: "Flow Architecture",
+        title: "Flow Architecture",
+        description: "Understand the journey of a lead through your system and how automated triggers turn prospects into customers.",
+        icon: GitBranch,
+        color: "text-blue-400 group-hover:text-blue-300",
+        gradient: "from-blue-600/30 via-blue-500/10 to-transparent",
+        borderColor: "border-blue-500/50 ring-blue-500/20",
+        shadowColor: "shadow-blue-500/20"
+    },
+    {
+        id: "compliance" as TabId,
+        label: "Compliance Academy",
+        title: "Compliance Academy",
+        description: "Master the regulatory landscape of SMS and Email outreach. Get verified, stay compliant, and ensure deliverability.",
+        icon: ShieldCheck,
+        color: "text-blue-400 group-hover:text-blue-300",
+        gradient: "from-blue-600/30 via-blue-500/10 to-transparent",
+        borderColor: "border-blue-500/50 ring-blue-500/20",
+        shadowColor: "shadow-blue-500/20"
+    },
+    {
+        id: "data-health" as TabId,
+        label: "Data Health",
+        title: "Data Health",
+        description: "Monitor and optimize your CRM data quality, lead health, and system performance metrics.",
+        icon: Database,
+        color: "text-emerald-400 group-hover:text-emerald-300",
+        gradient: "from-emerald-600/30 via-emerald-500/10 to-transparent",
+        borderColor: "border-emerald-500/50 ring-emerald-500/20",
+        shadowColor: "shadow-emerald-500/20"
+    },
+    {
+        id: "certification" as TabId,
+        label: "Mastery Paths",
+        title: "Mastery Paths",
+        description: "Professional certification paths to master every aspect of Basalt CRM and level up your career.",
+        icon: GraduationCap,
+        color: "text-blue-400 group-hover:text-blue-300",
+        gradient: "from-blue-600/30 via-blue-500/10 to-transparent",
+        borderColor: "border-blue-500/50 ring-blue-500/20",
+        shadowColor: "shadow-blue-500/20"
+    },
+    {
+        id: "prompt-lab" as TabId,
+        label: "Persona Playbook",
+        title: "Persona Playbook",
+        description: "Master the art of AI communication and persona management to personalize your outreach at scale.",
+        icon: Bot,
+        color: "text-emerald-400 group-hover:text-emerald-300",
+        gradient: "from-emerald-600/30 via-emerald-500/10 to-transparent",
+        borderColor: "border-emerald-500/50 ring-emerald-500/20",
+        shadowColor: "shadow-emerald-500/20"
+    },
+    {
+        id: "roi-modeler" as TabId,
+        label: "ROI Modeler",
+        title: "ROI Modeler",
+        description: "Model your sales performance and calculate your return on investment with our RevOps simulator.",
+        icon: BarChart3,
+        color: "text-emerald-400 group-hover:text-emerald-300",
+        gradient: "from-emerald-600/30 via-emerald-500/10 to-transparent",
+        borderColor: "border-emerald-500/50 ring-emerald-500/20",
+        shadowColor: "shadow-emerald-500/20"
+    },
+    {
+        id: "architecture" as TabId,
+        label: "Architecture",
+        title: "System Architecture",
+        description: "Technical blueprints and integration patterns for the Basalt CRM ecosystem and external API services.",
+        icon: Share2,
+        color: "text-violet-400 group-hover:text-violet-300",
+        gradient: "from-violet-600/30 via-violet-500/10 to-transparent",
+        borderColor: "border-violet-500/50 ring-violet-500/20",
+        shadowColor: "shadow-violet-500/20"
+    },
+    {
+        id: "reference" as TabId,
+        label: "Quick Reference",
+        title: "Quick Reference",
+        description: "Essential information at a glance, including pipeline stages, conversion rules, and technical guides.",
+        icon: Layers,
+        color: "text-emerald-400 group-hover:text-emerald-300",
+        gradient: "from-emerald-600/30 via-emerald-500/10 to-transparent",
+        borderColor: "border-emerald-500/50 ring-emerald-500/20",
+        shadowColor: "shadow-emerald-500/20"
+    },
+];
+
 export default function UniversityDashboard() {
-    const [activeTab, setActiveTab] = useState<TabId>("project-workflow");
+    const [activeTab, setActiveTab] = useState<TabId>("getting-started");
     const [activeStage, setActiveStage] = useState<string | undefined>(undefined);
 
-    const tabs = [
-        {
-            id: "project-workflow" as TabId,
-            label: "Project Workflow",
-            icon: FolderKanban,
-            color: "text-indigo-400 group-hover:text-indigo-300",
-            gradient: "from-indigo-600/30 via-indigo-500/10 to-transparent",
-            borderColor: "border-indigo-500/50 ring-indigo-500/20",
-            shadowColor: "shadow-indigo-500/20"
-        },
-        {
-            id: "flow" as TabId,
-            label: "Flow Architecture",
-            icon: GitBranch,
-            color: "text-blue-400 group-hover:text-blue-300",
-            gradient: "from-blue-600/30 via-blue-500/10 to-transparent",
-            borderColor: "border-blue-500/50 ring-blue-500/20",
-            shadowColor: "shadow-blue-500/20"
-        },
-        {
-            id: "compliance" as TabId,
-            label: "Compliance Academy",
-            icon: ShieldCheck,
-            color: "text-blue-400 group-hover:text-blue-300",
-            gradient: "from-blue-600/30 via-blue-500/10 to-transparent",
-            borderColor: "border-blue-500/50 ring-blue-500/20",
-            shadowColor: "shadow-blue-500/20"
-        },
-        {
-            id: "data-health" as TabId,
-            label: "Data Health",
-            icon: Database,
-            color: "text-emerald-400 group-hover:text-emerald-300",
-            gradient: "from-emerald-600/30 via-emerald-500/10 to-transparent",
-            borderColor: "border-emerald-500/50 ring-emerald-500/20",
-            shadowColor: "shadow-emerald-500/20"
-        },
-        {
-            id: "certification" as TabId,
-            label: "Mastery Paths",
-            icon: GraduationCap,
-            color: "text-blue-400 group-hover:text-blue-300",
-            gradient: "from-blue-600/30 via-blue-500/10 to-transparent",
-            borderColor: "border-blue-500/50 ring-blue-500/20",
-            shadowColor: "shadow-blue-500/20"
-        },
-        {
-            id: "prompt-lab" as TabId,
-            label: "Persona Playbook",
-            icon: Bot,
-            color: "text-emerald-400 group-hover:text-emerald-300",
-            gradient: "from-emerald-600/30 via-emerald-500/10 to-transparent",
-            borderColor: "border-emerald-500/50 ring-emerald-500/20",
-            shadowColor: "shadow-emerald-500/20"
-        },
-        {
-            id: "roi-modeler" as TabId,
-            label: "ROI Modeler",
-            icon: BarChart3,
-            color: "text-emerald-400 group-hover:text-emerald-300",
-            gradient: "from-emerald-600/30 via-emerald-500/10 to-transparent",
-            borderColor: "border-emerald-500/50 ring-emerald-500/20",
-            shadowColor: "shadow-emerald-500/20"
-        },
-        {
-            id: "architecture" as TabId,
-            label: "Architecture",
-            icon: Share2,
-            color: "text-violet-400 group-hover:text-violet-300",
-            gradient: "from-violet-600/30 via-violet-500/10 to-transparent",
-            borderColor: "border-violet-500/50 ring-violet-500/20",
-            shadowColor: "shadow-violet-500/20"
-        },
-        {
-            id: "reference" as TabId,
-            label: "Quick Reference",
-            icon: Layers,
-            color: "text-emerald-400 group-hover:text-emerald-300",
-            gradient: "from-emerald-600/30 via-emerald-500/10 to-transparent",
-            borderColor: "border-emerald-500/50 ring-emerald-500/20",
-            shadowColor: "shadow-emerald-500/20"
-        },
-    ];
+    const currentTab = useMemo(() => UNIVERSITY_TABS.find(t => t.id === activeTab), [activeTab]);
 
     return (
         <div className="space-y-6">
@@ -160,8 +193,8 @@ export default function UniversityDashboard() {
                 className="flex flex-col"
             >
                 <Heading
-                    title="CRM University"
-                    description="Master the complete lead-to-sale flow, track your performance, and level up your sales game."
+                    title={currentTab?.title || "CRM University"}
+                    description={currentTab?.description || "Master the complete lead-to-sale flow, track your performance, and level up your sales game."}
                 />
                 <Separator className="mt-4" />
             </motion.div>
@@ -171,9 +204,9 @@ export default function UniversityDashboard() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
-                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 xl:grid-cols-9 2xl:grid-cols-9 gap-3 md:gap-4 mb-8 bg-transparent"
+                className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 xl:grid-cols-10 2xl:grid-cols-10 gap-2 md:gap-3 mb-8 bg-transparent"
             >
-                {tabs.map((tab, index) => (
+                {UNIVERSITY_TABS.map((tab, index: number) => (
                     <TabNavigationCard
                         key={tab.id}
                         id={tab.id}
@@ -184,13 +217,28 @@ export default function UniversityDashboard() {
                         borderColor={tab.borderColor}
                         shadowColor={tab.shadowColor}
                         isActive={activeTab === tab.id}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => setActiveTab(tab.id as TabId)}
                     />
                 ))}
             </motion.div>
 
             {/* Tab Content with AnimatePresence */}
             <AnimatePresence mode="wait">
+
+                {/* Getting Started Tab */}
+                {activeTab === "getting-started" && (
+                    <motion.div
+                        key="getting-started"
+                        variants={pageVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        transition={{ duration: 0.3 }}
+                    >
+                        <GettingStarted />
+                    </motion.div>
+                )}
+
                 {/* Flow Architecture Tab */}
                 {activeTab === "flow" && (
                     <motion.div

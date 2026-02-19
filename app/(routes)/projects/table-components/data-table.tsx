@@ -405,7 +405,7 @@ export function ProjectsDataTable<TData, TValue>({
                                         </div>
                                       ))}
                                       {pools.length === 0 && (
-                                        <div className="text-xs text-muted-foreground">No lead pools assigned to this project.</div>
+                                        <div className="text-xs text-muted-foreground">No lists assigned to this project.</div>
                                       )}
                                     </div>
                                   </div>

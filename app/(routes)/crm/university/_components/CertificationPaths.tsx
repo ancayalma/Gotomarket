@@ -100,7 +100,7 @@ const MILESTONES = [
     {
         id: 7, phase: "data-pioneer", title: "Pool Master", subtitle: "Segmentation", icon: Database, xp: 250,
         requirements: [
-            { text: "Create 5 dynamic Lead Pools", done: false },
+            { text: "Create 5 targeted Lists", done: false },
             { text: "Set automated pool rotation rules", done: false },
             { text: "Define pool ownership weighted logic", done: false }
         ]

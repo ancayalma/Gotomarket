@@ -9,6 +9,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,11 @@ const LeadsPage = async ({ searchParams }: LeadsPageProps) => {
   return (
     <div className="h-full w-full">
       <LeadsManagerTabs leads={leads as any} crmData={crmData} isMember={isMember} />
+      <LearnLink
+        tab="flow"
+        tooltipLabel="Learn how leads flow through the pipeline and convert into customers"
+        dismissKey="learnlink_leads"
+      />
     </div>
   );
 };

@@ -220,7 +220,7 @@ export async function POST(req: Request) {
         select: { id: true },
       });
       if (!pool) {
-        return new NextResponse("Lead Pool not found", { status: 404 });
+        return new NextResponse("List not found", { status: 404 });
       }
     }
 

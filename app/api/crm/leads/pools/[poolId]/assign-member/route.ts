@@ -97,7 +97,7 @@ export async function POST(
                 teamId: user?.team_id || undefined,
                 assignedByName: user?.name || "Admin",
                 assignmentType: "pool",
-                assignmentName: pool.name || "Lead Pool",
+                assignmentName: pool.name || "List",
                 assignmentId: poolId,
                 role: "Member",
                 description: pool.description || undefined,

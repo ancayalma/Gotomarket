@@ -92,20 +92,20 @@ export default function LeadGenJobDetailPage({
         <div>
           <h1 className="text-2xl font-semibold">Lead Generation Job</h1>
           <p className="text-sm text-muted-foreground">
-            Track progress and jump to the Lead Pool to work candidates and start an email blast.
+            Track progress and jump to the List to work accounts and start an email blast.
           </p>
         </div>
         <div className="flex gap-2">
           {data?.pool?.id && (
             <button
               className="rounded border px-3 py-1"
-              onClick={() => router.push(`/crm/leads/pools/${data.pool.id}`)}
+              onClick={() => router.push(`/lists/${data.pool.id}`)}
             >
-              Go to Lead Pool
+              Go to List
             </button>
           )}
-          <button className="rounded border px-3 py-1" onClick={() => router.push("/crm/leads/pools")}>
-            All Lead Pools
+          <button className="rounded border px-3 py-1" onClick={() => router.push("/lists")}>
+            All Lists
           </button>
         </div>
       </div>
@@ -194,113 +194,112 @@ export default function LeadGenJobDetailPage({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="border rounded p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Job</h2>
-              {statusBadge(data.job?.status)}
-            </div>
-            <div className="text-sm">
-              <div>
-                <span className="text-muted-foreground">Job ID:</span> {data.job.id}
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium">Job</h2>
+                {statusBadge(data.job?.status)}
               </div>
-              <div>
-                <span className="text-muted-foreground">Started:</span>{" "}
-                {data.job.startedAt ? new Date(data.job.startedAt).toLocaleString() : "—"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Finished:</span>{" "}
-                {data.job.finishedAt ? new Date(data.job.finishedAt).toLocaleString() : "—"}
-              </div>
-            </div>
-          </div>
-
-          <div className="border rounded p-4 space-y-2">
-            <h2 className="text-lg font-medium">Counters</h2>
-            <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-1">
-              {Object.entries(data.job.counters || {}).map(([k, v]) => (
-                <div key={k} className="flex justify-between">
-                  <span className="text-muted-foreground">{k}</span>
-                  <span className="font-medium">{String(v)}</span>
+              <div className="text-sm">
+                <div>
+                  <span className="text-muted-foreground">Job ID:</span> {data.job.id}
                 </div>
-              ))}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Source events</span>
-                <span className="font-medium">{data.sourceEventsCount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Candidates</span>
-                <span className="font-medium">{data.candidatesCount}</span>
+                <div>
+                  <span className="text-muted-foreground">Started:</span>{" "}
+                  {data.job.startedAt ? new Date(data.job.startedAt).toLocaleString() : "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Finished:</span>{" "}
+                  {data.job.finishedAt ? new Date(data.job.finishedAt).toLocaleString() : "—"}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="border rounded p-4 space-y-3">
-            <h2 className="text-lg font-medium">Next Actions</h2>
-            <p className="text-sm text-muted-foreground">
-              When the job reaches Success, review candidates in the Lead Pool and start an automated email blast.
-            </p>
-            <div className="flex gap-2">
-              {data?.pool?.id && (
-                <button
-                  className="rounded bg-blue-600 px-4 py-2 text-white"
-                  onClick={() => router.push(`/crm/leads/pools/${data.pool.id}`)}
-                >
-                  Work This Pool
+            <div className="border rounded p-4 space-y-2">
+              <h2 className="text-lg font-medium">Counters</h2>
+              <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-1">
+                {Object.entries(data.job.counters || {}).map(([k, v]) => (
+                  <div key={k} className="flex justify-between">
+                    <span className="text-muted-foreground">{k}</span>
+                    <span className="font-medium">{String(v)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Source events</span>
+                  <span className="font-medium">{data.sourceEventsCount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Candidates</span>
+                  <span className="font-medium">{data.candidatesCount}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border rounded p-4 space-y-3">
+              <h2 className="text-lg font-medium">Next Actions</h2>
+              <p className="text-sm text-muted-foreground">
+                When the job reaches Success, review accounts in the List and start an automated email blast.
+              </p>
+              <div className="flex gap-2">
+                {data?.pool?.id && (
+                  <button
+                    className="rounded bg-blue-600 px-4 py-2 text-white"
+                    onClick={() => router.push(`/lists/${data.pool.id}`)}
+                  >
+                    Work This List
+                  </button>
+                )}
+                <button className="rounded border px-3 py-1" onClick={() => router.refresh()}>
+                  Refresh
                 </button>
-              )}
-              <button className="rounded border px-3 py-1" onClick={() => router.refresh()}>
-                Refresh
-              </button>
-            </div>
-          </div>
-
-          {/* AI Reasoning Stream */}
-          {data.job?.logs && Array.isArray(data.job.logs) && data.job.logs.length > 0 && (
-            <div className="border rounded-lg p-6 bg-card">
-              <div className="flex items-center gap-2 mb-4">
-                <Bot className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold">AI Agent Reasoning Stream</h2>
               </div>
-              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                {data.job.logs
-                  .slice(-7)
-                  .reverse()
-                  .map((log: any, idx: number) => {
-                    const isToolCall = log.msg?.includes("Agent action:");
-                    const isError = log.level === "ERROR" || log.level === "WARN";
-                    
-                    return (
-                      <div
-                        key={idx}
-                        className={`p-3 rounded-lg border ${
-                          isError
-                            ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
-                            : isToolCall
-                            ? "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
-                            : "bg-muted/50"
-                        }`}
-                      >
-                        <div className="flex items-start gap-2">
-                          {isError ? (
-                            <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                          ) : isToolCall ? (
-                            <Bot className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                          ) : (
-                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs text-muted-foreground mb-1">
-                              {log.ts ? new Date(log.ts).toLocaleTimeString() : ""}
+            </div>
+
+            {/* AI Reasoning Stream */}
+            {data.job?.logs && Array.isArray(data.job.logs) && data.job.logs.length > 0 && (
+              <div className="border rounded-lg p-6 bg-card">
+                <div className="flex items-center gap-2 mb-4">
+                  <Bot className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold">AI Agent Reasoning Stream</h2>
+                </div>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                  {data.job.logs
+                    .slice(-7)
+                    .reverse()
+                    .map((log: any, idx: number) => {
+                      const isToolCall = log.msg?.includes("Agent action:");
+                      const isError = log.level === "ERROR" || log.level === "WARN";
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-lg border ${isError
+                              ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
+                              : isToolCall
+                                ? "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
+                                : "bg-muted/50"
+                            }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            {isError ? (
+                              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                            ) : isToolCall ? (
+                              <Bot className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs text-muted-foreground mb-1">
+                                {log.ts ? new Date(log.ts).toLocaleTimeString() : ""}
+                              </div>
+                              <div className="text-sm break-words">{log.msg || "..."}</div>
                             </div>
-                            <div className="text-sm break-words">{log.msg || "..."}</div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         </>
       )}
     </div>

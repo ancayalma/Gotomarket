@@ -27,7 +27,7 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
             title="Lists"
             icon={List}
             iconColor="text-violet-400"
-            footerHref="/crm/lead-pools"
+            footerHref="/lists"
             footerLabel="View All Lists"
         >
             <div className="space-y-4 pt-2">
@@ -56,7 +56,7 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                                     {pool.total}
                                 </div>
                                 <div className="text-[10px] text-muted-foreground font-medium pb-0.5">
-                                    {pool.leadCount} Leads
+                                    {pool.leadCount} Contacts
                                 </div>
                             </div>
                         </div>
