@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prismadbCrm } from "@/lib/prisma-crm";
-import { prismadb } from "@/lib/prisma";
+import { prismadbCrm as prismadb } from "@/lib/prisma-crm";
 import { z } from "zod";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import phoneNormalizer from "@/lib/scraper/quality/phone-normalizer";
@@ -16,13 +15,16 @@ const commitSchema = z.object({
         location: z.string().optional(),
         domain: z.string().optional(),
         email: z.string().optional(),
+        additional_emails: z.array(z.string()).optional(),
+        dedupeKey: z.string().optional(),
     })),
     contacts: z.array(z.object({
         fullName: z.string().min(1),
         title: z.string().optional(),
         email: z.string().optional(),
         phone: z.string().optional(),
-        accountName: z.string().optional(), // Used to link contact to account during import
+        accountName: z.string().optional(),
+        candidateKey: z.string().optional(),
     }))
 });
 
@@ -40,7 +42,7 @@ export async function POST(req: Request) {
         const teamId = teamInfo?.teamId;
 
         // 1. Create the List (Pool)
-        const pool = await (prismadbCrm as any).crm_Lead_Pools.create({
+        const pool = await (prismadb as any).crm_Lead_Pools.create({
             data: {
                 name: poolName,
                 description: poolDescription,
@@ -55,16 +57,18 @@ export async function POST(req: Request) {
         let createdContactsCount = 0;
         let updatedContactsCount = 0;
 
-        const accountMap = new Map<string, string>(); // name -> id
+        const accountMapByDedupe = new Map<string, string>();
+        const accountMapByName = new Map<string, string>();
 
         // 2. Process Accounts
         for (const acc of accounts) {
             const name = acc.name.trim();
             const domain = acc.domain?.toLowerCase().trim();
+            const dedupeKey = acc.dedupeKey || domain || name.toLowerCase();
 
-            // Dedupe check: Name or Domain
-            let existingAccount = await (prismadbCrm as any).crm_Accounts.findFirst({
+            let existingAccount = await (prismadb as any).crm_Accounts.findFirst({
                 where: {
+                    team_id: teamId,
                     OR: [
                         { name: { equals: name, mode: "insensitive" } },
                         ...(domain ? [{ website: { contains: domain, mode: "insensitive" } }] : [])
@@ -74,27 +78,22 @@ export async function POST(req: Request) {
 
             let accountId: string;
             if (existingAccount) {
-                // Update existing
-                await (prismadbCrm as any).crm_Accounts.update({
+                await (prismadb as any).crm_Accounts.update({
                     where: { id: existingAccount.id },
                     data: {
-                        type: acc.type || existingAccount.type,
-                        billing_city: acc.location || existingAccount.billing_city,
-                        website: acc.domain || existingAccount.website,
-                        email: acc.email || existingAccount.email,
+                        website: domain || existingAccount.website,
+                        additional_emails: { set: acc.additional_emails || [] },
+                        updatedBy: session.user.id,
                     }
                 });
                 accountId = existingAccount.id;
                 updatedAccountsCount++;
             } else {
-                // Create new
-                const created = await (prismadbCrm as any).crm_Accounts.create({
+                const created = await (prismadb as any).crm_Accounts.create({
                     data: {
                         name,
-                        type: acc.type || "Analyst",
-                        billing_city: acc.location,
-                        website: acc.domain,
-                        email: acc.email,
+                        website: domain,
+                        additional_emails: acc.additional_emails || [],
                         status: "Active",
                         v: 0,
                         createdBy: session.user.id,
@@ -104,17 +103,19 @@ export async function POST(req: Request) {
                 accountId = created.id;
                 createdAccountsCount++;
             }
-            accountMap.set(name.toLowerCase(), accountId);
 
-            // Create Lead Candidate for organizing in List
-            await (prismadbCrm as any).crm_Lead_Candidates.create({
+            accountMapByDedupe.set(dedupeKey, accountId);
+            accountMapByName.set(name.toLowerCase(), accountId);
+
+            // Create Lead Candidate
+            await (prismadb as any).crm_Lead_Candidates.create({
                 data: {
                     pool: pool.id,
                     companyName: name,
                     domain: domain,
-                    industry: acc.type,
                     accountsIDs: accountId,
-                    dedupeKey: domain || name.toLowerCase(),
+                    additional_emails: acc.additional_emails || [],
+                    dedupeKey: dedupeKey,
                     v: 0
                 }
             });
@@ -126,12 +127,13 @@ export async function POST(req: Request) {
             const phoneRaw = con.phone?.trim();
             const { normalized: phone } = phoneNormalizer.normalizePhone(phoneRaw, { preferUS: true });
 
-            // Find Account link
-            const linkedAccountId = con.accountName ? accountMap.get(con.accountName.toLowerCase()) : null;
+            // Find Account link via candidateKey or accountName
+            const linkedAccountId = (con.candidateKey ? accountMapByDedupe.get(con.candidateKey) : null)
+                || (con.accountName ? accountMapByName.get(con.accountName.toLowerCase()) : null);
 
-            // Dedupe check: Email or Phone
-            let existingContact = await (prismadbCrm as any).crm_Contacts.findFirst({
+            let existingContact = await (prismadb as any).crm_Contacts.findFirst({
                 where: {
+                    team_id: teamId,
                     OR: [
                         ...(email ? [{ email: { equals: email, mode: "insensitive" } }] : []),
                         ...(phone ? [{ mobile_phone: phone }] : [])
@@ -141,11 +143,12 @@ export async function POST(req: Request) {
 
             let contactId: string;
             if (existingContact) {
-                await (prismadbCrm as any).crm_Contacts.update({
+                await (prismadb as any).crm_Contacts.update({
                     where: { id: existingContact.id },
                     data: {
                         position: con.title || existingContact.position,
                         accountsIDs: linkedAccountId || existingContact.accountsIDs,
+                        updatedBy: session.user.id,
                     }
                 });
                 contactId = existingContact.id;
@@ -155,7 +158,7 @@ export async function POST(req: Request) {
                 const firstName = names[0];
                 const lastName = names.slice(1).join(" ") || "Contact";
 
-                const created = await (prismadbCrm as any).crm_Contacts.create({
+                const created = await (prismadb as any).crm_Contacts.create({
                     data: {
                         first_name: firstName,
                         last_name: lastName,
@@ -172,14 +175,14 @@ export async function POST(req: Request) {
                 createdContactsCount++;
             }
 
-            // Note: In your schema, Contact Candidates link to Lead Candidates
-            // So we find the Lead Candidate we just created for the Account
-            if (con.accountName) {
-                const leadCand = await (prismadbCrm as any).crm_Lead_Candidates.findFirst({
-                    where: { pool: pool.id, companyName: con.accountName }
+            // Link to Lead Candidate
+            const candLookupKey = con.candidateKey || (con.accountName ? con.accountName.toLowerCase() : null);
+            if (candLookupKey) {
+                const leadCand = await (prismadb as any).crm_Lead_Candidates.findFirst({
+                    where: { pool: pool.id, OR: [{ dedupeKey: candLookupKey }, { companyName: con.accountName }] }
                 });
                 if (leadCand) {
-                    await (prismadbCrm as any).crm_Contact_Candidates.create({
+                    await (prismadb as any).crm_Contact_Candidates.create({
                         data: {
                             leadCandidate: leadCand.id,
                             fullName: con.fullName,

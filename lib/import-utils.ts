@@ -40,6 +40,63 @@ function lc(s: any): string {
     return typeof s === "string" ? s.trim() : "";
 }
 
+/**
+ * Strips legal suffixes and noise to find the core brand name.
+ */
+export function normalizeCompanyName(name: string): string {
+    if (!name) return "";
+    let n = name.toLowerCase().trim();
+
+    // Exact map for special cases or if the name is just a legal entity
+    const commonLegal = ["llc", "inc", "corp", "ltd", "corporation", "incorporated", "limited", "group"];
+    if (commonLegal.includes(n.replace(/[,\.]/g, ""))) return n;
+
+    // Remove legal entities and common noise only if they are at the end
+    const noisePatterns = [
+        /\bl\.?l\.?c\.?$/g,
+        /\bl\.?p\.?$/g,
+        /\bi\.?n\.?c\.?\.?$/g,
+        /\bc\.?o\.?r\.?p\.?\.?$/g,
+        /\bltd\.?$/g,
+        /\bincorporated$/g,
+        /\bcorporation$/g,
+        /\blimited$/g,
+        /\bgroup$/g,
+        /\bholdings$/g,
+        /\bservices$/g,
+        /\bsvcs\.?$/g,
+        /\btechnology$/g,
+        /\bsystems$/g,
+        /\bglobal$/g,
+    ];
+
+    noisePatterns.forEach(pattern => {
+        const potential = n.replace(pattern, "").trim();
+        if (potential) n = potential; // Only apply if it doesn't leave an empty string
+    });
+
+    // Strip trailing commas/dots
+    n = n.replace(/[,\.\s]+$/g, "").trim();
+
+    return n;
+}
+
+/**
+ * Normalizes a URL/Domain to a consistent format.
+ */
+export function normalizeDomain(url: string): string {
+    if (!url) return "";
+    let d = url.toLowerCase().trim();
+
+    // Remove protocol and www
+    d = d.replace(/^(https?:\/\/)?(www\.)?/, "");
+
+    // Remove paths, queries, fragments
+    d = d.split(/[/?#]/)[0];
+
+    return d;
+}
+
 function getFromRow(row: Record<string, any>, keys: string[]): any {
     for (const k of keys) {
         for (const rk of Object.keys(row)) {
@@ -49,62 +106,78 @@ function getFromRow(row: Record<string, any>, keys: string[]): any {
     return undefined;
 }
 
+// Global list of junk phone numbers to ignore for deduplication
+const JUNK_PHONES = ["0000000000", "1234567890", "9999999999"];
+
+// Global list of public email domains
+const PUBLIC_DOMAINS = ["gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "icloud.com", "aol.com", "live.com", "msn.com", "me.com"];
+
 export function normalizeRow(row: Record<string, any>): { candidate?: CandidateNorm; contacts?: ContactNorm[]; usedCols: string[] } {
     const usedCols: string[] = [];
-    const contacts: ContactNorm[] = [];
+    let domain = normalizeDomain(lc(getFromRow(row, COLS.domain)));
+    if (domain) usedCols.push("domain");
 
     const companyName = lc(getFromRow(row, COLS.companyName));
     if (companyName) usedCols.push("companyName");
-    const domain = lc(getFromRow(row, COLS.domain)).toLowerCase();
-    if (domain) usedCols.push("domain");
+
     const homepageUrl = lc(getFromRow(row, COLS.homepageUrl));
     if (homepageUrl) usedCols.push("homepageUrl");
+
     const description = lc(getFromRow(row, COLS.description));
     if (description) usedCols.push("description");
+
     const industry = lc(getFromRow(row, COLS.industry));
     if (industry) usedCols.push("industry");
+
     const techStackRaw = getFromRow(row, COLS.techStack);
     const techStack =
         typeof techStackRaw === "string"
-            ? techStackRaw
-                .split(/[;,]/)
-                .map((s: string) => s.trim())
-                .filter(Boolean)
+            ? techStackRaw.split(/[;,|]/).map((s: string) => s.trim()).filter(Boolean)
             : Array.isArray(techStackRaw)
                 ? techStackRaw.map((s: any) => String(s).trim()).filter(Boolean)
                 : undefined;
     if (techStack && techStack.length) usedCols.push("techStack");
 
-    // dedupeKey for candidate: prefer domain; else companyName|homepageUrl; else companyName
-    let candidateKey = "";
-    if (domain) candidateKey = domain;
-    else if (companyName && homepageUrl) candidateKey = `${companyName.toLowerCase()}|${homepageUrl.toLowerCase()}`;
-    else if (companyName) candidateKey = companyName.toLowerCase();
-
-    // Find all emails
+    // Gather all emails in the row
     const allEmailsFound = new Set<string>();
-
-    // Check every column in the row against our COLS.email and COLS.additionalEmails
     const emailSynonyms = [...COLS.email, ...COLS.additionalEmails];
     for (const rk of Object.keys(row)) {
         const lk = rk.toLowerCase();
         if (emailSynonyms.includes(lk)) {
             const val = row[rk];
-            if (val) {
+            if (val && typeof val === "string") {
                 if (!usedCols.includes(lk)) usedCols.push(lk);
-                if (typeof val === "string") {
-                    val.split(/[;,]/).forEach((e: string) => {
-                        const trimmed = e.trim().toLowerCase();
-                        if (trimmed && trimmed.includes("@")) allEmailsFound.add(trimmed);
-                    });
-                }
+                val.split(/[;,|]/).forEach((e: string) => {
+                    const trimmed = e.trim().toLowerCase();
+                    if (trimmed && trimmed.includes("@")) allEmailsFound.add(trimmed);
+                });
             }
         }
     }
 
-    // Also specifically use the primary email col if we need it for contact key later
-    const emailCol = getFromRow(row, COLS.email);
+    // Domain Extraction Mitigation
+    if (!domain && allEmailsFound.size > 0) {
+        for (const email of Array.from(allEmailsFound)) {
+            const domainPart = email.split("@")[1];
+            if (domainPart && !PUBLIC_DOMAINS.includes(domainPart)) {
+                domain = domainPart;
+                break;
+            }
+        }
+    }
 
+    // Dedupe Key Mitigation (Block public domains as account dedupe keys)
+    let finalCandidateKey = "";
+    if (domain && !PUBLIC_DOMAINS.includes(domain)) {
+        finalCandidateKey = domain;
+    } else {
+        const normalizedName = normalizeCompanyName(companyName);
+        if (normalizedName) {
+            finalCandidateKey = domain ? `${normalizedName}|${domain}` : normalizedName;
+        }
+    }
+
+    const emailCol = getFromRow(row, COLS.email);
     const genericEmails: string[] = [];
     const discoveredContacts: ContactNorm[] = [];
 
@@ -113,7 +186,7 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
         if (classification.type === "NAMED") {
             discoveredContacts.push({
                 dedupeKey: email,
-                candidateKey: candidateKey || undefined,
+                candidateKey: finalCandidateKey || undefined,
                 fullName: classification.nameHint,
                 email: email,
             });
@@ -122,23 +195,21 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
         }
     });
 
-    const candidate =
-        candidateKey
-            ? {
-                dedupeKey: candidateKey,
-                domain: domain || undefined,
-                companyName: companyName || undefined,
-                homepageUrl: homepageUrl || undefined,
-                description: description || undefined,
-                industry: industry || undefined,
-                techStack,
-                additional_emails: genericEmails,
-            }
-            : undefined;
+    const candidate = finalCandidateKey ? {
+        dedupeKey: finalCandidateKey,
+        domain: domain || undefined,
+        companyName: companyName || undefined,
+        homepageUrl: homepageUrl || undefined,
+        description: description || undefined,
+        industry: industry || undefined,
+        techStack,
+        additional_emails: genericEmails,
+    } : undefined;
 
-    // Manual Contact Info (if provided in dedicated columns)
+    // Contact Metadata
     let fullName = lc(getFromRow(row, COLS.fullName));
-    if (fullName.includes("@")) fullName = ""; // Don't treat email as name
+    // Improved Email Detection: Only clear if it actually matches an email pattern
+    if (fullName && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fullName)) fullName = "";
 
     if (fullName) usedCols.push("fullName");
     const title = lc(getFromRow(row, COLS.title));
@@ -148,10 +219,8 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
     const linkedinUrl = lc(getFromRow(row, COLS.linkedinUrl));
     if (linkedinUrl) usedCols.push("linkedinUrl");
 
-    // If a specific name/email was in the row, make sure that contact is prioritized or added
     if (fullName || phone || linkedinUrl) {
-        // try to find if one of our discovered contacts matches this info
-        const targetEmail = emailCol?.toLowerCase();
+        const targetEmail = lc(emailCol).toLowerCase();
         const existingIdx = discoveredContacts.findIndex(dc => (fullName && dc.fullName === fullName) || (targetEmail && dc.email === targetEmail));
 
         if (existingIdx >= 0) {
@@ -160,23 +229,24 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
             discoveredContacts[existingIdx].phone = phone;
             discoveredContacts[existingIdx].linkedinUrl = linkedinUrl;
         } else if (fullName || phone || linkedinUrl) {
-            // Only add if it's actually a named person
-            const emailToUse = lc(emailCol);
-            const isNamed = emailToUse ? classifyEmail(emailToUse).type === "NAMED" : !!fullName;
-
+            const isNamed = targetEmail ? classifyEmail(targetEmail).type === "NAMED" : !!fullName;
             if (isNamed) {
+                // Ignore junk phones for deduplication keys
+                const cleanPhone = phone.replace(/\D/g, "");
+                const isJunkPhone = JUNK_PHONES.includes(cleanPhone);
+
                 let contactKey = "";
-                if (emailToUse) contactKey = emailToUse.toLowerCase();
+                if (targetEmail) contactKey = targetEmail;
                 else if (fullName && linkedinUrl) contactKey = `${fullName.toLowerCase()}|${linkedinUrl.toLowerCase()}`;
-                else if (fullName && candidateKey) contactKey = `${fullName.toLowerCase()}|${candidateKey}`;
+                else if (fullName && finalCandidateKey) contactKey = `${fullName.toLowerCase()}|${finalCandidateKey}`;
 
                 if (contactKey) {
                     discoveredContacts.push({
                         dedupeKey: contactKey,
-                        candidateKey: candidateKey || undefined,
+                        candidateKey: finalCandidateKey || undefined,
                         fullName: fullName || undefined,
                         title: title || undefined,
-                        email: emailToUse || undefined,
+                        email: targetEmail || undefined,
                         phone: phone || undefined,
                         linkedinUrl: linkedinUrl || undefined,
                     });

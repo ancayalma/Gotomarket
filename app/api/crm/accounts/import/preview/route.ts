@@ -1,99 +1,32 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prismadbCrm } from "@/lib/prisma-crm";
 import ExcelJS from "exceljs";
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
 import phoneNormalizer from "@/lib/scraper/quality/phone-normalizer";
+import { normalizeRow } from "@/lib/import-utils";
 
-type AccountNorm = {
-    name: string;
-    type?: string;
-    location?: string;
-    domain?: string;
-    email?: string;
-    phone?: string;
-};
+const candidateSchema = z.object({
+    dedupeKey: z.string().min(1),
+    domain: z.string().optional(),
+    companyName: z.string().optional(),
+    homepageUrl: z.string().optional(),
+    description: z.string().optional(),
+    industry: z.string().optional(),
+    techStack: z.array(z.string()).optional(),
+    additional_emails: z.array(z.string()).optional(),
+});
 
-type ContactNorm = {
-    fullName: string;
-    title?: string;
-    email?: string;
-    phone?: string;
-};
-
-const COLS = {
-    accountName: ["investors", "investor", "company", "account", "organization", "name", "business"],
-    type: ["type", "classification", "category"],
-    location: ["location", "city", "address", "country"],
-    domain: ["domain", "website", "url"],
-    contactName: ["primary contact", "contact", "person", "fullname", "name"],
-    contactTitle: ["primary contact title", "title", "position", "role"],
-    email: ["email", "email address", "mail"],
-    phone: ["phone", "phone number", "mobile", "tel"],
-};
-
-function lc(s: any): string {
-    return typeof s === "string" ? s.trim() : "";
-}
-
-function getFromRow(row: Record<string, any>, keys: string[]): any {
-    for (const k of keys) {
-        for (const rk of Object.keys(row)) {
-            if (rk.toLowerCase() === k) return row[rk];
-        }
-    }
-    return undefined;
-}
-
-function normalizeRow(row: Record<string, any>): { account?: AccountNorm; contact?: ContactNorm; usedCols: string[] } {
-    const usedCols: string[] = [];
-
-    const accountName = lc(getFromRow(row, COLS.accountName));
-    if (accountName) usedCols.push("accountName");
-
-    const type = lc(getFromRow(row, COLS.type));
-    if (type) usedCols.push("type");
-
-    const location = lc(getFromRow(row, COLS.location));
-    if (location) usedCols.push("location");
-
-    const domain = lc(getFromRow(row, COLS.domain)).toLowerCase();
-    if (domain) usedCols.push("domain");
-
-    const accountPhoneRaw = getFromRow(row, COLS.phone);
-    const accountEmail = lc(getFromRow(row, COLS.email)).toLowerCase();
-
-    const account = accountName ? {
-        name: accountName,
-        type: type || undefined,
-        location: location || undefined,
-        domain: domain || undefined,
-        email: accountEmail || undefined,
-    } : undefined;
-
-    const contactName = lc(getFromRow(row, COLS.contactName));
-    if (contactName) usedCols.push("contactName");
-
-    const contactTitle = lc(getFromRow(row, COLS.contactTitle));
-    if (contactTitle) usedCols.push("contactTitle");
-
-    const contactEmail = lc(getFromRow(row, COLS.email)).toLowerCase();
-    if (contactEmail) usedCols.push("email");
-
-    const contactPhoneRaw = getFromRow(row, COLS.phone);
-    if (contactPhoneRaw) usedCols.push("phone");
-
-    const contact = contactName ? {
-        fullName: contactName,
-        title: contactTitle || undefined,
-        email: contactEmail || undefined,
-        phone: contactPhoneRaw ? String(contactPhoneRaw) : undefined,
-    } : undefined;
-
-    return { account, contact, usedCols };
-}
+const contactSchema = z.object({
+    dedupeKey: z.string().min(1),
+    candidateKey: z.string().optional(),
+    fullName: z.string().optional(),
+    title: z.string().optional(),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    linkedinUrl: z.string().optional(),
+});
 
 async function bufferToRows(fileName: string | undefined, buffer: Buffer): Promise<Record<string, any>[]> {
     const name = (fileName || "").toLowerCase();
@@ -158,24 +91,33 @@ export async function POST(req: Request) {
 
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
-            const { account, contact, usedCols } = normalizeRow(row);
+            const { candidate, contacts, usedCols } = normalizeRow(row);
             usedCols.forEach(c => usedColsSet.add(c));
 
-            if (account) {
-                validAccounts++;
-                preview.accounts.push(account);
-            }
-            if (contact) {
-                validContacts++;
-                // Normalize phone for preview
-                if (contact.phone) {
-                    const { normalized } = phoneNormalizer.normalizePhone(contact.phone, { preferUS: true });
-                    contact.phone = normalized;
+            if (candidate) {
+                const parsed = candidateSchema.safeParse(candidate);
+                if (parsed.success) {
+                    validAccounts++;
+                    preview.accounts.push(parsed.data);
                 }
-                preview.contacts.push(contact);
             }
 
-            if (!account && !contact) {
+            if (contacts && contacts.length > 0) {
+                for (const contact of contacts) {
+                    const parsed = contactSchema.safeParse(contact);
+                    if (parsed.success) {
+                        validContacts++;
+                        const conData = parsed.data;
+                        if (conData.phone) {
+                            const { normalized } = phoneNormalizer.normalizePhone(conData.phone, { preferUS: true });
+                            conData.phone = normalized;
+                        }
+                        preview.contacts.push(conData);
+                    }
+                }
+            }
+
+            if (!candidate && (!contacts || contacts.length === 0)) {
                 corruptRows.push({ index: i, error: "Empty row or no recognizable fields" });
             }
         }

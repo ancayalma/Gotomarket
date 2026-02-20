@@ -47,7 +47,13 @@ export function classifyEmail(email: string): EmailClassification {
     if (!cleanEmail.includes("@")) return { type: "GENERIC" };
 
     const [prefix, domain] = cleanEmail.split("@");
-    if (!prefix || prefix.length < 3) return { type: "GENERIC" };
+    if (!prefix) return { type: "GENERIC" };
+
+    // Mitigation for Short Names (Initials):
+    // Allow prefix length 2 if it contains a separator like a dot (e.g., "j.o@")
+    if (prefix.length < 3 && !prefix.includes(".") && !prefix.includes("_") && !prefix.includes("-")) {
+        return { type: "GENERIC" };
+    }
 
     const domainParts = domain.split(".");
     const domainName = domainParts[0];
@@ -62,7 +68,7 @@ export function classifyEmail(email: string): EmailClassification {
         return { type: "GENERIC" };
     }
 
-    // 3. Check if prefix contains any generic word as a discrete part (split by . _ -)
+    // 3. Check if prefix contains any generic word as a discrete part
     const parts = prefix.split(/[\._\-]/);
     if (parts.some(part => GENERIC_WORDS.includes(part))) {
         return { type: "GENERIC" };
@@ -70,7 +76,6 @@ export function classifyEmail(email: string): EmailClassification {
 
     // 4. Check for concatenated generic words
     if (GENERIC_WORDS.some(word => {
-        // For short words (3 chars), only check if they are at the end (llc, inc, etc.)
         if (word.length === 3) return prefix.endsWith(word);
         if (word.length < 3) return false;
         return prefix.startsWith(word) || prefix.endsWith(word);
