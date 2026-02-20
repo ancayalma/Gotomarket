@@ -108,27 +108,34 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
     const accountIds = convertedCandidates.map((c: any) => c.accountsIDs);
     const convertedAccounts = await (prismadbCrm as any).crm_Accounts.findMany({
       where: { id: { in: accountIds } },
-      include: { contacts: true }
+      include: { contacts: true, leads: true }
     });
 
     const accountItems = [];
     for (const acc of convertedAccounts) {
+      const fallbackEmail = acc.email || (acc.additional_emails && acc.additional_emails.length > 0 ? acc.additional_emails[0] : "");
+
+      // Try to find a primary lead record for outreach status
+      const primaryLead = acc.leads && acc.leads.length > 0 ? acc.leads[0] : null;
+
       if (acc.contacts && acc.contacts.length > 0) {
         for (const contact of acc.contacts) {
           accountItems.push({
             id: contact.id,
+            accountId: acc.id,
+            contactId: contact.id,
             firstName: contact.first_name || "",
             lastName: contact.last_name || "",
             company: acc.name,
-            jobTitle: contact.job_title || "",
-            email: contact.email || "",
-            phone: contact.mobile_phone || contact.phone || "",
+            jobTitle: contact.position || contact.job_title || "",
+            email: contact.email || fallbackEmail,
+            phone: contact.mobile_phone || contact.office_phone || acc.office_phone || "",
             description: acc.description || "",
             lead_source: "POOL_ACCOUNT",
-            status: "CONVERTED",
-            type: "CLIENT", // It's an account now
-            outreach_status: "IDLE",
-            pipeline_stage: "Closed", // or appropriate stage
+            status: primaryLead?.outreach_status !== "IDLE" ? primaryLead?.outreach_status : (primaryLead?.status || acc.status || "CONVERTED"),
+            type: "CLIENT",
+            outreach_status: primaryLead?.outreach_status || "IDLE",
+            pipeline_stage: primaryLead?.pipeline_stage || acc.type || "Lead",
             createdAt: acc.createdAt,
             updatedAt: acc.updatedAt
           });
@@ -137,16 +144,20 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
         // Account with no contacts
         accountItems.push({
           id: acc.id,
+          accountId: acc.id,
+          contactId: null,
           firstName: "",
-          lastName: acc.name, // Use company name as fallback
+          lastName: acc.name,
           company: acc.name,
           jobTitle: "",
-          email: acc.email || "",
-          phone: acc.phone || "",
+          email: fallbackEmail,
+          phone: acc.office_phone || "",
           description: acc.description || "",
           lead_source: "POOL_ACCOUNT",
-          status: "CONVERTED",
+          status: primaryLead?.outreach_status !== "IDLE" ? primaryLead?.outreach_status : (primaryLead?.status || acc.status || "CONVERTED"),
           type: "CLIENT",
+          outreach_status: primaryLead?.outreach_status || "IDLE",
+          pipeline_stage: primaryLead?.pipeline_stage || acc.type || "Lead",
           createdAt: acc.createdAt,
           updatedAt: acc.updatedAt
         });
@@ -159,17 +170,26 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
       const lastName = nameParts.length > 1 ? nameParts.pop() : (contact?.fullName || c.companyName || "Candidate");
       const firstName = nameParts.join(" ");
 
+      // Extract email from description if missing (regex)
+      let email = contact?.email || c.email;
+      if (!email && c.description) {
+        const match = c.description.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (match) email = match[0];
+      }
+
       return {
         id: c.id,
+        accountId: c.accountsIDs || null,
+        contactId: null, // Candidates don't have a contact ID in the main contacts table yet
         firstName: firstName || "",
         lastName: lastName as string,
         company: c.companyName || null,
         jobTitle: contact?.title || null,
-        email: contact?.email || null,
+        email: email || null,
         phone: contact?.phone || null,
         description: c.description,
         lead_source: "POOL_CANDIDATE",
-        status: c.status || "NEW",
+        status: c.status || "IDENTIFIED",
         type: "CANDIDATE",
         outreach_status: "IDLE",
         pipeline_stage: "Identify",

@@ -57,6 +57,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type LeadPool = {
     id: string;
@@ -94,6 +104,7 @@ export default function ListsView() {
     const [wizardLeadIds, setWizardLeadIds] = useState<string[]>([]);
     const [loadingOutreach, setLoadingOutreach] = useState<string | null>(null);
     const [assignModalPool, setAssignModalPool] = useState<LeadPool | null>(null);
+    const [poolToDelete, setPoolToDelete] = useState<{ id: string, name: string } | null>(null);
 
     const [buttonSets, setButtonSets] = useState<Record<string, { sets: any[] }>>({});
     const [selectedButtonSet, setSelectedButtonSet] = useState<Record<string, string>>({});
@@ -147,13 +158,13 @@ export default function ListsView() {
         }
     };
 
-    const onDeletePool = async (poolId: string, poolName: string) => {
-        if (!confirm(`Delete pool "${poolName}"?`)) return;
+    const onDeletePool = async (poolId: string) => {
         setDeleting(poolId);
         try {
             const res = await fetch(`/api/crm/leads/pools?poolId=${poolId}`, { method: "DELETE" });
             if (!res.ok) throw new Error("Failed to delete pool");
             mutate();
+            setPoolToDelete(null);
         } catch (error) {
             alert("Failed to delete pool");
         } finally {
@@ -259,7 +270,7 @@ export default function ListsView() {
                                                         variant="ghost"
                                                         size="sm"
                                                         className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                                                        onClick={() => onDeletePool(pool.id, pool.name)}
+                                                        onClick={() => setPoolToDelete({ id: pool.id, name: pool.name })}
                                                         disabled={deleting === pool.id}
                                                     >
                                                         <Trash2 className="w-4 h-4" />
@@ -296,7 +307,7 @@ export default function ListsView() {
                                                     <DropdownMenuItem onClick={() => router.push(`/documents?poolId=${pool.id}`)}><FileText className="w-4 h-4 mr-2" /> Manage Documents</DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => setIcpModalPool(pool)}><Target className="w-4 h-4 mr-2" /> View ICP</DropdownMenuItem>
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuItem className="text-red-500" onClick={() => onDeletePool(pool.id, pool.name)} disabled={deleting === pool.id}>
+                                                    <DropdownMenuItem className="text-red-500" onClick={() => setPoolToDelete({ id: pool.id, name: pool.name })} disabled={deleting === pool.id}>
                                                         <Trash2 className="w-4 h-4 mr-2" /> Delete
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -382,6 +393,27 @@ export default function ListsView() {
                 onClose={() => setWizardOpen(false)}
                 leadIds={wizardLeadIds}
             />
+
+            <AlertDialog open={!!poolToDelete} onOpenChange={(open) => !open && setPoolToDelete(null)}>
+                <AlertDialogContent className="bg-card border-white/10 shadow-2xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-xl font-bold">Delete Lead Pool</AlertDialogTitle>
+                        <AlertDialogDescription className="text-muted-foreground">
+                            Are you sure you want to delete <span className="text-foreground font-semibold">"{poolToDelete?.name}"</span>?
+                            This action cannot be undone and will remove all associated lead candidates.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-4">
+                        <AlertDialogCancel className="border-white/10 hover:bg-white/5 uppercase tracking-widest text-[10px] font-bold">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => poolToDelete && onDeletePool(poolToDelete.id)}
+                            className="bg-red-600 hover:bg-red-700 uppercase tracking-widest text-[10px] font-bold"
+                        >
+                            {deleting ? "Deleting..." : "Delete Permanently"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -17,10 +17,11 @@ export async function GET(req: Request) {
         });
 
         if (outreachItem) {
+            const now = new Date();
             await prismadb.crm_Outreach_Items.update({
                 where: { id: outreachItem.id },
                 data: {
-                    clickedAt: new Date(),
+                    clickedAt: now,
                     status: "CLICKED"
                 }
             });
@@ -32,6 +33,42 @@ export async function GET(req: Request) {
                     emails_opened: { increment: 1 } // If click happened, it's definitely opened too
                 }
             });
+
+            // Update Lead Status
+            if (outreachItem.lead) {
+                await (prismadb as any).crm_Leads.update({
+                    where: { id: outreachItem.lead },
+                    data: {
+                        outreach_status: "MEETING_LINK_CLICKED",
+                        status: "ACTIVE"
+                    }
+                });
+
+                // Log Activity specifically for FLOW STATE tracking
+                await (prismadb as any).crm_Lead_Activities.create({
+                    data: {
+                        lead: outreachItem.lead,
+                        type: "EMAIL_CLICK",
+                        title: "Link Clicked (FLOW STATE Pixel)",
+                        description: `The recipient clicked a link in the outreach email for campaign ${outreachItem.campaign}. Target: ${targetUrl}`,
+                        createdAt: now,
+                        v: 1
+                    }
+                });
+
+                // Update parent account if linked
+                const lead = await (prismadb as any).crm_Leads.findUnique({
+                    where: { id: outreachItem.lead },
+                    select: { accountsIDs: true }
+                });
+
+                if (lead?.accountsIDs) {
+                    await (prismadb as any).crm_Accounts.update({
+                        where: { id: lead.accountsIDs },
+                        data: { status: "Active" }
+                    });
+                }
+            }
         }
 
         return NextResponse.redirect(targetUrl);

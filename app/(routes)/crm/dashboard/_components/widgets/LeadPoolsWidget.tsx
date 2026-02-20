@@ -3,12 +3,14 @@
 import React from "react";
 import { WidgetWrapper } from "./WidgetWrapper";
 import { List, Users, Zap, TrendingUp } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface LeadPoolsWidgetProps {
     pools: any[];
 }
 
 export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
+    const router = useRouter();
     if (pools.length === 0) {
         return (
             <WidgetWrapper title="Lists" icon={List} iconColor="text-violet-400">
@@ -20,48 +22,68 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
         );
     }
 
-    const totalLeads = pools.reduce((acc, curr) => acc + curr.total, 0);
+    const totalAccounts = pools.reduce((acc, curr) => acc + (curr.candidateCount || 0), 0);
+    const totalContacted = pools.reduce((acc, curr) => acc + (curr.contactedCount || 0), 0);
+    const totalOpened = pools.reduce((acc, curr) => acc + (curr.openedCount || 0), 0);
+
+    const openRate = totalContacted > 0 ? Math.round((totalOpened / totalContacted) * 100) : 0;
 
     return (
         <WidgetWrapper
-            title="Lists"
+            title="Lead Lists"
             icon={List}
             iconColor="text-violet-400"
             footerHref="/lists"
-            footerLabel="View All Lists"
+            footerLabel="View All lists"
         >
             <div className="space-y-4 pt-2">
                 {/* Visual Distribution Summary */}
-                <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-white/5">
-                    {pools.slice(0, 4).map((pool, idx) => {
-                        const width = totalLeads > 0 ? (pool.total / totalLeads) * 100 : 0;
-                        const colors = ["bg-violet-500", "bg-indigo-500", "bg-purple-500", "bg-fuchsia-500"];
-                        return <div key={pool.id} style={{ width: `${width}%` }} className={colors[idx % colors.length]} />;
-                    })}
+                <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60">
+                        <span>Engagement Depth</span>
+                        <span className="text-violet-400">{openRate}% Open Rate</span>
+                    </div>
+                    <div className="flex h-2 w-full rounded-full overflow-hidden bg-white/5 relative shadow-inner">
+                        {/* Shimmering background for progress */}
+                        <div
+                            className="h-full bg-violet-600 shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all duration-1000 ease-out"
+                            style={{ width: `${totalContacted > 0 ? (totalOpened / totalContacted) * 100 : 0}%` }}
+                        />
+                        {/* Contacted marker */}
+                        <div
+                            className="absolute inset-y-0 left-0 border-r border-white/20 bg-violet-400/20"
+                            style={{ width: `${totalAccounts > 0 ? (totalContacted / totalAccounts) * 100 : 0}%` }}
+                        />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                     {pools.map((pool) => (
                         <div
                             key={pool.id}
-                            className="bg-white/5 border border-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors cursor-pointer group"
+                            onClick={() => router.push(`/crm/accounts/lists/${pool.id}`)}
+                            className="bg-white/5 border border-white/5 rounded-xl p-3 hover:bg-white/10 hover:border-violet-500/30 transition-all cursor-pointer group relative overflow-hidden"
                         >
+                            <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <TrendingUp size={10} className="text-violet-400" />
+                            </div>
                             <div className="flex items-start justify-between gap-2 overflow-hidden">
                                 <p className="text-[11px] font-bold text-white/90 truncate group-hover:text-violet-400 transition-colors uppercase tracking-tight">
                                     {pool.name}
                                 </p>
                             </div>
-                            <div className="flex items-end justify-between mt-1">
-                                <div className="flex items-baseline gap-1">
-                                    <div className="text-lg font-bold text-white tracking-tighter">
-                                        {pool.candidateCount || 0}
-                                    </div>
-                                    <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                                        Accounts
-                                    </div>
+                            <div className="mt-2 space-y-1">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Targets</span>
+                                    <span className="text-[11px] font-bold text-white">{pool.candidateCount || 0}</span>
                                 </div>
-                                <div className="text-[10px] text-muted-foreground font-medium pb-0.5 uppercase tracking-wider">
-                                    {pool.leadCount || 0} Contacts
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Contacted</span>
+                                    <span className="text-[11px] font-bold text-blue-400">{pool.contactedCount || 0}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Opened</span>
+                                    <span className="text-[11px] font-bold text-emerald-400">{pool.openedCount || 0}</span>
                                 </div>
                             </div>
                         </div>
@@ -69,14 +91,17 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                 </div>
 
                 {/* Automation Status */}
-                <div className="flex items-center gap-2 bg-violet-500/10 rounded-lg p-2.5 border border-violet-500/20">
-                    <div className="p-1.5 bg-violet-500/20 rounded-md text-violet-400">
-                        <Zap size={14} />
+                <div className="group flex items-center gap-3 bg-gradient-to-r from-violet-500/10 to-transparent rounded-xl p-3 border border-violet-500/20 hover:border-violet-500/40 transition-all cursor-pointer">
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-violet-500/40 blur-md rounded-full group-hover:bg-violet-400/60 transition-all animate-pulse" />
+                        <div className="relative p-2 bg-violet-500/20 rounded-lg text-violet-400 border border-violet-500/30">
+                            <Zap size={14} className="group-hover:scale-110 transition-transform" />
+                        </div>
                     </div>
                     <div className="min-w-0">
-                        <p className="text-[10px] font-bold text-violet-300 uppercase leading-none">AI Lead Sync</p>
-                        <p className="text-[11px] text-violet-400/80 font-medium truncate">
-                            Active: {pools.reduce((acc, curr) => acc + (curr.candidateCount || 0), 0)} accounts tracked
+                        <p className="text-[10px] font-bold text-violet-300 uppercase leading-none tracking-widest">FLOW STATE Tracking</p>
+                        <p className="text-[11px] text-white/70 font-medium mt-1 truncate">
+                            {totalOpened} real-time engagement signals captured
                         </p>
                     </div>
                 </div>
