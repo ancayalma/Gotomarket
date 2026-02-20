@@ -58,13 +58,12 @@ export const getAIInsights = async () => {
             });
         }
 
-        // Default Insight
-        if (insights.length < 2) {
+        if (insights.length === 0) {
             insights.push({
                 id: "optimization",
-                title: "Workflow Optimization",
-                description: "Your team's email open rate is 15% above average this week.",
-                action: "View Stats",
+                title: "Systems Nominal",
+                description: "AI has not detected any urgent issues or new optimization opportunities today.",
+                action: "View Reports",
                 actionHref: "/reports",
                 type: "info"
             });

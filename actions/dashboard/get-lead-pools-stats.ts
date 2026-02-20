@@ -10,7 +10,12 @@ export const getLeadPoolsStats = async () => {
 
         const pools = await prismadb.crm_Lead_Pools.findMany({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                ...(teamInfo.isGlobalAdmin ? {} : {
+                    OR: [
+                        { team_id: teamInfo.teamId },
+                        { user: teamInfo.userId }
+                    ]
+                }),
                 status: "ACTIVE"
             },
             include: {
@@ -21,10 +26,14 @@ export const getLeadPoolsStats = async () => {
                     }
                 }
             },
-            take: 10
+            orderBy: {
+                createdAt: "desc"
+            }
         });
 
-        return pools.map(pool => ({
+        const activePools = pools.filter(pool => pool._count.lead_maps > 0 || pool._count.candidates > 0).slice(0, 10);
+
+        return activePools.map(pool => ({
             id: pool.id,
             name: pool.name,
             leadCount: pool._count.lead_maps,

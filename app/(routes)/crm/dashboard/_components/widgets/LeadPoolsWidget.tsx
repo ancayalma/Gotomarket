@@ -52,11 +52,16 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                                 </p>
                             </div>
                             <div className="flex items-end justify-between mt-1">
-                                <div className="text-lg font-bold text-white tracking-tighter">
-                                    {pool.total}
+                                <div className="flex items-baseline gap-1">
+                                    <div className="text-lg font-bold text-white tracking-tighter">
+                                        {pool.candidateCount || 0}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                                        Accounts
+                                    </div>
                                 </div>
-                                <div className="text-[10px] text-muted-foreground font-medium pb-0.5">
-                                    {pool.leadCount} Contacts
+                                <div className="text-[10px] text-muted-foreground font-medium pb-0.5 uppercase tracking-wider">
+                                    {pool.leadCount || 0} Contacts
                                 </div>
                             </div>
                         </div>
@@ -70,7 +75,9 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                     </div>
                     <div className="min-w-0">
                         <p className="text-[10px] font-bold text-violet-300 uppercase leading-none">AI Lead Sync</p>
-                        <p className="text-[11px] text-violet-400/80 font-medium truncate">Optimal: 124 leads queued</p>
+                        <p className="text-[11px] text-violet-400/80 font-medium truncate">
+                            Active: {pools.reduce((acc, curr) => acc + (curr.candidateCount || 0), 0)} accounts tracked
+                        </p>
                     </div>
                 </div>
             </div>

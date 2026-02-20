@@ -47,12 +47,15 @@ export async function GET(req: Request, { params }: any) {
   const buffer = Buffer.from(xmlString);
 
   //Upload xml to S3 bucket and return url
+  const bucketName = process.env.STORAGE_PROVIDER === "s3" ? process.env.S3_BUCKET_NAME : process.env.DO_BUCKET;
+
   const bucketParamsJSON = {
-    Bucket: process.env.DO_BUCKET,
+    Bucket: bucketName,
     Key: `xml/invoice-${invoiceId}.xml`,
     Body: buffer,
     ContentType: "application/xml",
     ContentDisposition: "inline",
+    // Note: ACL may fail on standard AWS depending on settings, but keeping for compatibility
     ACL: "public-read" as const,
   };
 
@@ -60,12 +63,20 @@ export async function GET(req: Request, { params }: any) {
     const s3 = getS3Client();
     await s3.send(new PutObjectCommand(bucketParamsJSON));
   } catch (e) {
-    const msg = (e && (e as any).message) ? (e as any).message : "DigitalOcean S3 not configured";
+    const msg = (e && (e as any).message) ? (e as any).message : "S3 Object Storage not configured";
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 
-  //S3 bucket url for the invoice
-  const urlMoneyS3 = `https://${process.env.DO_BUCKET}.${process.env.DO_REGION}.digitaloceanspaces.com/xml/invoice-${invoiceId}.xml`;
+  //S3 bucket url for the invoice depending on provider
+  let urlMoneyS3 = "";
+  if (process.env.STORAGE_PROVIDER === "s3") {
+    // Basic formatting for S3/OVH style. E.g. https://s3.us-west-or.io.cloud.ovh.us/basaltCRM/xml/...
+    const endpoint = process.env.S3_ENDPOINT?.replace(/\/+$/, '') || "";
+    urlMoneyS3 = `${endpoint}/${bucketName}/xml/invoice-${invoiceId}.xml`;
+  } else {
+    // DigitalOcean Spaces fallback
+    urlMoneyS3 = `https://${bucketName}.${process.env.DO_REGION}.digitaloceanspaces.com/xml/invoice-${invoiceId}.xml`;
+  }
 
   //console.log(urlMoneyS3, "url MoneyS3");
 

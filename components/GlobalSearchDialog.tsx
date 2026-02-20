@@ -114,6 +114,8 @@ export default function GlobalSearchDialog() {
                 <div className="flex items-center border-b px-3">
                     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                     <input
+                        id="global-search-dialog-input"
+                        name="globalSearchQuery"
                         className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
                         placeholder="Search leads, accounts, projects..."
                         value={query}

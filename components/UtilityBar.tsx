@@ -146,6 +146,8 @@ export default function UtilityBar() {
                                     <StickyNote className="h-3 w-3 text-muted-foreground" />
                                 </div>
                                 <textarea
+                                    id="utility-notes"
+                                    name="utility-notes"
                                     className="w-full h-48 bg-muted/50 rounded-md p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary border-none"
                                     placeholder="Type something..."
                                     value={notes}
@@ -179,12 +181,16 @@ export default function UtilityBar() {
                                     {tasks.map((task) => (
                                         <div key={task.id} className="flex items-center gap-2 group">
                                             <input
+                                                id={`task-checkbox-${task.id}`}
+                                                name={`task-checkbox-${task.id}`}
                                                 type="checkbox"
                                                 checked={task.completed}
                                                 onChange={() => toggleTask(task.id)}
                                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                                             />
                                             <input
+                                                id={`task-text-${task.id}`}
+                                                name={`task-text-${task.id}`}
                                                 type="text"
                                                 value={task.text}
                                                 onChange={(e) => updateTask(task.id, e.target.value)}

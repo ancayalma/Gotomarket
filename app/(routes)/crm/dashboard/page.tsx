@@ -3,6 +3,9 @@ import Container from "../../components/ui/Container";
 import DashboardRoleManager from "./_components/DashboardRoleManager";
 import SuspenseLoading from "@/components/loadings/suspense";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const CrmDashboardPage = async () => {
   return (
     <Container>

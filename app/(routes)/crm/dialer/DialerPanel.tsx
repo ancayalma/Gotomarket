@@ -291,6 +291,8 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
           <div>
             <label className="text-xs font-medium">Phone (E.164)</label>
             <Input
+              id="full-single-phone"
+              name="single-phone"
               placeholder="+18885551212"
               value={singlePhone}
               onChange={(e) => setSinglePhone(e.target.value)}
@@ -299,6 +301,8 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
           <div>
             <label className="text-xs font-medium">Lead ID (optional)</label>
             <Input
+              id="full-single-lead-id"
+              name="single-lead-id"
               placeholder="lead-id-123"
               value={singleLeadId}
               onChange={(e) => setSingleLeadId(e.target.value)}
@@ -319,6 +323,8 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
           <div className="space-y-2">
             <label className="text-xs font-medium">Numbers (one per line). Optional leadId by comma or pipe.</label>
             <Textarea
+              id="full-list-raw"
+              name="list-raw"
               rows={8}
               placeholder={`+18885551212\n+18885551213,lead-123\n+18885551214|lead-456`}
               value={listRaw}
@@ -484,6 +490,8 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
               <div className="grid grid-cols-2 gap-2">
                 <div className="relative col-span-2">
                   <Input
+                    id="compact-single-phone"
+                    name="single-phone"
                     placeholder="Enter Number..."
                     value={singlePhone}
                     onChange={(e) => setSinglePhone(e.target.value)}
@@ -497,6 +505,8 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
                   </button>
                 </div>
                 <Input
+                  id="compact-single-lead-id"
+                  name="single-lead-id"
                   placeholder="Lead ID (Opt)"
                   value={singleLeadId}
                   onChange={(e) => setSingleLeadId(e.target.value)}
@@ -532,6 +542,8 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
             <div className="space-y-2">
               <label className="text-xs font-medium">Bulk Dial List</label>
               <Textarea
+                id="compact-list-raw"
+                name="list-raw"
                 rows={12}
                 className="font-mono text-xs"
                 placeholder={`+18885550001\n+18885550002,lead-A`}

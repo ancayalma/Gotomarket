@@ -342,6 +342,8 @@ export function LoginComponent() {
               ) : (
                 <div className="flex px-2 space-x-5 py-5">
                   <Input
+                    id="reset-email"
+                    name="reset-email"
                     type="email"
                     placeholder="name@domain.com"
                     onChange={(e) => setEmail(e.target.value)}

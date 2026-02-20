@@ -97,6 +97,8 @@ export default function GlobalSearchWidget({ className }: GlobalSearchWidgetProp
                 <Search className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
 
                 <input
+                    id="global-search-widget-input"
+                    name="globalSearchWidgetQuery"
                     className="!bg-transparent border-none outline-none text-sm w-full placeholder:text-muted-foreground/50 h-full"
                     placeholder="Search leads, accounts, projects..."
                     value={query}

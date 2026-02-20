@@ -315,8 +315,10 @@ export async function GET(req: Request, { params }: any) {
   const fileNameJSON = `rossum/invoice_annotation-${annotationId}.json`;
   const fileNameXML = `rossum/invoice_annotation-${annotationId}.xml`;
 
+  const bucketName = process.env.STORAGE_PROVIDER === "s3" ? process.env.S3_BUCKET_NAME : process.env.DO_BUCKET;
+
   const bucketParamsJSON = {
-    Bucket: process.env.DO_BUCKET,
+    Bucket: bucketName,
     Key: fileNameJSON,
     Body: buffer,
     ContentType: "application/json",
@@ -328,12 +330,20 @@ export async function GET(req: Request, { params }: any) {
     const s3 = getS3Client();
     await s3.send(new PutObjectCommand(bucketParamsJSON));
   } catch (e) {
-    const msg = (e && (e as any).message) ? (e as any).message : "DigitalOcean S3 not configured";
+    const msg = (e && (e as any).message) ? (e as any).message : "S3 Object Storage not configured";
     return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
 
-  //S3 bucket url for the invoice
-  const urlJSON = `https://${process.env.DO_BUCKET}.${process.env.DO_REGION}.digitaloceanspaces.com/${fileNameJSON}`;
+  //S3 bucket url for the invoice depending on provider
+  let urlJSON = "";
+  if (process.env.STORAGE_PROVIDER === "s3") {
+    // Basic formatting for S3/OVH style
+    const endpoint = process.env.S3_ENDPOINT?.replace(/\/+$/, '') || "";
+    urlJSON = `${endpoint}/${bucketName}/${fileNameJSON}`;
+  } else {
+    // DigitalOcean Spaces fallback
+    urlJSON = `https://${bucketName}.${process.env.DO_REGION}.digitaloceanspaces.com/${fileNameJSON}`;
+  }
 
   console.log(urlJSON, "url JSON");
 
