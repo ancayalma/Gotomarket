@@ -34,7 +34,11 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
 
     // Helpers for Where Clauses (Copied from route.ts for consistency)
     const getWhereClause = (searchConditions: any[]) => {
-        if (isSuperAdmin) return { OR: searchConditions };
+        if (isSuperAdmin) {
+            return teamId ? {
+                AND: [{ OR: searchConditions }, { team_id: teamId }]
+            } : { OR: searchConditions };
+        }
         return {
             AND: [
                 { OR: searchConditions },
@@ -51,7 +55,11 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
     };
 
     const getTaskWhereClause = (searchConditions: any[]) => {
-        if (isSuperAdmin) return { OR: searchConditions };
+        if (isSuperAdmin) {
+            return teamId ? {
+                AND: [{ OR: searchConditions }, { team_id: teamId }]
+            } : { OR: searchConditions };
+        }
         return {
             AND: [
                 { OR: searchConditions },
@@ -68,7 +76,9 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
     // Invoices
     const getInvoiceWhereClause = (searchConditions: any[]) => {
         if (isSuperAdmin) {
-            return { OR: searchConditions };
+            return teamId ? {
+                AND: [{ OR: searchConditions }, { team_id: teamId }]
+            } : { OR: searchConditions };
         }
         return {
             AND: [
@@ -86,7 +96,9 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
     // Documents
     const getDocumentWhereClause = (searchConditions: any[]) => {
         if (isSuperAdmin) {
-            return { OR: searchConditions };
+            return teamId ? {
+                AND: [{ OR: searchConditions }, { team_id: teamId }]
+            } : { OR: searchConditions };
         }
         return {
             AND: [
@@ -108,7 +120,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             { title: { contains: q, mode: insensitive } },
             { content: { contains: q, mode: insensitive } },
         ]),
-        take: 3,
+        take: 10,
         select: { id: true, title: true, assigned_section: { select: { board: true } } },
     });
 
@@ -119,20 +131,20 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             { company: { contains: q, mode: insensitive } },
             { email: { contains: q, mode: insensitive } },
         ]),
-        take: 3,
+        take: 10,
         select: { id: true, firstName: true, lastName: true, company: true },
     });
 
     const projectsPromise = prismadb.boards.findMany({
         where: isSuperAdmin
-            ? { title: { contains: q, mode: insensitive } }
+            ? (teamId ? { AND: [{ title: { contains: q, mode: insensitive } }, { team_id: teamId }] } : { title: { contains: q, mode: insensitive } })
             : {
                 AND: [
                     { title: { contains: q, mode: insensitive } },
                     { OR: [{ user: userId }, { sharedWith: { has: userId } }, ...(teamId ? [{ team_id: teamId }] : [])] }
                 ]
             },
-        take: 3,
+        take: 10,
         select: { id: true, title: true },
     });
 
@@ -141,7 +153,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             { name: { contains: q, mode: insensitive } },
             { description: { contains: q, mode: insensitive } },
         ]),
-        take: 3,
+        take: 10,
         select: { id: true, name: true, description: true },
         orderBy: { updatedAt: 'desc' }
     });
@@ -152,7 +164,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             { description: { contains: q, mode: insensitive } },
             { email: { contains: q, mode: insensitive } },
         ]),
-        take: 3,
+        take: 10,
         select: { id: true, name: true, email: true },
         orderBy: { updatedAt: 'desc' }
     });
@@ -163,7 +175,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             { last_name: { contains: q, mode: insensitive } },
             { email: { contains: q, mode: insensitive } },
         ]),
-        take: 3,
+        take: 10,
         select: { id: true, first_name: true, last_name: true, email: true },
         orderBy: { updatedAt: 'desc' }
     });
@@ -173,7 +185,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             { title: { contains: q, mode: insensitive } },
             { description: { contains: q, mode: insensitive } },
         ]),
-        take: 3,
+        take: 10,
         select: { id: true, title: true, description: true },
         orderBy: { updatedAt: 'desc' }
     });
@@ -184,7 +196,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             { description: { contains: q, mode: insensitive } },
             { partner: { contains: q, mode: insensitive } },
         ]),
-        take: 3,
+        take: 10,
         select: { id: true, invoice_number: true, description: true, partner: true },
         orderBy: { last_updated: 'desc' }
     });
@@ -194,7 +206,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             { document_name: { contains: q, mode: insensitive } },
             { description: { contains: q, mode: insensitive } },
         ]),
-        take: 3,
+        take: 10,
         select: { id: true, document_name: true, description: true },
         orderBy: { updatedAt: 'desc' }
     });

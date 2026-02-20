@@ -27,8 +27,13 @@ export const SWRSessionProvider = ({ children }: { children: React.ReactNode }) 
         try {
             const appCache = JSON.stringify(Array.from(cacheMapRef.current.entries()));
             sessionStorage.setItem(cacheKeyRef.current, appCache);
-        } catch (e) {
+        } catch (e: any) {
             console.warn('[CRM] Failed to save SWR cache to sessionStorage:', e);
+            if (e && e.name === 'QuotaExceededError') {
+                sessionStorage.removeItem(cacheKeyRef.current);
+                cacheMapRef.current.clear();
+                console.warn('[CRM] Cleared SWR cache to stay within browser storage limits.');
+            }
         }
     }, []);
 

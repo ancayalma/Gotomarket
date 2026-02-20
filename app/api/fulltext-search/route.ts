@@ -43,7 +43,9 @@ export async function POST(req: Request) {
     // Helper to generate where clause for standard CRM entities (Account, Lead, Opportunity)
     const getWhereClause = (searchConditions: any[]) => {
       if (isSuperAdmin) {
-        return { OR: searchConditions };
+        return teamId ? {
+          AND: [{ OR: searchConditions }, { team_id: teamId }]
+        } : { OR: searchConditions };
       }
       return {
         AND: [
@@ -62,7 +64,9 @@ export async function POST(req: Request) {
     // Helper for Tasks (uses `user` field)
     const getTaskWhereClause = (searchConditions: any[]) => {
       if (isSuperAdmin) {
-        return { OR: searchConditions };
+        return teamId ? {
+          AND: [{ OR: searchConditions }, { team_id: teamId }]
+        } : { OR: searchConditions };
       }
       return {
         AND: [
@@ -81,7 +85,9 @@ export async function POST(req: Request) {
     // Helper for Invoices (uses `assigned_user_id`)
     const getInvoiceWhereClause = (searchConditions: any[]) => {
       if (isSuperAdmin) {
-        return { OR: searchConditions };
+        return teamId ? {
+          AND: [{ OR: searchConditions }, { team_id: teamId }]
+        } : { OR: searchConditions };
       }
       return {
         AND: [
@@ -99,7 +105,9 @@ export async function POST(req: Request) {
     // Helper for Documents
     const getDocumentWhereClause = (searchConditions: any[]) => {
       if (isSuperAdmin) {
-        return { OR: searchConditions };
+        return teamId ? {
+          AND: [{ OR: searchConditions }, { team_id: teamId }]
+        } : { OR: searchConditions };
       }
       return {
         AND: [
@@ -123,7 +131,7 @@ export async function POST(req: Request) {
         { description: { contains: search, mode: insensitive } },
         { name: { contains: search, mode: insensitive } },
       ]),
-      take: 5,
+      take: 50,
       orderBy: { updatedAt: 'desc' }
     });
 
@@ -134,7 +142,7 @@ export async function POST(req: Request) {
         { name: { contains: search, mode: insensitive } },
         { email: { contains: search, mode: insensitive } },
       ]),
-      take: 5,
+      take: 50,
       orderBy: { updatedAt: 'desc' }
     });
 
@@ -145,7 +153,7 @@ export async function POST(req: Request) {
         { first_name: { contains: search, mode: insensitive } },
         { email: { contains: search, mode: insensitive } },
       ]),
-      take: 5,
+      take: 50,
       orderBy: { updatedAt: 'desc' }
     });
 
@@ -157,7 +165,7 @@ export async function POST(req: Request) {
         { email: { contains: search, mode: insensitive } },
         { company: { contains: search, mode: insensitive } },
       ]),
-      take: 5,
+      take: 50,
       orderBy: { updatedAt: 'desc' }
     });
 
@@ -167,7 +175,7 @@ export async function POST(req: Request) {
         { title: { contains: search, mode: insensitive } },
         { description: { contains: search, mode: insensitive } },
       ]),
-      take: 5,
+      take: 50,
       orderBy: { updatedAt: 'desc' }
     });
 
@@ -177,7 +185,7 @@ export async function POST(req: Request) {
         { document_name: { contains: search, mode: insensitive } },
         { description: { contains: search, mode: insensitive } },
       ]),
-      take: 5,
+      take: 50,
       orderBy: { updatedAt: 'desc' },
     });
 
@@ -188,7 +196,7 @@ export async function POST(req: Request) {
         { description: { contains: search, mode: insensitive } },
         { partner: { contains: search, mode: insensitive } },
       ]),
-      take: 5,
+      take: 50,
       orderBy: { last_updated: 'desc' }
     });
 
@@ -198,18 +206,28 @@ export async function POST(req: Request) {
         { title: { contains: search, mode: insensitive } },
         { content: { contains: search, mode: insensitive } },
       ]),
-      take: 5,
+      take: 50,
       orderBy: { updatedAt: 'desc' }
     });
 
     // Projects (Boards)
     const projectsWhere = isSuperAdmin
-      ? {
+      ? (teamId ? {
+        AND: [
+          {
+            OR: [
+              { title: { contains: search, mode: insensitive } },
+              { description: { contains: search, mode: insensitive } },
+            ]
+          },
+          { team_id: teamId }
+        ]
+      } : {
         OR: [
           { title: { contains: search, mode: insensitive } },
           { description: { contains: search, mode: insensitive } },
         ]
-      }
+      })
       : {
         AND: [
           {
@@ -230,7 +248,7 @@ export async function POST(req: Request) {
 
     const pProjects = prismadb.boards.findMany({
       where: projectsWhere,
-      take: 5,
+      take: 50,
       orderBy: { updatedAt: 'desc' }
     });
 
@@ -238,13 +256,24 @@ export async function POST(req: Request) {
     // Generally, users can find other users in the system (colleagues). 
     // Safest Scoping: Same Team OR Admin.
     const usersWhere = isSuperAdmin
-      ? {
+      ? (teamId ? {
+        AND: [
+          {
+            OR: [
+              { email: { contains: search, mode: insensitive } },
+              { name: { contains: search, mode: insensitive } },
+              { username: { contains: search, mode: insensitive } },
+            ]
+          },
+          { team_id: teamId }
+        ]
+      } : {
         OR: [
           { email: { contains: search, mode: insensitive } },
           { name: { contains: search, mode: insensitive } },
           { username: { contains: search, mode: insensitive } },
         ]
-      }
+      })
       : {
         AND: [
           {
@@ -265,7 +294,7 @@ export async function POST(req: Request) {
 
     const pUsers = prismadb.users.findMany({
       where: usersWhere,
-      take: 5,
+      take: 50,
       orderBy: { name: 'asc' }
     });
 
