@@ -9,11 +9,11 @@ export async function POST(
 ) {
     const params = await props.params;
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
         const { to } = await req.json();
-        if (!to) return new NextResponse("Recipient email required", { status: 400 });
+        if (!to) return NextResponse.json({ error: "Recipient email required" }, { status: 400 });
 
         await sendTeamEmail(params.teamId, {
             to,

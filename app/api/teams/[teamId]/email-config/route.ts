@@ -7,7 +7,7 @@ import { verifyEmailIdentity, getIdentityVerificationStatus, deleteEmailIdentity
 export async function GET(req: Request, props: { params: Promise<{ teamId: string }> }) {
     const params = await props.params;
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const config = await prismadb.teamEmailConfig.findUnique({
         where: { team_id: params.teamId }
@@ -74,7 +74,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
         smtp_password
     } = body;
 
-    if (!from_email) return new NextResponse("Email required", { status: 400 });
+    if (!from_email) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
     try {
         // Fetch existing config to merge keys if not provided
@@ -100,7 +100,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
 
         // Verification Logic
         if (provider === "AWS_SES") {
-            if (!finalAwsKey || !finalAwsSecret) return new NextResponse("AWS Credentials required", { status: 400 });
+            if (!finalAwsKey || !finalAwsSecret) return NextResponse.json({ error: "AWS Credentials required" }, { status: 400 });
 
             const triggerVerification = !existingConfig || existingConfig.from_email !== from_email || existingConfig.provider !== "AWS_SES";
 
@@ -111,19 +111,19 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
                 if (status === "SUCCESS") verificationStatus = "VERIFIED";
             }
         } else if (provider === "RESEND") {
-            if (!finalResendKey) return new NextResponse("Resend API Key required", { status: 400 });
+            if (!finalResendKey) return NextResponse.json({ error: "Resend API Key required" }, { status: 400 });
             verificationStatus = "VERIFIED";
         } else if (provider === "SENDGRID") {
-            if (!finalSendgridKey) return new NextResponse("SendGrid API Key required", { status: 400 });
+            if (!finalSendgridKey) return NextResponse.json({ error: "SendGrid API Key required" }, { status: 400 });
             verificationStatus = "VERIFIED";
         } else if (provider === "MAILGUN") {
-            if (!finalMailgunKey || !mailgun_domain) return new NextResponse("Mailgun Config required", { status: 400 });
+            if (!finalMailgunKey || !mailgun_domain) return NextResponse.json({ error: "Mailgun Config required" }, { status: 400 });
             verificationStatus = "VERIFIED";
         } else if (provider === "POSTMARK") {
-            if (!finalPostmarkToken) return new NextResponse("Postmark Token required", { status: 400 });
+            if (!finalPostmarkToken) return NextResponse.json({ error: "Postmark Token required" }, { status: 400 });
             verificationStatus = "VERIFIED";
         } else if (provider === "SMTP") {
-            if (!smtp_host || !smtp_port || !smtp_user || !finalSmtpPassword) return new NextResponse("SMTP Config required", { status: 400 });
+            if (!smtp_host || !smtp_port || !smtp_user || !finalSmtpPassword) return NextResponse.json({ error: "SMTP Config required" }, { status: 400 });
             verificationStatus = "VERIFIED";
         }
 
@@ -179,21 +179,21 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
         });
     } catch (error: any) {
         console.error("Email Config Error:", error);
-        return new NextResponse(error.message || "Failed to set config", { status: 500 });
+        return NextResponse.json({ error: error.message || "Failed to set config" }, { status: 500 });
     }
 }
 
 export async function DELETE(req: Request, props: { params: Promise<{ teamId: string }> }) {
     const params = await props.params;
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const config = await prismadb.teamEmailConfig.findUnique({
         where: { team_id: params.teamId }
     });
 
     if (!config) {
-        return new NextResponse("Configuration not found", { status: 404 });
+        return NextResponse.json({ error: "Configuration not found" }, { status: 404 });
     }
 
     try {

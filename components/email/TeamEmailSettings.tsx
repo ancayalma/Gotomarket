@@ -218,8 +218,15 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
             });
 
             if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || "Failed to save");
+                let errorMessage = "Failed to save configuration";
+                try {
+                    const errorData = await res.json();
+                    errorMessage = errorData.error || errorMessage;
+                } catch (e) {
+                    const text = await res.text();
+                    if (text) errorMessage = text;
+                }
+                throw new Error(errorMessage);
             }
 
             const data = await res.json();
@@ -257,8 +264,15 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
             });
 
             if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || "Failed to send test email");
+                let errorMessage = "Failed to send test email";
+                try {
+                    const errorData = await res.json();
+                    errorMessage = errorData.error || errorMessage;
+                } catch (e) {
+                    const text = await res.text();
+                    if (text) errorMessage = text;
+                }
+                throw new Error(errorMessage);
             }
 
             toast.success("Test email sent successfully! Please check your inbox.");

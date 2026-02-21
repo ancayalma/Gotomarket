@@ -6,7 +6,7 @@ import { prismadb } from "@/lib/prisma";
 export async function GET(req: Request, props: { params: Promise<{ teamId: string }> }) {
     const params = await props.params;
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
         // Fetch last 10 sent items for this team
@@ -51,6 +51,6 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
 
     } catch (error: any) {
         console.error("Failed to fetch email stats", error);
-        return new NextResponse(error.message, { status: 500 });
+        return NextResponse.json({ error: error.message || "Internal Error" }, { status: 500 });
     }
 }
