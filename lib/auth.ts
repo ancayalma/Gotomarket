@@ -176,6 +176,7 @@ export const authOptions: NextAuthOptions = {
           session.user.lastLoginAt = newUser.lastLoginAt;
           session.user.team_id = newUser.team_id;
           session.user.team_role = newUser.team_role;
+          session.user.mustChangePassword = newUser.mustChangePassword;
           return session;
         } catch (error) {
           console.error("[auth.session] users.create error:", error);
@@ -195,6 +196,7 @@ export const authOptions: NextAuthOptions = {
         session.user.lastLoginAt = user.lastLoginAt;
         session.user.team_id = user.team_id;
         session.user.team_role = user.team_role;
+        session.user.mustChangePassword = user.mustChangePassword;
 
         // Fetch role and permissions if available
         if (user.roleId) {

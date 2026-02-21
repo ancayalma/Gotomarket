@@ -34,8 +34,16 @@ export const getRevenuePacing = async () => {
 
         const currentRevenue = opportunities.reduce((sum, opp) => sum + (opp.expected_revenue || 0), 0);
 
-        // Mock target: $500,000 per month
-        const targetRevenue = 500000;
+        // Dynamic target: Use total active pipeline value or a default based on team size
+        const totalPipeline = await prismadb.crm_Opportunities.aggregate({
+            where: {
+                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                status: "ACTIVE"
+            },
+            _sum: { expected_revenue: true }
+        });
+
+        const targetRevenue = Number(totalPipeline._sum?.expected_revenue || 100000);
 
         // Projection logic: Linear extrapolation
         const projectedEOM = currentDay > 0 ? (currentRevenue / currentDay) * daysInMonth : 0;

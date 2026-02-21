@@ -10,6 +10,7 @@ import { Metadata } from "next";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 import UtilityBar from "@/components/UtilityBar";
 import { LearnProvider } from "@/components/providers/learn-provider";
+import ForcePasswordChangeCheck from "@/components/auth/ForcePasswordChangeCheck";
 
 
 function getSafeMetadataBase(): URL {
@@ -86,6 +87,7 @@ export default async function AppLayout({
 
   return (
     <LearnProvider>
+      <ForcePasswordChangeCheck />
       <div className="fixed inset-0 flex h-[100dvh] overflow-hidden">
         <SideBar />
         <div className="flex flex-col h-full w-full min-w-0 overflow-hidden">

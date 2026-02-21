@@ -127,49 +127,60 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             verificationStatus = "VERIFIED";
         }
 
-        // Save Config
-        const config = await prismadb.teamEmailConfig.upsert({
-            where: { team_id: params.teamId },
-            create: {
-                assigned_team: { connect: { id: params.teamId } },
-                provider,
-                from_email,
-                from_name,
-                aws_access_key_id: provider === "AWS_SES" ? finalAwsKey : null,
-                aws_secret_access_key: provider === "AWS_SES" ? finalAwsSecret : null,
-                aws_region: provider === "AWS_SES" ? (aws_region || "us-east-1") : null,
-                resend_api_key: provider === "RESEND" ? finalResendKey : null,
-                sendgrid_api_key: provider === "SENDGRID" ? finalSendgridKey : null,
-                mailgun_api_key: provider === "MAILGUN" ? finalMailgunKey : null,
-                mailgun_domain: provider === "MAILGUN" ? mailgun_domain : null,
-                mailgun_region: provider === "MAILGUN" ? (mailgun_region || "us") : null,
-                postmark_api_token: provider === "POSTMARK" ? finalPostmarkToken : null,
-                smtp_host: provider === "SMTP" ? smtp_host : null,
-                smtp_port: provider === "SMTP" ? parseInt(String(smtp_port)) : null,
-                smtp_user: provider === "SMTP" ? smtp_user : null,
-                smtp_password: provider === "SMTP" ? finalSmtpPassword : null,
-                verification_status: verificationStatus,
-            },
-            update: {
-                provider,
-                from_email,
-                from_name,
-                aws_access_key_id: provider === "AWS_SES" ? finalAwsKey : undefined,
-                aws_secret_access_key: provider === "AWS_SES" ? finalAwsSecret : undefined,
-                aws_region: provider === "AWS_SES" ? (aws_region || "us-east-1") : undefined,
-                resend_api_key: provider === "RESEND" ? finalResendKey : undefined,
-                sendgrid_api_key: provider === "SENDGRID" ? finalSendgridKey : undefined,
-                mailgun_api_key: provider === "MAILGUN" ? finalMailgunKey : undefined,
-                mailgun_domain: provider === "MAILGUN" ? mailgun_domain : undefined,
-                mailgun_region: provider === "MAILGUN" ? (mailgun_region || "us") : undefined,
-                postmark_api_token: provider === "POSTMARK" ? finalPostmarkToken : undefined,
-                smtp_host: provider === "SMTP" ? smtp_host : undefined,
-                smtp_port: provider === "SMTP" ? parseInt(String(smtp_port)) : undefined,
-                smtp_user: provider === "SMTP" ? smtp_user : undefined,
-                smtp_password: provider === "SMTP" ? finalSmtpPassword : undefined,
-                verification_status: verificationStatus,
-            }
-        });
+        // Save Config - Using separate update/create for better MongoDB reliability
+        let config;
+
+        const updateData = {
+            provider,
+            from_email,
+            from_name,
+            aws_access_key_id: provider === "AWS_SES" ? finalAwsKey : undefined,
+            aws_secret_access_key: provider === "AWS_SES" ? finalAwsSecret : undefined,
+            aws_region: provider === "AWS_SES" ? (aws_region || "us-east-1") : undefined,
+            resend_api_key: provider === "RESEND" ? finalResendKey : undefined,
+            sendgrid_api_key: provider === "SENDGRID" ? finalSendgridKey : undefined,
+            mailgun_api_key: provider === "MAILGUN" ? finalMailgunKey : undefined,
+            mailgun_domain: provider === "MAILGUN" ? mailgun_domain : undefined,
+            mailgun_region: provider === "MAILGUN" ? (mailgun_region || "us") : undefined,
+            postmark_api_token: provider === "POSTMARK" ? finalPostmarkToken : undefined,
+            smtp_host: provider === "SMTP" ? smtp_host : undefined,
+            smtp_port: provider === "SMTP" ? parseInt(String(smtp_port)) : undefined,
+            smtp_user: provider === "SMTP" ? smtp_user : undefined,
+            smtp_password: provider === "SMTP" ? finalSmtpPassword : undefined,
+            verification_status: verificationStatus,
+        };
+
+        console.log(`[EmailConfig] Saving for team ${params.teamId}`, { provider, from_email, isNew: !existingConfig });
+
+        if (existingConfig) {
+            config = await prismadb.teamEmailConfig.update({
+                where: { id: existingConfig.id },
+                data: updateData
+            });
+        } else {
+            config = await prismadb.teamEmailConfig.create({
+                data: {
+                    team_id: params.teamId,
+                    provider,
+                    from_email,
+                    from_name,
+                    aws_access_key_id: provider === "AWS_SES" ? finalAwsKey : null,
+                    aws_secret_access_key: provider === "AWS_SES" ? finalAwsSecret : null,
+                    aws_region: provider === "AWS_SES" ? (aws_region || "us-east-1") : "us-east-1",
+                    resend_api_key: provider === "RESEND" ? finalResendKey : null,
+                    sendgrid_api_key: provider === "SENDGRID" ? finalSendgridKey : null,
+                    mailgun_api_key: provider === "MAILGUN" ? finalMailgunKey : null,
+                    mailgun_domain: mailgun_domain || null,
+                    mailgun_region: mailgun_region || "us",
+                    postmark_api_token: provider === "POSTMARK" ? finalPostmarkToken : null,
+                    smtp_host: smtp_host || null,
+                    smtp_port: smtp_port ? parseInt(String(smtp_port)) : null,
+                    smtp_user: smtp_user || null,
+                    smtp_password: provider === "SMTP" ? finalSmtpPassword : null,
+                    verification_status: verificationStatus,
+                }
+            });
+        }
 
         return NextResponse.json({
             ...config,
@@ -178,7 +189,11 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             resend_api_key: config.resend_api_key ? "HasValue" : null
         });
     } catch (error: any) {
-        console.error("Email Config Error:", error);
+        console.error("Email Config Error Details:", {
+            error: error.message,
+            stack: error.stack,
+            teamId: params.teamId
+        });
         return NextResponse.json({ error: error.message || "Failed to set config" }, { status: 500 });
     }
 }

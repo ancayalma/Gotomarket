@@ -169,35 +169,6 @@ export const getAIInsights = async () => {
             });
         }
 
-        // ─── 8. Neural Intelligence: Timing & Channels ───
-        insights.push({
-            id: "neural-timing",
-            title: "Engagement Peak",
-            description: "Contact response velocity is 40% higher on Tuesdays between 10AM-2PM. Batch your high-value outreach now.",
-            action: "Batch Send",
-            actionHref: "/campaigns",
-            type: "success",
-            priority: "low"
-        });
-
-        // ─── 9. Platform Health: Nominal Status ───
-        if (insights.length < 4) {
-            insights.push({
-                id: "platform-health",
-                title: "Systems Nominal",
-                description: "Platform core is stable. No critical infrastructure anomalies detected in global data sync.",
-                action: "Health Report",
-                actionHref: "/reports",
-                type: "success",
-                priority: "low",
-                assumptions: [
-                    { text: "Lead quality scoring is aligned with target personas", confidence: 9 },
-                    { text: "Projected revenue pacing within 5% of monthly target", confidence: 8 },
-                    { text: "Customer engagement sentiment remains high (8.4/10)", confidence: 9 }
-                ]
-            });
-        }
-
         // Fetch user preferences for dismissed insights
         const userPrefs = await prismadb.users.findUnique({
             where: { id: teamInfo.userId },

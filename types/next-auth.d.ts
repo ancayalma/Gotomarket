@@ -23,6 +23,7 @@ declare module "next-auth" {
       permissions?: string[];
       team_id?: string | null;
       team_role?: string | null;
+      mustChangePassword: boolean;
     };
   }
 }

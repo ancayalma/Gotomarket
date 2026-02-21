@@ -131,18 +131,18 @@ export const SystemHealthWidget = () => {
     return (
         <MetricDeepDiveWidget
             title="System Health"
-            value="98%"
-            description="Operational"
+            value="100%"
+            description="All Systems Operational"
             icon={Activity}
-            iconColor="text-amber-400"
-            variant="warning"
+            iconColor="text-emerald-400"
+            variant="success"
             centered={true}
             deepDiveTitle="System Diagnostics"
             deepDiveData={[
-                { service: "API Engine", status: "Operational", latency: "42ms" },
-                { service: "Database Cluster", status: "Operational", latency: "12ms" },
-                { service: "AI Command", status: "Operational", latency: "156ms" },
-                { service: "Mail Server", status: "Warning", latency: "2.4s" },
+                { service: "API Engine", status: "Operational", latency: "24ms" },
+                { service: "Database Cluster", status: "Operational", latency: "8ms" },
+                { service: "AI Neural Engine", status: "Operational", latency: "142ms" },
+                { service: "Mail Node", status: "Operational", latency: "94ms" },
             ]}
             deepDiveColumns={[
                 { header: "Service Component", key: "service" },

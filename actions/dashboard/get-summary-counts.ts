@@ -40,7 +40,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
 
   // Helper to merge team filter with member restriction
   const getFilter = (modelField: "assigned_to" | "user" | "none" = "none", dateFieldName: string = "createdAt") => {
-    let base: any = isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
+    let base: any = teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" };
 
     if (teamRole === "MEMBER") {
       if (modelField === "assigned_to") {
@@ -58,7 +58,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
 
   // For documents: members see only their assigned or created docs
   const getDocumentFilter = () => {
-    const base = isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
+    const base = teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" };
     const dateQuery = getCreatedAtFilter();
 
     if (teamRole === "MEMBER") {
@@ -105,13 +105,13 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
   };
 
   const getInvoiceFilter = () => {
-    const base = isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
+    const base = teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" };
     const dateQuery = Object.keys(dateFilter).length > 0 ? { date_created: dateFilter } : {};
     return { ...base, ...dateQuery };
   };
 
   const getLeadPoolFilter = () => {
-    const base = isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
+    const base = teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" };
     // For members, maybe restrict? For now, team-wide.
     return {
       ...base,
@@ -156,7 +156,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     prismadb.users.count({
       where: teamRole === "MEMBER"
         ? { id: teamInfo?.userId }
-        : { ...(isGlobalAdmin ? {} : teamId ? { team_id: teamId } : { team_id: "no-team-fallback" }), userStatus: "ACTIVE" as any }
+        : { ...(teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" }), userStatus: "ACTIVE" as any }
     }),
     // CRM Opportunities expected revenue (already filtered for members)
     prismadb.crm_Opportunities.aggregate({

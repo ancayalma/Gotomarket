@@ -1,28 +1,25 @@
 "use server";
 
 import { prismadb } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 export const getUserMessages = async () => {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return [];
+    const teamInfo = await getCurrentUserTeamId();
+    if (!teamInfo?.userId) return [];
 
-    // Fetch user to get team context
-    const user = await prismadb.users.findUnique({
-        where: { id: session.user.id },
-        select: { team_id: true }
-    });
+    const userId = teamInfo.userId;
+    const teamId = teamInfo.teamId;
 
-    const teamId = user?.team_id;
-
-    // 1. Fetch Unread Messages
+    // 1. Fetch Unread Messages (Filtered by Team)
     const internalMessages = await prismadb.internalMessageRecipient.findMany({
         where: {
-            recipient_id: session.user.id,
+            recipient_id: userId,
             is_read: false,
             is_deleted: false,
             is_archived: false,
+            message: {
+                team_id: teamId || "no-team-fallback"
+            }
         },
         include: {
             message: true

@@ -16,6 +16,17 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 
 type EmailProvider = "AWS_SES" | "RESEND" | "SENDGRID" | "MAILGUN" | "POSTMARK" | "SMTP";
 
@@ -81,6 +92,9 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
     // Test Email
     const [testEmail, setTestEmail] = useState("");
 
+    // Modal state
+    const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+
     useEffect(() => {
         if (!teamId) return;
         fetchConfig();
@@ -114,7 +128,7 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
     };
 
     const handleRemove = async () => {
-        if (!config || !teamId || !confirm("Are you sure? This will stop future campaigns from using this email configuration.")) return;
+        if (!config || !teamId) return;
         setLoading(true);
         try {
             const res = await fetch(`/api/teams/${teamId}/email-config`, {
@@ -574,9 +588,50 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
                         </Button>
 
                         {config && (
-                            <Button variant="destructive" onClick={handleRemove} disabled={loading}>
-                                Remove Config
-                            </Button>
+                            <>
+                                <Button
+                                    variant="outline"
+                                    className="border-rose-500/20 text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/40 transition-all font-semibold"
+                                    onClick={() => setIsRemoveDialogOpen(true)}
+                                    disabled={loading}
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Remove Configuration
+                                </Button>
+
+                                <AlertDialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
+                                    <AlertDialogContent className="bg-[#0B1120] border-white/10 shadow-2xl">
+                                        <AlertDialogHeader>
+                                            <div className="mx-auto w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center mb-4 border border-rose-500/20">
+                                                <AlertCircle className="w-6 h-6 text-rose-500" />
+                                            </div>
+                                            <AlertDialogTitle className="text-xl font-bold text-center text-white">
+                                                Deactivate Email Engine?
+                                            </AlertDialogTitle>
+                                            <AlertDialogDescription asChild className="text-center text-slate-400 font-medium pt-2">
+                                                <div>
+                                                    This will immediately disconnect your <span className="text-white font-bold">{config.provider}</span> integration.
+                                                    <br /><br />
+                                                    <div className="p-3 rounded-lg bg-rose-500/5 border border-rose-500/10 text-[13px] text-rose-200/80 leading-relaxed italic">
+                                                        "All scheduled campaigns and automated notifications using this sender address will be paused until a new configuration is active."
+                                                    </div>
+                                                </div>
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter className="pt-6 sm:justify-center gap-3">
+                                            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white transition-all w-28">
+                                                Cancel
+                                            </AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={handleRemove}
+                                                className="bg-rose-600 hover:bg-rose-700 text-white border-none shadow-lg shadow-rose-900/20 w-32"
+                                            >
+                                                Confirm Removal
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </>
                         )}
                     </div>
 

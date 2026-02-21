@@ -24,8 +24,8 @@ export const getCurrentUserTeamId = async () => {
     const normalizedRole = (user?.team_role || '').trim().toUpperCase();
     const isPlatformAdminRole = normalizedRole === "PLATFORM_ADMIN" || normalizedRole === "PLATFORM ADMIN";
 
-    // "God Mode" for PLATFORM_ADMIN - NO TEAM RESTRICTIONS
-    // PLATFORM_ADMIN can see and access ALL data across ALL teams
+    // PLATFORM_ADMIN gets global access ONLY if they are impersonating a team
+    // Otherwise, they should be restricted to their assigned team data (if any)
     const isGlobalAdmin = isPlatformAdminRole;
 
     // Check for impersonation cookie
@@ -42,11 +42,12 @@ export const getCurrentUserTeamId = async () => {
     }
 
     return {
-        teamId: effectiveTeamId,
-        isGlobalAdmin: isGlobalAdmin,
+        teamId: effectiveTeamId || null,
+        isGlobalAdmin: isImpersonating, // Only true if ACTIVE global mode
+        isPlatformAdmin: isPlatformAdminRole,
         isImpersonating: isImpersonating,
         teamRole: user?.team_role,
-        isAdmin: user?.is_admin || user?.team_role === "ADMIN" || user?.team_role === "OWNER" || isGlobalAdmin,
+        isAdmin: user?.is_admin || user?.team_role === "ADMIN" || user?.team_role === "OWNER" || isPlatformAdminRole,
         userId: user?.id || (session.user as any).id
     };
 }

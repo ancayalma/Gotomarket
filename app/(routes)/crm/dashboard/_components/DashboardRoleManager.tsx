@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import AdminDashboard from "./views/AdminDashboard";
 import MemberDashboard from "./views/MemberDashboard";
 import ViewerDashboard from "./views/ViewerDashboard";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 // Data Fetching Actions
 import { getDailyTasks } from "@/actions/dashboard/get-daily-tasks";
@@ -30,10 +31,11 @@ import TeamPipelineSection from "../../../dashboard/components/TeamPipelineSecti
 import LoadingBox from "../../../dashboard/components/loading-box";
 
 const DashboardRoleManager = async () => {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return null;
+    const teamInfo = await getCurrentUserTeamId();
+    const userId = teamInfo?.userId;
+    const teamId = teamInfo?.teamId;
 
-    const userId = session.user.id;
+    if (!userId) return null;
 
     // 1. Determine Role
     let user: any;
@@ -41,14 +43,14 @@ const DashboardRoleManager = async () => {
         // We use 'as any' and a try-catch to safely handle the new field while Prisma client catches up
         user = await (prismadb.users as any).findUnique({
             where: { id: userId },
-            select: { team_role: true, email: true, is_admin: true, quickLaunchDismissed: true }
+            select: { team_role: true, email: true, is_admin: true, quickLaunchDismissed: true, name: true, mustChangePassword: true }
         });
     } catch (e) {
         // Fallback for when the field doesn't exist in the generated client yet (Next.js/Turbopack cache)
         // We fetch the basic info first
         user = await prismadb.users.findUnique({
             where: { id: userId },
-            select: { team_role: true, email: true, is_admin: true }
+            select: { team_role: true, email: true, is_admin: true, name: true, mustChangePassword: true }
         });
 
         // Then we try to get the dismissal status using a raw query to bypass Prisma's stale validation
@@ -104,7 +106,7 @@ const DashboardRoleManager = async () => {
             aiInsights,
         ] = await Promise.all([
             getUnifiedSalesData(),
-            prismadb.users.count(),
+            prismadb.users.count({ where: { team_id: teamId || "no-team" } }),
             getSummaryCounts(),
             getModules(),
             getUsersTasksCount(userId),
@@ -112,13 +114,13 @@ const DashboardRoleManager = async () => {
             getNewProjects(),
             getDailyTasks(),
             getUserMessages(),
-            prismadb.crm_Workflow.count({ where: { team_id: (session.user as any).team_id } } as any),
-            (prismadb as any).approvalProcess.count({ where: { team_id: (session.user as any).team_id } } as any),
-            (prismadb as any).validationRule.count({ where: { team_id: (session.user as any).team_id } } as any),
-            (prismadb as any).crm_Cases.count({ where: { team_id: (session.user as any).team_id } } as any),
-            (prismadb as any).crm_Products.count({ where: { team_id: (session.user as any).team_id } } as any),
-            (prismadb as any).crm_Quotes.count({ where: { team_id: (session.user as any).team_id } } as any),
-            (prismadb as any).savedReport.count({ where: { teamId: (session.user as any).team_id } } as any),
+            prismadb.crm_Workflow.count({ where: { team_id: teamId || "no-team" } } as any),
+            (prismadb as any).approvalProcess.count({ where: { team_id: teamId || "no-team" } } as any),
+            (prismadb as any).validationRule.count({ where: { team_id: teamId || "no-team" } } as any),
+            (prismadb as any).crm_Cases.count({ where: { team_id: teamId || "no-team" } } as any),
+            (prismadb as any).crm_Products.count({ where: { team_id: teamId || "no-team" } } as any),
+            (prismadb as any).crm_Quotes.count({ where: { team_id: teamId || "no-team" } } as any),
+            (prismadb as any).savedReport.count({ where: { teamId: teamId || "no-team" } } as any),
             getDashboardLayout(),
             getTeamActivity(),
             getRecentFiles(),
@@ -182,7 +184,7 @@ const DashboardRoleManager = async () => {
         return (
             <AdminDashboard
                 userId={userId}
-                userName={session.user.name || "User"}
+                userName={user?.name || "User"}
                 revenue={unifiedData?.summary?.revenue || 0}
                 actualRevenue={unifiedData?.summary?.actualRevenue || 0}
                 activePipelineCount={unifiedData?.summary?.activeDeals || 0}
@@ -231,7 +233,7 @@ const DashboardRoleManager = async () => {
             getNewProjects(),
             getUserMessages(),
             getUsersTasksCount(userId),
-            prismadb.users.count()
+            prismadb.users.count({ where: { team_id: teamId || "no-team" } })
         ]);
 
         const checklistCounts = {
@@ -244,7 +246,7 @@ const DashboardRoleManager = async () => {
         return (
             <MemberDashboard
                 userId={userId}
-                userName={session.user.name || "User"}
+                userName={user?.name || "User"}
                 dailyTasks={dailyTasks}
                 newLeads={newLeads}
                 newProjects={newProjects}

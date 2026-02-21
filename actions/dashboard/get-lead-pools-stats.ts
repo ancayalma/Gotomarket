@@ -6,16 +6,12 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 export const getLeadPoolsStats = async () => {
     try {
         const teamInfo = await getCurrentUserTeamId();
-        if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+        const teamId = teamInfo?.teamId;
+        if (!teamId && !teamInfo?.isImpersonating) return [];
 
         const pools = await prismadb.crm_Lead_Pools.findMany({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : {
-                    OR: [
-                        { team_id: teamInfo.teamId },
-                        { user: teamInfo.userId }
-                    ]
-                }),
+                ...(teamId ? { team_id: teamId } : teamInfo.isImpersonating ? {} : { id: "none" }),
                 status: "ACTIVE"
             },
             include: {

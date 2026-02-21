@@ -114,10 +114,12 @@ export async function getTeamAnalytics(): Promise<TeamAnalytics> {
   const isMember = teamInfo?.teamRole === "MEMBER" || teamInfo?.teamRole === "VIEWER";
   const userId = teamInfo?.userId;
 
-  // Build user filter - global admins see all, others see only their team
+  // Build user filter - global admins see all (unless teamId provided or not impersonating), others see only their team
   const userWhere: any = { userStatus: "ACTIVE" as any };
-  if (!isGlobalAdmin && teamId) {
+  if (teamId) {
     userWhere.team_id = teamId;
+  } else if (!teamInfo?.isImpersonating) {
+    userWhere.id = userId; // Fallback to just themselves if no team and not impersonating
   }
 
   // Active team members (filtered by team)
@@ -131,8 +133,10 @@ export async function getTeamAnalytics(): Promise<TeamAnalytics> {
 
   // Build lead filter - team filter + member filter
   const leadWhere: any = {};
-  if (!isGlobalAdmin && teamId) {
+  if (teamId) {
     leadWhere.team_id = teamId;
+  } else if (!teamInfo?.isImpersonating) {
+    leadWhere.id = "none"; // No leads if no team and not impersonating
   }
   // Members only see their assigned leads
   if (isMember && userId) {
@@ -155,13 +159,15 @@ export async function getTeamAnalytics(): Promise<TeamAnalytics> {
 
   const leadIds = allLeads.map((l: any) => l.id);
 
-  // Fetch activities once and reduce in-memory
+  // Fetch activities once and reduce in-memory (Filtered by Lead IDs which are already team-scoped)
+  const activityWhere: any = { lead: { in: leadIds } };
+
   const emailActivities = await prismadb.crm_Lead_Activities.findMany({
-    where: { type: "email_sent" },
+    where: { ...activityWhere, type: "email_sent" },
     select: { user: true, lead: true },
   });
   const callActivities = await prismadb.crm_Lead_Activities.findMany({
-    where: { type: { contains: "call", mode: "insensitive" } },
+    where: { ...activityWhere, type: { contains: "call", mode: "insensitive" } },
     select: { user: true, lead: true },
   });
 

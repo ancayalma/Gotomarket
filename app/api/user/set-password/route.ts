@@ -49,7 +49,8 @@ export async function POST(req: Request) {
     }
 
     // If user already has a password, require currentPassword validation
-    if (user.password) {
+    // EXCEPTION: If the user is flagged to force-change their password, they can skip currentPassword check
+    if (user.password && !user.mustChangePassword) {
       if (!currentPassword) {
         return new NextResponse("Current password is required.", { status: 400 });
       }
@@ -63,7 +64,10 @@ export async function POST(req: Request) {
     const hashed = await hash(newPassword, 12);
     await prismadb.users.update({
       where: { id: user.id },
-      data: { password: hashed },
+      data: {
+        password: hashed,
+        mustChangePassword: false
+      },
     });
 
     return NextResponse.json({ status: true, message: "Password updated." }, { status: 200 });
