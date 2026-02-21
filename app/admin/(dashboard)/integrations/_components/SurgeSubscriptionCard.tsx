@@ -10,10 +10,16 @@ import { CreditCard, ShieldCheck, Zap } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
 import { saveSubscription } from "@/actions/billing/save-subscription";
+import { PaymentModal } from "@/app/(routes)/invoice/detail/[invoiceId]/_components/PaymentModal";
 
 export const SurgeSubscriptionCard = () => {
     const [loading, setLoading] = useState(false);
     const [isSubscribed, setIsSubscribed] = useState(false);
+
+    // Payment Modal State
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+    const [activeInvoiceId, setActiveInvoiceId] = useState<string | null>(null);
 
     const handleVaultAndSubscribe = async () => {
         setLoading(true);
@@ -30,9 +36,11 @@ export const SurgeSubscriptionCard = () => {
             if (res.error) {
                 toast.error(res.error);
                 setLoading(false);
-            } else if (res.url) {
-                toast.success("Redirecting to BasaltSURGE Secure Portal...");
-                window.location.href = res.url;
+            } else if (res.url && res.invoiceId) {
+                toast.success("Opening BasaltSURGE Secure Portal...");
+                setPaymentUrl(res.url as string);
+                setActiveInvoiceId(res.invoiceId as string);
+                setPaymentModalOpen(true);
             } else {
                 // Determine success based on response
                 toast.success("Subscription initiated!");
@@ -126,6 +134,16 @@ export const SurgeSubscriptionCard = () => {
                     <span className="font-bold">BasaltSURGE</span>
                 </div>
             </CardFooter>
+            {paymentUrl && activeInvoiceId && (
+                <PaymentModal
+                    open={paymentModalOpen}
+                    onOpenChange={setPaymentModalOpen}
+                    url={paymentUrl}
+                    amount="100.00"
+                    currency="USDC"
+                    invoiceId={activeInvoiceId}
+                />
+            )}
         </Card>
     );
 };

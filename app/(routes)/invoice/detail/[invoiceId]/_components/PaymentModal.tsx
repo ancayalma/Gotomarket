@@ -29,12 +29,18 @@ export const PaymentModal = ({ open, onOpenChange, url, amount, currency, invoic
 
     // Auto-proxy legacy links to ensure they work in-modal
     const proxiedUrl = React.useMemo(() => {
-        if (!url) return "";
+        if (!url) {
+            console.log("[PaymentModal] No URL provided");
+            return "";
+        }
 
         // SURGE_USE_PROXY=false → point directly at surge.basalthq.com
         const useProxy = process.env.NEXT_PUBLIC_SURGE_USE_PROXY !== 'false';
 
-        if (url.startsWith("/api/surge-portal")) return url;
+        if (url.startsWith("/api/surge-portal")) {
+            console.log("[PaymentModal] Using internal proxy URL:", url);
+            return url;
+        }
 
         // Convert any external surge link to our internal proxy ONLY if enabled
         if (useProxy && url.includes("surge.basalthq.com")) {
@@ -42,9 +48,12 @@ export const PaymentModal = ({ open, onOpenChange, url, amount, currency, invoic
             if (matches && matches[2]) {
                 const receiptId = matches[2];
                 const params = url.split("?")[1] || "";
-                return `/api/surge-portal/${receiptId}${params ? `?${params}` : ""}`;
+                const newUrl = `/api/surge-portal/${receiptId}${params ? `?${params}` : ""}`;
+                console.log("[PaymentModal] Proxied external URL to:", newUrl);
+                return newUrl;
             }
         }
+        console.log("[PaymentModal] Using original URL:", url);
         return url;
     }, [url]);
 
@@ -65,6 +74,9 @@ export const PaymentModal = ({ open, onOpenChange, url, amount, currency, invoic
     //   gateway-card-cancel   → user cancelled
     //   gateway-preferred-height → responsive height hint
     React.useEffect(() => {
+        if (open) {
+            console.log("[PaymentModal] Modal opened for invoice:", invoiceId);
+        }
         if (!open) return;
 
         const handleMessage = async (event: MessageEvent) => {

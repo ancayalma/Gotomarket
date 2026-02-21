@@ -252,8 +252,14 @@ export function DataTableRowActions<TData>({
                 Send Invoice
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => setOpenView(true)}
-                disabled={!invoice.invoice_file_url}
+                onClick={() => {
+                  if (invoice.invoice_file_url) {
+                    setOpenView(true);
+                  } else if (invoice.surge_payment_link || invoice.surge_payment_id) {
+                    router.push(`/invoice/detail/${invoice.id}`);
+                  }
+                }}
+                disabled={!invoice.invoice_file_url && !invoice.surge_payment_link && !invoice.surge_payment_id}
               >
                 Preview invoice
               </DropdownMenuItem>

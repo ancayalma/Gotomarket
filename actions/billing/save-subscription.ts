@@ -108,9 +108,10 @@ export async function saveSubscription(data: {
             }
         });
 
-        // 2. Internal / Exempt Teams: Skip Invoice & Checkout
+        // 2. Internal / Exempt Teams: Try to create checkout anyway for testing, fallback to auto-success
         if (isInternalTeam) {
-            return { success: true, message: "Subscription updated (Internal Team - Free Tier)" };
+            console.log(`[SaveSubscription] Internal team ${team.slug} detected. Attempting to generate test checkout...`);
+            // We flow into the regular checkout logic below, but we'll return early ONLY if Surge fails.
         }
 
         // 3. Regular Flow: Create Invoice & Checkout
@@ -119,8 +120,10 @@ export async function saveSubscription(data: {
         const invoice = await prismadb.invoices.create({
             data: {
                 team_id: teamId,
+                assigned_user_id: session.user.id,
                 invoice_number: `SUB-${Date.now()}`,
                 invoice_amount: data.amount.toString(),
+                invoice_currency: "USD",
                 description: `Subscription: ${data.planName} (${data.interval})`,
                 status: "UNPAID",
                 payment_status: "UNPAID",
@@ -128,6 +131,8 @@ export async function saveSubscription(data: {
                 invoice_file_url: ""
             }
         });
+
+        console.log(`[SaveSubscription] Created invoice ${invoice.id} for subscription (${data.planName}, $${data.amount})`);
 
         // 3b. Also create a formal crm_BillingInvoice for the billing dashboard
         const periodStart = now;
@@ -151,14 +156,29 @@ export async function saveSubscription(data: {
             }
         });
 
-        // 3. Generate Surge Checkout Session
+        // 3c. Generate Surge Checkout Session
         const checkoutSession = await createSurgeCheckoutSession(teamId, invoice);
 
         if (checkoutSession && checkoutSession.url) {
-            return { success: true, url: checkoutSession.url };
+            // Sync the Surge link back to the invoice
+            await prismadb.invoices.update({
+                where: { id: invoice.id },
+                data: {
+                    surge_payment_id: checkoutSession.id,
+                    surge_payment_link: checkoutSession.url,
+                    payment_status: "PENDING"
+                }
+            });
+            return { success: true, url: checkoutSession.url, invoiceId: invoice.id };
         }
 
-        return { success: true, message: "Subscription updated, but payment link generation failed. Please check invoices." };
+        console.error(`[SaveSubscription] createSurgeCheckoutSession returned null for invoice ${invoice.id}. Check Surge API key, inventory creation, and order creation logs above.`);
+
+        if (isInternalTeam) {
+            return { success: true, message: "Subscription updated (Internal Team - Surge Link Generation Skipped/Failed)" };
+        }
+
+        return { error: "Subscription updated, but payment link generation failed. Please check invoices." };
 
     } catch (error) {
         console.error("Failed to save subscription:", error);

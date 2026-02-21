@@ -18,6 +18,8 @@ export const taskSchema = z.object({
   rossum_annotation_id: z.string().nullable(),
   rossum_annotation_json_url: z.string().nullable(),
   money_s3_url: z.string().nullable(),
+  surge_payment_id: z.string().nullable().optional(),
+  surge_payment_link: z.string().nullable().optional(),
 });
 
 export type Task = z.infer<typeof taskSchema>;

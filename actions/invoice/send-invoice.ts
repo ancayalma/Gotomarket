@@ -82,14 +82,125 @@ export async function sendInvoice(invoiceId: string, email: string) {
             });
         }
 
+        // Build rich email HTML with invoice details
+        const invoiceNumber = invoice.invoice_number || invoiceId;
+        const invoiceAmount = invoice.invoice_amount || "0.00";
+        const invoiceCurrency = invoice.invoice_currency || "USD";
+        const dueDate = invoice.date_due ? new Date(invoice.date_due).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "Upon Receipt";
+        const invoiceStatus = invoice.payment_status || invoice.status || "UNPAID";
+        const partnerName = invoice.partner || "Valued Client";
+        const appName = process.env.NEXT_PUBLIC_APP_NAME || "BasaltCRM";
+
+        const emailHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice #${invoiceNumber}</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0b;font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0b;padding:40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background:#111113;border-radius:16px;overflow:hidden;border:1px solid #27272a;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background:linear-gradient(135deg,#1e1b4b 0%,#0c0a1a 100%);padding:32px 40px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td>
+                                        <p style="margin:0;font-size:11px;letter-spacing:3px;color:#6366f1;font-weight:700;text-transform:uppercase;">INVOICE</p>
+                                        <h1 style="margin:8px 0 0;font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">#${invoiceNumber}</h1>
+                                    </td>
+                                    <td align="right" valign="top">
+                                        <div style="background:${invoiceStatus === 'PAID' ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)'};border:1px solid ${invoiceStatus === 'PAID' ? 'rgba(34,197,94,0.3)' : 'rgba(234,179,8,0.3)'};border-radius:8px;padding:6px 14px;display:inline-block;">
+                                            <span style="font-size:11px;font-weight:700;color:${invoiceStatus === 'PAID' ? '#22c55e' : '#eab308'};letter-spacing:1px;text-transform:uppercase;">${invoiceStatus}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Amount Section -->
+                    <tr>
+                        <td style="padding:32px 40px 24px;">
+                            <p style="margin:0 0 4px;font-size:11px;color:#71717a;font-weight:600;text-transform:uppercase;letter-spacing:2px;">Amount Due</p>
+                            <p style="margin:0;font-size:42px;font-weight:800;color:#ffffff;letter-spacing:-1px;font-family:'Courier New',monospace;">${invoiceAmount} <span style="font-size:18px;color:#71717a;font-weight:600;">${invoiceCurrency}</span></p>
+                        </td>
+                    </tr>
+
+                    <!-- Details Grid -->
+                    <tr>
+                        <td style="padding:0 40px 32px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background:#18181b;border-radius:12px;overflow:hidden;">
+                                <tr>
+                                    <td style="padding:16px 20px;border-bottom:1px solid #27272a;" width="50%">
+                                        <p style="margin:0 0 2px;font-size:10px;color:#52525b;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">Billed To</p>
+                                        <p style="margin:0;font-size:14px;color:#e4e4e7;font-weight:600;">${partnerName}</p>
+                                    </td>
+                                    <td style="padding:16px 20px;border-bottom:1px solid #27272a;" width="50%">
+                                        <p style="margin:0 0 2px;font-size:10px;color:#52525b;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">Due Date</p>
+                                        <p style="margin:0;font-size:14px;color:#e4e4e7;font-weight:600;">${dueDate}</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:16px 20px;" width="50%">
+                                        <p style="margin:0 0 2px;font-size:10px;color:#52525b;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">Invoice #</p>
+                                        <p style="margin:0;font-size:14px;color:#e4e4e7;font-weight:600;">${invoiceNumber}</p>
+                                    </td>
+                                    <td style="padding:16px 20px;" width="50%">
+                                        <p style="margin:0 0 2px;font-size:10px;color:#52525b;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">Settlement</p>
+                                        <p style="margin:0;font-size:14px;color:#e4e4e7;font-weight:600;">Basalt Surge</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- CTA Button -->
+                    <tr>
+                        <td style="padding:0 40px 32px;">
+                            <a href="${trackedPaymentLink}" target="_blank" style="display:block;background:linear-gradient(135deg,#4f46e5 0%,#6366f1 100%);color:#ffffff;text-decoration:none;text-align:center;padding:18px 32px;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:0.5px;">
+                                Pay ${invoiceAmount} ${invoiceCurrency} Now →
+                            </a>
+                            <p style="margin:12px 0 0;text-align:center;font-size:11px;color:#52525b;">Secure payment via encrypted settlement layer</p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background:#0c0c0e;padding:24px 40px;border-top:1px solid #1c1c1f;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td>
+                                        <p style="margin:0;font-size:10px;color:#3f3f46;font-weight:600;text-transform:uppercase;letter-spacing:2px;">Powered by ${appName} × Basalt Surge</p>
+                                    </td>
+                                    <td align="right">
+                                        <p style="margin:0;font-size:10px;color:#3f3f46;">SAQ-A Compliant</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    ${trackingPixel}
+</body>
+</html>`;
+
+        const emailText = `Invoice #${invoiceNumber}\n\nAmount Due: ${invoiceAmount} ${invoiceCurrency}\nBilled To: ${partnerName}\nDue: ${dueDate}\nStatus: ${invoiceStatus}\n\nPay now: ${paymentLink}\n\nSecure payment powered by Basalt Surge.`;
+
         // Send Email via AWS SES
         try {
             await sendEmailSES({
                 to: email,
-                subject: `Invoice #${invoice.invoice_number} Payment Link`,
-                text: `Here is your payment link for Invoice #${invoice.invoice_number}: ${paymentLink}`,
-                html: `<p>Here is your payment link for Invoice <strong>#${invoice.invoice_number}</strong>:</p>
-                       <p><a href="${trackedPaymentLink}">${paymentLink}</a></p>${trackingPixel}`,
+                subject: `Invoice #${invoiceNumber} — ${invoiceAmount} ${invoiceCurrency} Due`,
+                text: emailText,
+                html: emailHtml,
             });
             console.log(`[SendInvoice] Email sent to ${email} via SES (Tracked)`);
             return { success: true, message: "Email sent with tracking" };

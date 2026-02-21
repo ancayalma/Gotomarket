@@ -113,8 +113,8 @@ function applySecurityHeaders(response: NextResponse): void {
         "max-age=31536000; includeSubDomains; preload"
     );
 
-    // Prevent clickjacking
-    response.headers.set("X-Frame-Options", "DENY");
+    // Prevent clickjacking (SAMEORIGIN allows our own iFrames to work)
+    response.headers.set("X-Frame-Options", "SAMEORIGIN");
 
     // Prevent MIME type sniffing
     response.headers.set("X-Content-Type-Options", "nosniff");
@@ -143,11 +143,11 @@ function applySecurityHeaders(response: NextResponse): void {
             "font-src 'self' https://fonts.gstatic.com https://use.typekit.net https://p.typekit.net data:",
             "img-src 'self' data: blob: https: http: https://p.typekit.net",
             "connect-src 'self' https: wss: https://*.typekit.net",
-            "frame-src 'self' https://accounts.google.com",
+            "frame-src 'self' https://accounts.google.com https://surge.basalthq.com",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
-            "frame-ancestors 'none'",
+            "frame-ancestors 'self' https://surge.basalthq.com",
         ].join("; ")
     );
 }
