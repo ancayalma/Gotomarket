@@ -82,6 +82,7 @@ export const SurgeButton = ({ invoiceId, paymentLink, paymentStatus, amount, cur
                     url={activeLink}
                     amount={amount || "0"}
                     currency={currency || "USDC"}
+                    invoiceId={invoiceId}
                 />
             )}
         </>

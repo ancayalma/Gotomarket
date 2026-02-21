@@ -8,7 +8,9 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, ShieldCheck, ArrowUpRight } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
+import { verifySurgePayment } from "@/actions/invoice/verify-payment";
+import { toast } from "sonner";
 
 interface PaymentModalProps {
     open: boolean;
@@ -16,16 +18,20 @@ interface PaymentModalProps {
     url: string;
     amount: string | null;
     currency: string | null;
+    /** The invoice ID — required so we can verify payment on gateway-card-success */
+    invoiceId?: string;
 }
 
-export const PaymentModal = ({ open, onOpenChange, url, amount, currency }: PaymentModalProps) => {
+export const PaymentModal = ({ open, onOpenChange, url, amount, currency, invoiceId }: PaymentModalProps) => {
     const [loading, setLoading] = React.useState(true);
+    const [iframeHeight, setIframeHeight] = React.useState<number | null>(null);
+    const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
     // Auto-proxy legacy links to ensure they work in-modal
     const proxiedUrl = React.useMemo(() => {
         if (!url) return "";
 
-        // Check if we should use the proxy (Gold Standard check)
+        // SURGE_USE_PROXY=false → point directly at surge.basalthq.com
         const useProxy = process.env.NEXT_PUBLIC_SURGE_USE_PROXY !== 'false';
 
         if (url.startsWith("/api/surge-portal")) return url;
@@ -45,14 +51,72 @@ export const PaymentModal = ({ open, onOpenChange, url, amount, currency }: Paym
     // Safety timeout: If the portal is slow or onLoad is blocked, show anyway after 6s
     React.useEffect(() => {
         if (open) {
-            const timer = setTimeout(() => {
-                setLoading(false);
-            }, 6000);
+            const timer = setTimeout(() => setLoading(false), 6000);
             return () => clearTimeout(timer);
         } else {
             setLoading(true);
+            setIframeHeight(null);
         }
     }, [open]);
+
+    // ── PostMessage bridge ──────────────────────────────────────────────────
+    // Surge emits three events from the embedded portal iFrame:
+    //   gateway-card-success  → payment completed
+    //   gateway-card-cancel   → user cancelled
+    //   gateway-preferred-height → responsive height hint
+    React.useEffect(() => {
+        if (!open) return;
+
+        const handleMessage = async (event: MessageEvent) => {
+            // Only accept messages from surge.basalthq.com
+            if (!event.origin.includes("surge.basalthq.com")) return;
+
+            const { type, height } = (event.data ?? {}) as { type?: string; height?: number };
+
+            switch (type) {
+                case "gateway-card-success": {
+                    console.log("[PaymentModal] gateway-card-success received");
+                    onOpenChange(false);
+                    if (invoiceId) {
+                        try {
+                            const result = await verifySurgePayment(invoiceId);
+                            if (result.success) {
+                                toast.success("Payment verified! Thank you.");
+                            } else {
+                                toast.warning(result.message || "Payment received — verification pending.");
+                            }
+                        } catch {
+                            toast.warning("Payment received. Verification will update shortly.");
+                        }
+                    } else {
+                        toast.success("Payment completed!");
+                    }
+                    break;
+                }
+
+                case "gateway-card-cancel": {
+                    console.log("[PaymentModal] gateway-card-cancel received");
+                    onOpenChange(false);
+                    toast.info("Payment cancelled.");
+                    break;
+                }
+
+                case "gateway-preferred-height": {
+                    if (typeof height === "number" && height > 0) {
+                        console.log(`[PaymentModal] gateway-preferred-height: ${height}px`);
+                        setIframeHeight(height);
+                    }
+                    break;
+                }
+
+                default:
+                    break;
+            }
+        };
+
+        window.addEventListener("message", handleMessage);
+        return () => window.removeEventListener("message", handleMessage);
+    }, [open, invoiceId, onOpenChange]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -84,8 +148,10 @@ export const PaymentModal = ({ open, onOpenChange, url, amount, currency }: Paym
 
                     {proxiedUrl && (
                         <iframe
+                            ref={iframeRef}
                             src={proxiedUrl}
-                            className="flex-1 w-full h-full border-none"
+                            className="flex-1 w-full border-none transition-[height] duration-300"
+                            style={{ height: iframeHeight ? `${iframeHeight}px` : "100%" }}
                             allow="payment; publickey-credentials-get; clipboard-write; camera"
                             onLoad={() => {
                                 console.log("[PaymentModal] iFrame loaded, releasing UI");

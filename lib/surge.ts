@@ -155,6 +155,8 @@ export async function createSurgeCheckoutSession(tenantId: string, invoice: any)
             console.log(`[BasaltSurge] Proxy link generated (Secure Handshake active): ${paymentUrl}`);
         } else {
             // Return direct Surge URL (Target "Gold Standard" strategy)
+            // embedded=1 tells Surge to render in iFrame mode with PostMessage events
+            params.append('embedded', '1');
             paymentUrl = `https://surge.basalthq.com/portal/${receiptId}?${params.toString()}`;
             console.log(`[BasaltSurge] Direct link generated (Production whitelisting active): ${paymentUrl}`);
         }
