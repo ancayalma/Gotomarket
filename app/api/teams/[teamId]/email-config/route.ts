@@ -131,7 +131,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
         const config = await prismadb.teamEmailConfig.upsert({
             where: { team_id: params.teamId },
             create: {
-                team_id: params.teamId,
+                assigned_team: { connect: { id: params.teamId } },
                 provider,
                 from_email,
                 from_name,

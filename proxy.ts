@@ -138,7 +138,7 @@ function applySecurityHeaders(response: NextResponse): void {
         "Content-Security-Policy",
         [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://use.typekit.net",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://use.typekit.net https://static.cloudflareinsights.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://use.typekit.net https://p.typekit.net",
             "font-src 'self' https://fonts.gstatic.com https://use.typekit.net https://p.typekit.net data:",
             "img-src 'self' data: blob: https: http: https://p.typekit.net",
