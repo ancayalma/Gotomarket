@@ -36,6 +36,9 @@ import { BasicView as LeadBasicView } from "../../leads/[leadId]/components/Basi
 import { History, Info } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
+
 interface AccountDetailPageProps {
   params: Promise<{
     accountId: string;
@@ -45,6 +48,7 @@ interface AccountDetailPageProps {
 const AccountDetailPage = async (props: AccountDetailPageProps) => {
   const params = await props.params;
   const { accountId } = params;
+  const currentUserInfo = await getCurrentUserTeamId();
   const account: crm_Accounts | null = await getAccount(accountId);
   const opportunities: crm_Opportunities[] =
     await getOpportunitiesFullByAccountId(accountId);
@@ -68,7 +72,16 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
         <Container
           title={`Lead: ${lead?.firstName || ""} ${lead?.lastName || ""}`}
           description={lead?.company || "Lead Details"}
-        // action={<LeadScore leadData={lead} />} // Optional: Import LeadScore if needed
+          action={
+            <div className="flex items-center gap-2">
+              <RelocateEntityDialog
+                entityId={accountId}
+                entityType="LEAD"
+                entityName={`${lead?.firstName} ${lead?.lastName}`}
+                isGlobalAdmin={!!currentUserInfo?.isGlobalAdmin}
+              />
+            </div>
+          }
         >
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
             <div className="xl:col-span-5 space-y-6">
@@ -105,6 +118,16 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
     <Container
       title={`Account: ${account?.name}`}
       description={"Everything you need to know about sales potential"}
+      action={
+        <div className="flex items-center gap-2">
+          <RelocateEntityDialog
+            entityId={accountId}
+            entityType="ACCOUNT"
+            entityName={account?.name || "Account"}
+            isGlobalAdmin={!!currentUserInfo?.isGlobalAdmin}
+          />
+        </div>
+      }
     >
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
         {/* Left Sidebar: Account Info & Documents */}

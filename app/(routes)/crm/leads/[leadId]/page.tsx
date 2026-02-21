@@ -6,6 +6,8 @@ import { LeadTimeline } from "./components/LeadTimeline";
 import { LeadScore } from "../components/LeadScore";
 import { Separator } from "@/components/ui/separator";
 import { History, Info } from "lucide-react";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
 
 interface LeadDetailPageProps {
   params: Promise<{
@@ -16,6 +18,7 @@ interface LeadDetailPageProps {
 const LeadDetailPage = async (props: LeadDetailPageProps) => {
   const params = await props.params;
   const { leadId } = params;
+  const currentUserInfo = await getCurrentUserTeamId();
   const lead: any = await getLead(leadId);
 
   if (!lead) return <div>Lead not found</div>;
@@ -24,7 +27,17 @@ const LeadDetailPage = async (props: LeadDetailPageProps) => {
     <Container
       title={`${lead?.firstName} ${lead?.lastName}`}
       description={lead?.company || "Lead Details"}
-      action={<LeadScore leadData={lead} />}
+      action={
+        <div className="flex items-center gap-2">
+          <RelocateEntityDialog
+            entityId={leadId}
+            entityType="LEAD"
+            entityName={`${lead?.firstName} ${lead?.lastName}`}
+            isGlobalAdmin={!!currentUserInfo?.isGlobalAdmin}
+          />
+          <LeadScore leadData={lead} />
+        </div>
+      }
     >
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
         {/* Left Column: Details (4/12 or 5/12) */}

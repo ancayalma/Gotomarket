@@ -18,12 +18,16 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getEffectiveRoleModules } from "@/actions/permissions/get-effective-permissions";
 
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
+
 const OpportunityView = async (
   props: {
     params: Promise<{ opportunityId: string }>;
   }
 ) => {
   const params = await props.params;
+  const currentUserInfo = await getCurrentUserTeamId();
 
   const {
     opportunityId
@@ -100,7 +104,17 @@ const OpportunityView = async (
     <Container
       title={`Opportunity ${opportunity.name} - detail view`}
       description={"Description - " + opportunity.description}
-      action={<OpportunityActions opportunityId={opportunity.id} data={opportunity} status={opportunity.status} hasAccount={!!opportunity.account} />}
+      action={
+        <div className="flex items-center gap-2">
+          <RelocateEntityDialog
+            entityId={opportunityId}
+            entityType="OPPORTUNITY"
+            entityName={opportunity.name || "Opportunity"}
+            isGlobalAdmin={!!currentUserInfo?.isGlobalAdmin}
+          />
+          <OpportunityActions opportunityId={opportunity.id} data={opportunity} status={opportunity.status} hasAccount={!!opportunity.account} />
+        </div>
+      }
     >
       <div className="space-y-5">
         {hasAccess('opportunities.detail.info') && <BasicView data={opportunity} />}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { LayoutDashboard, Users, MessageSquare, Mail, Copy, Shield, Phone, AtSign, Building2 } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, Mail, Copy, Shield, Phone, AtSign, Building2, Bot } from "lucide-react";
 import { toast } from "sonner";
 
 import TeamSettingsForm from "./TeamSettingsForm";
@@ -15,7 +15,7 @@ import { TeamAiSettings } from "@/components/ai/TeamAiSettings";
 import SystemResendConfig from "@/components/system/SystemResendConfig";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Bot } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { NavigationCard } from "../../_components/NavigationCard";
 
@@ -184,6 +184,50 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
                             {team.slug}
                         </Badge>
                     </div>
+
+                    {currentUserInfo?.isGlobalAdmin && (
+                        <div className="flex items-center gap-3 border-l border-white/5 pl-10 ml-auto">
+                            {currentUserInfo.isImpersonating && currentUserInfo.teamId === team.id ? (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-[10px] border-amber-500/50 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20"
+                                    onClick={async () => {
+                                        const { switchTeam } = await import("@/actions/teams/switch-team");
+                                        const res = await switchTeam(null);
+                                        if (res.success) {
+                                            toast.success(res.message);
+                                            window.location.reload();
+                                        } else {
+                                            toast.error(res.error || "Failed to switch back");
+                                        }
+                                    }}
+                                >
+                                    <Shield className="w-3 h-3 mr-1.5" />
+                                    Return to Home Team
+                                </Button>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-[10px] border-blue-500/50 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20"
+                                    onClick={async () => {
+                                        const { switchTeam } = await import("@/actions/teams/switch-team");
+                                        const res = await switchTeam(team.id);
+                                        if (res.success) {
+                                            toast.success(res.message);
+                                            window.location.reload();
+                                        } else {
+                                            toast.error(res.error || "Failed to switch team");
+                                        }
+                                    }}
+                                >
+                                    <Shield className="w-3 h-3 mr-1.5" />
+                                    Login as this Team
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
 
@@ -214,6 +258,7 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
                         teamSlug={team.slug}
                         members={team.members}
                         isSuperAdmin={isOrgAdmin}
+                        isGlobalAdmin={currentUserInfo?.isGlobalAdmin}
                         ownerId={team.owner_id}
                     />
                 )}

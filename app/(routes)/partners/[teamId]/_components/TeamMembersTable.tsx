@@ -29,6 +29,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 
+import { Label } from "@/components/ui/label";
 import { updateMemberRole, removeMember, searchUsers, addMember, changePassword, toggleUserStatus } from "@/actions/teams/member-actions";
 import { TeamChangeRoleModal, RoleOption } from "./TeamChangeRoleModal";
 
@@ -70,11 +71,11 @@ type Props = {
     teamSlug: string;
     members: Member[];
     isSuperAdmin?: boolean;
+    isGlobalAdmin?: boolean;
     ownerId?: string | null;
 };
 
-const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, ownerId }: Props) => {
-    // ... existing hook logic ... 
+const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdmin, ownerId }: Props) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -87,6 +88,33 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, ownerId }: 
     // Role Change State
     const [roleModalOpen, setRoleModalOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
+    // Migration State
+    const [migrationOpen, setMigrationOpen] = useState(false);
+    const [selectedMigrationMember, setSelectedMigrationMember] = useState<Member | null>(null);
+    const [newTeamName, setNewTeamName] = useState("");
+    const [newTeamSlug, setNewTeamSlug] = useState("");
+
+    // Move to Existing Team State
+    const [moveExistingOpen, setMoveExistingOpen] = useState(false);
+    const [allTeams, setAllTeams] = useState<any[]>([]);
+    const [teamSearchQuery, setTeamSearchQuery] = useState("");
+    const [selectedTargetTeamId, setSelectedTargetTeamId] = useState("");
+    const [selectedTargetRole, setSelectedTargetRole] = useState("MEMBER");
+    const [isFetchingTeams, setIsFetchingTeams] = useState(false);
+
+    const fetchAllTeams = async () => {
+        setIsFetchingTeams(true);
+        try {
+            const { getTeams } = await import("@/actions/teams/get-teams");
+            const data = await getTeams();
+            setAllTeams(data);
+        } catch (error) {
+            toast.error("Failed to load teams");
+        } finally {
+            setIsFetchingTeams(false);
+        }
+    };
 
     // Password Reset State
     const [passwordOpen, setPasswordOpen] = useState(false);
@@ -267,7 +295,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, ownerId }: 
                     currentRole={selectedMember.team_role || "MEMBER"}
                     onConfirm={handleRoleUpdate}
                     allowedRoles={
-                        ["ledger1", "basalthq", "basalt"].includes(teamSlug) && isSuperAdmin
+                        ["ledger1", "basalthq", "basalt"].includes(teamSlug) && isGlobalAdmin
                             ? [PLATFORM_ADMIN_ROLE, ...BASE_ROLES]
                             : BASE_ROLES
                     }
@@ -353,6 +381,21 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, ownerId }: 
                                                 </DropdownMenuItem>
                                             )}
 
+                                            {isGlobalAdmin && member.team_role !== "OWNER" && (
+                                                <>
+                                                    <DropdownMenuItem className="text-blue-600" onClick={() => { setSelectedMigrationMember(member); setMigrationOpen(true); }}>
+                                                        <Shield className="w-4 h-4 mr-2" /> Spawn New Team
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="text-amber-600" onClick={() => {
+                                                        setSelectedMigrationMember(member);
+                                                        setMoveExistingOpen(true);
+                                                        if (allTeams.length === 0) fetchAllTeams();
+                                                    }}>
+                                                        <Shield className="w-4 h-4 mr-2" /> Move to Team
+                                                    </DropdownMenuItem>
+                                                </>
+                                            )}
+
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem className="text-red-600" onClick={() => handleRemove(member.id)}>
                                                 <Trash className="w-4 h-4 mr-2" /> Remove from Team
@@ -383,6 +426,169 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, ownerId }: 
                     )}
                 </div>
             </CardContent>
+
+            {/* Migration Dialog */}
+            <Dialog open={migrationOpen} onOpenChange={setMigrationOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Spawn New Team</DialogTitle>
+                        <DialogDescription>
+                            Create a new team/bucket and move {selectedMigrationMember?.name || selectedMigrationMember?.email} to it as the Owner.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Team Name</Label>
+                            <Input
+                                placeholder="e.g. Acme Corp"
+                                value={newTeamName}
+                                onChange={(e) => {
+                                    setNewTeamName(e.target.value);
+                                    // Auto-generate slug
+                                    if (!newTeamSlug) {
+                                        setNewTeamSlug(e.target.value.toLowerCase().replace(/ /g, "-").replace(/[^\w-]/g, ""));
+                                    }
+                                }}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Team Slug / ID</Label>
+                            <Input
+                                placeholder="e.g. acme-corp"
+                                value={newTeamSlug}
+                                onChange={(e) => setNewTeamSlug(e.target.value.toLowerCase().replace(/ /g, "-").replace(/[^\w-]/g, ""))}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setMigrationOpen(false)}>Cancel</Button>
+                        <Button
+                            onClick={async () => {
+                                if (!selectedMigrationMember || !newTeamName || !newTeamSlug) return;
+                                try {
+                                    setIsLoading(true);
+                                    const { moveMemberToNewTeam } = await import("@/actions/teams/move-member-to-new-team");
+                                    const res = await moveMemberToNewTeam(selectedMigrationMember.id, newTeamName, newTeamSlug);
+                                    if (res.error) {
+                                        toast.error(res.error);
+                                    } else {
+                                        toast.success(res.message);
+                                        setMigrationOpen(false);
+                                        setNewTeamName("");
+                                        setNewTeamSlug("");
+                                        router.refresh();
+                                    }
+                                } catch (error) {
+                                    toast.error("An error occurred during migration");
+                                } finally {
+                                    setIsLoading(false);
+                                }
+                            }}
+                            disabled={isLoading || !newTeamName || !newTeamSlug}
+                        >
+                            Move to New Team
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* Move to Existing Team Dialog */}
+            <Dialog open={moveExistingOpen} onOpenChange={setMoveExistingOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 font-bold uppercase tracking-tight">
+                            <Shield className="w-5 h-5 text-amber-500" />
+                            Move to Existing Team
+                        </DialogTitle>
+                        <DialogDescription className="text-xs">
+                            Relocate {selectedMigrationMember?.name || selectedMigrationMember?.email} to an existing team bucket.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Target Team</Label>
+                            <div className="space-y-2">
+                                <Input
+                                    placeholder="Search teams by name or slug..."
+                                    value={teamSearchQuery}
+                                    onChange={(e) => setTeamSearchQuery(e.target.value)}
+                                    className="bg-white/5 h-10 text-sm"
+                                />
+                                <div className="border border-white/10 rounded-lg h-[180px] overflow-y-auto bg-black/20 backdrop-blur-sm">
+                                    {isFetchingTeams ? (
+                                        <p className="text-xs text-center py-8 text-muted-foreground">Loading teams...</p>
+                                    ) : (
+                                        allTeams
+                                            .filter(t => t.id !== teamId) // Don't show current team
+                                            .filter(t => t.name.toLowerCase().includes(teamSearchQuery.toLowerCase()) || t.slug.toLowerCase().includes(teamSearchQuery.toLowerCase()))
+                                            .map(team => (
+                                                <div
+                                                    key={team.id}
+                                                    onClick={() => setSelectedTargetTeamId(team.id)}
+                                                    className={`p-3 flex flex-col cursor-pointer transition-all border-b border-white/5 last:border-0 ${selectedTargetTeamId === team.id ? "bg-amber-500/10 border-l-4 border-amber-500" : "hover:bg-white/5"}`}
+                                                >
+                                                    <span className="text-sm font-bold tracking-tight">{team.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground uppercase font-mono tracking-tighter">{team.slug}</span>
+                                                </div>
+                                            ))
+                                    )}
+                                    {!isFetchingTeams && allTeams.length > 0 && allTeams.filter(t => t.id !== teamId).filter(t => t.name.toLowerCase().includes(teamSearchQuery.toLowerCase()) || t.slug.toLowerCase().includes(teamSearchQuery.toLowerCase())).length === 0 && (
+                                        <p className="text-xs text-center py-8 text-muted-foreground">No matching teams found.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Assigned Role</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {["ADMIN", "MEMBER"].map(role => (
+                                    <Button
+                                        key={role}
+                                        type="button"
+                                        variant={selectedTargetRole === role ? "default" : "outline"}
+                                        className={`h-10 text-xs font-bold uppercase tracking-widest transition-all ${selectedTargetRole === role ? "bg-amber-500 hover:bg-amber-600 text-black border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "border-white/10 hover:bg-white/5"}`}
+                                        onClick={() => setSelectedTargetRole(role)}
+                                    >
+                                        {role}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="ghost" onClick={() => setMoveExistingOpen(false)} disabled={isLoading} className="text-xs h-10">
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={async () => {
+                                if (!selectedMigrationMember || !selectedTargetTeamId) return;
+                                try {
+                                    setIsLoading(true);
+                                    const { moveMemberToExistingTeam } = await import("@/actions/teams/move-member-to-existing-team");
+                                    const res = await moveMemberToExistingTeam(selectedMigrationMember.id, selectedTargetTeamId, selectedTargetRole);
+                                    if (res.error) {
+                                        toast.error(res.error);
+                                    } else {
+                                        toast.success(res.message);
+                                        setMoveExistingOpen(false);
+                                        setSelectedTargetTeamId("");
+                                        setTeamSearchQuery("");
+                                        router.refresh();
+                                    }
+                                } catch (error) {
+                                    toast.error("An error occurred during transfer");
+                                } finally {
+                                    setIsLoading(false);
+                                }
+                            }}
+                            disabled={isLoading || !selectedTargetTeamId}
+                            className="bg-amber-500 hover:bg-amber-600 text-black font-bold uppercase tracking-wider h-10 px-8 shadow-lg shadow-amber-500/20"
+                        >
+                            Complete Transfer
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card >
     );
 };

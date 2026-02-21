@@ -7,16 +7,19 @@ import { getModules } from "@/actions/get-modules";
 import { prismadb } from "@/lib/prisma";
 import { getCaseStats } from "@/actions/crm/cases/get-case-stats";
 import { getDictionary } from "@/dictionaries";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 const SideBar = async () => {
-  const session = await getServerSession(authOptions);
+  const currentUserInfo = await getCurrentUserTeamId();
+  if (!currentUserInfo) return null;
 
-  if (!session?.user?.id) return null;
+  const session = await getServerSession(authOptions);
+  if (!session) return null;
 
   const [modules, user, caseStats, dbNavConfig] = await Promise.all([
     getModules(),
     (prismadb.users as any).findUnique({
-      where: { id: session.user.id },
+      where: { id: currentUserInfo.userId },
       include: {
         assigned_team: {
           include: { assigned_plan: true }
@@ -63,6 +66,8 @@ const SideBar = async () => {
     isPartnerAdmin={isPartnerAdmin}
     teamRole={teamRole}
     serviceBadge={caseStats?.openCases || 0}
+    isImpersonating={currentUserInfo.isImpersonating}
+    impersonatedTeamName={team?.name}
   />;
 };
 export default SideBar;

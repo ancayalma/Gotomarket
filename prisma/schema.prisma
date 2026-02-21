@@ -981,6 +981,7 @@ model Users {
   navigation_preferences     NavigationConfig[]
   ai_usage_logs              crm_AiUsageLog[]    @relation(name: "AiUsageUser")
   quickLaunchDismissed       Boolean             @default(false)
+  dismissedAIInsights        String[]
 }
 
 model Team {

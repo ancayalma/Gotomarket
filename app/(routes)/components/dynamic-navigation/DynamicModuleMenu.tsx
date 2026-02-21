@@ -14,7 +14,8 @@ import {
     Mail,
     Wrench,
     Globe,
-    Calendar
+    Calendar,
+    Shield
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -35,6 +36,8 @@ type Props = {
     isPartnerAdmin: boolean;
     teamRole?: string;
     serviceBadge?: number; // Count for service cases
+    isImpersonating?: boolean;
+    impersonatedTeamName?: string;
 };
 
 const sidebarVariants = {
@@ -66,8 +69,11 @@ const DynamicModuleMenu = ({
     features,
     isPartnerAdmin,
     teamRole = "MEMBER",
-    serviceBadge = 0
+    serviceBadge = 0,
+    isImpersonating = false,
+    impersonatedTeamName
 }: Props) => {
+    // ... hooks ...
     const [open, setOpen] = useState(true);
     const [isMounted, setIsMounted] = useState(false);
     const pathname = usePathname();
@@ -85,6 +91,22 @@ const DynamicModuleMenu = ({
         setOpen(next);
         try { localStorage.setItem("sidebar-open", String(next)); } catch (_) { }
     };
+    // ...
+
+    // (Inside the motion.div, after logo)
+    // ─── Impersonation Indicator ───
+    const handleSwitchBack = async () => {
+        try {
+            const { switchTeam } = await import("@/actions/teams/switch-team");
+            const res = await switchTeam(null);
+            if (res.success) {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    // ...
 
     // ─── Permission Logic ───
     const hasFeature = (f?: string) => !f || features.includes("all") || features.includes(f);
@@ -220,6 +242,32 @@ const DynamicModuleMenu = ({
                             <ThemedLogo variant="compact" className="h-8 w-auto object-contain" />
                         </motion.div>
                     </div>
+
+                    {/* ─── Impersonation Indicator ─── */}
+                    {isImpersonating && (
+                        <div className={cn(
+                            "mx-2 mb-2 p-2 rounded-xl border border-amber-500/20 bg-amber-500/5 transition-all overflow-hidden shrink-0",
+                            !open ? "px-1" : "px-2"
+                        )}>
+                            <div className="flex items-center gap-2">
+                                <Shield className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                {open && (
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider truncate">God Mode</p>
+                                        <p className="text-[9px] text-muted-foreground truncate">{impersonatedTeamName}</p>
+                                    </div>
+                                )}
+                            </div>
+                            {open && (
+                                <button
+                                    onClick={handleSwitchBack}
+                                    className="mt-2 w-full py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-[9px] font-bold uppercase transition-colors"
+                                >
+                                    Return to Home
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                     {/* ─── Toggle Button ─── */}
                     <button

@@ -48,9 +48,6 @@ export const getLeadPoolsStats = async () => {
                 _count: {
                     id: true,
                 },
-                _sum: {
-                    // Note: We'll count by status presence since we don't have direct counters on Leads for aggregate
-                }
             });
 
             // More precise counts

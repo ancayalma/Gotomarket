@@ -15,15 +15,18 @@ import DocumentsView from "../../components/DocumentsView";
 import { LeadTimeline } from "../../leads/[leadId]/components/LeadTimeline";
 import { History, Info } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getEffectiveRoleModules } from "@/actions/permissions/get-effective-permissions";
 
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
+
 const ContactViewPage = async (props: any) => {
   const params = await props.params;
   const { contactId } = params;
+  const currentUserInfo = await getCurrentUserTeamId();
 
   // Permission Logic
   const session = await getServerSession(authOptions);
@@ -70,6 +73,14 @@ const ContactViewPage = async (props: any) => {
     <Container
       title={`Contact: ${contact?.first_name} ${contact?.last_name}`}
       description={"Everything you need to know about this contact"}
+      action={
+        <RelocateEntityDialog
+          entityId={contactId}
+          entityType="CONTACT"
+          entityName={`${contact?.first_name} ${contact?.last_name}`}
+          isGlobalAdmin={!!currentUserInfo?.isGlobalAdmin}
+        />
+      }
     >
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
         {/* Left Sidebar: Contact Info */}
