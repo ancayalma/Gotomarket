@@ -4,7 +4,6 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createMistral } from "@ai-sdk/mistral";
 import { prismadb } from "@/lib/prisma";
-import { AiProvider } from "@prisma/client";
 
 export function isReasoningModel(modelId: string | undefined | null): boolean {
     if (!modelId) return false;
@@ -27,75 +26,101 @@ export async function getAiSdkModel(userId: string | "system") {
         return url.endsWith('/') ? url.slice(0, -1) : url;
     };
 
-    // --- Provider Factory Helper ---
-    const createProviderModel = (provider: AiProvider, modelId: string, apiKey?: string, resourceName?: string, baseURL?: string) => {
-        switch (provider) {
-            case "OPENAI": {
-                const openai = createOpenAI({
-                    apiKey: apiKey || process.env.OPENAI_API_KEY,
-                    baseURL: baseURL || cleanUrl(process.env.OPENAI_BASE_URL),
-                });
-                return openai(modelId);
+    // --- Dynamic Provider Factory ---
+    // Uses sdkType from AiProviderRegistry to determine which SDK to use.
+    // Most modern LLM providers are OpenAI-compatible.
+    const createProviderModel = async (providerSlug: string, modelId: string, apiKey?: string, resourceName?: string, baseURL?: string) => {
+        // Look up provider registry for sdkType and default baseUrl
+        let sdkType = "OPENAI_COMPATIBLE";
+        let registryBaseUrl: string | undefined;
+        try {
+            const registry = await prismadb.aiProviderRegistry.findUnique({ where: { slug: providerSlug } });
+            if (registry) {
+                sdkType = registry.sdkType;
+                registryBaseUrl = registry.baseUrl || undefined;
             }
+        } catch { /* Registry may not be seeded yet, fall back to slug-based matching */ }
+
+        // Fallback: infer sdkType from known built-in provider slugs
+        if (!sdkType || sdkType === "OPENAI_COMPATIBLE") {
+            const slugOverrides: Record<string, string> = {
+                ANTHROPIC: "ANTHROPIC",
+                GOOGLE: "GOOGLE",
+                AZURE: "AZURE",
+                MISTRAL: "MISTRAL",
+            };
+            sdkType = slugOverrides[providerSlug] || "OPENAI_COMPATIBLE";
+        }
+
+        const effectiveBaseURL = baseURL || registryBaseUrl;
+
+        // Known provider-specific base URLs (fallbacks for built-in providers)
+        const builtInBaseUrls: Record<string, string> = {
+            GROK: "https://api.x.ai/v1",
+            DEEPSEEK: "https://api.deepseek.com",
+            PERPLEXITY: "https://api.perplexity.ai",
+        };
+
+        // Known env var keys per provider slug
+        const envKeyMap: Record<string, string> = {
+            OPENAI: "OPENAI_API_KEY",
+            AZURE: "AZURE_OPENAI_API_KEY",
+            ANTHROPIC: "ANTHROPIC_API_KEY",
+            GOOGLE: "GOOGLE_GENERATIVE_AI_API_KEY",
+            GROK: "XAI_API_KEY",
+            DEEPSEEK: "DEEPSEEK_API_KEY",
+            PERPLEXITY: "PERPLEXITY_API_KEY",
+            MISTRAL: "MISTRAL_API_KEY",
+        };
+        const envKey = envKeyMap[providerSlug];
+        const effectiveApiKey = apiKey || (envKey ? process.env[envKey] : undefined);
+
+        switch (sdkType) {
             case "AZURE": {
                 const effectiveResourceName = resourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
                 const apiVersion = process.env.AZURE_OPENAI_API_VERSION || "2024-05-01-preview";
-
                 console.log(`[AZURE_DEBUG] Using Resource: ${effectiveResourceName} (Version: ${apiVersion})`);
-
                 const azure = createAzure({
-                    apiKey: apiKey || process.env.AZURE_OPENAI_API_KEY,
+                    apiKey: effectiveApiKey!,
                     resourceName: effectiveResourceName,
                     apiVersion: apiVersion,
                 });
                 return azure(modelId);
             }
-            case "GOOGLE": {
-                const google = createGoogleGenerativeAI({
-                    apiKey: apiKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-                    baseURL: baseURL, // Google might not use this standard prop, but good to have
-                });
-                return google(modelId);
-            }
             case "ANTHROPIC": {
                 const anthropic = createAnthropic({
-                    apiKey: apiKey || process.env.ANTHROPIC_API_KEY,
-                    baseURL: baseURL,
+                    apiKey: effectiveApiKey || process.env.ANTHROPIC_API_KEY,
+                    baseURL: effectiveBaseURL,
                 });
                 return anthropic(modelId);
             }
-            case "GROK": {
-                // xAI (Grok) uses an OpenAI-compatible API
-                const grok = createOpenAI({
-                    name: 'grok',
-                    baseURL: baseURL || 'https://api.x.ai/v1',
-                    apiKey: apiKey || process.env.XAI_API_KEY,
+            case "GOOGLE": {
+                const google = createGoogleGenerativeAI({
+                    apiKey: effectiveApiKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+                    baseURL: effectiveBaseURL,
                 });
-                return grok(modelId);
-            }
-            case "DEEPSEEK": {
-                // DeepSeek uses an OpenAI-compatible API
-                const deepseek = createOpenAI({
-                    name: 'deepseek',
-                    baseURL: baseURL || 'https://api.deepseek.com',
-                    apiKey: apiKey || process.env.DEEPSEEK_API_KEY,
-                });
-                return deepseek(modelId);
+                return google(modelId);
             }
             case "MISTRAL": {
                 const mistral = createMistral({
-                    apiKey: apiKey || process.env.MISTRAL_API_KEY,
-                    baseURL: baseURL,
+                    apiKey: effectiveApiKey || process.env.MISTRAL_API_KEY,
+                    baseURL: effectiveBaseURL,
                 });
                 return mistral(modelId);
             }
-            default:
-                console.warn(`${DEBUG_PREFIX} Unknown provider ${provider}, falling back to OpenAI`);
-                const fallback = createOpenAI({
-                    apiKey: process.env.OPENAI_API_KEY,
-                    baseURL: cleanUrl(process.env.OPENAI_BASE_URL)
+            case "OPENAI_COMPATIBLE":
+            case "CUSTOM":
+            default: {
+                // Covers: OpenAI, Grok, DeepSeek, Perplexity, Groq, Together,
+                // Fireworks, HuggingFace, Ollama, LM Studio, vLLM, and any
+                // OpenAI-compatible endpoint.
+                const openai = createOpenAI({
+                    name: providerSlug.toLowerCase(),
+                    apiKey: effectiveApiKey || process.env.OPENAI_API_KEY,
+                    baseURL: effectiveBaseURL || builtInBaseUrls[providerSlug] || cleanUrl(process.env.OPENAI_BASE_URL),
                 });
-                return fallback(modelId);
+                return openai(modelId);
+            }
         }
     };
 

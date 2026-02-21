@@ -95,7 +95,7 @@ export async function POST(req: Request) {
     });
 
     // Send Emails
-    const sendFrom = "sales@basalthq.com";
+    const sendFrom = process.env.EMAIL_FROM || "sales@basalthq.com";
 
     // 1. Email to Sales Team (sales@basalthq.com)
     try {

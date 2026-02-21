@@ -1,9 +1,9 @@
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import sendEmail from "@/lib/sendmail";
 import { fillXmlTemplate } from "@/lib/xml-generator";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { sendTeamEmail } from "@/lib/email/team-mailer";
 
 export async function GET(req: Request, props: { params: Promise<{ invoiceId: string }> }) {
   const params = await props.params;
@@ -59,12 +59,10 @@ export async function GET(req: Request, props: { params: Promise<{ invoiceId: st
   }
 
   if (accountantEmail.email_accountant) {
-    await sendEmail({
-      from: process.env.EMAIL_FROM,
+    await sendTeamEmail(session.user.team_id as string, {
       to: accountantEmail.email_accountant,
       subject: `${process.env.NEXT_PUBLIC_APP_NAME} invoice in XML format for ERP system`,
       text: message,
-      //@ts-ignore
       attachments: [
         {
           filename: `invoice-${invoiceId}.xml`,

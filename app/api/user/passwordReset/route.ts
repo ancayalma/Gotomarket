@@ -1,5 +1,3 @@
-"use server";
-
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 
@@ -7,13 +5,10 @@ import { generateRandomPassword } from "@/lib/utils";
 
 import { hash } from "bcryptjs";
 import PasswordResetEmail from "@/emails/PasswordReset";
-import resendHelper from "@/lib/resend";
+import { render } from "@react-email/render";
+import sendEmail from "@/lib/sendmail";
 
 export async function POST(req: Request) {
-  /*
-  Resend.com function init - this is a helper function that will be used to send emails
-  */
-  const resend = await resendHelper();
   try {
     const body = await req.json();
     const { email } = body;
@@ -60,32 +55,29 @@ export async function POST(req: Request) {
       return new NextResponse("Password not updated!", {
         status: 401,
       });
-    } else {
-      if (resend) {
-        try {
-          const data = await resend.emails.send({
-            from: process.env.EMAIL_FROM!,
-            to: user.email,
-            subject: "BasaltCRM - Password reset",
-            text: "", // Add this line to fix the types issue
-            react: PasswordResetEmail({
-              username: user?.name!,
-              avatar: user.avatar,
-              email: user.email,
-              password: password,
-              userLanguage: "en",
-            }),
-          });
-          console.log(data, "data");
-          console.log("Email sent to: " + user.email);
-        } catch (e) {
-          console.log("[USER_PASSWORD_CHANGE_EMAIL_ERROR]", e);
-        }
-      } else {
-        console.log(
-          "RESEND_API_KEY not configured; skipping password reset email"
-        );
-      }
+    }
+
+    try {
+      const emailHtml = await render(
+        PasswordResetEmail({
+          username: user?.name!,
+          avatar: user.avatar,
+          email: user.email,
+          password: password,
+          userLanguage: "en",
+        })
+      );
+
+      await sendEmail({
+        to: user.email,
+        subject: "BasaltCRM - Password reset",
+        text: `Your new password is: ${password}`,
+        html: emailHtml,
+        replyTo: "support@basalthq.com"
+      });
+      console.log("Email sent to: " + user.email);
+    } catch (e) {
+      console.log("[USER_PASSWORD_CHANGE_EMAIL_ERROR]", e);
     }
 
     return NextResponse.json({ message: "Password changed!", status: true });

@@ -100,12 +100,12 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
             <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                     <Mail className="w-5 h-5 text-primary" />
-                    Team Email Settings
+                    Team Email Settings (Bring Your Own Email)
                 </CardTitle>
                 <CardDescription>
-                    Configure the email address used for mass outreach campaigns.
+                    Configure your own email service (AWS SES, Resend, SMTP, etc.) to handle client outreach.
                     <br />
-                    We use AWS SES for high-deliverability. You must verify ownership of this email.
+                    <span className="text-red-500 font-semibold">Mandatory:</span> Mass outreach, quotes, and invoices WILL NOT be sent until a verified custom email is configured here. This protects the system from being blacklisted.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

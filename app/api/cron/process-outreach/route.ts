@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
-import { sendEmailSES } from "@/lib/aws/ses";
+import { sendTeamEmail } from "@/lib/email/team-mailer";
 import { OutreachItemStatus } from "@prisma/client";
 import { requireCronAuth } from "@/lib/api-auth-guard";
 
@@ -53,40 +53,23 @@ export async function GET(req: Request) {
                     throw new Error("Lead has no email");
                 }
 
-                // Determine Sender Identity
-                let fromAddress = process.env.SES_FROM_ADDRESS; // Default System Address
-
-                if (item.assigned_campaign?.team_id) {
-                    // Check for Team Custom Email
-                    const teamConfig = await prismadb.teamEmailConfig.findUnique({
-                        where: { team_id: item.assigned_campaign.team_id }
-                    });
-
-                    // Only use if explicitly VERIFIED
-                    if (teamConfig && teamConfig.verification_status === "VERIFIED") {
-                        fromAddress = teamConfig.from_email;
-                    }
-                }
-
-                if (!fromAddress) {
-                    throw new Error("No valid sender address available");
+                if (!item.assigned_campaign?.team_id) {
+                    throw new Error("No team associated with campaign");
                 }
 
                 // Prepare Content 
-                // (In a real scenario, we might render dynamic content here if not already rendered)
-                // Assuming body_html or body_text is ready in the item
                 const subject = item.subject || "No Subject";
                 const html = item.body_html || item.body_text || "";
 
-                // Send via SES
-                const sesResult = await sendEmailSES({
-                    to: item.assigned_lead.email,
-                    from: fromAddress,
+                // Send via Team-aware mailer (Strict enforcement of BYO Email)
+                await sendTeamEmail(item.assigned_campaign.team_id as string, {
+                    to: item.assigned_lead.email as string,
                     subject: subject,
                     html: html,
-                    text: item.body_text || undefined,
-                    // replyTo: ... (could add reply threading later)
+                    text: item.body_text || "",
                 });
+
+                const messageId = `outreach_${item.id}_${Date.now()}`;
 
                 // Update Status: SENT
                 await prismadb.crm_Outreach_Items.update({
@@ -94,7 +77,7 @@ export async function GET(req: Request) {
                     data: {
                         status: "SENT",
                         sentAt: new Date(),
-                        message_id: sesResult.messageId,
+                        message_id: messageId,
                         error_message: null
                     }
                 });
@@ -106,7 +89,7 @@ export async function GET(req: Request) {
                         type: "EMAIL_SENT",
                         metadata: {
                             campaignId: item.assigned_campaign?.id,
-                            messageId: sesResult.messageId,
+                            messageId: messageId,
                             subject: subject
                         }
                     }

@@ -5,15 +5,11 @@ import { authOptions } from "@/lib/auth";
 
 import NewTaskFromCRMEmail from "@/emails/NewTaskFromCRM";
 import NewTaskFromCRMToWatchersEmail from "@/emails/NewTaskFromCRMToWatchers";
-import resendHelper from "@/lib/resend";
+import sendEmail from "@/lib/sendmail";
+import { render } from "@react-email/render";
 
 //Create new task from CRM in project route
 export async function POST(req: Request) {
-  /*
-  Resend.com function init - this is a helper function that will be used to send emails
-  */
-  const resend = await resendHelper();
-
   const session = await getServerSession(authOptions);
   const body = await req.json();
   const { title, user, priority, content, account, dueDateAt } = body;
@@ -51,21 +47,21 @@ export async function POST(req: Request) {
 
         //console.log(notifyRecipient, "notifyRecipient");
 
-        await resend.emails.send({
-          from:
-            process.env.NEXT_PUBLIC_APP_NAME +
-            " <" +
-            process.env.EMAIL_FROM +
-            ">",
-          to: notifyRecipient?.email!,
-          subject: `New task - ${title}.`,
-          text: "", // Add this line to fix the types issue
-          react: NewTaskFromCRMEmail({
+        const emailHtml = await render(
+          NewTaskFromCRMEmail({
             taskFromUser: session.user.name!,
             username: notifyRecipient?.name!,
             userLanguage: "en",
             taskData: task,
-          }),
+          })
+        );
+
+        await sendEmail({
+          from: process.env.EMAIL_FROM,
+          to: notifyRecipient?.email!,
+          subject: `New task - ${title}.`,
+          text: `New task assigned from ${session.user.name}: ${title}`,
+          html: emailHtml,
         });
         //console.log("Email sent to user: ", notifyRecipient?.email!);
       } catch (error) {
@@ -94,21 +90,21 @@ export async function POST(req: Request) {
           },
         });
         console.log("Send email to user: ", user?.email!);
-        await resend.emails.send({
-          from:
-            process.env.NEXT_PUBLIC_APP_NAME +
-            " <" +
-            process.env.EMAIL_FROM +
-            ">",
-          to: user?.email!,
-          subject: `New task - ${title}.`,
-          text: "", // Add this line to fix the types issue
-          react: NewTaskFromCRMToWatchersEmail({
+        const emailHtml = await render(
+          NewTaskFromCRMToWatchersEmail({
             taskFromUser: session.user.name!,
             username: user?.name!,
             userLanguage: "en",
             taskData: task,
-          }),
+          })
+        );
+
+        await sendEmail({
+          from: process.env.EMAIL_FROM,
+          to: user?.email!,
+          subject: `New task - ${title}.`,
+          text: `New task created by ${session.user.name}: ${title}`,
+          html: emailHtml,
         });
       }
     } catch (error) {

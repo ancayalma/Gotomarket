@@ -174,6 +174,8 @@ export const authOptions: NextAuthOptions = {
           session.user.userLanguage = newUser.userLanguage;
           session.user.userStatus = newUser.userStatus;
           session.user.lastLoginAt = newUser.lastLoginAt;
+          session.user.team_id = newUser.team_id;
+          session.user.team_role = newUser.team_role;
           return session;
         } catch (error) {
           console.error("[auth.session] users.create error:", error);
@@ -191,6 +193,8 @@ export const authOptions: NextAuthOptions = {
         session.user.userLanguage = user.userLanguage;
         session.user.userStatus = user.userStatus;
         session.user.lastLoginAt = user.lastLoginAt;
+        session.user.team_id = user.team_id;
+        session.user.team_role = user.team_role;
 
         // Fetch role and permissions if available
         if (user.roleId) {

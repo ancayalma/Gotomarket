@@ -4,16 +4,12 @@ import dayjs from "dayjs";
 import axios from "axios";
 
 import { prismadb } from "@/lib/prisma";
-import resendHelper from "@/lib/resend";
 import AiTasksReportEmail from "@/emails/AiTasksReport";
 import sendEmail from "@/lib/sendmail";
 import { render } from "@react-email/render";
 
 export async function getUserAiTasks(session: any) {
-  /*
-  Resend.com function init - this is a helper function that will be used to send emails
-  */
-  const resend = await resendHelper();
+
 
   const today = dayjs().startOf("day");
   const nextWeek = dayjs().add(7, "day").startOf("day");
@@ -154,23 +150,13 @@ export async function getUserAiTasks(session: any) {
         data: getAiResponse.response.message.content,
       });
 
-      if (resend) {
-        await resend.emails.send({
-          from: fromAddress,
-          to: user.email!,
-          subject,
-          text: getAiResponse.response.message.content,
-          react: reactEmail,
-        });
-      } else {
-        await sendEmail({
-          from: fromAddress,
-          to: user.email!,
-          subject,
-          text: getAiResponse.response.message.content,
-          html: await render(reactEmail),
-        });
-      }
+      await sendEmail({
+        from: fromAddress,
+        to: user.email!,
+        subject,
+        text: getAiResponse.response.message.content,
+        html: await render(reactEmail),
+      });
       //console.log("AI tasks email sent");
     } catch (error) {
       console.log(error, "Error from get-user-ai-tasks");

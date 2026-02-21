@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import resendHelper from "@/lib/resend";
+import sendEmail from "@/lib/sendmail";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { isValidEmailFormat, normalizeEmail } from "@/lib/scraper/quality/email-filters";
 import { requireApiAuth } from "@/lib/api-auth-guard";
@@ -34,21 +34,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Invalid email" }, { status: 400 });
     }
 
-    const resend = await resendHelper();
-    if (!resend) {
-      return NextResponse.json({ ok: false, error: "Resend API key not configured" }, { status: 500 });
-    }
-
     // Send lightweight message
     const subject = body?.subject || "Address availability check";
     const text = body?.text || "This is a one-time address availability check initiated by the account owner.";
 
-    const sendResult = await resend.emails.send({
+    const sendResult = await sendEmail({
       from: fromAddress,
       to: email,
       subject,
       text,
-    } as any);
+    });
 
     // Mark enrichment requested so UI can show pending state
     try {
@@ -77,7 +72,7 @@ export async function POST(req: NextRequest) {
           },
         });
       }
-    } catch {}
+    } catch { }
 
     return NextResponse.json({ ok: true, email, sendId: (sendResult as any)?.id || (sendResult as any)?.data?.id }, { status: 200 });
   } catch (e: any) {

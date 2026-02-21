@@ -4,17 +4,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 import NewTaskCommentEmail from "@/emails/NewTaskComment";
-import resendHelper from "@/lib/resend";
+import sendEmail from "@/lib/sendmail";
+import { render } from "@react-email/render";
 
 export async function POST(
   req: Request,
   props: { params: Promise<{ taskId: string }> }
 ) {
   const params = await props.params;
-  /*
-  Resend.com function init - this is a helper function that will be used to send emails
-  */
-  const resend = await resendHelper();
   const session = await getServerSession(authOptions);
   const body = await req.json();
   const { comment } = body;
@@ -111,22 +108,22 @@ export async function POST(
 
         //console.log("Comment send to user: ", user?.email);
 
-        await resend.emails.send({
-          from:
-            process.env.NEXT_PUBLIC_APP_NAME +
-            " <" +
-            process.env.EMAIL_FROM +
-            ">",
-          to: user?.email!,
-          subject: `New comment on task ${task.title}.`,
-          text: "", // Add this line to fix the types issue
-          react: NewTaskCommentEmail({
+        const emailHtml = await render(
+          NewTaskCommentEmail({
             commentFromUser: session.user.name!,
             username: user?.name!,
             userLanguage: "en",
             taskId: task.id,
             comment: comment,
-          }),
+          })
+        );
+
+        await sendEmail({
+          from: process.env.EMAIL_FROM,
+          to: user?.email!,
+          subject: `New comment on task ${task.title}.`,
+          text: `New comment from ${session.user.name}: ${comment}`,
+          html: emailHtml,
         });
       }
       return NextResponse.json(newComment, { status: 200 });

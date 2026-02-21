@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { AiProvider } from "@prisma/client";
 
 // GET /api/teams/[teamId]/ai-config/data - Get all AI config data for the form
 export async function GET(
@@ -29,12 +28,26 @@ export async function GET(
             })
         ]);
 
-        const isProviderEnabled = (provider: AiProvider) => {
-            const config = systemConfigs.find(c => c.provider === provider);
+        // Determine which providers are enabled (check system config isActive flag)
+        const isProviderEnabled = (providerSlug: string) => {
+            const config = systemConfigs.find(c => c.provider === providerSlug);
             return config ? config.isActive : true;
         };
 
-        const enabledProviders = Object.values(AiProvider).filter(isProviderEnabled);
+        // Get all registered providers, then filter to enabled ones
+        let registeredProviders: string[] = [];
+        try {
+            const providerRegistry = await prismadb.aiProviderRegistry.findMany({
+                where: { isActive: true },
+                select: { slug: true }
+            });
+            registeredProviders = providerRegistry.map(p => p.slug);
+        } catch {
+            // Fallback: derive unique providers from active models
+            registeredProviders = Array.from(new Set(activeModels.map(m => m.provider)));
+        }
+
+        const enabledProviders = registeredProviders.filter(isProviderEnabled);
 
         const providersWithSystemKey = systemConfigs
             .filter(c => c.apiKey && c.apiKey.trim().length > 0)

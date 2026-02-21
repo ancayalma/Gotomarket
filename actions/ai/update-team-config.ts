@@ -2,12 +2,12 @@
 "use server";
 
 import { prismadb } from "@/lib/prisma";
-import { AiProvider } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export const updateTeamAiConfig = async (formData: FormData) => {
     const teamId = formData.get("teamId") as string;
-    const provider = formData.get("provider") as AiProvider;
+    const provider = formData.get("provider") as string;
+
     const modelId = formData.get("modelId") as string;
     const useSystemKey = formData.get("useSystemKey") === "system";
     const apiKey = formData.get("apiKey") as string;

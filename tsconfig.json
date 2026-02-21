@@ -43,7 +43,20 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "check-account-candidates.ts",
+    "check-distribution.ts",
+    "check-lead-distribution.ts",
+    "check-orphans.ts",
+    "check-recent-invoices.ts",
+    "cross-db-check.ts",
+    "debug_prisma.ts",
+    "debug-counts.ts",
+    "get_ref_data.ts",
+    "fix_xoinpay.ts",
+    "find-missing-leads.ts",
+    "find-big-tables.ts",
+    "list-collections.ts"
   ],
   "exclude": [
     "node_modules"

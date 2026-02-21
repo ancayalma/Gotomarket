@@ -6,17 +6,14 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 import NewTaskFromCRMEmail from "@/emails/NewTaskFromCRM";
 import NewTaskFromProject from "@/emails/NewTaskFromProject";
-import resendHelper from "@/lib/resend";
+import sendEmail from "@/lib/sendmail";
+import { render } from "@react-email/render";
 
 //Create new task in project route
 /*
 TODO: there is second route for creating task in board, but it is the same as this one. Consider merging them (/api/projects/tasks/create-task/[boardId]). 
 */
 export async function POST(req: Request) {
-  /*
-  Resend.com function init - this is a helper function that will be used to send emails
-  */
-  const resend = await resendHelper();
   const session = await getServerSession(authOptions);
   const body = await req.json();
   const {
@@ -119,22 +116,22 @@ export async function POST(req: Request) {
 
         //console.log(notifyRecipient, "notifyRecipient");
 
-        await resend.emails.send({
-          from:
-            process.env.NEXT_PUBLIC_APP_NAME +
-            " <" +
-            process.env.EMAIL_FROM +
-            ">",
-          to: notifyRecipient?.email!,
-          subject: `New task - ${title}.`,
-          text: "", // Add this line to fix the types issue
-          react: NewTaskFromProject({
+        const emailHtml = await render(
+          NewTaskFromProject({
             taskFromUser: session.user.name!,
             username: notifyRecipient?.name!,
             userLanguage: "en",
             taskData: task,
             boardData: boardData,
-          }),
+          })
+        );
+
+        await sendEmail({
+          from: process.env.EMAIL_FROM,
+          to: notifyRecipient?.email!,
+          subject: `New task - ${title}.`,
+          text: `New task assigned from ${session.user.name}: ${title}`,
+          html: emailHtml,
         });
         console.log("Email sent to user: ", notifyRecipient?.email!);
       } catch (error) {

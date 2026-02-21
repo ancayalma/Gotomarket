@@ -1,8 +1,9 @@
 import { authOptions } from "@/lib/auth";
-import resendHelper from "@/lib/resend";
+import sendEmail from "@/lib/sendmail";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import { sendTeamEmail } from "@/lib/email/team-mailer";
 
 export async function POST(req: Request) {
   try {
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
 
     const { feedback } = body;
     const userId = session.user.id;
-    const teamId = (session.user as any).team_id;
+    const teamId = session.user.team_id;
 
     // Fetch User and Team Details
     const [user, team] = await Promise.all([
@@ -42,8 +43,8 @@ export async function POST(req: Request) {
     // Construct the content
     const subject = `New Feedback from: ${senderName} (${teamName})`;
     const feedbackContent = `
-Team: ${teamName}
-User: ${senderName} (${senderEmail})
+Team: ${teamName} (ID: ${teamId || "N/A"})
+User: ${senderName} (${senderEmail}) (ID: ${userId})
 Time: ${timeDelivered}
 
 Feedback:
@@ -87,16 +88,47 @@ ${feedback}
     }
 
     // 3. Send mail notification
-    const resend = await resendHelper();
     const uniqueEmails = ["support@basalthq.com"];
 
-    await resend.emails.send({
-      from: process.env.NEXT_PUBLIC_APP_NAME + " <" + process.env.EMAIL_FROM + ">",
-      to: uniqueEmails,
-      subject: subject,
-      text: feedbackContent,
-      html: feedbackContent.replace(/\n/g, "<br>"),
-    });
+    try {
+      if (teamId) {
+        // Use Team's custom mail service if available (Enforces BYO Email for feedback)
+        await sendTeamEmail(teamId, {
+          to: uniqueEmails[0],
+          replyTo: senderEmail,
+          subject: subject,
+          text: feedbackContent,
+          html: feedbackContent.replace(/\n/g, "<br>"),
+        });
+      } else {
+        // Fallback for users without a team (System relay)
+        let rawFrom = process.env.EMAIL_FROM || "sales@basalthq.com";
+        if (rawFrom.includes("<")) {
+          rawFrom = rawFrom.split("<")[1].split(">")[0];
+        }
+        const cleanSenderName = senderName.replace(/[<>]/g, "").trim();
+
+        await sendEmail({
+          from: `"${cleanSenderName}" <${rawFrom}>`,
+          to: uniqueEmails[0],
+          replyTo: senderEmail,
+          subject: subject,
+          text: feedbackContent,
+          html: feedbackContent.replace(/\n/g, "<br>"),
+        });
+      }
+    } catch (error) {
+      console.error("[FEEDBACK_SEND_ERROR] Falling back to system relay:", error);
+      // Last resort fallback if team-mailer fails/not configured
+      await sendEmail({
+        from: process.env.EMAIL_FROM || "sales@basalthq.com",
+        to: uniqueEmails[0],
+        replyTo: senderEmail,
+        subject: subject,
+        text: feedbackContent,
+        html: feedbackContent.replace(/\n/g, "<br>"),
+      });
+    }
 
     return NextResponse.json({ message: "Feedback sent" }, { status: 200 });
 

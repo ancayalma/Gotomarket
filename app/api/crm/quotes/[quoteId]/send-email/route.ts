@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { generateQuotePdf } from "@/lib/pdf-utils";
-import sendEmail from "@/lib/sendmail";
+import { sendTeamEmail } from "@/lib/email/team-mailer";
 
 export async function POST(
     req: Request,
@@ -19,10 +19,10 @@ export async function POST(
 
         const quoteId = params.quoteId;
 
-        const quote = await prismadb.crm_Quotes.findFirst({
+        const quote = await (prismadb.crm_Quotes as any).findFirst({
             where: {
                 id: quoteId,
-                team_id: (session.user as any).team_id,
+                team_id: session.user.team_id as string,
             },
             include: {
                 account: true,
@@ -39,24 +39,24 @@ export async function POST(
             return new NextResponse("Quote not found", { status: 404 });
         }
 
-        const recipientEmail = quote.contact?.email;
+        const recipientEmail = (quote as any).contact?.email;
 
         if (!recipientEmail) {
             return NextResponse.json({ error: "Contact has no email address defined" }, { status: 400 });
         }
 
         // Generate PDF
-        const pdfBuffer = await generateQuotePdf(quote);
+        const pdfBuffer = await generateQuotePdf(quote as any);
 
-        // Send Email
-        await sendEmail({
+        // Send Email via Team Mailer (Enforces BYO Email)
+        await sendTeamEmail(session.user.team_id as string, {
             to: recipientEmail,
             subject: `Sales Proposal: ${quote.title} (${quote.quoteNumber})`,
-            text: `Hello ${quote.contact?.first_name || 'there'},\n\nPlease find attached the sales proposal for ${quote.title}.\n\nBest regards,\nBasalt Echo Sales Team`,
+            text: `Hello ${(quote as any).contact?.first_name || 'there'},\n\nPlease find attached the sales proposal for ${quote.title}.\n\nBest regards,\nBasalt Echo Sales Team`,
             html: `
                 <div style="font-family: sans-serif; padding: 20px;">
                     <h2 style="color: #2563eb;">Sales Proposal</h2>
-                    <p>Hello ${quote.contact?.first_name || 'there'},</p>
+                    <p>Hello ${(quote as any).contact?.first_name || 'there'},</p>
                     <p>Please find attached the sales proposal for <strong>${quote.title}</strong>.</p>
                     <p>Proposal Number: <strong>${quote.quoteNumber}</strong></p>
                     <p>Total amount: <strong>$${quote.totalAmount.toLocaleString()}</strong></p>

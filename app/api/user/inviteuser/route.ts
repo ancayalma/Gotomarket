@@ -8,13 +8,10 @@ import { logActivity } from "@/actions/audit";
 import { hash } from "bcryptjs";
 
 import InviteUserEmail from "@/emails/InviteUser";
-import resendHelper from "@/lib/resend";
+import sendEmail from "@/lib/sendmail";
+import { render } from "@react-email/render";
 
 export async function POST(req: Request) {
-  /*
-  Resend.com function init - this is a helper function that will be used to send emails
-  */
-  const resend = await resendHelper();
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -42,9 +39,7 @@ export async function POST(req: Request) {
 
     const message = `You have been invited to ${process.env.NEXT_PUBLIC_APP_NAME} \n\n Your username is: ${email} \n\n Your password is: ${password} \n\n Please login to ${appUrl} \n\n Thank you \n\n ${process.env.NEXT_PUBLIC_APP_NAME}`;
 
-    if (!resend) {
-      return new NextResponse("Resend API key not configured", { status: 500 });
-    }
+
 
     //Check if user already exists in local database
     const checkexisting = await prismadb.users.findFirst({
@@ -84,30 +79,25 @@ export async function POST(req: Request) {
           return new NextResponse("User not created", { status: 500 });
         }
 
-        const { data: emailData, error: emailError } = await resend.emails.send({
-          from:
-            process.env.NEXT_PUBLIC_APP_NAME +
-            " <" +
-            process.env.EMAIL_FROM +
-            ">",
-          to: user.email,
-          subject: `You have been invited to ${process.env.NEXT_PUBLIC_APP_NAME} `,
-          text: message, // Add this line to fix the types issue
-          react: InviteUserEmail({
+        const emailHtml = await render(
+          InviteUserEmail({
             invitedByUsername: session.user?.name! || "admin",
             username: user?.name!,
             invitedUserPassword: password,
             userLanguage: "en",
             appUrl: appUrl || "",
-          }),
+          })
+        );
+
+        await sendEmail({
+          from: process.env.EMAIL_FROM,
+          to: user.email,
+          subject: `You have been invited to ${process.env.NEXT_PUBLIC_APP_NAME}`,
+          text: message,
+          html: emailHtml,
         });
 
-        if (emailError) {
-          console.log("Resend Error:", emailError);
-          return new NextResponse("Error sending email: " + emailError.message, { status: 500 });
-        }
-
-        console.log("Resend Success:", emailData);
+        console.log("Invitation email sent successfully via Unified Relay");
 
         await logActivity(
           "Invited User",

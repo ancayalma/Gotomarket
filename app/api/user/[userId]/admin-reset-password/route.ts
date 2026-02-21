@@ -4,9 +4,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateRandomPassword } from "@/lib/utils";
 import { hash } from "bcryptjs";
-import resendHelper from "@/lib/resend";
 import PasswordResetEmail from "@/emails/PasswordReset";
 import { logActivity } from "@/actions/audit";
+import { render } from "@react-email/render";
+import sendEmail from "@/lib/sendmail";
 
 export async function POST(
     req: Request,
@@ -53,27 +54,28 @@ export async function POST(
             },
         });
 
-        // Send Email
-        const resend = await resendHelper();
-        if (resend) {
-            try {
-                await resend.emails.send({
-                    from: process.env.EMAIL_FROM!,
-                    to: user.email,
-                    subject: "BasaltCRM - Temporary Password",
-                    text: `Your temporary password is: ${tempPassword}`,
-                    react: PasswordResetEmail({
-                        username: user.name || "User",
-                        avatar: user.avatar,
-                        email: user.email,
-                        password: tempPassword,
-                        userLanguage: user.userLanguage,
-                    }),
-                });
-            } catch (emailError) {
-                console.error("[ADMIN_RESET_EMAIL_ERROR]", emailError);
-                // Continue execution, we still reset the password
-            }
+        // Send Email using Unified Relay
+        try {
+            const emailHtml = await render(
+                PasswordResetEmail({
+                    username: user.name || "User",
+                    avatar: user.avatar,
+                    email: user.email,
+                    password: tempPassword,
+                    userLanguage: user.userLanguage || "en",
+                })
+            );
+
+            await sendEmail({
+                to: user.email,
+                subject: "BasaltCRM - Temporary Password",
+                text: `Your temporary password is: ${tempPassword}`,
+                html: emailHtml,
+                replyTo: "support@basalthq.com"
+            });
+        } catch (emailError) {
+            console.error("[ADMIN_RESET_EMAIL_ERROR]", emailError);
+            // Continue execution, we still reset the password in DB
         }
 
         await logActivity(

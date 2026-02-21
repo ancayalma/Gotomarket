@@ -7,7 +7,6 @@ import { SendMailToAll } from "./schema";
 import { InputType, ReturnType } from "./types";
 
 import { prismadb } from "@/lib/prisma";
-import resendHelper from "@/lib/resend";
 import { authOptions } from "@/lib/auth";
 import { createSafeAction } from "@/lib/create-safe-action";
 import MessageToAllUsers from "@/emails/admin/MessageToAllUser";
@@ -29,7 +28,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
     };
   }
 
-  const resend = await resendHelper();
+
 
   const { title, message } = data;
 
@@ -52,46 +51,21 @@ const handler = async (data: InputType): Promise<ReturnType> => {
 
     //For each user, send mail
     for (const user of users) {
-      const resendKey = await prismadb.systemServices.findFirst({
-        where: {
-          name: "resend_smtp",
-        },
-      });
-
-      if (!resendKey?.serviceKey || !process.env.RESEND_API_KEY) {
-        const emailHtml = render(
-          MessageToAllUsers({
-            title: title,
-            message: message,
-            username: user?.name!,
-          })
-        );
-
-        //send via sendmail
-        await sendEmail({
-          from: process.env.EMAIL_FROM as string,
-          to: user.email || "info@softbase.com",
-          subject: title,
-          text: message,
-          html: await emailHtml,
-        });
-      }
-
-      //send via Resend.com
-      await resend.emails.send({
-        from:
-          process.env.NEXT_PUBLIC_APP_NAME +
-          " <" +
-          process.env.EMAIL_FROM +
-          ">",
-        to: user?.email!,
-        subject: title,
-        text: message, // Add this line to fix the types issue
-        react: MessageToAllUsers({
+      const emailHtml = await render(
+        MessageToAllUsers({
           title: title,
           message: message,
           username: user?.name!,
-        }),
+        })
+      );
+
+      //send via Unified Relay
+      await sendEmail({
+        from: process.env.EMAIL_FROM as string,
+        to: user.email || "info@softbase.com",
+        subject: title,
+        text: message,
+        html: emailHtml,
       });
     }
   } catch (error) {

@@ -4,7 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 import NewTaskFromProject from "@/emails/NewTaskFromProject";
-import resendHelper from "@/lib/resend";
+import sendEmail from "@/lib/sendmail";
+import { render } from "@react-email/render";
 import UpdatedTaskFromProject from "@/emails/UpdatedTaskFromProject";
 
 //Create new task in project route
@@ -13,10 +14,6 @@ TODO: there is second route for creating task in board, but it is the same as th
 */
 export async function PUT(req: Request, props: { params: Promise<{ taskId: string }> }) {
   const params = await props.params;
-  /*
-  Resend.com function init - this is a helper function that will be used to send emails
-  */
-  const resend = await resendHelper();
   const session = await getServerSession(authOptions);
   const body = await req.json();
   //console.log(body, "body");
@@ -130,22 +127,22 @@ export async function PUT(req: Request, props: { params: Promise<{ taskId: strin
 
         //console.log(notifyRecipient, "notifyRecipient");
 
-        await resend.emails.send({
-          from:
-            process.env.NEXT_PUBLIC_APP_NAME +
-            " <" +
-            process.env.EMAIL_FROM +
-            ">",
-          to: notifyRecipient?.email!,
-          subject: `Task - ${title} - was updated.`,
-          text: "", // Add this line to fix the types issue
-          react: UpdatedTaskFromProject({
+        const emailHtml = await render(
+          UpdatedTaskFromProject({
             taskFromUser: session.user.name!,
             username: notifyRecipient?.name!,
             userLanguage: "en",
             taskData: task,
             boardData: boardData,
-          }),
+          })
+        );
+
+        await sendEmail({
+          from: process.env.EMAIL_FROM,
+          to: notifyRecipient?.email!,
+          subject: `Task - ${title} - was updated.`,
+          text: `Task updated by ${session.user.name}: ${title}`,
+          html: emailHtml,
         });
         console.log("Email sent to user: ", notifyRecipient?.email!);
       } catch (error) {

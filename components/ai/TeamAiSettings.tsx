@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AiProvider, AiModel, TeamAiConfig } from "@prisma/client";
+import { AiModel, TeamAiConfig } from "@prisma/client";
 import { AiConfigManager } from "./AiConfigManager";
 
 interface TeamAiSettingsProps {
@@ -12,8 +12,8 @@ export const TeamAiSettings = ({ teamId }: TeamAiSettingsProps) => {
     const [isLoading, setIsLoading] = useState(true);
     const [teamConfig, setTeamConfig] = useState<TeamAiConfig | null>(null);
     const [activeModels, setActiveModels] = useState<AiModel[]>([]);
-    const [enabledProviders, setEnabledProviders] = useState<AiProvider[]>([]);
-    const [providersWithSystemKey, setProvidersWithSystemKey] = useState<AiProvider[]>([]);
+    const [enabledProviders, setEnabledProviders] = useState<string[]>([]);
+    const [providersWithSystemKey, setProvidersWithSystemKey] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {

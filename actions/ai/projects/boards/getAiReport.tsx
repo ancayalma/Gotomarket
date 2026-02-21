@@ -3,15 +3,12 @@
 import axios from "axios";
 
 import { prismadb } from "@/lib/prisma";
-import resendHelper from "@/lib/resend";
-
+import sendEmail from "@/lib/sendmail";
+import { render } from "@react-email/render";
 import AiProjectReportEmail from "@/emails/AiProjectReport";
 
 export async function getAiReport(session: any, boardId: string) {
-  /*
-  Resend.com function init - this is a helper function that will be used to send emails
-  */
-  const resend = await resendHelper();
+
 
   const user = await prismadb.users.findUnique({
     where: {
@@ -80,21 +77,24 @@ export async function getAiReport(session: any, boardId: string) {
     console.log("Error from OpenAI API");
   } else {
     try {
-      const data = await resend.emails.send({
-        from: process.env.EMAIL_FROM!,
-        to: user.email!,
-        subject: `${process.env.NEXT_PUBLIC_APP_NAME} OpenAI Project manager assistant from: ${process.env.NEXT_PUBLIC_APP_URL}`,
-        text: getAiResponse.response.message.content,
-        react: AiProjectReportEmail({
+      const emailHtml = await render(
+        AiProjectReportEmail({
           username: session.user.name,
           avatar: session.user.avatar,
           userLanguage: session.user.userLanguage,
           data: getAiResponse.response.message.content,
-        }),
+        })
+      );
+
+      await sendEmail({
+        from: process.env.EMAIL_FROM!,
+        to: user.email!,
+        subject: `${process.env.NEXT_PUBLIC_APP_NAME} OpenAI Project manager assistant from: ${process.env.NEXT_PUBLIC_APP_URL}`,
+        text: getAiResponse.response.message.content,
+        html: emailHtml,
       });
-      //console.log(data, "Email sent");
     } catch (error) {
-      console.log(error, "Error from get-user-ai-tasks");
+      console.log(error, "Error from getAiReport");
     }
   }
 

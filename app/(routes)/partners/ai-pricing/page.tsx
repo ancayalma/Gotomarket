@@ -1,6 +1,5 @@
 
 import { prismadb } from "@/lib/prisma";
-import { AiProvider } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { AiPricingTable } from "./_components/AiPricingTable";

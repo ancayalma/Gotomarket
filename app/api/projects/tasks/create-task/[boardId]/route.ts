@@ -5,14 +5,11 @@ import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 import NewTaskFromProject from "@/emails/NewTaskFromProject";
-import resendHelper from "@/lib/resend";
+import sendEmail from "@/lib/sendmail";
+import { render } from "@react-email/render";
 
 export async function POST(req: Request, props: { params: Promise<{ boardId: string }> }) {
   const params = await props.params;
-  /*
-  Resend.com function init - this is a helper function that will be used to send emails
-  */
-  const resend = await resendHelper();
   const session = await getServerSession(authOptions);
   const body = await req.json();
   const { boardId } = params;
@@ -120,22 +117,22 @@ export async function POST(req: Request, props: { params: Promise<{ boardId: str
 
           //console.log(notifyRecipient, "notifyRecipient");
 
-          await resend.emails.send({
-            from:
-              process.env.NEXT_PUBLIC_APP_NAME +
-              " <" +
-              process.env.EMAIL_FROM +
-              ">",
-            to: notifyRecipient?.email!,
-            subject: `New task - ${title}.`,
-            text: "", // Add this line to fix the types issue
-            react: NewTaskFromProject({
+          const emailHtml = await render(
+            NewTaskFromProject({
               taskFromUser: session.user.name!,
               username: notifyRecipient?.name!,
               userLanguage: "en",
               taskData: task,
               boardData: boardData,
-            }),
+            })
+          );
+
+          await sendEmail({
+            from: process.env.EMAIL_FROM,
+            to: notifyRecipient?.email!,
+            subject: `New task - ${title}.`,
+            text: `New task assigned from ${session.user.name}: ${title}`,
+            html: emailHtml,
           });
           console.log("Email sent to user: ", notifyRecipient?.email!);
         } catch (error) {

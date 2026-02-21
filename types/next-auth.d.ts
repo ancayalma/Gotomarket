@@ -1,4 +1,4 @@
- 
+
 import type { Session, User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
@@ -18,10 +18,11 @@ declare module "next-auth" {
       avatar?: string | null | undefined;
       isAdmin: boolean;
       userLanguage: string;
-      userLanguage: string;
       userStatus: string;
       role?: string;
       permissions?: string[];
+      team_id?: string | null;
+      team_role?: string | null;
     };
   }
 }

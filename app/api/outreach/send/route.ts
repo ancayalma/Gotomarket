@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import sendEmail from "@/lib/sendmail";
-import { sendEmailSES } from "@/lib/aws/ses";
+import { sendTeamEmail } from "@/lib/email/team-mailer";
 import { render } from "@react-email/render";
 import OutreachTemplate, { type ResourceLink } from "@/emails/OutreachTemplate";
 import { getAiSdkModel } from "@/lib/openai";
@@ -181,6 +180,7 @@ export async function POST(req: Request) {
         signature_html: true,
         resource_links: true,
         outreach_prompt_default: true,
+        team_id: true,
       } as const,
     });
 
@@ -357,33 +357,27 @@ export async function POST(req: Request) {
       // Prepare plaintext fallback (use the LLM plain text body)
       const text = stripHtml(bodyText);
 
-      // Send email via Amazon SES (primary), fallback to Gmail or SMTP
+      // Send email via Team's custom mail service
+      // This enforces "Bring Your Own Email" for outreach.
       try {
-        const fromAddress =
-          process.env.SES_FROM_ADDRESS ||
-          process.env.EMAIL_FROM ||
-          process.env.EMAIL_USERNAME ||
-          `no-reply@${new URL(baseUrl || "http://localhost").hostname}`;
+        if (!user.team_id) {
+          throw new Error("No team associated with your account.");
+        }
 
-        let transport: "ses" | "gmail" | "smtp" = "ses";
+        let transport: "team_email" = "team_email";
         let messageId: string | null = null;
 
-        // Attempt SES first
-        try {
-          const sesRes = await sendEmailSES({ to: toEmail, from: fromAddress, subject, html, text });
-          messageId = sesRes.messageId || null;
-          transport = messageId ? "ses" : transport;
-        } catch (e) {
-          // Fallback to Gmail
-          try {
-            messageId = await sendViaGmail(session.user.id, toEmail, subject, html, text);
-            if (messageId) transport = "gmail";
-          } catch {
-            // Fallback to SMTP
-            await sendEmail({ from: fromAddress, to: toEmail, subject, text, html });
-            transport = "smtp";
-          }
-        }
+        // Use the unified Team Mailer (which now throws if unconfigured)
+        await sendTeamEmail(user.team_id, {
+          to: toEmail,
+          subject,
+          text,
+          html,
+        });
+
+        // We don't have the messageId directly from sendTeamEmail in all cases yet, 
+        // but we assume success if no error thrown.
+        messageId = `team_sent_${Date.now()}`;
 
         // Persist outreach fields
         const updateData: any = {

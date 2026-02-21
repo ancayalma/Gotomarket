@@ -155,6 +155,83 @@ async function main() {
   }
   console.log("AI Models sync complete");
 
+  // Seed AI Provider Registry (Dynamic provider management)
+  const builtInProviders = [
+    {
+      slug: "OPENAI", name: "OpenAI", sdkType: "OPENAI_COMPATIBLE",
+      color: "text-emerald-400", gradient: "from-emerald-500/20 to-green-500/20",
+      apiKeyUrl: "https://platform.openai.com/api-keys", isBuiltIn: true,
+    },
+    {
+      slug: "AZURE", name: "Azure OpenAI", sdkType: "AZURE",
+      color: "text-blue-400", gradient: "from-blue-500/20 to-cyan-500/20",
+      apiKeyUrl: "https://portal.azure.com", isBuiltIn: true,
+    },
+    {
+      slug: "ANTHROPIC", name: "Anthropic", sdkType: "ANTHROPIC",
+      color: "text-orange-400", gradient: "from-orange-500/20 to-amber-500/20",
+      apiKeyUrl: "https://console.anthropic.com/settings/keys", isBuiltIn: true,
+    },
+    {
+      slug: "GOOGLE", name: "Google AI", sdkType: "GOOGLE",
+      color: "text-red-400", gradient: "from-red-500/20 to-yellow-500/20",
+      apiKeyUrl: "https://aistudio.google.com/apikey", isBuiltIn: true,
+    },
+    {
+      slug: "GROK", name: "xAI (Grok)", sdkType: "OPENAI_COMPATIBLE",
+      baseUrl: "https://api.x.ai/v1",
+      color: "text-gray-400", gradient: "from-gray-500/20 to-zinc-500/20",
+      apiKeyUrl: "https://console.x.ai/team/default/api-keys", isBuiltIn: true,
+    },
+    {
+      slug: "DEEPSEEK", name: "DeepSeek", sdkType: "OPENAI_COMPATIBLE",
+      baseUrl: "https://api.deepseek.com",
+      color: "text-indigo-400", gradient: "from-indigo-500/20 to-violet-500/20",
+      apiKeyUrl: "https://platform.deepseek.com/api_keys", isBuiltIn: true,
+    },
+    {
+      slug: "PERPLEXITY", name: "Perplexity", sdkType: "OPENAI_COMPATIBLE",
+      baseUrl: "https://api.perplexity.ai",
+      color: "text-teal-400", gradient: "from-teal-500/20 to-cyan-500/20",
+      apiKeyUrl: "https://www.perplexity.ai/settings/api", isBuiltIn: true,
+    },
+    {
+      slug: "MISTRAL", name: "Mistral AI", sdkType: "MISTRAL",
+      color: "text-amber-400", gradient: "from-amber-500/20 to-yellow-500/20",
+      apiKeyUrl: "https://console.mistral.ai/api-keys/", isBuiltIn: true,
+    },
+    {
+      slug: "HUGGINGFACE", name: "Hugging Face", sdkType: "OPENAI_COMPATIBLE",
+      baseUrl: "https://api-inference.huggingface.co/v1",
+      color: "text-yellow-400", gradient: "from-yellow-500/20 to-orange-500/20",
+      apiKeyUrl: "https://huggingface.co/settings/tokens", isBuiltIn: true,
+    },
+  ];
+
+  for (const provider of builtInProviders) {
+    const existing = await prisma.aiProviderRegistry.findUnique({ where: { slug: provider.slug } });
+    if (!existing) {
+      await prisma.aiProviderRegistry.create({ data: provider });
+      console.log(`Created provider registry: ${provider.name}`);
+    } else {
+      // Update existing built-in providers (keep in sync)
+      await prisma.aiProviderRegistry.update({
+        where: { slug: provider.slug },
+        data: {
+          name: provider.name,
+          sdkType: provider.sdkType,
+          color: provider.color,
+          gradient: provider.gradient,
+          apiKeyUrl: provider.apiKeyUrl,
+          baseUrl: provider.baseUrl || null,
+          isBuiltIn: true,
+        }
+      });
+      console.log(`Updated provider registry: ${provider.name}`);
+    }
+  }
+  console.log("AI Provider Registry sync complete");
+
   // Seed Footer Data
   const footerSetting = await prisma.footerSetting.findFirst();
   if (!footerSetting) {

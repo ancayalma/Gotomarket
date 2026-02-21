@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { AiProvider } from "@prisma/client";
 
 // POST /api/teams/[teamId]/ai-config - Update team AI configuration
 export async function POST(
@@ -17,11 +16,18 @@ export async function POST(
 
         const resolvedParams = await params;
         const { teamId } = resolvedParams;
-        const body = await request.json();
+
+        let body: any;
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json({ error: "Invalid or empty request body" }, { status: 400 });
+        }
+
         const { provider, modelId, useSystemKey, apiKey } = body;
 
-        // Validate provider
-        if (!Object.values(AiProvider).includes(provider)) {
+        // Validate provider string is non-empty
+        if (!provider || typeof provider !== "string" || provider.trim().length === 0) {
             return NextResponse.json({ error: "Invalid provider" }, { status: 400 });
         }
 

@@ -4,14 +4,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 import NewTaskCommentEmail from "@/emails/NewTaskComment";
-import resendHelper from "@/lib/resend";
+
 
 export async function POST(req: Request, props: { params: Promise<{ taskId: string }> }) {
   const params = await props.params;
-  /*
-  Resend.com function init - this is a helper function that will be used to send emails
-  */
-  const resend = await resendHelper();
   const session = await getServerSession(authOptions);
   const body = await req.json();
   const { comment } = body;

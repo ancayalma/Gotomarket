@@ -1267,26 +1267,43 @@ model oauth_Authorization_Codes {
   createdAt       DateTime @default(now()) @db.Date
 }
 
-enum AiProvider {
-  OPENAI
-  AZURE
-  ANTHROPIC
-  GOOGLE
-  GROK
-  DEEPSEEK
-  PERPLEXITY
-  MISTRAL
+// =============================================================================
+// AI PROVIDER REGISTRY — Dynamic provider management (no hard-coded enum)
+// Providers are stored in the database and managed by PLATFORM_ADMINs
+// =============================================================================
+
+model AiProviderRegistry {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String  @unique // "OPENAI", "ANTHROPIC", "HUGGINGFACE", etc.
+  name        String // "OpenAI", "Hugging Face"
+  description String?
+  iconUrl     String? // URL or data:uri for custom provider icon
+  color       String? // Tailwind-style color class e.g. "text-emerald-400"
+  gradient    String? // "from-emerald-500/20 to-green-500/20"
+  apiKeyUrl   String? // "https://platform.openai.com/api-keys"
+
+  // Connection template
+  baseUrl String? // Default base URL for this provider
+  sdkType String  @default("OPENAI_COMPATIBLE")
+  // Possible: "OPENAI_COMPATIBLE", "ANTHROPIC", "GOOGLE", "AZURE", "MISTRAL", "CUSTOM"
+
+  // Lifecycle
+  isBuiltIn Boolean  @default(false) // true for original 8 providers
+  isActive  Boolean  @default(true)
+  createdBy String?  @db.ObjectId
+  createdAt DateTime @default(now()) @db.Date
+  updatedAt DateTime @updatedAt @db.Date
 }
 
 model AiModel {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  v           Int        @default(0) @map("__v")
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  v           Int    @default(0) @map("__v")
   name        String // Display name (e.g. "GPT-4o")
   modelId     String // API model ID (e.g. "gpt-4o")
-  provider    AiProvider
+  provider    String // Provider slug — e.g. "OPENAI", "HUGGINGFACE"
   description String?
 
-  // Pricing per 1k tokens (managed by Partner)
+  // Pricing per 1M tokens (managed by Partner)
   inputPrice  Float @default(0) // Cost from provider
   outputPrice Float @default(0) // Cost from provider
 
@@ -1300,24 +1317,52 @@ model AiModel {
 }
 
 model SystemAiConfig {
-  id             String     @id @default(auto()) @map("_id") @db.ObjectId
-  provider       AiProvider @unique
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  provider       String  @unique // Provider slug — e.g. "OPENAI"
   apiKey         String?
   baseUrl        String? // Optional override
   configuration  Json? // Store provider-specific config (Azure endpoint, etc)
   defaultModelId String? // Default model for this provider (e.g. "gpt-4o")
-  isActive       Boolean    @default(true)
+  isActive       Boolean @default(true)
 }
 
 model TeamAiConfig {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
-  team_id      String     @unique @db.ObjectId
-  provider     AiProvider @default(OPENAI) // Active provider for this team
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  team_id      String  @unique @db.ObjectId
+  provider     String  @default("OPENAI") // Active provider slug for this team
   modelId      String? // Specific model override (e.g. "gpt-4o")
-  useSystemKey Boolean    @default(true)
+  useSystemKey Boolean @default(true)
   apiKey       String? // Stored if useSystemKey is false
 
   assigned_team Team @relation(fields: [team_id], references: [id])
+}
+
+// =============================================================================
+// CUSTOM MODEL REQUESTS — Team admins submit, Platform admins approve/reject
+// =============================================================================
+
+model CustomModelRequest {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  // What the team admin wants to add
+  provider    String // Provider slug or new provider name
+  modelId     String // API model identifier
+  displayName String // Human-readable name
+  baseUrl     String? // Custom endpoint URL
+  description String?
+
+  // Who submitted it
+  team_id      String  @db.ObjectId
+  requested_by String  @db.ObjectId
+  team_name    String? // Denormalized for display
+
+  // Approval workflow
+  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewed_by  String?  @db.ObjectId
+  reviewed_at  DateTime? @db.Date
+  review_notes String?
+
+  createdAt DateTime @default(now()) @db.Date
+  updatedAt DateTime @updatedAt @db.Date
 }
 
 // =============================================================================

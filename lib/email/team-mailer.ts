@@ -11,6 +11,7 @@ interface EmailOptions {
     subject: string;
     text: string;
     html?: string;
+    replyTo?: string;
     attachments?: {
         filename: string;
         content: any;
@@ -22,11 +23,12 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions) {
     // 1. Fetch Config
     const config = await prismadb.teamEmailConfig.findUnique({ where: { team_id: teamId } });
 
-    // 2. Fallback if not configured or verified
-    // We strictly require VERIFIED status to avoid sending from unverified domains/emails and getting blocked
+    // 2. Strict Requirement for Team Configuration
+    // To protect the system SES reputation, mass outreach/client emails MUST use the team's own service.
     if (!config || config.verification_status !== "VERIFIED") {
-        console.log(`[TeamEmail] Falling back to system email for team ${teamId} (Reason: ${!config ? "No Config" : "Not Verified"})`);
-        return sendSystemEmail(options);
+        const errorMsg = `[TeamEmail] Team ${teamId} has not configured a verified email service. Outreach prevented to protect system reputation.`;
+        console.error(errorMsg);
+        throw new Error("Email service not configured or verified for this team. Please set up your custom mail service in Team Settings.");
     }
 
     const fromAddress = `"${config.from_name || config.from_email}" <${config.from_email}>`;
@@ -58,6 +60,7 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions) {
                 subject: options.subject,
                 text: options.text,
                 html: options.html,
+                replyTo: options.replyTo,
                 attachments: options.attachments,
             });
             console.log(`[TeamEmail] Sent via AWS SES (Team: ${teamId})`);
@@ -84,6 +87,7 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions) {
                 subject: options.subject,
                 text: options.text,
                 html: options.html,
+                replyTo: options.replyTo,
                 attachments: options.attachments?.map(a => ({
                     filename: a.filename,
                     content: a.content, // Resend expects buffer or string

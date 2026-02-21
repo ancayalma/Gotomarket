@@ -34,7 +34,7 @@ export default async function AdminAiSettingsPage() {
     }
 
     // Fetch AI data in parallel
-    const [teamConfig, systemConfigs, activeModels] = await Promise.all([
+    const [teamConfig, systemConfigs, activeModels, teamModelRequests] = await Promise.all([
         prismadb.teamAiConfig.findUnique({
             where: { team_id: teamId },
         }),
@@ -43,6 +43,11 @@ export default async function AdminAiSettingsPage() {
             where: { isActive: true },
             orderBy: [{ provider: "asc" }, { name: "asc" }],
         }),
+        prismadb.customModelRequest.findMany({
+            where: { team_id: teamId },
+            orderBy: { createdAt: "desc" },
+            take: 10,
+        }),
     ]);
 
     // Determine which providers have system keys configured
@@ -50,7 +55,18 @@ export default async function AdminAiSettingsPage() {
         .filter((c) => c.apiKey && c.apiKey.trim().length > 0)
         .map((c) => c.provider);
 
-    const availableModels = activeModels;
+    // Fetch available providers for the request form
+    let providerOptions: { slug: string; name: string }[] = [];
+    try {
+        const registeredProviders = await prismadb.aiProviderRegistry.findMany({
+            where: { isActive: true },
+            orderBy: { slug: "asc" },
+            select: { slug: true, name: true },
+        });
+        providerOptions = registeredProviders;
+    } catch {
+        providerOptions = Array.from(new Set(activeModels.map(m => m.provider))).map(p => ({ slug: p, name: p }));
+    }
 
     return (
         <Container
@@ -63,8 +79,12 @@ export default async function AdminAiSettingsPage() {
                     ...teamConfig,
                     apiKey: teamConfig.apiKey ? "********" : null
                 } : null}
-                models={availableModels}
+                models={activeModels}
                 providersWithSystemKey={providersWithSystemKey}
+                userId={user?.id || ""}
+                teamName={user?.assigned_team?.name || ""}
+                modelRequests={teamModelRequests as any}
+                providerOptions={providerOptions}
             />
         </Container>
     );

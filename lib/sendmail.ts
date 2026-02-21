@@ -10,6 +10,7 @@ interface EmailOptions {
   subject: string;
   text: string;
   html?: string;
+  replyTo?: string;
   attachments?: {
     filename: string;
     content: any;
@@ -64,11 +65,18 @@ export default async function sendEmail(
   }
 
   try {
+    const fromAddress =
+      emailOptions.from ||
+      process.env.SES_FROM_ADDRESS ||
+      process.env.EMAIL_FROM ||
+      process.env.EMAIL_USERNAME ||
+      "BasaltCRM <sales@basalthq.com>";
+
     const result = await transporter.sendMail({
       ...emailOptions,
-      from: emailOptions.from || process.env.SES_FROM_ADDRESS || process.env.EMAIL_FROM
+      from: fromAddress
     });
-    console.log(`[Email Success] To: ${emailOptions.to}, MessageId: ${result.messageId}`);
+    console.log(`[Email Success] To: ${emailOptions.to}, From: ${fromAddress}, MessageId: ${result.messageId}`);
   } catch (error: any | Error) {
     console.error(`[Email Error] Failed to send to ${emailOptions.to}:`, error);
     throw error; // Rethrow to let the API know it failed
