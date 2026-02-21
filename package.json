@@ -93,7 +93,7 @@
     "imap": "^0.8.19",
     "isomorphic-dompurify": "^3.0.0-rc.2",
     "jotai": "^2.16.1",
-    "jspdf": "^4.1.0",
+    "jspdf": "^4.2.0",
     "lucide-react": "^0.556.0",
     "mailparser": "^3.9.1",
     "mermaid": "^10.9.5",
@@ -178,6 +178,9 @@
       "semver": "^5.7.2"
     },
     "tar": "^7.5.9",
-    "fast-xml-parser": "^5.3.6"
+    "fast-xml-parser": "^5.3.6",
+    "ajv": "^6.14.0",
+    "minimatch": "^10.2.2",
+    "systeminformation": "^5.31.1"
   }
 }

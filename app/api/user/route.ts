@@ -9,7 +9,7 @@ import sendEmail from "@/lib/sendmail";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, username, email, language, password, confirmPassword, companyName, planId } = body;
+    const { name, username, email, language, password, confirmPassword, companyName, planId, avatar } = body;
 
     // Validate required fields
     if (!name || !email || !language || !password || !confirmPassword || !companyName || !planId) {
@@ -58,11 +58,40 @@ export async function POST(req: Request) {
 
     const hashedPassword = await hash(password, 12);
 
+    let avatarUrl = avatar;
+    if (avatar && avatar.startsWith("data:image")) {
+      try {
+        const { getBlobServiceClient } = await import("@/lib/azure-storage");
+        const container = process.env.BLOB_STORAGE_CONTAINER;
+        if (container) {
+          const serviceClient = getBlobServiceClient();
+          const containerClient = serviceClient.getContainerClient(container);
+
+          const base64Data = avatar.split(",")[1];
+          const buffer = Buffer.from(base64Data, "base64");
+          const mimeType = avatar.split(";")[0].split(":")[1];
+          const extension = mimeType.split("/")[1] || "png";
+          const key = `avatars/public/${Date.now()}_${Math.random().toString(36).substring(7)}.${extension}`;
+
+          const blobClient = containerClient.getBlockBlobClient(key);
+          await blobClient.uploadData(buffer, {
+            blobHTTPHeaders: { blobContentType: mimeType },
+          });
+          avatarUrl = blobClient.url;
+          console.log("[Register] Avatar uploaded successfully:", avatarUrl);
+        }
+      } catch (uploadError) {
+        console.error("[Register] Avatar upload failed:", uploadError);
+        // Fallback to null or keep original if it was a URL
+      }
+    }
+
     const user = await prismadb.users.create({
       data: {
         name,
         username,
         email,
+        avatar: avatarUrl,
         userLanguage: "en",
         password: hashedPassword,
         userStatus: initialStatus === "PENDING" ? "PENDING" : "ACTIVE",

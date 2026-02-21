@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,6 +53,9 @@ const AvatarDropdown = ({ avatar, userId, name, email }: Props) => {
                   : `${process.env.NEXT_PUBLIC_APP_URL}/images/nouser.png`
               }
             />
+            <AvatarFallback className="bg-primary text-white">
+              {name?.charAt(0) || "U"}
+            </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -79,7 +82,7 @@ const AvatarDropdown = ({ avatar, userId, name, email }: Props) => {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => {
             clearUserCache();
-            signOut({ callbackUrl: `/sign-in?loggedOut=true` });
+            signOut({ callbackUrl: `https://crm.basalthq.com/sign-in?loggedOut=true` });
           }}>
             <LogOut className="w-4 h-4 inline-block mr-2 stroke-current text-gray-500" />
             <span>Sign Out</span>

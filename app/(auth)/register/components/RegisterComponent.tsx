@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import React from "react";
-import { FingerprintIcon } from "lucide-react";
+import { FingerprintIcon, User } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -24,6 +24,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Select,
@@ -54,6 +55,7 @@ export function RegisterComponent({ availablePlans }: { availablePlans: any[] })
     language: z.string().min(2).max(50),
     password: z.string().min(8).max(50),
     confirmPassword: z.string().min(8).max(50),
+    avatar: z.string().optional(),
   });
 
   type BillboardFormValues = z.infer<typeof formSchema>;
@@ -69,6 +71,7 @@ export function RegisterComponent({ availablePlans }: { availablePlans: any[] })
       language: "",
       password: "",
       confirmPassword: "",
+      avatar: "",
     },
   });
 
@@ -109,6 +112,51 @@ export function RegisterComponent({ availablePlans }: { availablePlans: any[] })
       <CardContent className="grid gap-4 overflow-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} suppressHydrationWarning={true}>
+            <div className="flex flex-col items-center justify-center space-y-4 py-4">
+              <FormField
+                control={form.control}
+                name="avatar"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col items-center">
+                    <FormLabel className="mb-2">Profile Photo</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                          {field.value ? (
+                            <img
+                              src={field.value}
+                              alt="Avatar Preview"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-12 w-12 text-gray-300" />
+                          )}
+                        </div>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          className="max-w-[200px]"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                field.onChange(reader.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription className="text-xs text-center">
+                      Maximum size 2MB. Auto-fits to square.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <div className="grid gap-2">
               <FormField
                 control={form.control}

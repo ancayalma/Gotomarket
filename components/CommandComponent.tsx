@@ -51,7 +51,7 @@ export function CommandComponent() {
       }
       if (e.key === "l" && e.metaKey) {
         clearUserCache();
-        signOut({ callbackUrl: `/${locale}/sign-in?loggedOut=true` });
+        signOut({ callbackUrl: `https://crm.basalthq.com/sign-in?loggedOut=true` });
       }
     };
 
@@ -97,7 +97,7 @@ export function CommandComponent() {
               <span>Profile settings</span>
               <CommandShortcut>Shift + ⌘ + P</CommandShortcut>
             </CommandItem>
-            <CommandItem onClick={() => { clearUserCache(); signOut({ callbackUrl: `/${locale}/sign-in?loggedOut=true` }); }}>
+            <CommandItem onClick={() => { clearUserCache(); signOut({ callbackUrl: `https://crm.basalthq.com/sign-in?loggedOut=true` }); }}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Logout</span>
               <CommandShortcut>⌘L</CommandShortcut>
