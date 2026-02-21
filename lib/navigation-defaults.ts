@@ -204,7 +204,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Invoices",
                 iconName: "FileCheck",
                 href: "/invoice",
-                permissions: { module: "invoice", feature: "invoices" },
+                permissions: { module: "invoice" },
                 children: [
                     { id: "sub_invoices_all", type: "item", label: "All Invoices", href: "/invoice", iconName: "FileCheck" }
                 ]

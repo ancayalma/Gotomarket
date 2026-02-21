@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { LucideIcon, ChevronRight } from "lucide-react";
+import { LucideIcon, ChevronRight, Lock } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 
@@ -144,8 +144,9 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                         <span className="truncate flex items-center gap-2">
                             {title}
                             {isLocked && (
-                                <span className="text-[10px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded flex items-center gap-1">
-                                    🔒 <span className="hidden xl:inline">Upgrade</span>
+                                <span className="text-[10px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded flex items-center gap-1.5 border border-white/5">
+                                    <Lock className="w-2.5 h-2.5" />
+                                    <span className="hidden xl:inline">Upgrade</span>
                                 </span>
                             )}
                         </span>
@@ -165,10 +166,10 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                     {/* Micro-Label for Collapsed State */}
                     {!isOpen && (
                         <span className={cn(
-                            "text-[9px] uppercase tracking-wider mt-0.5 truncate max-w-[60px] text-center",
+                            "text-[9px] uppercase tracking-wider mt-0.5 truncate max-w-[60px] text-center flex items-center justify-center",
                             isActive ? "text-primary font-semibold" : "text-muted-foreground"
                         )}>
-                            {isLocked ? "🔒" : title.split(' ')[0]}
+                            {isLocked ? <Lock className="w-2.5 h-2.5" /> : title.split(' ')[0]}
                         </span>
                     )}
                 </div>

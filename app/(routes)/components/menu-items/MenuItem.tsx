@@ -104,8 +104,9 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                     >
                         {title}
                         {isLocked && (
-                            <span className="text-[10px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded ml-auto flex items-center gap-1">
-                                🔒 <span className="hidden xl:inline">Upgrade</span>
+                            <span className="text-[10px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded ml-auto flex items-center gap-1.5 border border-white/5">
+                                <Lock className="w-2.5 h-2.5" />
+                                <span className="hidden xl:inline">Upgrade</span>
                             </span>
                         )}
                     </motion.span>
@@ -113,10 +114,10 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                     {/* Micro-Label for Collapsed State */}
                     {!isOpen && (
                         <span className={cn(
-                            "text-[9px] uppercase tracking-wider mt-0.5 truncate max-w-[60px] text-center",
+                            "text-[9px] uppercase tracking-wider mt-0.5 truncate max-w-[60px] text-center flex items-center justify-center",
                             isActive ? "text-primary font-semibold" : "text-muted-foreground"
                         )}>
-                            {isLocked ? "🔒" : microLabel}
+                            {isLocked ? <Lock className="w-2.5 h-2.5" /> : microLabel}
                         </span>
                     )}
 

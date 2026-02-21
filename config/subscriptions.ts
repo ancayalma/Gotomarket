@@ -3,7 +3,7 @@ export const SUBSCRIPTION_PLANS = {
         name: "Testing Plan",
         slug: "FREE",
         price: 2, // From screenshot
-        features: ["crm", "projects", "documents"],
+        features: ["crm", "projects", "documents", "invoices"],
         limits: {
             max_users: 1,
             max_storage: 500, // MB
