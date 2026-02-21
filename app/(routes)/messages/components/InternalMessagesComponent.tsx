@@ -21,6 +21,8 @@ import {
     UserPlus,
     Undo2,
     AlertTriangle,
+    Check,
+    Bell,
     X,
     Pencil,
 } from "lucide-react";
@@ -103,10 +105,22 @@ interface FormSubmission {
     };
 }
 
+interface SystemNotification {
+    id: string;
+    title: string;
+    message: string;
+    type: string;
+    link?: string | null;
+    isRead: boolean;
+    isCleared: boolean;
+    createdAt: Date | string;
+}
+
 interface InternalMessagesProps {
     messages: Message[];
     teamMembers: TeamMember[];
     formSubmissions?: FormSubmission[];
+    notifications?: SystemNotification[];
     currentUserId: string;
     currentUserName: string;
     currentUserEmail: string;
@@ -118,6 +132,7 @@ export function InternalMessagesComponent({
     messages,
     teamMembers,
     formSubmissions = [],
+    notifications = [],
     currentUserId,
     currentUserName,
     currentUserEmail,
@@ -125,6 +140,7 @@ export function InternalMessagesComponent({
     defaultCollapsed = false,
 }: InternalMessagesProps) {
     const router = useRouter();
+    const [selectedNotificationId, setSelectedNotificationId] = React.useState<string | null>(null);
     const searchParams = useSearchParams();
     const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
     const [selectedMessageId, setSelectedMessageId] = React.useState<string | null>(null);
@@ -145,7 +161,7 @@ export function InternalMessagesComponent({
     }, [searchParams]);
     const [composeOpen, setComposeOpen] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState("");
-    const [activeNav, setActiveNav] = React.useState<"inbox" | "sent" | "drafts" | "archive" | "trash" | "submissions">("inbox");
+    const [activeNav, setActiveNav] = React.useState<"inbox" | "sent" | "drafts" | "archive" | "trash" | "submissions" | "notifications">("inbox");
     const [isConvertingToLead, setIsConvertingToLead] = React.useState(false);
     const [isDeletingSubmission, setIsDeletingSubmission] = React.useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
@@ -277,13 +293,20 @@ export function InternalMessagesComponent({
         return formSubmissions.filter(s => !s.is_deleted && s.status === "ARCHIVED");
     }, [formSubmissions]);
 
+    const activeNotifications = notifications.filter(n => !n.isCleared);
+
     const submissionsCount = activeSubmissions.filter(s => s.status === "NEW").length;
+    const notificationsCount = activeNotifications.filter(n => !n.isRead).length;
     const totalTrashCount = messageTrashCount + trashedSubmissions.length;
     const totalArchiveCount = archiveCount + archivedSubmissions.length;
 
     const selectedSubmission = React.useMemo(() => {
         return formSubmissions.find(s => s.id === selectedSubmissionId) || null;
     }, [formSubmissions, selectedSubmissionId]);
+
+    const selectedNotification = React.useMemo(() => {
+        return notifications.find(n => n.id === selectedNotificationId) || null;
+    }, [notifications, selectedNotificationId]);
 
     // Convert submission to lead
     const handleConvertToLead = async (submissionId: string) => {
@@ -442,6 +465,25 @@ export function InternalMessagesComponent({
         } catch (e) { toast.error("Failed to delete"); }
     };
 
+    const handleClearNotification = async (notificationId: string) => {
+        try {
+            const { clearNotification } = await import("@/actions/crm/notifications");
+            await clearNotification(notificationId);
+            toast.success("Notification cleared");
+            setSelectedNotificationId(null);
+            router.refresh();
+        } catch (e) { toast.error("Failed to clear notification"); }
+    };
+
+    const handleMarkNotificationRead = async (notification: SystemNotification) => {
+        if (notification.isRead) return;
+        try {
+            const { markAsRead } = await import("@/actions/crm/notifications");
+            await markAsRead(notification.id);
+            router.refresh();
+        } catch (e) { }
+    };
+
     const handleMessageRead = async (msg: Message) => {
         const { myRecipient } = getStatus(msg);
         if (!myRecipient || myRecipient.is_read) return;
@@ -587,6 +629,7 @@ export function InternalMessagesComponent({
     const navItems = [
         { id: "inbox" as const, title: "Inbox", icon: Inbox, count: inboxCount },
         { id: "submissions" as const, title: "Form Submissions", icon: FormInput, count: submissionsCount },
+        { id: "notifications" as const, title: "Notifications", icon: Bell, count: notificationsCount },
         { id: "sent" as const, title: "Sent", icon: Send, count: sentCount },
         { id: "drafts" as const, title: "Drafts", icon: File, count: draftsCount },
         { id: "archive" as const, title: "Archive", icon: Archive, count: totalArchiveCount },
@@ -990,6 +1033,53 @@ export function InternalMessagesComponent({
                                         })}
                                     </div>
                                 )
+                            ) : activeNav === "notifications" ? (
+                                /* Notifications List */
+                                activeNotifications.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-full py-10 text-center">
+                                        <Bell className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                                        <p className="text-muted-foreground">No active notifications</p>
+                                    </div>
+                                ) : (
+                                    <div className="divide-y">
+                                        {activeNotifications.map((notification) => (
+                                            <button
+                                                key={notification.id}
+                                                onClick={() => {
+                                                    setSelectedNotificationId(notification.id);
+                                                    setSelectedMessageId(null);
+                                                    setSelectedSubmissionId(null);
+                                                    handleMarkNotificationRead(notification);
+                                                }}
+                                                className={cn(
+                                                    "w-full flex items-start gap-3 p-4 text-left hover:bg-muted/50 transition-colors",
+                                                    selectedNotificationId === notification.id && "bg-muted",
+                                                    !notification.isRead && "bg-primary/5"
+                                                )}
+                                            >
+                                                {!notification.isRead && (
+                                                    <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                                                )}
+                                                <div className="h-9 w-9 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                                                    <Bell className="h-4 w-4 text-primary" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={cn("text-sm truncate", !notification.isRead && "font-semibold")}>
+                                                            {notification.title}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                                        {notification.message}
+                                                    </p>
+                                                </div>
+                                                <span className="text-xs text-muted-foreground flex-shrink-0">
+                                                    {formatMessageDate(notification.createdAt)}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )
                             ) : activeNav === "trash" ? (
                                 /* Trash - Deleted Submissions */
                                 trashedSubmissions.length === 0 ? (
@@ -1141,10 +1231,52 @@ export function InternalMessagesComponent({
 
                 <ResizableHandle withHandle />
 
-                {/* Right - Message/Submission Display */}
+                {/* Right - Message/Submission/Notification Display */}
                 <ResizablePanel defaultSize={defaultLayout[2]}>
                     <div className="flex flex-col h-full">
-                        {selectedSubmission ? (
+                        {selectedNotification ? (
+                            /* Notification Display */
+                            <>
+                                <div className="flex items-center gap-2 p-4 border-b">
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold">{selectedNotification.title}</h3>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="gap-2 hover:bg-emerald-500/10 hover:text-emerald-500 border-white/10"
+                                        onClick={() => handleClearNotification(selectedNotification.id)}
+                                    >
+                                        <Check className="h-4 w-4" />
+                                        Clear as Done
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 ml-2" onClick={() => setSelectedNotificationId(null)}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div className="p-8 flex flex-col items-center justify-center text-center space-y-4">
+                                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <Bell className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <div className="max-w-md">
+                                        <h2 className="text-xl font-bold mb-2">{selectedNotification.title}</h2>
+                                        <p className="text-muted-foreground leading-relaxed">
+                                            {selectedNotification.message}
+                                        </p>
+                                        <div className="mt-6 text-xs text-muted-foreground">
+                                            Received {format(new Date(selectedNotification.createdAt), "PPpp")}
+                                        </div>
+                                        {selectedNotification.link && (
+                                            <Button className="mt-8" asChild>
+                                                <Link href={selectedNotification.link}>
+                                                    View Details
+                                                </Link>
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        ) : selectedSubmission ? (
                             /* Form Submission Display */
                             <>
                                 <div className="flex items-center gap-2 p-4 border-b">

@@ -3437,6 +3437,7 @@ model Notification {
   type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR, APPROVAL, MENTION
   link      String?
   isRead    Boolean  @default(false)
+  isCleared Boolean  @default(false)
   createdAt DateTime @default(now()) @db.Date
   team_id   String?  @db.ObjectId
 

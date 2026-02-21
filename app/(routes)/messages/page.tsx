@@ -123,6 +123,18 @@ const MessagesRoute = async () => {
         formSubmissions = [];
     }
 
+    // Fetch system notifications
+    let notifications: any[] = [];
+    try {
+        notifications = await prismadb.notification.findMany({
+            where: { userId: session.user.id },
+            orderBy: { createdAt: "desc" },
+            take: 100,
+        });
+    } catch (e) {
+        notifications = [];
+    }
+
     const layout = (await cookies()).get("react-resizable-panels:layout");
     const collapsed = (await cookies()).get("react-resizable-panels:collapsed");
 
@@ -139,6 +151,7 @@ const MessagesRoute = async () => {
                     messages={messages}
                     teamMembers={teamMembers}
                     formSubmissions={formSubmissions}
+                    notifications={notifications}
                     currentUserId={session.user.id}
                     currentUserName={session.user.name || session.user.email || "You"}
                     currentUserEmail={session.user.email || ""}

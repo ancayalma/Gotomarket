@@ -18,7 +18,7 @@ export default async function NotificationsPage() {
         redirect("/sign-in");
     }
 
-    const notifications = await getNotifications();
+    const notifications = await getNotifications(true); // Include cleared for the main page archive
 
     return (
         <div className="flex flex-col h-full">

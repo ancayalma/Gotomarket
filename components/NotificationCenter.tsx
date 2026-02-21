@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { getNotifications, markAsRead, markAllAsRead } from "@/actions/crm/notifications";
+import { getNotifications, markAsRead, markAllAsRead, clearNotification, clearAllNotifications } from "@/actions/crm/notifications";
 import { useRouter } from "next/navigation";
 
 export default function NotificationCenter() {
@@ -32,7 +32,7 @@ export default function NotificationCenter() {
     const router = useRouter();
 
     const fetchNotifications = async () => {
-        const data = await getNotifications();
+        const data = await getNotifications(false); // Only fetch uncleared
         setNotifications(data);
         setUnreadCount(data.filter((n: any) => !n.isRead).length);
     };
@@ -54,6 +54,12 @@ export default function NotificationCenter() {
 
     const handleMarkAllRead = async () => {
         await markAllAsRead();
+        fetchNotifications();
+    };
+
+    const handleClear = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        await clearNotification(id);
         fetchNotifications();
     };
 
@@ -86,15 +92,32 @@ export default function NotificationCenter() {
                         Notifications
                         {unreadCount > 0 && <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">{unreadCount} New</Badge>}
                     </h4>
-                    {unreadCount > 0 && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-[10px] font-semibold text-primary hover:bg-primary/10 px-2"
-                            onClick={handleMarkAllRead}
-                        >
-                            Mark all read
-                        </Button>
+                    {notifications.length > 0 && (
+                        <div className="flex items-center gap-1">
+                            {notifications.some(n => !n.isRead) && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-[10px] font-bold hover:bg-white/5"
+                                    onClick={handleMarkAllRead}
+                                >
+                                    Mark all read
+                                </Button>
+                            )}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-[10px] font-bold text-red-400 hover:text-red-300 hover:bg-white/5"
+                                onClick={async () => {
+                                    if (confirm("Clear all notifications?")) {
+                                        await clearAllNotifications();
+                                        fetchNotifications();
+                                    }
+                                }}
+                            >
+                                Clear all
+                            </Button>
+                        </div>
                     )}
                 </div>
                 <ScrollArea className="h-80">
@@ -114,14 +137,25 @@ export default function NotificationCenter() {
                                     )}
                                     onClick={() => handleMarkAsRead(n.id, n.link)}
                                 >
-                                    <div className="flex gap-3">
+                                    <div className="flex gap-3 items-start">
                                         <div className="mt-1 shrink-0">
                                             {getIcon(n.type)}
                                         </div>
                                         <div className="flex-1 space-y-1 overflow-hidden">
-                                            <p className={cn("text-xs font-semibold leading-none", !n.isRead ? "text-foreground" : "text-muted-foreground")}>
-                                                {n.title}
-                                            </p>
+                                            <div className="flex items-center justify-between">
+                                                <p className={cn("text-xs font-semibold leading-none", !n.isRead ? "text-foreground" : "text-muted-foreground")}>
+                                                    {n.title}
+                                                </p>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all ml-2 shrink-0"
+                                                    onClick={(e) => handleClear(e, n.id)}
+                                                    title="Mark as done & clear"
+                                                >
+                                                    <Check className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
                                             <p className="text-[11px] text-muted-foreground line-clamp-2">
                                                 {n.message}
                                             </p>
@@ -131,7 +165,7 @@ export default function NotificationCenter() {
                                             </div>
                                         </div>
                                         {!n.isRead && (
-                                            <div className="h-2 w-2 rounded-full bg-primary mt-1" />
+                                            <div className="h-2 w-2 rounded-full bg-primary mt-1 shrink-0" />
                                         )}
                                     </div>
                                 </div>

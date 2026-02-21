@@ -66,42 +66,46 @@ export const MercurySettingsForm = ({ initialData }: Props) => {
                 </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-4 flex-1 flex flex-col">
-                <div className="grid gap-2">
-                    <Label htmlFor="mercury-key">API API Key</Label>
-                    <div className="relative">
-                        <Input
-                            id="mercury-key"
-                            type={visible ? "text" : "password"}
-                            value={apiKey}
-                            onChange={(e) => setApiKey(e.target.value)}
-                            placeholder="sk_live_..."
-                            className="bg-background/50 border-blue-400/20 font-mono text-sm pr-10"
-                        />
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setVisible(!visible)}
-                        >
-                            {visible ? (
-                                <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                            )}
-                        </Button>
+                {enabled && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="grid gap-2">
+                            <Label htmlFor="mercury-key">API Token</Label>
+                            <div className="relative">
+                                <Input
+                                    id="mercury-key"
+                                    type={visible ? "text" : "password"}
+                                    value={apiKey}
+                                    onChange={(e) => setApiKey(e.target.value)}
+                                    placeholder="mercury_token_..."
+                                    className="bg-background/50 border-blue-400/20 font-mono text-sm pr-10"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                    onClick={() => setVisible(!visible)}
+                                >
+                                    {visible ? (
+                                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                    ) : (
+                                        <Eye className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="mercury-account">Account ID</Label>
+                            <Input
+                                id="mercury-account"
+                                value={accountId}
+                                onChange={(e) => setAccountId(e.target.value)}
+                                placeholder="00000000-0000-0000-0000-000000000000"
+                                className="bg-background/50 border-blue-400/20 font-mono text-sm"
+                            />
+                        </div>
                     </div>
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="mercury-account">Account ID</Label>
-                    <Input
-                        id="mercury-account"
-                        value={accountId}
-                        onChange={(e) => setAccountId(e.target.value)}
-                        placeholder="mercury_account_..."
-                        className="bg-background/50 border-blue-400/20 font-mono text-sm"
-                    />
-                </div>
+                )}
 
                 <div className="flex justify-between items-center pt-2 mt-auto">
                     <Button
@@ -111,7 +115,7 @@ export const MercurySettingsForm = ({ initialData }: Props) => {
                         onClick={() => window.open("https://mercury.com/settings/api", "_blank")}
                         className="border-blue-400/20 hover:bg-blue-400/10 text-xs py-1 h-8"
                     >
-                        Merchant Portal
+                        Mercury API Settings
                         <ExternalLink className="w-3 h-3 ml-2" />
                     </Button>
                     <Button
