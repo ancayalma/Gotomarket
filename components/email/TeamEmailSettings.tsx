@@ -78,6 +78,9 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
     const [smtpUser, setSmtpUser] = useState("");
     const [smtpPassword, setSmtpPassword] = useState("");
 
+    // Test Email
+    const [testEmail, setTestEmail] = useState("");
+
     useEffect(() => {
         if (!teamId) return;
         fetchConfig();
@@ -238,6 +241,29 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
             }
         } catch (error: any) {
             toast.error(error.message || "Failed to save configuration");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSendTest = async () => {
+        if (!teamId || !testEmail) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/teams/${teamId}/email-config/test`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ to: testEmail }),
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Failed to send test email");
+            }
+
+            toast.success("Test email sent successfully! Please check your inbox.");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to send test email");
         } finally {
             setLoading(false);
         }
@@ -526,16 +552,43 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
                 )}
 
                 {/* 4. Actions & Status */}
-                <div className="flex items-center gap-4 pt-4 border-t">
-                    <Button onClick={handleSave} disabled={loading}>
-                        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                        Save Configuration
-                    </Button>
-
-                    {config && (
-                        <Button variant="destructive" onClick={handleRemove} disabled={loading}>
-                            Remove Config
+                <div className="flex flex-col gap-4 pt-4 border-t">
+                    <div className="flex items-center gap-4">
+                        <Button onClick={handleSave} disabled={loading}>
+                            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                            Save Configuration
                         </Button>
+
+                        {config && (
+                            <Button variant="destructive" onClick={handleRemove} disabled={loading}>
+                                Remove Config
+                            </Button>
+                        )}
+                    </div>
+
+                    {config?.verification_status === "VERIFIED" && (
+                        <div className="flex items-center gap-2 p-4 border rounded-lg bg-primary/5">
+                            <div className="flex-1 space-y-1">
+                                <Label htmlFor="testEmail">Send Test Email</Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        id="testEmail"
+                                        placeholder="test@example.com"
+                                        value={testEmail}
+                                        onChange={(e) => setTestEmail(e.target.value)}
+                                        disabled={loading}
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleSendTest}
+                                        disabled={loading || !testEmail}
+                                    >
+                                        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                                        Send Test
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
 

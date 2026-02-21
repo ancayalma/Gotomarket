@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { prismadb } from "@/lib/prisma";
 import Container from "@/app/(routes)/components/ui/Container";
 import TeamAiSettings from "./_components/TeamAiSettings";
+import { TeamEmailSettings } from "@/components/email/TeamEmailSettings";
+import { EmailDeliveryStats } from "@/components/email/EmailDeliveryStats";
 
 export default async function TeamSettingsPage() {
     const session = await getServerSession(authOptions);
@@ -32,6 +34,10 @@ export default async function TeamSettingsPage() {
         <Container title="Team Settings" description="Manage your team preferences.">
             <div className="space-y-8">
                 <TeamAiSettings teamId={user.assigned_team.id} />
+                <div className="grid gap-6 md:grid-cols-2">
+                    <TeamEmailSettings teamId={user.assigned_team.id} />
+                    <EmailDeliveryStats teamId={user.assigned_team.id} />
+                </div>
             </div>
         </Container>
     );
