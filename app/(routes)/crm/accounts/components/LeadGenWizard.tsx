@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import useSWR from "swr";
 import fetcher from "@/lib/fetcher";
 import AIWriterModal from "../../leads/components/modals/AIWriterModal";
+import { Combobox } from "@/components/ui/combobox";
 
 type WizardMode = "ai-only" | "step-by-step" | "advanced";
 
@@ -321,17 +322,15 @@ export default function LeadGenWizardPage() {
         <label className="text-[10px] uppercase tracking-wider font-semibold text-indigo-400 mb-1.5 block flex items-center gap-1.5">
           <FolderKanban className="w-3 h-3" /> Assign to Campaign
         </label>
-        <select
-          name="campaignId"
+        <Combobox
+          options={(projectsData?.projects || []).map(p => ({ label: p.title, value: p.id }))}
           value={state.campaignId}
-          onChange={(e) => setState(prev => ({ ...prev, campaignId: e.target.value }))}
-          className="w-full bg-transparent border-none text-sm font-medium focus:ring-0 px-0 cursor-pointer"
-        >
-          <option value="">— Select Campaign (Optional) —</option>
-          {(projectsData?.projects || []).map(p => (
-            <option key={p.id} value={p.id}>{p.title}</option>
-          ))}
-        </select>
+          onChange={(value) => setState(prev => ({ ...prev, campaignId: value }))}
+          placeholder="Search campaigns..."
+          emptyMessage="No campaigns found."
+          variant="ghost"
+          className="w-full justify-start bg-transparent border-none text-sm font-medium focus:ring-0 px-0 hover:bg-white/5 transition-colors text-white h-auto py-1.5"
+        />
         <div className="text-[10px] text-muted-foreground mt-1">Generated list will be linked to this campaign</div>
       </div>
 

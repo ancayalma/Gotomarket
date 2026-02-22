@@ -656,7 +656,7 @@
   textarea,
   select {
     background-color: hsl(var(--input)) !important;
-    color: hsl(var(--foreground)) !important;
+    color: #ffffff !important;
     border-color: hsl(var(--border)) !important;
   }
 
@@ -1334,4 +1334,21 @@ div.headlessui-portal>div {
 .tremor-Legend-itemText,
 .recharts-legend-item-text {
   color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Global override for list items in dropdowns */
+[cmdk-item] {
+  color: #ffffff !important;
+}
+
+[cmdk-item][aria-selected="true"] {
+  background-color: hsla(200, 100%, 50%, 0.4) !important;
+  color: #ffffff !important;
+}
+
+[cmdk-group-heading] {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
 }

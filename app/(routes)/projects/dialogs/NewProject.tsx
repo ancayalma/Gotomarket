@@ -155,10 +155,12 @@ const NewProjectDialog = ({ customTrigger, entityName = "Project", apiEndpoint =
     console.log(data);
     setIsLoading(true);
     try {
-      // Normalize payload: campaigns API expects `name`, projects API expects `title`
-      const payload = apiEndpoint.startsWith("/api/campaigns")
-        ? { name: data.title, description: data.description, status: "Active" }
-        : data;
+      // Send full data to preserve branding, ICP, and context.
+      // Set appropriate status based on entity type.
+      const payload = {
+        ...data,
+        status: entityName === "Campaign" ? "ACTIVE" : "DRAFT"
+      };
       await axios.post(apiEndpoint, payload);
       toast({
         title: "Success",

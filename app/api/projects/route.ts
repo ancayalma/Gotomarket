@@ -100,8 +100,8 @@ export async function POST(req: Request) {
         visibility: visibility,
         sharedWith: [session.user.id],
         createdBy: session.user.id,
-        // Status starts as DRAFT
-        status: "DRAFT",
+        // Allow status override from body, default to DRAFT
+        status: (body.status as any) || "DRAFT",
         // Branding (optional)
         brand_logo_url: typeof brand_logo_url === "string" ? brand_logo_url : undefined,
         brand_primary_color: typeof brand_primary_color === "string" ? brand_primary_color : undefined,

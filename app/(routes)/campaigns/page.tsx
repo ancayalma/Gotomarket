@@ -59,7 +59,7 @@ const CampaignsPage = async () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 flex-shrink-0 sticky top-0 z-40 pb-4 pt-2">
                 <NewProjectDialog
                     entityName="Campaign"
-                    apiEndpoint="/api/campaigns"
+                    apiEndpoint="/api/projects"
                     customTrigger={<ProjectCard card={cards[0]} />}
                 />
             </div>

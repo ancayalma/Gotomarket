@@ -24,6 +24,7 @@ import { toast } from "react-hot-toast";
 import useSWR from "swr";
 import fetcher from "@/lib/fetcher";
 import Link from "next/link";
+import { Combobox } from "@/components/ui/combobox";
 
 interface LeadWizardQuickModalProps {
     open: boolean;
@@ -246,28 +247,15 @@ export const LeadWizardQuickModal = ({
                                         <FolderKanban size={10} />
                                         Link to Project
                                     </label>
-                                    <select
-                                        id="quickwizard-project"
+                                    <Combobox
+                                        options={(campaignsData?.projects || []).map(p => ({ label: p.title, value: p.id }))}
                                         value={campaignId}
-                                        onChange={(e) =>
-                                            setCampaignId(e.target.value)
-                                        }
-                                        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all outline-none appearance-none cursor-pointer"
-                                    >
-                                        <option value="">
-                                            — No Project —
-                                        </option>
-                                        {(campaignsData?.projects || []).map(
-                                            (p) => (
-                                                <option
-                                                    key={p.id}
-                                                    value={p.id}
-                                                >
-                                                    {p.title}
-                                                </option>
-                                            )
-                                        )}
-                                    </select>
+                                        onChange={(value) => setCampaignId(value)}
+                                        placeholder="Search projects..."
+                                        emptyMessage="No projects found."
+                                        variant="ghost"
+                                        className="w-full justify-start rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+                                    />
                                 </div>
 
                                 {/* Max Companies */}
