@@ -49,9 +49,16 @@ export const AIInsightsWidget = ({ insights = [] }: AIInsightsWidgetProps) => {
 
             <div className="space-y-4 pt-4 relative z-10">
                 {insights.length === 0 ? (
-                    <div className="py-12 flex flex-col items-center justify-center space-y-3">
-                        <Zap className="w-6 h-6 text-violet-500/30 animate-pulse" />
-                        <p className="text-[11px] text-muted-foreground italic font-medium tracking-wide">Scanning neural network...</p>
+                    <div className="py-12 flex flex-col items-center justify-center space-y-3 text-center animate-in fade-in duration-1000">
+                        <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                            <Check className="w-6 h-6 text-emerald-500" />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[12px] text-white font-bold uppercase tracking-widest">Neural Network Clear</p>
+                            <p className="text-[11px] text-white/50 italic leading-relaxed max-w-[200px]">
+                                Your enterprise is operating at peak efficiency. No immediate risks detected by the command center.
+                            </p>
+                        </div>
                     </div>
                 ) : (
                     insights.map((insight) => (

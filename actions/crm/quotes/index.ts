@@ -39,6 +39,7 @@ export async function createQuote(data: {
     title: string;
     accountId?: string;
     contactId?: string;
+    leadId?: string;
     opportunityId?: string;
     items: {
         productId: string;
@@ -65,6 +66,7 @@ export async function createQuote(data: {
                 expirationDate: data.expirationDate,
                 accountId: data.accountId,
                 contactId: data.contactId,
+                leadId: data.leadId,
                 opportunityId: data.opportunityId,
                 createdBy: session.user.id,
                 team_id: (session.user as any).team_id,

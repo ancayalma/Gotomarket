@@ -150,6 +150,7 @@ model crm_Leads {
   // Department assignment for scoped access
   assigned_department_id String? @db.ObjectId
   additional_emails      String[]
+  quotes                 crm_Quotes[]
 }
 
 enum crm_Lead_Status {
@@ -3497,12 +3498,14 @@ model crm_Quotes {
 
   accountId     String? @db.ObjectId
   contactId     String? @db.ObjectId
+  leadId        String? @db.ObjectId
   opportunityId String? @db.ObjectId
   createdBy     String  @db.ObjectId
   team_id       String  @db.ObjectId
 
   account     crm_Accounts?      @relation(fields: [accountId], references: [id])
   contact     crm_Contacts?      @relation(fields: [contactId], references: [id])
+  lead        crm_Leads?         @relation(fields: [leadId], references: [id])
   opportunity crm_Opportunities? @relation(fields: [opportunityId], references: [id])
   creator     Users              @relation(fields: [createdBy], references: [id])
   team        Team               @relation(fields: [team_id], references: [id])

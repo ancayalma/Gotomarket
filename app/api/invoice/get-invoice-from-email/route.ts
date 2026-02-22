@@ -6,7 +6,9 @@ import axios from "axios";
 import { requireApiAuth } from "@/lib/api-auth-guard";
 // TLS workaround: disable certificate verification to avoid DEPTH_ZERO_SELF_SIGNED_CERT
 // WARNING: Do not leave this enabled in production without proper CA configuration.
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+if (process.env.NODE_ENV === "development") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+}
 
 const imapConfig: Imap.Config = {
   user: process.env.IMAP_USER!,

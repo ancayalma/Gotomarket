@@ -21,10 +21,11 @@ export default async function QuoteBuilderPage() {
     const teamId = (session.user as any).team_id;
 
     // Fetch necessary data for the builder
-    const [products, accounts, contacts] = await Promise.all([
+    const [products, accounts, contacts, leads] = await Promise.all([
         getProducts(),
         prismadb.crm_Accounts.findMany({ where: { team_id: teamId }, select: { id: true, name: true } }),
-        prismadb.crm_Contacts.findMany({ where: { team_id: teamId }, select: { id: true, first_name: true, last_name: true, account: true } })
+        prismadb.crm_Contacts.findMany({ where: { team_id: teamId }, select: { id: true, first_name: true, last_name: true, accountsIDs: true } }),
+        prismadb.crm_Leads.findMany({ where: { team_id: teamId }, select: { id: true, firstName: true, lastName: true, accountsIDs: true } })
     ]);
 
     return (
@@ -34,8 +35,9 @@ export default async function QuoteBuilderPage() {
         >
             <QuoteBuilderClient
                 products={JSON.parse(JSON.stringify(products))}
-                accounts={JSON.parse(JSON.stringify(accounts))}
-                contacts={JSON.parse(JSON.stringify(contacts))}
+                initialAccounts={JSON.parse(JSON.stringify(accounts))}
+                initialContacts={JSON.parse(JSON.stringify(contacts))}
+                initialLeads={JSON.parse(JSON.stringify(leads))}
             />
         </Container>
     );
