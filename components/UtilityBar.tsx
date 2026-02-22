@@ -36,29 +36,7 @@ export default function UtilityBar() {
     const [isDialerOpen, setIsDialerOpen] = useState(false);
     const { activeTab, tooltipLabel, overviewTitle, overviewWhat, overviewWhy, overviewHow, dismissKey } = useLearn();
     const router = useRouter();
-    const [isLearnDismissed, setIsLearnDismissed] = useState(false);
-
-    useEffect(() => {
-        if (!activeTab) {
-            setIsLearnDismissed(false);
-            return;
-        }
-        const storageKey = dismissKey ?? `crm_learnlink_${activeTab}`;
-        try {
-            if (localStorage.getItem(storageKey) === "true") {
-                setIsLearnDismissed(true);
-            } else {
-                setIsLearnDismissed(false);
-            }
-        } catch { /* ignore */ }
-    }, [activeTab, dismissKey]);
-
-    const handleDismissLearn = () => {
-        if (!activeTab) return;
-        const storageKey = dismissKey ?? `crm_learnlink_${activeTab}`;
-        setIsLearnDismissed(true);
-        try { localStorage.setItem(storageKey, "true"); } catch { /* ignore */ }
-    };
+    const [isLearnOpen, setIsLearnOpen] = useState(false);
 
     useEffect(() => {
         const savedNotes = localStorage.getItem("crm-utility-notes");
@@ -222,8 +200,8 @@ export default function UtilityBar() {
 
                     <div className="flex items-center gap-4">
                         {/* Learn About This Page - Integrated into UtilityBar */}
-                        {activeTab && !isLearnDismissed && (
-                            <Popover>
+                        {activeTab && (
+                            <Popover open={isLearnOpen} onOpenChange={setIsLearnOpen}>
                                 <PopoverTrigger asChild>
                                     <div className={cn(
                                         "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all cursor-pointer group",
@@ -252,9 +230,9 @@ export default function UtilityBar() {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={handleDismissLearn}
+                                            onClick={() => setIsLearnOpen(false)}
                                             className="text-white/25 hover:text-white/60 transition-colors p-0.5"
-                                            title="Don't show again"
+                                            title="Close"
                                         >
                                             <X className="w-3.5 h-3.5" />
                                         </button>
@@ -297,7 +275,7 @@ export default function UtilityBar() {
                                                 router.push(`/crm/university?tab=${activeTab}`);
                                             } else {
                                                 // Just dismiss for now since there's no specific university page
-                                                handleDismissLearn();
+                                                setIsLearnOpen(false);
                                             }
                                         }}
                                         className={`w-full h-8 text-xs font-bold text-white bg-gradient-to-r ${TAB_COLORS[activeTab]} hover:opacity-90 transition-opacity border-none`}
