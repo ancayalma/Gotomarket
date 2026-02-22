@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { getModules } from "@/actions/get-modules";
 import { prismadb } from "@/lib/prisma";
 import { getCaseStats } from "@/actions/crm/cases/get-case-stats";
-import { getDictionary } from "@/dictionaries";
+import { getDictionary } from "@/lib/dictionaries";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 const SideBar = async () => {

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getModules } from "@/actions/get-modules";
 import { getNavigationConfig } from "@/actions/navigation/get-navigation-config";
-import { getDictionary } from "@/dictionaries";
+import { getDictionary } from "@/lib/dictionaries";
 import { prismadb } from "@/lib/prisma";
 import { DEFAULT_NAV_STRUCTURE } from "@/lib/navigation-defaults";
 import { NavigationEditor } from "./_components/NavigationEditor";

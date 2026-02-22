@@ -2,7 +2,7 @@
   This route is used to test the different components of the app.
 */
 
-import MultiSelect from "@/shadcn-examples/MultiSelect";
+import MultiSelect from "@/components/shadcn-examples/MultiSelect";
 import React from "react";
 
 const DevModePage = () => {

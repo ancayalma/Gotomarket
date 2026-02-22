@@ -6,7 +6,7 @@ import Container from "../components/ui/Container";
 import SuspenseLoading from "@/components/loadings/suspense";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getDictionary } from "@/dictionaries";
+import { getDictionary } from "@/lib/dictionaries";
 import { redirect } from "next/navigation";
 
 const EmailRoute = async () => {
