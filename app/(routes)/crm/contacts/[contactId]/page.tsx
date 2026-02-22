@@ -22,6 +22,7 @@ import { getEffectiveRoleModules } from "@/actions/permissions/get-effective-per
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 const ContactViewPage = async (props: any) => {
   const params = await props.params;
@@ -82,6 +83,13 @@ const ContactViewPage = async (props: any) => {
         />
       }
     >
+      <LearnLink
+        tab="contact-detail"
+        overviewTitle="Contact Explorer"
+        overviewWhat="The definitive profile viewing pane for a single individual. It aggregates their direct communication history, associated accounts, and related opportunities."
+        overviewWhy="Allows you to understand the complete context of your relationship with a person before reaching out. It prevents you from missing crucial historical context hidden in other accounts they might have engaged with."
+        overviewHow="Scroll through the left pane for basic profile details and contact info, and use the right-side tabs to browse their communication timeline, company affiliations, and active deals."
+      />
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
         {/* Left Sidebar: Contact Info */}
         <div className="xl:col-span-4 space-y-6">

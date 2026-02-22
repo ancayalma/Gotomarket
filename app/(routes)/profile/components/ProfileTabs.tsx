@@ -13,6 +13,14 @@ import { Users } from "@prisma/client";
 import { Separator } from "@/components/ui/separator";
 import Container from "../../components/ui/Container";
 
+import CalendarIntegrationPanel from "../../crm/leads/components/CalendarIntegrationPanel";
+import CalendarAvailabilityPanel from "../../crm/leads/components/CalendarAvailabilityPanel";
+import CalendarEventsPanel from "../../crm/leads/components/CalendarEventsPanel";
+import SignaturesResourcesPanel from "../../crm/leads/components/SignaturesResourcesPanel";
+import PortalSettingsPanel from "../../crm/leads/components/PortalSettingsPanel";
+import DashboardCard from "../../crm/dashboard/_components/DashboardCard";
+import { User, PenTool, Link, Clock, Calendar, MessageSquare, Shield } from "lucide-react";
+
 interface ProfileTabsProps {
     data: Users;
 }
@@ -23,16 +31,43 @@ export function ProfileTabs({ data }: ProfileTabsProps) {
     const [activeTab, setActiveTab] = useState(defaultTab);
 
     const getHeader = () => {
-        if (activeTab === "signature") {
-            return {
-                title: "Email Signature",
-                description: "Design and customize your professional email signature with live preview."
-            };
+        switch (activeTab) {
+            case "signature":
+                return {
+                    title: "Email Signature",
+                    description: "Design and customize your professional email signature with live preview."
+                };
+            case "integration":
+                return {
+                    title: "Integrations",
+                    description: "Connect your calendar and external services."
+                };
+            case "availability":
+                return {
+                    title: "Availability",
+                    description: "Set your working hours and meeting availability."
+                };
+            case "events":
+                return {
+                    title: "Event Types",
+                    description: "Manage your meeting types and scheduling links."
+                };
+            case "signatures":
+                return {
+                    title: "Resources & Prompts",
+                    description: "Manage your outreach buttons and AI prompts."
+                };
+            case "portal":
+                return {
+                    title: "SMS Portal Settings",
+                    description: "Configure your client facing messaging portal."
+                };
+            default:
+                return {
+                    title: "Profile & Account",
+                    description: "Manage your personal information, security, and integrations."
+                };
         }
-        return {
-            title: "Profile",
-            description: "Manage your account settings, personal information, and security."
-        };
     };
 
     const { title, description } = getHeader();
@@ -40,18 +75,76 @@ export function ProfileTabs({ data }: ProfileTabsProps) {
     return (
         <Container title={title} description={description}>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-                <TabsList className="bg-transparent p-0 w-full justify-start h-auto gap-8 border-b border-white/5 pb-0 mb-6 rounded-none">
-                    <TabsTrigger
-                        value="general"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 py-4 text-sm font-medium text-muted-foreground transition-all hover:text-primary"
-                    >
-                        General
+                <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8 h-auto bg-transparent p-0">
+                    <TabsTrigger value="general" asChild>
+                        <DashboardCard
+                            icon={User}
+                            label="Profile"
+                            description="Personal info"
+                            variant="default"
+                            hideIcon={true}
+                            className="data-[state=active]:ring-2 data-[state=active]:ring-primary data-[state=active]:border-primary/50"
+                        />
                     </TabsTrigger>
-                    <TabsTrigger
-                        value="signature"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-1 py-4 text-sm font-medium text-muted-foreground transition-all hover:text-primary"
-                    >
-                        Signature
+                    <TabsTrigger value="signature" asChild>
+                        <DashboardCard
+                            icon={PenTool}
+                            label="Signature"
+                            description="Email identity"
+                            variant="default"
+                            hideIcon={true}
+                            className="data-[state=active]:ring-2 data-[state=active]:ring-primary data-[state=active]:border-primary/50"
+                        />
+                    </TabsTrigger>
+                    <TabsTrigger value="integration" asChild>
+                        <DashboardCard
+                            icon={Link}
+                            label="Integrations"
+                            description="Connect apps"
+                            variant="info"
+                            hideIcon={true}
+                            className="data-[state=active]:ring-2 data-[state=active]:ring-primary data-[state=active]:border-primary/50"
+                        />
+                    </TabsTrigger>
+                    <TabsTrigger value="availability" asChild>
+                        <DashboardCard
+                            icon={Clock}
+                            label="Availability"
+                            description="Work hours"
+                            variant="success"
+                            hideIcon={true}
+                            className="data-[state=active]:ring-2 data-[state=active]:ring-primary data-[state=active]:border-primary/50"
+                        />
+                    </TabsTrigger>
+                    <TabsTrigger value="events" asChild>
+                        <DashboardCard
+                            icon={Calendar}
+                            label="Events"
+                            description="Meeting types"
+                            variant="violet"
+                            hideIcon={true}
+                            className="data-[state=active]:ring-2 data-[state=active]:ring-primary data-[state=active]:border-primary/50"
+                        />
+                    </TabsTrigger>
+                    <TabsTrigger value="signatures" asChild>
+                        <DashboardCard
+                            icon={Shield}
+                            label="Resources"
+                            description="Buttons & Prompts"
+                            variant="warning"
+                            hideIcon={true}
+                            className="data-[state=active]:ring-2 data-[state=active]:ring-primary data-[state=active]:border-primary/50"
+                        />
+                    </TabsTrigger>
+                    <TabsTrigger value="portal" asChild>
+                        <DashboardCard
+                            icon={MessageSquare}
+                            label="SMS Portal"
+                            description="Messaging"
+                            variant="violet"
+                            hideIcon={true}
+                            className="data-[state=active]:ring-2 data-[state=active]:ring-primary data-[state=active]:border-primary/50"
+                        />
                     </TabsTrigger>
                 </TabsList>
 
@@ -86,6 +179,26 @@ export function ProfileTabs({ data }: ProfileTabsProps) {
 
                     <TabsContent value="signature" className="mt-0">
                         <SignatureBuilder hasAccess={true} />
+                    </TabsContent>
+
+                    <TabsContent value="integration" className="mt-0">
+                        <CalendarIntegrationPanel />
+                    </TabsContent>
+
+                    <TabsContent value="availability" className="mt-0">
+                        <CalendarAvailabilityPanel />
+                    </TabsContent>
+
+                    <TabsContent value="events" className="mt-0">
+                        <CalendarEventsPanel />
+                    </TabsContent>
+
+                    <TabsContent value="signatures" className="mt-0">
+                        <SignaturesResourcesPanel />
+                    </TabsContent>
+
+                    <TabsContent value="portal" className="mt-0">
+                        <PortalSettingsPanel />
                     </TabsContent>
                 </div>
             </Tabs>

@@ -20,6 +20,7 @@ import { getEffectiveRoleModules } from "@/actions/permissions/get-effective-per
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 const OpportunityView = async (
   props: {
@@ -116,6 +117,13 @@ const OpportunityView = async (
         </div>
       }
     >
+      <LearnLink
+        tab="opportunity-detail"
+        overviewTitle="Deal Workspace"
+        overviewWhat="The central dashboard for a single, active financial opportunity. It records the forecasted value, confidence probability, and current pipeline pipeline stage."
+        overviewWhy="Ensures that anyone touching this deal understands its monetary value and the agreed timeline before taking action. It stops disjointed communication by grouping related assets together."
+        overviewHow="Update the stage from the top-right button when progressing through negotiations, and scroll down to view internal comments, related contacts, and formal quote documents attached to this specific opportunity."
+      />
       <div className="space-y-5">
         {hasAccess('opportunities.detail.info') && <BasicView data={opportunity} />}
         {hasAccess('opportunities.detail.accounts') && <AccountsView crmData={crmData} data={accounts} />}

@@ -74,7 +74,7 @@ export default function ProjectWorkflowGuide() {
 
     const workflowSteps = [
         {
-            phase: "Phase 1",
+            phase: "Step 1",
             title: "Campaign Setup",
             actor: "Admin",
             icon: FolderKanban,
@@ -89,7 +89,7 @@ export default function ProjectWorkflowGuide() {
             ],
         },
         {
-            phase: "Phase 2",
+            phase: "Steps 2-3",
             title: "List & Assignment",
             actor: "Admin",
             icon: Users,
@@ -104,7 +104,7 @@ export default function ProjectWorkflowGuide() {
             ],
         },
         {
-            phase: "Phase 3",
+            phase: "Step 4",
             title: "Outreach Execution",
             actor: "Member",
             icon: Rocket,
@@ -119,7 +119,7 @@ export default function ProjectWorkflowGuide() {
             ],
         },
         {
-            phase: "Phase 4",
+            phase: "Settings",
             title: "Approval (Optional)",
             actor: "Admin decides",
             icon: ShieldCheck,
@@ -134,7 +134,7 @@ export default function ProjectWorkflowGuide() {
             ],
         },
         {
-            phase: "Phase 5",
+            phase: "Analytics",
             title: "Monitoring",
             actor: "Everyone",
             icon: Bell,
@@ -168,30 +168,7 @@ export default function ProjectWorkflowGuide() {
     ];
 
     return (
-        <div className="space-y-8">
-            {/* Hero */}
-            <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
-            >
-                <Card className="bg-gradient-to-br from-card via-background to-muted/20 border-primary/10 shadow-xl shadow-primary/5 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-grid-white/[0.02] -z-10" />
-                    <div className="flex flex-col items-center justify-center p-4 text-center space-y-1">
-                        <div className="flex items-center gap-2">
-                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-                                <FolderKanban className="w-4 h-4" />
-                            </div>
-                            <h2 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
-                                Campaign Workflow Guide
-                            </h2>
-                        </div>
-                        <p className="text-sm text-muted-foreground w-full">
-                            How campaigns, lists, and outreach flow from admin setup to member execution.
-                        </p>
-                    </div>
-                </Card>
-            </motion.div>
+        <div className="space-y-6 pb-4">
 
             {/* Role Permissions */}
             <div className="space-y-4">

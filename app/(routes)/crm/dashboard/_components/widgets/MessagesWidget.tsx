@@ -31,13 +31,25 @@ interface MessagesWidgetProps {
     messages: NotificationItem[];
 }
 
+const MessagePulseIndicator = ({ createdAt }: { createdAt: Date }) => {
+    const isVeryRecent = (new Date().getTime() - new Date(createdAt).getTime()) / (1000 * 3600) < 1; // within last hour
+
+    return (
+        <div className="relative h-2 w-2">
+            {isVeryRecent && (
+                <div className="absolute inset-0 rounded-full bg-cyan-500/30 animate-ping" />
+            )}
+            <div className={`absolute inset-0 rounded-full bg-cyan-500/60 ${isVeryRecent ? 'shadow-[0_0_8px_rgba(6,182,212,0.8)]' : 'opacity-40'}`} />
+        </div>
+    );
+};
+
 export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProps) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [messages, setMessages] = useState<NotificationItem[]>(initialMessages);
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
 
-    // Sync with props
     React.useEffect(() => {
         setMessages(initialMessages);
     }, [initialMessages]);
@@ -50,15 +62,15 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
             try {
                 const result = await markNotificationRead(id, type);
                 if (result.success) {
-                    toast.success("Marked as read");
+                    toast.success("Intelligence cleared");
                     router.refresh();
                 } else {
                     setMessages(previousMessages);
-                    toast.error("Failed to mark as read");
+                    toast.error("Failed to update status");
                 }
             } catch (error) {
                 setMessages(previousMessages);
-                toast.error("Something went wrong");
+                toast.error("Network synchronization error");
             }
         });
     };
@@ -76,10 +88,10 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
                 <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 px-2 text-[10px] font-bold border-white/10 bg-white/5 hover:bg-white/10"
+                    className="h-7 px-2 text-[10px] font-bold border-white/10 bg-white/5 hover:bg-white/10 text-primary"
                 >
                     <SendHorizontal size={12} className="mr-1" />
-                    MESSAGE
+                    NEW INTEL
                 </Button>
             }
         />
@@ -87,74 +99,87 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
 
     return (
         <WidgetWrapper
-            title="Inbox"
+            title="Inbox Stream"
             icon={MessageSquare}
             iconColor="text-cyan-400"
             onSearch={setSearchTerm}
             searchValue={searchTerm}
             footerHref="/messages"
-            footerLabel="Go to Inbox"
+            footerLabel="Review Full Intelligence Stream"
             count={messages.length}
             rightAction={rightAction}
         >
-            <div className="space-y-1 pb-4 mt-2">
+            <div className="space-y-1.5 pb-4 mt-3">
                 {filteredMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground/30">
                         <MessageSquare className="h-10 w-10 mb-2 opacity-10" />
-                        <p className="text-[11px] font-medium italic">Your inbox is empty</p>
+                        <p className="text-[11px] font-medium italic">No unread intelligence</p>
                     </div>
                 ) : (
                     filteredMessages.map((item) => (
                         <div
                             key={item.id}
-                            className="group flex items-start justify-between gap-3 p-3 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/[0.03] transition-all duration-300"
+                            className="group flex items-start justify-between gap-3 p-3 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.04] transition-all duration-300 relative overflow-hidden"
                         >
-                            <div className="space-y-1.5 overflow-hidden flex-1">
+                            <div className="space-y-1.5 overflow-hidden flex-1 relative z-10">
                                 <div className="flex items-center gap-2">
-                                    <Avatar className="h-6 w-6 ring-1 ring-white/10">
-                                        <AvatarImage src={item.sender.avatar || undefined} />
-                                        <AvatarFallback className="text-[9px] bg-white/5 text-muted-foreground uppercase font-bold">
-                                            {item.sender.name.substring(0, 2)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-sm font-semibold text-white/90 truncate group-hover:text-primary transition-colors">
-                                        {item.sender.name}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground ml-auto font-medium opacity-60">
-                                        {format(new Date(item.createdAt), "MMM d")}
-                                    </span>
+                                    <div className="relative">
+                                        <Avatar className="h-7 w-7 border border-white/10 group-hover:border-primary/50 transition-colors duration-300">
+                                            <AvatarImage src={item.sender.avatar || undefined} className="object-cover" />
+                                            <AvatarFallback className="text-[9px] bg-white/5 text-muted-foreground uppercase font-bold">
+                                                {item.sender.name.substring(0, 2)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="absolute -bottom-0.5 -right-0.5 z-20">
+                                            <MessagePulseIndicator createdAt={item.createdAt} />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-sm font-bold text-white/90 truncate group-hover:text-primary transition-colors">
+                                            {item.sender.name}
+                                        </span>
+                                        <span className="text-[9px] text-muted-foreground font-medium opacity-50">
+                                            {format(new Date(item.createdAt), "h:mm a")}
+                                        </span>
+                                    </div>
+
+                                    <div className="ml-auto">
+                                        {item.type === 'form' && (
+                                            <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-white/10 bg-white/5 text-muted-foreground font-black uppercase tracking-tighter">Form Entry</Badge>
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="space-y-0.5" onClick={() => handleMarkRead(item.id, item.type)}>
+                                <div className="space-y-0.5 px-0.5" onClick={() => handleMarkRead(item.id, item.type)}>
                                     <div className="font-bold text-[11px] truncate flex items-center gap-1.5 text-white/80 group-hover:text-white transition-colors cursor-pointer">
-                                        {item.type === 'form' && (
-                                            <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-white/10 bg-white/5 text-muted-foreground font-medium uppercase tracking-tighter">Form</Badge>
-                                        )}
                                         {item.title}
                                     </div>
                                     {item.body && (
-                                        <p className="text-[10px] text-muted-foreground/70 line-clamp-1 font-medium italic cursor-pointer">
+                                        <p className="text-[10px] text-muted-foreground/60 line-clamp-1 font-medium italic cursor-pointer group-hover:text-muted-foreground/80 transition-colors">
                                             {item.body}
                                         </p>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="shrink-0 flex items-center gap-1 pt-0.5 self-center">
+                            <div className="shrink-0 flex items-center gap-1.5 pt-0.5 self-center relative z-10">
                                 <Button
                                     size="icon"
                                     variant="ghost"
-                                    onClick={() => handleMarkRead(item.id, item.type)}
-                                    className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all duration-300"
-                                    title="Mark as Read"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMarkRead(item.id, item.type);
+                                    }}
+                                    className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all duration-300"
                                 >
                                     <Check className="h-4 w-4" />
                                 </Button>
-                                <Link href={item.url}>
+                                <Link href={item.url} onClick={(e) => e.stopPropagation()}>
                                     <Button
                                         size="icon"
                                         variant="ghost"
-                                        className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-primary hover:text-white transition-all duration-300"
+                                        className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-white/10 transition-all duration-300"
                                     >
                                         <ArrowRight className="h-4 w-4" />
                                     </Button>

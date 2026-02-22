@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Inbox, GraduationCap, ArrowRight, Zap, Folder } from "lucide-react";
+import { Sparkles, Inbox, GraduationCap, ArrowRight, Zap, Folder, Rocket } from "lucide-react";
 import { useGreeting } from "@/app/hooks/use-greeting";
 import { LeadsWidget, TasksWidget, ProjectsWidget, MessagesWidget } from "../widgets";
 import DashboardCard from "../DashboardCard";
@@ -114,12 +114,12 @@ const MemberDashboard = ({
                         label="Total Active Tasks"
                         count={userTasksCount}
                         variant="violet"
-                        description="Across all projects"
+                        description="Across all campaigns"
                         className="h-32"
                     />
                     <DashboardCard
-                        icon={Folder}
-                        label="Active Projects"
+                        icon={Rocket}
+                        label="Active Campaigns"
                         count={newProjects.length}
                         variant="default"
                         description="You are a member of"

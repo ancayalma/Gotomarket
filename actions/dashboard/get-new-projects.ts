@@ -3,27 +3,56 @@
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 export const getNewProjects = async () => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return [];
 
-    const memberships = await prismadb.projectMember.findMany({
-        where: {
-            user: session.user.id,
-            board: {
-                status: {
-                    not: "ARCHIVED"
+    const teamInfo = await getCurrentUserTeamId();
+    const isAdmin = teamInfo?.isAdmin;
+    const teamId = teamInfo?.teamId;
+
+    let boards: any[] = [];
+    let memberships: any[] = [];
+
+    if (isAdmin && teamId) {
+        // ADMIN MODE: Fetch all active boards for the team
+        boards = await (prismadb as any).boards.findMany({
+            where: {
+                team_id: teamId,
+                status: { not: "ARCHIVED" }
+            },
+            orderBy: { updatedAt: "desc" },
+            take: 10 // Show more in pulse for admins
+        });
+
+        // Map boards to a membership-like structure for the frontend
+        memberships = boards.map(board => ({
+            id: `admin-${board.id}`,
+            project: board.id,
+            assignedAt: board.createdAt,
+            board: board
+        }));
+    } else {
+        // MEMBER MODE: Fetch only assigned memberships
+        memberships = await prismadb.projectMember.findMany({
+            where: {
+                user: session.user.id,
+                board: {
+                    status: {
+                        not: "ARCHIVED"
+                    }
                 }
-            }
-        },
-        include: {
-            board: true,
-        },
-        orderBy: {
-            assignedAt: "desc",
-        },
-    });
+            },
+            include: {
+                board: true,
+            },
+            orderBy: {
+                assignedAt: "desc",
+            },
+        });
+    }
 
     if (memberships.length === 0) return [];
 

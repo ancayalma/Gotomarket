@@ -1197,6 +1197,7 @@ enum EmailProvider {
   MAILGUN
   POSTMARK
   SMTP
+  GOOGLE_GMAIL
 }
 
 model TeamEmailConfig {

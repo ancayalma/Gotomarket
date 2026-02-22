@@ -133,56 +133,67 @@ export function MermaidDiagram({ chart, mobileChart, compact, className }: Merma
 // ==========================================
 
 export const CRM_FLOW_DIAGRAM = `
-%%{init: {'theme': 'dark', 'themeVariables': { 'fontSize': '13px', 'clusterBkg': 'transparent', 'clusterBorder': '#334155' }}}%%
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontSize': '13px', 'clusterBkg': 'rgba(15, 23, 42, 0.3)', 'clusterBorder': '#334155' }}}%%
 graph LR
-    P["Project/Board"] --> LEAD
-    
-    LEAD["Lead"] --> S1["1. Identify"]
-    S1 --> S2["2. Contacted"]
-    S2 --> S3["3. Qualified"]
-    S3 --> CONVERT{{"Convert"}}
-    
-    CONVERT --> OPP["Opportunity"]
-    CONVERT --> CONTACT["Contact"]
-    
-    OPP --> CLOSE{{"Close Won"}}
-    CLOSE --> ACCOUNT["Account"]
+    subgraph Discovery [" 1-3. Strategize & Discover "]
+        direction LR
+        CAMPAIGN["Campaign Created"]:::adminNode --> WIZARD["LeadGen Wizard"]:::systemNode
+        WIZARD --> ACC_LIST["Accounts & Lists"]:::dataNode
+    end
 
-    style P fill:#1e3a5f,stroke:#3b82f6,stroke-width:2px,color:#e2e8f0
-    style LEAD fill:#78350f,stroke:#f59e0b,stroke-width:2px,color:#fef3c7
-    style S1 fill:#0c4a6e,stroke:#0ea5e9,stroke-width:2px,color:#e0f2fe
-    style S2 fill:#1e3a5f,stroke:#3b82f6,stroke-width:2px,color:#dbeafe
-    style S3 fill:#312e81,stroke:#6366f1,stroke-width:2px,color:#c7d2fe
-    style CONVERT fill:#831843,stroke:#ec4899,stroke-width:2px,color:#fce7f3,rx:5,ry:5
-    style CONTACT fill:#1e3a5f,stroke:#3b82f6,stroke-width:2px,color:#dbeafe
-    style OPP fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#dcfce7
-    style CLOSE fill:#831843,stroke:#ec4899,stroke-width:2px,color:#fce7f3,rx:5,ry:5
-    style ACCOUNT fill:#4c1d95,stroke:#8b5cf6,stroke-width:2px,color:#e9d5ff
+    subgraph Outreach [" 4-6. Engage & Discover "]
+        direction LR
+        ACC_LIST --> ENGAGE["Outreach (Member)"]:::memberNode
+        ENGAGE --> CONTACTS["Contacts Discovery"]:::dataNode
+        CONTACTS --> LEAD_PROMO["Promoted to Lead"]:::conversionNode
+    end
+
+    subgraph Pipeline [" 7-10. Qualify & Deliver "]
+        direction LR
+        LEAD_PROMO --> OPP["Opportunity (Qualify)"]:::pipelineNode
+        OPP --> CLOSING["Quote ➜ Contract ➜ Invoice"]:::financeNode
+        CLOSING --> PROJECT["Project (Close Won)"]:::successNode
+    end
+
+    %% Enrichment happens throughout
+    PROJECT -.-> ENRICH["Account Enrichment"]:::enrichNode
+    ENRICH -.-> ACC_LIST
+
+    classDef adminNode fill:#1e3a5f,stroke:#3b82f6,stroke-width:2px,color:#e2e8f0
+    classDef systemNode fill:#312e81,stroke:#6366f1,stroke-width:2px,color:#c7d2fe
+    classDef dataNode fill:#0f172a,stroke:#475569,stroke-width:1px,color:#94a3b8
+    classDef memberNode fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#dcfce7
+    classDef conversionNode fill:#831843,stroke:#ec4899,stroke-width:2px,color:#fce7f3
+    classDef pipelineNode fill:#78350f,stroke:#f59e0b,stroke-width:2px,color:#fef3c7
+    classDef financeNode fill:#4c1d95,stroke:#8b5cf6,stroke-width:2px,color:#e9d5ff
+    classDef successNode fill:#064e3b,stroke:#10b981,stroke-width:3px,color:#dcfce7
+    classDef enrichNode fill:#1e293b,stroke:#94a3b8,stroke-dasharray: 5 5,color:#94a3b8
 `;
 
 // Desktop: Two HORIZONTAL rows stacked vertically
 export const CONVERSION_FLOW_DIAGRAM = `
 %%{init: {'theme': 'dark', 'themeVariables': { 'fontSize': '13px', 'clusterBkg': 'rgba(30, 41, 59, 0.5)', 'clusterBorder': '#334155' }}}%%
 graph TB
-    subgraph Conversion[" Lead Conversion "]
+    subgraph Step_Discovery[" Lead Discovery "]
         direction LR
-        L1["Lead"] --> CONV{{"Convert"}} --> O1["Opportunity"]
-        CONV --> C1["Contact"]
+        L1["LeadGen Wizard"] --> A1["Accounts"]
+        L1 --> LISTS["Lists"]
     end
     
-    subgraph Closing[" Deal Closing "]
+    subgraph Step_Conversion[" Conversion Path "]
         direction LR
-        O2["Opportunity"] --> WIN{{"Close Won"}} --> A1["Account"]
+        C1["Contact"] --> CONV{{"Promote"}} --> LE["Lead"]
+        LE --> Q1["Opportunity"]
     end
 
-    style L1 fill:#78350f,stroke:#f59e0b,stroke-width:2px,color:#fef3c7
-    style CONV fill:#831843,stroke:#ec4899,stroke-width:2px,color:#fce7f3
-    style O1 fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#dcfce7
-    style C1 fill:#1e3a5f,stroke:#3b82f6,stroke-width:2px,color:#dbeafe
-    
-    style O2 fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#dcfce7
-    style WIN fill:#831843,stroke:#ec4899,stroke-width:2px,color:#fce7f3
-    style A1 fill:#4c1d95,stroke:#8b5cf6,stroke-width:2px,color:#e9d5ff
+    subgraph Step_Fulfillment[" Revenue & Delivery "]
+        direction LR
+        O2["Opportunity"] --> WIN{{"Close Won"}} --> P1["Project"]
+    end
+
+    style L1 fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+    style CONV fill:#831843,stroke:#ec4899,color:#fce7f3
+    style WIN fill:#064e3b,stroke:#10b981,color:#dcfce7
 `;
 
 // ==========================================
@@ -190,48 +201,43 @@ graph TB
 // ==========================================
 
 export const CRM_FLOW_DIAGRAM_MOBILE = `
-%%{init: {'theme': 'dark', 'themeVariables': { 'fontSize': '12px' }}}%%
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontSize': '11px' }}}%%
 graph TB
-    P["Project"] --> LEAD
-    LEAD["Lead"] --> S1["Identify"]
-    S1 --> S2["Contacted"]
-    S2 --> S3["Qualified"]
-    S3 --> CONVERT{{"Convert"}}
+    CAMPAIGN["1. Campaign Created"]:::adminNode --> WIZARD["2. LeadGen Wizard"]:::systemNode
+    WIZARD --> ACC_LIST["3. Accounts & Lists"]:::dataNode
     
-    CONVERT --> OPP["Opportunity"]
-    CONVERT --> CONTACT["Contact"]
+    ACC_LIST --> ENGAGE["4. Outreach (Member)"]:::memberNode
+    ENGAGE --> CONTACTS["5. Contacts Discovery"]:::dataNode
+    CONTACTS --> LEAD_PROMO["6. Promoted to Lead"]:::conversionNode
     
-    OPP --> CLOSE{{"Close Won"}}
-    CLOSE --> ACCOUNT["Account"]
+    LEAD_PROMO --> OPP["7. Opportunity (Qualify)"]:::pipelineNode
+    OPP --> CLOSING["8. Quote & Contract"]:::financeNode
+    CLOSING --> INVOICE["9. Invoice Sent"]:::financeNode
+    INVOICE --> PROJECT["10. Project (Close Won)"]:::successNode
 
-    style P fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-    style LEAD fill:#78350f,stroke:#f59e0b,color:#fef3c7
-    style S1 fill:#0c4a6e,stroke:#0ea5e9,color:#e0f2fe
-    style S2 fill:#1e3a5f,stroke:#3b82f6,color:#dbeafe
-    style S3 fill:#312e81,stroke:#6366f1,color:#c7d2fe
-    style CONVERT fill:#831843,stroke:#ec4899,color:#fce7f3
-    style CONTACT fill:#1e3a5f,stroke:#3b82f6,color:#dbeafe
-    style OPP fill:#064e3b,stroke:#10b981,color:#dcfce7
-    style CLOSE fill:#831843,stroke:#ec4899,color:#fce7f3
-    style ACCOUNT fill:#4c1d95,stroke:#8b5cf6,color:#e9d5ff
+    classDef adminNode fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+    classDef systemNode fill:#312e81,stroke:#6366f1,color:#c7d2fe
+    classDef dataNode fill:#0f172a,stroke:#475569,color:#94a3b8
+    classDef memberNode fill:#064e3b,stroke:#10b981,color:#dcfce7
+    classDef conversionNode fill:#831843,stroke:#ec4899,color:#fce7f3
+    classDef pipelineNode fill:#78350f,stroke:#f59e0b,color:#fef3c7
+    classDef financeNode fill:#4c1d95,stroke:#8b5cf6,color:#e9d5ff
+    classDef successNode fill:#064e3b,stroke:#10b981,color:#dcfce7
 `;
 
 export const CONVERSION_FLOW_DIAGRAM_MOBILE = `
 %%{init: {'theme': 'dark', 'themeVariables': { 'fontSize': '12px' }}}%%
 graph TB
-    L1["Lead"] --> CONV{{"Convert"}}
-    CONV --> O1["Opportunity"]
-    CONV --> C1["Contact"]
-    
-    O1 --> WIN{{"Close"}}
-    WIN --> A1["Account"]
+    WIZARD["Wizard"] --> ACCS["Accounts"]
+    ACCS --> PROM["Promote Contact"]
+    PROM --> LEAD["Lead"]
+    LEAD --> OPP["Opportunity"]
+    OPP --> CLOSE["Close Won"]
+    CLOSE --> PROJ["Project"]
 
-    style L1 fill:#78350f,stroke:#f59e0b,color:#fef3c7
-    style CONV fill:#831843,stroke:#ec4899,color:#fce7f3
-    style O1 fill:#064e3b,stroke:#10b981,color:#dcfce7
-    style C1 fill:#1e3a5f,stroke:#3b82f6,color:#dbeafe
-    style WIN fill:#831843,stroke:#ec4899,color:#fce7f3
-    style A1 fill:#4c1d95,stroke:#8b5cf6,color:#e9d5ff
+    style WIZARD fill:#1e3a5f,stroke:#3b82f6
+    style PROM fill:#831843,stroke:#ec4899
+    style PROJ fill:#064e3b,stroke:#10b981
 `;
 
 export default MermaidDiagram;

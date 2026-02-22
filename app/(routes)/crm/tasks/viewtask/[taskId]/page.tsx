@@ -13,6 +13,7 @@ import { TaskDataTable } from "./components/data-table";
 import { columns } from "./components/columns";
 import { columnsTask } from "./components/columns-task";
 import { getCrMTask } from "@/actions/crm/account/get-task";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 type TaskPageProps = {
   params: Promise<{
@@ -31,6 +32,13 @@ const CRMTaskPage = async (props: TaskPageProps) => {
 
   return (
     <div className="flex flex-col md:flex-row w-full px-2 space-x-2 ">
+      <LearnLink
+        tab="tasks"
+        overviewTitle="Task Management"
+        overviewWhat="A collaborative space for a specific task line item. Features a checklist, document attachment area, and a live comment feed."
+        overviewWhy="Provides accountability and tracks granular work items that don't warrant an entire project board, keeping all relevant discussion in context."
+        overviewHow="Update the task status, assign documents from the repository below, and leave updates in the right-pane team conversation."
+      />
       <div className="flex flex-col w-full md:w-2/3">
         <h4 className="scroll-m-20 text-xl font-semibold tracking-tight py-5">
           Task details

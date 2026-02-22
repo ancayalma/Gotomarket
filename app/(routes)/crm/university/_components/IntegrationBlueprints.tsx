@@ -176,20 +176,7 @@ export default function IntegrationBlueprints() {
     ];
 
     return (
-        <div className="space-y-8 pb-32">
-            <div className="flex flex-col md:flex-row items-start justify-between gap-4">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-bold flex items-center gap-2">
-                        <Network className="w-6 h-6 text-violet-400" />
-                        System Architecture & Blueprints
-                    </h2>
-                    <p className="text-gray-400 text-sm">Visualizing the BasaltCRM ecosystem and data integrations.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-violet-500/5 border-violet-500/20 text-violet-400">API-First</Badge>
-                    <Badge variant="outline" className="bg-emerald-500/5 border-emerald-500/20 text-emerald-400">Real-time</Badge>
-                </div>
-            </div>
+        <div className="space-y-6 pb-4">
 
             <div className="flex flex-col gap-10">
                 {/* Ecosystem Overview */}
@@ -246,7 +233,7 @@ export default function IntegrationBlueprints() {
                                     Secure Webhooks
                                 </div>
                                 <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors">
-                                    All outgoing webhooks are signed with a unique **HMAC-SHA256** secret per organization. Receiver systems can verify payloads to ensure they originated from your authorized Basalt instance.
+                                    All outgoing webhooks are signed with a unique <strong className="text-emerald-400 font-mono">HMAC-SHA256</strong> secret per organization. Receiver systems can verify payloads to ensure they originated from your authorized Basalt instance.
                                 </p>
                             </div>
                             <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4 hover:border-blue-500/30 transition-all group">
@@ -257,7 +244,7 @@ export default function IntegrationBlueprints() {
                                     Global Data Center
                                 </div>
                                 <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors">
-                                    Our edge mesh leverages **AWS Global Infrastructure** to provide sub-100ms latency on Voice processing and Data operations, ensuring 100% uptime and high accuracy.
+                                    Our edge mesh leverages <strong className="text-blue-400">AWS Global Infrastructure</strong> to provide sub-100ms latency on Voice processing and Data operations, ensuring 99.99% uptime and high accuracy.
                                 </p>
                             </div>
                         </div>

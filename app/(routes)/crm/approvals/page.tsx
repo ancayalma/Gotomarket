@@ -5,6 +5,7 @@ import { getApprovalProcesses, getMyPendingApprovals } from "@/actions/crm/appro
 import { ApprovalsClient } from "./components/ApprovalsClient";
 import { CheckCircle2 } from "lucide-react";
 import { Suspense } from "react";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export const metadata = {
     title: "Approval Chains | CRM",
@@ -25,7 +26,14 @@ export default async function ApprovalsPage() {
     ]);
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full w-full">
+            <LearnLink
+                tab="approvals"
+                overviewTitle="Approval Workflows"
+                overviewWhat="A centralized queue for reviewing, rejecting, or signing off on account-related processes."
+                overviewWhy="Creating a formal paper trail for account downgrades, discount requests, or feature flags prevents rogue actions and ensures managerial oversight before system changes occur."
+                overviewHow="Navigate the Pending tab to review requests awaiting your input, or open the Processes tab to define the actual logic flow for how an approval propagates across the team."
+            />
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
                 <div className="flex items-center gap-3">

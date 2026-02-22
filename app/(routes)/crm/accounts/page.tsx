@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 
 // Components
 import AccountsManagerTabs from "./components/AccountsManagerTabs";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export const dynamic = "force-dynamic";
 
@@ -73,11 +74,18 @@ const AccountsPage = async ({ searchParams }: AccountsPageProps) => {
 
   return (
     <div className="h-full w-full">
+      <LearnLink
+        tab="accounts"
+        overviewTitle="Accounts Management"
+        overviewWhat="The central repository for all Business-to-Business (B2B) entities you work with. This list view displays companies, their scorecards, and key metadata."
+        overviewWhy="Allows you to track organizations as a whole, rather than just individual contacts. This high-level view helps assess territory health, identify VIP organizations, and see overall account value at a glance."
+        overviewHow="Use the filters to segment accounts by industry or tier, search for specific organizations, or click on any row to dive into the comprehensive Account Detail view."
+      />
       <AccountsManagerTabs
         accounts={accounts || []}
         crmData={crmData}
         isMember={isMember}
-        defaultTab={tab as "accounts" | "wizard" | "settings" | "pools"}
+        defaultTab={tab as "accounts" | "wizard" | "pools"}
       />
     </div>
   );

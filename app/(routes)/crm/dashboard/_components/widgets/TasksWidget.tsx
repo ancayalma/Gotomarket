@@ -37,6 +37,31 @@ interface TasksWidgetProps {
     userId: string;
 }
 
+const TaskUrgencyIndicator = ({ dueDate, priority }: { dueDate: Date | null; priority: string }) => {
+    const isOverdue = dueDate && new Date(dueDate) < new Date();
+    const isHighPriority = priority.toLowerCase() === "high";
+
+    let glowColor = "bg-white/10";
+    let pulseColor = "bg-white/5";
+
+    if (isOverdue) {
+        glowColor = "bg-rose-500";
+        pulseColor = "bg-rose-500/20";
+    } else if (isHighPriority) {
+        glowColor = "bg-amber-500";
+        pulseColor = "bg-amber-500/20";
+    }
+
+    return (
+        <div className="relative h-2 w-2">
+            {(isOverdue || isHighPriority) && (
+                <div className={`absolute inset-0 rounded-full ${pulseColor} animate-ping`} />
+            )}
+            <div className={`absolute inset-0 rounded-full ${glowColor} ${isOverdue || isHighPriority ? 'shadow-[0_0_8px_rgba(244,63,94,0.6)]' : ''}`} />
+        </div>
+    );
+};
+
 export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [tasks, setTasks] = useState<DailyTask[]>(initialTasks);
@@ -47,13 +72,11 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isLoadingTask, setIsLoadingTask] = useState(false);
 
-    // Update local state when prop changes (if server revalidates)
     React.useEffect(() => {
         setTasks(initialTasks);
     }, [initialTasks]);
 
     const handleTaskComplete = async (taskId: string) => {
-        // Optimistic update
         const previousTasks = [...tasks];
         setTasks(prev => prev.filter(t => t.id !== taskId));
 
@@ -61,16 +84,15 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
             try {
                 const result = await markTaskComplete(taskId);
                 if (result.success) {
-                    toast.success("Task completed");
+                    toast.success("Task cleared from pipeline");
                     router.refresh();
                 } else {
-                    // Revert if failed
                     setTasks(previousTasks);
-                    toast.error("Failed to complete task");
+                    toast.error("Failed to update status");
                 }
             } catch (error) {
                 setTasks(previousTasks);
-                toast.error("Something went wrong");
+                toast.error("Network error");
             }
         });
     };
@@ -111,10 +133,10 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
                 <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 px-2 text-[10px] font-bold border-white/10 bg-white/5 hover:bg-white/10"
+                    className="h-7 px-2 text-[10px] font-bold border-white/10 bg-white/5 hover:bg-white/10 text-primary"
                 >
                     <Plus size={12} className="mr-1" />
-                    TASK
+                    QUICK TASK
                 </Button>
             }
         />
@@ -123,13 +145,13 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
     return (
         <>
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-4">
+                <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-4 border-white/10 bg-slate-950/90 backdrop-blur-xl">
                     <DialogHeader>
-                        <DialogTitle>Edit Task</DialogTitle>
+                        <DialogTitle className="text-xl font-bold">Refine Task</DialogTitle>
                     </DialogHeader>
                     {isLoadingTask ? (
                         <div className="flex items-center justify-center flex-1 h-full">
-                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
                     ) : selectedTask ? (
                         <UpdateTaskDialog
@@ -143,8 +165,8 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
                             }}
                         />
                     ) : (
-                        <div className="flex items-center justify-center flex-1 text-muted-foreground">
-                            Failed to load task
+                        <div className="flex items-center justify-center flex-1 text-muted-foreground italic">
+                            Mission data lost
                         </div>
                     )}
                 </DialogContent>
@@ -157,76 +179,86 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
                 onSearch={setSearchTerm}
                 searchValue={searchTerm}
                 footerHref={`/projects/tasks/${userId}`}
-                footerLabel="View All Tasks"
+                footerLabel="View Full Task Pipeline"
                 count={tasks.length}
                 rightAction={rightAction}
             >
-                <div className="space-y-1 pb-4 mt-2">
+                <div className="space-y-1.5 pb-4 mt-3">
                     {filteredTasks.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground/30">
                             <CheckCircle2 className="h-10 w-10 mb-2 opacity-10" />
-                            <p className="text-[11px] font-medium italic">No active tasks found</p>
+                            <p className="text-[11px] font-medium italic">No active objectives</p>
                         </div>
                     ) : (
-                        filteredTasks.map((task) => (
-                            <div
-                                key={task.id}
-                                className="group flex items-start justify-between gap-3 p-3 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/[0.03] transition-all duration-300"
-                            >
-                                <div className="pt-0.5">
-                                    <Checkbox
-                                        checked={false}
-                                        onCheckedChange={() => handleTaskComplete(task.id)}
-                                        className="border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
-                                    />
-                                </div>
-                                <div className="space-y-1.5 overflow-hidden flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-semibold text-white/90 truncate group-hover:text-primary transition-colors cursor-pointer" onClick={() => handleTaskClick(task.id)}>
-                                            {task.title}
-                                        </span>
-                                        {(() => {
-                                            const pData = getPriorityData(task.priority);
-                                            return (
-                                                <Badge variant="outline" className={cn("text-[8px] h-4 px-1.5 capitalize border-0 shadow-none", pData?.bgColor, pData?.color)}>
-                                                    {pData?.dotColor && <div className={cn("h-1.5 w-1.5 rounded-full mr-0.5", pData.dotColor)} />}
+                        filteredTasks.map((task) => {
+                            const pData = getPriorityData(task.priority);
+                            const isOverdue = task.dueDateAt && new Date(task.dueDateAt) < new Date();
+
+                            return (
+                                <div
+                                    key={task.id}
+                                    className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.04] transition-all duration-300"
+                                >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="shrink-0">
+                                            <div
+                                                onClick={() => handleTaskComplete(task.id)}
+                                                className="h-5 w-5 rounded-md border-2 border-white/10 bg-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 cursor-pointer flex items-center justify-center transition-all duration-200 group/check"
+                                            >
+                                                <div className="h-2 w-2 rounded-sm bg-emerald-500 opacity-0 scale-50 group-hover/check:opacity-50 group-hover/check:scale-100 transition-all duration-200" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1 overflow-hidden flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <TaskUrgencyIndicator dueDate={task.dueDateAt} priority={task.priority} />
+                                                <span
+                                                    className="text-sm font-bold text-white/90 truncate group-hover:text-primary transition-colors cursor-pointer"
+                                                    onClick={() => handleTaskClick(task.id)}
+                                                >
+                                                    {task.title}
+                                                </span>
+                                                <Badge variant="outline" className={cn("text-[8px] font-black uppercase tracking-tighter h-4 px-1.5 border-0 shadow-none bg-white/5", pData?.color)}>
                                                     {task.priority}
                                                 </Badge>
-                                            );
-                                        })()}
+                                            </div>
+
+                                            <div className="flex items-center gap-3 text-[10px] font-medium">
+                                                {task.dueDateAt && (
+                                                    <span className={cn(
+                                                        "flex items-center gap-1",
+                                                        isOverdue ? "text-rose-400 font-bold animate-pulse" : "text-muted-foreground opacity-60"
+                                                    )}>
+                                                        <Clock size={10} />
+                                                        {isOverdue ? "Overdue" : format(new Date(task.dueDateAt), "MMM d")}
+                                                    </span>
+                                                )}
+                                                {task.assigned_section?.title && (
+                                                    <span className="text-muted-foreground opacity-60 truncate flex items-center gap-1.5">
+                                                        <div className="w-1 h-1 rounded-full bg-white/20" />
+                                                        {task.assigned_section.title}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-medium">
-                                        {task.dueDateAt && (
-                                            <span className={new Date(task.dueDateAt) < new Date() ? "text-destructive font-bold" : "flex items-center gap-1 opacity-70"}>
-                                                <Clock size={10} />
-                                                {format(new Date(task.dueDateAt), "MMM d")}
-                                            </span>
-                                        )}
-                                        {task.assigned_section?.title && (
-                                            <span className="flex items-center gap-1.5 truncate">
-                                                <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
-                                                {task.assigned_section.title}
-                                            </span>
+                                    <div className="shrink-0">
+                                        {task.assigned_section?.board && (
+                                            <Link href={`/projects/boards/${task.assigned_section.board}`}>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-white/10 transition-all duration-300"
+                                                >
+                                                    <ArrowRight className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
                                         )}
                                     </div>
                                 </div>
-
-                                <div className="shrink-0 pt-1">
-                                    {task.assigned_section?.board && (
-                                        <Link href={`/projects/boards/${task.assigned_section.board}`}>
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-primary hover:text-white transition-all duration-300"
-                                            >
-                                                <ArrowRight className="h-4 w-4" />
-                                            </Button>
-                                        </Link>
-                                    )}
-                                </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
             </WidgetWrapper>

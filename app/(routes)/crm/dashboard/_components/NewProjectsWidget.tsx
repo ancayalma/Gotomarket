@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { Folder, CalendarIcon, ArrowRight } from "lucide-react";
+import { Rocket, CalendarIcon, ArrowRight } from "lucide-react";
 import DashboardCard from "./DashboardCard";
 
 import {
@@ -41,7 +41,7 @@ export default function NewProjectsWidget({ projects }: NewProjectsWidgetProps) 
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <DashboardCard
-                    icon={Folder}
+                    icon={Rocket}
                     label="New Campaigns"
                     count={projects.length}
                     description={projects.length > 0 ? "Campaigns assigned this week" : "No new campaigns"}
@@ -51,8 +51,8 @@ export default function NewProjectsWidget({ projects }: NewProjectsWidgetProps) 
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-amber-500">
-                        <Folder className="h-5 w-5" />
+                    <DialogTitle className="flex items-center gap-2 text-indigo-400">
+                        <Rocket className="h-5 w-5" />
                         New Campaigns This Week
                     </DialogTitle>
                     <DialogDescription>
@@ -66,13 +66,13 @@ export default function NewProjectsWidget({ projects }: NewProjectsWidgetProps) 
                     <div className="space-y-3">
                         {projects.length === 0 && (
                             <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground opacity-60">
-                                <Folder className="h-12 w-12 mb-3" />
+                                <Rocket className="h-12 w-12 mb-3" />
                                 <p>No new campaigns</p>
                             </div>
                         )}
 
                         {projects.map((item) => (
-                            <div key={item.id} className="group flex items-start gap-3 p-3 rounded-lg border bg-card/50 hover:bg-muted/50 transition-colors">
+                            <div key={item.id} className="group flex items-start gap-3 p-3 rounded-xl border bg-card/50 hover:bg-muted/50 transition-colors">
                                 <div className="space-y-1.5 overflow-hidden flex-1">
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium truncate block">
@@ -100,8 +100,8 @@ export default function NewProjectsWidget({ projects }: NewProjectsWidgetProps) 
                 </ScrollArea>
 
                 <div className="mt-4 pt-4 border-t flex justify-end">
-                    <Link href="/crm/my-campaigns">
-                        <Button variant="ghost" className="text-amber-500 hover:text-amber-600 hover:bg-amber-500/10">
+                    <Link href="/campaigns">
+                        <Button variant="ghost" className="text-indigo-400 hover:text-indigo-500 hover:bg-indigo-500/10">
                             View All My Campaigns <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </Link>

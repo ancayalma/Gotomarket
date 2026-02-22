@@ -38,6 +38,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 interface AccountDetailPageProps {
   params: Promise<{
@@ -129,6 +130,13 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
         </div>
       }
     >
+      <LearnLink
+        tab="account-detail"
+        overviewTitle="Account Explorer"
+        overviewWhat="The comprehensive dossier for a specific company. It aggregates all related Contacts, ongoing Tasks, Opportunities, and digital Contracts in one continuous pane."
+        overviewWhy="Saves time by preventing infinite tab-switching. You can view the entire historical relationship with an organization, from first lead touchpoint to latest contract signature, instantly."
+        overviewHow="Scroll down to view basic company info, or use the horizontal tabs on the right side to switch between Activity timelines, employee Contacts, active Sales paths, and uploaded files."
+      />
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
         {/* Left Sidebar: Account Info & Documents */}
         <div className="xl:col-span-4 space-y-6">

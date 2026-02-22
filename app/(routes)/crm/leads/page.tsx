@@ -35,12 +35,14 @@ const LeadsPage = async ({ searchParams }: LeadsPageProps) => {
 
   return (
     <div className="h-full w-full">
-      <LeadsManagerTabs leads={leads as any} crmData={crmData} isMember={isMember} />
       <LearnLink
-        tab="flow"
-        tooltipLabel="Learn how leads flow through the pipeline and convert into customers"
-        dismissKey="learnlink_leads"
+        tab="leads"
+        overviewTitle="Lead Intelligence"
+        overviewWhat="The central staging ground for potential prospects before they become official Opportunities or active Contacts."
+        overviewWhy="Allows you to vet, score, and nurture raw contacts before cluttering up the main database or your official pipeline forecasts."
+        overviewHow="From here you can launch multi-channel campaign sequences, manually convert highly qualified leads, or view their latest interactions."
       />
+      <LeadsManagerTabs leads={leads as any} crmData={crmData} isMember={isMember} />
     </div>
   );
 };

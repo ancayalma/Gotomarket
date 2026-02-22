@@ -85,31 +85,7 @@ export default function ComplianceAcademy() {
     ];
 
     return (
-        <div className="space-y-12 pb-32">
-            {/* Hero Section */}
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600/20 via-background to-violet-600/10 border border-white/10 p-10 md:p-14"
-            >
-                <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
-                    <div className="flex-1 space-y-4 text-center md:text-left">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mx-auto md:mx-0">
-                            <Scale className="w-3.5 h-3.5" />
-                            Legal & Compliance
-                        </div>
-                        <h2 className="text-4xl md:text-5xl font-black tracking-tighter leading-none">
-                            Compliance <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400 italic">Academy</span>
-                        </h2>
-                        <p className="text-gray-400 text-lg max-w-2xl leading-relaxed">
-                            Master the regulatory landscape of SMS and Email outreach. Get verified, stay compliant, and ensure your messages always land in the inbox.
-                        </p>
-                    </div>
-                </div>
-                {/* Background Decor */}
-                <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 blur-[120px] pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-80 h-80 bg-violet-500/10 blur-[120px] pointer-events-none" />
-            </motion.div>
+        <div className="space-y-6 pb-4">
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* 10DLC Track */}
@@ -227,14 +203,14 @@ export default function ComplianceAcademy() {
                                 <MessageSquare className="w-10 h-10 text-emerald-400" />
                             </div>
                             <div className="flex-1 space-y-2 text-center md:text-left">
-                                <h3 className="text-xl font-bold">Automated Opt-out Handling</h3>
-                                <p className="text-gray-400 text-sm max-w-2xl">
-                                    BasaltCRM automatically detects keywords like **STOP**, **QUIT**, and **UNSUBSCRIBE**. When a lead replies with these, our system instantly flags them and prevents further outreach to protect your reputation.
+                                <h3 className="text-xl font-bold font-mono uppercase tracking-tighter">Automated Opt-out Handling</h3>
+                                <p className="text-gray-400 text-sm max-w-2xl leading-relaxed">
+                                    BasaltCRM automatically detects legally required keywords like <strong className="text-emerald-400 font-mono">STOP</strong>, <strong className="text-emerald-400 font-mono">QUIT</strong>, and <strong className="text-emerald-400 font-mono">UNSUBSCRIBE</strong>. When a recipient replies with these, our system instantly flags the record and halts all active sequences to protect your sender reputation and ensure TCPA compliance.
                                 </p>
                             </div>
                             <div className="flex flex-wrap justify-center gap-3">
                                 {["STOP", "REMOVE", "CANCEL"].map(word => (
-                                    <Badge key={word} variant="secondary" className="px-3 py-1 bg-black/40 text-emerald-400 font-mono tracking-widest">
+                                    <Badge key={word} variant="secondary" className="px-3 py-1 bg-black/40 text-emerald-400 font-mono tracking-widest border border-emerald-500/10">
                                         {word}
                                     </Badge>
                                 ))}

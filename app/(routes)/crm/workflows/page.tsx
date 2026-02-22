@@ -75,9 +75,11 @@ export default async function WorkflowsPage() {
             </div>
 
             <LearnLink
-                tab="architecture"
-                tooltipLabel="Learn how FlowState automation fits into the CRM architecture"
-                dismissKey="learnlink_workflows"
+                tab="workflows"
+                overviewTitle="FlowState Automation"
+                overviewWhat="The central dashboard for designing 'if-this-then-that' style automated workflows tied to your CRM."
+                overviewWhy="Removes manual data entry. By configuring a FlowState, you guarantee that standard operating procedures—like sending an email quote when a deal reaches the final stage—execute without human intervention."
+                overviewHow="Create a new workflow, define triggers (like 'Lead Status Changed'), and stack automated Actions below it."
             />
         </div>
     );

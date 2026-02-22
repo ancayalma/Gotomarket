@@ -9,6 +9,7 @@ import SignaturesResourcesPanel from "../../leads/components/SignaturesResources
 import PortalSettingsPanel from "../../leads/components/PortalSettingsPanel";
 import { Link, Clock, Calendar, PenTool, MessageSquare, LucideIcon } from "lucide-react";
 import DashboardCard from "../../dashboard/_components/DashboardCard";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 type SettingsTabsProps = {
     defaultTab?: "integration" | "availability" | "events" | "signatures" | "portal";
@@ -69,6 +70,13 @@ export default function SettingsTabs({ defaultTab = "integration" }: SettingsTab
 
     return (
         <div className="w-full h-full flex flex-col">
+            <LearnLink
+                tab="settings"
+                overviewTitle="System Settings"
+                overviewWhat="The central configuration hub for your personal profile and integrations."
+                overviewWhy="Properly connecting your calendar and configuring your availability ensures that automated scheduling links provided to leads actually work."
+                overviewHow="Navigate through the tabs to connect third-party accounts, set working hours, define meeting types, and customize communication templates."
+            />
             <Tabs defaultValue={defaultTab} className="w-full h-full flex flex-col">
                 <TabsList className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4 h-auto bg-transparent p-0">
                     {cards.map((card) => {

@@ -125,6 +125,9 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
         } else if (provider === "SMTP") {
             if (!smtp_host || !smtp_port || !smtp_user || !finalSmtpPassword) return NextResponse.json({ error: "SMTP Config required" }, { status: 400 });
             verificationStatus = "VERIFIED";
+        } else if (provider === "GOOGLE_GMAIL") {
+            // Google OAuth connections are verified by the authentication flow itself
+            verificationStatus = "VERIFIED";
         }
 
         // Save Config - Using separate update/create for better MongoDB reliability

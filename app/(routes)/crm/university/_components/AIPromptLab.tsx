@@ -55,20 +55,7 @@ export default function AIPromptLab() {
     };
 
     return (
-        <div className="space-y-8 pb-32">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-bold flex items-center gap-2">
-                        <Cpu className="w-6 h-6 text-emerald-400" />
-                        AI Prompt Lab & Persona Playbook
-                    </h2>
-                    <p className="text-gray-400 text-sm">Design, test, and deploy high-converting AI personalities.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-emerald-500/5 border-emerald-500/20 text-emerald-400">GPT-4o Optimized</Badge>
-                    <Badge variant="outline" className="bg-blue-500/5 border-blue-500/20 text-blue-400">Claude 3.5 Ready</Badge>
-                </div>
-            </div>
+        <div className="space-y-6 pb-4">
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                 {/* Persona Playbook */}
@@ -194,7 +181,7 @@ export default function AIPromptLab() {
             </div>
 
             {/* AI Capability Badges */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-4">
                 {[
                     { label: "Voice Optimized", icon: Mic2, color: "blue" },
                     { label: "High Token Limit", icon: Zap, color: "amber" },

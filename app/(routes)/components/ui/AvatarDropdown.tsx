@@ -77,7 +77,7 @@ const AvatarDropdown = ({ avatar, userId, name, email }: Props) => {
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => router.push("/profile")}>
             <Settings className="w-4 h-4 inline-block mr-2 stroke-current text-gray-500" />
-            <span>Profile Settings</span>
+            <span>Account Settings</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => {

@@ -149,7 +149,7 @@ const DashboardRoleManager = async () => {
 
             // Insert Campaigns here to match sidebar order
             if (projectsModule?.enabled) {
-                crmEntities.push({ id: "entity:projects", name: "Projects", value: counts.boards, href: "/projects", iconName: "FolderKanban", color: "cyan", tooltip: "Organize work into project boards. Track tasks, progress, and collaborate with your team." });
+                crmEntities.push({ id: "entity:projects", name: "Campaigns", value: counts.boards, href: "/campaigns", iconName: "Rocket", color: "cyan", tooltip: "Organize work into strategic campaign boards. Track tasks, progress, and collaborate on your outreach." });
             }
 
             crmEntities.push(

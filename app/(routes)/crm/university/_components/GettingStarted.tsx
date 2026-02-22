@@ -53,52 +53,60 @@ const ADMIN_STEPS: GuideStep[] = [
         stepNumber: 1,
         label: "Create a Campaign",
         description: "Start by creating a Campaign — the strategic container for all your outreach work.",
-        detail: "A Campaign groups your Lists, outreach sequences, and team assignments under one goal. Name it after a market segment or initiative (e.g. \"Q1 DACH Expansion\").",
+        detail: "A Campaign groups your Lists, outreach sequences, and team assignments under one goal. Name it after a market segment or initiative (e.g. \"Q1 Tech Expansion\").",
         href: "/campaigns",
         icon: Megaphone,
         iconColor: "text-orange-400",
-        badgeText: "Start here",
+        badgeText: "Step 1",
         badgeColor: "bg-orange-500/15 text-orange-400 border-orange-500/25",
     },
     {
         id: "wizard",
         stepNumber: 2,
         label: "Run the LeadGen Wizard",
-        description: "Use the AI-powered wizard on the Accounts page to discover target companies matching your ICP.",
-        detail: "Describe your Ideal Customer Profile (ICP) once in plain English — industries, company size, geography, tech stack, target roles. The wizard finds matching companies and contacts automatically.",
+        description: "Use the AI-powered wizard to populate Accounts following your ICP.",
+        detail: "The wizard uses AI to find companies matching your tech stack, geography, and industry requirements. It automatically populates your Accounts database.",
         href: "/crm/accounts",
         icon: Wand2,
         iconColor: "text-cyan-400",
+        badgeText: "Step 2",
+        badgeColor: "bg-cyan-500/15 text-cyan-400 border-cyan-500/25",
     },
     {
         id: "list",
         stepNumber: 3,
-        label: "Build your first List",
-        description: "A List is a curated segment of discovered accounts, ready to be worked by your team.",
-        detail: "After the wizard runs, you'll have a List populated with companies and contacts. Think of each List as a targeted outreach batch — one per segment, region, or campaign.",
+        label: "Build & Assign Lists",
+        description: "Segment accounts into Lists and assign them to your team members.",
+        detail: "Lists are curated batches of accounts. Assigning them to a member creates their personal work queue for the campaign.",
         href: "/lists",
         icon: List,
         iconColor: "text-violet-400",
+        badgeText: "Step 3",
+        badgeColor: "bg-violet-500/15 text-violet-400 border-violet-500/25",
     },
     {
-        id: "assign",
+        id: "closing",
         stepNumber: 4,
-        label: "Assign the List to a Team Member",
-        description: "Hand off the List to the team member who will execute outreach on those accounts.",
-        detail: "Members only see and work the Lists assigned to them, keeping their focus sharp. You can assign one List to multiple members or keep them separate by territory.",
-        href: "/lists",
-        icon: Users,
+        label: "Monitor the Pipeline (Steps 7-9)",
+        description: "Track as Leads qualify into Opportunities and move through Quotes to Invoices.",
+        detail: "Once members promote contacts to Leads and qualify them, you can track the formal Opportunity pipeline and oversee Quote generation and Invoicing.",
+        href: "/crm/opportunities",
+        icon: Sparkles,
         iconColor: "text-emerald-400",
+        badgeText: "Closing",
+        badgeColor: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
     },
     {
-        id: "outreach",
+        id: "project",
         stepNumber: 5,
-        label: "Launch Outreach",
-        description: "Once assigned, the member launches an email or call sequence from their Campaign dashboard.",
-        detail: "The member selects their List, picks a sequence template, and fires. Replies and outcomes are tracked automatically in the CRM — leads that engage convert to Opportunities.",
-        href: "/campaigns",
+        label: "Project Success (Step 10)",
+        description: "Mark deals as Close Won to automatically trigger Project creation.",
+        detail: "Closing a deal isn't the end — it triggers a new Project board for delivery, ensuring a smooth hand-off from sales to execution.",
+        href: "/projects",
         icon: Rocket,
         iconColor: "text-pink-400",
+        badgeText: "Step 10",
+        badgeColor: "bg-pink-500/15 text-pink-400 border-pink-500/25",
     },
 ];
 
@@ -106,36 +114,40 @@ const ADMIN_STEPS: GuideStep[] = [
 
 const MEMBER_STEPS: GuideStep[] = [
     {
-        id: "find-campaign",
+        id: "outreach",
         stepNumber: 1,
-        label: "Find your assigned Campaign",
-        description: "Your admin assigns you to Campaigns. Check your dashboard to see which ones are active.",
-        detail: "Head to your Dashboard or the Campaigns page. You'll see the Campaign you've been added to — this is your operational container. Everything you do is scoped to your assigned campaigns.",
+        label: "Execute Outreach (Step 4)",
+        description: "Start contacting companies in your assigned Lists via Email or Voice.",
+        detail: "Open your List and use the integrated tools to reach out. Every interaction is tracked and enriches the global Account record.",
         href: "/campaigns",
-        icon: ClipboardList,
+        icon: Rocket,
         iconColor: "text-blue-400",
-        badgeText: "Start here",
+        badgeText: "Step 4",
         badgeColor: "bg-blue-500/15 text-blue-400 border-blue-500/25",
     },
     {
-        id: "open-list",
+        id: "discovery",
         stepNumber: 2,
-        label: "Open your assigned List",
-        description: "Inside your Campaign, open the List assigned to you — itcontains your target accounts and contacts.",
-        detail: "Each List is a set of companies and contacts discovered by the LeadGen Wizard. You can filter by pipeline stage, view contact details, and see prior engagement history.",
+        label: "Contact Discovery (Step 5)",
+        description: "Add new contacts found during outreach to the Account record.",
+        detail: "As you find decision-makers, add them to the system. This keeps the Account record rich and current.",
         href: "/lists",
-        icon: Inbox,
+        icon: Users,
         iconColor: "text-violet-400",
+        badgeText: "Step 5",
+        badgeColor: "bg-violet-500/15 text-violet-400 border-violet-500/25",
     },
     {
-        id: "start-outreach",
+        id: "promotion",
         stepNumber: 3,
-        label: "Start Outreach",
-        description: "Work through your List — send emails, log calls, and move contacts through the pipeline.",
-        detail: "For each contact: send intro emails from the sequence template, log calls in the dialer, and update the pipeline stage as they respond. When a contact is ready, convert them to an Opportunity.",
-        href: "/campaigns",
-        icon: PhoneCall,
+        label: "Promote to Lead (Step 6)",
+        description: "When a contact shows interest, promote them to a Lead.",
+        detail: "Promotion signals the start of the formal sales cycle. You can do this manually or let the AI detect intent thresholds.",
+        href: "/lists",
+        icon: Sparkles,
         iconColor: "text-emerald-400",
+        badgeText: "Step 6",
+        badgeColor: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
     },
 ];
 
@@ -297,39 +309,6 @@ function AdminGuide({ compact = false }: { compact?: boolean }) {
 
     return (
         <div className="space-y-6">
-            {/* Hero */}
-            <Card className={["border-white/10 bg-gradient-to-br from-orange-500/8 via-transparent to-violet-500/8 overflow-hidden", compact ? "rounded-xl" : ""].join(" ")}>
-                {!compact && <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-orange-500 via-violet-500 to-pink-500" />}
-                <CardHeader className={compact ? "p-4" : "pb-3"}>
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                            <CardTitle className={["font-bold flex items-center gap-2", compact ? "text-sm" : "text-lg"].join(" ")}>
-                                <Sparkles className={compact ? "w-4 h-4 text-violet-400" : "w-5 h-5 text-violet-400"} />
-                                Admin Launch Guide
-                            </CardTitle>
-                            {!compact && (
-                                <CardDescription className="mt-1">
-                                    From zero to your first active outreach campaign — follow these steps in order.
-                                </CardDescription>
-                            )}
-                        </div>
-                        <div className="flex-shrink-0 text-right">
-                            <div className={compact ? "text-lg font-black text-white/90" : "text-2xl font-black text-white/90"}>{progressPct}%</div>
-                            <div className="text-[10px] text-white/35">complete</div>
-                        </div>
-                    </div>
-
-                    {/* Progress bar */}
-                    <div className={["w-full rounded-full bg-white/8 overflow-hidden", compact ? "mt-2 h-1" : "mt-4 h-1.5"].join(" ")}>
-                        <motion.div
-                            className="h-full rounded-full bg-gradient-to-r from-orange-500 via-violet-500 to-pink-500"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progressPct}%` }}
-                            transition={{ duration: 0.6, ease: "easeOut" }}
-                        />
-                    </div>
-                </CardHeader>
-            </Card>
 
             {/* Completion state */}
             {allDone && (
@@ -459,40 +438,6 @@ function MemberGuide({ isPreview = false }: { isPreview?: boolean }) {
 
     return (
         <div className="space-y-6">
-            {/* Hero */}
-            <Card className={["border-white/10 bg-gradient-to-br from-blue-500/8 via-transparent to-violet-500/8 overflow-hidden", isPreview ? "rounded-xl border-dashed" : ""].join(" ")}>
-                {!isPreview && <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-blue-500 via-violet-500 to-emerald-500" />}
-                <CardHeader className={isPreview ? "p-5" : "pb-3"}>
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                            <CardTitle className={["font-bold flex items-center gap-2", isPreview ? "text-base" : "text-lg"].join(" ")}>
-                                <Sparkles className={isPreview ? "w-4 h-4 text-blue-400" : "w-5 h-5 text-blue-400"} />
-                                Member Playbook
-                                {isPreview && (
-                                    <Badge variant="outline" className="text-[9px] uppercase tracking-tighter bg-blue-500/10 border-blue-500/20 text-blue-400">Team Preview</Badge>
-                                )}
-                            </CardTitle>
-                            <CardDescription className="mt-1">
-                                Once your admin assigns you to a Campaign, follow these 3 steps to start producing.
-                            </CardDescription>
-                        </div>
-                        <div className="flex-shrink-0 text-right">
-                            <div className={isPreview ? "text-xl font-black text-white/90" : "text-2xl font-black text-white/90"}>{progressPct}%</div>
-                            <div className="text-[10px] text-white/35">complete</div>
-                        </div>
-                    </div>
-
-                    {/* Progress bar */}
-                    <div className={["w-full rounded-full bg-white/8 overflow-hidden", isPreview ? "mt-3 h-1" : "mt-4 h-1.5"].join(" ")}>
-                        <motion.div
-                            className="h-full rounded-full bg-gradient-to-r from-blue-500 via-violet-500 to-emerald-500"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progressPct}%` }}
-                            transition={{ duration: 0.6, ease: "easeOut" }}
-                        />
-                    </div>
-                </CardHeader>
-            </Card>
 
             {/* Waiting banner (shown if no campaigns yet) - only for actual members */}
             {!isPreview && (
@@ -583,7 +528,7 @@ export default function GettingStarted() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="space-y-6"
+            className="space-y-4"
         >
             {/* Admin View Toggle */}
             {isAdmin && (
@@ -620,20 +565,10 @@ export default function GettingStarted() {
             <div className="max-w-4xl mx-auto">
                 {viewMode === "admin" ? (
                     <div className="space-y-6">
-                        <div className="flex items-center gap-2 px-1">
-                            <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 uppercase tracking-widest text-[9px] px-2 py-0.5">
-                                Admin Launch Guide
-                            </Badge>
-                        </div>
                         <AdminGuide />
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        <div className="flex items-center gap-2 px-1">
-                            <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 uppercase tracking-widest text-[9px] px-2 py-0.5">
-                                {isAdmin ? "Member Playbook (Preview)" : "Team Member Experience"}
-                            </Badge>
-                        </div>
                         <MemberGuide isPreview={isAdmin} />
                         {isAdmin && (
                             <div className="p-4 rounded-xl border border-white/5 bg-white/[0.02] mt-4">

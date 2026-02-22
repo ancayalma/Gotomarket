@@ -34,9 +34,11 @@ const AccountsPage = async () => {
         </Suspense>
 
         <LearnLink
-          tab="reference"
-          tooltipLabel="Understand how Opportunities work in the CRM pipeline"
-          dismissKey="learnlink_opportunities"
+          tab="opportunities"
+          overviewTitle="Pipeline Opportunities"
+          overviewWhat="The core revenue-tracking table mapping out active deals, their associated stages, projected values, and closing probabilities."
+          overviewWhy="Essential for financial forecasting. Opportunities track the actual money on the line, separating general interest (Leads) from structured, ongoing negotiations."
+          overviewHow="Filter by pipeline stage or owner. Click 'New Opportunity' to log a deal, attach it to an existing Account, and push it through your custom sales stages."
         />
       </div>
     </Container>

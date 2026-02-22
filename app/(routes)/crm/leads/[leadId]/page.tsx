@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { History, Info } from "lucide-react";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 interface LeadDetailPageProps {
   params: Promise<{
@@ -39,6 +40,13 @@ const LeadDetailPage = async (props: LeadDetailPageProps) => {
         </div>
       }
     >
+      <LearnLink
+        tab="lead-detail"
+        overviewTitle="Lead Intelligence"
+        overviewWhat="The core profile for an unverified prospect. It pulls together their scraped background info, AI-generated lead scores, and communication history."
+        overviewWhy="Before a contact is officially 'qualified' and turned into an Account/Contact, they live here so you can determine their actual value without muddying up your main sales pipeline."
+        overviewHow="Review their AI confidence score, check the event timeline on the right for recent interactions, or directly execute an Outreach Sequence."
+      />
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
         {/* Left Column: Details (4/12 or 5/12) */}
         <div className="xl:col-span-5 space-y-6">

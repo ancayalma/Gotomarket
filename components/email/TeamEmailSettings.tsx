@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 
-type EmailProvider = "AWS_SES" | "RESEND" | "SENDGRID" | "MAILGUN" | "POSTMARK" | "SMTP";
+type EmailProvider = "AWS_SES" | "RESEND" | "SENDGRID" | "MAILGUN" | "POSTMARK" | "SMTP" | "GOOGLE_GMAIL";
 
 interface EmailConfig {
     id: string;
@@ -201,6 +201,8 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
                 toast.error("All SMTP fields are required");
                 return;
             }
+        } else if (provider === "GOOGLE_GMAIL") {
+            // No credentials needed for Google OAuth here as they are stored per user
         }
 
         setLoading(true);
@@ -328,6 +330,7 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
                             <SelectItem value="MAILGUN">Mailgun</SelectItem>
                             <SelectItem value="POSTMARK">Postmark</SelectItem>
                             <SelectItem value="SMTP">Custom SMTP</SelectItem>
+                            <SelectItem value="GOOGLE_GMAIL">Google Gmail (OAuth)</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -578,6 +581,27 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
                         </div>
                     </div>
                 )}
+
+                {provider === "GOOGLE_GMAIL" && (
+                    <div className="space-y-4 p-4 border rounded-lg bg-primary/5">
+                        <div className="flex items-center gap-2 mb-2">
+                            <ShieldCheck className="w-4 h-4 text-primary" />
+                            <h4 className="text-sm font-medium">Google OAuth Authentication</h4>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            When using Google Gmail, the system will use your individual <strong>Google Account</strong> (connected via OAuth) to send emails.
+                        </p>
+                        <div className="p-3 bg-white/5 border border-primary/20 rounded-md text-xs leading-relaxed">
+                            <p className="font-semibold text-primary mb-1">Requirements:</p>
+                            <ul className="list-disc pl-4 space-y-1">
+                                <li>You must have a connected Google account in your <strong>User Settings &gt; Integrations</strong>.</li>
+                                <li>The "Sender Email Address" above should match your connected Google account email.</li>
+                                <li>Ensure `https://www.googleapis.com/auth/gmail.send` scope is granted.</li>
+                            </ul>
+                        </div>
+                    </div>
+                )}
+
 
                 {/* 4. Actions & Status */}
                 <div className="flex flex-col gap-4 pt-4 border-t">

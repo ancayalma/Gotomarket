@@ -31,7 +31,6 @@ import { Separator } from "@/components/ui/separator";
 
 // New Phase 1 components
 import ComplianceAcademy from "./ComplianceAcademy";
-import DataHealthDashboard from "./DataHealthDashboard";
 
 // New Phase 2 components
 import RevOpsSimulator from "./RevOpsSimulator";
@@ -55,7 +54,7 @@ import TabNavigationCard from "./TabNavigationCard";
 import GettingStarted from "./GettingStarted";
 import { Rocket } from "lucide-react";
 
-type TabId = "getting-started" | "flow" | "reference" | "project-workflow" | "compliance" | "data-health" | "roi-modeler" | "architecture" | "certification" | "prompt-lab";
+type TabId = "getting-started" | "flow" | "reference" | "project-workflow" | "compliance" | "performance" | "certification" | "prompt-lab";
 
 // Page transition variants
 const pageVariants = {
@@ -89,8 +88,8 @@ const UNIVERSITY_TABS = [
     },
     {
         id: "flow" as TabId,
-        label: "Flow Architecture",
-        title: "Flow Architecture",
+        label: "CRM Flow",
+        title: "CRM Flow",
         description: "Understand the journey of a lead through your system and how automated triggers turn prospects into customers.",
         icon: GitBranch,
         color: "text-blue-400 group-hover:text-blue-300",
@@ -109,17 +108,7 @@ const UNIVERSITY_TABS = [
         borderColor: "border-blue-500/50 ring-blue-500/20",
         shadowColor: "shadow-blue-500/20"
     },
-    {
-        id: "data-health" as TabId,
-        label: "Data Health",
-        title: "Data Health",
-        description: "Monitor and optimize your CRM data quality, lead health, and system performance metrics.",
-        icon: Database,
-        color: "text-emerald-400 group-hover:text-emerald-300",
-        gradient: "from-emerald-600/30 via-emerald-500/10 to-transparent",
-        borderColor: "border-emerald-500/50 ring-emerald-500/20",
-        shadowColor: "shadow-emerald-500/20"
-    },
+
     {
         id: "certification" as TabId,
         label: "Mastery Paths",
@@ -143,26 +132,15 @@ const UNIVERSITY_TABS = [
         shadowColor: "shadow-emerald-500/20"
     },
     {
-        id: "roi-modeler" as TabId,
-        label: "ROI Modeler",
-        title: "ROI Modeler",
-        description: "Model your sales performance and calculate your return on investment with our RevOps simulator.",
+        id: "performance" as TabId,
+        label: "Performance Modeler",
+        title: "Performance Modeler",
+        description: "Model your sales ROI based on lead quality, data health, and AI efficiency improvements.",
         icon: BarChart3,
         color: "text-emerald-400 group-hover:text-emerald-300",
         gradient: "from-emerald-600/30 via-emerald-500/10 to-transparent",
         borderColor: "border-emerald-500/50 ring-emerald-500/20",
         shadowColor: "shadow-emerald-500/20"
-    },
-    {
-        id: "architecture" as TabId,
-        label: "Architecture",
-        title: "System Architecture",
-        description: "Technical blueprints and integration patterns for the Basalt CRM ecosystem and external API services.",
-        icon: Share2,
-        color: "text-violet-400 group-hover:text-violet-300",
-        gradient: "from-violet-600/30 via-violet-500/10 to-transparent",
-        borderColor: "border-violet-500/50 ring-violet-500/20",
-        shadowColor: "shadow-violet-500/20"
     },
     {
         id: "reference" as TabId,
@@ -184,7 +162,7 @@ export default function UniversityDashboard() {
     const currentTab = useMemo(() => UNIVERSITY_TABS.find(t => t.id === activeTab), [activeTab]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-10">
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -204,7 +182,7 @@ export default function UniversityDashboard() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
-                className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 xl:grid-cols-10 2xl:grid-cols-10 gap-2 md:gap-3 mb-8 bg-transparent"
+                className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 md:gap-3 mb-6 bg-transparent"
             >
                 {UNIVERSITY_TABS.map((tab, index: number) => (
                     <TabNavigationCard
@@ -248,26 +226,8 @@ export default function UniversityDashboard() {
                         animate="animate"
                         exit="exit"
                         transition={{ duration: 0.3 }}
-                        className="space-y-8"
+                        className="space-y-4"
                     >
-                        {/* Hero Card */}
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.98 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.4, delay: 0.1 }}
-                        >
-                            <Card className="bg-card border-border overflow-hidden">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Workflow className="w-6 h-6 text-primary" />
-                                        CRM Flow Architecture
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Understand how leads flow through the pipeline and convert into customers.
-                                    </CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </motion.div>
 
                         {/* Main Pipeline Mermaid Diagram */}
                         <FlowDiagramCard
@@ -328,6 +288,14 @@ export default function UniversityDashboard() {
                         >
                             <OutreachFlowView />
                         </FlowDiagramCard>
+                        {/* Architecture Integrations */}
+                        <FlowDiagramCard
+                            title="System Integrations"
+                            description="Technical blueprints for external API services"
+                            accentColor="violet"
+                        >
+                            <IntegrationBlueprints />
+                        </FlowDiagramCard>
                     </motion.div>
                 )}
 
@@ -345,19 +313,6 @@ export default function UniversityDashboard() {
                     </motion.div>
                 )}
 
-                {/* Data Health Tab */}
-                {activeTab === "data-health" && (
-                    <motion.div
-                        key="data-health"
-                        variants={pageVariants}
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        transition={{ duration: 0.3 }}
-                    >
-                        <DataHealthDashboard />
-                    </motion.div>
-                )}
 
                 {/* Mastery Paths Tab */}
                 {activeTab === "certification" && (
@@ -387,10 +342,10 @@ export default function UniversityDashboard() {
                     </motion.div>
                 )}
 
-                {/* ROI Modeler Tab */}
-                {activeTab === "roi-modeler" && (
+                {/* Performance Modeler Tab */}
+                {activeTab === "performance" && (
                     <motion.div
-                        key="roi-modeler"
+                        key="performance"
                         variants={pageVariants}
                         initial="initial"
                         animate="animate"
@@ -401,19 +356,6 @@ export default function UniversityDashboard() {
                     </motion.div>
                 )}
 
-                {/* Architecture Tab */}
-                {activeTab === "architecture" && (
-                    <motion.div
-                        key="architecture"
-                        variants={pageVariants}
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        transition={{ duration: 0.3 }}
-                    >
-                        <IntegrationBlueprints />
-                    </motion.div>
-                )}
 
                 {/* Quick Reference Tab */}
                 {activeTab === "reference" && (
@@ -424,31 +366,8 @@ export default function UniversityDashboard() {
                         animate="animate"
                         exit="exit"
                         transition={{ duration: 0.3 }}
-                        className="space-y-6"
+                        className="space-y-4"
                     >
-                        <Card className="bg-card border-border">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Layers className="w-6 h-6 text-emerald-500" />
-                                    Quick Reference
-                                </CardTitle>
-                                <CardDescription>
-                                    Essential information at a glance
-                                </CardDescription>
-                            </CardHeader>
-                        </Card>
-
-                        {/* Interactive Pipeline Explorer */}
-                        <FlowDiagramCard
-                            title="Interactive Pipeline Explorer"
-                            description="Click any stage to see detailed activities"
-                            accentColor="blue"
-                        >
-                            <PipelineFlow
-                                activeStage={activeStage}
-                                onStageClick={(id) => setActiveStage(activeStage === id ? undefined : id)}
-                            />
-                        </FlowDiagramCard>
 
                         {/* Stage Overview Grid */}
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -504,9 +423,11 @@ export default function UniversityDashboard() {
                                     transition={{ delay: 0.3 }}
                                     className="p-4 rounded-lg bg-card border border-border"
                                 >
-                                    <h4 className="font-semibold text-sm text-blue-500">Lead → Contact & Opportunity</h4>
+                                    <h4 className="font-semibold text-sm text-sky-500 flex items-center gap-2">
+                                        Contact → Lead & Opportunity
+                                    </h4>
                                     <p className="text-sm text-muted-foreground mt-2">
-                                        When you click <strong>Convert</strong> on a qualified lead, it becomes an <strong>Opportunity</strong> (for your pipeline) and a <strong>Contact</strong> (for unique identity).
+                                        When a person at an Account shows interest, you can promote them from a <strong>Contact</strong> to a <strong>Lead</strong>. This signals qualified intent and allows you to create an <strong>Opportunity</strong>.
                                     </p>
                                 </motion.div>
                                 <motion.div
@@ -515,16 +436,17 @@ export default function UniversityDashboard() {
                                     transition={{ delay: 0.4 }}
                                     className="p-4 rounded-lg bg-card border border-border"
                                 >
-                                    <h4 className="font-semibold text-sm text-emerald-500">Opportunity → Account</h4>
+                                    <h4 className="font-semibold text-sm text-emerald-500 flex items-center gap-2">
+                                        Opportunity → Project
+                                    </h4>
                                     <p className="text-sm text-muted-foreground mt-2">
-                                        When you <strong>Close Won</strong> an Opportunity, it automatically creates an <strong>Account</strong>.
-                                        Congratulations – they're now a customer!
+                                        When you <strong>Close Won</strong> an Opportunity, it automatically creates a <strong>Project</strong> board. This seamlessly triggers the hand-off from sales to delivery.
                                     </p>
                                 </motion.div>
                             </CardContent>
                         </Card>
 
-                        <div className="pt-10 border-t border-white/5 space-y-8">
+                        <div className="pt-4 border-t border-white/5 space-y-8">
                             <div>
                                 <h3 className="text-2xl font-black flex items-center gap-3">
                                     <GraduationCap className="w-7 h-7 text-primary" />
@@ -533,91 +455,21 @@ export default function UniversityDashboard() {
                                 <p className="text-gray-400 text-sm mt-1">Master BasaltCRM with these essential guides and tutorials.</p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {/* Video Tutorials */}
-                                <Card className="bg-white/5 border-white/10">
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-lg flex items-center gap-2 font-bold">
-                                            <Video className="w-5 h-5 text-blue-500" />
-                                            Video Academy
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="grid gap-4">
-                                        <motion.div
-                                            whileHover={{ scale: 1.02 }}
-                                            className="flex items-start gap-4 p-4 rounded-xl border border-white/10 bg-black/20 hover:bg-white/[0.05] transition-all cursor-pointer group"
-                                        >
-                                            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 group-hover:bg-blue-500/20">
-                                                <PlayCircle className="w-5 h-5 text-blue-500" />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-sm">CRM Walkthrough</h4>
-                                                <p className="text-[11px] text-gray-500 mt-1">A 5-minute tour of the main dashboard.</p>
-                                            </div>
-                                        </motion.div>
-                                        <motion.div
-                                            whileHover={{ scale: 1.02 }}
-                                            className="flex items-start gap-4 p-4 rounded-xl border border-white/10 bg-black/20 hover:bg-white/[0.05] transition-all cursor-pointer group"
-                                        >
-                                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:bg-emerald-500/20">
-                                                <PlayCircle className="w-5 h-5 text-emerald-500" />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-sm">Lead Management</h4>
-                                                <p className="text-[11px] text-gray-500 mt-1">Import, assign, and track effectively.</p>
-                                            </div>
-                                        </motion.div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Written Guides */}
-                                <Card className="bg-white/5 border-white/10">
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-lg flex items-center gap-2 font-bold">
-                                            <FileText className="w-5 h-5 text-amber-500" />
-                                            Technical Docs
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="grid gap-3">
-                                        {[
-                                            "Configuring your email signature",
-                                            "Understanding pipeline stages",
-                                            "Using the AI Dialer effectively",
-                                            "Advanced API integrations"
-                                        ].map((title, i) => (
-                                            <motion.div key={i} whileHover={{ x: 4 }} className="flex items-center gap-2 p-2 text-sm font-medium hover:text-white cursor-pointer transition-all border-b border-white/5 last:border-0 pb-3">
-                                                <ArrowRight className="w-3 h-3 text-amber-500" />
-                                                {title}
-                                            </motion.div>
-                                        ))}
-                                    </CardContent>
-                                </Card>
-
-                                {/* Best Practices */}
-                                <Card className="bg-white/5 border-white/10">
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-lg flex items-center gap-2 font-bold">
-                                            <Trophy className="w-5 h-5 text-emerald-500" />
-                                            Strategic Advisor
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <p className="text-xs text-gray-400">Advanced strategies for high-performing teams.</p>
-                                        <div className="space-y-3">
-                                            {[
-                                                { label: "The Art of Follow-up", color: "text-blue-400" },
-                                                { label: "Handling Objections", color: "text-red-400" },
-                                                { label: "Closing Techniques", color: "text-emerald-400" }
-                                            ].map((item, i) => (
-                                                <div key={i} className="flex items-center gap-3">
-                                                    <div className={cn("w-1.5 h-1.5 rounded-full bg-current", item.color)} />
-                                                    <span className="text-xs font-bold">{item.label}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                            <Card className="bg-white/5 border-white/10 relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10 opacity-50" />
+                                <CardContent className="p-10 flex flex-col items-center justify-center text-center space-y-4 relative z-10 min-h-[300px]">
+                                    <div className="w-16 h-16 rounded-full bg-black/40 border border-white/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-500">
+                                        <Video className="w-8 h-8 text-blue-400" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white">Interactive NotebookLM Guides</h3>
+                                    <p className="text-sm text-gray-400 max-w-md mx-auto leading-relaxed">
+                                        We are currently producing a series of deep-dive video walkthroughs and technical documentation powered by Google NotebookLM. Check back soon for comprehensive guides on mastering your workflow!
+                                    </p>
+                                    <Badge variant="outline" className="text-blue-400 border-blue-400/30 bg-blue-400/10 mt-4 uppercase tracking-widest text-[10px] font-black">
+                                        Coming Soon
+                                    </Badge>
+                                </CardContent>
+                            </Card>
                         </div>
                     </motion.div>
                 )}
@@ -634,7 +486,7 @@ export default function UniversityDashboard() {
                     >
                         <ProjectWorkflowGuide />
 
-                        <div className="mt-8">
+                        <div className="mt-4">
                             <FlowDiagramCard
                                 title="Visual Workflow: From Setup to Launch"
                                 description="How projects, pools, and outreach allow for scalable outreach."

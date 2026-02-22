@@ -4,6 +4,7 @@ import { Resend } from "resend";
 import sendSystemEmail from "@/lib/sendmail";
 import nodemailer from "nodemailer";
 import * as aws from "@aws-sdk/client-ses";
+import { sendViaGmail } from "@/lib/gmail";
 
 interface EmailOptions {
     from?: string; // Optional override, otherwise uses config.from_email
@@ -17,6 +18,7 @@ interface EmailOptions {
         content: any;
         contentType?: string;
     }[];
+    senderId?: string; // Required for GOOGLE_GMAIL provider
 }
 
 export async function sendTeamEmail(teamId: string, options: EmailOptions) {
@@ -103,6 +105,34 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions) {
             return;
         } catch (error) {
             console.error("[TeamEmail] Resend Send Failed:", error);
+            throw error;
+        }
+    }
+
+    // 5. GOOGLE GMAIL (OAuth)
+    if (config.provider as string === "GOOGLE_GMAIL") {
+        if (!options.senderId) {
+            console.error("[TeamEmail] GOOGLE_GMAIL requires a senderId (userId)");
+            throw new Error("Email provider is Google Gmail but no user ID was provided for authentication.");
+        }
+
+        try {
+            const messageId = await sendViaGmail(
+                options.senderId,
+                options.to,
+                options.subject,
+                options.html || options.text,
+                options.text
+            );
+
+            if (!messageId) {
+                throw new Error("Failed to send message via Google OAuth. Please ensure your Google account is connected with proper permissions.");
+            }
+
+            console.log(`[TeamEmail] Sent via Google Gmail OAuth (User: ${options.senderId}, Team: ${teamId})`);
+            return;
+        } catch (error) {
+            console.error("[TeamEmail] Google Gmail Send Failed:", error);
             throw error;
         }
     }

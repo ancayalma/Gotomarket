@@ -4,6 +4,7 @@ import SuspenseLoading from "@/components/loadings/suspense";
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getContractsWithIncludes } from "@/actions/crm/get-contracts";
 import ContractsView from "../components/ContractsView";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 const ContractsPage = async () => {
   const crmData = await getAllCrmData();
@@ -13,6 +14,13 @@ const ContractsPage = async () => {
       title="Contracts"
       description={"Everything you need to know about your contracts"}
     >
+      <LearnLink
+        tab="contracts"
+        overviewTitle="Contracts Management"
+        overviewWhat="A centralized secure vault for all generated and uploaded legal documents tied to your CRM Accounts."
+        overviewWhy="Legal signatures require strict auditing. This system ensures active proposals and binding agreements remain securely linked to the specific entities and people who signed them."
+        overviewHow="Select 'Add' to upload a new executed document, and associate it with a known company footprint."
+      />
       <Suspense fallback={<SuspenseLoading />}>
         <ContractsView crmData={crmData} data={contracts} />
       </Suspense>

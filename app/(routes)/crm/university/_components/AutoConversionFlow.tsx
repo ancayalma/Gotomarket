@@ -14,6 +14,7 @@ import {
     PartyPopper,
     MessageCircle,
     TrendingUp,
+    Rocket,
 } from "lucide-react";
 
 interface ConversionStep {
@@ -25,18 +26,18 @@ interface ConversionStep {
     bgColor: string;
 }
 
-const leadToContactSteps: ConversionStep[] = [
-    { id: "lead", label: "Qualified Lead", subtitle: "Ready for next step", icon: User, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-    { id: "convert", label: "Click Convert", subtitle: "Manual Action", icon: ArrowRight, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-    { id: "opp_contact", label: "Opp & Contact", subtitle: "Created Instantly", icon: Users, color: "text-indigo-500", bgColor: "bg-indigo-500/10" },
-    { id: "engage", label: "Work Deal", subtitle: "Manage Pipeline", icon: TrendingUp, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
+const contactToLeadSteps: ConversionStep[] = [
+    { id: "contact", label: "Contact Match", subtitle: "Person discovered", icon: Users, color: "text-sky-500", bgColor: "bg-sky-500/10" },
+    { id: "promote", label: "Promote Lead", subtitle: "Signal Interest", icon: Sparkles, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+    { id: "lead", label: "Qualified Lead", subtitle: "Active Prospect", icon: User, color: "text-orange-500", bgColor: "bg-orange-500/10" },
+    { id: "opp", label: "Create Deal", subtitle: "Enter Pipeline", icon: TrendingUp, color: "text-indigo-500", bgColor: "bg-indigo-500/10" },
 ];
 
-const leadToAccountSteps: ConversionStep[] = [
-    { id: "opp", label: "Opportunity", subtitle: "In Pipeline", icon: TrendingUp, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+const dealToProjectSteps: ConversionStep[] = [
+    { id: "opp_active", label: "Opportunity", subtitle: "Value Defined", icon: TrendingUp, color: "text-indigo-500", bgColor: "bg-indigo-500/10" },
     { id: "close", label: "Close Won", subtitle: "Mark as Won", icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-    { id: "account", label: "Account Created", subtitle: "New Customer", icon: Building2, color: "text-purple-500", bgColor: "bg-purple-500/10" },
-    { id: "growth", label: "Growth", subtitle: "Upsell & Retain", icon: Sparkles, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+    { id: "project", label: "Project Created", subtitle: "Post-Sale Board", icon: Rocket, color: "text-pink-500", bgColor: "bg-pink-500/10" },
+    { id: "delivery", label: "Delivery", subtitle: "Client Success", icon: Sparkles, color: "text-white", bgColor: "bg-white/10" },
 ];
 
 interface FlowRowProps {
@@ -106,16 +107,16 @@ export default function AutoConversionFlow() {
     return (
         <div className="space-y-3">
             <FlowRow
-                title="When You Convert a Lead"
-                description="Converting a lead creates both a Contact and an Opportunity in your pipeline."
-                steps={leadToContactSteps}
+                title="When You Qualify a Contact"
+                description="Interest signals allow you to promote a Contact to a Lead and enter the Sales Pipeline."
+                steps={contactToLeadSteps}
                 delay={0}
                 accentColor="blue"
             />
             <FlowRow
                 title="When You Close an Opportunity"
-                description="Closing a deal automatically creates a Customer Account record."
-                steps={leadToAccountSteps}
+                description="Winning a deal automatically triggers the creation of a Delivery Project for the new client."
+                steps={dealToProjectSteps}
                 delay={0.15}
                 accentColor="emerald"
                 celebration

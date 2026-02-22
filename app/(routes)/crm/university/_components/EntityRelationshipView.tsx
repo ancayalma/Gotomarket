@@ -29,54 +29,54 @@ interface Entity {
 
 const ENTITIES: Entity[] = [
     {
-        id: "lead",
-        name: "Lead",
-        subtitle: "Potential Customer",
-        description: "Someone you're reaching out to who might be interested in your services",
-        icon: User,
-        color: "text-sky-500",
-        bgColor: "bg-sky-500/10",
-        href: "/crm/leads",
+        id: "account",
+        name: "Account",
+        subtitle: "The Foundation",
+        description: "Company records created at scale via AI LeadGen to anchor your outreach",
+        icon: Building2,
+        color: "text-blue-500",
+        bgColor: "bg-blue-500/10",
+        href: "/crm/accounts",
     },
     {
         id: "contact",
         name: "Contact",
-        subtitle: "Engaged Person",
-        description: "A lead who has received your outreach and is now in your sales process",
+        subtitle: "The Individual",
+        description: "People discovered at target accounts during the initial engagement phase",
         icon: Users,
-        color: "text-blue-500",
-        bgColor: "bg-blue-500/10",
+        color: "text-sky-500",
+        bgColor: "bg-sky-500/10",
         href: "/crm/contacts",
     },
     {
-        id: "account",
-        name: "Account",
-        subtitle: "Customer",
-        description: "A person or company that has completed a deal with you",
-        icon: Building2,
-        color: "text-indigo-500",
-        bgColor: "bg-indigo-500/10",
-        href: "/crm/accounts",
+        id: "lead",
+        name: "Lead",
+        subtitle: "Qualified Intent",
+        description: "A contact promoted to a Lead once engagement or interest is established",
+        icon: User,
+        color: "text-amber-500",
+        bgColor: "bg-amber-500/10",
+        href: "/crm/leads",
     },
     {
         id: "opportunity",
         name: "Opportunity",
-        subtitle: "Active Deal",
-        description: "A potential sale you're working on with an expected value",
+        subtitle: "Sales Pipeline",
+        description: "A formal deal cycle with stages, value, and closing timelines",
         icon: TrendingUp,
-        color: "text-emerald-500",
-        bgColor: "bg-emerald-500/10",
+        color: "text-indigo-500",
+        bgColor: "bg-indigo-500/10",
         href: "/crm/opportunities",
     },
     {
-        id: "contract",
-        name: "Contract",
-        subtitle: "Signed Agreement",
-        description: "A formal agreement with a customer for ongoing services",
-        icon: FileSignature,
-        color: "text-violet-500",
-        bgColor: "bg-violet-500/10",
-        href: "/crm/contracts",
+        id: "project",
+        name: "Project Success",
+        subtitle: "Client Delivery",
+        description: "Post-sale delivery boards triggered automatically by winning a deal",
+        icon: Sparkles,
+        color: "text-emerald-500",
+        bgColor: "bg-emerald-500/10",
+        href: "/projects",
     },
 ];
 
@@ -183,13 +183,12 @@ export default function EntityRelationshipView() {
                     transition={{ delay: 0.5 }}
                     className="p-4 rounded-lg bg-card border border-border"
                 >
-                    <h4 className="font-semibold text-sm text-blue-500 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        Automatic: Lead → Contact
+                    <h4 className="font-semibold text-sm text-sky-500 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Qualified Intent: Contact → Lead
                     </h4>
-                    <p className="text-sm text-muted-foreground mt-2">
-                        When you send your first email or text to a lead, they automatically become a <strong>Contact</strong>.
-                        This means they've received your first touchpoint and are now in your active sales process!
+                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                        When a person at an Account shows interest or meets engagement criteria, they are promoted from <strong>Contact</strong> to <strong>Lead</strong>. This triggers Step 6 of our GTM flow.
                     </p>
                 </motion.div>
 
@@ -200,12 +199,11 @@ export default function EntityRelationshipView() {
                     className="p-4 rounded-lg bg-card border border-border"
                 >
                     <h4 className="font-semibold text-sm text-emerald-500 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        Automatic: Lead → Account
+                        <TrendingUp className="w-4 h-4" />
+                        Delivery Trigger: Deal → Project
                     </h4>
-                    <p className="text-sm text-muted-foreground mt-2">
-                        When you close a deal, the lead automatically becomes an <strong>Account</strong>.
-                        Congratulations – they're now a customer! You can create opportunities and contracts for them.
+                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                        Moving an Opportunity to <strong>Close Won</strong> automatically triggers Step 9: <strong>Project Creation</strong>. The system hands off the data to a delivery board for execution.
                     </p>
                 </motion.div>
             </div>

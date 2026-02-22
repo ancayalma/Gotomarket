@@ -29,25 +29,29 @@ export default function RevOpsSimulator() {
     const [teamSize, setTeamSize] = useState(5);
     const [leadsPerMonth, setLeadsPerMonth] = useState(200);
     const [closeRate, setCloseRate] = useState(15); // Percentage
+    const [dataHealth, setDataHealth] = useState(60); // 0-100%
 
     // "What-if" improvements (multipliers/percentages)
     const [aiEfficiency, setAiEfficiency] = useState(20); // 0-100% boost in efficiency
     const [speedToLeadBoost, setSpeedToLeadBoost] = useState(15); // 0-50% improvement in close rate due to speed
 
     const results = useMemo(() => {
+        // Data health impacts how many leads are actually 'pursuable'
+        const effectiveLeads = leadsPerMonth * (0.5 + (dataHealth / 200));
+
         const baselineCloseRate = closeRate / 100;
         const improvedCloseRate = baselineCloseRate * (1 + (speedToLeadBoost / 100));
 
-        const baselineDeals = leadsPerMonth * baselineCloseRate;
-        const improvedDeals = leadsPerMonth * improvedCloseRate;
+        const baselineDeals = effectiveLeads * baselineCloseRate;
+        const improvedDeals = effectiveLeads * improvedCloseRate;
 
-        const avgDealValue = arr / (baselineDeals * 12);
+        const avgDealValue = arr / (baselineDeals * 12 || 1);
 
         const baselineAnnRevenue = baselineDeals * avgDealValue * 12;
         const improvedAnnRevenue = improvedDeals * avgDealValue * 12;
 
         const revenueLift = improvedAnnRevenue - baselineAnnRevenue;
-        const timeSavedHours = teamSize * 40 * 0.1 * (aiEfficiency / 10); // Rough estimate: 10% of time spent on raw data work, boosted by AI efficiency
+        const timeSavedHours = teamSize * 40 * 0.1 * (aiEfficiency / 10);
 
         return {
             baselineAnnRevenue,
@@ -55,9 +59,9 @@ export default function RevOpsSimulator() {
             revenueLift,
             revenueLiftPct: ((improvedAnnRevenue / baselineAnnRevenue) - 1) * 100,
             timeSavedHours: Math.round(timeSavedHours),
-            roiMultiplier: (revenueLift / 5000).toFixed(1) // Assuming $5k/mo cost for Basalt
+            roiMultiplier: (revenueLift / 5000).toFixed(1)
         };
-    }, [arr, leadsPerMonth, closeRate, aiEfficiency, speedToLeadBoost, teamSize]);
+    }, [arr, leadsPerMonth, closeRate, dataHealth, aiEfficiency, speedToLeadBoost, teamSize]);
 
     const chartData = useMemo(() => {
         return [
@@ -71,15 +75,6 @@ export default function RevOpsSimulator() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold flex items-center gap-2">
-                        <TrendingUp className="w-6 h-6 text-blue-500" />
-                        RevOps ROI Simulator
-                    </h2>
-                    <p className="text-muted-foreground text-sm">Quantify the impact of AI-augmented sales operations.</p>
-                </div>
-            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Inputs */}
@@ -88,7 +83,7 @@ export default function RevOpsSimulator() {
                         <Title className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Baseline Metrics</Title>
                         <div className="space-y-4">
                             <InputRange
-                                label="Current Annual Revenue"
+                                label="Annual Revenue"
                                 value={arr}
                                 min={100000}
                                 max={5000000}
@@ -97,7 +92,7 @@ export default function RevOpsSimulator() {
                                 onChange={(val) => setArr(val)}
                             />
                             <InputRange
-                                label="Monthly Lead Volume"
+                                label="Lead Volume / Mo"
                                 value={leadsPerMonth}
                                 min={10}
                                 max={1000}
@@ -118,15 +113,25 @@ export default function RevOpsSimulator() {
                     <Divider />
 
                     <div>
-                        <Title className="text-sm font-bold uppercase tracking-wider text-blue-400 mb-4">AI Optimization Boost</Title>
+                        <Title className="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4">Optimization Levers</Title>
                         <div className="space-y-4">
+                            <InputRange
+                                label="Data Health & Enrichment"
+                                value={dataHealth}
+                                min={0}
+                                max={100}
+                                step={5}
+                                formatter={(val) => `${val}% Accuracy`}
+                                color="emerald"
+                                onChange={(val) => setDataHealth(val)}
+                            />
                             <InputRange
                                 label="AI Efficiency Gains"
                                 value={aiEfficiency}
                                 min={0}
                                 max={100}
                                 step={5}
-                                formatter={(val) => `+${val}%`}
+                                formatter={(val) => `+${val}% Output`}
                                 color="blue"
                                 onChange={(val) => setAiEfficiency(val)}
                             />
@@ -137,7 +142,7 @@ export default function RevOpsSimulator() {
                                 max={50}
                                 step={1}
                                 formatter={(val) => `+${val}% Close Rate`}
-                                color="emerald"
+                                color="violet"
                                 onChange={(val) => setSpeedToLeadBoost(val)}
                             />
                         </div>
@@ -180,20 +185,87 @@ export default function RevOpsSimulator() {
                             data={chartData}
                             index="month"
                             categories={["Revenue"]}
-                            colors={["blue"]}
+                            colors={["emerald"]}
                             valueFormatter={(number: number) => `$${(number / 1000).toFixed(0)}k`}
                             showAnimation={true}
                             showYAxis={false}
+                            showXAxis={true}
                             showGridLines={false}
+                            startEndOnly={true}
                         />
-                        <div className="mt-6 p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Zap className="w-5 h-5 text-blue-400" />
-                                <Text className="text-sm text-gray-300">Scaling these efficiencies across your entire CRM can yield up to <span className="text-blue-400 font-bold">2.5x</span> better data utilization.</Text>
-                            </div>
-                            <button className="px-4 py-2 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-400 transition-colors">Apply Strategy</button>
-                        </div>
                     </Card>
+
+                    {/* New Integrated Performance Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card className="bg-card border-border ring-0 shadow-sm">
+                            <Title className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">System Performance Baseline</Title>
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <Flex>
+                                        <Text className="text-xs">Data Cleanliness</Text>
+                                        <Text className="text-xs font-bold text-emerald-400">{dataHealth}%</Text>
+                                    </Flex>
+                                    <CategoryBar
+                                        values={[40, 30, 30]}
+                                        colors={["rose", "amber", "emerald"]}
+                                        markerValue={dataHealth}
+                                        showLabels={false}
+                                        className="h-2.5"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Flex>
+                                        <Text className="text-xs">Enrichment Match Rate</Text>
+                                        <Text className="text-xs font-bold text-blue-400">82%</Text>
+                                    </Flex>
+                                    <CategoryBar
+                                        values={[30, 40, 30]}
+                                        colors={["rose", "amber", "emerald"]}
+                                        markerValue={82}
+                                        showLabels={false}
+                                        className="h-2.5"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Flex>
+                                        <Text className="text-xs">Lead Velocity Score</Text>
+                                        <Text className="text-xs font-bold text-violet-400">High</Text>
+                                    </Flex>
+                                    <CategoryBar
+                                        values={[20, 30, 50]}
+                                        colors={["rose", "amber", "emerald"]}
+                                        markerValue={85}
+                                        showLabels={false}
+                                        className="h-2.5"
+                                    />
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="bg-card border-border ring-0 shadow-sm">
+                            <Title className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Strategic Action Items</Title>
+                            <div className="space-y-3">
+                                {[
+                                    { text: "Improve phone number coverage by 15%", color: "text-blue-400" },
+                                    { text: "Automate LinkedIn persona matching", color: "text-emerald-400" },
+                                    { text: "Reduce first-response time to < 2min", color: "text-violet-400" }
+                                ].map((item, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/5">
+                                        <div className={cn("w-1 h-1 rounded-full bg-current", item.color)} />
+                                        <Text className="text-xs text-gray-300">{item.text}</Text>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Zap className="w-5 h-5 text-blue-400" />
+                            <Text className="text-sm text-gray-300">Scaling these efficiencies across your entire CRM can yield up to <span className="text-blue-400 font-bold">2.5x</span> better data utilization.</Text>
+                        </div>
+                        <button className="px-4 py-2 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-400 transition-colors">Apply Strategy</button>
+                    </div>
                 </div>
             </div>
         </div>

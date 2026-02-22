@@ -90,7 +90,7 @@ const MILESTONES = [
     },
     // Data Pioneer
     {
-        id: 6, phase: "data-pioneer", title: "Lead Hunter", subtitle: "Volume processing", icon: Search, xp: 200,
+        id: 6, phase: "data-pioneer", title: "Data Specialist", subtitle: "Volume processing", icon: Search, xp: 200,
         requirements: [
             { text: "Import 500+ leads via CSV", done: false },
             { text: "Setup auto-verify for new leads", done: false },
@@ -229,7 +229,7 @@ const MILESTONES = [
         ]
     },
     {
-        id: 23, phase: "strategic-master", title: "Elite Deal Closer", subtitle: "ROI realization", icon: Trophy, xp: 1000,
+        id: 23, phase: "strategic-master", title: "Revenue Architect", subtitle: "ROI realization", icon: Trophy, xp: 1000,
         requirements: [
             { text: "Manage $1M+ in Deal Room pipeline", done: false },
             { text: "Close 5 enterprise deals in CRM", done: false },
@@ -245,7 +245,7 @@ const MILESTONES = [
         ]
     },
     {
-        id: 25, phase: "strategic-master", title: "Arch-Mage of Basalt", subtitle: "Ultimate mastery", icon: GraduationCap, xp: 2500,
+        id: 25, phase: "strategic-master", title: "Operations Master", subtitle: "Ultimate mastery", icon: GraduationCap, xp: 2500,
         requirements: [
             { text: "6 months of active platform usage", done: false },
             { text: "Zero critical data gaps (Full Health)", done: false },
@@ -256,12 +256,12 @@ const MILESTONES = [
 ];
 
 const STAGE_WEIGHTS: Record<string, number> = {
-    Identify: 0,
-    Engage_AI: 10,
-    Engage_Human: 20,
-    Offering: 40,
-    Finalizing: 60,
-    Closed: 100,
+    "Step 7: Qualify": 0,
+    "Step 8: Nurture": 10,
+    "Step 8: Deep-Dive": 20,
+    "Step 8: Quote": 40,
+    "Step 9: Invoice": 60,
+    "Step 10: Close Won": 100,
 };
 const STAGES = Object.keys(STAGE_WEIGHTS);
 
@@ -270,7 +270,7 @@ function clamp(min: number, val: number, max: number) {
 }
 
 export default function CertificationPaths() {
-    const [stage, setStage] = React.useState<string>("Closed");
+    const [stage, setStage] = React.useState<string>("Step 10: Close Won");
     const [touches, setTouches] = React.useState<string>("3");
     const [daysToBooking, setDaysToBooking] = React.useState<string>("7");
 
@@ -280,7 +280,7 @@ export default function CertificationPaths() {
         const d = Number(daysToBooking);
         let effBonus = 0;
         let speedBonus = 0;
-        if (stage === "Closed") {
+        if (stage === "Step 10: Close Won") {
             effBonus = clamp(0, (3 - t) / 10, 0.3);
             if (!Number.isNaN(d)) speedBonus = clamp(0, (14 - d) / 20, 0.7);
         }
@@ -300,78 +300,7 @@ export default function CertificationPaths() {
     const maxTotalXp = MILESTONES.reduce((acc, m) => acc + m.xp, 0);
 
     return (
-        <div className="space-y-12 pb-32">
-            {/* Header / Global Rank */}
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-10 bg-black/40 p-10 rounded-3xl border border-white/10 relative overflow-hidden backdrop-blur-md">
-                <div className="space-y-4 flex-1 relative z-10">
-                    <div className="flex items-center gap-3">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-[0.25em]">
-                            <Crown className="w-3.5 h-3.5" />
-                            Professional Certification
-                        </div>
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-[0.25em]">
-                            <Zap className="w-3.5 h-3.5" />
-                            {totalXp} / {maxTotalXp} XP
-                        </div>
-                    </div>
-                    <h2 className="text-5xl font-black tracking-tighter leading-none py-1">
-                        Mastery <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 italic pr-2">Evolved</span>
-                    </h2>
-                    <p className="text-gray-400 text-lg max-w-2xl leading-relaxed">
-                        Becoming a **Master Admin** is a journey of precision and volume. Each task completed builds your **XP** and unlocks new achievement tiers.
-                    </p>
-
-                    {/* Achievement Snippets */}
-                    <div className="flex flex-wrap gap-4 pt-4">
-                        {[
-                            { name: "Closer x5", icon: Trophy, active: false },
-                            { name: "Data Architect", icon: Database, active: true },
-                            { name: "Speed Demon", icon: Zap, active: false }
-                        ].map(ach => (
-                            <div key={ach.name} className={cn(
-                                "flex items-center gap-2 px-3 py-2 rounded-2xl border transition-all",
-                                ach.active ? "bg-amber-500/10 border-amber-500/30 text-amber-500" : "bg-white/5 border-white/5 text-gray-600 grayscale"
-                            )}>
-                                <ach.icon className="w-4 h-4" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">{ach.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-10 relative z-10">
-                    <div className="text-right hidden md:block">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Rank Standing</p>
-                        <p className="text-3xl font-black text-white">Elite Pioneer</p>
-                        <div className="flex justify-end gap-1 mt-2">
-                            {[1, 2, 3].map(i => <Star key={i} className="w-4 h-4 text-amber-500 fill-amber-500" />)}
-                            <Star className="w-4 h-4 text-gray-800 fill-gray-800" />
-                        </div>
-                    </div>
-                    <div className="w-px h-20 bg-white/10 hidden md:block" />
-                    <div className="relative w-28 h-28 flex items-center justify-center">
-                        <svg className="w-full h-full -rotate-90">
-                            <circle cx="56" cy="56" r="50" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-white/5" />
-                            <circle
-                                cx="56" cy="56" r="50"
-                                stroke="currentColor" strokeWidth="8"
-                                fill="transparent"
-                                className="text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]"
-                                strokeDasharray={314}
-                                strokeDashoffset={314 - (314 * progressPct) / 100}
-                                strokeLinecap="round"
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-black text-white leading-none">{progressPct}%</span>
-                            <span className="text-[10px] uppercase font-bold text-gray-500 mt-1">Global</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Background Glow */}
-                <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 blur-[120px] pointer-events-none" />
-            </div>
+        <div className="space-y-6 pb-4">
 
             {/* Matrix of Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
@@ -629,7 +558,7 @@ export default function CertificationPaths() {
             </div>
 
             {/* Prestige Summary */}
-            <div className="pt-20">
+            <div className="pt-8">
                 <Card className="bg-gradient-to-br from-amber-600/10 via-black to-blue-600/5 border-amber-500/20 p-12 overflow-hidden relative shadow-2xl">
                     <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
                         <div className="relative">

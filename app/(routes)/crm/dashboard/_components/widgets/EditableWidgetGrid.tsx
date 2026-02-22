@@ -82,7 +82,7 @@ const widgetTooltips: Record<string, string> = {
     collaboration_feed: "Recent mentions and activity in campaign threads you're part of.",
     leads: "Newest leads added to your pipeline. Review and assign them quickly.",
     tasks: "Your daily task list. Stay productive and on track with your priorities.",
-    projects: "Recently created or updated projects. Jump straight into project work.",
+    projects: "Recently created or updated campaigns. Jump straight into campaign work.",
     messages: "Your latest messages and notifications. Stay in the loop with your team.",
     team_activity: "Recent actions taken by team members across the CRM.",
     recent_files: "Files recently uploaded or modified. Quick access to your documents.",

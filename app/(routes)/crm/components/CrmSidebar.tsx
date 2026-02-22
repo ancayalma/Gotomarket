@@ -23,6 +23,7 @@ import {
     Zap,
     Calendar,
     Lock,
+    Rocket,
 } from "lucide-react";
 
 interface CrmSidebarProps {
@@ -72,7 +73,7 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
         { id: 'contacts', label: "Contacts", href: "/crm/contacts", icon: Contact },
         { id: 'leads', label: "Leads", href: "/crm/leads", icon: Users },
         { id: 'opportunities', label: "Opportunities", href: "/crm/opportunities", icon: Target },
-        { id: 'projects', label: "Projects", href: "/projects", icon: Folder },
+        { id: 'projects', label: "Campaigns", href: "/campaigns", icon: Rocket },
         { id: 'dialer', label: "Dialer", href: "/crm/dialer", icon: Phone },
         { id: 'contracts', label: "Contracts", href: "/crm/contracts", icon: FileText },
         { id: 'quotes', label: "Quotes", href: "/crm/quotes", icon: FileText },

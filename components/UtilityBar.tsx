@@ -34,7 +34,7 @@ export default function UtilityBar() {
     const [notes, setNotes] = useState("");
     const [tasks, setTasks] = useState<{ id: string, text: string, completed: boolean }[]>([]);
     const [isDialerOpen, setIsDialerOpen] = useState(false);
-    const { activeTab, tooltipLabel, dismissKey } = useLearn();
+    const { activeTab, tooltipLabel, overviewTitle, overviewWhat, overviewWhy, overviewHow, dismissKey } = useLearn();
     const router = useRouter();
     const [isLearnDismissed, setIsLearnDismissed] = useState(false);
 
@@ -221,7 +221,7 @@ export default function UtilityBar() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {/* Learn About This Page - Integrated into Utility Bar */}
+                        {/* Learn About This Page - Integrated into UtilityBar */}
                         {activeTab && !isLearnDismissed && (
                             <Popover>
                                 <PopoverTrigger asChild>
@@ -233,16 +233,23 @@ export default function UtilityBar() {
                                         <span className="text-xs font-semibold">Learn about this page</span>
                                     </div>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-80 p-4 border-blue-500/20 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden shadow-blue-500/10" side="top" align="center" sideOffset={12}>
+                                <PopoverContent className="w-96 p-4 border-blue-500/20 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden shadow-blue-500/10" side="top" align="center" sideOffset={12}>
                                     {/* Top gradient line */}
                                     <div className={`absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r ${TAB_COLORS[activeTab]}`} />
 
-                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                    <div className="flex items-start justify-between gap-2 mb-3">
                                         <div className="flex items-center gap-2">
-                                            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${TAB_COLORS[activeTab]} flex items-center justify-center flex-shrink-0`}>
+                                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${TAB_COLORS[activeTab]} flex items-center justify-center flex-shrink-0`}>
                                                 <GraduationCap className="w-4 h-4 text-white" />
                                             </div>
-                                            <p className="text-xs font-bold text-white/90">CRM University</p>
+                                            <div>
+                                                <p className="text-xs font-bold text-white/90">
+                                                    {overviewTitle || TAB_LABELS[activeTab]}
+                                                </p>
+                                                <p className="text-[10px] text-white/50 uppercase tracking-wider font-semibold">
+                                                    CRM Overview
+                                                </p>
+                                            </div>
                                         </div>
                                         <button
                                             onClick={handleDismissLearn}
@@ -252,15 +259,52 @@ export default function UtilityBar() {
                                             <X className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
-                                    <p className="text-[11px] text-white/50 leading-relaxed mb-3">
-                                        {tooltipLabel ?? `Learn how ${TAB_LABELS[activeTab]} works in the CRM ecosystem.`}
-                                    </p>
+
+                                    {(overviewWhat || overviewWhy || overviewHow) ? (
+                                        <div className="space-y-3 mb-4 max-h-[40vh] overflow-y-auto pr-1">
+                                            {overviewWhat && (
+                                                <div className="space-y-1">
+                                                    <h4 className="text-[10px] font-bold text-white/80 uppercase tracking-wider">What is this?</h4>
+                                                    <p className="text-[11px] text-white/60 leading-relaxed">{overviewWhat}</p>
+                                                </div>
+                                            )}
+                                            {overviewWhy && (
+                                                <div className="space-y-1">
+                                                    <h4 className="text-[10px] font-bold text-white/80 uppercase tracking-wider">Why use it?</h4>
+                                                    <p className="text-[11px] text-white/60 leading-relaxed">{overviewWhy}</p>
+                                                </div>
+                                            )}
+                                            {overviewHow && (
+                                                <div className="space-y-1">
+                                                    <h4 className="text-[10px] font-bold text-white/80 uppercase tracking-wider">How to use it</h4>
+                                                    <p className="text-[11px] text-white/60 leading-relaxed">{overviewHow}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-[11px] text-white/50 leading-relaxed mb-4">
+                                            {tooltipLabel ?? `Learn how ${TAB_LABELS[activeTab]} works in the CRM ecosystem.`}
+                                        </p>
+                                    )}
+
+                                    {/* Link to University if it exists, otherwise just a dismiss button */}
                                     <Button
                                         size="sm"
-                                        onClick={() => router.push(`/crm/university?tab=${activeTab}`)}
+                                        onClick={() => {
+                                            // Only redirect if it's one of the actual university tabs, else just close
+                                            const isUniversityTab = ["getting-started", "project-workflow", "flow", "compliance", "data-health", "certification", "prompt-lab", "roi-modeler", "architecture", "reference"].includes(activeTab as string);
+                                            if (isUniversityTab) {
+                                                router.push(`/crm/university?tab=${activeTab}`);
+                                            } else {
+                                                // Just dismiss for now since there's no specific university page
+                                                handleDismissLearn();
+                                            }
+                                        }}
                                         className={`w-full h-8 text-xs font-bold text-white bg-gradient-to-r ${TAB_COLORS[activeTab]} hover:opacity-90 transition-opacity border-none`}
                                     >
-                                        Open University →
+                                        {(["getting-started", "project-workflow", "flow", "compliance", "data-health", "certification", "prompt-lab", "roi-modeler", "architecture", "reference"].includes(activeTab as string))
+                                            ? "Open University →"
+                                            : "Got it!"}
                                     </Button>
                                 </PopoverContent>
                             </Popover>

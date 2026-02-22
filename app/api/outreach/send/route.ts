@@ -373,6 +373,7 @@ export async function POST(req: Request) {
           subject,
           text,
           html,
+          senderId: session.user.id,
         });
 
         // We don't have the messageId directly from sendTeamEmail in all cases yet, 
