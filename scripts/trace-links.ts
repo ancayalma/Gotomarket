@@ -1,5 +1,5 @@
 
-import { prismadbCrm } from "./lib/prisma-crm";
+import { prismadbCrm } from  "../lib/prisma-crm";
 
 async function run() {
     const cryptoAccs = await (prismadbCrm as any).crm_Accounts.findMany({

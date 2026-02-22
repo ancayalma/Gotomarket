@@ -1,5 +1,5 @@
 
-import { prismadbCrm } from "./lib/prisma-crm";
+import { prismadbCrm } from  "../lib/prisma-crm";
 
 async function run() {
     const dbs = ["intelligent_agent", "ledger1crm", "basalt-onyx", "ledger1cms", "BasaltCRM"];

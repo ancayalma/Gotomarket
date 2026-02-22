@@ -1,5 +1,5 @@
 
-import { prismadbCrm } from "./lib/prisma-crm";
+import { prismadbCrm } from  "../lib/prisma-crm";
 
 async function run() {
     const result = await (prismadbCrm as any).$runCommandRaw({

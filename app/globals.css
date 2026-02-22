@@ -685,6 +685,7 @@
   /* Firefox: remove spinner styling */
   input[type="number"] {
     -moz-appearance: textfield;
+    appearance: textfield;
   }
 }
 
@@ -1336,19 +1337,38 @@ div.headlessui-portal>div {
   color: hsl(var(--muted-foreground)) !important;
 }
 
-/* Global override for list items in dropdowns */
-[cmdk-item] {
+/* Global overrides for list items in dropdowns, selects, and command menus */
+[cmdk-item],
+[role="menuitem"],
+[role="option"],
+.SelectItem,
+.DropdownMenuItem {
   color: #ffffff !important;
 }
 
-[cmdk-item][aria-selected="true"] {
+[cmdk-item][aria-selected="true"],
+[role="menuitem"][data-highlighted],
+[role="option"][aria-selected="true"],
+[role="option"][data-highlighted],
+.SelectItem[data-highlighted],
+.DropdownMenuItem[data-highlighted] {
   background-color: hsla(200, 100%, 50%, 0.4) !important;
   color: #ffffff !important;
 }
 
-[cmdk-group-heading] {
+[cmdk-group-heading],
+[role="group"]>[role="presentation"],
+.SelectLabel,
+.DropdownMenuLabel {
   color: rgba(255, 255, 255, 0.6) !important;
   font-weight: 600 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
+  font-size: 10px !important;
+}
+
+/* Force Select and Dropdown triggers to have white text when open or focused */
+[data-state="open"]>.SelectValue,
+[data-state="open"]>.DropdownMenuValue {
+  color: #ffffff !important;
 }

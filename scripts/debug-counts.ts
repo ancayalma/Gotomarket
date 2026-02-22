@@ -1,6 +1,6 @@
 
-import { prismadb } from "./lib/prisma";
-import { prismadbCrm } from "./lib/prisma-crm";
+import { prismadb } from  "../lib/prisma";
+import { prismadbCrm } from  "../lib/prisma-crm";
 
 async function check() {
     console.log("--- MAIN DB (prismadb) ---");

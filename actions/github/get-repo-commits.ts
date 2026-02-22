@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from "axios";
-import build from "@/buildCount.json";
+import build from "@/data/buildCount.json";
 
 export default async function getAllCommits(): Promise<number> {
   const perPage = 100;

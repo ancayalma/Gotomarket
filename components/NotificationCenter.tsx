@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation";
 export default function NotificationCenter() {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [open, setOpen] = useState(false);
     const router = useRouter();
 
     const fetchNotifications = async () => {
@@ -46,6 +47,7 @@ export default function NotificationCenter() {
 
     const handleMarkAsRead = async (id: string, link?: string) => {
         await markAsRead(id);
+        setOpen(false);
         fetchNotifications();
         if (link) {
             router.push(link);
@@ -75,7 +77,10 @@ export default function NotificationCenter() {
     };
 
     return (
-        <DropdownMenu onOpenChange={(open) => open && fetchNotifications()}>
+        <DropdownMenu open={open} onOpenChange={(val) => {
+            setOpen(val);
+            if (val) fetchNotifications();
+        }}>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full bg-background/50 border hover:bg-background transition-all">
                     <Bell className="h-4 w-4 text-muted-foreground" />
@@ -86,7 +91,7 @@ export default function NotificationCenter() {
                     )}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden shadow-2xl border-border/50">
+            <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden shadow-2xl border-border/50 glass">
                 <div className="flex items-center justify-between p-4 border-b bg-muted/30">
                     <h4 className="font-semibold text-sm flex items-center gap-2">
                         Notifications
@@ -174,7 +179,15 @@ export default function NotificationCenter() {
                     )}
                 </ScrollArea>
                 <div className="p-2 border-t bg-muted/10 text-center">
-                    <Button variant="ghost" size="sm" className="w-full text-[10px] h-8 text-muted-foreground" onClick={() => router.push('/crm/notifications')}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-[10px] h-8 text-muted-foreground"
+                        onClick={() => {
+                            setOpen(false);
+                            router.push('/crm/notifications');
+                        }}
+                    >
                         View All Activity
                     </Button>
                 </div>
