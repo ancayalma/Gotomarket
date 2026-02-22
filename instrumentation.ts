@@ -4,23 +4,21 @@ export async function register() {
         const { prismadbCrm } = await import('@/lib/prisma-crm');
         const { runLeadGenPipeline } = await import('@/actions/leads/run-pipeline');
 
-        console.log('==================================================');
-        console.log('   Self-Healing: Resuming stuck LeadGen jobs...   ');
-        console.log('==================================================');
-
         try {
-            // Find all jobs that were stuck in RUNNING state
             const stuckJobs = await (prismadbCrm as any).crm_Lead_Gen_Jobs.findMany({
                 where: { status: 'RUNNING' }
             });
 
             if (stuckJobs.length > 0) {
+                console.log('==================================================');
+                console.log('   Self-Healing: Resuming stuck LeadGen jobs...   ');
+                console.log('==================================================');
                 console.log(`[SELF-HEALING] Found ${stuckJobs.length} stuck jobs from previous session.`);
 
                 for (const job of stuckJobs) {
+                    // ... rest of the loop logic stays same
                     console.log(`[SELF-HEALING] Attempting to resume job: ${job.id}`);
 
-                    // 1. Log the resumption attempt
                     await (prismadbCrm as any).crm_Lead_Gen_Jobs.update({
                         where: { id: job.id },
                         data: {
@@ -34,11 +32,9 @@ export async function register() {
                         }
                     });
 
-                    // 2. Re-trigger the background process
-                    // We don't await this as we want the server to finish booting
                     runLeadGenPipeline({
                         jobId: job.id,
-                        userId: job.user || 'system', // Fallback if user ID is missing
+                        userId: job.user || 'system',
                     }).catch(async (error) => {
                         console.error(`[SELF-HEALING_RESUME_ERROR] Failed to resume job ${job.id}:`, error);
                         try {
@@ -53,18 +49,15 @@ export async function register() {
                                 }
                             });
                         } catch (dbErr) {
-                            console.error("Critical DB failure during resume error logging", dbErr);
+                            console.error("Critical DB failure", dbErr);
                         }
                     });
                 }
-
-                console.log(`[SELF-HEALING] Successfully re-queued ${stuckJobs.length} jobs for background processing.`);
-            } else {
-                console.log('[SELF-HEALING] No stuck jobs found. System healthy.');
+                console.log(`[SELF-HEALING] Successfully re-queued ${stuckJobs.length} jobs.`);
+                console.log('==================================================');
             }
         } catch (error) {
-            console.error('[SELF-HEALING] Error during job resumption:', error);
+            // Quietly log error if DB isn't ready yet (common in dev boot)
         }
-        console.log('==================================================');
     }
 }

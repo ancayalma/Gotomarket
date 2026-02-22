@@ -86,6 +86,39 @@ export default function LeadGenWizardPage() {
     }
   };
 
+  const handleEnhance = async (field: keyof WizardState | 'aiPrompt') => {
+    const currentValue = field === 'aiPrompt' ? state.aiPrompt : state[field];
+    if (typeof currentValue !== 'string' || !currentValue || currentValue.trim().length < 3) {
+      toast.error("Please enter some text to enhance first");
+      return;
+    }
+
+    const toastId = toast.loading(`AI is enhancing ${field === 'aiPrompt' ? 'your prompt' : field}...`);
+    try {
+      const res = await fetch("/api/ai/generate-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: currentValue,
+          context: `You are an expert at Ideal Customer Profiles (ICP). Rewrite and enhance the following targeting criteria for better search results. Maintain the original intent but make it more professional and precise: "${currentValue}"`
+        }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+
+      if (field === 'aiPrompt') {
+        setState(prev => ({ ...prev, aiPrompt: data.text }));
+      } else {
+        setState(prev => ({ ...prev, [field]: data.text }));
+      }
+      toast.success("Enhanced successfully!", { id: toastId });
+    } catch (error: any) {
+      console.error("[ENHANCE_ERROR]", error);
+      toast.error("Failed to enhance text", { id: toastId });
+    }
+  };
+
   // --- Helper Components ---
   const AIInputLabel = ({ label, field, className }: { label: string, field: keyof WizardState, className?: string }) => (
     <div className={`flex items-center justify-between mb-2 ${className}`}>
@@ -95,7 +128,7 @@ export default function LeadGenWizardPage() {
           type="button"
           tabIndex={-1}
           className="text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
-          onClick={() => toast.success("Enhancing content... (Simulated)")}
+          onClick={() => handleEnhance(field)}
         >
           <Zap className="w-3 h-3" /> Enhance AI
         </button>
@@ -385,7 +418,7 @@ export default function LeadGenWizardPage() {
               <button
                 type="button"
                 className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
-                onClick={() => toast.success("Enhancement triggered (simulated)")}
+                onClick={() => handleEnhance('aiPrompt')}
               >
                 <Zap className="w-3.5 h-3.5" /> Enhance AI
               </button>

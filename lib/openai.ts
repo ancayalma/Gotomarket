@@ -78,7 +78,7 @@ export async function getAiSdkModel(userId: string | "system") {
         switch (sdkType) {
             case "AZURE": {
                 const effectiveResourceName = resourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
-                const apiVersion = process.env.AZURE_OPENAI_API_VERSION || "2024-05-01-preview";
+                const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
                 console.log(`[AZURE_DEBUG] Using Resource: ${effectiveResourceName} (Version: ${apiVersion})`);
                 const azure = createAzure({
                     apiKey: effectiveApiKey!,

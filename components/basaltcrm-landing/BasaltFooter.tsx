@@ -37,6 +37,7 @@ export default function BasaltFooter() {
                                     src="/CRM-ERP-CMS.png"
                                     alt="Basalt Shield"
                                     fill
+                                    sizes="(max-width: 768px) 48px, 48px"
                                     className="object-contain"
                                 />
                                 <div className="shield-gleam-container" />
@@ -93,7 +94,7 @@ export default function BasaltFooter() {
                                         {link.label}
                                         {link.href.startsWith("http") && (
                                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 0 00-2 2v10a2 0 002 2h10a2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                             </svg>
                                         )}
                                     </a>

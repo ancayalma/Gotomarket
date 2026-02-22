@@ -46,6 +46,7 @@ const LoadingComponent = () => {
               src="/BasaltCRMWide.png"
               alt="BasaltCRM"
               fill
+              sizes="(max-width: 768px) 224px, 224px"
               className="object-contain themed-logo drop-shadow-[0_0_12px_rgba(0,0,0,0.9)]"
               priority
             />

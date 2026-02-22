@@ -8,11 +8,12 @@ export default function BasaltHero() {
             <div className="flex-grow flex flex-col justify-center items-center text-center w-full max-w-5xl z-10">
                 {/* Logo */}
                 <div className="relative w-[300px] h-[80px] mx-auto mb-8 opacity-0 animate-fadeInUp">
-                    <div className="w-full h-full transform scale-[1.8] origin-center">
+                    <div className="relative w-full h-full transform scale-[1.8] origin-center">
                         <Image
                             src="/BasaltCRMWide.png"
                             alt="BasaltCRM"
                             fill
+                            sizes="(max-width: 768px) 300px, 300px"
                             className="object-contain"
                             priority
                         />

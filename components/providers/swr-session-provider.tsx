@@ -21,21 +21,24 @@ export const SWRSessionProvider = ({ children }: { children: React.ReactNode }) 
         }
     }, []);
 
+    const [persistenceDisabled, setPersistenceDisabled] = useState(false);
+
     // Save cache to sessionStorage
     const saveCache = useCallback(() => {
-        if (!cacheMapRef.current || !cacheKeyRef.current) return;
+        if (!cacheMapRef.current || !cacheKeyRef.current || persistenceDisabled) return;
         try {
             const appCache = JSON.stringify(Array.from(cacheMapRef.current.entries()));
             sessionStorage.setItem(cacheKeyRef.current, appCache);
         } catch (e: any) {
             console.warn('[CRM] Failed to save SWR cache to sessionStorage:', e);
-            if (e && e.name === 'QuotaExceededError') {
+            if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
+                setPersistenceDisabled(true);
                 sessionStorage.removeItem(cacheKeyRef.current);
                 cacheMapRef.current.clear();
-                console.warn('[CRM] Cleared SWR cache to stay within browser storage limits.');
+                console.warn('[CRM] persistenceDisabled set to TRUE to avoid storage spam.');
             }
         }
-    }, []);
+    }, [persistenceDisabled]);
 
     useEffect(() => {
         if (!session?.user?.email) return;

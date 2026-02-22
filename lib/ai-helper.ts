@@ -124,10 +124,42 @@ export async function getAiClient(teamId: string) {
 
     switch (sdkType) {
         case "AZURE": {
-            const resourceName = providerConfig.resourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
-            const deploymentId = providerConfig.deploymentId || process.env.AZURE_OPENAI_DEPLOYMENT || modelRecord.modelId;
-            if (!resourceName) throw new Error("Azure Resource Name missing");
-            const azure = createAzure({ apiKey: apiKey!, resourceName, baseURL: effectiveBaseURL });
+            // Priority: Env Vars -> Provider Config (DB)
+            const rawEndpoint = process.env.AZURE_OPENAI_ENDPOINT || baseURL || registryBaseUrl;
+            const endpoint = rawEndpoint?.endsWith("/") ? rawEndpoint.slice(0, -1) : rawEndpoint;
+            const deploymentId = process.env.AZURE_OPENAI_DEPLOYMENT || providerConfig.deploymentId || modelRecord.modelId;
+            const apiVersion = process.env.AZURE_OPENAI_API_VERSION || providerConfig.apiVersion;
+            const effectiveKey = process.env.AZURE_OPENAI_API_KEY || apiKey;
+
+            // Robust Resource Name Extraction (if not explicitly provided)
+            let finalResourceName = process.env.AZURE_OPENAI_RESOURCE_NAME || providerConfig.resourceName;
+            if (!finalResourceName && endpoint) {
+                try {
+                    const url = new URL(endpoint);
+                    // Match resource from {resource}.openai.azure.com or {resource}.cognitiveservices.azure.com
+                    const match = url.hostname.match(/^([^.]+)\.(openai|cognitiveservices)\.azure\.com$/);
+                    if (match) {
+                        finalResourceName = match[1];
+                    }
+                } catch (e) { }
+            }
+
+            console.log("[AI_DEBUG] Azure Configuration (Dynamic):", {
+                finalResourceName,
+                deploymentId,
+                apiVersion,
+                endpoint
+            });
+
+            if (!finalResourceName && !endpoint) throw new Error("Azure Configuration Missing: Set AZURE_OPENAI_ENDPOINT or AZURE_OPENAI_RESOURCE_NAME");
+
+            const azure = createAzure({
+                apiKey: effectiveKey!,
+                resourceName: finalResourceName || undefined,
+                apiVersion: apiVersion || undefined,
+                // Only pass baseURL if we are NOT using the standard resourceName-based path construction
+                baseURL: !finalResourceName ? endpoint : undefined
+            });
             model = azure(deploymentId);
             break;
         }
