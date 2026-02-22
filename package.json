@@ -1,6 +1,6 @@
 {
   "name": "basaltcrm-app",
-  "version": "1.2.0q",
+  "version": "1.2.0s",
   "author": "Michael Milton (BasaltHQ)",
   "private": true,
   "scripts": {
@@ -36,6 +36,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^5.2.2",
+    "@mendable/firecrawl-js": "^4.13.0",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@napi-rs/canvas": "^0.1.88",
     "@next-auth/prisma-adapter": "^1.0.7",
@@ -74,7 +75,6 @@
     "amazon-chime-sdk-js": "^3.29.0",
     "amazon-connect-streams": "^2.22.0",
     "aws-crt": "^1.28.1",
-    "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -87,6 +87,7 @@
     "encoding": "^0.1.13",
     "entities": "^7.0.0",
     "exceljs": "^4.4.0",
+    "firecrawl": "^4.13.0",
     "framer-motion": "^12.23.26",
     "geist": "^1.5.1",
     "googleapis": "167.0.0",

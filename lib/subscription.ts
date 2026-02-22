@@ -42,6 +42,10 @@ export const checkTeamLimit = (
         if (metric === 'max_users') limit = team.assigned_plan.max_users;
         if (metric === 'max_storage') limit = team.assigned_plan.max_storage;
         if (metric === 'credits') limit = team.assigned_plan.max_credits;
+        if (metric === 'leadgen_credits' as any) {
+            // This maps to the plan's default; current usage/balance is in TeamAiConfig
+            // But we can still return the total allowed if needed
+        }
 
         if (limit === -1) return true;
         return currentUsage < limit;

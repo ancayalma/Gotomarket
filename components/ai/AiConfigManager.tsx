@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition, useCallback } from "react";
+import { useState, useMemo, useTransition, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AiModel, TeamAiConfig } from "@prisma/client";
 import { toast } from "sonner";
@@ -54,6 +54,7 @@ import {
     PerplexityIcon,
     MistralIcon
 } from "@/components/ai/ProviderIcons";
+import { LeadGenPurchaseModal } from "@/components/modals/leadgen-purchase-modal";
 
 // ─── Types ───
 
@@ -79,6 +80,7 @@ interface AiConfigManagerProps {
     teamName?: string;
     modelRequests?: ModelRequest[];
     providerOptions?: { slug: string; name: string }[];
+    leadgenCredits?: number;
 }
 
 // ─── Provider metadata for beautiful cards ───
@@ -185,6 +187,7 @@ export const AiConfigManager = ({
     teamName,
     modelRequests = [],
     providerOptions = [],
+    leadgenCredits = 0,
 }: AiConfigManagerProps) => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -195,11 +198,20 @@ export const AiConfigManager = ({
 
     // BYOK Request Modal State
     const [requestModalOpen, setRequestModalOpen] = useState(false);
+    const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [selectedModelId, setSelectedModelId] = useState<string | null>(
         currentConfig?.modelId || null
     );
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('payment') === 'success' && urlParams.get('type') === 'credits') {
+            toast.success("Intelligence Credits added successfully! Your balance will update in a moment.");
+            router.replace('/admin/ai-settings');
+        }
+    }, [router]);
 
     // Form inputs for pre-filling
     const [requestFormData, setRequestFormData] = useState({
@@ -341,34 +353,52 @@ export const AiConfigManager = ({
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Current Selection Summary */}
-            {selectedModelId && (
-                <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 backdrop-blur-md shadow-sm">
-                    <div className="p-3 rounded-full bg-primary/20 text-primary animate-pulse-glow">
-                        <Bot className="w-6 h-6" />
+            {/* LeadGen Credits Wallet */}
+            <Card className="group relative bg-[#09090b] border-[#27272a] overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4">
+                    <div className="space-y-1">
+                        <CardTitle className="text-xl flex items-center gap-2 text-amber-500">
+                            <Zap className="w-6 h-6 fill-amber-500/20" />
+                            LeadGen Intelligence Credits
+                        </CardTitle>
+                        <CardDescription className="text-muted-foreground">
+                            Used for Discovery, Enrichment and Agentic Brain Research.
+                        </CardDescription>
                     </div>
-                    <div className="flex-1">
-                        <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Active Configuration</p>
-                        <div className="flex items-center gap-2">
-                            <p className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                                {models.find((m) => m.modelId === selectedModelId)?.name || selectedModelId}
-                            </p>
-                            {useSystemKey ? (
-                                <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 flex gap-1">
-                                    <Shield className="w-3 h-3" /> Managed
-                                </Badge>
-                            ) : (
-                                <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-400 flex gap-1">
-                                    <Key className="w-3 h-3" /> Custom Key
-                                </Badge>
-                            )}
+                    <div className="text-right p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 backdrop-blur-sm">
+                        <div className="text-4xl font-black text-amber-500 tabular-nums">
+                            {leadgenCredits.toLocaleString()}
                         </div>
+                        <p className="text-[10px] text-amber-500/60 font-bold uppercase tracking-[0.2em]">Current Balance</p>
                     </div>
-                    <Badge variant="secondary" className={cn("px-3 py-1 text-sm font-semibold", getProviderMeta(selectedProvider)?.color)}>
-                        {getProviderMeta(selectedProvider)?.name}
-                    </Badge>
-                </div>
-            )}
+                </CardHeader>
+                <CardContent className="relative">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4 border-t border-white/5">
+                        <div className="grid grid-cols-2 sm:flex gap-x-6 gap-y-2">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                1 Credit / Company
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                5 Credits / Deep Enrich
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                25 Credits / Agentic
+                            </div>
+                        </div>
+                        <Button
+                            onClick={() => setPurchaseModalOpen(true)}
+                            className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-black font-bold h-11 px-8 rounded-xl shadow-xl shadow-amber-500/10 group-hover:scale-105 transition-transform"
+                        >
+                            <Plus className="w-5 h-5 mr-2" />
+                            Purchase Top-Up
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Provider Sections */}
             <div className="space-y-4">
@@ -801,6 +831,11 @@ export const AiConfigManager = ({
                     </form>
                 </DialogContent>
             </Dialog>
+            {/* ─── LeadGen Purchase Modal ─── */}
+            <LeadGenPurchaseModal
+                isOpen={purchaseModalOpen}
+                onClose={() => setPurchaseModalOpen(false)}
+            />
         </div>
     );
 };

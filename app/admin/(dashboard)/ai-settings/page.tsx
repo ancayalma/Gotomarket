@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import Container from "@/app/(routes)/components/ui/Container";
 import { AiConfigManager } from "@/components/ai/AiConfigManager";
+import { getTeamLeadGenCredits } from "@/lib/scraper/credits";
 
 export default async function AdminAiSettingsPage() {
     const session = await getServerSession(authOptions);
@@ -57,6 +58,8 @@ export default async function AdminAiSettingsPage() {
 
     // Fetch available providers for the request form
     let providerOptions: { slug: string; name: string }[] = [];
+    const leadgenCredits = await getTeamLeadGenCredits(teamId);
+
     try {
         const registeredProviders = await prismadb.aiProviderRegistry.findMany({
             where: { isActive: true },
@@ -85,6 +88,7 @@ export default async function AdminAiSettingsPage() {
                 teamName={user?.assigned_team?.name || ""}
                 modelRequests={teamModelRequests as any}
                 providerOptions={providerOptions}
+                leadgenCredits={leadgenCredits}
             />
         </Container>
     );

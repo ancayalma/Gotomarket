@@ -8,6 +8,7 @@ import { Card, Title, Subtitle, Legend } from "@tremor/react";
 import { ModelDistributionChart } from "@/app/(routes)/partners/_components/ModelDistributionChart";
 import Container from "@/app/(routes)/components/ui/Container";
 import { AiUsageCharts } from "@/app/(routes)/partners/_components/AiUsageCharts";
+import { getTeamLeadGenCredits } from "@/lib/scraper/credits";
 
 // Type wrapper for prisma-chat
 const db: any = prismadbChat;
@@ -85,6 +86,24 @@ export default async function AiUsagePage() {
         }
     });
 
+    const leadgenCredits = await getTeamLeadGenCredits(teamId);
+
+    // Fetch LeadGen jobs for the team to calculate total candidates found
+    const { prismadbCrm } = await import("@/lib/prisma-crm");
+    const teamJobs = await (prismadbCrm as any).crm_Lead_Gen_Jobs.findMany({
+        where: { user: { in: teamMemberIds } },
+        select: { counters: true }
+    });
+
+    let totalCandidatesFound = 0;
+    teamJobs.forEach((job: any) => {
+        if (job.counters?.candidatesCreated) {
+            totalCandidatesFound += Number(job.counters.candidatesCreated);
+        } else if (job.counters?.companiesFound) {
+            totalCandidatesFound += Number(job.counters.companiesFound);
+        }
+    });
+
     // 5. Aggregate Data
     let totalTokens = 0;
     let promptTokens = 0;
@@ -136,9 +155,9 @@ export default async function AiUsagePage() {
             <div className="dark space-y-6">
                 <div className="grid gap-6">
                     {/* KPI Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="indigo">
-                            <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">Total Token Consumption</p>
+                            <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">Token Consumption</p>
                             <p className="text-3xl text-tremor-content-strong dark:text-dark-tremor-content-strong font-semibold">
                                 {totalTokens.toLocaleString()}
                             </p>
@@ -149,10 +168,16 @@ export default async function AiUsagePage() {
                                 {requestCount.toLocaleString()}
                             </p>
                         </Card>
-                        <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="amber">
-                            <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">Active Users</p>
+                        <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="orange">
+                            <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">Intelligence Credits</p>
                             <p className="text-3xl text-tremor-content-strong dark:text-dark-tremor-content-strong font-semibold">
-                                {teamMemberIds.length}
+                                {leadgenCredits.toLocaleString()}
+                            </p>
+                        </Card>
+                        <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="emerald">
+                            <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">Leads Discovered</p>
+                            <p className="text-3xl text-tremor-content-strong dark:text-dark-tremor-content-strong font-semibold">
+                                {totalCandidatesFound.toLocaleString()}
                             </p>
                         </Card>
                     </div>

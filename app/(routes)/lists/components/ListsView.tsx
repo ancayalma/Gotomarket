@@ -98,7 +98,12 @@ export default function ListsView() {
     const [icpModalPool, setIcpModalPool] = useState<LeadPool | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const { data, error, isLoading, mutate } = useSWR<PoolsResponse>("/api/crm/leads/pools", fetcher, {
-        refreshInterval: 30000,
+        refreshInterval: (data) => {
+            const hasActiveJob = data?.pools?.some(p =>
+                p.latestJob?.status === "RUNNING" || p.latestJob?.status === "QUEUED"
+            );
+            return hasActiveJob ? 5000 : 30000;
+        },
     });
     const [wizardOpen, setWizardOpen] = useState(false);
     const [wizardLeadIds, setWizardLeadIds] = useState<string[]>([]);
@@ -320,8 +325,13 @@ export default function ListsView() {
                                                 {pool.candidatesCount} Accounts
                                             </Badge>
                                             {pool.latestJob && (
-                                                <Badge variant="outline" className={`${getStatusColor(pool.latestJob.status)} border-none text-[10px] font-bold uppercase tracking-wider`}>
+                                                <Badge variant="outline" className={`${getStatusColor(pool.latestJob.status)} border-none text-[10px] font-bold uppercase tracking-wider ${pool.latestJob.status === 'RUNNING' ? 'animate-pulse' : ''}`}>
                                                     {pool.latestJob.status}
+                                                    {pool.latestJob.status === "RUNNING" && pool.latestJob.counters && (
+                                                        <span className="ml-1 opacity-80 normal-case font-medium">
+                                                            ({pool.latestJob.counters.companiesFound || 0} Found, {pool.latestJob.counters.contactsCreated || 0} Contacts)
+                                                        </span>
+                                                    )}
                                                 </Badge>
                                             )}
                                         </div>

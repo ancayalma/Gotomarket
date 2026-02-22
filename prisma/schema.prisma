@@ -1106,6 +1106,7 @@ model Plan {
   max_users   Int @default(1)
   max_storage Int @default(1000) // MB
   max_credits Int @default(0)
+  leadgen_credits_monthly Int @default(0)
 
   // Subscription Settings
   billing_cycle     BillingCycle @default(MONTHLY)
@@ -1335,6 +1336,10 @@ model TeamAiConfig {
   apiKey       String? // Stored if useSystemKey is false
 
   assigned_team Team @relation(fields: [team_id], references: [id])
+
+  // Lead Generation Credits (Monthly Use-it-or-lose-it)
+  leadgen_credits_balance    Int       @default(0)
+  leadgen_credits_last_reset DateTime? @db.Date
 }
 
 // =============================================================================
@@ -1639,12 +1644,16 @@ model crm_Global_Companies {
   description String?
   homepageUrl String?
   industry    String?
-  techStack   Json?
-  dedupeKey   String?   @unique
-  firstSeen   DateTime? @default(now()) @db.Date
-  lastSeen    DateTime? @db.Date
-  provenance  Json?
-  status      String?   @default("ACTIVE")
+  techStack      Json?
+  emails        String[]
+  phones        String[]
+  socialLinks   Json?
+  enrichmentData Json?
+  dedupeKey      String?   @unique
+  firstSeen      DateTime? @default(now()) @db.Date
+  lastSeen       DateTime? @db.Date
+  provenance     Json?
+  status         String?   @default("ACTIVE")
 
   // Persons back-relation for referential consistency
   persons crm_Global_Persons[] @relation("GlobalCompanyPersons")

@@ -8,6 +8,7 @@ export const SUBSCRIPTION_PLANS = {
             max_users: 1,
             max_storage: 500, // MB
             credits: 50, // General monthly credits
+            leadgen_credits: 100,
         }
     },
     INDIVIDUAL_BASIC: {
@@ -19,6 +20,7 @@ export const SUBSCRIPTION_PLANS = {
             max_users: 2,
             max_storage: 5000,
             credits: 1000,
+            leadgen_credits: 1000,
         }
     },
     INDIVIDUAL_PRO: {
@@ -30,6 +32,7 @@ export const SUBSCRIPTION_PLANS = {
             max_users: 4,
             max_storage: 50000,
             credits: 10000,
+            leadgen_credits: 5000,
         }
     }
 };

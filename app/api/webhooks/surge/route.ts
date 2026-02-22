@@ -41,6 +41,33 @@ export async function POST(req: Request) {
                 }
             });
 
+            // 1.1 Handle LeadGen Credits fulfillment
+            if (invoice.description?.includes("LeadGen Intelligence Credits")) {
+                const match = invoice.description.match(/Credits: (\d+)/);
+                if (match && invoice.team_id) {
+                    const credits = parseInt(match[1]);
+                    try {
+                        const { addLeadGenCredits } = await import("@/lib/scraper/credits");
+                        await addLeadGenCredits(invoice.team_id, credits);
+                        console.log(`[Surge Webhook] Successfully added ${credits} credits to team ${invoice.team_id}`);
+
+                        // Update formal billing invoice status if it exists
+                        await (prismadb as any).crm_BillingInvoice.updateMany({
+                            where: {
+                                tenant_id: invoice.team_id,
+                                invoice_number: `BIL-${invoice.invoice_number}`
+                            },
+                            data: {
+                                payment_status: "PAID",
+                                paid_at: new Date()
+                            }
+                        });
+                    } catch (e) {
+                        console.error("[Surge Webhook] LeadGen Credit fulfillment failed", e);
+                    }
+                }
+            }
+
             // 1.1 Sync with Mercury
             if (invoice.mercury_invoice_id && invoice.team_id) {
                 // Import dynamically or at top. Using dynamic import to avoid circular dep if any?

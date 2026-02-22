@@ -1,7 +1,6 @@
 /**
- * Google Custom Search API Integration
- * Provides reliable, legal company discovery
- * Free tier: 100 queries/day | Paid: $5 per 1000 queries
+ * Serper.dev API Integration
+ * Provides fast, reliable, and cost-effective company discovery via Google Search
  */
 
 import { prismadbCrm } from "@/lib/prisma-crm";
@@ -14,40 +13,43 @@ type SearchResult = {
 };
 
 /**
- * Perform Google Custom Search
- * Requires GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_CX in .env
+ * Perform Google Search via Serper.dev
+ * Requires SERPER_API_KEY in .env
  */
 export async function googleCustomSearch(query: string, numResults: number = 10): Promise<SearchResult[]> {
-  const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
-  const cx = process.env.GOOGLE_SEARCH_CX;
+  const apiKey = process.env.SERPER_API_KEY;
 
-  if (!apiKey || !cx) {
-    console.warn("Google Custom Search not configured. Set GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_CX in .env");
+  if (!apiKey) {
+    console.warn("Serper API Key not configured. Set SERPER_API_KEY in .env");
     return [];
   }
 
   try {
-    const url = new URL("https://www.googleapis.com/customsearch/v1");
-    url.searchParams.set("key", apiKey);
-    url.searchParams.set("cx", cx);
-    url.searchParams.set("q", query);
-    url.searchParams.set("num", Math.min(numResults, 10).toString());
+    const response = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: {
+        "X-API-KEY": apiKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        q: query,
+        num: Math.min(numResults, 100) // Serper allows up to 100
+      })
+    });
 
-    const response = await fetch(url.toString());
-    
     if (!response.ok) {
       const error = await response.text();
-      console.error(`Google Search API error: ${response.status} - ${error}`);
+      console.error(`Serper API error: ${response.status} - ${error}`);
       return [];
     }
 
     const data = await response.json();
-    
-    if (!data.items || data.items.length === 0) {
+
+    if (!data.organic || data.organic.length === 0) {
       return [];
     }
 
-    const results: SearchResult[] = data.items.map((item: any) => ({
+    const results: SearchResult[] = data.organic.map((item: any) => ({
       title: item.title || "",
       link: item.link || "",
       snippet: item.snippet || "",
@@ -56,7 +58,7 @@ export async function googleCustomSearch(query: string, numResults: number = 10)
 
     return results.filter(r => r.domain !== null);
   } catch (error) {
-    console.error(`Google Custom Search error for "${query}":`, error);
+    console.error(`Serper Search error for "${query}":`, error);
     return [];
   }
 }
@@ -68,19 +70,19 @@ function extractDomain(url: string): string | null {
   try {
     const u = new URL(url);
     let hostname = u.hostname.replace(/^www\./i, "");
-    
+
     // Filter out non-company domains
     const excludePatterns = [
-      'wikipedia.org', 'youtube.com', 'facebook.com', 
+      'wikipedia.org', 'youtube.com', 'facebook.com',
       'twitter.com', 'linkedin.com', 'instagram.com',
       'reddit.com', 'medium.com', 'github.com',
       'pinterest.com', 'tiktok.com', 'snapchat.com'
     ];
-    
+
     if (excludePatterns.some(p => hostname.includes(p))) {
       return null;
     }
-    
+
     return hostname;
   } catch {
     return null;
@@ -100,7 +102,7 @@ export async function runGoogleSearchForJob(
   sourceEvents: number;
 }> {
   const db: any = prismadbCrm;
-  
+
   const job = await db.crm_Lead_Gen_Jobs.findUnique({
     where: { id: jobId },
     select: { logs: true }
@@ -108,14 +110,14 @@ export async function runGoogleSearchForJob(
 
   const allDomains: string[] = [];
   let sourceEvents = 0;
-  
+
   const perQueryDelayMs = Number(process.env.SCRAPER_QUERY_DELAY_MS || 1500);
 
   for (const query of queries) {
     try {
       const results = await googleCustomSearch(query, 10);
       const domains = results.map(r => r.domain).filter((d): d is string => d !== null);
-      
+
       allDomains.push(...domains);
 
       // Log source event
@@ -123,12 +125,12 @@ export async function runGoogleSearchForJob(
         await db.crm_Lead_Source_Events.create({
           data: {
             job: jobId,
-            type: "google_search",
+            type: "serper_search",
             query,
             url: results[0]?.link || null,
             fetchedAt: new Date(),
             metadata: {
-              note: "Google Custom Search results",
+              note: "Serper Search results",
               domains: domains.slice(0, 20),
               totalResults: results.length,
               snippets: results.slice(0, 3).map(r => r.snippet)
@@ -141,7 +143,7 @@ export async function runGoogleSearchForJob(
       }
 
       await new Promise(resolve => setTimeout(resolve, perQueryDelayMs));
-      
+
       // Break if we have enough
       if (allDomains.length >= maxCompanies) {
         break;
@@ -152,10 +154,10 @@ export async function runGoogleSearchForJob(
         data: {
           logs: [
             ...(job?.logs || []),
-            { 
-              ts: new Date().toISOString(), 
-              level: "WARN", 
-              msg: `Google Search error for "${query}": ${(error as Error).message}` 
+            {
+              ts: new Date().toISOString(),
+              level: "WARN",
+              msg: `Serper Search error for "${query}": ${(error as Error).message}`
             },
           ],
         },

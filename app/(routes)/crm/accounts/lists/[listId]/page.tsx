@@ -7,7 +7,7 @@ import fetcher from "@/lib/fetcher";
 import Heading from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Loader2, Trash2, Search, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Trash2, Search, ArrowUpDown, CheckCircle2 } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -180,6 +180,14 @@ export default function AccountListDetailsPage() {
                     <div className="flex-1">
                         <Heading title={pool.name} description={pool.description || "Account Details"} />
                     </div>
+                    <Button
+                        variant="secondary"
+                        onClick={() => router.push(`/crm/accounts/lists/${listId}/approve`)}
+                        className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20"
+                    >
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Approval Center
+                    </Button>
                     <Button onClick={() => router.push("/crm/accounts?tab=wizard")}>
                         <Plus className="w-4 h-4 mr-2" />
                         Add Contacts

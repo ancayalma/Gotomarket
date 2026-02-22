@@ -12,7 +12,7 @@ import { z } from "zod";
 import { generateObject, generateText, tool, ModelMessage } from "ai";
 
 import { prismadbCrm } from "@/lib/prisma-crm";
-import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
+// import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
 import {
   normalizeDomain,
   normalizeEmail,
@@ -52,66 +52,27 @@ type ICPConfig = {
 };
 
 /**
- * DuckDuckGo search using browser automation (free, no API needed)
+ * Search companies using Serper API
  */
+import { googleCustomSearch } from "./google-search";
+
 async function ddgWebSearch(query: string, count: number = 20): Promise<Array<{
   name: string;
   url: string;
   snippet: string;
   domain: string;
 }>> {
-  const browser = await launchBrowser();
   try {
-    const page = await newPageWithDefaults(browser);
-    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-      const homeResp = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 });
-      let homeResponseHeaders: any = undefined;
-      try {
-        // Puppeteer Response.headers() returns a plain object
-        homeResponseHeaders = typeof (homeResp as any)?.headers === 'function' ? (homeResp as any).headers() : (homeResp as any)?.headers;
-      } catch {}
-    // Wait for results container; fallback to small delay
-    try { await (page as any).waitForSelector('#links', { timeout: 10000 }); } catch {}
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    const results = await page.evaluate((max: number) => {
-      const out: Array<{ name: string; url: string; snippet: string }> = [];
-      const anchors = Array.from(document.querySelectorAll('#links a[href]')) as HTMLAnchorElement[];
-      for (const a of anchors) {
-        if (out.length >= max) break;
-        let href = a.getAttribute('href') || '';
-        let finalUrl = '';
-        try {
-          if (href.startsWith('http://') || href.startsWith('https://')) {
-            finalUrl = href;
-          } else {
-            // Attempt to resolve duckduckgo redirect links
-            const abs = (a as HTMLAnchorElement).href || '';
-            const u = new URL(abs);
-            if (u.hostname.includes('duckduckgo.com')) {
-              const uddg = u.searchParams.get('uddg');
-              if (uddg) finalUrl = decodeURIComponent(uddg);
-            }
-          }
-        } catch {}
-        if (!finalUrl) continue;
-        const name = (a.textContent || '').trim();
-        const container = a.closest('.result') || a.parentElement;
-        const snippet = (container?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200);
-        out.push({ name, url: finalUrl, snippet });
-      }
-      return out;
-    }, Math.max(1, Math.min(count || 20, 50)));
-
+    const results = await googleCustomSearch(query, count);
     return results.map(r => ({
-      ...r,
-      domain: extractDomain(r.url)
+      name: r.title,
+      url: r.link,
+      snippet: r.snippet || "",
+      domain: r.domain || "" // Filter out below
     })).filter(r => r.domain);
   } catch (error) {
-    console.error("DDG search error:", error);
+    console.error("Serper API search error:", error);
     return [];
-  } finally {
-    await closeBrowser(browser);
   }
 }
 
@@ -131,9 +92,9 @@ function fixConcatenatedWords(input: string | null | undefined): string {
   // Insert space between lower->Upper boundaries (camel-case like)
   s = s.replace(/([a-z])([A-Z])/g, '$1 $2');
   // Insert space before some common lowercase suffixes stuck to the previous token
-  const suffixes = ['me','us','now','team','about','info','support','contact'];
+  const suffixes = ['me', 'us', 'now', 'team', 'about', 'info', 'support', 'contact'];
   for (const suf of suffixes) {
-    const re = new RegExp(`(^|[^A-Za-z])([A-Za-z]{3,})${suf}$`,'i');
+    const re = new RegExp(`(^|[^A-Za-z])([A-Za-z]{3,})${suf}$`, 'i');
     s = s.replace(re, (_m, p1, p2) => `${p1}${p2} ${suf}`);
   }
   // Collapse extra whitespace
@@ -534,106 +495,166 @@ async function extractPageData(page: any): Promise<{
 }
 
 /**
- * Visit website with deep crawling - visits multiple pages for maximum contact extraction
+ * Visit website and autonomously crawl subpages using Firecrawl Deep Research
  */
+import FirecrawlApp from "@mendable/firecrawl-js";
+
 async function visitWebsiteForAgent(url: string, userId?: string, icp?: ICPConfig): Promise<any> {
-  const browser = await launchBrowser();
-  try {
-    const page = await newPageWithDefaults(browser);
-    const domain = extractDomain(url);
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (!apiKey) {
+    console.warn("FIRECRAWL_API_KEY is not set.");
+    return { error: "Firecrawl API key not set." };
+  }
 
-    // Aggregate data from all pages
-    const aggregatedData: any = {
-      title: "",
-      description: "",
-      contacts: [],
-      socialLinks: {},
-      techStack: [],
-      emails: [],
-      phones: [],
-      pagesVisited: [],
-      errors: []
-    };
+  const db: any = prismadbCrm;
+  const domain = normalizeDomain(url);
+  const cacheThreshold = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000); // 14 days
 
-    // Step 1: Visit homepage
+  // 1. Try Cache First
+  if (domain) {
     try {
-      const homeResp = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 });
-      let homeResponseHeaders: any = undefined;
-      try {
-        homeResponseHeaders = typeof (homeResp as any)?.headers === 'function' ? (homeResp as any).headers() : (homeResp as any)?.headers;
-      } catch {}
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      await dismissOverlays(page);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const cached = await db.crm_Global_Companies.findUnique({
+        where: { domain },
+        select: {
+          companyName: true,
+          description: true,
+          industry: true,
+          techStack: true,
+          emails: true,
+          phones: true,
+          socialLinks: true,
+          enrichmentData: true,
+          lastSeen: true
+        }
+      });
 
-      const homeData = await extractPageData(page);
-      aggregatedData.title = homeData.title;
-      aggregatedData.description = homeData.description;
-      aggregatedData.emails.push(...homeData.emails);
-      // Deobfuscate additional email candidates from text and hrefs
-      aggregatedData.emails.push(...decodeEmailCandidates(homeData.rawTextExcerpt, homeData.hrefList));
-      aggregatedData.phones.push(...homeData.phones);
-      // Detect tech via signatures outside browser
-      const detectedHomeTech = detectTechFromSnapshot({ ...(homeData._techSnapshot || {}), headers: homeResponseHeaders });
-      aggregatedData.techStack.push(...homeData.techStack, ...detectedHomeTech);
-      aggregatedData.techStack = canonTech(aggregatedData.techStack);
-      Object.assign(aggregatedData.socialLinks, homeData.socialLinks);
-      aggregatedData.pagesVisited.push(url);
-    } catch (e) {
-      aggregatedData.errors.push(`Homepage: ${(e as Error).message}`);
+      if (cached && cached.lastSeen && cached.lastSeen > cacheThreshold) {
+        console.log(`[CACHE_HIT] Using cached data for domain: ${domain}`);
+        return {
+          title: cached.companyName || "",
+          description: cached.description || "",
+          emails: cached.emails || [],
+          phones: cached.phones || [],
+          socialLinks: cached.socialLinks || {},
+          techStack: cached.techStack || [],
+          pagesVisited: [url],
+          errors: [],
+          fromCache: true
+        };
+      }
+    } catch (cacheErr) {
+      console.error("[CACHE_ERROR] Failed to read from global cache:", cacheErr);
+    }
+  }
+
+  const firecrawl = new FirecrawlApp({ apiKey });
+
+  try {
+    // We use the crawl endpoint to autonomously navigate up to 5 sub-pages
+    // extracting structured data on each using our exact schema requirements.
+    const response = await firecrawl.crawl(url, {
+      limit: 5,
+      pollInterval: 2, // poll every 2 seconds
+      scrapeOptions: {
+        formats: ["extract"],
+        extract: {
+          schema: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              description: { type: "string" },
+              emails: { type: "array", items: { type: "string" } },
+              phones: { type: "array", items: { type: "string" } },
+              socialLinks: {
+                type: "object",
+                properties: {
+                  linkedin: { type: "string" },
+                  twitter: { type: "string" },
+                  facebook: { type: "string" },
+                  instagram: { type: "string" },
+                  github: { type: "string" }
+                }
+              },
+              techStack: { type: "array", items: { type: "string" } }
+            }
+          }
+        }
+      } as any
+    });
+
+    if (response.status !== "completed") {
+      return { error: `Firecrawl failed or cancelled. Status: ${response.status}` };
     }
 
-    // Step 2: Discover sitemap
-    const sitemapUrls = await discoverSitemap(domain, page);
+    const pagesVisited: string[] = [];
+    let title = "";
+    let description = "";
+    const emails = new Set<string>();
+    const phones = new Set<string>();
+    const socialLinks: any = {};
+    const techStack = new Set<string>();
 
-    // Step 3: Get high-value page URLs
-    const highValueUrls = getHighValuePageUrls(domain, sitemapUrls);
+    for (const page of response.data || []) {
+      pagesVisited.push(page.metadata?.sourceURL || "");
+      const data = ((page as any).extract || page.json) as any;
+      if (!data) continue;
 
-    // AI sideloop: rank links using heuristics + optional model
-    let candidateLinks = Array.from(new Set([
-      ...highValueUrls,
-    ]));
-    candidateLinks = candidateLinks.filter(u => !aggregatedData.pagesVisited.includes(u));
-    const ranked = await rankLinks(userId, domain, candidateLinks, { icp, visited: aggregatedData.pagesVisited });
-    const pagesToVisit = ranked.slice(0, 5);
+      if (!title) title = data.title || "";
+      if (!description) description = data.description || "";
 
-    for (const pageUrl of pagesToVisit) {
-      try {
-        const pageResp = await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 12000 });
-        let pageResponseHeaders: any = undefined;
-        try {
-          pageResponseHeaders = typeof (pageResp as any)?.headers === 'function' ? (pageResp as any).headers() : (pageResp as any)?.headers;
-        } catch {}
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        await dismissOverlays(page);
-
-        const pageData = await extractPageData(page);
-        aggregatedData.emails.push(...pageData.emails);
-        // Deobfuscate additional email candidates from text and hrefs
-        aggregatedData.emails.push(...decodeEmailCandidates(pageData.rawTextExcerpt, pageData.hrefList));
-        aggregatedData.phones.push(...pageData.phones);
-        // Detect tech via signatures outside browser
-        const detectedPageTech = detectTechFromSnapshot({ ...(pageData._techSnapshot || {}), headers: pageResponseHeaders });
-        aggregatedData.techStack.push(...pageData.techStack, ...detectedPageTech);
-        aggregatedData.techStack = canonTech(aggregatedData.techStack);
-        Object.assign(aggregatedData.socialLinks, pageData.socialLinks);
-        aggregatedData.pagesVisited.push(pageUrl);
-      } catch (e) {
-        // Page failed to load, continue to next
-        aggregatedData.errors.push(`${pageUrl}: ${(e as Error).message}`);
+      if (Array.isArray(data.emails)) data.emails.forEach((x: string) => emails.add(x));
+      if (Array.isArray(data.phones)) data.phones.forEach((x: string) => phones.add(x));
+      if (Array.isArray(data.techStack)) data.techStack.forEach((x: string) => techStack.add(x));
+      if (data.socialLinks) {
+        Object.assign(socialLinks, Object.fromEntries(Object.entries(data.socialLinks).filter(([_, v]) => v)));
       }
     }
 
-    // Deduplicate results
-    aggregatedData.emails = Array.from(new Set(aggregatedData.emails as string[]));
-    aggregatedData.phones = Array.from(new Set(aggregatedData.phones as string[]));
-    aggregatedData.techStack = Array.from(new Set(aggregatedData.techStack as string[]));
+    const finalResult = {
+      title,
+      description,
+      emails: Array.from(emails),
+      phones: Array.from(phones),
+      socialLinks,
+      techStack: Array.from(techStack),
+      pagesVisited: pagesVisited.filter(Boolean),
+      errors: []
+    };
 
-    return aggregatedData;
+    // 3. Cache the Result Globally
+    if (domain) {
+      try {
+        await db.crm_Global_Companies.upsert({
+          where: { domain },
+          create: {
+            domain,
+            companyName: title,
+            description,
+            techStack: finalResult.techStack,
+            emails: finalResult.emails,
+            phones: finalResult.phones,
+            socialLinks: finalResult.socialLinks,
+            lastSeen: new Date(),
+          },
+          update: {
+            companyName: title,
+            description,
+            techStack: finalResult.techStack,
+            emails: finalResult.emails,
+            phones: finalResult.phones,
+            socialLinks: finalResult.socialLinks,
+            lastSeen: new Date(),
+          }
+        });
+      } catch (cacheErr) {
+        console.error("[CACHE_SAVE_ERROR] Failed to save to global cache:", cacheErr);
+      }
+    }
+
+    return finalResult;
   } catch (error) {
+    console.error("Firecrawl error:", error);
     return { error: (error as Error).message };
-  } finally {
-    await closeBrowser(browser);
   }
 }
 
@@ -719,16 +740,29 @@ async function executeToolCall(toolName: string, args: any, context: any): Promi
       // Log the search outcome to the job for traceability
       try {
         const top = searchResults.slice(0, 5).map(r => r.domain || (r.url ? extractDomain(r.url) : '')).filter(Boolean).join(', ');
+
+        // Fetch current job to get existing queryTemplates and logs
+        const job = await (prismadbCrm as any).crm_Lead_Gen_Jobs.findUnique({
+          where: { id: context.jobId },
+          select: { queryTemplates: true, logs: true }
+        });
+
+        const existingTemplates = Array.isArray(job?.queryTemplates) ? job.queryTemplates : [];
+        const newTemplates = Array.from(new Set([...existingTemplates, args.query]));
+
         await (prismadbCrm as any).crm_Lead_Gen_Jobs.update({
           where: { id: context.jobId },
           data: {
+            queryTemplates: newTemplates,
             logs: [
-              ...(context.logs || []),
-              { ts: new Date().toISOString(), msg: `search_companies(\"${args.query}\") -> ${searchResults.length} result(s). Top: ${top || 'none'}` }
+              ...(job?.logs || []),
+              { ts: new Date().toISOString(), msg: `🔍 search_companies("${args.query}") -> ${searchResults.length} results. Top: ${top || 'none'}` }
             ]
           }
         });
-      } catch {}
+      } catch (dbErr) {
+        console.error("Failed to update job for search query", dbErr);
+      }
       return {
         success: true,
         results: searchResults,
@@ -754,6 +788,25 @@ async function executeToolCall(toolName: string, args: any, context: any): Promi
     case "save_company":
       const db: any = prismadbCrm;
       const domain = normalizeDomain(args.domain);
+
+      // Blacklist Check: Ensure we don't save already existing customers
+      try {
+        const { prismadb: mainDb } = await import("@/lib/prisma");
+        const existingAccount = await (mainDb as any).crm_Accounts.findFirst({
+          where: {
+            OR: [
+              { website: { contains: domain } },
+              { website: { endsWith: domain } }
+            ]
+          }
+        });
+        if (existingAccount) {
+          console.log(`[SAVE_COMPANY] Blacklisted: ${domain} is already a customer in crm_Accounts.`);
+          return { success: false, error: "Company is already an existing customer (Blacklisted)." };
+        }
+      } catch (e) {
+        console.warn("[SAVE_COMPANY] Blacklist check error:", e);
+      }
 
       console.log("[SAVE_COMPANY] Validating company:", {
         domain,
@@ -1090,7 +1143,7 @@ async function executeToolCall(toolName: string, args: any, context: any): Promi
             where: { id: candidate.id },
             data: { score: Math.max(candidate.score || 0, adjustedScore) }
           });
-        } catch {}
+        } catch { }
         return {
           success: true,
           candidateId: candidate.id,
@@ -1137,7 +1190,12 @@ export async function runAgenticLeadGeneration(
   userId: string,
   icp: ICPConfig,
   poolId: string,
-  maxCompanies: number = 100
+  maxCompanies: number = 100,
+  initialState?: {
+    companiesSaved?: number;
+    contactsSaved?: number;
+    queryTemplates?: string[];
+  }
 ): Promise<{
   companiesSaved: number;
   contactsSaved: number;
@@ -1149,9 +1207,10 @@ export async function runAgenticLeadGeneration(
   }
 
   const db: any = prismadbCrm;
+  const isResume = !!initialState && (initialState.companiesSaved || 0) > 0;
 
   // Initial prompt for the agent
-  const systemPrompt = `You are an ELITE B2B lead generation agent with world-class expertise in search, web scraping, and contact discovery. Your mission: autonomously find and qualify ${maxCompanies} PERFECT-FIT companies with ACTUAL decision-maker contact information.
+  let systemPrompt = `You are an ELITE B2B lead generation agent with world-class expertise in search, web scraping, and contact discovery. Your mission: autonomously find and qualify ${maxCompanies} PERFECT-FIT companies with ACTUAL decision-maker contact information.
 
 ICP CRITERIA (Ideal Customer Profile):
 - Industries: ${icp.industries?.join(", ") || "Any"}
@@ -1161,16 +1220,30 @@ ICP CRITERIA (Ideal Customer Profile):
 ${icp.notes ? `- Additional Notes: ${icp.notes}` : ""}
 
 TARGET: ${maxCompanies} companies with HIGH-QUALITY contact information
+`;
 
+  if (isResume) {
+    systemPrompt += `
+═══════════════════════════════════════════════════════
+🔄 RESUMPTION CONTEXT
+═══════════════════════════════════════════════════════
+- **Previous Progress**: You already saved ${initialState?.companiesSaved || 0} companies and ${initialState?.contactsSaved || 0} contacts.
+- **Goal Remaining**: Find ${maxCompanies - (initialState?.companiesSaved || 0)} more companies.
+- **Avoid Duplication**: You have already explored these search queries: ${initialState?.queryTemplates?.join(", ") || "None"}.
+- **Action**: Start by exploring NEW search queries or deeper research on existing results.
+`;
+  }
+
+  systemPrompt += `
 ═══════════════════════════════════════════════════════
 🎯 CRITICAL SUCCESS CRITERIA (READ CAREFULLY)
 ═══════════════════════════════════════════════════════
 
 1. ⚠️ **EMAIL REQUIREMENT**: NEVER save a company without AT LEAST ONE email address
 2. **MULTIPLE CONTACTS**: Extract ALL contacts from EVERY qualified company (aim for 3-5+ per company)
-3. **VISIT MULTIPLE PAGES**: Don't stop at homepage - check /about, /team, /contact, /leadership
-4. **PARALLEL EXECUTION**: Visit 5-10 websites simultaneously for speed
-5. **QUALITY > SPEED**: Better to save 20 perfect companies than 100 with missing data
+3. **AUTONOMOUS DEEP RESEARCH**: The visit_website tool automatically crawls up to 5 subpages (/about, /team, /contact) for you! You do NOT need to manually visit subpages of the same domain.
+4. **PARALLEL EXECUTION**: Visit 5-10 different company websites simultaneously for speed.
+5. **QUALITY > SPEED**: Better to save 20 perfect companies with contacts than 100 with missing data.
 
 ═══════════════════════════════════════════════════════
 🔍 MASTER CONTACT EXTRACTION STRATEGIES
@@ -1254,14 +1327,13 @@ TARGET: ${maxCompanies} companies with HIGH-QUALITY contact information
 **ITERATION 1-3: Cast Wide Net**
 1. Execute 3-5 searches with diverse queries
 2. Visit top 10-15 company websites IN PARALLEL
-3. For each company, visit homepage + contact + team pages
+3. Use visit_website on the company domain (it will automatically Deep Crawl for you)
 4. Save companies that have emails (aim for 5-10 companies per iteration)
 
 **ITERATION 4-10: Deep Qualification**
 1. If you have < 50% of target, do more searches
-2. For promising companies, visit additional pages (/about, /careers, /leadership)
-3. Extract ALL possible contacts (aim for 3-5+ per company)
-4. Save only ICP-aligned companies with decision-maker emails
+2. Extract ALL possible contacts from the visit_website results
+3. Save only ICP-aligned companies with decision-maker emails
 
 **ITERATION 10+: Quality Refinement**
 1. Review what's working - which search queries yielded best results?
@@ -1293,7 +1365,7 @@ Remember: QUALITY > QUANTITY. Better to save 50 perfect companies with 250 conta
 Be strategic, thorough, and relentless in finding contact information. Good luck! 🚀`;
 
   // Start with a User message; pass systemPrompt via the 'system' option in generateText
-const messages: ModelMessage[] = [
+  const messages: ModelMessage[] = [
     {
       role: "user",
       content: `Begin lead generation. Find ${maxCompanies} companies matching the ICP.
@@ -1315,8 +1387,8 @@ Start now by searching for companies.`
     }
   ];
 
-  let companiesSaved = 0;
-  let contactsSaved = 0;
+  let companiesSaved = initialState?.companiesSaved || 0;
+  let contactsSaved = initialState?.contactsSaved || 0;
   let iterations = 0;
   const maxIterations = 50; // Prevent infinite loops
   const context = { jobId, poolId, logs: [], icp, userId };
@@ -1354,7 +1426,7 @@ Start now by searching for companies.`
     const updateData: any = {
       logs: logsToWrite,
       counters: {
-        companiesSaved,
+        companiesFound: companiesSaved,
         contactsSaved,
         iterations,
         progress: Math.min(100, Math.round((companiesSaved / maxCompanies) * 100))
@@ -1542,13 +1614,14 @@ Start now by searching for companies.`
             let payload: any = tr.output;
             if (payload && typeof payload === 'object' && 'type' in payload) {
               if (payload.type === 'json') payload = payload.value;
-              else if (payload.type === 'text') { try { payload = JSON.parse(payload.value); } catch { /* ignore */ }
+              else if (payload.type === 'text') {
+                try { payload = JSON.parse(payload.value); } catch { /* ignore */ }
               }
             }
             const cnt = typeof payload?.count === 'number' ? payload.count : (Array.isArray(payload?.results) ? payload.results.length : 0);
             if (cnt === 0) { __serpZero = true; break; }
           }
-        } catch {}
+        } catch { }
         if (__serpZero && savedResults.length === 0) {
           addLog('SERP returned 0 results and no companies were saved in this batch. Refining strategy and continuing.');
           messages.push({
@@ -1611,7 +1684,7 @@ Start now by searching for companies.`
           role: "assistant",
           content: text,
         });
-        
+
         console.log("Agent reasoning:", text);
         addLog(`💭 Agent thinking: ${text}`);
 
@@ -1688,7 +1761,7 @@ Don't keep searching - SAVE the companies you've already found!`;
         }
       }
     });
-  } catch {}
+  } catch { }
 
   return {
     companiesSaved,

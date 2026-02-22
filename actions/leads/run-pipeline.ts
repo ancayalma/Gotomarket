@@ -19,24 +19,75 @@ export async function runLeadGenPipeline({
   userId: string;
 }): Promise<{ createdCandidates: number; createdContacts: number }> {
   const db: any = prismadbCrm;
+  const mainDb = (await import("@/lib/prisma")).prismadb;
+  const { getTeamLeadGenCredits, consumeLeadGenCredits } = await import("@/lib/scraper/credits");
 
   // Fetch job
   const job = await db.crm_Lead_Gen_Jobs.findUnique({ where: { id: jobId } });
   if (!job) throw new Error("Job not found");
 
+  // 1. Fetch team and check initial credits
+  const user = await mainDb.users.findUnique({
+    where: { id: userId },
+    select: {
+      team_id: true,
+      assigned_team: {
+        include: {
+          assigned_plan: true
+        }
+      }
+    }
+  });
+  if (!user?.team_id) throw new Error("User has no team association for billing.");
+  const teamId = user.team_id;
+
+  const planSlug = user.assigned_team?.assigned_plan?.slug || user.assigned_team?.subscription_plan || "FREE";
+  const isFreePlan = planSlug.toUpperCase() === "FREE" || planSlug.toUpperCase() === "FREE_TRIAL";
+
+  // Enforce Puppeteer scraping for FREE plans (disable paid APIs)
+  if (isFreePlan) {
+    if (!job.providers) job.providers = {};
+    job.providers.agenticAI = false;
+    job.providers.aiQueries = false;
+    job.providers.aiAnalysis = false;
+    job.providers.serp = true; // Rely on Puppeteer DDG SERP 
+    job.providers.crawler = true; // Rely on Puppeteer enrichment
+  }
+
+  const currentCredits = await getTeamLeadGenCredits(teamId);
+  if (currentCredits <= 0) {
+    await db.crm_Lead_Gen_Jobs.update({
+      where: { id: jobId },
+      data: {
+        status: "FAILED",
+        logs: [
+          ...(job.logs || []),
+          { ts: new Date().toISOString(), level: "ERROR", msg: "Out of LeadGen credits. Please top up in AI Settings." }
+        ]
+      },
+    });
+    throw new Error("No LeadGen credits remaining.");
+  }
+
   // Mark RUNNING
+  const isResume = !!job.startedAt;
   await db.crm_Lead_Gen_Jobs.update({
     where: { id: jobId },
-    data: { status: "RUNNING", startedAt: new Date() },
+    data: {
+      status: "RUNNING",
+      startedAt: job.startedAt || new Date()
+    },
   });
 
   let createdCandidates = 0;
   let createdContacts = 0;
+  let creditsConsumed = 0;
   // Aggregation counters from SERP step
   let uniqueDomains: string[] = [];
   let serpEvents = 0;
   let enrichedCount = 0;
   let enrichmentFailed = 0;
+  let peopleContactsAdded = 0;
 
   // Use agentic AI mode by default (most powerful)
   // Only fall back to old SERP scraper if explicitly disabled
@@ -54,7 +105,12 @@ export async function runLeadGenPipeline({
       userId,
       pool?.icpConfig as any || {},
       job.pool,
-      job.counters?.companiesFound || 100
+      (pool?.icpConfig as any)?.limits?.maxCompanies || 100,
+      {
+        companiesSaved: job.counters?.companiesSaved || 0,
+        contactsSaved: job.counters?.contactsSaved || 0,
+        queryTemplates: Array.isArray(job.queryTemplates) ? job.queryTemplates : []
+      }
     );
 
     // SERP fallback: only run if agentic returned zero companies and SERP is enabled
@@ -123,6 +179,12 @@ export async function runLeadGenPipeline({
 
     createdCandidates = result.companiesSaved + serpAddedCandidates;
 
+    // 3. Consume Credits for Agentic session + Discovery
+    const sessionCost = isResume ? 0 : 25;
+    const discoveryCost = createdCandidates * 1;
+    await consumeLeadGenCredits(teamId, sessionCost + discoveryCost);
+    creditsConsumed = sessionCost + discoveryCost;
+
     // Update counters
     await db.crm_Lead_Gen_Jobs.update({
       where: { id: jobId },
@@ -156,6 +218,11 @@ export async function runLeadGenPipeline({
       createdCandidates += res.createdCandidates;
       serpEvents += res.sourceEvents;
       uniqueDomains = res.uniqueDomains;
+
+      if (res.createdCandidates > 0) {
+        await consumeLeadGenCredits(teamId, res.createdCandidates);
+        creditsConsumed += res.createdCandidates;
+      }
     } catch (error) {
       await db.crm_Lead_Gen_Jobs.update({
         where: { id: jobId },
@@ -176,6 +243,11 @@ export async function runLeadGenPipeline({
       const enrichmentResult = await enrichCompaniesForJob(jobId, 50, userId);
       enrichedCount = enrichmentResult.enriched;
       enrichmentFailed = enrichmentResult.failed;
+
+      if (enrichedCount > 0) {
+        await consumeLeadGenCredits(teamId, enrichedCount * 5);
+        creditsConsumed += enrichedCount * 5;
+      }
 
       await db.crm_Lead_Gen_Jobs.update({
         where: { id: jobId },

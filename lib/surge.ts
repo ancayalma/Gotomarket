@@ -23,7 +23,7 @@ interface SurgeOrderResponse {
  * 2. Generate Order
  * 3. Return Payment URL
  */
-export async function createSurgeCheckoutSession(tenantId: string, invoice: any): Promise<{ id: string, url: string } | null> {
+export async function createSurgeCheckoutSession(tenantId: string, invoice: any, returnUrl?: string): Promise<{ id: string, url: string } | null> {
     try {
         // 1. Fetch Tenant Secrets
         // Note: Using findFirst to be safe if multiple integrations exist, prioritized by existence of key
@@ -124,15 +124,15 @@ export async function createSurgeCheckoutSession(tenantId: string, invoice: any)
             });
         });
 
-        const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invoice/detail/${invoice.id}?payment=success`;
-        console.log(`[BasaltSurge] Using Return URL: ${returnUrl}`);
+        const finalReturnUrl = returnUrl || `${process.env.NEXT_PUBLIC_APP_URL}/invoice/detail/${invoice.id}?payment=success`;
+        console.log(`[BasaltSurge] Using Return URL: ${finalReturnUrl}`);
 
         // Construct Payment URL based on Doc Review
         // 1. Use /portal/ for the enhanced UI
         // 2. recipient MUST be a 0x address for successful settlement
         // 3. layout=invoice optimizes for the user's specific use case
         const params = new URLSearchParams({
-            returnUrl: returnUrl,
+            returnUrl: finalReturnUrl,
             layout: 'widget',
             origin: process.env.NEXT_PUBLIC_APP_URL || '',
             preferredChain: integration?.preferred_chain || process.env.SURGE_CHAIN || 'BASE'
