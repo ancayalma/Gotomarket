@@ -13,6 +13,7 @@ import { getTasksPastDue } from "@/actions/projects/get-tasks-past-due";
 import { getActiveUsers } from "@/actions/get-users";
 import { getBoards } from "@/actions/projects/get-boards";
 import { getSections } from "@/actions/projects/get-sections";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export const maxDuration = 300;
 
@@ -52,6 +53,13 @@ const ProjectsPage = async () => {
       title="Projects Overview"
       description={"Welcome to your Projects cockpit. Manage boards, tasks, and deadlines in one place."}
     >
+      <LearnLink
+        tab="projects"
+        overviewTitle="Projects Cockpit"
+        overviewWhat="The strategic command center for all long-running service delivery and internal initiatives. It aggregates individual boards into a unified health view."
+        overviewWhy="Running multiple client projects requires high-level visibility into task velocity and past-due items. This cockpit ensures that no project falls behind schedule due to lack of oversight."
+        overviewHow="Monitor the 'Tasks Past Due' widget for immediate risks. Use the Board navigation to jump into specific Kanban views, or create new Sections to categorize your growing project portfolio."
+      />
       <Suspense fallback={<SuspenseLoading />}>
         <ProjectDashboardCockpit
           dashboardData={dashboardData as any}

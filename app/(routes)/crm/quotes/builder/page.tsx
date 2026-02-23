@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Container from "../../../components/ui/Container";
 import { getProducts } from "@/actions/crm/products";
 import { prismadb } from "@/lib/prisma";
+import { LearnLink } from "@/components/ui/LearnLink";
 import QuoteBuilderClient from "./components/QuoteBuilderClient";
 
 export const metadata = {
@@ -33,6 +34,13 @@ export default async function QuoteBuilderPage() {
             title="Create Sales Quote"
             description="Configure products, quantities, and discounts to generate a new proposal."
         >
+            <LearnLink
+                tab="quotes"
+                overviewTitle="Precision Quote Builder"
+                overviewWhat="The core engine for generating production-grade sales proposals, enabling you to configure line items, apply targeted discounts, and finalize internal terms."
+                overviewWhy="Detailed quoting ensures financial accuracy and legal compliance before a signature is requested. This stage converts opportunity interest into a concrete, actionable contract."
+                overviewHow="Search and select an account to unlock associated contacts/leads. Configure your products below, add internal summary notes, and hit 'Deploy Proposal' to finalize the draft."
+            />
             <QuoteBuilderClient
                 products={JSON.parse(JSON.stringify(products))}
                 initialAccounts={JSON.parse(JSON.stringify(accounts))}

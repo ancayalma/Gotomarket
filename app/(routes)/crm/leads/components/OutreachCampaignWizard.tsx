@@ -27,8 +27,10 @@ import {
     Loader2,
     RefreshCw,
     Save,
-    Cloud
+    Cloud,
+    Linkedin
 } from "lucide-react";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 /**
  * OutreachCampaignWizard - Comprehensive Prompt Builder & Sequence Manager
@@ -805,6 +807,13 @@ export default function OutreachCampaignWizard({
                     {/* Step 1: Sequence Basics */}
                     {currentStep === 1 && (
                         <div className="space-y-4">
+                            <LearnLink
+                                tab="lead-detail"
+                                overviewTitle="Sequence Foundations"
+                                overviewWhat="The initialization step for a new outbound campaign. This involves naming your project, selecting communication channels, and auditing your target lead list."
+                                overviewWhy="Careful selection of leads and channels at the start prevents you from burning through high-value prospects with poorly matched messaging strategies."
+                                overviewHow="Enter a descriptive name for your internal records. Select whether you want to use Email, SMS, or both, and verify the lead count in the preview window below."
+                            />
                             <div className="space-y-2">
                                 <Label htmlFor="campaignName">Campaign Name *</Label>
                                 <Input
@@ -905,6 +914,13 @@ export default function OutreachCampaignWizard({
                     {/* Step 2: Project Context */}
                     {currentStep === 2 && (
                         <div className="space-y-6">
+                            <LearnLink
+                                tab="lead-detail"
+                                overviewTitle="Strategic Context & Briefing"
+                                overviewWhat="A deep-dive data entry section where you provide the AI with everything it needs to know about your background, product, and meeting goals."
+                                overviewWhy="AI personalization is only as good as the context it receives. Providing a 'Briefing' allows the model to connect your product's specific value to the recipient's daily pain points."
+                                overviewHow="Fill out your professional credentials and use the 'Product Briefing' area to list your core value propositions. Use the 'Enhance' buttons to have AI clean up your rough notes."
+                            />
                             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                 <div className="flex gap-2">
                                     <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -1026,10 +1042,16 @@ Example from vcrun.py:
                             </div>
                         </div>
                     )}
-
                     {/* Step 3: AI Prompt Template */}
                     {currentStep === 3 && (
                         <div className="space-y-6">
+                            <LearnLink
+                                tab="lead-detail"
+                                overviewTitle="Neural Prompt Template"
+                                overviewWhat="The master instruction set that governs how the AI will reason and write for every single lead in this sequence."
+                                overviewWhy="A well-tuned template ensures that your automated emails don't 'look' automated. It enforces constraints on length, tone, and the inclusion of research data."
+                                overviewHow="Review the default logic, or click 'Generate Unique Prompt' to have AI build a bespoke structure for this specific campaign. Ensure variables like {LEAD_NAME} are preserved."
+                            />
                             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                                 <div className="flex gap-2">
                                     <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -1172,6 +1194,13 @@ Example from vcrun.py:
                                 )}
 
                                 <TabsContent value="email" className="space-y-4 mt-4">
+                                    <LearnLink
+                                        tab="lead-detail"
+                                        overviewTitle="Email Synthesis & Quality Control"
+                                        overviewWhat="The final inspection stage where you can see the exact email copy generated using your AI prompt and real lead research."
+                                        overviewWhy="Prevents 'hallucinations' or logic errors from going live. It allows you to verify that the research data matches the recipient's actual background."
+                                        overviewHow="Click 'Generate Preview' for a selected lead. Scroll through the HTML view to see how it will look in their inbox, and use 'Send Test' to verify delivery to yourself."
+                                    />
                                     <Button onClick={generateEmailPreview} disabled={generatingEmail} className="w-full">
                                         {generatingEmail ? "Generating..." : "Generate Email Preview"}
                                     </Button>
@@ -1222,6 +1251,13 @@ Example from vcrun.py:
                                 </TabsContent>
 
                                 <TabsContent value="sms" className="space-y-4 mt-4">
+                                    <LearnLink
+                                        tab="lead-detail"
+                                        overviewTitle="SMS Flow Validation"
+                                        overviewWhat="A high-velocity messaging preview designed to test the brevity and impact of your AI-generated text messages."
+                                        overviewWhy="SMS has strict character limits and higher compliance standards. This preview ensures your messages are concise and compliant with 10DLC regulations."
+                                        overviewHow="Generate a preview to check for character overflows. Ensure the call-to-action is clear and that the tone is appropriate for an mobile-first interaction."
+                                    />
                                     <Button onClick={generateSmsPreview} disabled={generatingSms} className="w-full">
                                         {generatingSms ? "Generating..." : "Generate SMS Preview"}
                                     </Button>
@@ -1267,17 +1303,12 @@ Example from vcrun.py:
 
             {/* Navigation */}
             <div className="flex items-center justify-between max-w-6xl mx-auto">
-                <Button
-                    variant="outline"
-                    onClick={prevStep}
-                    disabled={currentStep === 1}
-                >
+                <Button variant="outline" onClick={prevStep} disabled={currentStep === 1}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Previous
                 </Button>
 
                 <div className="flex items-center gap-4">
-                    {/* Draft indicator */}
                     {draftCampaignId && (
                         <div className="flex items-center gap-2 text-sm">
                             {savingDraft ? (
@@ -1299,18 +1330,12 @@ Example from vcrun.py:
                 </div>
 
                 {currentStep < 4 ? (
-                    <Button
-                        onClick={nextStep}
-                        disabled={!canProceed()}
-                    >
+                    <Button onClick={nextStep} disabled={!canProceed()}>
                         Next
                         <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                 ) : (
-                    <Button
-                        onClick={launchCampaign}
-                        disabled={loading || !canProceed()}
-                    >
+                    <Button onClick={launchCampaign} disabled={loading || !canProceed()}>
                         {loading ? "Creating Campaign..." : "Launch Campaign"}
                         <Send className="w-4 h-4 ml-2" />
                     </Button>

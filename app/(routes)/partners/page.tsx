@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { prismadb } from "@/lib/prisma";
 import Link from "next/link";
 import { PartnersNavigation } from "./_components/PartnersNavigation";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 import { getAllSubscriptions } from "@/actions/billing/get-all-subscriptions";
 import { getAllBillingInvoices } from "@/actions/billing/get-team-billing-invoices";
@@ -63,6 +64,13 @@ const PartnersPage = async () => {
             title="Platform"
             description="Manage your Teams and CRM Instances"
         >
+            <LearnLink
+                tab="partners"
+                overviewTitle="Platform Management"
+                overviewWhat="The multi-tenant control center for managing disparate CRM teams, subscription plans, and global platform billing."
+                overviewWhy="For platform owners and partners, visibility across all client instances is essential for support and billing. This view allows you to manage the entire ecosystem from a single, high-level dashboard."
+                overviewHow="Track total registered versus active teams, monitor platform-wide user growth, and drill into specific team billing histories or subscription plan assignments."
+            />
             <div className="p-4 space-y-6">
                 <PartnersNavigation availablePlans={plans as any} />
 

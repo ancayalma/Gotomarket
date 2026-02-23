@@ -42,6 +42,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 interface CaseDetailClientProps {
     caseData: any;
@@ -247,6 +248,13 @@ export default function CaseDetailClient({
 
     return (
         <div className="flex flex-col h-[calc(100vh-64px)] bg-background overflow-hidden">
+            <LearnLink
+                tab="cases"
+                overviewTitle="Service Console Detail"
+                overviewWhat="The core resolution workspace for a specific support ticket or customer inquiry."
+                overviewWhy="Centralizing communication, status, and SLAs here ensures that no customer issue falls through the cracks. It also provides a historical record for future auditing and training."
+                overviewHow="Use the 'Comments' feed to reply to the customer or leave internal notes. Monitor the 'SLA Countdown' in the header to ensure timely resolution. The 'Quick Actions' sidebar allows for rapid escalation or reassignment."
+            />
             {/* Top Bar */}
             <div className="shrink-0 flex items-center gap-3 px-4 md:px-6 py-3 border-b border-border/50 bg-background/95 backdrop-blur">
                 <Button variant="ghost" size="sm" onClick={() => router.push("/crm/cases")} className="shrink-0">

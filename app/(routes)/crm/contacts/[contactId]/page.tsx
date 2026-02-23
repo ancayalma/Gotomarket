@@ -83,13 +83,7 @@ const ContactViewPage = async (props: any) => {
         />
       }
     >
-      <LearnLink
-        tab="contact-detail"
-        overviewTitle="Contact Explorer"
-        overviewWhat="The definitive profile viewing pane for a single individual. It aggregates their direct communication history, associated accounts, and related opportunities."
-        overviewWhy="Allows you to understand the complete context of your relationship with a person before reaching out. It prevents you from missing crucial historical context hidden in other accounts they might have engaged with."
-        overviewHow="Scroll through the left pane for basic profile details and contact info, and use the right-side tabs to browse their communication timeline, company affiliations, and active deals."
-      />
+
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
         {/* Left Sidebar: Contact Info */}
         <div className="xl:col-span-4 space-y-6">
@@ -139,6 +133,13 @@ const ContactViewPage = async (props: any) => {
             </TabsList>
 
             <TabsContent value="activity" className="space-y-6 animate-in fade-in-50 duration-500">
+              <LearnLink
+                tab="contact-detail"
+                overviewTitle="Personal Interaction Timeline"
+                overviewWhat="A chronological stream of every direct interaction with this person, including private notes, recorded calls, and email threads."
+                overviewWhy="Relationships are built on consistency. Seeing the exact sequence of your last five interactions allows you to maintain professional rapport and pick up exactly where you left off."
+                overviewHow="Review the color-coded icons to distinguish between different channels (Phone vs Email). Click into any thread to view the full transcript or reply directly from this view."
+              />
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-6 w-6 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
                   <History size={14} />
@@ -154,12 +155,26 @@ const ContactViewPage = async (props: any) => {
 
             {hasAccess('accounts.view') && (
               <TabsContent value="accounts" className="animate-in fade-in-50 duration-500">
+                <LearnLink
+                  tab="contact-detail"
+                  overviewTitle="Corporate Affiliations"
+                  overviewWhat="A list of all business entities this individual is currently or historically associated with according to the CRM records."
+                  overviewWhy="Contacts often hold roles at multiple companies or move between organizations. Tracking these affiliations ensures you understand their full influence network across your pipeline."
+                  overviewHow="Click on an account name to switch to the full Account Detail view for that organization. Use the 'Primary' badge to identify their main place of employment."
+                />
                 <AccountsView data={accounts} crmData={crmData} />
               </TabsContent>
             )}
 
             {hasAccess('contacts.detail.opportunities') && (
               <TabsContent value="opportunities" className="animate-in fade-in-50 duration-500">
+                <LearnLink
+                  tab="contact-detail"
+                  overviewTitle="Direct Deal Involvement"
+                  overviewWhat="The specific sales opportunities where this person is listed as a primary stakeholder, decision-maker, or influencer."
+                  overviewWhy="Instead of searching by company, this view shows you exactly which revenue-generating conversations this specific individual is currently steering."
+                  overviewHow="Monitor the 'Closed Date' for upcoming milestones. You can click into any opportunity to see the specific role this contact occupies in the deal's buying committee."
+                />
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Opportunities
@@ -171,13 +186,20 @@ const ContactViewPage = async (props: any) => {
 
             {hasAccess('contacts.detail.documents') && (
               <TabsContent value="documents" className="animate-in fade-in-50 duration-500">
+                <LearnLink
+                  tab="contact-detail"
+                  overviewTitle="Personal Files & Collateral"
+                  overviewWhat="A focused repository for documents specifically linked to this person, such as headshots, resumes, or individualized proposals."
+                  overviewWhy="Keeps personal-level data separate from general company assets, making it easier to find stakeholder-specific information during a high-stakes call."
+                  overviewHow="Drag and drop files to attach them directly to this contact record. Use the preview button to view PDF or image content without leaving the CRM."
+                />
                 <DocumentsView data={documents} />
               </TabsContent>
             )}
           </Tabs>
-        </div>
-      </div>
-    </Container>
+        </div >
+      </div >
+    </Container >
   );
 };
 

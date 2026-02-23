@@ -19,6 +19,7 @@ import { MyAccount } from "@prisma/client";
 import { getActiveUsers } from "@/actions/get-users";
 import { getBoards } from "@/actions/projects/get-boards";
 import NewTaskDialog from "./dialogs/NewTask";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 import { SyncInvoiceCard } from "./components/SyncInvoiceCard";
 import { ManualInvoiceDialog } from "./dialogs/ManualInvoiceDialog";
@@ -99,6 +100,13 @@ const InvoicePage = async () => {
       description={"Everything you need to know about invoices and TAX"}
       sticky
     >
+      <LearnLink
+        tab="invoice"
+        overviewTitle="Financial Operations"
+        overviewWhat="The core clearinghouse for all accounts receivable and tax-related documentation. It tracks the movement of money from quotes to finalized settlements."
+        overviewWhy="Accuracy in finance is non-negotiable. This module ensures every invoice is accounted for, providing a clear audit trail for both internal bookkeeping and external tax reporting."
+        overviewHow="Upload PDF invoices directly into the ledger, sync with your external ERP systems, or use the Manual Invoice dialog to create one-off billing statements."
+      />
       <NewTaskDialog users={users} boards={boards} />
 
       {/* Navigation Grid */}

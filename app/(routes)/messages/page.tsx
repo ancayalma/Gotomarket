@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { getDictionary } from "@/lib/dictionaries";
 import { prismadb } from "@/lib/prisma";
 import { InternalMessagesComponent } from "./components/InternalMessagesComponent";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 const MessagesRoute = async () => {
     const session = await getServerSession(authOptions);

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-hot-toast';
+import { LearnLink } from '@/components/ui/LearnLink';
 
 
 /**
@@ -202,6 +203,13 @@ export default function SignaturesResourcesPanel() {
 
         {/* Resources Tab */}
         <TabsContent value="resources">
+          <LearnLink
+            tab="lead-detail"
+            overviewTitle="Digital Signatures & Resources"
+            overviewWhat="The configuration workspace for the interactive 'Call-to-Action' blocks that appear at the bottom of your outbound emails and SMS."
+            overviewWhy="Standardizing your value-add links (like Calendars or Case Studies) ensures that your AI agents always drive prospects toward high-conversion next steps."
+            overviewHow="Define your primary and secondary link labels here. You can preview exactly how the styled buttons will look in a recipient's inbox using the 'Email Preview' window below."
+          />
           <div className="space-y-6">
             {/* Per-user resource buttons */}
             <div className="space-y-3">
@@ -519,6 +527,13 @@ export default function SignaturesResourcesPanel() {
 
         {/* Prompt Tab */}
         <TabsContent value="prompt">
+          <LearnLink
+            tab="lead-detail"
+            overviewTitle="AI Outreach Persona"
+            overviewWhat="The central 'brain' for your automated communication style. This prompt dictates the tone, empathy, and technical depth of your outreach agents."
+            overviewWhy="Setting a high-quality global prompt ensures brand consistency across all campaigns while still allowing for the AI to dynamically personalize each individual message."
+            overviewHow="Write your core instructions in the text area below. Focus on defining your agent's role (e.g., 'Helpful Technical Advisor') and any mandatory talking points or constraints."
+          />
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Default Outreach Prompt</h3>

@@ -11,6 +11,7 @@ import { getFinancialsByMonth } from "@/actions/reports/get-financials";
 import { getLeadsByMonth } from "@/actions/crm/get-leads";
 import { getDepartments } from "@/actions/departments/get-departments";
 import { getSavedReports } from "@/actions/reports/get-saved-reports";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 type Props = {};
 
@@ -35,6 +36,13 @@ const ReportsPage = async (props: Props) => {
         "Comprehensive analytics overview of your CRM performance."
       }
     >
+      <LearnLink
+        tab="reports"
+        overviewTitle="Performance Analytics"
+        overviewWhat="A data visualization engine that transforms raw CRM records into actionable insights regarding revenue, team velocity, and lead conversion rates."
+        overviewWhy="Raw data is difficult to interpret at scale. Reports aggregate these data points into charts and tables, allowing you to identify trends and optimize your sales strategy based on historical performance."
+        overviewHow="Review the pre-built dashboards for a quick pulse, or build custom reports to drill down into specific departments or date Ranges."
+      />
       <div className="pt-5">
         <ReportsDashboard
           usersInitial={usersData}

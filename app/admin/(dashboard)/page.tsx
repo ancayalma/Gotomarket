@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import Container from "@/app/(routes)/components/ui/Container";
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 import { Users, ShieldCheck, UserCheck, Eye, Building2, LayoutDashboard } from "lucide-react";
 
@@ -80,6 +81,13 @@ export default async function AdminDashboardPage({
       action={<SendMailToAll />}
       fluid
     >
+      <LearnLink
+        tab="admin"
+        overviewTitle="System Administration"
+        overviewWhat="The core governance panel for your organization. This is where you manage user identities, team permissions, and departmental hierarchies."
+        overviewWhy="Centralized control is vital for security and operational clarity. By managing users and departments here, you ensure that every team member has exactly the access they need to perform their role without over-exposing sensitive data."
+        overviewHow="Invite new members via the Invite Form, audit your existing user base in the data table, or organize your team structure by creating and managing Departments."
+      />
       <Tabs defaultValue={activeTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
           <TabsTrigger value="overview" className="flex items-center gap-2">

@@ -6,6 +6,8 @@ import { NotificationsClient } from "./components/NotificationsClient";
 import { Bell } from "lucide-react";
 import { Suspense } from "react";
 
+import { LearnLink } from "@/components/ui/LearnLink";
+
 export const metadata = {
     title: "Notifications | CRM",
     description: "Manage your alerts and activity"
@@ -22,6 +24,13 @@ export default async function NotificationsPage() {
 
     return (
         <div className="flex flex-col h-full">
+            <LearnLink
+                tab="notifications"
+                overviewTitle="Activity Command Center"
+                overviewWhat="A persistent log of all system triggers, direct mentions, task assignments, and approval requests."
+                overviewWhy="Staying responsive to real-time events is critical for deal velocity. This feed ensures you never miss a stakeholder update or a critical automation status change."
+                overviewHow="New alerts appear here and in the nav bar. You can clear individual notifications or 'Clear All' once reviewed to maintain a zero-inbox workflow."
+            />
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
                 <div className="flex items-center gap-3">

@@ -5,6 +5,7 @@ import useSWR from "swr";
 import fetcher from "@/lib/fetcher";
 import { useRouter } from "next/navigation";
 import { Bot, Search, Globe, CheckCircle, Loader2, AlertCircle, Play, Pause, Square } from "lucide-react";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 type JobStatus = "QUEUED" | "RUNNING" | "PAUSED" | "STOPPED" | "SUCCESS" | "FAILED";
 
@@ -88,6 +89,13 @@ export default function LeadGenJobDetailPage({
 
   return (
     <div className="p-6 space-y-6">
+      <LearnLink
+        tab="leads"
+        overviewTitle="Neural Prospecting Job"
+        overviewWhat="A real-time monitoring terminal for an active AI agent task specifically searching for new companies and contacts based on your criteria."
+        overviewWhy="AI prospecting is a background process. This terminal provides transparency into the agent's reasoning, current hit-rate, and job health so you know exactly when your outreach list is ready for human intervention."
+        overviewHow="Monitor the 'Reasoning Stream' to see the AI's internal logic. You can Pause or Stop the job at any time if the lead quality isn't matching your target persona. Once finished, click 'Work This List' to start engagement."
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Lead Generation Job</h1>
@@ -272,10 +280,10 @@ export default function LeadGenJobDetailPage({
                         <div
                           key={idx}
                           className={`p-3 rounded-lg border ${isError
-                              ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
-                              : isToolCall
-                                ? "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
-                                : "bg-muted/50"
+                            ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
+                            : isToolCall
+                              ? "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
+                              : "bg-muted/50"
                             }`}
                         >
                           <div className="flex items-start gap-2">

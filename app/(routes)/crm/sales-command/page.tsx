@@ -10,6 +10,7 @@ import { getLeads } from "@/actions/crm/get-leads";
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getBoards } from "@/actions/projects/get-boards";
 import { getTasks } from "@/actions/projects/get-tasks";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export default async function SalesCommandPage() {
     const session = await getServerSession(authOptions);
@@ -60,6 +61,13 @@ export default async function SalesCommandPage() {
 
     return (
         <PermissionsProvider permissions={permissions} isSuperAdmin={isSuperAdmin}>
+            <LearnLink
+                tab="sales-command"
+                overviewTitle="Sales Command Terminal"
+                overviewWhat="A high-velocity mission control center combining lead outreach, pipeline health, and real-time sales performance metrics."
+                overviewWhy="Traditional CRM layouts can be fragmented. Sales Command unifies your entire workflow into a single pane of glass, allowing for faster decision making and outreach execution."
+                overviewHow="Monitor your daily KPIs, execute lead engagement sequences, and track your active opportunities from the Command Canvas. Use the filters to toggle between Personal and Team-wide performance."
+            />
             <SalesCommandProvider
                 initialData={unifiedData}
                 initialLeads={leads}

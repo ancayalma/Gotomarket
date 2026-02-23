@@ -34,7 +34,23 @@ export type UniversityTab =
     | "approvals"
     | "workflows"
     | "dialer"
-    | "settings";
+    | "settings"
+    | "calendar"
+    | "notifications"
+    | "products"
+    | "sales-command"
+    | "prompt"
+    | "validation-rules"
+    | "lists"
+    | "forms"
+    | "reports"
+    | "invoice"
+    | "employees"
+    | "admin"
+    | "partners"
+    | "profile"
+    | "documents"
+    | "campaigns";
 
 // Tab → human-readable label map
 export const TAB_LABELS: Record<UniversityTab, string> = {
@@ -65,7 +81,23 @@ export const TAB_LABELS: Record<UniversityTab, string> = {
     "approvals": "Approval Workflows",
     "workflows": "FlowState Automation",
     "dialer": "Communication Terminal",
-    "settings": "System Settings"
+    "settings": "System Settings",
+    "calendar": "Global Calendar",
+    "notifications": "Activity Center",
+    "products": "Product Catalog",
+    "sales-command": "Sales Command",
+    "prompt": "AI Engineering",
+    "validation-rules": "Guard Rules",
+    "lists": "Lead Segmenting",
+    "forms": "LeadGen Forms",
+    "reports": "Performance Analytics",
+    "invoice": "Financial Operations",
+    "employees": "Human Resources",
+    "admin": "System Administration",
+    "partners": "Platform Management",
+    "profile": "User Account",
+    "documents": "Asset Library",
+    "campaigns": "Outreach Campaigns"
 };
 
 // Tab → accent color
@@ -100,7 +132,23 @@ export const TAB_COLORS: Record<UniversityTab, string> = {
     "approvals": "from-teal-500 to-emerald-500",
     "workflows": "from-fuchsia-500 to-pink-500",
     "dialer": "from-emerald-500 to-teal-500",
-    "settings": "from-slate-500 to-gray-500"
+    "settings": "from-slate-500 to-gray-500",
+    "calendar": "from-blue-500 to-indigo-500",
+    "notifications": "from-rose-500 to-pink-500",
+    "products": "from-amber-500 to-orange-500",
+    "sales-command": "from-violet-500 to-purple-500",
+    "prompt": "from-emerald-500 to-cyan-500",
+    "validation-rules": "from-red-500 to-rose-500",
+    "lists": "from-blue-500 to-cyan-500",
+    "forms": "from-emerald-500 to-teal-500",
+    "reports": "from-violet-500 to-purple-500",
+    "invoice": "from-orange-500 to-red-500",
+    "employees": "from-slate-500 to-gray-500",
+    "admin": "from-red-500 to-orange-500",
+    "partners": "from-indigo-500 to-blue-500",
+    "profile": "from-slate-500 to-gray-500",
+    "documents": "from-stone-500 to-neutral-500",
+    "campaigns": "from-amber-500 to-orange-500"
 };
 
 interface LearnLinkProps {

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Container from "../../../components/ui/Container";
 import { getQuoteById } from "@/actions/crm/quotes";
 import QuoteDetailsClient from "./components/QuoteDetailsClient";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export const metadata = {
     title: "Quote Details | CRM",
@@ -29,6 +30,13 @@ export default async function QuoteDetailsPage(props: { params: Promise<{ quoteI
             title={`Quote: ${quote.quoteNumber}`}
             description={quote.title}
         >
+            <LearnLink
+                tab="quotes"
+                overviewTitle="Proposal Management"
+                overviewWhat="A detailed view of a specific sales proposal, including line items, discounts, and current approval status."
+                overviewWhy="Centralizing the quote details ensures that both the sales rep and management are looking at the same version of the truth before a PDF is generated and sent to the client."
+                overviewHow="Review the financial summary in the sidebar. You can edit the quote contents if it's still in 'Draft' status, or move it to 'Sent' once the proposal has been shared with the customer."
+            />
             <QuoteDetailsClient quote={JSON.parse(JSON.stringify(quote))} />
         </Container>
     );

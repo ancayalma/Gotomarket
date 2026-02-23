@@ -12,6 +12,7 @@ import { ArrowLeft, Check, X, Loader2, Sparkles, User, Globe, Building2, Briefca
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "react-hot-toast";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 type ContactCandidate = {
     id: string;
@@ -109,6 +110,13 @@ export default function ApprovalCenterPage() {
 
     return (
         <div className="flex flex-col h-full bg-background">
+            <LearnLink
+                tab="approvals"
+                overviewTitle="AI Intelligence Review"
+                overviewWhat="The human-in-the-loop stage for vetting AI-generated company and contact candidates before they enter the CRM."
+                overviewWhy="Automation is powerful but requires oversight. This page allows you to review confidence scores, detected tech stacks, and social signals to ensure only high-quality data enters your pipeline."
+                overviewHow="Examine each candidate card for firmographic fit. Click 'Check' to promote the record to your active list, or 'X' to dismiss it. Promoting a candidate automatically creates the Account and Contact records."
+            />
             <div className="p-4 md:p-6 lg:p-8 space-y-4">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => router.push(`/crm/accounts/lists/${listId}`)}>

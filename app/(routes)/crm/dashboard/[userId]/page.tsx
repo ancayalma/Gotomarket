@@ -6,6 +6,8 @@ import Container from "../../../components/ui/Container";
 import { getLeadsStageCounts } from "@/actions/dashboard/get-leads-stage-counts";
 import StageProgressBar, { type StageDatum } from "@/components/StageProgressBar";
 
+import { LearnLink } from "@/components/ui/LearnLink";
+
 type PipelineStage = "Identify" | "Engage_AI" | "Engage_Human" | "Offering" | "Finalizing" | "Closed";
 
 const STAGES: PipelineStage[] = [
@@ -44,6 +46,13 @@ export default async function UserCRMDashboard() {
   return (
     <div>
       <Container title={`${session.user.name} | Sales My Dashboard`} description="Lead pipeline progress across all batches">
+        <LearnLink
+          tab="dashboard"
+          overviewTitle="Personal Performance Portal"
+          overviewWhat="A high-density view of your individual sales funnel, tracking leads from initial identification through to closing."
+          overviewWhy="Focusing on your specific metrics allows you to identify personal bottlenecks in the sales process and prioritize follow-ups that will move the needle on your quarterly quota."
+          overviewHow="Review the 'Overview Progress' bar to see your pipeline distribution. Scroll through the 'Lists' section to drop into specific outreach batches that require immediate attention."
+        />
         {/* Overview Progress Bars */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-6">
           <div className="space-y-4 p-4 rounded-lg border bg-card shadow-sm">

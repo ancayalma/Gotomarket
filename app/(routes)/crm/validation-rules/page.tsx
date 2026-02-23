@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getValidationRules } from "@/actions/crm/validation-rules";
 import { ValidationRulesClient } from "./components/ValidationRulesClient";
 import { Shield } from "lucide-react";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export const metadata = {
     title: "Guard Rules | CRM Settings",
@@ -23,6 +24,13 @@ export default async function ValidationRulesPage() {
 
     return (
         <div className="flex flex-col">
+            <LearnLink
+                tab="validation-rules"
+                overviewTitle="Data Governance Guard"
+                overviewWhat="The central terminal for defining logic-based restrictions and format requirements for CRM data entry."
+                overviewWhy="Maintaining high data integrity depends on consistent input. Guard Rules prevent 'dirty data' from entering the system by enforcing business logic (e.g., preventing a deal from closing without a valid quote) at the point of entry."
+                overviewHow="Create new rules using the Formula Builder. You can define triggers for specific fields and custom error messages that populate in the UI when a user attempts to save record data that violates your business constraints."
+            />
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
                 <div className="flex items-center gap-3">

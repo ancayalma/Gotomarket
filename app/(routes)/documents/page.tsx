@@ -1,6 +1,7 @@
 import { getDocuments } from "@/actions/documents/get-documents";
 import { getUnassignedDocuments } from "@/actions/documents/get-unassigned-documents";
 import Container from "../components/ui/Container";
+import { LearnLink } from "@/components/ui/LearnLink";
 import { DocumentsDataTable } from "./components/data-table";
 import { columns } from "./components/columns";
 import ModalDropzone from "./components/modal-dropzone";
@@ -32,6 +33,13 @@ const DocumentsPage = async ({ searchParams }: { searchParams?: Promise<{ [k: st
       title="Documents"
       description={"Everything you need to know about company documents"}
     >
+      <LearnLink
+        tab="documents"
+        overviewTitle="Asset Library & Secure Storage"
+        overviewWhat="The global repository for all files, media, and unstructured data uploaded to your CRM instance."
+        overviewWhy="Searching through emails for attachments is a waste of time. This centralized library ensures that all team assets—from brand decks to technical whitepapers—are searchable and assignable to any record."
+        overviewHow="Use the 'Upload' cards to add new files by type. You can filter for 'Unassigned' documents to clean up your library or attach floating files to specific accounts or projects."
+      />
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3 flex-shrink-0">
         <ModalDropzone
           buttonLabel="Upload pdf"

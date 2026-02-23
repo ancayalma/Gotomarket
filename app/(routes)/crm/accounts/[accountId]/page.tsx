@@ -130,13 +130,7 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
         </div>
       }
     >
-      <LearnLink
-        tab="account-detail"
-        overviewTitle="Account Explorer"
-        overviewWhat="The comprehensive dossier for a specific company. It aggregates all related Contacts, ongoing Tasks, Opportunities, and digital Contracts in one continuous pane."
-        overviewWhy="Saves time by preventing infinite tab-switching. You can view the entire historical relationship with an organization, from first lead touchpoint to latest contract signature, instantly."
-        overviewHow="Scroll down to view basic company info, or use the horizontal tabs on the right side to switch between Activity timelines, employee Contacts, active Sales paths, and uploaded files."
-      />
+
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
         {/* Left Sidebar: Account Info & Documents */}
         <div className="xl:col-span-4 space-y-6">
@@ -192,6 +186,13 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
             </TabsList>
 
             <TabsContent value="activity" className="space-y-6 animate-in fade-in-50 duration-500">
+              <LearnLink
+                tab="account-detail"
+                overviewTitle="Account Communication History"
+                overviewWhat="A centralized timeline of every email, SMS, and call log exchanged with this specific company."
+                overviewWhy="Maintaining a shared memory of customer interactions prevents team overlap and ensures that anyone picking up the account has full context of previous conversations."
+                overviewHow="Scan the timeline to see recent engagement. Click on any event to see the full content of the message or the call recording associated with it."
+              />
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-6 w-6 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
                   <History size={14} />
@@ -206,14 +207,35 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
             </TabsContent>
 
             <TabsContent value="contacts" className="animate-in fade-in-50 duration-500">
+              <LearnLink
+                tab="account-detail"
+                overviewTitle="Key Stakeholders & Contacts"
+                overviewWhat="The directory of all individuals associated with this account, including their roles, seniority, and direct contact details."
+                overviewWhy="B2B sales involve multiple decision-makers. This tab allows you to identify champions, gatekeepers, and economic buyers within the organization."
+                overviewHow="Use the search bar to find a specific person, or click 'Add Contact' to associate a new team member with this company footprint."
+              />
               <ContactsView data={contacts} crmData={crmData} accountId={accountId} />
             </TabsContent>
 
             <TabsContent value="tasks" className="animate-in fade-in-50 duration-500">
+              <LearnLink
+                tab="account-detail"
+                overviewTitle="Operational Task Queue"
+                overviewWhat="A collaborative checklist of todos, follow-ups, and internal administrative work specific to this account."
+                overviewWhy="Keeps the sales cycle moving by ensuring that follow-up promises and internal prerequisites are tracked and assigned to a specific team member."
+                overviewHow="Check off completed tasks to clear the queue, or click 'New Task' to assign a new action item to yourself or a colleague."
+              />
               <AccountsTasksView data={tasks} account={account} />
             </TabsContent>
 
             <TabsContent value="sales" className="space-y-8 animate-in fade-in-50 duration-500">
+              <LearnLink
+                tab="account-detail"
+                overviewTitle="Sales Pipeline & Lead Health"
+                overviewWhat="The revenue-focused view tracking both active sales opportunities and raw leads associated with this company."
+                overviewWhy="Provides a clear picture of the current and potential financial value of the account, helping you prioritize high-value negotiations."
+                overviewHow="Monitor the 'Opportunity Stage' to see deal progression. Use the Leads section to identify new expansion potential within the same organization."
+              />
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Opportunities
@@ -234,6 +256,13 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
             </TabsContent>
 
             <TabsContent value="contracts" className="animate-in fade-in-50 duration-500">
+              <LearnLink
+                tab="account-detail"
+                overviewTitle="Executed Agreements & Legal"
+                overviewWhat="The secure vault for all legally binding contracts, MSAs, and NDAs signed by this account."
+                overviewWhy="Centralizing legal documents ensures that sales teams can quickly verify active terms, expiration dates, and previous commitments without digging through legal archives."
+                overviewHow="Click on a contract to view the PDF or e-signature status. Use the 'New Contract' wizard to generate a new agreement for signing."
+              />
               <ContractsView
                 data={contracts}
                 crmData={crmData}
@@ -242,6 +271,13 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
             </TabsContent>
 
             <TabsContent value="documents" className="animate-in fade-in-50 duration-500">
+              <LearnLink
+                tab="account-detail"
+                overviewTitle="Document Repository"
+                overviewWhat="A general-purpose storage area for sales decks, technical specifications, and non-contractual files."
+                overviewWhy="Sharing a common workspace for collateral ensures that everyone on the account team is using the latest version of presentations and technical docs."
+                overviewHow="Drag and drop files to upload. Use the search bar to find specific assets or sort by upload date to see the latest additions."
+              />
               <DocumentsView data={documents} />
             </TabsContent>
           </Tabs>

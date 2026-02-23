@@ -69,9 +69,11 @@ const CampaignsPage = async () => {
             </div>
 
             <LearnLink
-                tab="project-workflow"
-                tooltipLabel="Campaigns are the top-level container for your outreach strategy"
-                dismissKey="learnlink_campaigns"
+                tab="campaigns"
+                overviewTitle="Strategic Outreach Campaigns"
+                overviewWhat="The top-level container for your go-to-market strategies. Campaigns group together specific lead lists, messaging themes, and performance goals."
+                overviewWhy="Random outreach is inefficient. Campaigns provide the structural guardrails to ensure that your sales efforts are aligned with specific business objectives and can be measured for ROI."
+                overviewHow="Click 'New Campaign' to initialize a project. Once created, you can attach lead lists and begin the 'Outreach Campaign Wizard' to synthesize personalized AI messaging."
             />
         </div>
     );

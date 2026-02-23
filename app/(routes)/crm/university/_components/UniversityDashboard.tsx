@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import Heading from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 // New Phase 1 components
 import ComplianceAcademy from "./ComplianceAcademy";
@@ -213,6 +214,13 @@ export default function UniversityDashboard() {
                         exit="exit"
                         transition={{ duration: 0.3 }}
                     >
+                        <LearnLink
+                            tab="getting-started"
+                            overviewTitle="Foundations of BASALT"
+                            overviewWhat="The entry point for mastering the CRM's core philosophy and layout."
+                            overviewWhy="CRM platforms can be overwhelming. Starting here ensures you understand the high-level relationship between accounts, leads, and sales automation before you start clicking."
+                            overviewHow="Follow the 'Critical Path' guide below. Complete each milestone to earn your first platform badge and unlock more advanced outreach tools."
+                        />
                         <GettingStarted />
                     </motion.div>
                 )}
@@ -228,6 +236,13 @@ export default function UniversityDashboard() {
                         transition={{ duration: 0.3 }}
                         className="space-y-4"
                     >
+                        <LearnLink
+                            tab="flow"
+                            overviewTitle="Neural Flow Architecture"
+                            overviewWhat="A technical and strategic visualization of how data moves from a raw internet signal to a closed deal."
+                            overviewWhy="Understanding the 'Under the Hood' logic prevents confusion when automated events occur (like why a lead moved stages). It empowers you to build better workflows."
+                            overviewHow="Review the Mermaid diagrams to see the branching logic. Hover over the stage cards below to see the specific system events that trigger a status change."
+                        />
 
                         {/* Main Pipeline Mermaid Diagram */}
                         <FlowDiagramCard
@@ -309,6 +324,13 @@ export default function UniversityDashboard() {
                         exit="exit"
                         transition={{ duration: 0.3 }}
                     >
+                        <LearnLink
+                            tab="compliance"
+                            overviewTitle="Trust & Deliverability Academy"
+                            overviewWhat="The definitive guide to staying legal and professional in the world of high-velocity digital outreach."
+                            overviewWhy="One bad campaign can blacklist your entire domain. Mastery of these rules ensures your messages actually reach the inbox and that your brand remains respected."
+                            overviewHow="Study the SMS and Email modules. Complete the 'Compliance Checklist' before launching any campaign reaching over 1,000 prospects."
+                        />
                         <ComplianceAcademy />
                     </motion.div>
                 )}
@@ -324,6 +346,13 @@ export default function UniversityDashboard() {
                         exit="exit"
                         transition={{ duration: 0.3 }}
                     >
+                        <LearnLink
+                            tab="certification"
+                            overviewTitle="Professional Mastery Center"
+                            overviewWhat="The career-building hub where you can prove your expertise in CRM operations and Sales AI."
+                            overviewWhy="Certifications standardized the team's skillset. Earning these badges demonstrates to leadership that you are capable of managing complex automation and high-value accounts."
+                            overviewHow="Enroll in a Mastery Path. Complete the interactive assessments and pass the final simulation to earn your digital certificate and platform profile badge."
+                        />
                         <CertificationPaths />
                     </motion.div>
                 )}
@@ -338,6 +367,13 @@ export default function UniversityDashboard() {
                         exit="exit"
                         transition={{ duration: 0.3 }}
                     >
+                        <LearnLink
+                            tab="prompt-lab"
+                            overviewTitle="AI Persona Engineering"
+                            overviewWhat="The collaborative workspace for iterating on the 'brain center' of your AI outreach agents."
+                            overviewWhy="Generic AI sounds like a robot. This lab allows you to fine-tune the tone, empathy, and technical depth of your agents to ensure they represent your brand perfectly."
+                            overviewHow="Use the playground to test prompt variations. Compare output results against your 'Golden Dataset' and push the winning persona to your live campaigns."
+                        />
                         <AIPromptLab />
                     </motion.div>
                 )}
@@ -352,6 +388,13 @@ export default function UniversityDashboard() {
                         exit="exit"
                         transition={{ duration: 0.3 }}
                     >
+                        <LearnLink
+                            tab="roi-modeler"
+                            overviewTitle="Strategic Performance Modeler"
+                            overviewWhat="A mathematical simulator for projecting revenue outcomes based on your current outreach efficiency."
+                            overviewWhy="Sales is a numbers game. This tool allows you to see the exact financial impact of improving your lead quality or AI reply rates by just 1 or 2 percent."
+                            overviewHow="Adjust the sliders to match your current metrics. Watch the 'Projected Revenue' chart update in real-time to identify which optimization will have the highest ROI."
+                        />
                         <RevOpsSimulator />
                     </motion.div>
                 )}
@@ -368,6 +411,13 @@ export default function UniversityDashboard() {
                         transition={{ duration: 0.3 }}
                         className="space-y-4"
                     >
+                        <LearnLink
+                            tab="reference"
+                            overviewTitle="Sales Operations Almanac"
+                            overviewWhat="The rapid-access encyclopedia for all technical terms, stage definitions, and system shortcuts."
+                            overviewWhy="Speed is leverage. This section provides the precise 'meaning of truth' for every field in the CRM so there is never ambiguity during team handoffs."
+                            overviewHow="Scroll through the Stage Overview grid for quick definitions. Use the 'What Happens Automatically' section to troubleshoot system behavior."
+                        />
 
                         {/* Stage Overview Grid */}
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -484,6 +534,13 @@ export default function UniversityDashboard() {
                         exit="exit"
                         transition={{ duration: 0.3 }}
                     >
+                        <LearnLink
+                            tab="project-workflow"
+                            overviewTitle="Campaign Execution Strategy"
+                            overviewWhat="A step-by-step masterclass in launching and scaling a new sales initiative."
+                            overviewWhy="Moving from 'one-off sales' to 'scaled operations' requires a predictable sequence. This workflow ensures no step is missed during the transition from list building to outreach."
+                            overviewHow="Follow the visual 'Setup to Launch' flow. Reference the 'Pool Management' guide to see how to properly shard your lead lists for maximum agent efficiency."
+                        />
                         <ProjectWorkflowGuide />
 
                         <div className="mt-4">

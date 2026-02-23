@@ -19,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "react-hot-toast";
 import { Input } from "@/components/ui/input";
+import { LearnLink } from "@/components/ui/LearnLink";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -172,6 +173,13 @@ export default function AccountListDetailsPage() {
 
     return (
         <div className="flex flex-col h-full bg-background">
+            <LearnLink
+                tab="accounts"
+                overviewTitle="Account Intelligence List"
+                overviewWhat="A curated collection of regional or industry-specific organizations staged for active outreach and vetting."
+                overviewWhy="Lists act as 'mini-databases' that allow you to segment your market. This view focuses strictly on the data health and status of those segmented records before they are fully committed to a workflow."
+                overviewHow="Monitor the 'Status' column to see which leads are ready for promotion. Use the 'Approval Center' button to verify data accuracy or the 'Add Contacts' wizard to expand the current batch."
+            />
             <div className="p-4 md:p-6 lg:p-8 space-y-4">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => router.push("/lists")}>

@@ -10,6 +10,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 const FormsPage = async () => {
     const session = await getServerSession(authOptions);
@@ -64,6 +65,13 @@ const FormsPage = async () => {
             title="Form Builder"
             description="Create and manage lead capture forms for your websites"
         >
+            <LearnLink
+                tab="forms"
+                overviewTitle="LeadGen Form Builder"
+                overviewWhat="A drag-and-drop tool for creating secure, branded forms to embed on your external websites and landing pages."
+                overviewWhy="Direct manual entry of leads is slow. These forms allow prospects to self-onboard, with data flowing directly into your CRM Lists while being protected by team-wide CAPTCHA settings."
+                overviewHow="Create a new form, define your required fields (Name, Email, etc.), and associate it with a 'Board' for automatic task generation upon submission."
+            />
             <div className="mb-4">
                 <Link href={`/messages`}>
                     <Button variant="ghost" size="sm" className="gap-2">
