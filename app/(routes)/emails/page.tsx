@@ -9,6 +9,8 @@ import { authOptions } from "@/lib/auth";
 import { getDictionary } from "@/lib/dictionaries";
 import { redirect } from "next/navigation";
 
+import { LearnLink } from "@/components/ui/LearnLink";
+
 const EmailRoute = async () => {
   const session = await getServerSession(authOptions);
 
@@ -35,6 +37,13 @@ const EmailRoute = async () => {
         "This module is in development. Now it is only frontend demo."
       }
     >
+      <LearnLink
+        tab="emails"
+        overviewTitle="External Communications Hub"
+        overviewWhat="The primary interface for managing cross-channel email correspondence with leads and clients."
+        overviewWhy="Consolidating your business email within the CRM allows the AI to automatically parse sentiments and log interaction timelines without manual entry."
+        overviewHow="Connect your SMTP or Resend credentials in settings. Once active, use this console to manage threads, apply labels, and archive resolved conversations."
+      />
       <Suspense fallback={<SuspenseLoading />}>
         <MailComponent
           accounts={accounts}

@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { SurgeSettingsForm } from "./_components/SurgeSettingsForm";
 import { MercurySettingsForm } from "./_components/MercurySettingsForm";
 import { CloudflareSettingsForm } from "./_components/CloudflareSettingsForm";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export default async function IntegrationsSettingsPage() {
     const session = await getServerSession(authOptions);
@@ -25,6 +26,13 @@ export default async function IntegrationsSettingsPage() {
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
+            <LearnLink
+                tab="admin"
+                overviewTitle="External Service Integrations"
+                overviewWhat="The configuration terminal for linking your CRM to third-party providers like payment gateways (Mercury/Surge) and infrastructure security (Cloudflare)."
+                overviewWhy="Authenticating these services here unlocks automated financial tracking and advanced bot protection across your entire team's LeadGen forms and outreach sequences."
+                overviewHow="Locate your API keys or Access Tokens in the provider's dashboard, paste them into the appropriate card below, and hit 'Save Integration' to activate the link."
+            />
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Integrations</h2>
             </div>

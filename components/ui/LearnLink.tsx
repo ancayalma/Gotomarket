@@ -50,7 +50,11 @@ export type UniversityTab =
     | "partners"
     | "profile"
     | "documents"
-    | "campaigns";
+    | "campaigns"
+    | "messages"
+    | "emails"
+    | "search"
+    | "databox";
 
 // Tab → human-readable label map
 export const TAB_LABELS: Record<UniversityTab, string> = {
@@ -97,7 +101,11 @@ export const TAB_LABELS: Record<UniversityTab, string> = {
     "partners": "Platform Management",
     "profile": "User Account",
     "documents": "Asset Library",
-    "campaigns": "Outreach Campaigns"
+    "campaigns": "Outreach Campaigns",
+    "messages": "Internal Messaging",
+    "emails": "Email Communications",
+    "search": "Global Search",
+    "databox": "Databox Integration"
 };
 
 // Tab → accent color
@@ -148,7 +156,11 @@ export const TAB_COLORS: Record<UniversityTab, string> = {
     "partners": "from-indigo-500 to-blue-500",
     "profile": "from-slate-500 to-gray-500",
     "documents": "from-stone-500 to-neutral-500",
-    "campaigns": "from-amber-500 to-orange-500"
+    "campaigns": "from-amber-500 to-orange-500",
+    "messages": "from-blue-500 to-indigo-500",
+    "emails": "from-blue-500 to-sky-500",
+    "search": "from-violet-500 to-purple-500",
+    "databox": "from-cyan-500 to-blue-500"
 };
 
 interface LearnLinkProps {

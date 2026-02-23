@@ -7,6 +7,7 @@ import { getMyTeamBillingInvoices } from "@/actions/billing/get-team-billing-inv
 import { getMyTeamAiUsage } from "@/actions/billing/get-ai-usage";
 import { getMyTeamSubscription } from "@/actions/billing/get-my-subscription";
 import { AdminBillingDashboard } from "./_components/AdminBillingDashboard";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export default async function AdminBillingPage() {
     const session = await getServerSession(authOptions);
@@ -33,6 +34,13 @@ export default async function AdminBillingPage() {
             description="View your subscription, AI usage, and BasaltECHO credits."
             fluid
         >
+            <LearnLink
+                tab="admin"
+                overviewTitle="Financial Governance"
+                overviewWhat="The central ledger for your organization's subscription health, AI compute consumption, and credit balances."
+                overviewWhy="Maintaining visibility into spend prevents service interruptions. This dashboard allows you to audit exactly how your AI budget is being consumed across the team and manage your payment methods."
+                overviewHow="Review your current active subscription in the top card. Use the 'AI Usage Logs' to see a per-user breakdown of token consumption, and download historical invoices for your tax records."
+            />
             <AdminBillingDashboard
                 invoices={invoices}
                 aiUsageLogs={aiUsageData.logs}

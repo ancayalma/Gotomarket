@@ -5,6 +5,7 @@ import { prismadb } from "@/lib/prisma";
 import Container from "@/app/(routes)/components/ui/Container";
 import { AiConfigManager } from "@/components/ai/AiConfigManager";
 import { getTeamLeadGenCredits } from "@/lib/scraper/credits";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export default async function AdminAiSettingsPage() {
     const session = await getServerSession(authOptions);
@@ -76,6 +77,13 @@ export default async function AdminAiSettingsPage() {
             title="AI Settings"
             description="Configure your team's AI model preferences and API keys"
         >
+            <LearnLink
+                tab="admin"
+                overviewTitle="AI Neural Configuration"
+                overviewWhat="The core switching station for choosing which Large Language Models (LLMs) power your CRM's intelligence features."
+                overviewWhy="Different tasks require different models. High-volume scraping might use a cheaper, faster model, while complex sales command synthesis requires a high-reasoning model like GPT-4 or Claude 3.5."
+                overviewHow="Toggle between 'System Keys' (provided by the platform) or 'Team Keys' (using your own API budget). Select your preferred model for each core function and monitor your LeadGen credit balance."
+            />
             <AiConfigManager
                 teamId={teamId}
                 currentConfig={teamConfig ? {

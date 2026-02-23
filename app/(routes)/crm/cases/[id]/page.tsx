@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import CaseDetailClient from "./components/CaseDetailClient";
+import { LearnLink } from "@/components/ui/LearnLink";
 
 export const dynamic = "force-dynamic";
 
@@ -34,11 +35,20 @@ const CaseDetailPage = async ({ params }: CaseDetailPageProps) => {
     }
 
     return (
-        <CaseDetailClient
-            caseData={caseData}
-            currentUserId={session.user.id}
-            teamMembers={teamMembers}
-        />
+        <>
+            <LearnLink
+                tab="cases"
+                overviewTitle="Service Case Management"
+                overviewWhat="A comprehensive view of a specific customer issue, including communication threads, severity levels, and resolution status."
+                overviewWhy="Detailed tracking ensures that customer problems don't get 'lost' in emails. By logging every update here, the entire organization knows exactly where a ticket stands at any moment."
+                overviewHow="Use the 'Status' dropdown to move a case from New to Resolved. Add comments to collaborate with colleagues, and use the 'Related' tab to link this issue to a specific Account or Contact for long-term tracking."
+            />
+            <CaseDetailClient
+                caseData={caseData}
+                currentUserId={session.user.id}
+                teamMembers={teamMembers}
+            />
+        </>
     );
 };
 
