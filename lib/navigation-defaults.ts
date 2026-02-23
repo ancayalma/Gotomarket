@@ -50,9 +50,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 href: "/crm/accounts",
                 children: [
                     { id: "sub_accounts_all", type: "item", label: "All Accounts", href: "/crm/accounts?tab=accounts", iconName: "Building2" },
-
-                    { id: "sub_accounts_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/accounts?tab=wizard", iconName: "Wand2" },
-                    { id: "sub_accounts_settings", type: "item", label: "Settings", href: "/crm/accounts?tab=settings", iconName: "Settings" }
+                    { id: "sub_accounts_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/accounts?tab=wizard", iconName: "Wand2" }
                 ]
             },
             {

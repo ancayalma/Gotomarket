@@ -27,10 +27,12 @@ import { Input } from "@/components/ui/input";
 import ImportLeadsDialog from "../../crm/accounts/components/ImportLeadsDialog";
 import ImportAccountsDialog from "../../crm/accounts/components/ImportAccountsDialog";
 import FirstContactWizard from "@/components/modals/FirstContactWizard";
+import RestrictedAccessModal from "@/components/modals/RestrictedAccessModal";
 import Heading from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { ViewToggle, type ViewMode } from "@/components/ViewToggle";
 import { useIsMobile } from "@/hooks/use-is-mobile";
+import { EnhancedDateFilter } from "@/components/date-filter/EnhancedDateFilter";
 import {
     Table,
     TableBody,
@@ -110,6 +112,7 @@ export default function ListsView() {
     const [loadingOutreach, setLoadingOutreach] = useState<string | null>(null);
     const [assignModalPool, setAssignModalPool] = useState<LeadPool | null>(null);
     const [poolToDelete, setPoolToDelete] = useState<{ id: string, name: string } | null>(null);
+    const [restrictedPool, setRestrictedPool] = useState<string | null>(null);
 
     const [buttonSets, setButtonSets] = useState<Record<string, { sets: any[] }>>({});
     const [selectedButtonSet, setSelectedButtonSet] = useState<Record<string, string>>({});
@@ -142,22 +145,55 @@ export default function ListsView() {
         return () => clearInterval(interval);
     }, []);
 
-    const filteredPools = data?.pools?.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+        from: undefined,
+        to: undefined
+    });
+
+    const filteredPools = data?.pools?.filter(p => {
+        // Search filter
+        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        // Date filter
+        if (dateRange.from || dateRange.to) {
+            if (!p.createdAt) return false;
+            const createdAt = new Date(p.createdAt);
+
+            if (dateRange.from && dateRange.to) {
+                return createdAt >= dateRange.from && createdAt <= dateRange.to;
+            }
+            if (dateRange.from) {
+                return createdAt >= dateRange.from;
+            }
+            if (dateRange.to) {
+                return createdAt <= dateRange.to;
+            }
+        }
+
+        return true;
+    });
 
     const startFirstContact = async (poolId: string) => {
         try {
             setLoadingOutreach(poolId);
             const res = await fetch(`/api/crm/leads/pools/${encodeURIComponent(poolId)}/leads?mine=true`);
+
+            if (res.status === 403) {
+                const pool = data?.pools?.find(p => p.id === poolId);
+                setRestrictedPool(pool?.name || "this list");
+                return;
+            }
+
             if (!res.ok) throw new Error(await res.text());
             const j = await res.json();
             const ids: string[] = Array.isArray(j?.leads) ? (j.leads as any[]).filter(l => !!l.email).map(l => l.id) : [];
             setWizardLeadIds(ids);
             setWizardOpen(true);
         } catch (e) {
-            alert("Failed to load leads for outreach");
+            alert("An error occurred while loading outreach leads");
         } finally {
             setLoadingOutreach(null);
         }
@@ -190,13 +226,21 @@ export default function ListsView() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search lists..."
-                        className="pl-9 bg-card/50 backdrop-blur-sm border-white/10"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search lists..."
+                            className="pl-3 bg-card/50 backdrop-blur-sm border-white/10 !text-left placeholder:!text-left"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <EnhancedDateFilter
+                        onFilterChange={(range: { from: Date | undefined; to: Date | undefined }) => setDateRange(range)}
+                        storageKey="crm-lists-view-date-filter"
+                        initialType="all-time"
+                        className="w-full md:w-auto"
                     />
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
@@ -424,6 +468,12 @@ export default function ListsView() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <RestrictedAccessModal
+                isOpen={!!restrictedPool}
+                onClose={() => setRestrictedPool(null)}
+                poolName={restrictedPool || ""}
+            />
         </div>
     );
 }

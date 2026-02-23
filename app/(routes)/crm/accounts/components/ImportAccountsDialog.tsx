@@ -1,12 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { FileUp, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import {
+    FileUp,
+    CheckCircle2,
+    AlertCircle,
+    Loader2,
+    Database,
+    RefreshCcw,
+    ChevronRight,
+    Users,
+    Layers,
+    FileText
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 type PreviewStats = {
     totalRows: number;
@@ -21,14 +34,8 @@ type PreviewResponse = {
         usedColumns: string[];
         allColumns: string[];
     };
-    preview: {
-        accounts: any[];
-        contacts: any[];
-    };
-    fullPreview: {
-        accounts: any[];
-        contacts: any[];
-    }
+    preview: any[];
+    fullPreview: any[];
 };
 
 type Props = {
@@ -42,8 +49,10 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
     const [poolDescription, setPoolDescription] = useState("");
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState<PreviewResponse | null>(null);
+    const [mode, setMode] = useState<"simple" | "advanced">("simple");
     const [step, setStep] = useState<"upload" | "preview" | "complete">("upload");
     const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
@@ -84,18 +93,36 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
         if (!preview || !poolName) return;
         setLoading(true);
         try {
+            const allAccounts: any[] = [];
+            const allContacts: any[] = [];
+
+            // Flatten rows back into lists for the API
+            preview.fullPreview.forEach((row: any) => {
+                if (row.account) {
+                    allAccounts.push({
+                        ...row.account,
+                        name: row.account.companyName || "Unknown Account"
+                    });
+                }
+                if (row.contacts && row.contacts.length > 0) {
+                    row.contacts.forEach((c: any) => {
+                        allContacts.push({
+                            ...c,
+                            accountName: row.account?.companyName,
+                            candidateKey: row.account?.dedupeKey
+                        });
+                    });
+                }
+            });
+
             const res = await fetch("/api/crm/accounts/import/commit", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     poolName,
                     poolDescription,
-                    accounts: preview.fullPreview.accounts,
-                    contacts: preview.fullPreview.contacts.map((c: any, i: number) => ({
-                        ...c,
-                        // Attempt to link contact to the account from the same row if possible
-                        accountName: preview.fullPreview.accounts[i]?.name
-                    }))
+                    accounts: allAccounts,
+                    contacts: allContacts
                 }),
             });
 
@@ -137,35 +164,219 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
                     Import Accounts
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl bg-zinc-950 text-white border-zinc-800">
                 <DialogHeader>
                     <DialogTitle>Import Accounts & Contacts</DialogTitle>
                 </DialogHeader>
 
                 {step === "upload" && (
-                    <div className="space-y-6 py-4">
-                        <div className="border-2 border-dashed border-muted-foreground/20 rounded-xl p-10 text-center space-y-4">
-                            <FileUp className="w-10 h-10 mx-auto text-muted-foreground/40" />
-                            <div>
-                                <Label htmlFor="file-upload" className="cursor-pointer text-indigo-500 hover:underline font-medium">
-                                    Click to upload
-                                </Label>
-                                <input id="file-upload" type="file" className="hidden" accept=".xlsx,.csv" onChange={handleFileChange} />
-                                <p className="text-sm text-muted-foreground mt-1">Excel (.xlsx) or CSV files supported</p>
-                            </div>
-                            {file && (
-                                <div className="bg-indigo-500/10 text-indigo-500 text-xs py-2 px-4 rounded-full inline-block font-medium">
-                                    Selected: {file.name}
+                    <div className="space-y-6 py-2">
+                        {/* Intelligence Header & Toggle */}
+                        <div className="flex items-center justify-between px-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+                                    <Database className="w-4 h-4 text-indigo-400" />
                                 </div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-white leading-none">Mapping Intelligence</h4>
+                                    <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest font-bold">Preparation Guide</p>
+                                </div>
+                            </div>
+                            <div className="flex bg-zinc-900 p-0.5 rounded-xl border border-zinc-800">
+                                <button
+                                    onClick={() => setMode("simple")}
+                                    className={cn(
+                                        "px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase tracking-tighter",
+                                        mode === "simple" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "text-zinc-500 hover:text-zinc-300"
+                                    )}
+                                >
+                                    Standard
+                                </button>
+                                <button
+                                    onClick={() => setMode("advanced")}
+                                    className={cn(
+                                        "px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase tracking-tighter",
+                                        mode === "advanced" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "text-zinc-500 hover:text-zinc-300"
+                                    )}
+                                >
+                                    Migration
+                                </button>
+                            </div>
+                        </div>
+
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={mode}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <div className="bg-zinc-900/40 p-5 rounded-3xl border border-zinc-800/80 space-y-4 shadow-2xl backdrop-blur-sm">
+                                    {mode === "simple" ? (
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-3">
+                                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest italic">Core Fields</p>
+                                                <ul className="space-y-1.5">
+                                                    <li className="flex justify-between items-center text-[11px] bg-zinc-950/50 p-2 rounded-lg border border-zinc-800/30">
+                                                        <span className="text-zinc-400">Company</span>
+                                                        <span className="font-mono text-indigo-400 font-bold">Company Name</span>
+                                                    </li>
+                                                    <li className="flex justify-between items-center text-[11px] bg-zinc-950/50 p-2 rounded-lg border border-zinc-800/30">
+                                                        <span className="text-zinc-400">Contact</span>
+                                                        <span className="font-mono text-indigo-400 font-bold">Full Name</span>
+                                                    </li>
+                                                    <li className="flex justify-between items-center text-[11px] bg-zinc-950/50 p-2 rounded-lg border border-zinc-800/30">
+                                                        <span className="text-zinc-400">Email</span>
+                                                        <span className="font-mono text-indigo-400 font-bold">Primary Email</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div className="flex flex-col justify-center space-y-4">
+                                                <div className="p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10 space-y-2">
+                                                    <p className="text-[10px] text-zinc-400 leading-relaxed font-medium">
+                                                        Our engine automatically recognizes variations like <span className="text-white">"Org"</span>, <span className="text-white">"Corp"</span>, or <span className="text-white">"Person"</span>.
+                                                    </p>
+                                                    <div className="flex items-center gap-2 text-indigo-400 font-bold text-[10px]">
+                                                        <CheckCircle2 className="w-3 h-3" /> All CSV/XLSX supported
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                                            <div className="md:col-span-4 space-y-4">
+                                                <div className="space-y-1.5">
+                                                    <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest italic">High Fidelity Mapping</p>
+                                                    <ul className="space-y-1 text-[10px]">
+                                                        <li className="flex justify-between py-1 border-b border-zinc-800/50">
+                                                            <span className="text-zinc-500">History/Bio</span>
+                                                            <span className="text-white font-bold">Description</span>
+                                                        </li>
+                                                        <li className="flex justify-between py-1 border-b border-zinc-800/50">
+                                                            <span className="text-zinc-500">Secondary Email</span>
+                                                            <span className="text-white font-bold">Email 2</span>
+                                                        </li>
+                                                        <li className="flex justify-between py-1 border-b border-zinc-800/50">
+                                                            <span className="text-zinc-500">Mobile/Direct</span>
+                                                            <span className="text-white font-bold">Phone 2</span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            <div className="md:col-span-8 flex flex-col justify-between">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="p-3 bg-zinc-950/50 rounded-2xl border border-zinc-800/80 space-y-1.5">
+                                                        <p className="text-[10px] font-bold text-indigo-400 flex items-center gap-1.5 uppercase tracking-tighter">
+                                                            <Users className="w-3 h-3" /> Multi-Contact Strategy
+                                                        </p>
+                                                        <p className="text-[9px] text-zinc-500 leading-tight">
+                                                            Upload multiple rows with the same <span className="text-white font-medium">Domain</span>. The system will merge the account and link each unique person.
+                                                        </p>
+                                                    </div>
+                                                    <div className="p-3 bg-zinc-950/50 rounded-2xl border border-zinc-800/80 space-y-1.5">
+                                                        <p className="text-[10px] font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-tighter">
+                                                            <Layers className="w-3 h-3" /> Deduplication
+                                                        </p>
+                                                        <p className="text-[9px] text-zinc-500 leading-tight">
+                                                            We match on <span className="text-white font-medium">Exact Domain</span>. If "acme.com" exists, we'll enrich rather than duplicate.
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="w-full mt-4 text-[10px] h-9 bg-zinc-950 border-zinc-800 hover:bg-zinc-900 text-white font-bold rounded-xl shadow-xl shadow-black/40 border-b-2 border-b-indigo-500/20"
+                                                    onClick={() => {
+                                                        const headers = "Company Name,Domain,Full Name,Title,Email,Email 2,Phone,Phone 2,Description,Industry,Tech Stack,LinkedIn URL\n";
+                                                        const blob = new Blob([headers], { type: 'text/csv' });
+                                                        const url = window.URL.createObjectURL(blob);
+                                                        const a = document.createElement('a');
+                                                        a.setAttribute('hidden', '');
+                                                        a.setAttribute('href', url);
+                                                        a.setAttribute('download', 'basalt_migration_master.csv');
+                                                        document.body.appendChild(a);
+                                                        a.click();
+                                                        document.body.removeChild(a);
+                                                    }}
+                                                >
+                                                    <FileText className="w-3 h-3 mr-2 text-indigo-400" />
+                                                    Download Migration Master Template (.csv)
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        </AnimatePresence>
+
+                        {/* Dropzone Area */}
+                        <div
+                            onClick={() => fileInputRef.current?.click()}
+                            className={cn(
+                                "group relative aspect-[3/1] rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-8 cursor-pointer overflow-hidden mt-2 border-zinc-800/80 hover:border-indigo-500/30",
+                                file
+                                    ? "bg-emerald-500/5 border-emerald-500/30 shadow-2xl shadow-emerald-500/10"
+                                    : "bg-zinc-950/40 hover:bg-zinc-900/60"
+                            )}
+                        >
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".xlsx,.csv"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+
+                            {file ? (
+                                <motion.div
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    className="text-center space-y-2"
+                                >
+                                    <div className="w-12 h-12 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+                                        <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                                    </div>
+                                    <p className="text-white font-bold text-base leading-none tracking-tight">{file.name}</p>
+                                    <p className="text-emerald-500/60 text-[10px] font-bold uppercase tracking-widest italic">Intelligence Scan Ready</p>
+                                </motion.div>
+                            ) : (
+                                <>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <FileUp className="w-8 h-8 text-zinc-700 mb-3 group-hover:text-indigo-500 group-hover:scale-110 transition-all duration-300" />
+                                    <p className="text-zinc-500 font-medium text-sm text-center">
+                                        Drop CSV or XLSX to begin mapping
+                                    </p>
+                                    <p className="text-zinc-700 text-[9px] mt-2 uppercase tracking-[0.3em] font-black italic">Auto-detection Engine</p>
+                                </>
                             )}
                         </div>
 
-                        <div className="flex justify-end gap-3">
-                            <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-                            <Button disabled={!file || loading} onClick={startPreview}>
-                                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                Analyze File
-                            </Button>
+                        <div className="flex justify-between items-center pt-2">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 rounded bg-zinc-900 border border-zinc-800">
+                                    <RefreshCcw className="w-3 h-3 text-zinc-600 animate-[spin_4s_linear_infinite]" />
+                                </div>
+                                <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest italic">V2.4 Intelligence active</span>
+                            </div>
+
+                            <div className="flex gap-4">
+                                <Button variant="ghost" className="text-zinc-600 hover:text-white transition-colors" onClick={() => setOpen(false)}>Cancel</Button>
+                                <Button
+                                    disabled={loading || !file}
+                                    onClick={startPreview}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 px-8 rounded-xl shadow-xl shadow-indigo-600/20 group transform transition-all hover:scale-[1.02]"
+                                >
+                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                                        <div className="flex items-center gap-2 uppercase tracking-tighter italic font-black">
+                                            Preview Dataset
+                                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                        </div>
+                                    )}
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -224,12 +435,12 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {preview.preview.contacts.slice(0, 3).map((con, i) => (
+                                        {preview.preview.slice(0, 3).map((row: any, i: number) => (
                                             <tr key={i} className="border-t">
-                                                <td className="p-2 font-bold">{preview.preview.accounts[i]?.name || "—"}</td>
-                                                <td className="p-2">{con.fullName}</td>
-                                                <td className="p-2 text-muted-foreground">{con.email || "—"}</td>
-                                                <td className="p-2 font-mono text-[10px]">{con.phone || "—"}</td>
+                                                <td className="p-2 font-bold">{row.account?.companyName || "—"}</td>
+                                                <td className="p-2">{row.contacts?.[0]?.fullName || "—"}</td>
+                                                <td className="p-2 text-muted-foreground">{row.contacts?.[0]?.email || "—"}</td>
+                                                <td className="p-2 font-mono text-[10px]">{row.contacts?.[0]?.phone || "—"}</td>
                                             </tr>
                                         ))}
                                     </tbody>

@@ -26,7 +26,7 @@ export async function GET() {
 
     const isMember = user?.team_role === "MEMBER";
     const teamInfo = await getCurrentUserTeamId();
-    const isGlobalAdmin = teamInfo?.isGlobalAdmin;
+    const isGlobalAdmin = teamInfo?.isGlobalAdmin || teamInfo?.isPlatformAdmin;
     const teamId = teamInfo?.teamId;
 
     const poolSelect = {
@@ -168,7 +168,7 @@ export async function DELETE(req: Request) {
     }
 
     const teamInfo = await getCurrentUserTeamId();
-    const isGlobalAdmin = teamInfo?.isGlobalAdmin;
+    const isGlobalAdmin = teamInfo?.isGlobalAdmin || teamInfo?.isPlatformAdmin;
     const isTeamAdmin = teamInfo?.isAdmin; // Team Admin/Owner
     const myTeamId = teamInfo?.teamId;
 

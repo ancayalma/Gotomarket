@@ -22,18 +22,19 @@ export type ContactNorm = {
 };
 
 export const COLS = {
-    companyName: ["company", "companyname", "org", "organization", "business", "account", "company name"],
-    domain: ["domain", "website", "site", "companydomain", "company_domain"],
-    homepageUrl: ["homepage", "url", "websiteurl", "companyurl", "company_url"],
-    description: ["description", "about", "summary", "notes"],
-    industry: ["industry", "sector"],
+    companyName: ["company", "companyname", "org", "organization", "business", "account", "company name", "legal name", "merchant name"],
+    domain: ["domain", "website", "site", "companydomain", "company_domain", "url"],
+    homepageUrl: ["homepage", "websiteurl", "companyurl", "company_url"],
+    description: ["description", "about", "summary", "notes", "comments"],
+    industry: ["industry", "sector", "vertical", "mcc"],
     techStack: ["techstack", "technology", "stack", "technologies"],
-    fullName: ["name", "fullname", "contact", "person"],
-    title: ["title", "role", "jobtitle", "position"],
-    email: ["email", "emailaddress", "contactemail", "email1", "email_1", "primaryemail", "primary email", "primary email / contact"],
-    additionalEmails: ["email2", "email3", "email_2", "email_3", "other_emails", "emails", "secondary email", "third email", "secondaryemail", "thirdemail"],
-    phone: ["phone", "phonenumber", "contactphone", "mobile", "phone number"],
-    linkedinUrl: ["linkedin", "linkedinurl", "linkedin_profile"],
+    fullName: ["name", "fullname", "contact", "person", "contact name", "primary contact"],
+    title: ["title", "role", "jobtitle", "position", "job title"],
+    email: ["email", "emailaddress", "contactemail", "email1", "email_1", "primaryemail", "primary email", "primary email / contact", "contact email"],
+    additionalEmails: ["email2", "email3", "email_4", "other_emails", "emails", "secondary email", "third email", "secondaryemail", "thirdemail", "additional email"],
+    phone: ["phone", "phonenumber", "contactphone", "mobile", "phone number", "office phone", "business phone", "phone 1", "phone_1"],
+    additionalPhones: ["phone2", "phone3", "phone_2", "secondary phone", "other phone", "mobile phone", "direct phone", "direct line"],
+    linkedinUrl: ["linkedin", "linkedinurl", "linkedin_profile", "linkedin profile"],
 };
 
 function lc(s: any): string {
@@ -214,25 +215,41 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
     if (fullName) usedCols.push("fullName");
     const title = lc(getFromRow(row, COLS.title));
     if (title) usedCols.push("title");
-    const phone = lc(getFromRow(row, COLS.phone));
-    if (phone) usedCols.push("phone");
     const linkedinUrl = lc(getFromRow(row, COLS.linkedinUrl));
     if (linkedinUrl) usedCols.push("linkedinUrl");
 
-    if (fullName || phone || linkedinUrl) {
+    // Gather all phones in the row
+    const allPhonesFound = new Set<string>();
+    const phoneSynonyms = [...COLS.phone, ...COLS.additionalPhones];
+    for (const rk of Object.keys(row)) {
+        const lk = rk.toLowerCase();
+        if (phoneSynonyms.includes(lk)) {
+            const val = row[rk];
+            if (val) {
+                if (!usedCols.includes(lk)) usedCols.push(lk);
+                allPhonesFound.add(String(val).trim());
+            }
+        }
+    }
+
+    const primaryPhone = lc(getFromRow(row, COLS.phone));
+    // Prioritize mobile/direct if primary is empty
+    const finalPhone = primaryPhone || Array.from(allPhonesFound)[0] || "";
+
+    if (fullName || finalPhone || linkedinUrl) {
         const targetEmail = lc(emailCol).toLowerCase();
         const existingIdx = discoveredContacts.findIndex(dc => (fullName && dc.fullName === fullName) || (targetEmail && dc.email === targetEmail));
 
         if (existingIdx >= 0) {
             discoveredContacts[existingIdx].fullName = fullName || discoveredContacts[existingIdx].fullName;
             discoveredContacts[existingIdx].title = title;
-            discoveredContacts[existingIdx].phone = phone;
+            discoveredContacts[existingIdx].phone = finalPhone || discoveredContacts[existingIdx].phone;
             discoveredContacts[existingIdx].linkedinUrl = linkedinUrl;
-        } else if (fullName || phone || linkedinUrl) {
+        } else if (fullName || finalPhone || linkedinUrl) {
             const isNamed = targetEmail ? classifyEmail(targetEmail).type === "NAMED" : !!fullName;
             if (isNamed) {
                 // Ignore junk phones for deduplication keys
-                const cleanPhone = phone.replace(/\D/g, "");
+                const cleanPhone = finalPhone.replace(/\D/g, "");
                 const isJunkPhone = JUNK_PHONES.includes(cleanPhone);
 
                 let contactKey = "";
@@ -247,7 +264,7 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
                         fullName: fullName || undefined,
                         title: title || undefined,
                         email: targetEmail || undefined,
-                        phone: phone || undefined,
+                        phone: finalPhone || undefined,
                         linkedinUrl: linkedinUrl || undefined,
                     });
                 }

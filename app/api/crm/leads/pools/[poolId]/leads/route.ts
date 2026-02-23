@@ -30,22 +30,30 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
     // 3. Team Admin (if pool is in team)
 
     const teamInfo = await getCurrentUserTeamId();
-    const isGlobalAdmin = teamInfo?.isGlobalAdmin;
+    const isGlobalAdmin = teamInfo?.isGlobalAdmin || teamInfo?.isPlatformAdmin;
     const isTeamAdmin = user?.team_role === "ADMIN" || user?.team_role === "OWNER";
 
-    // Fetch pool with team_id
+    // Fetch pool with team_id and assigned_members
     const pool = await (prismadbCrm as any).crm_Lead_Pools.findUnique({
       where: { id: poolId },
-      select: { user: true, team_id: true },
+      select: { user: true, team_id: true, assigned_members: true },
     });
 
     if (!pool) return new NextResponse("Pool not found", { status: 404 });
 
     const isOwner = pool.user === session.user.id;
     const isTeamMatch = pool.team_id === teamInfo?.teamId;
+    const isAssigned = Array.isArray(pool.assigned_members) && pool.assigned_members.includes(session.user.id);
 
-    if (!isGlobalAdmin && !isOwner && !(isTeamAdmin && isTeamMatch)) {
-      // If just a MEMBER, they are blocked unless they own it
+    // RBAC logic:
+    // 1. Global Admin (GOD MODE) -> Always allow
+    // 2. Creator (isOwner) -> Always allow
+    // 3. Team Admin/Owner (isTeamAdmin && isTeamMatch) -> Allow team management
+    // 4. Member (isAssigned) -> Allow access if list is assigned to them
+
+    if (isGlobalAdmin || isOwner || (isTeamAdmin && isTeamMatch) || isAssigned) {
+      // Access granted
+    } else {
       return new NextResponse("Forbidden", { status: 403 });
     }
 

@@ -63,7 +63,6 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
   const allNavItems = [
     { id: "accounts", label: "All Accounts", icon: Users },
     { id: "wizard", label: "LeadGen Wizard", icon: Wand2 },
-    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   const leadsNavItems = isMember
@@ -207,7 +206,6 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
           {selected === "accounts" && managerSlot}
           {selected === "wizard" && wizardSlot}
           {selected === "pools" && poolsSlot}
-          {selected === "settings" && settingsSlot}
         </div>
       </div>
 

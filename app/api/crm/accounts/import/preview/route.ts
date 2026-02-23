@@ -81,11 +81,7 @@ export async function POST(req: Request) {
 
         const usedColsSet = new Set<string>();
         const corruptRows: any[] = [];
-        const preview = {
-            accounts: [] as any[],
-            contacts: [] as any[],
-        };
-
+        const combinedRows: any[] = [];
         let validAccounts = 0;
         let validContacts = 0;
 
@@ -94,30 +90,30 @@ export async function POST(req: Request) {
             const { candidate, contacts, usedCols } = normalizeRow(row);
             usedCols.forEach(c => usedColsSet.add(c));
 
-            if (candidate) {
-                const parsed = candidateSchema.safeParse(candidate);
-                if (parsed.success) {
-                    validAccounts++;
-                    preview.accounts.push(parsed.data);
+            if (candidate || (contacts && contacts.length > 0)) {
+                if (candidate) {
+                    const parsed = candidateSchema.safeParse(candidate);
+                    if (parsed.success) validAccounts++;
                 }
-            }
 
-            if (contacts && contacts.length > 0) {
-                for (const contact of contacts) {
-                    const parsed = contactSchema.safeParse(contact);
-                    if (parsed.success) {
-                        validContacts++;
-                        const conData = parsed.data;
-                        if (conData.phone) {
-                            const { normalized } = phoneNormalizer.normalizePhone(conData.phone, { preferUS: true });
-                            conData.phone = normalized;
+                if (contacts && contacts.length > 0) {
+                    for (const contact of contacts) {
+                        const parsed = contactSchema.safeParse(contact);
+                        if (parsed.success) {
+                            validContacts++;
+                            if (contact.phone) {
+                                const { normalized } = phoneNormalizer.normalizePhone(contact.phone, { preferUS: true });
+                                contact.phone = normalized;
+                            }
                         }
-                        preview.contacts.push(conData);
                     }
                 }
-            }
 
-            if (!candidate && (!contacts || contacts.length === 0)) {
+                combinedRows.push({
+                    account: candidate,
+                    contacts: contacts || []
+                });
+            } else {
                 corruptRows.push({ index: i, error: "Empty row or no recognizable fields" });
             }
         }
@@ -133,14 +129,8 @@ export async function POST(req: Request) {
                 usedColumns: Array.from(usedColsSet),
                 allColumns: Object.keys(rows[0] || {})
             },
-            preview: {
-                accounts: preview.accounts.slice(0, 10),
-                contacts: preview.contacts.slice(0, 10)
-            },
-            fullPreview: {
-                accounts: preview.accounts.slice(0, 2000),
-                contacts: preview.contacts.slice(0, 2000)
-            }
+            preview: combinedRows.slice(0, 10),
+            fullPreview: combinedRows.slice(0, 5000)
         });
 
     } catch (error: any) {
