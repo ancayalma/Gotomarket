@@ -11,9 +11,117 @@ interface MermaidDiagramProps {
     className?: string;
 }
 
+/**
+ * Extract mermaid diagram blocks from input.
+ * Handles: full markdown docs with ```mermaid fences, single fenced blocks, and clean code.
+ * Always returns an array of diagram strings.
+ */
+function extractMermaidBlocks(input: string): string[] {
+    const trimmed = input.trim();
+
+    // Case 1: Contains ```mermaid fenced blocks — extract ALL of them
+    const fenceRegex = /```mermaid\s*\n([\s\S]*?)```/g;
+    const matches: string[] = [];
+    let match;
+    while ((match = fenceRegex.exec(trimmed)) !== null) {
+        matches.push(match[1].trim());
+    }
+    if (matches.length > 0) {
+        return matches;
+    }
+
+    // Case 2: Wrapped in a single ``` ... ``` (no "mermaid" keyword)
+    const singleFence = trimmed.match(/^```(?:mermaid)?\s*\n([\s\S]*?)```$/m);
+    if (singleFence) {
+        return [singleFence[1].trim()];
+    }
+
+    // Case 3: Already clean mermaid code
+    return [trimmed];
+}
+
+// ─── Multi-Page Markdown Parsing ─────────────────────────────────────────────
+
+export type DiagramPage = {
+    pageNumber: number;
+    title: string;
+    description: string;
+    mermaidCode: string;
+    notes: string;
+};
+
+/**
+ * Parse a full markdown document into structured DiagramPages.
+ * Each page corresponds to a ## heading section that contains a ```mermaid block.
+ * Extracts: title, description (italic intro), mermaid code, and notes (logic breakdown).
+ */
+export function parseMarkdownToPages(markdown: string): DiagramPage[] {
+    const trimmed = markdown.trim();
+
+    // Quick check: does this look like a markdown doc with mermaid blocks?
+    if (!trimmed.includes('```mermaid')) {
+        // Single clean diagram — no page structure
+        return [{
+            pageNumber: 1,
+            title: '',
+            description: '',
+            mermaidCode: trimmed,
+            notes: '',
+        }];
+    }
+
+    // Split by level-2 headings (## ), keeping the heading with its section
+    const sections = trimmed.split(/(?=^## )/m);
+    const pages: DiagramPage[] = [];
+    let pageNum = 1;
+
+    for (const section of sections) {
+        // Only process sections that contain a mermaid block
+        const mermaidMatch = section.match(/```mermaid\s*\n([\s\S]*?)```/);
+        if (!mermaidMatch) continue;
+
+        // Extract title from ## heading
+        const titleMatch = section.match(/^## (.+)$/m);
+        const title = titleMatch ? titleMatch[1].trim() : `Page ${pageNum}`;
+
+        // Extract description — italic text (*...*) between the title and the mermaid block
+        const beforeMermaid = section.substring(0, section.indexOf('```mermaid'));
+        const descMatch = beforeMermaid.match(/\*([^*]+)\*/);
+        const description = descMatch ? descMatch[1].trim() : '';
+
+        // Extract notes — everything after the closing ``` of the mermaid block
+        const mermaidEnd = section.indexOf('```', section.indexOf('```mermaid') + 10) + 3;
+        const afterMermaid = section.substring(mermaidEnd).trim();
+        // Clean up notes: remove trailing --- separators
+        const notes = afterMermaid.replace(/\n---\s*$/, '').trim();
+
+        pages.push({
+            pageNumber: pageNum++,
+            title,
+            description,
+            mermaidCode: mermaidMatch[1].trim(),
+            notes,
+        });
+    }
+
+    // Fallback: if markdown has mermaid blocks but no ## sections
+    if (pages.length === 0) {
+        const blocks = extractMermaidBlocks(trimmed);
+        return blocks.map((code, i) => ({
+            pageNumber: i + 1,
+            title: `Diagram ${i + 1}`,
+            description: '',
+            mermaidCode: code,
+            notes: '',
+        }));
+    }
+
+    return pages;
+}
+
 export function MermaidDiagram({ chart, mobileChart, compact, className }: MermaidDiagramProps) {
-    const [desktopSvg, setDesktopSvg] = useState<string>("");
-    const [mobileSvg, setMobileSvg] = useState<string>("");
+    const [desktopSvgs, setDesktopSvgs] = useState<string[]>([]);
+    const [mobileSvgs, setMobileSvgs] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -38,34 +146,57 @@ export function MermaidDiagram({ chart, mobileChart, compact, className }: Merma
                         background: "transparent",
                         mainBkg: "transparent",
                         nodeBorder: "#475569",
-                        clusterBkg: "rgba(15, 23, 42, 0.4)", // Slightly darker and more transparent for elegance
+                        clusterBkg: "rgba(15, 23, 42, 0.4)",
                         clusterBorder: "rgba(71, 85, 105, 0.4)",
-                        titleColor: "#94a3b8", // Subdued title color
+                        titleColor: "#94a3b8",
                         edgeLabelBackground: "transparent",
-                        fontSize: "12px", // Slightly smaller font
+                        fontSize: "16px",
                         fontFamily: "var(--font-inter), system-ui, sans-serif",
                     },
                     flowchart: {
                         htmlLabels: true,
-                        curve: "basis", // Smoother curves for a "sexier" look
-                        padding: compact ? 12 : 20,
-                        nodeSpacing: compact ? 30 : 60,
-                        rankSpacing: compact ? 220 : 100, // Significantly stretched in compact mode
+                        curve: "basis",
+                        padding: compact ? 14 : 28,
+                        nodeSpacing: compact ? 40 : 80,
+                        rankSpacing: compact ? 220 : 120,
                         useMaxWidth: true,
                     },
                     securityLevel: 'loose',
                 });
 
-                // Render desktop version
-                const desktopId = `mermaid-desktop-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-                const { svg: dSvg } = await mermaid.render(desktopId, chart.trim());
-                setDesktopSvg(dSvg);
+                // Extract all diagram blocks from input
+                const desktopBlocks = extractMermaidBlocks(chart);
+                const renderedDesktop: string[] = [];
 
-                // Render mobile version if provided
+                for (let i = 0; i < desktopBlocks.length; i++) {
+                    const id = `mermaid-desktop-${Date.now()}-${i}-${Math.random().toString(36).slice(2)}`;
+                    try {
+                        const { svg } = await mermaid.render(id, desktopBlocks[i]);
+                        renderedDesktop.push(svg);
+                    } catch (blockErr: any) {
+                        console.warn(`Mermaid block ${i + 1} failed:`, blockErr?.message);
+                        renderedDesktop.push(
+                            `<div class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">Diagram ${i + 1} failed to render: ${blockErr?.message || "Unknown error"}</div>`
+                        );
+                    }
+                }
+                setDesktopSvgs(renderedDesktop);
+
+                // Render mobile versions if provided
                 if (mobileChart) {
-                    const mobileId = `mermaid-mobile-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-                    const { svg: mSvg } = await mermaid.render(mobileId, mobileChart.trim());
-                    setMobileSvg(mSvg);
+                    const mobileBlocks = extractMermaidBlocks(mobileChart);
+                    const renderedMobile: string[] = [];
+
+                    for (let i = 0; i < mobileBlocks.length; i++) {
+                        const id = `mermaid-mobile-${Date.now()}-${i}-${Math.random().toString(36).slice(2)}`;
+                        try {
+                            const { svg } = await mermaid.render(id, mobileBlocks[i]);
+                            renderedMobile.push(svg);
+                        } catch {
+                            // Mobile fallback — skip silently, desktop will be used
+                        }
+                    }
+                    setMobileSvgs(renderedMobile);
                 }
 
                 setError(null);
@@ -97,6 +228,8 @@ export function MermaidDiagram({ chart, mobileChart, compact, className }: Merma
         );
     }
 
+    const isMulti = desktopSvgs.length > 1;
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -107,23 +240,53 @@ export function MermaidDiagram({ chart, mobileChart, compact, className }: Merma
                 className
             )}
         >
-            {/* Desktop: horizontal chart */}
-            <div
-                className="hidden md:flex md:justify-center md:items-center [&_svg]:w-full [&_svg]:max-w-full [&_svg]:h-auto"
-                dangerouslySetInnerHTML={{ __html: desktopSvg }}
-            />
-            {/* Mobile: vertical chart or scrollable horizontal */}
-            {mobileSvg ? (
-                <div
-                    className="block md:hidden flex justify-center items-center [&_svg]:w-full [&_svg]:max-w-full [&_svg]:h-auto"
-                    dangerouslySetInnerHTML={{ __html: mobileSvg }}
-                />
-            ) : (
-                <div
-                    className="block md:hidden overflow-x-auto [&_svg]:min-w-[600px] [&_svg]:h-auto"
-                    dangerouslySetInnerHTML={{ __html: desktopSvg }}
-                />
-            )}
+            {/* Desktop: render all charts */}
+            <div className={cn(
+                "hidden md:block [&_svg]:w-full [&_svg]:max-w-full [&_svg]:h-auto",
+                isMulti && "space-y-6"
+            )}>
+                {desktopSvgs.map((svg, i) => (
+                    <div key={i} className={cn(
+                        "flex justify-center items-center",
+                        isMulti && i > 0 && "pt-6 border-t border-white/5"
+                    )}>
+                        <div
+                            className="w-full flex justify-center items-center"
+                            dangerouslySetInnerHTML={{ __html: svg }}
+                        />
+                    </div>
+                ))}
+            </div>
+
+            {/* Mobile: vertical charts or scrollable horizontal fallback */}
+            <div className={cn(
+                "block md:hidden",
+                isMulti && "space-y-4"
+            )}>
+                {mobileSvgs.length > 0 ? (
+                    mobileSvgs.map((svg, i) => (
+                        <div
+                            key={i}
+                            className={cn(
+                                "flex justify-center items-center [&_svg]:w-full [&_svg]:max-w-full [&_svg]:h-auto",
+                                isMulti && i > 0 && "pt-4 border-t border-white/5"
+                            )}
+                            dangerouslySetInnerHTML={{ __html: svg }}
+                        />
+                    ))
+                ) : (
+                    desktopSvgs.map((svg, i) => (
+                        <div
+                            key={i}
+                            className={cn(
+                                "overflow-x-auto [&_svg]:min-w-[600px] [&_svg]:h-auto",
+                                isMulti && i > 0 && "pt-4 border-t border-white/5"
+                            )}
+                            dangerouslySetInnerHTML={{ __html: svg }}
+                        />
+                    ))
+                )}
+            </div>
         </motion.div>
     );
 }
