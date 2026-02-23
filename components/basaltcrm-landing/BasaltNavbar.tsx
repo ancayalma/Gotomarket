@@ -56,8 +56,8 @@ export default function BasaltNavbar({ themeColor = '#06b6d4' }: NavbarProps) {
                 <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
                     {/* Logo & System Status */}
                     <div className="flex items-center gap-6">
-                        <Link href="/" className="flex items-center gap-3 group">
-                            <div className="relative w-10 h-10 transform group-hover:scale-110 transition-transform duration-300">
+                        <Link href="/" className="flex items-center gap-2 md:gap-3 group">
+                            <div className="relative w-8 h-8 md:w-10 md:h-10 flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
                                 <Image
                                     src="/CRM-ERP-CMS.png"
                                     alt="Basalt Shield"
@@ -71,7 +71,7 @@ export default function BasaltNavbar({ themeColor = '#06b6d4' }: NavbarProps) {
                                 <span className="hidden md:block text-xs font-mono tracking-widest opacity-80 transition-colors" style={{ color: themeColor }}>
                                     STATUS.ONLINE
                                 </span>
-                                <span className="text-lg text-white tracking-widest group-hover:opacity-80 transition-opacity" style={{ fontFamily: '"vox", sans-serif' }}>
+                                <span className="text-base md:text-lg text-white tracking-widest group-hover:opacity-80 transition-opacity" style={{ fontFamily: '"vox", sans-serif' }}>
                                     <span style={{ fontWeight: 300 }}>BASALT</span><span style={{ fontWeight: 700 }}>CRM</span>
                                 </span>
                             </div>
@@ -129,10 +129,10 @@ export default function BasaltNavbar({ themeColor = '#06b6d4' }: NavbarProps) {
                             ))}
                         </div>
 
-                        {/* CTA Button */}
+                        {/* CTA Button - hidden on mobile to avoid crowding */}
                         <Link
                             href="/register"
-                            className="text-xs font-mono tracking-wider px-6 py-3 rounded-[10px] bg-white text-black font-bold hover:opacity-90 transition-opacity"
+                            className="hidden xl:inline-flex text-xs font-mono tracking-wider px-6 py-3 rounded-[10px] bg-white text-black font-bold hover:opacity-90 transition-opacity"
                             style={{ backgroundColor: themeColor, color: '#000' }}
                         >
                             GET STARTED

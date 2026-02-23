@@ -44,7 +44,7 @@ const jsonLd = {
 
 export default function LandingPage() {
     return (
-        <div className="dark min-h-screen bg-black text-white font-sans selection:bg-cyan-500/30">
+        <div className="dark min-h-screen bg-black text-white font-sans selection:bg-cyan-500/30 overflow-x-hidden">
             {/* Global Background - Fixed to cover detailed sections */}
             <div className="fixed inset-0 z-0">
                 <GeometricBackground />

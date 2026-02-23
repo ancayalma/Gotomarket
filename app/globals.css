@@ -635,6 +635,7 @@
 
   html {
     min-height: 100%;
+    overflow-x: hidden;
     @apply bg-background;
     /* Ensure overscroll area is dark */
     background-color: hsl(var(--background));

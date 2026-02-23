@@ -147,7 +147,7 @@ export default function GeometricBackground() {
                                     width: line.width,
                                 }}
                                 animate={{
-                                    x: [0, 1000], // Move right
+                                    x: ['-100%', '100%'], // Move right within bounds
                                     opacity: [0, 1, 0],
                                 }}
                                 transition={{
