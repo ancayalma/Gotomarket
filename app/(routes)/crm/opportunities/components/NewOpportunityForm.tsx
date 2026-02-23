@@ -50,6 +50,7 @@ import useDebounce from "@/hooks/useDebounce";
 export type NewOpportunityFormProps = {
   users: any[];
   accounts: crm_Accounts[];
+  leads: any[];
   contacts: crm_Contacts[];
   salesType: crm_Opportunities_Type[];
   saleStages: crm_Opportunities_Sales_Stages[];
@@ -62,6 +63,7 @@ export type NewOpportunityFormProps = {
 export function NewOpportunityForm({
   users,
   accounts,
+  leads = [],
   contacts,
   salesType,
   saleStages,
@@ -70,6 +72,7 @@ export function NewOpportunityForm({
   accountId,
   onDialogClose,
 }: NewOpportunityFormProps) {
+
   const router = useRouter();
   const { toast } = useToast();
 
@@ -91,6 +94,7 @@ export function NewOpportunityForm({
     account: z.string().optional().nullable(),
     assign_to_project: z.string().optional().nullable(),
     contact: z.string().optional().nullable(),
+    lead: z.string().optional().nullable(),
     lead_source: z.string().optional().nullable(),
   });
 
@@ -112,6 +116,7 @@ export function NewOpportunityForm({
       account: accountId ? accountId : null,
       assign_to_project: null,
       contact: null,
+      lead: null,
       lead_source: null,
     },
   });
@@ -148,6 +153,7 @@ export function NewOpportunityForm({
         account: "",
         assign_to_project: "",
         contact: "",
+        lead: "",
         lead_source: "",
       });
     }
@@ -428,7 +434,32 @@ export function NewOpportunityForm({
 
                 <FormField
                   control={form.control}
+                  name="lead"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Assigned Lead</FormLabel>
+                      <FormControl>
+                        <Combobox
+                          options={leads.map((lead: any) => ({
+                            label: lead.firstName || lead.lastName
+                              ? `${lead.firstName || ""} ${lead.lastName || ""}`.trim()
+                              : lead.email || "Unknown Lead",
+                            value: lead.id,
+                          }))}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select lead"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="account"
+
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Assigned Account</FormLabel>

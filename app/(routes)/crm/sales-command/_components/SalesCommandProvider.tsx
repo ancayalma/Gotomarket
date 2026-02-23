@@ -43,12 +43,14 @@ export function SalesCommandProvider({
     initialCrmData = {},
     initialBoards = [],
     initialTasks = [],
-    defaultViewMode = "team",
+    defaultViewMode,
     isMember = false,
+
 }: SalesCommandProviderProps) {
-    // If member, force default view to personal
-    const effectiveDefaultView = isMember ? "personal" : defaultViewMode;
+    // Use provided default view mode, or fallback to role-based default
+    const effectiveDefaultView = defaultViewMode || (isMember ? "personal" : "team");
     const [viewMode, setViewMode] = useState<ViewMode>(effectiveDefaultView);
+
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [selectedUserData, setSelectedUserData] = useState<UserSpecificSalesData | null>(null);
     const [data, setData] = useState<UnifiedSalesData>(initialData);
@@ -56,6 +58,13 @@ export function SalesCommandProvider({
 
     // Simple heuristic for manager role based on initial data (can be refined)
     const isManager = initialData.meta.isGlobalAdmin;
+
+    // Sync viewMode with prop changes (e.g. from URL navigation)
+    React.useEffect(() => {
+        if (defaultViewMode) {
+            setViewMode(defaultViewMode);
+        }
+    }, [defaultViewMode]);
 
     const refreshData = React.useCallback(async (from?: Date, to?: Date) => {
         setIsRefreshing(true);

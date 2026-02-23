@@ -37,6 +37,12 @@ export const getOpportunitiesFull = async () => {
           name: true,
         },
       },
+      assigned_lead: {
+        select: {
+          firstName: true,
+          lastName: true,
+        },
+      },
     },
     orderBy: {
       created_on: "desc",

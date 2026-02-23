@@ -110,12 +110,9 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Command",
                 iconName: "Radio",
-                href: "/crm/sales-command",
-                children: [
-                    { id: "sub_command_my", type: "item", label: "My Command", href: "/crm/sales-command" },
-                    { id: "sub_command_team", type: "item", label: "Team Command", href: "/crm/sales-command?view=team" }
-                ]
+                href: "/crm/sales-command"
             },
+
             {
                 id: "nav_deals",
                 type: "item",

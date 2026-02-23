@@ -152,7 +152,13 @@ const DynamicModuleMenu = ({
 
     // ─── Renderer ───
     const renderItem = (item: NavItem) => {
+        // Force Command to have no flyout children as per latest design
+        if (item.id === "nav_command" || item.href === "/crm/sales-command") {
+            item = { ...item, children: undefined };
+        }
+
         if (!isVisible(item)) return null;
+
 
         const hasAccess = checkPermission(item);
         const isLocked = item.isPremium && !hasAccess;

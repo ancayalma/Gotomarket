@@ -92,7 +92,7 @@ export default function SalesCommandDashboard() {
                                     : "text-muted-foreground hover:text-foreground"
                             )}
                         >
-                            Overview
+                            Team Dashboard
                         </button>
                         <button
                             onClick={() => setViewMode("personal")}

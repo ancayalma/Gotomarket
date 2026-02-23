@@ -12,7 +12,13 @@ import { getBoards } from "@/actions/projects/get-boards";
 import { getTasks } from "@/actions/projects/get-tasks";
 import { LearnLink } from "@/components/ui/LearnLink";
 
-export default async function SalesCommandPage() {
+export default async function SalesCommandPage({
+    searchParams
+}: {
+    searchParams: { [key: string]: string | string[] | undefined }
+}) {
+    const view = typeof searchParams.view === 'string' ? searchParams.view : undefined;
+
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
@@ -75,9 +81,11 @@ export default async function SalesCommandPage() {
                 initialBoards={boards}
                 initialTasks={tasks || []}
                 isMember={!isSuperAdmin && user?.team_role === 'MEMBER'}
+                defaultViewMode={view as any}
             >
                 <SalesCommandDashboard />
             </SalesCommandProvider>
+
         </PermissionsProvider>
     );
 }

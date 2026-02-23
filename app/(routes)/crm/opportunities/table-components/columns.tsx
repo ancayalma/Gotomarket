@@ -85,6 +85,34 @@ export const columns: ColumnDef<Opportunity>[] = [
     enableHiding: true,
   },
   {
+    accessorKey: "assigned_lead",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Assigned lead" />
+    ),
+    cell: ({ row }) => (
+      <div className="w-[200px]">
+        {(() => {
+          //@ts-ignore
+          const lead = row.getValue("assigned_lead");
+          if (!lead) return <span className="text-muted-foreground/50 text-xs italic font-medium">Unassigned</span>;
+          //@ts-ignore
+          const name = `${lead.firstName || ""} ${lead.lastName || ""}`.trim() || "Unknown Lead";
+          return (
+            <div className="flex items-center space-x-2 w-max px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+              <div className="h-4 w-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-[8px] font-bold">
+                {name.substring(0, 2).toUpperCase()}
+              </div>
+              <span className="text-xs font-semibold">{name}</span>
+            </div>
+          )
+        })()}
+      </div>
+    ),
+    enableSorting: true,
+    enableHiding: true,
+  },
+
+  {
     accessorKey: "name",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />

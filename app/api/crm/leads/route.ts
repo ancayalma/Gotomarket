@@ -16,10 +16,16 @@ export async function GET(req: Request) {
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
 
+    let whereClause: any = {
+      team_id: teamId,
+    };
+
+    if (teamInfo && !teamInfo.isAdmin && !teamInfo.isGlobalAdmin) {
+      whereClause.assigned_to = teamInfo.userId;
+    }
+
     const leads = await prismadb.crm_Leads.findMany({
-      where: {
-        team_id: teamId,
-      },
+      where: whereClause,
       select: {
         id: true,
         firstName: true,

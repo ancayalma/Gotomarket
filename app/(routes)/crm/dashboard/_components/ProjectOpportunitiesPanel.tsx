@@ -1,47 +1,48 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { User, Target, TrendingUp, Sparkles, ArrowRight, Loader2, DollarSign } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Combobox } from "@/components/ui/combobox";
 import axios from "axios";
 
-type Project = { id: string; title: string; description?: string };
+type Lead = { id: string; firstName?: string; lastName?: string; company?: string };
 
 type Opportunity = {
   id: string;
-  title: string;
+  name: string;
   description?: string | null;
-  category: "FEATURE_BUILDOUT" | "COMMISSIONED_WORK" | "OTHER";
-  status: "OPEN" | "WON" | "LOST" | "ARCHIVED";
-  valueEstimate?: number | null;
-  relatedTasksIDs?: string[];
+  status: string;
+  expected_revenue?: number | null;
   createdAt?: string;
 };
 
-export default function ProjectOpportunitiesPanel() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+export default function LeadOpportunitiesPanel() {
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [selectedLeadId, setSelectedLeadId] = useState<string>("");
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<"FEATURE_BUILDOUT" | "COMMISSIONED_WORK" | "OTHER">("FEATURE_BUILDOUT");
+  const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [valueEstimate, setValueEstimate] = useState<string>("");
+  const [expectedRevenue, setExpectedRevenue] = useState<string>("");
 
   const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch accessible projects
+    // Fetch accessible leads
     (async () => {
       try {
-        const res = await fetch("/api/projects", { cache: "no-store" });
+        const res = await fetch("/api/crm/leads", { cache: "no-store" });
         if (res.ok) {
-          const j = await res.json();
-          setProjects((j?.projects || []) as Project[]);
+          const data = await res.json();
+          setLeads(data as Lead[]);
         }
       } catch (e) {
         // ignore
@@ -50,14 +51,18 @@ export default function ProjectOpportunitiesPanel() {
   }, []);
 
   useEffect(() => {
-    if (!selectedProjectId) return;
+    if (!selectedLeadId) return;
     setIsLoading(true);
     (async () => {
       try {
-        const res = await fetch(`/api/projects/${encodeURIComponent(selectedProjectId)}/opportunities`, { cache: "no-store" });
+        // Fetch opportunities for this lead
+        // Note: Needs a way to filter opportunities by lead on the server
+        // For now, we fetch all and filter client-side or use a specialized endpoint if exists
+        const res = await fetch("/api/crm/opportunity", { cache: "no-store" });
         if (res.ok) {
-          const j = await res.json();
-          setOpportunities(((j?.opportunities || []) as Opportunity[]).filter(o => o.status !== 'ARCHIVED'));
+          const data = await res.json();
+          // Assuming the full data includes detailed info from the API route update
+          setOpportunities((data?.opportunities || []).filter((o: any) => o.lead_id === selectedLeadId));
         }
       } catch (e) {
         // ignore
@@ -65,126 +70,252 @@ export default function ProjectOpportunitiesPanel() {
         setIsLoading(false);
       }
     })();
-  }, [selectedProjectId]);
+  }, [selectedLeadId]);
 
   async function onCreateOpportunity() {
-    if (!selectedProjectId) {
-      toast({ title: "Select campaign", description: "Choose a campaign first" });
+    if (!selectedLeadId) {
+      toast({ title: "Select lead", description: "Choose a lead first" });
       return;
     }
-    if (!title.trim()) {
-      toast({ title: "Missing title", description: "Enter a title for the opportunity" });
+    if (!name.trim()) {
+      toast({ title: "Missing name", description: "Enter a name for the opportunity" });
       return;
     }
     try {
-      setIsLoading(true);
-      const res = await fetch(`/api/projects/${encodeURIComponent(selectedProjectId)}/opportunities`, {
+      setIsSubmitting(true);
+      const res = await fetch("/api/crm/opportunity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, category, description: description || null, valueEstimate: valueEstimate ? Number(valueEstimate) : undefined }),
+        body: JSON.stringify({
+          name,
+          description: description || null,
+          expected_revenue: expectedRevenue ? Number(expectedRevenue) : 0,
+          lead: selectedLeadId,
+          type: "New Business", // Default type
+          sales_stage: "Qualification", // Default stage
+          close_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days default
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
       const j = await res.json();
-      toast({ title: "Request submitted", description: j?.opportunity?.title });
-      setTitle("");
+      toast({ title: "Opportunity created", description: j?.newOpportunity?.name });
+      setName("");
       setDescription("");
-      setValueEstimate("");
-      // refresh
-      const res2 = await fetch(`/api/projects/${encodeURIComponent(selectedProjectId)}/opportunities`, { cache: "no-store" });
+      setExpectedRevenue("");
+
+      // Refresh list
+      const res2 = await fetch("/api/crm/opportunity", { cache: "no-store" });
       const j2 = await res2.json();
-      setOpportunities((j2?.opportunities || []) as Opportunity[]);
+      setOpportunities((j2?.opportunities || []).filter((o: any) => o.lead_id === selectedLeadId));
     } catch (e: any) {
       toast({ variant: "destructive", title: "Error", description: e?.message || "Failed to create opportunity" });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   }
 
+  const listVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, scale: 0.95, y: 10 },
+    show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row gap-3 items-start md:items-end">
-        <div className="w-full md:w-64">
-          <label className="text-sm">Campaign</label>
-          <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select campaign" />
-            </SelectTrigger>
-            <SelectContent className="max-h-60 overflow-y-auto">
-              {projects.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="space-y-6"
+    >
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-end bg-gradient-to-r from-background to-background/50 p-4 rounded-xl border border-white/5 shadow-sm">
+        <div className="w-full md:w-96 relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-blue-500/30 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+          <div className="relative">
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center space-x-1">
+              <Sparkles className="h-3 w-3 text-primary mr-1" /> Target Lead Profile
+            </label>
+            <Combobox
+              options={leads.map(l => ({
+                label: `${l.firstName || ''} ${l.lastName || ''} ${l.company ? `(${l.company})` : ''}`.trim(),
+                value: l.id
+              }))}
+              value={selectedLeadId}
+              onChange={setSelectedLeadId}
+              placeholder="Select target lead to convert..."
+              className="w-full bg-background border-white/10 hover:border-primary/50 transition-colors h-12 shadow-sm focus:ring-primary/20"
+            />
+          </div>
         </div>
       </div>
 
-      <Card className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Create New Request</h3>
-          <span className="text-xs text-muted-foreground">Feature buildouts & commissioned work</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <label className="text-xs">Title</label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., White-label integration for Client X" />
-          </div>
-          <div>
-            <label className="text-xs">Category</label>
-            <Select value={category} onValueChange={(v: any) => setCategory(v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="FEATURE_BUILDOUT">Feature buildout</SelectItem>
-                <SelectItem value="COMMISSIONED_WORK">Commissioned work</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs">Value estimate (USD)</label>
-            <Input type="number" value={valueEstimate} onChange={(e) => setValueEstimate(e.target.value)} placeholder="e.g., 25000" />
-          </div>
-        </div>
-        <div>
-          <label className="text-xs">Description</label>
-          <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Short description" />
-        </div>
-        <div className="flex justify-end">
-          <Button disabled={isLoading} onClick={onCreateOpportunity}>Submit Request</Button>
-        </div>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+        <motion.div whileHover={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 30 }}>
+          <Card className="p-6 border-white/5 bg-gradient-to-br from-background via-background shadow-[0_8px_30px_rgb(0,0,0,0.04)] to-primary/[0.03] overflow-hidden relative h-full backdrop-blur-md">
+            <div className="absolute top-0 right-0 p-32 bg-primary/5 rounded-full blur-[80px] -mr-16 -mt-16 pointer-events-none"></div>
 
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold">Posted Requests</h3>
-          <span className="text-xs text-muted-foreground">{opportunities.length} items</span>
-        </div>
-        <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-          {(!selectedProjectId || opportunities.length === 0) && (
-            <div className="text-sm text-muted-foreground">{!selectedProjectId ? "Select a campaign to view its opportunities" : "No opportunities yet"}</div>
-          )}
-          {opportunities.map((o) => (
-            <div key={o.id} className="p-3 rounded border bg-background">
-              <div className="flex justify-between">
-                <div>
-                  <div className="text-sm font-medium">{o.title}</div>
-                  <div className="text-xs text-muted-foreground">{o.category.replace("_", " ")} · {o.status}</div>
-                </div>
-                {typeof o.valueEstimate === "number" && (
-                  <div className="text-sm font-semibold">${o.valueEstimate.toLocaleString()}</div>
-                )}
+            <div className="flex items-center space-x-3 mb-6 relative">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary shadow-inner border border-primary/20">
+                <Target className="h-5 w-5" />
               </div>
-              {o.description && (
-                <div className="mt-1 text-xs text-muted-foreground line-clamp-2">{o.description}</div>
-              )}
-              {Array.isArray(o.relatedTasksIDs) && o.relatedTasksIDs.length > 0 && (
-                <div className="mt-2 text-[11px] text-muted-foreground">Linked tasks: {o.relatedTasksIDs.length}</div>
+              <div>
+                <h3 className="text-base font-bold tracking-wide">Quick Opportunity Convert</h3>
+                <p className="text-[11px] text-muted-foreground">Instantly draft a deal linked to the active lead</p>
+              </div>
+            </div>
+
+            <div className="space-y-5 relative">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest pl-1">Deal Name</label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g., Q3 Enterprise Subscription Renewal"
+                  className="bg-background/40 border-white/10 focus:border-primary/50 h-11 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest pl-1">Expected Revenue</label>
+                <div className="relative group">
+                  <div className="absolute left-0 inset-y-0 flex items-center justify-center w-11 bg-primary/5 border-r border-white/5 rounded-l-md text-muted-foreground">
+                    <DollarSign className="h-4 w-4 text-primary group-focus-within:text-primary transition-colors" />
+                  </div>
+                  <Input
+                    type="number"
+                    value={expectedRevenue}
+                    onChange={(e) => setExpectedRevenue(e.target.value)}
+                    placeholder="25000"
+                    className="pl-14 bg-background/40 border-white/10 focus:border-primary/50 h-11 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest pl-1">Strategic Notes (Optional)</label>
+                <Input
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Key drivers, urgency, constraints..."
+                  className="bg-background/40 border-white/10 focus:border-primary/50 h-11 transition-all"
+                />
+              </div>
+
+              <Button
+                disabled={isSubmitting || !selectedLeadId}
+                onClick={onCreateOpportunity}
+                className="w-full h-12 mt-2 bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90 shadow-lg shadow-primary/25 border-0 text-white font-medium group transition-all"
+              >
+                {isSubmitting ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Provisioning Deal...</>
+                ) : (
+                  <><Sparkles className="mr-2 h-4 w-4" /> Convert to Opportunity <ArrowRight className="ml-2 h-4 w-4 opacity-70 group-hover:translate-x-1 transition-transform" /></>
+                )}
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 30 }}>
+          <Card className="p-6 border-white/5 bg-gradient-to-bl from-background via-background shadow-[0_8px_30px_rgb(0,0,0,0.04)] to-blue-500/[0.03] overflow-hidden relative h-full backdrop-blur-md flex flex-col">
+            <div className="absolute top-0 right-0 p-32 bg-blue-500/5 rounded-full blur-[80px] -mr-16 -mt-16 pointer-events-none"></div>
+
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 text-blue-500 shadow-inner border border-blue-500/20">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold tracking-wide">Linked Pipeline</h3>
+                  <p className="text-[11px] text-muted-foreground">Opportunities connected to this lead</p>
+                </div>
+              </div>
+              {opportunities.length > 0 && (
+                <div className="text-[10px] font-bold px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 shadow-inner flex items-center space-x-1">
+                  <span className="relative flex h-2 w-2 mr-1">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                  </span>
+                  {opportunities.length} ACTIVE
+                </div>
               )}
             </div>
-          ))}
-        </div>
-      </Card>
-    </div>
+
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-[300px] relative z-10">
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center h-full space-y-3 opacity-60">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/30" />
+                  <p className="text-xs text-muted-foreground">Fetching pipeline...</p>
+                </div>
+              ) : (!selectedLeadId || opportunities.length === 0) ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                  className="flex flex-col items-center justify-center h-full py-10 text-center space-y-3"
+                >
+                  <div className="p-4 rounded-full bg-muted/10 border border-white/5">
+                    <User className="h-8 w-8 text-muted-foreground/20" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground/80">
+                      {!selectedLeadId ? "Awaiting Selection" : "No Active Pipeline"}
+                    </p>
+                    <p className="text-xs text-muted-foreground/60 italic mt-1 max-w-[200px] mx-auto leading-relaxed">
+                      {!selectedLeadId ? "Select a lead from the target profile dropdown above to view linked deals." : "Use the builder to convert this lead into a tangible revenue opportunity."}
+                    </p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div variants={listVariants} initial="hidden" animate="show" className="space-y-3">
+                  <AnimatePresence>
+                    {opportunities.map((o) => (
+                      <motion.div
+                        key={o.id}
+                        variants={itemVariants}
+                        layout
+                        className="p-4 rounded-xl border border-white/5 bg-background shadow-sm hover:shadow-md hover:border-primary/20 hover:bg-primary/[0.02] transition-all group cursor-pointer relative overflow-hidden"
+                      >
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/50 to-blue-400/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="text-sm font-bold group-hover:text-primary transition-colors pr-4">{o.name}</div>
+                            <div className="flex items-center space-x-2 mt-2">
+                              <span className="text-[9px] uppercase font-bold text-foreground/70 tracking-tighter bg-foreground/5 px-2 py-0.5 rounded-full border border-white/5 flex items-center space-x-1">
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
+                                <span>{o.status}</span>
+                              </span>
+                              <span className="text-[10px] text-muted-foreground/50">
+                                Created {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'recently'}
+                              </span>
+                            </div>
+                          </div>
+                          {typeof o.expected_revenue === "number" && (
+                            <div className="text-sm font-black text-emerald-500/90 whitespace-nowrap bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/10 shadow-inner">
+                              ${o.expected_revenue.toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                        {o.description && (
+                          <div className="mt-3 text-xs text-muted-foreground/70 leading-relaxed bg-muted/20 p-2.5 rounded-lg border border-white/5 line-clamp-2">
+                            {o.description}
+                          </div>
+                        )}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+    </motion.div>
   );
 }

@@ -29,6 +29,7 @@ export async function POST(req: Request) {
       lead_source,
       close_date,
       contact,
+      lead,
       currency,
       description,
       expected_revenue,
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
         lead_source: lead_source,
         close_date: close_date,
         contact: contact,
+        lead_id: lead,
         created_by: userId,
         last_activity_by: userId,
         updatedBy: userId,
@@ -112,6 +114,7 @@ export async function PUT(req: Request) {
       lead_source,
       close_date,
       contact,
+      lead,
       currency,
       description,
       expected_revenue,
@@ -133,6 +136,7 @@ export async function PUT(req: Request) {
         lead_source: lead_source,
         close_date: close_date,
         contact: contact,
+        lead_id: lead,
         updatedBy: userId,
         currency: currency,
         description: description,
@@ -188,14 +192,26 @@ export async function GET(req: Request) {
     const saleStages = await prismadb.crm_Opportunities_Sales_Stages.findMany(
       {}
     );
+    const leads = await (prismadb.crm_Leads as any).findMany({
+      where: where
+    });
     // Assuming campaigns are global for now, or need update. If global, no where.
     const campaigns = await prismadb.crm_campaigns.findMany({});
     const industries = await prismadb.crm_Industry_Type.findMany({});
+
+    const opportunities = await prismadb.crm_Opportunities.findMany({
+      where: where,
+      orderBy: {
+        created_on: "desc",
+      },
+    });
 
     const data = {
       users,
       accounts,
       contacts,
+      leads,
+      opportunities,
       saleTypes,
       saleStages,
       campaigns,

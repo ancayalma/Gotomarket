@@ -14,12 +14,17 @@ export const metadata = {
     description: "Visual builder for automating CRM processes with FlowState"
 };
 
-export default async function WorkflowsPage() {
+import { MermaidEditor } from "./components/MermaidEditor";
+
+export default async function WorkflowsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
         redirect("/sign-in");
     }
+
+    const awaitedSearchParams = await searchParams;
+    const isEditorView = awaitedSearchParams?.view === "editor";
 
     // Get user's team_id from session or user record
     const teamId = (session.user as { team_id?: string }).team_id;
@@ -34,23 +39,27 @@ export default async function WorkflowsPage() {
                         <Zap className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold">FlowState</h1>
+                        <h1 className="text-2xl font-bold">{isEditorView ? "Visual Editor" : "FlowState"}</h1>
                         <p className="text-sm text-muted-foreground">
-                            Visual workflow automation for your CRM
+                            {isEditorView ? "Design and test FlowState automations with Mermaid.js" : "Visual workflow automation for your CRM"}
                         </p>
                     </div>
                 </div>
-                <CreateWorkflowDialog teamId={teamId || ""}>
-                    <Button className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        New FlowState
-                    </Button>
-                </CreateWorkflowDialog>
+                {!isEditorView && (
+                    <CreateWorkflowDialog teamId={teamId || ""}>
+                        <Button className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            New FlowState
+                        </Button>
+                    </CreateWorkflowDialog>
+                )}
             </div>
 
             {/* Content */}
             <div className="flex-1 p-6 overflow-auto">
-                {workflows.length === 0 ? (
+                {isEditorView ? (
+                    <MermaidEditor />
+                ) : workflows.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <div className="p-4 bg-muted rounded-full mb-4">
                             <Workflow className="h-12 w-12 text-muted-foreground" />
@@ -82,5 +91,6 @@ export default async function WorkflowsPage() {
                 overviewHow="Create a new workflow, define triggers (like 'Lead Status Changed'), and stack automated Actions below it."
             />
         </div>
+
     );
 }

@@ -128,10 +128,8 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
     { label: "Won / Lost", href: "/crm/opportunities?view=closed" },
   ];
 
-  const commandSubItems: SubMenuItemType[] = [
-    { label: "My Command", href: "/crm/sales-command" },
-    { label: "Team Command", href: "/crm/sales-command?view=team" },
-  ];
+
+
 
   const serviceSubItems: SubMenuItemType[] = [
     { label: "Agent Workspace", href: "/crm/cases" },
@@ -236,13 +234,12 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
               {/* ══════ SALES HUB ══════ */}
               <HubLabel label="Sales Hub" isOpen={open} />
 
-              <ExpandableMenuItem
+              <MenuItem
                 href="/crm/sales-command"
                 icon={Radio}
                 title="Command"
                 isOpen={open}
                 isActive={isCrmCommand}
-                items={commandSubItems}
               />
               <ExpandableMenuItem
                 href="/crm/opportunities"

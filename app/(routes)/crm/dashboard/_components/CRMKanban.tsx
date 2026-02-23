@@ -58,7 +58,7 @@ const CRMKanban = ({
 
   const [opportunities, setOpportunities] = useState(data);
 
-  const { users, accounts, contacts, saleTypes, saleStages, campaigns } =
+  const { users, accounts, contacts, leads, saleTypes, saleStages, campaigns } =
     crmData;
 
   useEffect(() => {
@@ -151,6 +151,7 @@ const CRMKanban = ({
           <NewOpportunityForm
             users={users}
             accounts={accounts}
+            leads={leads}
             contacts={contacts}
             salesType={saleTypes}
             saleStages={saleStages}

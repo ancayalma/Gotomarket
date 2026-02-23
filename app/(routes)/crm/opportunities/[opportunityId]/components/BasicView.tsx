@@ -116,6 +116,23 @@ export async function BasicView({ data }: OppsViewProps) {
             </div>
 
             <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
+              <div className="p-2.5 rounded-lg bg-pink-500/10 text-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.1)] group-hover:scale-110 transition-transform">
+                <User className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground/60">Lead</p>
+                <p className="text-sm font-semibold">
+                  {(() => {
+                    const lead = (data as any).assigned_lead;
+                    if (!lead) return "Not assigned";
+                    return `${lead.firstName || ""} ${lead.lastName || ""}`.trim() || "Lead";
+                  })()}
+                </p>
+              </div>
+            </div>
+
+
+            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
               <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.1)] group-hover:scale-110 transition-transform">
                 <CalendarDays className="h-5 w-5" />
               </div>

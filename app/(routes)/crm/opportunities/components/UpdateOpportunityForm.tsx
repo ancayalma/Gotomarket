@@ -77,6 +77,7 @@ export function UpdateOpportunityForm({
     assigned_to: z.string(),
     account: z.string(),
     contact: z.string(),
+    lead: z.string().optional().nullable(),
   });
 
   type NewAccountFormValues = z.infer<typeof formSchema>;
@@ -87,6 +88,7 @@ export function UpdateOpportunityForm({
       ...initialData,
       budget: String(initialData.budget),
       expected_revenue: String(initialData.expected_revenue),
+      lead: initialData.lead_id || initialData.lead || null,
     },
   });
 
@@ -119,7 +121,7 @@ export function UpdateOpportunityForm({
       </div>
     );
   //console.log(opportunities, "opportunities");
-  const { users, accounts, contacts, saleTypes, saleStages } =
+  const { users, accounts, contacts, leads, saleTypes, saleStages } =
     opportunities;
 
   if (!users || !accounts || !initialData)
@@ -428,7 +430,29 @@ export function UpdateOpportunityForm({
                     </FormItem>
                   )}
                 />
-
+                <FormField
+                  control={form.control}
+                  name="lead"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assigned Lead</FormLabel>
+                      <FormControl>
+                        <Combobox
+                          options={(leads || []).map((lead: any) => ({
+                            label: lead.firstName || lead.lastName
+                              ? `${lead.firstName || ""} ${lead.lastName || ""}`.trim()
+                              : lead.email || "Unknown Lead",
+                            value: lead.id,
+                          }))}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Choose lead"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
           </div>

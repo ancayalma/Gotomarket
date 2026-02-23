@@ -24,6 +24,7 @@ const NewOpportunityPage = async () => {
                     users={data.users}
                     accounts={data.accounts}
                     contacts={data.contacts}
+                    leads={data.leads}
                     salesType={data.saleTypes}
                     saleStages={data.saleStages}
                     boards={data.boards}
