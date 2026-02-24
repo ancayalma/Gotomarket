@@ -3576,6 +3576,16 @@ model NavigationConfig {
   // Format: Array of { id, type: 'item'|'group', label, icon, href, children: [], permissions: [], hidden: boolean }
   structure Json     
 
+  titleFont       String?
+  titleFontSize   String?
+  titleFontWeight String?
+  titleFontStyle  String?
+  
+  itemFont       String?
+  itemFontSize   String?
+  itemFontWeight String?
+  itemFontStyle  String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

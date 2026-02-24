@@ -56,7 +56,7 @@ const DashboardCard = React.forwardRef<HTMLButtonElement, DashboardCardProps>(
                     {hideIcon ? (
                         // Centered Layout (Stats/Deep Dive)
                         <>
-                            <h3 className={cn("font-bold text-[11px] uppercase tracking-wider text-muted-foreground/90 mb-0.5", labelClassName)}>
+                            <h3 className={cn("font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent mb-0.5 py-0.5 px-2 leading-tight", labelClassName)}>
                                 {label}
                             </h3>
                             {count !== undefined && (
@@ -74,7 +74,7 @@ const DashboardCard = React.forwardRef<HTMLButtonElement, DashboardCardProps>(
                         // Clean List Layout (Entities/Icons) - Left Aligned, No Central Icon
                         <>
                             <div className="flex items-center gap-2 mb-0.5">
-                                <h3 className={cn("font-bold text-[11px] uppercase tracking-wider text-muted-foreground/90", labelClassName)}>
+                                <h3 className={cn("font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-0.5 px-2 leading-tight", labelClassName)}>
                                     {label}
                                 </h3>
                             </div>

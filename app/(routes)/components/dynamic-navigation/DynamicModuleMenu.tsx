@@ -38,6 +38,14 @@ type Props = {
     serviceBadge?: number; // Count for service cases
     isImpersonating?: boolean;
     impersonatedTeamName?: string;
+    titleFont?: string;
+    titleFontSize?: string;
+    titleFontWeight?: string;
+    titleFontStyle?: string;
+    itemFont?: string;
+    itemFontSize?: string;
+    itemFontWeight?: string;
+    itemFontStyle?: string;
 };
 
 const sidebarVariants = {
@@ -71,7 +79,15 @@ const DynamicModuleMenu = ({
     teamRole = "MEMBER",
     serviceBadge = 0,
     isImpersonating = false,
-    impersonatedTeamName
+    impersonatedTeamName,
+    titleFont,
+    titleFontSize,
+    titleFontWeight,
+    titleFontStyle,
+    itemFont,
+    itemFontSize,
+    itemFontWeight,
+    itemFontStyle
 }: Props) => {
     // ... hooks ...
     const [open, setOpen] = useState(true);
@@ -84,7 +100,17 @@ const DynamicModuleMenu = ({
             const persisted = localStorage.getItem("sidebar-open");
             if (persisted !== null) setOpen(persisted === "true");
         } catch (_) { }
-    }, []);
+
+        // Load fonts if they are custom
+        const fontsToLoad = [titleFont, itemFont].filter(Boolean) as string[];
+        if (fontsToLoad.length > 0) {
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            const fontQuery = fontsToLoad.map(f => f.replace(/\s+/g, "+")).join("&family=");
+            link.href = `https://fonts.googleapis.com/css2?family=${fontQuery}&display=swap`;
+            document.head.appendChild(link);
+        }
+    }, [titleFont, itemFont]);
 
     const toggleSidebar = () => {
         const next = !open;
@@ -115,7 +141,7 @@ const DynamicModuleMenu = ({
         if (!minRole) return true;
         if (minRole === "MEMBER") return true;
         if (minRole === "ADMIN") return teamRole !== "MEMBER"; // Simplified typical check
-        if (minRole === "PARTNER_ADMIN") return isPartnerAdmin;
+        if (minRole === "PARTNER_ADMIN" || minRole === "PLATFORM_ADMIN") return isPartnerAdmin;
         return false;
     };
 
@@ -152,8 +178,15 @@ const DynamicModuleMenu = ({
 
     // ─── Renderer ───
     const renderItem = (item: NavItem) => {
-        // Force Command to have no flyout children as per latest design
-        if (item.id === "nav_command" || item.href === "/crm/sales-command") {
+        // Force certain items to have no flyout children as per design
+        if (
+            item.id === "nav_command" ||
+            item.href === "/crm/sales-command" ||
+            item.id === "nav_contracts" ||
+            item.href === "/crm/contracts" ||
+            item.id === "nav_projects" ||
+            item.href === "/projects"
+        ) {
             item = { ...item, children: undefined };
         }
 
@@ -178,15 +211,18 @@ const DynamicModuleMenu = ({
 
         if (item.children && item.children.length > 0) {
             // Expandable Item
-            // Map children to SubMenuItemType
-            const subItems: SubMenuItemType[] = item.children.map(child => ({
+            const visibleChildren = item.children.filter(isVisible);
+            if (visibleChildren.length === 0 && (!item.href || item.href === "#")) return null;
+
+            // Map visible children to SubMenuItemType
+            const subItems: SubMenuItemType[] = visibleChildren.map(child => ({
                 label: child.label,
                 href: child.href || "#",
                 icon: child.iconName ? getIcon(child.iconName) : undefined
             }));
 
             // Check if any child is active to activate parent (or parent itself)
-            const isActive = checkActive(item) || item.children.some(child => child.href && pathname.startsWith(child.href));
+            const isActive = checkActive(item) || visibleChildren.some(child => child.href && pathname.startsWith(child.href));
 
             return (
                 <ExpandableMenuItem
@@ -227,6 +263,17 @@ const DynamicModuleMenu = ({
                     initial={open ? "expanded" : "collapsed"}
                     animate={open ? "expanded" : "collapsed"}
                     variants={sidebarVariants}
+                    style={{
+                        // @ts-ignore
+                        "--nav-title-font": titleFont ? `'${titleFont}', sans-serif` : "inherit",
+                        "--nav-title-size": titleFontSize || "10px",
+                        "--nav-title-weight": titleFontWeight || "900",
+                        "--nav-title-style": titleFontStyle || "normal",
+                        "--nav-item-font": itemFont ? `'${itemFont}', sans-serif` : "inherit",
+                        "--nav-item-size": itemFontSize || "18px",
+                        "--nav-item-weight": itemFontWeight || "900",
+                        "--nav-item-style": itemFontStyle || "normal",
+                    }}
                     className={cn(
                         "relative h-full flex flex-col border-r border-primary/20 shadow-xl group",
                         "bg-gradient-to-b from-background/95 via-background/90 to-background/95",
@@ -290,7 +337,9 @@ const DynamicModuleMenu = ({
                     </button>
 
                     {/* ─── Content ─── */}
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 custom-scrollbar">
+                    <div
+                        className="flex-1 overflow-y-auto overflow-x-hidden py-2 custom-scrollbar"
+                    >
                         <div className="flex flex-col gap-0.5 px-1.5">
                             {navStructure.map(renderItem)}
                         </div>

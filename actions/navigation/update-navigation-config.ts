@@ -3,8 +3,19 @@
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 
-export async function updateTeamNavigationConfig(structure: any) {
+export async function updateTeamNavigationConfig(
+    structure: any,
+    titleFont?: string,
+    itemFont?: string,
+    titleFontSize?: string,
+    titleFontWeight?: string,
+    titleFontStyle?: string,
+    itemFontSize?: string,
+    itemFontWeight?: string,
+    itemFontStyle?: string
+) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Unauthorized");
 
@@ -20,27 +31,58 @@ export async function updateTeamNavigationConfig(structure: any) {
     if (!isAdmin) throw new Error("Permission Denied: Only Admins can update Team Navigation.");
 
     // Check if existing TEAM config exists (user_id: null)
-    const existing = await (prismadb as any).navigationConfig?.findFirst({
+    const existing = await prismadb.navigationConfig.findFirst({
         where: { team_id: user.team_id, user_id: null }
     });
 
     if (existing) {
-        return await (prismadb as any).navigationConfig?.update({
+        await prismadb.navigationConfig.update({
             where: { id: existing.id },
-            data: { structure }
+            data: {
+                structure,
+                titleFont,
+                itemFont,
+                titleFontSize,
+                titleFontWeight,
+                titleFontStyle,
+                itemFontSize,
+                itemFontWeight,
+                itemFontStyle
+            } as any
         });
     } else {
-        return await (prismadb as any).navigationConfig?.create({
+        await prismadb.navigationConfig.create({
             data: {
                 team_id: user.team_id,
                 user_id: null,
-                structure
-            }
+                structure,
+                titleFont,
+                itemFont,
+                titleFontSize,
+                titleFontWeight,
+                titleFontStyle,
+                itemFontSize,
+                itemFontWeight,
+                itemFontStyle
+            } as any
         });
     }
+
+    revalidatePath("/");
+    return { success: true };
 }
 
-export async function updateUserNavigationConfig(structure: any) {
+export async function updateUserNavigationConfig(
+    structure: any,
+    titleFont?: string,
+    itemFont?: string,
+    titleFontSize?: string,
+    titleFontWeight?: string,
+    titleFontStyle?: string,
+    itemFontSize?: string,
+    itemFontWeight?: string,
+    itemFontStyle?: string
+) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Unauthorized");
 
@@ -53,24 +95,45 @@ export async function updateUserNavigationConfig(structure: any) {
     if (!user || !user.team_id) throw new Error("Team not found");
 
     // Check if existing USER config exists
-    const existing = await (prismadb as any).navigationConfig?.findFirst({
+    const existing = await prismadb.navigationConfig.findFirst({
         where: { team_id: user.team_id, user_id: userId }
     });
 
     if (existing) {
-        return await (prismadb as any).navigationConfig?.update({
+        await prismadb.navigationConfig.update({
             where: { id: existing.id },
-            data: { structure }
+            data: {
+                structure,
+                titleFont,
+                itemFont,
+                titleFontSize,
+                titleFontWeight,
+                titleFontStyle,
+                itemFontSize,
+                itemFontWeight,
+                itemFontStyle
+            } as any
         });
     } else {
-        return await (prismadb as any).navigationConfig?.create({
+        await prismadb.navigationConfig.create({
             data: {
                 team_id: user.team_id,
                 user_id: userId,
-                structure
-            }
+                structure,
+                titleFont,
+                itemFont,
+                titleFontSize,
+                titleFontWeight,
+                titleFontStyle,
+                itemFontSize,
+                itemFontWeight,
+                itemFontStyle
+            } as any
         });
     }
+
+    revalidatePath("/");
+    return { success: true };
 }
 
 export async function resetNavigationConfig(scope: "USER" | "TEAM") {
@@ -87,7 +150,7 @@ export async function resetNavigationConfig(scope: "USER" | "TEAM") {
 
     if (scope === "USER") {
         // Delete only THIS user's override
-        await (prismadb as any).navigationConfig?.deleteMany({
+        await prismadb.navigationConfig.deleteMany({
             where: { team_id: user.team_id, user_id: userId }
         });
     } else if (scope === "TEAM") {
@@ -95,12 +158,11 @@ export async function resetNavigationConfig(scope: "USER" | "TEAM") {
         if (!isAdmin) throw new Error("Permission Denied");
 
         // Delete TEAM config (user_id: null)
-        await (prismadb as any).navigationConfig?.deleteMany({
-            where: { team_id: user.team_id, user_id: null } // Prisma treats null as explicit value
+        await prismadb.navigationConfig.deleteMany({
+            where: { team_id: user.team_id, user_id: null }
         });
-        // TODO: Does this deleteMany also delete users' overrides? NO.
-        // Should resetting Team config delete user overrides? Probably not.
     }
 
+    revalidatePath("/");
     return { success: true };
 }

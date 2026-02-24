@@ -253,7 +253,7 @@ export default function ThemeStudioPage() {
                     <span className="text-sm text-muted-foreground">Appearance</span>
                 </div>
 
-                <h1 className="text-3xl font-bold text-foreground mb-2">
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                     Customize Your Experience
                 </h1>
                 <p className="text-muted-foreground">

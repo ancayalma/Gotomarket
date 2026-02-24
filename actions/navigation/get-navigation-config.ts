@@ -33,22 +33,21 @@ export async function getNavigationConfig() {
         }
     });
 
-    if (userConfig?.structure) {
-        return userConfig.structure;
+    if (userConfig) {
+        return userConfig;
     }
 
     // Priority 2: Team-Wide Default
     const teamConfig = await (prismadb as any).navigationConfig?.findFirst({
         where: {
             team_id: teamId,
-            user_id: null // Explicitly look for the config with NO user_id
+            user_id: null
         }
     });
 
-    if (teamConfig?.structure) {
-        return teamConfig.structure;
+    if (teamConfig) {
+        return teamConfig;
     }
 
-    // Priority 3: System Default (Code)
     return null;
 }

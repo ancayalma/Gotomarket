@@ -444,8 +444,7 @@ export default function CertificationPaths() {
                 <div className="lg:col-span-2 space-y-6">
                     <div className="flex items-center justify-between">
                         <div className="space-y-1">
-                            <h3 className="text-2xl font-black flex items-center gap-3">
-                                <Calculator className="w-7 h-7 text-primary" />
+                            <h3 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4">
                                 Revenue & Points Simulator
                             </h3>
                             <p className="text-gray-500 text-sm font-medium">Calculate the ROI and Mastery Points of your sales activity.</p>
@@ -523,7 +522,7 @@ export default function CertificationPaths() {
                 </div>
 
                 <div className="space-y-6">
-                    <h4 className="text-xl font-black uppercase tracking-tighter italic">Gamification Rewards</h4>
+                    <h4 className="text-xl font-black uppercase tracking-tight italic py-1 px-1">Gamification Rewards</h4>
                     <div className="space-y-4">
                         {[
                             { name: "Momentum Builder", badge: "10 Leads > Identify", icon: TrendingUp },
@@ -570,8 +569,8 @@ export default function CertificationPaths() {
                             </div>
                         </div>
                         <div className="flex-1 space-y-4 text-center md:text-left">
-                            <h3 className="text-4xl font-black italic tracking-tighter uppercase leading-none">
-                                Ultimate Prestige: <span className="text-amber-500">Master of Basalt</span>
+                            <h3 className="text-4xl md:text-6xl font-black bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-4">
+                                Ultimate Prestige: <span className="text-white">Master of Basalt</span>
                             </h3>
                             <p className="text-gray-400 text-lg max-w-2xl leading-relaxed">
                                 This certification is the culmination of technical excellence and massive output. Reaching Level 25 proves you have mastered every aspect of modern RevOps automation.

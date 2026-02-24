@@ -34,7 +34,7 @@ export default function GlobalError({
                             </h1>
                             <div className="absolute inset-0 flex items-center justify-center flex-col">
                                 <AlertTriangle className="w-20 h-20 text-red-500 mb-4 animate-pulse" />
-                                <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-red-500 to-red-900 drop-shadow-2xl">
+                                <h2 className="text-5xl md:text-7xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-red-500 to-red-900 drop-shadow-2xl py-4 px-4 leading-normal">
                                     SYSTEM FAILURE
                                 </h2>
                             </div>

@@ -38,8 +38,10 @@ export default async function ValidationRulesPage() {
                         <Shield className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold">Guard Rules</h1>
-                        <p className="text-sm text-muted-foreground">
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tighter uppercase leading-none">
+                            Guard Rules
+                        </h1>
+                        <p className="text-muted-foreground/80 mt-2 text-base font-medium tracking-wide italic border-l-2 border-primary/30 pl-4">
                             Enforce data quality with formula-based field validation
                         </p>
                     </div>

@@ -92,7 +92,7 @@ export const ProjectsWidget = ({ projects: initialProjects }: ProjectsWidgetProp
                     className="h-7 px-2 text-[10px] font-bold border-white/10 bg-white/5 hover:bg-white/10 text-primary"
                 >
                     <Plus size={12} className="mr-1" />
-                    NEW PULSE
+                    PULSE
                 </Button>
             }
         />

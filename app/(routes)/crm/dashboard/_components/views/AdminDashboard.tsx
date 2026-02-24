@@ -122,8 +122,12 @@ const AdminDashboard = ({
                     <div className="max-w-[1600px] mx-auto w-full space-y-8 pb-10">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <h1 className="text-3xl font-bold tracking-tight text-white/90">{greeting}, {userName}</h1>
-                                <p className="text-muted-foreground mt-1 font-medium italic opacity-80 border-l-2 border-primary/30 pl-3">This is your Command Center.</p>
+                                <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-tight uppercase leading-relaxed py-4 px-4">
+                                    {greeting}{userName ? `, ${userName}` : ""}
+                                </h2>
+                                <p className="text-muted-foreground/80 mt-2 text-base font-medium tracking-wide italic border-l-2 border-primary/30 pl-4">
+                                    This is your Command Center.
+                                </p>
                             </div>
                             {/* Jump Back In - Top Right with Global Edit */}
                             <div className="flex-shrink-0 relative">

@@ -87,7 +87,7 @@ export const LeadsWidget = ({ leads: initialLeads }: LeadsWidgetProps) => {
                     onClick={() => setIsModalOpen(true)}
                 >
                     <Plus size={12} className="mr-1" />
-                    NEW LEAD
+                    LEAD
                 </Button>
             }
             open={isModalOpen}

@@ -42,8 +42,8 @@ export const WidgetWrapper = ({
                         <div className={cn("p-2 rounded-xl bg-white/5 shadow-sm group-hover/widget:scale-110 transition-transform duration-300", iconColor)}>
                             <Icon size={18} />
                         </div>
-                        <CardTitle className="text-sm font-bold text-white/90 uppercase tracking-widest">
-                            {title} {count !== undefined && <span className="text-muted-foreground ml-1 font-medium">({count})</span>}
+                        <CardTitle className="text-base font-black uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-2 px-2 leading-relaxed">
+                            {title} {count !== undefined && <span className="text-muted-foreground ml-1 font-medium not-italic">({count})</span>}
                         </CardTitle>
                     </div>
                     {rightAction}

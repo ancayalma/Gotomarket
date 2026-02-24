@@ -178,8 +178,12 @@ export default function CasesClient({
                                 <Headset className="w-5 h-5 text-violet-400" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold tracking-tight">Service Console</h1>
-                                <p className="text-xs text-muted-foreground">Case Management & Support Operations</p>
+                                <h1 className="text-2xl md:text-4xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tighter uppercase leading-none">
+                                    Service Console
+                                </h1>
+                                <p className="text-muted-foreground/80 mt-2 text-[10px] md:text-xs font-medium tracking-wide italic border-l-2 border-primary/30 pl-4">
+                                    Case Management & Support Operations
+                                </p>
                             </div>
                         </div>
                         <Button

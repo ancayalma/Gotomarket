@@ -8,7 +8,7 @@ export type NavItemType = "item" | "group" | "separator";
 export interface NavPermission {
     module?: string;
     feature?: string;
-    minRole?: "MEMBER" | "ADMIN" | "PARTNER_ADMIN"; // ADMIN = isNonMember in current logic
+    minRole?: "MEMBER" | "ADMIN" | "PLATFORM_ADMIN" | "PARTNER_ADMIN"; // ADMIN = isNonMember in current logic
 }
 
 export interface NavItem {
@@ -128,12 +128,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Projects",
                 iconName: "ServerIcon",
                 href: "/projects",
-                permissions: { module: "projects", feature: "projects" },
-                children: [
-                    { id: "sub_projects_overview", type: "item", label: "Overview", href: "/projects", iconName: "FolderKanban" },
-                    { id: "sub_projects_all", type: "item", label: "All Projects", href: "/projects/all", iconName: "Folder" },
-                    { id: "sub_projects_tasks", type: "item", label: "Tasks", href: "/projects/tasks", iconName: "ListTodo" }
-                ]
+                permissions: { module: "projects", feature: "projects" }
             },
             {
                 id: "nav_dialer",
@@ -190,7 +185,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
     {
         id: "group_management",
         type: "group",
-        label: "Insights & Finance",
+        label: "Finance",
         permissions: { minRole: "ADMIN" },
         children: [
             {
@@ -238,11 +233,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Contracts",
                 iconName: "FileText",
-                href: "/crm/contracts",
-                children: [
-                    { id: "sub_contracts_all", type: "item", label: "All Contracts", href: "/crm/contracts" },
-                    { id: "sub_contracts_rooms", type: "item", label: "Deal Rooms", href: "/crm/contracts?view=rooms" }
-                ]
+                href: "/crm/contracts"
             },
             {
                 id: "nav_products",
@@ -305,7 +296,22 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 children: [
                     { id: "sub_admin_overview", type: "item", label: "Overview", href: "/admin?tab=overview", iconName: "LayoutDashboard" },
                     { id: "sub_admin_depts", type: "item", label: "Departments", href: "/admin?tab=departments", iconName: "Building2" },
-                    { id: "sub_admin_users", type: "item", label: "Users", href: "/admin", iconName: "Users" }
+                    { id: "sub_admin_users", type: "item", label: "Users", href: "/admin", iconName: "Users" },
+                    {
+                        id: "sub_admin_platform",
+                        type: "item",
+                        label: "Platform",
+                        href: "/partners",
+                        iconName: "Globe",
+                        permissions: { minRole: "PLATFORM_ADMIN" },
+                        children: [
+                            { id: "sub_platform_team", type: "item", label: "Team Management", href: "/partners" },
+                            { id: "sub_platform_keys", type: "item", label: "System Keys", href: "/partners/ai-system-config" },
+                            { id: "sub_platform_price", type: "item", label: "Model Pricing", href: "/partners/ai-pricing" },
+                            { id: "sub_platform_email", type: "item", label: "System Email", href: "/partners/email-system-config" },
+                            { id: "sub_platform_plans", type: "item", label: "Manage Plans", href: "/partners/plans" }
+                        ]
+                    }
                 ]
             },
             {
@@ -318,27 +324,4 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
         ]
     },
 
-    // 9. PLATFORM
-    {
-        id: "group_platform",
-        type: "group",
-        label: "Platform",
-        permissions: { minRole: "PARTNER_ADMIN" },
-        children: [
-            {
-                id: "nav_platform",
-                type: "item",
-                label: "Platform",
-                iconName: "Globe",
-                href: "/partners",
-                children: [
-                    { id: "sub_platform_team", type: "item", label: "Team Management", href: "/partners" },
-                    { id: "sub_platform_keys", type: "item", label: "System Keys", href: "/partners/ai-system-config" },
-                    { id: "sub_platform_price", type: "item", label: "Model Pricing", href: "/partners/ai-pricing" },
-                    { id: "sub_platform_email", type: "item", label: "System Email", href: "/partners/email-system-config" },
-                    { id: "sub_platform_plans", type: "item", label: "Manage Plans", href: "/partners/plans" }
-                ]
-            }
-        ]
-    }
 ];

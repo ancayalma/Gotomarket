@@ -39,7 +39,7 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
             <div className="space-y-4 pt-2">
                 {/* Visual Distribution Summary */}
                 <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 py-1 px-1 leading-normal">
                         <span>Engagement Depth</span>
                         <span className="text-violet-400">{openRate}% Open Rate</span>
                     </div>
@@ -99,7 +99,7 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                         </div>
                     </div>
                     <div className="min-w-0">
-                        <p className="text-[10px] font-bold text-violet-300 uppercase leading-none tracking-widest">FLOW STATE Tracking</p>
+                        <p className="text-[10px] font-bold text-violet-300 uppercase leading-normal tracking-widest py-1 px-1">FLOW STATE Tracking</p>
                         <p className="text-[11px] text-white/70 font-medium mt-1 truncate">
                             {totalOpened} real-time engagement signals captured
                         </p>

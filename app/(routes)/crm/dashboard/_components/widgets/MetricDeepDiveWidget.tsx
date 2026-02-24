@@ -112,7 +112,7 @@ export const MetricDeepDiveWidget = ({
                 />
 
                 <div className={cn("relative z-10 flex flex-col", centered ? "items-center text-center gap-1" : "items-start pl-1")}>
-                    <h3 className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground/90 mb-0.5">
+                    <h3 className="font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-1 px-2 leading-tight">
                         {title}
                     </h3>
 

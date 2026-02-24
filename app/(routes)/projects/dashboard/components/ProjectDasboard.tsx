@@ -24,7 +24,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { CheckSquare, Eye, MessagesSquare, Pencil } from "lucide-react";
+import { CheckSquare, Eye, MessagesSquare, Pencil, Clock } from "lucide-react";
 import UpdateTaskDialog from "../../dialogs/UpdateTask";
 import { Button } from "@/components/ui/button";
 import { Sections } from "@prisma/client";
@@ -95,8 +95,8 @@ const ProjectDashboardCockpit = ({
     <div className="flex flex-col md:flex-row items-start justify-center h-full w-full overflow-auto">
       <div className="w-full md:w-1/2">
         <div>
-          <h2 className="font-bold text-lg ">
-            Tasks due Today ({dashboardData?.getTaskPastDue?.length})
+          <h2 className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-tight uppercase leading-relaxed py-1 px-1">
+            Tasks due Today <span className="text-primary/40 ml-2">({dashboardData?.getTaskPastDue?.length})</span>
           </h2>
           {/*         <pre>
             <code>{JSON.stringify(dashboardData, null, 2)}</code>
@@ -104,62 +104,71 @@ const ProjectDashboardCockpit = ({
         </div>
 
         {dashboardData?.getTaskPastDue?.map((task: Tasks) => (
-          <Card key={task.id} className="m-2">
-            <CardHeader>
-              <CardTitle className="text-xl">
+          <Card
+            key={task.id}
+            className="m-2 group relative overflow-hidden border-primary/10 bg-background/40 backdrop-blur-xl hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 rounded-3xl"
+          >
+            {/* Ambient background glow */}
+            <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+            <CardHeader className="relative z-10">
+              <CardTitle className="text-xl font-black group-hover:text-primary transition-colors">
                 {task.title === "" ? "Untitled" : task.title}
               </CardTitle>
-              <CardDescription>{task.content}</CardDescription>
+              <CardDescription className="text-muted-foreground/80">{task.content}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative z-10">
               <div
-                className={
-                  task.dueDateAt < new Date() ? "text-red-500 text-xs" : ""
-                }
+                className={cn(
+                  "text-xs font-semibold px-2 py-1 rounded-md w-fit flex items-center gap-1.5",
+                  task.dueDateAt < new Date() ? "bg-red-500/10 text-red-500" : "bg-muted text-muted-foreground"
+                )}
               >
-                Due date: {moment(task.dueDateAt).format("YYYY-MM-DD")}
+                <Clock className="w-3.5 h-3.5" />
+                Due {moment(task.dueDateAt).format("MMM Do")}
               </div>
               <div>
                 {(() => {
                   const priorityObj = priorities.find(p => p.value === task.priority) || priorities.find(p => p.value === "normal");
                   const Icon = priorityObj?.icon;
                   return (
-                    <div className={cn("flex items-center gap-2 text-sm px-2 py-1 rounded-full w-fit mt-2", priorityObj?.bgColor)}>
+                    <div className={cn("flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full w-fit mt-3", priorityObj?.bgColor)}>
                       {Icon && <Icon className={cn("w-3 h-3", priorityObj?.color)} />}
-                      <span className={cn("font-medium", priorityObj?.color)}>{priorityObj?.label}</span>
+                      <span className={priorityObj?.color}>{priorityObj?.label}</span>
                     </div>
                   );
                 })()}
               </div>
             </CardContent>
-            <CardFooter className="space-x-2 ">
+            <CardFooter className="relative z-10 space-x-2 bg-primary/5 border-t border-primary/5 mt-2 p-3">
               <Link href={`/projects/tasks/viewtask/${task.id}`}>
-                <Badge variant={"outline"}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  <span>View task</span>
+                <Badge variant={"outline"} className="hover:bg-primary/20 transition-colors cursor-pointer border-primary/20 text-primary">
+                  <Eye className="w-3.5 h-3.5 mr-1.5" />
+                  <span>Open</span>
                 </Badge>
               </Link>
               <Sheet>
                 <SheetTrigger asChild>
-                  <Badge variant={"outline"} className="cursor-pointer">
-                    <MessagesSquare className="w-4 h-4 mr-2" />
+                  <Badge variant={"outline"} className="cursor-pointer hover:bg-primary/20 border-primary/20 text-primary">
+                    <MessagesSquare className="w-3.5 h-3.5 mr-1.5" />
                     <span>Chat</span>
                   </Badge>
                 </SheetTrigger>
-                <SheetContent className="cursor-pointer">
+                <SheetContent className="rounded-l-[40px] border-l-primary/20">
                   <SheetHeader>
-                    <SheetTitle>Team conversation</SheetTitle>
+                    <SheetTitle className="text-2xl font-black">Team Pulse</SheetTitle>
                   </SheetHeader>
                   <TeamConversations taskId={task.id} data={task.comments} />
                 </SheetContent>
               </Sheet>
+
               <Badge
                 variant={"outline"}
                 onClick={() => onDone(task.id)}
-                className="cursor-pointer"
+                className="cursor-pointer hover:bg-emerald-500/20 border-emerald-500/20 text-emerald-500 ml-auto"
               >
-                <CheckSquare className="w-4 h-4 mr-2" />
-                <span>Mark as done</span>
+                <CheckSquare className="w-3.5 h-3.5 mr-1.5" />
+                <span>Done</span>
               </Badge>
 
               <FormSheet
@@ -195,84 +204,76 @@ const ProjectDashboardCockpit = ({
       </div>
       <div className="w-full pt-5 md:w-1/2 md:pt-0">
         <div>
-          <h2 className="font-bold text-lg ">
-            Tasks due in 7 days (
-            {dashboardData?.getTaskPastDueInSevenDays?.length})
+          <h2 className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-tight uppercase leading-relaxed py-1 px-1">
+            Tasks due in 7 days <span className="text-primary/40 ml-2">({dashboardData?.getTaskPastDueInSevenDays?.length})</span>
           </h2>
         </div>
         {dashboardData?.getTaskPastDueInSevenDays?.map((task: Tasks) => (
-          <Card key={task.id} className="m-2">
-            <CardHeader>
-              <CardTitle className="text-xl">
+          <Card
+            key={task.id}
+            className="m-2 group relative overflow-hidden border-primary/10 bg-background/40 backdrop-blur-xl hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 rounded-3xl"
+          >
+            {/* Ambient background glow */}
+            <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+            <CardHeader className="relative z-10">
+              <CardTitle className="text-xl font-black group-hover:text-primary transition-colors">
                 {task.title === "" ? "Untitled" : task.title}
               </CardTitle>
-              <CardDescription>{task.content}</CardDescription>
+              <CardDescription className="text-muted-foreground/80">{task.content}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative z-10">
               <div
-                className={
-                  task.dueDateAt < new Date()
-                    ? "text-red-500 text-xs"
-                    : "text-xs"
-                }
+                className={cn(
+                  "text-xs font-semibold px-2 py-1 rounded-md w-fit flex items-center gap-1.5",
+                  task.dueDateAt < new Date() ? "bg-red-500/10 text-red-500" : "bg-muted text-muted-foreground"
+                )}
               >
-                Due date: {moment(task.dueDateAt).format("YYYY-MM-DD")}
+                <Clock className="w-3.5 h-3.5" />
+                Due {moment(task.dueDateAt).format("MMM Do")}
               </div>
               <div>
                 {(() => {
                   const priorityObj = priorities.find(p => p.value === task.priority) || priorities.find(p => p.value === "normal");
                   const Icon = priorityObj?.icon;
                   return (
-                    <div className={cn("flex items-center gap-2 text-sm px-2 py-1 rounded-full w-fit mt-2", priorityObj?.bgColor)}>
+                    <div className={cn("flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full w-fit mt-3", priorityObj?.bgColor)}>
                       {Icon && <Icon className={cn("w-3 h-3", priorityObj?.color)} />}
-                      <span className={cn("font-medium", priorityObj?.color)}>{priorityObj?.label}</span>
+                      <span className={priorityObj?.color}>{priorityObj?.label}</span>
                     </div>
                   );
                 })()}
               </div>
             </CardContent>
-            <CardFooter className="space-x-2">
+            <CardFooter className="relative z-10 space-x-2 bg-primary/5 border-t border-primary/5 mt-2 p-3">
               <Link href={`/projects/tasks/viewtask/${task.id}`}>
-                <Badge variant={"outline"}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  <span>View task</span>
+                <Badge variant={"outline"} className="hover:bg-primary/20 transition-colors cursor-pointer border-primary/20 text-primary">
+                  <Eye className="w-3.5 h-3.5 mr-1.5" />
+                  <span>Open</span>
                 </Badge>
               </Link>
-
               <Sheet>
                 <SheetTrigger asChild>
-                  <Badge variant={"outline"}>
-                    <MessagesSquare className="w-4 h-4 mr-2" />
+                  <Badge variant={"outline"} className="cursor-pointer hover:bg-primary/20 border-primary/20 text-primary">
+                    <MessagesSquare className="w-3.5 h-3.5 mr-1.5" />
                     <span>Chat</span>
                   </Badge>
                 </SheetTrigger>
-
-                <SheetContent>
+                <SheetContent className="rounded-l-[40px] border-l-primary/20">
                   <SheetHeader>
-                    <SheetTitle>Team conversation</SheetTitle>
+                    <SheetTitle className="text-2xl font-black">Team Pulse</SheetTitle>
                   </SheetHeader>
                   <TeamConversations taskId={task.id} data={task.comments} />
                 </SheetContent>
               </Sheet>
 
-              <Badge variant={"outline"} onClick={() => onDone(task.id)}>
-                <CheckSquare className="w-4 h-4 mr-2" />
-                <span>Mark as done</span>
-              </Badge>
-              <Badge variant={"outline"} className="cursor-pointer">
-                <Pencil className="w-4 h-4 mr-2" />
-                <Sheet>
-                  <SheetTrigger>
-                    <span>Edit</span>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <UpdateTaskDialog
-                      users={users}
-                      boards={boards}
-                      initialData={task}
-                    />
-                  </SheetContent>
-                </Sheet>
+              <Badge
+                variant={"outline"}
+                onClick={() => onDone(task.id)}
+                className="cursor-pointer hover:bg-emerald-500/20 border-emerald-500/20 text-emerald-500 ml-auto"
+              >
+                <CheckSquare className="w-3.5 h-3.5 mr-1.5" />
+                <span>Done</span>
               </Badge>
             </CardFooter>
           </Card>

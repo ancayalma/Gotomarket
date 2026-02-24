@@ -235,7 +235,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                         <div className="min-w-0">
                             <div className="flex items-center gap-2">
                                 <Sparkles className="w-4 h-4 text-violet-400 flex-shrink-0" />
-                                <h2 className="text-sm font-bold text-white/90 tracking-tight">
+                                <h2 className="text-sm font-black italic uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-2 px-2 leading-relaxed">
                                     {allDone ? "You're all set! 🎉" : "Quick Launch — Get Started"}
                                 </h2>
                             </div>

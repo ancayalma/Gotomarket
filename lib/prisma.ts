@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-// Force reload after schema update
+// Force reload after schema update (v6.19.2)
 
 const globalForPrisma = globalThis as unknown as { prismadb: PrismaClient };
 

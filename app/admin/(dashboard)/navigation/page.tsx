@@ -10,6 +10,7 @@ import { NavigationEditor } from "./_components/NavigationEditor";
 import { redirect } from "next/navigation";
 
 export default async function NavigationPage() {
+    // Navigation Manager Refresh
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -32,23 +33,30 @@ export default async function NavigationPage() {
     }
 
     const teamRole = user.team_role || "MEMBER";
-    const isPartnerAdmin = user.is_admin || teamRole === "PLATFORM_ADMIN" || user.assigned_team?.slug === "basalthq";
-
-    // Only admins can access this page
-    if (teamRole === "MEMBER") {
-        return redirect(`/dashboard`);
-    }
+    const isAdmin = user.is_admin || ["ADMIN", "SUPER_ADMIN", "OWNER", "PLATFORM_ADMIN"].includes(teamRole.toUpperCase()) || user.assigned_team?.slug === "basalthq";
+    const isPartnerAdmin = user.is_admin || teamRole === "PLATFORM_ADMIN";
 
     const features: string[] = []; // In a real app, resolve features from team's plan
+
+    const config = dbNavConfig as any;
 
     return (
         <div className="h-full">
             <NavigationEditor
-                initialStructure={dbNavConfig || DEFAULT_NAV_STRUCTURE}
+                initialStructure={config?.structure || DEFAULT_NAV_STRUCTURE}
+                initialTitleFont={config?.titleFont}
+                initialTitleFontSize={config?.titleFontSize}
+                initialTitleFontWeight={config?.titleFontWeight}
+                initialTitleFontStyle={config?.titleFontStyle}
+                initialItemFont={config?.itemFont}
+                initialItemFontSize={config?.itemFontSize}
+                initialItemFontWeight={config?.itemFontWeight}
+                initialItemFontStyle={config?.itemFontStyle}
                 modules={modules}
                 dict={dict}
                 features={features}
                 isPartnerAdmin={isPartnerAdmin}
+                isAdmin={isAdmin}
                 teamRole={teamRole}
             />
         </div>

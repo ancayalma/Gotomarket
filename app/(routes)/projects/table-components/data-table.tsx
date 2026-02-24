@@ -58,7 +58,7 @@ export function ProjectsDataTable<TData, TValue>({
   stats,
   entityName = "Project",
   statsLinks = {
-    total: "/projects/all",
+    total: "/projects",
     tasks: "/projects/tasks",
     documents: "/documents",
   },

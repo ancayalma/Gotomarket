@@ -46,10 +46,20 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                             <Lock className="w-3 h-3 text-muted-foreground" />
                         </div>
                     )}
-                    <span className={cn(
-                        "text-[9px] uppercase tracking-wider font-semibold truncate max-w-[64px]",
-                        isActive ? "text-primary" : "text-muted-foreground"
-                    )}>
+                    <span
+                        className={cn(
+                            "uppercase tracking-wider truncate max-w-[64px]",
+                            isActive ? "text-primary" : "text-muted-foreground"
+                        )}
+                        style={{
+                            fontFamily: 'var(--nav-item-font)',
+                            fontSize: 'calc(var(--nav-item-size) * 0.5)',
+                            fontWeight: 'var(--nav-item-weight)',
+                            fontStyle: 'var(--nav-item-style)',
+                            lineHeight: '1.2',
+                            paddingRight: '0.2em'
+                        }}
+                    >
                         {microLabel}
                     </span>
                 </div>
@@ -100,11 +110,21 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                             display: isOpen ? "block" : "none",
                         }}
                         transition={{ duration: 0.2 }}
-                        className="ml-2.5 truncate whitespace-nowrap overflow-hidden z-10 flex items-center gap-2"
+                        className={cn(
+                            "ml-2.5 whitespace-nowrap z-10 flex items-center gap-2 uppercase tracking-tight py-0 px-2 leading-normal",
+                            isActive ? "bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-all duration-300"
+                        )}
+                        style={{
+                            fontFamily: 'var(--nav-item-font)',
+                            fontSize: 'var(--nav-item-size)',
+                            fontWeight: 'var(--nav-item-weight)',
+                            fontStyle: 'var(--nav-item-style)',
+                            paddingRight: '0.5em'
+                        }}
                     >
                         {title}
                         {isLocked && (
-                            <span className="text-[10px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded ml-auto flex items-center gap-1.5 border border-white/5">
+                            <span className="text-[10px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded ml-auto flex items-center gap-1.5 border border-white/5 not-italic font-bold">
                                 <Lock className="w-2.5 h-2.5" />
                                 <span className="hidden xl:inline">Upgrade</span>
                             </span>
@@ -113,10 +133,19 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
 
                     {/* Micro-Label for Collapsed State */}
                     {!isOpen && (
-                        <span className={cn(
-                            "text-[9px] uppercase tracking-wider mt-0.5 truncate max-w-[60px] text-center flex items-center justify-center",
-                            isActive ? "text-primary font-semibold" : "text-muted-foreground"
-                        )}>
+                        <span
+                            className={cn(
+                                "uppercase tracking-wider mt-0.5 truncate max-w-[60px] text-center flex items-center justify-center",
+                                isActive ? "text-primary font-semibold" : "text-muted-foreground"
+                            )}
+                            style={{
+                                fontFamily: 'var(--nav-item-font)',
+                                fontSize: 'calc(var(--nav-item-size) * 0.5)',
+                                fontWeight: 'var(--nav-item-weight)',
+                                fontStyle: 'var(--nav-item-style)',
+                                paddingRight: '0.2em'
+                            }}
+                        >
                             {isLocked ? <Lock className="w-2.5 h-2.5" /> : microLabel}
                         </span>
                     )}

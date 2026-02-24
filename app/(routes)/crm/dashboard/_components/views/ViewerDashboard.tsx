@@ -13,8 +13,12 @@ const ViewerDashboard = ({ revenue, activePipelineCount }: ViewerDashboardProps)
     return (
         <div className="flex flex-col space-y-8">
             <div>
-                <h2 className="text-3xl font-bold tracking-tight mb-2">Executive Summary</h2>
-                <p className="text-muted-foreground mb-8">High-level insights.</p>
+                <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                    Executive Summary
+                </h2>
+                <p className="text-muted-foreground/80 text-base font-medium tracking-wide italic border-l-2 border-primary/30 pl-4 mb-8">
+                    High-level insights.
+                </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <DashboardCard

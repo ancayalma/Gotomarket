@@ -8,12 +8,14 @@ interface HeadingProps {
 
 const Heading = ({ title, description, visibility }: HeadingProps) => {
   return (
-    <div className="">
-      <h2 className="flex gap-2 text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 tracking-tight">
+    <div className="space-y-1">
+      <h2 className="flex items-center gap-3 text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-tight py-2 px-1">
         {title}
-        {visibility === "private" ? <Lock className="text-muted-foreground" /> : ""}
+        {visibility === "private" ? <Lock className="text-primary/60 w-6 h-6" /> : ""}
       </h2>
-      <p className="text-muted-foreground mt-2 text-lg">{description}</p>
+      <p className="text-muted-foreground/80 text-sm md:text-base font-medium tracking-wide">
+        {description}
+      </p>
     </div>
   );
 };

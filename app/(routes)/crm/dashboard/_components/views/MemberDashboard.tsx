@@ -61,9 +61,13 @@ const MemberDashboard = ({
             <div>
                 <div className="flex items-center gap-3 mb-2">
                     <Sparkles className="w-6 h-6 text-primary animate-pulse" />
-                    <h2 className="text-3xl font-bold tracking-tight text-white/90">{greeting}{userName ? `, ${userName}` : ""}</h2>
+                    <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4">
+                        {greeting}{userName ? `, ${userName}` : ""}
+                    </h2>
                 </div>
-                <p className="text-muted-foreground mb-6 font-medium">Here is what's on your plate today.</p>
+                <p className="text-muted-foreground/80 text-base font-medium tracking-wide italic border-l-2 border-primary/30 pl-4">
+                    Here is what's on your plate today.
+                </p>
 
                 {/* Quick Launch Checklist — only visible for new members who have no assignments yet */}
                 {isNewishMember && checklistCounts && (
@@ -107,7 +111,7 @@ const MemberDashboard = ({
 
             {/* Quick Stats Row (Personal Performance) */}
             <div>
-                <h3 className="text-lg font-semibold mb-4">My Performance</h3>
+                <h3 className="text-lg font-semibold px-1 py-1 mb-4 leading-normal">My Performance</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <DashboardCard
                         icon={Zap}

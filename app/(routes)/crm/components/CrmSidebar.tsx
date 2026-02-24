@@ -73,7 +73,8 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
         { id: 'contacts', label: "Contacts", href: "/crm/contacts", icon: Contact },
         { id: 'leads', label: "Leads", href: "/crm/leads", icon: Users },
         { id: 'opportunities', label: "Opportunities", href: "/crm/opportunities", icon: Target },
-        { id: 'projects', label: "Campaigns", href: "/campaigns", icon: Rocket },
+        { id: 'projects', label: "Projects", href: "/projects", icon: Folder },
+        { id: 'campaigns', label: "Campaigns", href: "/campaigns", icon: Rocket },
         { id: 'dialer', label: "Dialer", href: "/crm/dialer", icon: Phone },
         { id: 'contracts', label: "Contracts", href: "/crm/contracts", icon: FileText },
         { id: 'quotes', label: "Quotes", href: "/crm/quotes", icon: FileText },
@@ -135,7 +136,12 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                                 <item.icon className="w-4 h-4 shrink-0" />
                                 {!isCollapsed && (
                                     <div className="flex items-center gap-2 truncate">
-                                        <span>{item.label}</span>
+                                        <span className={cn(
+                                            "truncate font-black uppercase tracking-tighter text-base",
+                                            isActive ? "bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-all duration-300"
+                                        )}>
+                                            {item.label}
+                                        </span>
                                         {item.isPremium && <Lock className="w-3 h-3 text-amber-500/70" />}
                                     </div>
                                 )}

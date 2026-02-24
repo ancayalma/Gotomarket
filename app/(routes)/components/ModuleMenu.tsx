@@ -137,10 +137,6 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
     { label: "Knowledge Base", href: "/crm/cases?view=kb" },
   ];
 
-  const contractsSubItems: SubMenuItemType[] = [
-    { label: "All Contracts", href: "/crm/contracts" },
-    { label: "Deal Rooms", href: "/crm/contracts?view=rooms" },
-  ];
 
   const flowsSubItems: SubMenuItemType[] = [
     { label: "All Workflows", href: "/crm/workflows" },
@@ -349,13 +345,12 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
               {/* ══════ OPERATIONS ══════ */}
               <HubLabel label="Operations" isOpen={open} />
 
-              <ExpandableMenuItem
+              <MenuItem
                 href="/crm/contracts"
                 icon={FileText}
                 title="Contracts"
                 isOpen={open}
                 isActive={isCrmContracts}
-                items={contractsSubItems}
               />
 
               <MenuItem

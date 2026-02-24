@@ -141,10 +141,22 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                         }}
                         className="ml-2.5 flex-1 items-center justify-between overflow-hidden whitespace-nowrap z-10"
                     >
-                        <span className="truncate flex items-center gap-2">
+                        <span
+                            className={cn(
+                                "flex items-center gap-2 uppercase tracking-tight py-0 px-2 leading-normal",
+                                isActive ? "bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-all duration-300"
+                            )}
+                            style={{
+                                fontFamily: 'var(--nav-item-font)',
+                                fontSize: 'var(--nav-item-size)',
+                                fontWeight: 'var(--nav-item-weight)',
+                                fontStyle: 'var(--nav-item-style)',
+                                paddingRight: '0.4em'
+                            }}
+                        >
                             {title}
                             {isLocked && (
-                                <span className="text-[10px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded flex items-center gap-1.5 border border-white/5">
+                                <span className="text-[10px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded flex items-center gap-1.5 border border-white/5 not-italic font-bold">
                                     <Lock className="w-2.5 h-2.5" />
                                     <span className="hidden xl:inline">Upgrade</span>
                                 </span>
@@ -165,10 +177,19 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
 
                     {/* Micro-Label for Collapsed State */}
                     {!isOpen && (
-                        <span className={cn(
-                            "text-[9px] uppercase tracking-wider mt-0.5 truncate max-w-[60px] text-center flex items-center justify-center",
-                            isActive ? "text-primary font-semibold" : "text-muted-foreground"
-                        )}>
+                        <span
+                            className={cn(
+                                "uppercase tracking-wider mt-0.5 truncate max-w-[60px] text-center flex items-center justify-center",
+                                isActive ? "text-primary font-semibold" : "text-muted-foreground"
+                            )}
+                            style={{
+                                fontFamily: 'var(--nav-item-font)',
+                                fontSize: 'calc(var(--nav-item-size) * 0.5)',
+                                fontWeight: 'var(--nav-item-weight)',
+                                fontStyle: 'var(--nav-item-style)',
+                                paddingRight: '0.2em'
+                            }}
+                        >
                             {isLocked ? <Lock className="w-2.5 h-2.5" /> : title.split(' ')[0]}
                         </span>
                     )}
@@ -213,7 +234,18 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                                             )}
                                         >
                                             {subItem.icon && <subItem.icon className="w-3.5 h-3.5 shrink-0" />}
-                                            <span className="truncate">{subItem.label}</span>
+                                            <span
+                                                className="truncate"
+                                                style={{
+                                                    fontFamily: 'var(--nav-item-font)',
+                                                    fontSize: 'calc(var(--nav-item-size) * 0.8)',
+                                                    fontWeight: 'var(--nav-item-weight)',
+                                                    fontStyle: 'var(--nav-item-style)',
+                                                    paddingRight: '0.3em'
+                                                }}
+                                            >
+                                                {subItem.label}
+                                            </span>
                                         </Link>
                                     );
                                 })}

@@ -52,14 +52,45 @@ const SideBar = async () => {
     features = getSubscriptionPlan(slug).features;
   }
 
-  const teamRole = (user as any)?.team_role || "MEMBER";
-  const isPartnerAdmin = (user as any).is_admin || teamRole === "PLATFORM_ADMIN" || (user as any).assigned_team?.slug === "basalt" || (user as any).assigned_team?.slug === "basalthq";
+  const teamRole = currentUserInfo.teamRole || "MEMBER";
+  const isPartnerAdmin = currentUserInfo.isPlatformAdmin || (user as any).assigned_team?.slug === "basalt" || (user as any).assigned_team?.slug === "basalthq";
 
   // Resolve Navigation Structure (Now synced via DB Migration)
-  const activeNavStructure = (dbNavConfig as NavItem[]) || DEFAULT_NAV_STRUCTURE;
+  const config = dbNavConfig as any;
+  const rawStructure = config?.structure || DEFAULT_NAV_STRUCTURE;
+
+  // Utility to ensure unique IDs across the entire structure
+  const deduplicateStructure = (items: NavItem[]): NavItem[] => {
+    const seen = new Set<string>();
+    const process = (list: NavItem[]): NavItem[] => {
+      const result: NavItem[] = [];
+      list.forEach(item => {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          const processedItem = { ...item };
+          if (item.children) {
+            processedItem.children = process(item.children);
+          }
+          result.push(processedItem);
+        }
+      });
+      return result;
+    };
+    return process(items);
+  };
+
+  const activeNavStructure = deduplicateStructure(rawStructure);
 
   return <DynamicModuleMenu
     navStructure={activeNavStructure}
+    titleFont={config?.titleFont}
+    titleFontSize={config?.titleFontSize}
+    titleFontWeight={config?.titleFontWeight}
+    titleFontStyle={config?.titleFontStyle}
+    itemFont={config?.itemFont}
+    itemFontSize={config?.itemFontSize}
+    itemFontWeight={config?.itemFontWeight}
+    itemFontStyle={config?.itemFontStyle}
     modules={modules}
     dict={dict}
     features={features}

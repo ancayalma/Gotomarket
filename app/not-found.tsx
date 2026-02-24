@@ -22,11 +22,11 @@ export default function NotFound() {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     className="relative mb-8"
                 >
-                    <h1 className="text-[12rem] md:text-[16rem] font-black tracking-tighter leading-none select-none text-white/5">
+                    <h1 className="text-[12rem] md:text-[16rem] font-black tracking-tight leading-none select-none text-white/5">
                         404
                     </h1>
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <h2 className="text-6xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/20 drop-shadow-2xl">
+                        <h2 className="text-6xl md:text-8xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/20 drop-shadow-2xl py-4 px-4 leading-normal">
                             LOST?
                         </h2>
                     </div>
@@ -41,7 +41,7 @@ export default function NotFound() {
                     className="max-w-2xl space-y-8"
                 >
                     <div className="space-y-4">
-                        <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-white uppercase font-mono">
+                        <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-white uppercase font-mono py-2 px-4">
                             <span className="text-primary mr-2">/</span> Signal Lost in Transit
                         </h3>
                         <p className="text-gray-400 text-lg md:text-xl leading-relaxed max-w-lg mx-auto">

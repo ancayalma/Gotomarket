@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { getActiveUsers } from "@/actions/get-users";
 import { getBoards } from "@/actions/projects/get-boards";
 import { getProjectStats } from "@/actions/projects/get-project-stats";
+import { Button } from "@/components/ui/button";
 
 import { authOptions } from "@/lib/auth";
 
@@ -12,20 +13,34 @@ import NewProjectDialog from "../dialogs/NewProject";
 
 import { ProjectsDataTable } from "../table-components/data-table";
 import { columns } from "../table-components/columns";
-import { FolderPlus, CheckSquare } from "lucide-react";
+import { FolderPlus, CheckSquare, LayoutGrid, List as ListIcon } from "lucide-react";
 import { ProjectCard, ProjectCardData } from "./ProjectCard";
 import AiAssistantCardWrapper from "./AiAssistantCardWrapper";
+import { ProjectsGrid } from "../components/ProjectsGrid";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const ProjectsView = async () => {
+interface ProjectsViewProps {
+    view?: "overview" | "campaigns";
+}
+
+const ProjectsView = async ({ view = "overview" }: ProjectsViewProps) => {
     const session = await getServerSession(authOptions);
 
     if (!session) return null;
 
     const users = await getActiveUsers();
+    // Fetch ALL boards for now to ensure no data loss
     const boards: any = await getBoards(session.user.id!);
     const stats = await getProjectStats();
 
-    // We only define data for the first two cards here as AiAssistantCardWrapper handles its own card data
+    const isCampaignsView = view === "campaigns";
+    const displayData = boards; // Show everything to prevent "losing" data
+    const title = isCampaignsView ? "Strategic Campaigns" : "Delivery Boards";
+    const description = isCampaignsView
+        ? "Manage your strategic outreach, branding, and go-to-market initiatives."
+        : "Manage your internal initiatives and service delivery projects.";
+    const entityLabel = isCampaignsView ? "Campaign" : "Project";
+
     const cards: ProjectCardData[] = [
         {
             title: "New Project",
@@ -42,6 +57,57 @@ const ProjectsView = async () => {
             iconColor: "text-orange-400"
         }
     ];
+
+    if (isCampaignsView) {
+        return (
+            <div className="space-y-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-tight uppercase leading-[1.2] py-2">
+                            {title}
+                        </h2>
+                        <p className="text-muted-foreground/80 mt-1 text-base font-medium tracking-wide">
+                            {description}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <NewProjectDialog
+                            entityName={entityLabel}
+                            customTrigger={
+                                <Button className="gap-2 bg-primary shadow-lg shadow-primary/20">
+                                    <FolderPlus className="w-4 h-4" />
+                                    New {entityLabel}
+                                </Button>
+                            }
+                        />
+                    </div>
+                </div>
+
+                <Tabs defaultValue="grid" className="w-full">
+                    <div className="flex items-center justify-between mb-6">
+                        <TabsList className="bg-background/50 border border-primary/10 rounded-xl p-1">
+                            <TabsTrigger value="grid" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                                <LayoutGrid className="w-4 h-4" />
+                                Grid
+                            </TabsTrigger>
+                            <TabsTrigger value="list" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                                <ListIcon className="w-4 h-4" />
+                                List
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
+                    <TabsContent value="grid" className="mt-0 outline-none">
+                        <ProjectsGrid data={displayData} />
+                    </TabsContent>
+                    <TabsContent value="list" className="mt-0 outline-none">
+                        <div className="rounded-3xl border border-primary/10 bg-background/50 backdrop-blur-sm overflow-hidden">
+                            <ProjectsDataTable data={displayData} columns={columns} stats={stats} entityName="Campaigns" />
+                        </div>
+                    </TabsContent>
+                </Tabs>
+            </div>
+        );
+    }
 
     return (
         <>

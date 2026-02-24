@@ -78,11 +78,26 @@ export function SortableNavItem({
                     ) : null}
                 </div>
                 <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-semibold truncate text-primary/90">
+                    <span
+                        className={cn(
+                            "truncate uppercase tracking-tight",
+                            item.type === 'group'
+                                ? "bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-[2px]"
+                                : "text-primary/90"
+                        )}
+                        style={{
+                            fontFamily: item.type === 'group' ? 'var(--nav-title-font)' : 'var(--nav-item-font)',
+                            fontSize: item.type === 'group' ? 'var(--nav-title-size)' : 'var(--nav-item-size)',
+                            fontWeight: item.type === 'group' ? 'var(--nav-title-weight)' : 'var(--nav-item-weight)',
+                            fontStyle: item.type === 'group' ? 'var(--nav-title-style)' : 'var(--nav-item-style)',
+                            lineHeight: '1.2',
+                            paddingRight: '0.4em'
+                        }}
+                    >
                         {item.label}
                     </span>
-                    {item.href && (
-                        <span className="text-[10px] text-muted-foreground truncate font-mono">
+                    {item.href && item.type !== 'group' && (
+                        <span className="text-[10px] text-muted-foreground truncate font-mono opacity-50">
                             {item.href}
                         </span>
                     )}

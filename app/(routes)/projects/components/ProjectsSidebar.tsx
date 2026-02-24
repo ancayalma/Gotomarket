@@ -44,7 +44,6 @@ export default function ProjectsSidebar() {
 
     const navItems = [
         { label: "Overview", href: "/projects", icon: FolderKanban },
-        { label: "All Projects", href: "/projects/all", icon: Folder },
         { label: "Tasks", href: "/projects/tasks", icon: ListTodo },
     ];
 
@@ -88,7 +87,14 @@ export default function ProjectsSidebar() {
                                 title={isCollapsed ? item.label : undefined}
                             >
                                 <item.icon className="w-4 h-4 shrink-0" />
-                                {!isCollapsed && <span className="truncate">{item.label}</span>}
+                                {!isCollapsed && (
+                                    <span className={cn(
+                                        "truncate font-black uppercase tracking-tighter text-base",
+                                        isActive ? "bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-all duration-300"
+                                    )}>
+                                        {item.label}
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
