@@ -3468,8 +3468,33 @@ model crm_Products {
   sku         String  @unique
   description String?
   price       Float
+  costPrice   Float?
+  taxRate     Float?  @default(0)
   category    String?
+  brand       String?
+  model       String?
+  stock       Int     @default(0)
+  weight      Float?
+  width       Float?
+  height      Float?
+  length      Float?
+  isDigital   Boolean @default(false)
+  imageUrl    String?   // Product image URL (from Surge, Shopify, WooCommerce, or manual)
   active      Boolean @default(true)
+  tags             String[]
+  surge_id         String?
+  shopify_id       String?   // Shopify product ID for bidirectional sync
+  woo_id           String?   // WooCommerce product ID for bidirectional sync
+  taxable          Boolean @default(true)
+  jurisdictionCode String?
+  industryPack     String?   // Surge industry pack (freelancer, ecommerce, etc.)
+  attributes       Json?     // Flexible key-value attributes from Surge (varies by industry pack)
+  currency         String?   @default("USD") // Currency code (USD, EUR, etc.)
+  ownerWallet      String?   // Surge owner wallet address
+  isBook           Boolean   @default(false) // Is this item a book/publication
+  allowDownload    Boolean   @default(false) // Allow digital download
+  drmEnabled       Boolean   @default(false) // DRM protection enabled
+  isSubscription   Boolean   @default(false) // Subscription item
 
   team_id String @db.ObjectId
   team    Team   @relation(fields: [team_id], references: [id])
@@ -3572,6 +3597,17 @@ model Tenant_Integrations {
   surge_merchant_id String?
   preferred_chain String   @default("BASE")
   
+  // E-Commerce Integrations (Shopify - Custom App / Admin API)
+  shopify_enabled       Boolean  @default(false)
+  shopify_store_url     String?   // "your-store.myshopify.com"
+  shopify_access_token  String?   // Admin API Access Token (shpat_...)
+
+  // E-Commerce Integrations (WooCommerce - REST API v3)
+  woocommerce_enabled         Boolean  @default(false)
+  woocommerce_store_url       String?   // "https://your-store.com"
+  woocommerce_consumer_key    String?   // Consumer Key (ck_...)
+  woocommerce_consumer_secret String?   // Consumer Secret (cs_...)
+
   // Mercury Config (Banking)
   mercury_enabled Boolean  @default(false)
   mercury_api_key String?

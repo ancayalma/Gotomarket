@@ -63,7 +63,7 @@ export const SurgeSettingsForm = ({ initialData }: Props) => {
                         BasaltSURGE
                     </CardTitle>
                     <CardDescription className="text-muted-foreground/80">
-                        Accept crypto payments (Base Network).
+                        Crypto payments & product inventory (Base Network).
                     </CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">

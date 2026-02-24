@@ -32,6 +32,17 @@ export async function saveIntegrationSettings(data: FormData) {
         const mercuryApiKey = data.get("mercury_api_key") as string;
         const mercuryAccountId = data.get("mercury_account_id") as string;
 
+        // Extract Shopify Settings
+        const shopifyEnabled = data.get("shopify_enabled") === "on";
+        const shopifyStoreUrl = data.get("shopify_store_url") as string;
+        const shopifyAccessToken = data.get("shopify_access_token") as string;
+
+        // Extract WooCommerce Settings
+        const woocommerceEnabled = data.get("woocommerce_enabled") === "on";
+        const woocommerceStoreUrl = data.get("woocommerce_store_url") as string;
+        const woocommerceConsumerKey = data.get("woocommerce_consumer_key") as string;
+        const woocommerceConsumerSecret = data.get("woocommerce_consumer_secret") as string;
+
         // Validate
         if (surgeEnabled && (!surgeApiKey || !surgeMerchantId)) {
             return { error: "Surge API Key and ID are required when enabled." };
@@ -50,6 +61,13 @@ export async function saveIntegrationSettings(data: FormData) {
                 mercury_enabled: mercuryEnabled,
                 mercury_api_key: mercuryApiKey,
                 mercury_account_id: mercuryAccountId,
+                shopify_enabled: shopifyEnabled,
+                shopify_store_url: shopifyStoreUrl || undefined,
+                shopify_access_token: shopifyAccessToken || undefined,
+                woocommerce_enabled: woocommerceEnabled,
+                woocommerce_store_url: woocommerceStoreUrl || undefined,
+                woocommerce_consumer_key: woocommerceConsumerKey || undefined,
+                woocommerce_consumer_secret: woocommerceConsumerSecret || undefined,
                 preferred_chain: "BASE"
             },
             update: {
@@ -59,6 +77,13 @@ export async function saveIntegrationSettings(data: FormData) {
                 mercury_enabled: mercuryEnabled,
                 mercury_api_key: mercuryApiKey,
                 mercury_account_id: mercuryAccountId,
+                shopify_enabled: shopifyEnabled,
+                shopify_store_url: shopifyStoreUrl || undefined,
+                shopify_access_token: shopifyAccessToken || undefined,
+                woocommerce_enabled: woocommerceEnabled,
+                woocommerce_store_url: woocommerceStoreUrl || undefined,
+                woocommerce_consumer_key: woocommerceConsumerKey || undefined,
+                woocommerce_consumer_secret: woocommerceConsumerSecret || undefined,
             }
         });
 

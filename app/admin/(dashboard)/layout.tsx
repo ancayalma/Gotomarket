@@ -11,6 +11,7 @@ import { ReactNode } from "react";
 import Header from "@/app/(routes)/components/Header";
 import SideBar from "@/app/(routes)/components/SideBar";
 import Footer from "@/app/(routes)/components/Footer";
+import { LearnProvider } from "@/components/providers/learn-provider";
 
 const AnyFooter = Footer as any;
 const AnySideBar = SideBar as any;
@@ -63,7 +64,9 @@ export default async function AdminDashboardLayout({
                 <div className="flex flex-1 min-h-0 overflow-hidden">
                     <AdminSidebar showModules={!!showModules} />
                     <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4">
-                        {children}
+                        <LearnProvider>
+                            {children}
+                        </LearnProvider>
                     </div>
                 </div>
                 <AnyFooter />
