@@ -207,7 +207,7 @@ export function LoginComponent() {
         <CardDescription className="text-gray-300">Click here to login with: </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <Button variant="outline" onClick={loginWithGitHub} className="px-0">
             <Icons.gitHub className="mr-2 h-4 w-4" />
             Github

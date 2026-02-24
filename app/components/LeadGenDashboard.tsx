@@ -21,7 +21,7 @@ export default function LeadGenDashboard() {
     ];
 
     return (
-        <div className="relative w-full h-full p-6 flex flex-col gap-4 overflow-hidden bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
+        <div className="relative w-full p-8 flex flex-col gap-6 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl min-h-[550px]">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
@@ -82,7 +82,7 @@ export default function LeadGenDashboard() {
             {/* Lead Cards */}
             <div className="flex-1 flex flex-col gap-3">
                 <div className="text-xs font-bold text-yellow-500 uppercase tracking-wider">Discovered Leads</div>
-                
+
                 <AnimatePresence>
                     {leads.map((lead, index) => (
                         <motion.div
@@ -101,11 +101,10 @@ export default function LeadGenDashboard() {
                                 <div className="text-sm font-medium text-white">{lead.company}</div>
                                 <div className="text-xs text-muted-foreground">Lead Score: {lead.score}%</div>
                             </div>
-                            <div className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                lead.status === "hot" 
-                                    ? "bg-red-500/20 text-red-400" 
-                                    : "bg-orange-500/20 text-orange-400"
-                            }`}>
+                            <div className={`px-2 py-0.5 rounded text-xs font-medium ${lead.status === "hot"
+                                ? "bg-red-500/20 text-red-400"
+                                : "bg-orange-500/20 text-orange-400"
+                                }`}>
                                 {lead.status.toUpperCase()}
                             </div>
                             {step >= index + 3 && (

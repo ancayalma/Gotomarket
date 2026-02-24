@@ -1,122 +1,106 @@
-import { ShieldCheck, Globe, Zap, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Globe, Zap, Cpu, Layers, Activity, Command } from "lucide-react";
 
 export default function BasaltAbout() {
     return (
-        <section id="about" className="relative py-10 px-6">
+        <section id="about" className="relative py-32 px-6">
             <div className="max-w-7xl mx-auto">
-                <div className="grid lg:grid-cols-2 gap-16 items-start mb-24">
+                <div className="grid lg:grid-cols-2 gap-24 items-center mb-32">
                     {/* Left Content */}
                     <div>
-                        <span className="section-heading">ABOUT BASALT</span>
-                        <h2 className="section-title mt-4 mb-6">AI-First Customer Relationships</h2>
+                        <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20">
+                            <span className="text-[10px] font-mono text-cyan-400 tracking-[0.3em] uppercase">NEURAL ARCHITECTURE</span>
+                        </div>
+                        <h2 className="text-5xl md:text-7xl font-black mb-8 leading-tight uppercase tracking-tighter">
+                            THE <span className="text-cyan-500">CORE</span> <br />
+                            PHILOSOPHY
+                        </h2>
 
-                        <div className="space-y-6 text-gray-300 leading-relaxed">
+                        <div className="space-y-8 text-gray-400 text-lg leading-relaxed font-light">
                             <p>
-                                <span className="text-cyan-500 font-semibold">BasaltCRM</span> is the foundation of
-                                the next generation of business intelligence. We integrate autonomous agents
-                                that empower sales teams while driving efficiency and predictability in revenue ops.
+                                <span className="text-white font-medium">BasaltCRM</span> is not a tool; it is a foundation.
+                                We are engineering the first end-to-end <span className="text-white">autonomous revenue machine</span>.
+                                By abstracting the heavy lifting of AI-ASSISTED STACK onto agentic neural cores, we allow founders
+                                and growth teams to operate at a scale previously reserved for Fortune 500 conglomerates.
                             </p>
                             <p>
-                                By fostering symbiotic relationships between human strategy and AI execution, we
-                                believe in technology's potential to eliminate the grind of sales and support,
-                                allowing teams to focus on what matters most: closing deals and building relationships.
+                                Our architecture is built for <span className="text-cyan-500">Total Agency</span>.
+                                Every agent in the Basalt stack is capable of reasoning, planning, and executing
+                                complex revenue cycles without human oversight.
                             </p>
                         </div>
 
                         {/* Mission Statement Card */}
-                        <div className="mt-8 p-6 glass-panel rounded-2xl border-l-4 border-cyan-500">
-                            <p className="text-sm text-gray-400 italic">
-                                &ldquo;A self-driving growth engine that operates 24/7. Freedom from repetitive tasks.
-                                Confidence in your pipeline. A business that grows even when you're not watching.&rdquo;
+                        <div className="mt-12 p-8 glass-panel rounded-[32px] border border-white/10 bg-gradient-to-br from-white/5 to-transparent relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-20">
+                                <Command className="h-20 w-20 text-cyan-500" />
+                            </div>
+                            <p className="text-lg text-white font-medium italic relative z-10 leading-relaxed">
+                                &ldquo;Provisioning performance at grid-scale. We don&apos;t just manage your pipeline;
+                                we engineer the loop that grows it while you sleep.&rdquo;
+                            </p>
+                            <div className="mt-6 flex items-center gap-3">
+                                <Activity className="h-4 w-4 text-cyan-500 animate-pulse" />
+                                <span className="text-[10px] font-mono text-cyan-500 tracking-widest uppercase">System Vision 2.1</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Content - Values / Specs */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[
+                            {
+                                title: 'ENCRYPTION',
+                                value: 'AES-256-GCM',
+                                desc: 'Grid-level security on every neural synapse.',
+                                icon: <ShieldCheck className="w-6 h-6 text-emerald-500" />
+                            },
+                            {
+                                title: 'PROPAGATION',
+                                value: 'MULTI-REGION',
+                                desc: 'Low-latency execution across 24 global nodes.',
+                                icon: <Globe className="w-6 h-6 text-blue-500" />
+                            },
+                            {
+                                title: 'INFERENCE',
+                                value: '0.12s LATENCY',
+                                desc: 'High-speed reasoning for voice and text streams.',
+                                icon: <Zap className="w-6 h-6 text-cyan-500" />
+                            },
+                            {
+                                title: 'AUTONOMY',
+                                value: 'L4 AGENCY',
+                                desc: 'Self-correcting workflows with zero human loop.',
+                                icon: <Cpu className="w-6 h-6 text-violet-500" />
+                            },
+                        ].map((spec) => (
+                            <div key={spec.title} className="p-8 glass-panel rounded-[32px] border border-white/10 bg-black/40 hover:bg-white/5 transition-all duration-500 group">
+                                <div className="mb-6">
+                                    {spec.icon}
+                                </div>
+                                <div className="text-[10px] font-mono text-gray-500 mb-2 tracking-widest uppercase">{spec.title}</div>
+                                <div className="text-2xl font-bold text-white mb-4 tracking-tight group-hover:text-cyan-400 transition-colors uppercase">{spec.value}</div>
+                                <p className="text-sm text-gray-500 leading-relaxed">{spec.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Tech Stack Billboard */}
+                <div className="border-t border-white/5 pt-24">
+                    <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-8">
+                        <div className="max-w-2xl">
+                            <span className="text-[10px] font-mono text-cyan-500 tracking-widest uppercase mb-4 block">Infrastructure</span>
+                            <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">THE NEURAL STACK</h3>
+                            <p className="text-gray-500 mt-4 text-lg">
+                                Deeply integrated with industry-lead models and real-time communication protocols.
                             </p>
                         </div>
                     </div>
 
-                    {/* Right Content - Values */}
-                    <div className="space-y-6 lg:space-y-12">
-                        {/* Values Grid */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-                            {[
-                                {
-                                    title: 'SECURE',
-                                    desc: 'Bank-grade encryption & SOC2 ready',
-                                    icon: <ShieldCheck className="w-5 h-5" />
-                                },
-                                {
-                                    title: 'GLOBAL',
-                                    desc: 'Multilingual support in 100+ languages',
-                                    icon: <Globe className="w-5 h-5" />
-                                },
-                                {
-                                    title: 'FAST',
-                                    desc: 'Real-time processing <100ms latency',
-                                    icon: <Zap className="w-5 h-5" />
-                                },
-                                {
-                                    title: 'RELIABLE',
-                                    desc: '99.9% Uptime SLA guaranteed',
-                                    icon: <CheckCircle2 className="w-5 h-5" />
-                                },
-                            ].map((value) => (
-                                <div key={value.title} className="glass-panel bg-black/60 p-6 rounded-xl hover:-translate-y-1 transition-all duration-300 group hover:bg-cyan-500/10 border border-white/10 flex flex-col items-start justify-between min-h-[140px] shadow-lg">
-                                    <div>
-                                        <div className="text-cyan-500 mb-3 group-hover:scale-110 transition-transform bg-cyan-500/10 p-2 rounded-lg w-fit">
-                                            {value.icon}
-                                        </div>
-                                        <h4 className="text-xs font-mono tracking-wider text-cyan-500 mb-2 font-bold">
-                                            {value.title}
-                                        </h4>
-                                    </div>
-                                    <p className="text-xs text-gray-400 font-medium">{value.desc}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Performance Metrics */}
-                        <div className="glass-panel rounded-2xl p-6 lg:p-10">
-                            <h4 className="text-xs font-mono tracking-wider text-gray-500 mb-4">
-                                SYSTEM METRICS
-                            </h4>
-                            <div className="grid grid-cols-2 gap-4 lg:gap-8">
-                                {[
-                                    { label: 'Scalability', desc: 'Auto-scaling agent fleets' },
-                                    { label: 'Accuracy', desc: '98% Intent recognition rate' },
-                                    { label: 'Integration', desc: 'Connects with 5000+ apps' },
-                                    { label: 'Support', desc: '24/7 Autonomous resolution' },
-                                ].map((metric) => (
-                                    <div key={metric.label} className="flex items-start gap-2">
-                                        <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full mt-2" />
-                                        <div>
-                                            <span className="text-sm font-semibold text-white">{metric.label}</span>
-                                            <p className="text-xs text-gray-500">{metric.desc}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Extended Team Section (Optional - kept if needed, or replaced with something else) */}
-                {/* For now, I'll comment out the team section as it might not be relevant if they don't have a large team to show yet, or I can replace it with "Trusted By" logos later if they have them. 
-                    Given the request is to align with the template, and the template has it, I will retain a placeholder structure but maybe generic or skip if no data. 
-                     I'll skip the team section for now to focus on the product, unless specifically asked. The prompt said "fit the style of the template exactly", so maybe I should add a section there. 
-                     Let's add a "Powered By" or "Technology Stack" section instead of Team to keep the layout similar. */}
-
-                <div className="border-t border-white/10 pt-16">
-                    <div className="text-center mb-12">
-                        <span className="section-heading">OUR ENGINE</span>
-                        <h2 className="section-title mt-4">Powered By Next-Gen Tech</h2>
-                        <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
-                            Built on the most advanced AI and blockchain infrastructure available today.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                        {/* tech logos text */}
-                        {['OpenAI', 'Anthropic', 'ElevenLabs', 'Vercel'].map((tech) => (
-                            <div key={tech} className="group text-center p-6 glass-panel rounded-xl hover:bg-white/5 transition-all">
-                                <h4 className="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">{tech}</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {['OpenAI', 'Anthropic', 'ElevenLabs', 'Vercel', 'Stripe', 'Twilio'].map((tech) => (
+                            <div key={tech} className="h-32 flex items-center justify-center glass-panel rounded-2xl border border-white/5 hover:border-cyan-500/30 hover:bg-white/5 transition-all group">
+                                <span className="text-gray-500 group-hover:text-white font-bold tracking-widest uppercase">{tech}</span>
                             </div>
                         ))}
                     </div>

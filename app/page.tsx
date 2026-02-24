@@ -1,7 +1,8 @@
 // @ts-nocheck
 export const dynamic = "force-dynamic";
 import { Metadata } from "next";
-import GeometricBackground from "./components/GeometricBackground";
+import FluidNeuralWave from "./components/FluidNeuralWave";
+// import GeometricBackground from "./components/GeometricBackground";
 import BasaltNavbar from "@/components/basaltcrm-landing/BasaltNavbar";
 import BasaltHero from "@/components/basaltcrm-landing/BasaltHero";
 import BasaltFeatures from "@/components/basaltcrm-landing/BasaltFeatures";
@@ -46,8 +47,8 @@ export default function LandingPage() {
     return (
         <div className="dark min-h-screen bg-black text-white font-sans selection:bg-cyan-500/30 overflow-x-hidden">
             {/* Global Background - Fixed to cover detailed sections */}
-            <div className="fixed inset-0 z-0">
-                <GeometricBackground />
+            <div className="fixed inset-0 z-0 opacity-40">
+                <FluidNeuralWave variant="complex" seed={1.5} />
             </div>
 
             {/* Content Overlay */}
