@@ -30,66 +30,41 @@ export const useDashboardLayout = () => {
 };
 
 export const defaultWidgets: WidgetItem[] = [
-    // First Row: Stats & Schedule (Small Widgets)
+    // --- SEGMENT 1: THE 9 KEY METRICS (IMAGE 1) ---
+    { id: "active_users", isVisible: true },
+    { id: "avg_deal_size", isVisible: true },
     { id: "revenue", isVisible: true },
+    { id: "system_uptime", isVisible: true },
     { id: "active_pipeline", isVisible: true },
+    { id: "conversion_rate", isVisible: true },
     { id: "system_health", isVisible: true },
     { id: "my_schedule", isVisible: true },
+    { id: "response_time", isVisible: true },
 
     { id: "divider-1", isVisible: true },
 
-    // Second Row: Comprehensive Entity Grid (Full Width)
-    { id: "crm_entities_grid", isVisible: true },
+    // --- SEGMENT 2: OPERATIONAL VIEWS (Initially Hidden to match Image 1 focus) ---
+    { id: "leads", isVisible: false },
+    { id: "tasks", isVisible: false },
+    { id: "projects", isVisible: false },
+    { id: "messages", isVisible: false },
 
-    // Middle/Bottom Sections: Lists & Detailed Data
-    { id: "leads", isVisible: true },
-    { id: "tasks", isVisible: true },
-    { id: "projects", isVisible: true },
-    { id: "messages", isVisible: true },
+    { id: "divider-2", isVisible: true },
 
-    { id: "divider-3", isVisible: true },
-
-    // Pipelines (Large Widgets)
     { id: "personal_pipeline", isVisible: true },
     { id: "team_pipeline", isVisible: true },
 
-    // Hidden by Default - Operations & Analytics
-    { id: "active_users", isVisible: true },
+    // --- SEGMENT 3: HUB GRID & EXTENDED ---
+    { id: "crm_entities_grid", isVisible: true },
+
+    // Hidden/Optional Operations & Analytics
     { id: "team_activity", isVisible: false },
     { id: "recent_files", isVisible: false },
     { id: "revenue_pacing", isVisible: false },
-    { id: "outreach_roi", isVisible: true },
-    { id: "lead_pools", isVisible: true },
-    { id: "lead_wizard", isVisible: true },
-    { id: "ai_insights", isVisible: true },
-
-    // Additional Specialized Stats
-    { id: "conversion_rate", isVisible: true },
-    { id: "avg_deal_size", isVisible: true },
-    { id: "response_time", isVisible: true },
-    { id: "system_uptime", isVisible: false },
-
-    // Entity Widgets (Small Buttons section)
-    { id: "entity:accounts", isVisible: true },
-    { id: "entity:contacts", isVisible: true },
-    { id: "entity:contracts", isVisible: true },
-    { id: "entity:dialer", isVisible: true },
-    { id: "entity:leads_manager", isVisible: true },
-    { id: "entity:projects", isVisible: true },
-    { id: "entity:opportunities", isVisible: true },
-    { id: "entity:sales_command", isVisible: true },
-    { id: "entity:service_console", isVisible: true },
-    { id: "entity:guard_rules", isVisible: true },
-    { id: "entity:approval_chains", isVisible: true },
-    { id: "entity:flowstate_builder", isVisible: true },
-    { id: "entity:lead_wizard", isVisible: true },
-    { id: "entity:lead_pools", isVisible: true },
-    { id: "entity:outreach", isVisible: true },
-    { id: "entity:my_tasks", isVisible: true },
-    { id: "entity:invoices", isVisible: true },
-    { id: "entity:reports", isVisible: true },
-    { id: "entity:products", isVisible: true },
-    { id: "entity:quotes", isVisible: true },
+    { id: "outreach_roi", isVisible: false },
+    { id: "lead_pools", isVisible: false },
+    { id: "lead_wizard", isVisible: false },
+    { id: "ai_insights", isVisible: false },
 ];
 
 interface DashboardLayoutProviderProps {
@@ -101,27 +76,66 @@ export const DashboardLayoutProvider = ({
     children,
     initialLayout,
 }: DashboardLayoutProviderProps) => {
-    const [widgets, setWidgets] = useState<WidgetItem[]>(initialLayout || defaultWidgets);
+    const [widgets, setWidgets] = useState<WidgetItem[]>(defaultWidgets);
     const [isEditMode, setIsEditMode] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     // Update local state when initialLayout changes (if it comes from a server action/fetch)
     useEffect(() => {
-        if (initialLayout && initialLayout.length > 0) {
-            // Merge: Keep user reordering/visibility for existing widgets,
-            // but add any new widgets that exist in defaultWidgets but not in initialLayout
-            // First, filter out old/redundant dividers from user layout
-            const cleanedLayout = initialLayout.filter(w => w.id !== "divider" && w.id !== "divider-2");
-            const merged = [...cleanedLayout];
+        const userLayout = (initialLayout || []) as WidgetItem[];
 
-            defaultWidgets.forEach(defaultW => {
-                if (!merged.find(w => w.id === defaultW.id)) {
-                    merged.push(defaultW);
-                }
-            });
+        // 1. Clean user layout of deprecated items
+        const cleanedUser = userLayout.filter(w =>
+            w.id !== "divider" &&
+            w.id !== "divider-2" &&
+            w.id !== "divider-3" &&
+            w.id !== "system_uptime_old" // any old IDs
+        );
 
-            setWidgets(merged);
-        }
+        // 2. Prepare the merge list
+        // We start with DEFAULT widgets to ensure the 9 metrics have their default visibility (TRUE)
+        // unless overridden. Actually, let's merge carefully to avoid duplicates.
+        const workList: WidgetItem[] = [];
+
+        // First pass: Add all default widgets in order
+        defaultWidgets.forEach(dw => {
+            const userVersion = cleanedUser.find(uw => uw.id === dw.id);
+            if (userVersion) {
+                // If user has it, but it's one of the 9 metrics, and it's hidden, 
+                // FORCE it to be visible if the user hasn't saved a specific "HIDE" preference?
+                // For now, let's just respect userVersion but if it's missing, add default.
+                workList.push(userVersion);
+            } else {
+                workList.push(dw);
+            }
+        });
+
+        // Second pass: Add any extra widgets from user layout that aren't in defaults
+        cleanedUser.forEach(uw => {
+            if (!workList.find(w => w.id === uw.id)) {
+                workList.push(uw);
+            }
+        });
+
+        // 3. Final Deduplication (Secondary Guard)
+        const finalLayout = workList.reduce((acc: WidgetItem[], current) => {
+            if (!acc.find(item => item.id === current.id)) {
+                acc.push(current);
+            }
+            return acc;
+        }, []);
+
+        // 4. Sort to match defaultWidgets order for the top part
+        finalLayout.sort((a, b) => {
+            const aIdx = defaultWidgets.findIndex(dw => dw.id === a.id);
+            const bIdx = defaultWidgets.findIndex(dw => dw.id === b.id);
+            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+            if (aIdx !== -1) return -1;
+            if (bIdx !== -1) return 1;
+            return 0;
+        });
+
+        setWidgets(finalLayout);
     }, [initialLayout]);
 
     const updateLayout = (newWidgets: WidgetItem[]) => {
@@ -129,9 +143,14 @@ export const DashboardLayoutProvider = ({
     };
 
     const toggleWidgetVisibility = (id: string, isVisible: boolean) => {
-        setWidgets((prev) =>
-            prev.map((w) => (w.id === id ? { ...w, isVisible } : w))
-        );
+        setWidgets((prev) => {
+            const exists = prev.find(w => w.id === id);
+            if (exists) {
+                return prev.map((w) => (w.id === id ? { ...w, isVisible } : w));
+            } else {
+                return [...prev, { id, isVisible }];
+            }
+        });
     };
 
     const saveLayout = async () => {

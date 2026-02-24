@@ -16,34 +16,30 @@ export const getRevenuePacing = async () => {
         const currentDay = differenceInDays(now, start) + 1;
         const daysRemaining = daysInMonth - currentDay;
 
-        // Fetch current month's revenue (from opportunities closed/active in this month)
-        // For pacing, let's look at Expected Revenue of ACTIVE opportunities
-        const opportunities = await prismadb.crm_Opportunities.findMany({
+        // Fetch current month's revenue from INVOICES
+        const invoices = await prismadb.invoices.findMany({
             where: {
                 ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
-                status: "ACTIVE",
-                createdAt: {
+                date_created: {
                     gte: start,
                     lte: end
                 }
             },
             select: {
-                expected_revenue: true
+                invoice_amount: true
             }
         });
 
-        const currentRevenue = opportunities.reduce((sum, opp) => sum + (opp.expected_revenue || 0), 0);
-
-        // Dynamic target: Use total active pipeline value or a default based on team size
-        const totalPipeline = await prismadb.crm_Opportunities.aggregate({
-            where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
-                status: "ACTIVE"
-            },
-            _sum: { expected_revenue: true }
+        let currentRevenue = 0;
+        invoices.forEach(inv => {
+            const amount = parseFloat((inv.invoice_amount || "0").replace(/[^0-9.-]+/g, ""));
+            if (!isNaN(amount)) {
+                currentRevenue += amount;
+            }
         });
 
-        const targetRevenue = Number(totalPipeline._sum?.expected_revenue || 100000);
+        // Set a realistic target based on typical monthly performance (~$10k default or based on current vol)
+        const targetRevenue = 10000;
 
         // Projection logic: Linear extrapolation
         const projectedEOM = currentDay > 0 ? (currentRevenue / currentDay) * daysInMonth : 0;

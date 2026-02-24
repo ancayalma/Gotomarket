@@ -396,16 +396,7 @@ export const EditableWidgetGrid = ({
                         variant="info"
                     />
                 );
-            case "ai_insights":
-                return (
-                    <DashboardCard
-                        icon={Zap}
-                        label="AI Command"
-                        count="4 Suggestions"
-                        description="Workflow optimizations found"
-                        variant="violet"
-                    />
-                );
+
             case "upcoming_meetings":
                 return (
                     <DashboardCard
@@ -435,6 +426,7 @@ export const EditableWidgetGrid = ({
             case "system_uptime":
                 return <DashboardCard icon={CloudLightning} label="Uptime" count="99.99%" description="All systems green" variant="success" hideIcon={true} />;
 
+
             case "personal_pipeline":
                 return (
                     <div className="space-y-4">
@@ -457,14 +449,11 @@ export const EditableWidgetGrid = ({
     // Filter out entity widgets from this grid's management
     const operationalWidgets = widgets.filter(w => !w.id.startsWith("entity:"));
 
-    const itemsToRender = isEditMode
-        ? operationalWidgets
-        : operationalWidgets.filter(w => w.isVisible);
+    // Determine segments for the unified grid vs hidden palette
+    const activeWidgets = operationalWidgets.filter(w => w.isVisible);
+    const hiddenWidgets = operationalWidgets.filter(w => !w.isVisible);
 
-    const sortableItems = itemsToRender.map(w => w.id);
-    const hiddenOperationalWidgets = operationalWidgets.filter(w => !w.isVisible);
-
-    if (itemsToRender.length === 0 && !isEditMode) {
+    if (activeWidgets.length === 0 && !isEditMode) {
         return (
             <div className="flex flex-col items-center justify-center p-12 border border-dashed border-white/10 rounded-xl bg-white/5 text-center">
                 <p className="text-white/60 text-sm font-medium mb-2">No widgets visible</p>
@@ -482,62 +471,30 @@ export const EditableWidgetGrid = ({
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    {/* SECTION 1: KEY METRICS (Small Widgets) */}
+                    {/* UNIFIED DASHBOARD GRID */}
                     <div className="mb-8">
-                        {isEditMode && itemsToRender.some(w => getWidgetSpanClass(w.id) === "col-span-1") && (
-                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <Activity size={14} /> Key Metrics
+                        {isEditMode && (
+                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <Activity size={16} /> Dashboard Layout (Drag to Reorder)
                             </h3>
                         )}
                         <SortableContext
-                            items={itemsToRender.filter(w => getWidgetSpanClass(w.id) === "col-span-1").map(w => w.id)}
+                            items={activeWidgets.map(w => w.id)}
                             strategy={rectSortingStrategy}
                         >
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                                {itemsToRender
-                                    .filter(w => getWidgetSpanClass(w.id) === "col-span-1")
-                                    .map((widget) => (
+                                {activeWidgets.map((widget) => (
+                                    <div key={widget.id} className={getWidgetSpanClass(widget.id)}>
                                         <SortableWidget
-                                            key={widget.id}
                                             id={widget.id}
                                             disabled={!isEditMode}
-                                            className={getWidgetSpanClass(widget.id)}
                                         >
                                             <WidgetWithTooltip id={widget.id}>
                                                 {renderWidget(widget.id)}
                                             </WidgetWithTooltip>
                                         </SortableWidget>
-                                    ))}
-                            </div>
-                        </SortableContext>
-                    </div>
-
-                    {/* SECTION 2: OPERATIONAL VIEWS (Large Widgets) */}
-                    <div>
-                        {isEditMode && itemsToRender.some(w => getWidgetSpanClass(w.id) !== "col-span-1") && (
-                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <FolderPlus size={14} /> Operational Views
-                            </h3>
-                        )}
-                        <SortableContext
-                            items={itemsToRender.filter(w => getWidgetSpanClass(w.id) !== "col-span-1").map(w => w.id)}
-                            strategy={rectSortingStrategy}
-                        >
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                                {itemsToRender
-                                    .filter(w => getWidgetSpanClass(w.id) !== "col-span-1")
-                                    .map((widget) => (
-                                        <SortableWidget
-                                            key={widget.id}
-                                            id={widget.id}
-                                            disabled={!isEditMode}
-                                            className={getWidgetSpanClass(widget.id)}
-                                        >
-                                            <WidgetWithTooltip id={widget.id}>
-                                                {renderWidget(widget.id)}
-                                            </WidgetWithTooltip>
-                                        </SortableWidget>
-                                    ))}
+                                    </div>
+                                ))}
                             </div>
                         </SortableContext>
                     </div>
@@ -553,13 +510,13 @@ export const EditableWidgetGrid = ({
 
                 {/* Hidden Widgets Palette - Only in Edit Mode */}
                 {
-                    isEditMode && hiddenOperationalWidgets.length > 0 && (
+                    isEditMode && hiddenWidgets.length > 0 && (
                         <div className="border-t border-white/10 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <Plus size={14} /> Available Operation Widgets
+                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2 text-primary">
+                                <Plus size={14} /> Add Available Widgets
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 opacity-60 hover:opacity-100 transition-opacity">
-                                {hiddenOperationalWidgets.map((widget) => (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 opacity-60 hover:opacity-100 transition-opacity mt-4">
+                                {hiddenWidgets.map((widget) => (
                                     <div
                                         key={widget.id}
                                         className="relative group cursor-pointer border border-dashed border-white/20 rounded-xl p-4 hover:bg-white/5 hover:border-emerald-500/50 transition-all font-sans"
