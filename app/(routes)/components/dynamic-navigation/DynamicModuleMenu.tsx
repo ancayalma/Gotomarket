@@ -185,9 +185,19 @@ const DynamicModuleMenu = ({
             item.id === "nav_contracts" ||
             item.href === "/crm/contracts" ||
             item.id === "nav_projects" ||
-            item.href === "/projects"
+            item.href === "/projects" ||
+            item.id === "nav_invoices" ||
+            item.href === "/invoice"
         ) {
             item = { ...item, children: undefined };
+        }
+
+        // Remove hidden/redundant children specifically from Admin flyout
+        if (item.id === "nav_admin") {
+            item = {
+                ...item,
+                children: item.children?.filter(child => child.id !== "sub_admin_platform")
+            };
         }
 
         if (!isVisible(item)) return null;

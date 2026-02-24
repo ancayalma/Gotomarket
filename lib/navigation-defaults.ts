@@ -194,10 +194,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Invoices",
                 iconName: "FileCheck",
                 href: "/invoice",
-                permissions: { module: "invoice" },
-                children: [
-                    { id: "sub_invoices_all", type: "item", label: "All Invoices", href: "/invoice", iconName: "FileCheck" }
-                ]
+                permissions: { module: "invoice" }
             },
             {
                 id: "nav_reports",
@@ -296,22 +293,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 children: [
                     { id: "sub_admin_overview", type: "item", label: "Overview", href: "/admin?tab=overview", iconName: "LayoutDashboard" },
                     { id: "sub_admin_depts", type: "item", label: "Departments", href: "/admin?tab=departments", iconName: "Building2" },
-                    { id: "sub_admin_users", type: "item", label: "Users", href: "/admin", iconName: "Users" },
-                    {
-                        id: "sub_admin_platform",
-                        type: "item",
-                        label: "Platform",
-                        href: "/partners",
-                        iconName: "Globe",
-                        permissions: { minRole: "PLATFORM_ADMIN" },
-                        children: [
-                            { id: "sub_platform_team", type: "item", label: "Team Management", href: "/partners" },
-                            { id: "sub_platform_keys", type: "item", label: "System Keys", href: "/partners/ai-system-config" },
-                            { id: "sub_platform_price", type: "item", label: "Model Pricing", href: "/partners/ai-pricing" },
-                            { id: "sub_platform_email", type: "item", label: "System Email", href: "/partners/email-system-config" },
-                            { id: "sub_platform_plans", type: "item", label: "Manage Plans", href: "/partners/plans" }
-                        ]
-                    }
+                    { id: "sub_admin_users", type: "item", label: "Users", href: "/admin", iconName: "Users" }
                 ]
             },
             {

@@ -1,19 +1,20 @@
-import { getServerSession } from "next-auth";
-import sendEmail from "@/lib/sendmail";
-import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import sendEmail from "@/lib/sendmail";
 import crypto from "crypto";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.id) {
+        const teamInfo = await getCurrentUserTeamId();
+        if (!teamInfo?.userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const userId = session.user.id;
-        const teamId = (session.user as any).team_id;
+        const userId = teamInfo.userId;
+        const teamId = teamInfo.teamId;
 
         if (!teamId) {
             return NextResponse.json({ error: "No team associated" }, { status: 400 });
@@ -43,13 +44,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.id) {
+        const teamInfo = await getCurrentUserTeamId();
+        if (!teamInfo?.userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const userId = session.user.id;
-        const teamId = (session.user as any).team_id;
+        const userId = teamInfo.userId;
+        const teamId = teamInfo.teamId;
 
         if (!teamId) {
             return NextResponse.json({ error: "No team associated" }, { status: 400 });

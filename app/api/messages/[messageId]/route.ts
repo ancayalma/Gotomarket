@@ -164,19 +164,22 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ m
         }
 
         const isSender = message.sender_id === userId;
-
-        // Only sender can permanently delete (usually just drafts, or if cleaning up)
-        // Or if in Trash?
-        // Let's implement permanent delete logic based on context
-        // If it's DRAFT -> Delete
-        // If it's SENT -> Maybe prevent unless admin? Or if testing?
-        // Replicating FormSubmission logic: Permanent delete is just DELETE
+        const isRecipient = message.recipients.some(r => r.recipient_id === userId);
 
         if (isSender) {
             await prismadb.internalMessage.delete({ where: { id: messageId } });
             return NextResponse.json({ success: true, message: "Permanently deleted" });
+        } else if (isRecipient) {
+            // For recipient, "Delete Forever" means removing their association with the message
+            await prismadb.internalMessageRecipient.deleteMany({
+                where: {
+                    message_id: messageId,
+                    recipient_id: userId
+                }
+            });
+            return NextResponse.json({ success: true, message: "Permanently removed from view" });
         } else {
-            return NextResponse.json({ error: "Only sender can delete permanently" }, { status: 403 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 
     } catch (error) {

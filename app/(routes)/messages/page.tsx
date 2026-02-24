@@ -10,6 +10,8 @@ import { prismadb } from "@/lib/prisma";
 import { InternalMessagesComponent } from "./components/InternalMessagesComponent";
 import { LearnLink } from "@/components/ui/LearnLink";
 
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+
 const MessagesRoute = async () => {
     const session = await getServerSession(authOptions);
 
@@ -17,10 +19,11 @@ const MessagesRoute = async () => {
         redirect("/");
     }
 
+    const teamInfo = await getCurrentUserTeamId();
+    const teamId = teamInfo?.teamId;
+    const teamRole = (session.user as any).team_role;
     const lang = session.user.userLanguage;
     const dict = await getDictionary(lang as "en" | "cz" | "de");
-    const teamId = (session.user as any).team_id;
-    const teamRole = (session.user as any).team_role;
 
     // PLATFORM_ADMIN has god mode - fetch ALL team members across teams
     const isPlatformAdmin = teamRole === "PLATFORM_ADMIN";

@@ -455,14 +455,21 @@ export function InternalMessagesComponent({
     };
 
     const handlePermanentDeleteMessage = async (messageId: string) => {
+        setIsDeletingSubmission(true);
         try {
             await fetch(`/api/messages/${messageId}`, {
                 method: "DELETE",
             });
             toast.success("Permanently deleted");
             setSelectedMessageId(null);
+            setShowDeleteConfirm(false);
+            setMessageToDelete(null);
             router.refresh();
-        } catch (e) { toast.error("Failed to delete"); }
+        } catch (e) {
+            toast.error("Failed to delete");
+        } finally {
+            setIsDeletingSubmission(false);
+        }
     };
 
     const handleClearNotification = async (notificationId: string) => {
@@ -1081,17 +1088,58 @@ export function InternalMessagesComponent({
                                     </div>
                                 )
                             ) : activeNav === "trash" ? (
-                                /* Trash - Deleted Submissions */
-                                trashedSubmissions.length === 0 ? (
+                                /* Trash - Deleted Messages AND Submissions */
+                                (trashedSubmissions.length === 0 && filteredMessages.length === 0) ? (
                                     <div className="flex flex-col items-center justify-center h-full py-10 text-center">
                                         <Trash2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
                                         <p className="text-muted-foreground">Trash is empty</p>
                                         <p className="text-sm text-muted-foreground/70">
-                                            Deleted submissions will appear here
+                                            Deleted messages and submissions will appear here
                                         </p>
                                     </div>
                                 ) : (
                                     <div className="divide-y">
+                                        {/* Render Trashed Messages */}
+                                        {filteredMessages.map((message) => {
+                                            const isFromMe = message.from_user_id === currentUserId;
+                                            const otherUser = isFromMe ? message.to_user : message.from_user;
+                                            return (
+                                                <button
+                                                    key={message.id}
+                                                    onClick={() => {
+                                                        setSelectedMessageId(message.id);
+                                                        setSelectedSubmissionId(null);
+                                                    }}
+                                                    className={cn(
+                                                        "w-full flex items-start gap-3 p-4 text-left hover:bg-muted/50 transition-colors border-b",
+                                                        selectedMessageId === message.id && "bg-muted",
+                                                        "opacity-75"
+                                                    )}
+                                                >
+                                                    <div className="h-4 w-4 mt-1.5 flex-shrink-0">
+                                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm truncate font-medium">
+                                                                {isFromMe ? `To: ${otherUser?.name || otherUser?.email || "Unknown"}` : (otherUser?.name || otherUser?.email || "Unknown")}
+                                                            </span>
+                                                            <Badge variant="secondary" className="text-[10px] px-1.5 h-4 font-normal">
+                                                                Internal Message
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="text-sm truncate text-muted-foreground mt-0.5">
+                                                            {message.subject || "(No Subject)"}
+                                                        </p>
+                                                    </div>
+                                                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                                                        {formatMessageDate(message.createdAt)}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+
+                                        {/* Render Trashed Submissions */}
                                         {trashedSubmissions.map((submission) => {
                                             const email = submission.data?.email || submission.data?.Email || "";
                                             const name = submission.data?.name || submission.data?.full_name ||
@@ -1105,28 +1153,25 @@ export function InternalMessagesComponent({
                                                         setSelectedMessageId(null);
                                                     }}
                                                     className={cn(
-                                                        "w-full flex items-start gap-3 p-4 text-left hover:bg-muted/50 transition-colors",
+                                                        "w-full flex items-start gap-3 p-4 text-left hover:bg-muted/50 transition-colors border-b",
                                                         selectedSubmissionId === submission.id && "bg-muted",
-                                                        "opacity-75"
+                                                        "opacity-80"
                                                     )}
                                                 >
-                                                    <div className="h-9 w-9 flex-shrink-0 rounded-full bg-gray-500/10 flex items-center justify-center">
-                                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                                    <div className="h-4 w-4 mt-1.5 flex-shrink-0">
+                                                        <FormInput className="h-4 w-4 text-muted-foreground" />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-sm truncate">
+                                                            <span className="text-sm truncate font-medium">
                                                                 {name}
                                                             </span>
-                                                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                                                Deleted
+                                                            <Badge variant="secondary" className="text-[10px] px-1.5 h-4">
+                                                                Form Submission
                                                             </Badge>
                                                         </div>
                                                         <p className="text-sm truncate text-muted-foreground">
                                                             {submission.form.name}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                                            {email || submission.source_url || "No email provided"}
                                                         </p>
                                                     </div>
                                                     <span className="text-xs text-muted-foreground flex-shrink-0">
@@ -1641,7 +1686,7 @@ export function InternalMessagesComponent({
                             Delete Forever?
                         </DialogTitle>
                         <DialogDescription>
-                            This action cannot be undone. This will permanently delete the form submission and all its data.
+                            This action cannot be undone. This will permanently delete the {submissionToDelete ? "form submission" : "message"} and all its data.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-2 sm:gap-0">
