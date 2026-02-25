@@ -81,6 +81,19 @@ const SideBar = async () => {
 
   const activeNavStructure = deduplicateStructure(rawStructure);
 
+  const ensureCommandHasLeads = (items: NavItem[]) => {
+    items.forEach(item => {
+      if (item.id === "nav_command") {
+        if (!item.children || item.children.length === 0) {
+          item.children = [{ id: "sub_command_leads", type: "item", label: "Leads", href: "/crm/leads", iconName: "Users" }];
+        }
+      } else if (item.children) {
+        ensureCommandHasLeads(item.children);
+      }
+    });
+  };
+  ensureCommandHasLeads(activeNavStructure);
+
   return <DynamicModuleMenu
     navStructure={activeNavStructure}
     titleFont={config?.titleFont}

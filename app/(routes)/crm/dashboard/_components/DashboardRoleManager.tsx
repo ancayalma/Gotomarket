@@ -1,20 +1,18 @@
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { dbAdapter } from "@/lib/database/db-adapter";
 import { prismadb } from "@/lib/prisma";
-import AdminDashboard from "./views/AdminDashboard";
-import MemberDashboard from "./views/MemberDashboard";
-import ViewerDashboard from "./views/ViewerDashboard";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
-// Data Fetching Actions
-import { getDailyTasks } from "@/actions/dashboard/get-daily-tasks";
-import { getNewLeads } from "@/actions/dashboard/get-new-leads";
-import { getNewProjects } from "@/actions/dashboard/get-new-projects";
-import { getUserMessages } from "@/actions/dashboard/get-user-messages";
 import { getUnifiedSalesData } from "@/actions/crm/get-unified-sales-data";
-import { getUsersTasksCount } from "@/actions/dashboard/get-tasks-count";
 import { getSummaryCounts } from "@/actions/dashboard/get-summary-counts";
 import { getModules } from "@/actions/get-modules";
+import { getUsersTasksCount } from "@/actions/dashboard/get-tasks-count";
+import { getNewLeads } from "@/actions/dashboard/get-new-leads";
+import { getNewProjects } from "@/actions/dashboard/get-new-projects";
+import { getDailyTasks } from "@/actions/dashboard/get-daily-tasks";
+import { getUserMessages } from "@/actions/dashboard/get-user-messages";
 import { getDashboardLayout } from "../_actions/get-dashboard-layout";
 import { getTeamActivity } from "@/actions/dashboard/get-team-activity";
 import { getRecentFiles } from "@/actions/dashboard/get-recent-files";
@@ -25,10 +23,12 @@ import { getLeadGenStats } from "@/actions/dashboard/get-lead-gen-stats";
 import { getIntelligenceStats } from "@/actions/dashboard/get-intelligence-stats";
 import { getAIInsights } from "@/actions/dashboard/get-ai-insights";
 
-import { Suspense } from "react";
-import MyPipelineSection from "../../../dashboard/components/MyPipelineSection";
-import TeamPipelineSection from "../../../dashboard/components/TeamPipelineSection";
-import LoadingBox from "../../../dashboard/components/loading-box";
+import AdminDashboard from "./views/AdminDashboard";
+import MemberDashboard from "./views/MemberDashboard";
+import ViewerDashboard from "./views/ViewerDashboard";
+import LoadingBox from "@/app/(routes)/dashboard/components/loading-box";
+import MyPipelineSection from "@/app/(routes)/dashboard/components/MyPipelineSection";
+import TeamPipelineSection from "@/app/(routes)/dashboard/components/TeamPipelineSection";
 
 const DashboardRoleManager = async () => {
     const teamInfo = await getCurrentUserTeamId();
@@ -55,8 +55,8 @@ const DashboardRoleManager = async () => {
 
         // Then we try to get the dismissal status using a raw query to bypass Prisma's stale validation
         try {
-            const rawResult = await (prismadb.users as any).findRaw({
-                filter: { _id: { $oid: userId } }
+            const rawResult = await dbAdapter.executeRawQuery("users", {
+                _id: { $oid: userId }
             });
             if (Array.isArray(rawResult) && rawResult.length > 0) {
                 user.quickLaunchDismissed = rawResult[0].quickLaunchDismissed;
@@ -66,6 +66,7 @@ const DashboardRoleManager = async () => {
         }
     }
 
+
     const role = (user?.team_role || "VIEWER").trim().toUpperCase();
 
     // Platform Admin Check: Only specific team/users if requirement exists, otherwise maps to PLATFORM_ADMIN role
@@ -73,8 +74,6 @@ const DashboardRoleManager = async () => {
     const isAdmin = (user as any)?.is_admin || role === "PLATFORM_ADMIN" || role === "ADMIN" || role === "SUPER_ADMIN" || role === "PLATFORM ADMIN" || role === "SYSADM" || role === "OWNER";
     const isMember = role === "MEMBER";
 
-    // 2. Fetch Data Parallel
-    // We fetch different data based on role to optimize performance
     // 2. Fetch Data Parallel
     // We fetch different data based on role to optimize performance
     if (isAdmin) {

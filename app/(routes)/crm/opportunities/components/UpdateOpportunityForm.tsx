@@ -73,10 +73,10 @@ export function UpdateOpportunityForm({
     budget: z.string(),
     currency: z.string(),
     expected_revenue: z.string(),
-    next_step: z.string(),
-    assigned_to: z.string(),
-    account: z.string(),
-    contact: z.string(),
+    next_step: z.string().optional().nullable(),
+    assigned_to: z.string().optional().nullable(),
+    account: z.string().optional().nullable(),
+    contact: z.string().optional().nullable(),
     lead: z.string().optional().nullable(),
   });
 

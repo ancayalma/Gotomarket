@@ -41,14 +41,47 @@ export async function POST(req: Request) {
       industry,
     } = body;
 
+    const accountCount = await (prismadb.crm_Accounts as any).count({
+      where: { team_id: teamId }
+    });
+    const generatedCompanyId = `BSLT-${(accountCount + 1).toString().padStart(4, "0")}`;
+
+    let finalIndustryId = industry || null;
+    if (industry && industry.trim() !== "") {
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(industry);
+      if (!isObjectId) {
+        const existingIndustry = await (prismadb.crm_Industry_Type as any).findFirst({
+          where: { name: { equals: industry, mode: "insensitive" } }
+        });
+        if (existingIndustry) {
+          finalIndustryId = existingIndustry.id;
+        } else {
+          const newIndustry = await (prismadb.crm_Industry_Type as any).create({
+            data: { name: industry, v: 0 }
+          });
+          finalIndustryId = newIndustry.id;
+        }
+      }
+    } else {
+      finalIndustryId = null;
+    }
+
+    const searchOrConditions: any[] = [
+      { name: { equals: name } }
+    ];
+
+    if (email && email.trim() !== "") {
+      searchOrConditions.push({ email: { equals: email } });
+    }
+
+    if (office_phone && office_phone.trim() !== "") {
+      searchOrConditions.push({ office_phone: { equals: office_phone } });
+    }
+
     const existingAccount = await (prismadb.crm_Accounts as any).findFirst({
       where: {
         team_id: teamId,
-        OR: [
-          { name: { equals: name, mode: "insensitive" } },
-          ...(email ? [{ email: { equals: email, mode: "insensitive" } }] : []),
-          ...(office_phone ? [{ office_phone: { equals: office_phone, mode: "insensitive" } }] : []),
-        ],
+        OR: searchOrConditions,
       },
     });
 
@@ -60,7 +93,7 @@ export async function POST(req: Request) {
           office_phone: existingAccount.office_phone || office_phone,
           website: existingAccount.website || website,
           fax: existingAccount.fax || fax,
-          company_id: existingAccount.company_id || company_id,
+          company_id: existingAccount.company_id || generatedCompanyId,
           vat: existingAccount.vat || vat,
           email: existingAccount.email || email,
           billing_street: existingAccount.billing_street || billing_street,
@@ -76,7 +109,7 @@ export async function POST(req: Request) {
           description: existingAccount.description || description,
           annual_revenue: existingAccount.annual_revenue || annual_revenue,
           member_of: existingAccount.member_of || member_of,
-          industry: existingAccount.industry || industry,
+          industry: existingAccount.industry || finalIndustryId,
           updatedBy: session.user.id,
         },
       });
@@ -93,7 +126,7 @@ export async function POST(req: Request) {
         office_phone,
         website,
         fax,
-        company_id,
+        company_id: generatedCompanyId,
         vat,
         email,
         billing_street,
@@ -111,7 +144,7 @@ export async function POST(req: Request) {
         status: "Active",
         annual_revenue,
         member_of,
-        industry,
+        industry: finalIndustryId,
       },
     });
 
@@ -157,6 +190,26 @@ export async function PUT(req: Request) {
       industry,
     } = body;
 
+    let finalIndustryId = industry || null;
+    if (industry && industry.trim() !== "") {
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(industry);
+      if (!isObjectId) {
+        const existingIndustry = await (prismadb.crm_Industry_Type as any).findFirst({
+          where: { name: { equals: industry, mode: "insensitive" } }
+        });
+        if (existingIndustry) {
+          finalIndustryId = existingIndustry.id;
+        } else {
+          const newIndustry = await (prismadb.crm_Industry_Type as any).create({
+            data: { name: industry, v: 0 }
+          });
+          finalIndustryId = newIndustry.id;
+        }
+      }
+    } else {
+      finalIndustryId = null;
+    }
+
     const newAccount = await (prismadb.crm_Accounts as any).update({
       where: {
         id,
@@ -186,7 +239,7 @@ export async function PUT(req: Request) {
         status: status,
         annual_revenue,
         member_of,
-        industry,
+        industry: finalIndustryId,
       },
     });
 

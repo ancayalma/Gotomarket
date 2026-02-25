@@ -1,4 +1,4 @@
-export type PipelineStage = "Identify" | "Engage_AI" | "Engage_Human" | "Offering" | "Finalizing" | "Closed";
+export type PipelineStage = "Identify" | "Engage_AI" | "Engage_Human" | "Offering" | "Finalizing" | "Converted" | "Closed";
 
 export const STAGE_NODE_CLASS: Record<PipelineStage, string> = {
   Identify: "bg-slate-400 dark:bg-slate-500",
@@ -6,7 +6,8 @@ export const STAGE_NODE_CLASS: Record<PipelineStage, string> = {
   Engage_Human: "bg-violet-500 dark:bg-violet-400",
   Offering: "bg-amber-500 dark:bg-amber-400",
   Finalizing: "bg-teal-500 dark:bg-teal-400",
-  Closed: "bg-green-500 dark:bg-green-400",
+  Converted: "bg-green-500 dark:bg-green-400",
+  Closed: "bg-red-500 dark:bg-red-400",
 };
 
 export const STAGE_TEXT_CLASS: Record<PipelineStage, string> = {
@@ -15,7 +16,8 @@ export const STAGE_TEXT_CLASS: Record<PipelineStage, string> = {
   Engage_Human: "text-violet-700 dark:text-violet-300",
   Offering: "text-amber-700 dark:text-amber-300",
   Finalizing: "text-teal-700 dark:text-teal-300",
-  Closed: "text-green-700 dark:text-green-300",
+  Converted: "text-green-700 dark:text-green-300",
+  Closed: "text-red-700 dark:text-red-300",
 };
 
 export const STAGE_BADGE_CLASS: Record<PipelineStage, string> = {
@@ -24,10 +26,12 @@ export const STAGE_BADGE_CLASS: Record<PipelineStage, string> = {
   Engage_Human: "px-2 py-1 rounded text-xs font-semibold bg-violet-100 dark:bg-violet-900/50 text-violet-800 dark:text-violet-200 border border-violet-200 dark:border-violet-800",
   Offering: "px-2 py-1 rounded text-xs font-semibold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800",
   Finalizing: "px-2 py-1 rounded text-xs font-semibold bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200 border border-teal-200 dark:border-teal-800",
-  Closed: "px-2 py-1 rounded text-xs font-semibold bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800",
+  Converted: "px-2 py-1 rounded text-xs font-semibold bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800",
+  Closed: "px-2 py-1 rounded text-xs font-semibold bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800",
 };
 
 export function formatStageLabel(stage: PipelineStage | string | null | undefined) {
   if (!stage) return "-";
+  if (stage === "Closed") return "Converted";
   return String(stage).replace("_", " ");
 }

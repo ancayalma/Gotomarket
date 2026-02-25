@@ -1729,6 +1729,7 @@ enum OutreachStatus {
   MEETING_LINK_CLICKED
   MEETING_BOOKED
   CLOSED
+  CONVERTED
 }
 
 enum PipelineStage {
@@ -1738,6 +1739,7 @@ enum PipelineStage {
   Offering
   Finalizing
   Closed
+  Converted
 }
 
 model crm_Lead_Activities {

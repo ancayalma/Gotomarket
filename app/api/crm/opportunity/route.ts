@@ -39,31 +39,48 @@ export async function POST(req: Request) {
       type,
     } = body;
 
-    //console.log(req.body, "req.body");
+    // Auto-resolve unspecified bindings from parent Lead
+    let finalAccountId = account;
+    let finalAssignedTo = assigned_to;
+
+    if (lead && (!finalAccountId || !finalAssignedTo)) {
+      const sourceLead = await prismadb.crm_Leads.findUnique({
+        where: { id: lead },
+        select: { accountsIDs: true, assigned_to: true }
+      });
+      if (sourceLead) {
+        if (!finalAccountId && sourceLead.accountsIDs) {
+          finalAccountId = sourceLead.accountsIDs;
+        }
+        if (!finalAssignedTo && sourceLead.assigned_to) {
+          finalAssignedTo = sourceLead.assigned_to;
+        }
+      }
+    }
 
     const newOpportunity = await (prismadb.crm_Opportunities as any).create({
       data: {
         v: 0,
-        team_id: teamId,
-        account: account,
-        assigned_to: assigned_to,
-        project: assign_to_project,
-        budget: Number(budget),
+        assigned_team: teamId ? { connect: { id: teamId } } : undefined,
+        assigned_account: finalAccountId ? { connect: { id: finalAccountId } } : undefined,
+        assigned_to_user: finalAssignedTo ? { connect: { id: finalAssignedTo } } : { connect: { id: userId } },
+        assigned_project: assign_to_project ? { connect: { id: assign_to_project } } : undefined,
+        budget: Number(budget) || 0,
         lead_source: lead_source,
-        close_date: close_date,
-        contact: contact,
-        lead_id: lead,
-        created_by: userId,
+        close_date: close_date ? new Date(close_date) : undefined,
+        contacts: contact ? { connect: [{ id: contact }] } : undefined,
+        assigned_lead: lead ? { connect: { id: lead } } : undefined,
+        created_by_user: userId ? { connect: { id: userId } } : undefined,
         last_activity_by: userId,
         updatedBy: userId,
         currency: currency,
         description: description,
-        expected_revenue: Number(expected_revenue),
+        expected_revenue: Number(expected_revenue) || 0,
         name: name,
         next_step: next_step,
-        sales_stage: sales_stage,
+        assigned_sales_stage: (sales_stage && sales_stage.length === 24) ? { connect: { id: sales_stage } } : undefined,
+        assigned_type: (type && type.length === 24) ? { connect: { id: type } } : undefined,
         status: "ACTIVE",
-        type: type,
       },
     });
 
@@ -129,23 +146,23 @@ export async function PUT(req: Request) {
     const updatedOpportunity = await (prismadb.crm_Opportunities as any).update({
       where: { id },
       data: {
-        account: account,
-        assigned_to: assigned_to,
-        project: assign_to_project,
-        budget: Number(budget),
+        assigned_account: account ? { connect: { id: account } } : undefined,
+        assigned_to_user: assigned_to ? { connect: { id: assigned_to } } : undefined,
+        assigned_project: assign_to_project ? { connect: { id: assign_to_project } } : undefined,
+        budget: Number(budget) || 0,
         lead_source: lead_source,
-        close_date: close_date,
-        contact: contact,
-        lead_id: lead,
+        close_date: close_date ? new Date(close_date) : undefined,
+        contacts: contact ? { set: [{ id: contact }] } : undefined,
+        assigned_lead: lead ? { connect: { id: lead } } : undefined,
         updatedBy: userId,
         currency: currency,
         description: description,
-        expected_revenue: Number(expected_revenue),
+        expected_revenue: Number(expected_revenue) || 0,
         name: name,
         next_step: next_step,
-        sales_stage: sales_stage,
+        assigned_sales_stage: (sales_stage && sales_stage.length === 24) ? { connect: { id: sales_stage } } : undefined,
+        assigned_type: (type && type.length === 24) ? { connect: { id: type } } : undefined,
         status: "ACTIVE",
-        type: type,
       },
     });
 

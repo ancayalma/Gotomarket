@@ -1,6 +1,6 @@
-
 import { prismadbCrm } from "../lib/prisma-crm";
 import { prismadb } from "../lib/prisma";
+import { dbAdapter } from "../lib/database/db-adapter";
 
 async function diagnose() {
     const poolId = "699792e83e5cb6e1f2525326";
@@ -78,14 +78,14 @@ async function diagnose() {
     const query = "Payroc";
     console.log(`\nDEEP SCAN: Searching for raw text "${query}" in ALL collections...`);
 
-    const result = await (prismadb as any).$runCommandRaw({
+    const result: any = await dbAdapter.executeRawCommand({
         listCollections: 1
     });
     const collections = result.cursor.firstBatch.map((c: any) => c.name);
 
     for (const collName of collections) {
         try {
-            const matches = await (prismadb as any).$runCommandRaw({
+            const matches: any = await dbAdapter.executeRawCommand({
                 find: collName,
                 filter: {
                     $or: [

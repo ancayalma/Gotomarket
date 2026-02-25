@@ -180,8 +180,6 @@ const DynamicModuleMenu = ({
     const renderItem = (item: NavItem) => {
         // Force certain items to have no flyout children as per design
         if (
-            item.id === "nav_command" ||
-            item.href === "/crm/sales-command" ||
             item.id === "nav_contracts" ||
             item.href === "/crm/contracts" ||
             item.id === "nav_projects" ||

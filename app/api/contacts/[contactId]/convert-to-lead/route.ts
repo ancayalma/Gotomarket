@@ -26,7 +26,7 @@ export async function POST(
                 id: contactId,
             },
             include: {
-                assigned_account: true
+                assigned_accounts: true
             }
         });
 
@@ -40,17 +40,20 @@ export async function POST(
         // 3. Create Lead
         const lead = await (prismadb as any).crm_Leads.create({
             data: {
+                v: 1, // MongoDB Versioning
                 firstName: contact.first_name,
                 lastName: contact.last_name,
                 email: contact.email,
-                phone: contact.phone,
-                company: contact.assigned_account?.name || "Unassigned Company", // Use account name or fallback
-                jobTitle: contact.job_title,
-                status: "NEW", // Default status
+                phone: contact.mobile_phone || contact.office_phone,
+                company: contact.assigned_accounts?.name || "Unassigned Company",
+                jobTitle: contact.position,
+                status: "NEW",
                 lead_source: "Contact Conversion",
-                assigned_to: userId,
-                description: `Converted from Contact: ${contact.first_name} ${contact.last_name}`,
-                // Map other fields as necessary
+                assigned_to: contact.assigned_to || userId,
+                accountsIDs: contact.accountsIDs || undefined, // Transfers associations unconditionally!
+                team_id: contact.team_id || undefined,
+                project: contact.assigned_department_id || undefined, // Assuming temporary mapping hook
+                description: `Converted from Contact: ${contact.first_name || ""} ${contact.last_name || ""}`,
             },
         });
 

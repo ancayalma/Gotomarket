@@ -32,6 +32,8 @@ export async function GET(req: Request) {
         lastName: true,
         company: true,
         email: true,
+        assigned_to: true,
+        accountsIDs: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -82,15 +84,23 @@ export async function POST(req: Request) {
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
 
-    const existingLead = await (prismadb.crm_Leads as any).findFirst({
-      where: {
-        team_id: teamId,
-        OR: [
-          ...(email ? [{ email: { equals: email, mode: "insensitive" } }] : []),
-          ...(phone ? [{ phone: { equals: phone, mode: "insensitive" } }] : []),
-        ],
-      },
-    });
+    const searchOrConditions: any[] = [];
+    if (email && email.trim() !== "") {
+      searchOrConditions.push({ email: { equals: email } });
+    }
+    if (phone && phone.trim() !== "") {
+      searchOrConditions.push({ phone: { equals: phone } });
+    }
+
+    let existingLead = null;
+    if (searchOrConditions.length > 0) {
+      existingLead = await (prismadb.crm_Leads as any).findFirst({
+        where: {
+          team_id: teamId,
+          OR: searchOrConditions,
+        },
+      });
+    }
 
     if (existingLead) {
       // Merge: Update existing lead with new data if current fields are empty

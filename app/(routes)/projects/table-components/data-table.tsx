@@ -157,7 +157,7 @@ export function ProjectsDataTable<TData, TValue>({
         const j = await res.json().catch(() => null);
         const pools: any[] = Array.isArray(j?.pools) ? j.pools : [];
         const assigned = pools.filter((p) => (p?.icpConfig?.assignedProjectId === projectId));
-        const stageKeys = ["Identify", "Engage_AI", "Engage_Human", "Offering", "Finalizing", "Closed"] as const;
+        const stageKeys = ["Identify", "Engage_AI", "Engage_Human", "Offering", "Finalizing", "Converted"] as const;
         const items: { poolId: string; name: string; stageData: StageDatum[]; total: number }[] = [];
         for (const p of assigned) {
           try {
@@ -349,7 +349,7 @@ export function ProjectsDataTable<TData, TValue>({
                         const pools = projectPools[projectId] || [];
                         // Overall stage aggregation
                         const agg: Record<string, number> = {};
-                        const keys = ["Identify", "Engage_AI", "Engage_Human", "Offering", "Finalizing", "Closed"] as const;
+                        const keys = ["Identify", "Engage_AI", "Engage_Human", "Offering", "Finalizing", "Converted"] as const;
                         for (const k of keys) agg[k] = 0;
                         let total = 0;
                         for (const item of pools) {

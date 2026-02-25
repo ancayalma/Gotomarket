@@ -52,7 +52,7 @@ const STAGES: PipelineStage[] = [
   "Engage_Human",
   "Offering",
   "Finalizing",
-  "Closed",
+  "Converted",
 ];
 
 function StatusBadge({ status }: { status?: string | null }) {
@@ -315,7 +315,7 @@ export default function LeadsView({ data }: Props) {
                         showLabelsAndCounts={false}
                         coloringMode="activated"
                         activeStageKey={stageKey || 'Identify'}
-                        isClosed={stageKey === 'Closed'}
+                        isClosed={stageKey === 'Converted' || (stageKey as any) === 'Closed'}
                       />
                     </td>
                     <td className="p-3 text-right">

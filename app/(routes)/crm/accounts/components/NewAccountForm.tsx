@@ -46,23 +46,23 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
     office_phone: z.string().optional(),
     website: z.string().optional(),
     fax: z.string().optional(),
-    company_id: z.string().min(5).max(10),
+    company_id: z.string().max(50).optional(),
     vat: z.string().max(20).optional(),
-    email: z.string().email(),
-    billing_street: z.string().min(3).max(50),
-    billing_postal_code: z.string().min(2).max(10),
-    billing_city: z.string().min(3).max(50),
-    billing_state: z.string().min(3).max(50).optional(),
-    billing_country: z.string().min(3).max(50),
+    email: z.string().email().optional().or(z.literal("")),
+    billing_street: z.string().max(50).optional(),
+    billing_postal_code: z.string().max(10).optional(),
+    billing_city: z.string().max(50).optional(),
+    billing_state: z.string().max(50).optional(),
+    billing_country: z.string().max(50).optional(),
     shipping_street: z.string().optional(),
     shipping_postal_code: z.string().optional(),
     shipping_city: z.string().optional(),
     shipping_state: z.string().optional(),
     shipping_country: z.string().optional(),
-    description: z.string().min(3).max(1000).optional(),
-    status: z.string().min(3).max(50).optional(),
-    annual_revenue: z.string().min(3).max(50).optional(),
-    member_of: z.string().min(3).max(50).optional(),
+    description: z.string().max(1000).optional(),
+    status: z.string().max(50).optional(),
+    annual_revenue: z.string().max(50).optional(),
+    member_of: z.string().max(50).optional(),
     industry: z.string().optional().nullable(),
     assigned_to: z.string().optional().nullable(),
   });
@@ -71,17 +71,75 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
 
   const form = useForm<NewAccountFormValues>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      office_phone: "",
+      website: "",
+      fax: "",
+      company_id: "",
+      vat: "",
+      email: "",
+      billing_street: "",
+      billing_postal_code: "",
+      billing_city: "",
+      billing_state: "",
+      billing_country: "",
+      shipping_street: "",
+      shipping_postal_code: "",
+      shipping_city: "",
+      shipping_state: "",
+      shipping_country: "",
+      description: "",
+      status: "",
+      annual_revenue: "",
+      member_of: "",
+      industry: null,
+      assigned_to: null,
+    },
   });
 
   const onSubmit = async (data: NewAccountFormValues) => {
-    //console.log(data);
     setIsLoading(true);
     try {
-      await axios.post("/api/crm/account", data);
+      const response = await axios.post("/api/crm/account", data);
       toast({
         title: "Success",
         description: "Account created successfully",
       });
+
+      form.reset({
+        name: "",
+        office_phone: "",
+        website: "",
+        fax: "",
+        company_id: "",
+        vat: "",
+        email: "",
+        billing_street: "",
+        billing_postal_code: "",
+        billing_city: "",
+        billing_state: "",
+        billing_country: "",
+        shipping_street: "",
+        shipping_postal_code: "",
+        shipping_city: "",
+        shipping_state: "",
+        shipping_country: "",
+        description: "",
+        status: "",
+        annual_revenue: "",
+        member_of: "",
+        industry: null,
+        assigned_to: null,
+      });
+
+      onFinish();
+
+      if (response.data?.newAccount?.id) {
+        router.push(`/crm/accounts/${response.data.newAccount.id}`);
+      } else {
+        router.refresh();
+      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -89,9 +147,6 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
         description: "Something went wrong. Please try again.",
       });
     } finally {
-      form.reset();
-      router.refresh();
-      onFinish();
       setIsLoading(false);
     }
   };
@@ -106,7 +161,7 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
         </div> */}
         <div className="w-full max-w-[800px] text-sm mx-auto">
           <div className="pb-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -117,25 +172,6 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
                       <Input
                         disabled={isLoading}
                         placeholder="BasaltCRM Inc."
-                        {...field}
-                        value={field.value ?? ""}
-                        className="h-8"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="company_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Account ID</FormLabel>
-                    <FormControl>
-                      <Input
-                        disabled={isLoading}
-                        placeholder="1234567890"
                         {...field}
                         value={field.value ?? ""}
                         className="h-8"
@@ -471,7 +507,7 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
         </div>
         <div className="grid gap-2 py-5">
           <Button disabled={isLoading} type="submit">
-            Create account
+            Create Account
           </Button>
         </div>
       </form>

@@ -1,11 +1,10 @@
-
-import { prismadbCrm } from  "../lib/prisma-crm";
+import { crmDbAdapter } from "../lib/database/db-adapter";
 
 async function run() {
-    const result = await (prismadbCrm as any).$runCommandRaw({
+    const result = await crmDbAdapter.executeRawCommand({
         listCollections: 1
     });
-    console.log("Collections:", result.cursor.firstBatch.map((c: any) => c.name));
+    console.log("Collections:", (result as any).cursor.firstBatch.map((c: any) => c.name));
 }
 
 run().catch(console.error);

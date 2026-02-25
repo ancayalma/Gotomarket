@@ -1,14 +1,11 @@
-
-import { prismadbCrm } from  "../lib/prisma-crm";
+import { crmDbAdapter } from "../lib/database/db-adapter";
 
 async function run() {
-    const collection = (prismadbCrm as any).crm_Lead_Candidates;
-
     // Find candidates created yesterday or later
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 2);
 
-    const raw = await (prismadbCrm as any).$runCommandRaw({
+    const raw: any = await crmDbAdapter.executeRawCommand({
         find: "crm_Lead_Candidates",
         filter: {
             // If candidates don't have createdAt, we can't filter by it.
@@ -21,7 +18,7 @@ async function run() {
     console.log("Other candidates (raw):", JSON.stringify(raw.cursor.firstBatch, null, 2));
 
     // Check if there are ANY records in crm_Lead_Candidates besides the 188
-    const totalRaw = await (prismadbCrm as any).$runCommandRaw({
+    const totalRaw: any = await crmDbAdapter.executeRawCommand({
         count: "crm_Lead_Candidates"
     });
     console.log("Total Raw Count:", totalRaw.n);

@@ -1,5 +1,5 @@
-
-import { prismadbCrm } from  "../lib/prisma-crm";
+import { crmDbAdapter } from "../lib/database/db-adapter";
+import { prismadbCrm } from "../lib/prisma-crm";
 
 async function run() {
     const collection = (prismadbCrm as any).crm_Lead_Candidates;
@@ -7,7 +7,7 @@ async function run() {
     console.log("Total candidates (Prisma count):", count);
 
     // Try raw find
-    const raw = await (prismadbCrm as any).$runCommandRaw({
+    const raw: any = await crmDbAdapter.executeRawCommand({
         aggregate: "crm_Lead_Candidates",
         pipeline: [
             { $group: { _id: "$pool", count: { $sum: 1 } } }

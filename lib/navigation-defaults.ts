@@ -108,9 +108,21 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Command",
                 iconName: "Radio",
-                href: "/crm/sales-command"
+                href: "/crm/sales-command",
+                children: [
+                    { id: "sub_command_leads", type: "item", label: "Leads", href: "/crm/leads", iconName: "Users" }
+                ]
             },
-
+            {
+                id: "nav_leads",
+                type: "item",
+                label: "Leads",
+                iconName: "Users",
+                href: "/crm/leads",
+                children: [
+                    { id: "sub_leads_all", type: "item", label: "All Leads", href: "/crm/leads", iconName: "Users" }
+                ]
+            },
             {
                 id: "nav_deals",
                 type: "item",

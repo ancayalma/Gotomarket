@@ -10,6 +10,7 @@ import { User, Target, TrendingUp, Sparkles, ArrowRight, Loader2, DollarSign } f
 import { motion, AnimatePresence } from "framer-motion";
 import { Combobox } from "@/components/ui/combobox";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 type Lead = { id: string; firstName?: string; lastName?: string; company?: string };
 
@@ -22,7 +23,17 @@ type Opportunity = {
   createdAt?: string;
 };
 
-export default function LeadOpportunitiesPanel() {
+export default function LeadOpportunitiesPanel({
+  metrics
+}: {
+  metrics?: {
+    totalValue: number;
+    countDeals: number;
+    avgDealSize: number;
+    isClosedView: boolean;
+  }
+} = {}) {
+  const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeadId, setSelectedLeadId] = useState<string>("");
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -83,6 +94,9 @@ export default function LeadOpportunitiesPanel() {
     }
     try {
       setIsSubmitting(true);
+
+      const fullLead = leads.find(l => l.id === selectedLeadId) as any;
+
       const res = await fetch("/api/crm/opportunity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,7 +104,10 @@ export default function LeadOpportunitiesPanel() {
           name,
           description: description || null,
           expected_revenue: expectedRevenue ? Number(expectedRevenue) : 0,
+          budget: expectedRevenue ? Number(expectedRevenue) : 0,
           lead: selectedLeadId,
+          assigned_to: fullLead?.assigned_to || undefined,
+          account: fullLead?.accountsIDs?.[0] || undefined,
           type: "New Business", // Default type
           sales_stage: "Qualification", // Default stage
           close_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days default
@@ -107,6 +124,8 @@ export default function LeadOpportunitiesPanel() {
       const res2 = await fetch("/api/crm/opportunity", { cache: "no-store" });
       const j2 = await res2.json();
       setOpportunities((j2?.opportunities || []).filter((o: any) => o.lead_id === selectedLeadId));
+
+      router.refresh(); // Refresh the main CRM OpportunitiesTable server components
     } catch (e: any) {
       toast({ variant: "destructive", title: "Error", description: e?.message || "Failed to create opportunity" });
     } finally {
@@ -136,25 +155,65 @@ export default function LeadOpportunitiesPanel() {
       transition={{ duration: 0.4 }}
       className="space-y-6"
     >
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-end bg-gradient-to-r from-background to-background/50 p-4 rounded-xl border border-white/5 shadow-sm">
-        <div className="w-full md:w-96 relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-blue-500/30 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-          <div className="relative">
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center space-x-1">
-              <Sparkles className="h-3 w-3 text-primary mr-1" /> Target Lead Profile
-            </label>
-            <Combobox
-              options={leads.map(l => ({
-                label: `${l.firstName || ''} ${l.lastName || ''} ${l.company ? `(${l.company})` : ''}`.trim(),
-                value: l.id
-              }))}
-              value={selectedLeadId}
-              onChange={setSelectedLeadId}
-              placeholder="Select target lead to convert..."
-              className="w-full bg-background border-white/10 hover:border-primary/50 transition-colors h-12 shadow-sm focus:ring-primary/20"
-            />
+      <div className={`grid grid-cols-1 ${metrics ? 'md:grid-cols-4' : 'md:grid-cols-1'} gap-4`}>
+        <div className="flex flex-col gap-4 items-start bg-gradient-to-br from-background via-background shadow-[0_8px_30px_rgb(0,0,0,0.04)] to-primary/[0.03] p-4 rounded-xl border border-white/5 h-full justify-center">
+          <div className="w-full relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-blue-500/30 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+            <div className="relative">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center space-x-1">
+                <Sparkles className="h-3 w-3 text-primary mr-1" /> Target Lead Profile
+              </label>
+              <Combobox
+                options={leads.map(l => {
+                  const fName = (l.firstName || '').replace(/Direct\s+/gi, '').trim();
+                  return {
+                    label: `${fName} ${l.lastName || ''} ${l.company ? `(${l.company})` : ''}`.trim(),
+                    value: l.id
+                  };
+                })}
+                value={selectedLeadId}
+                onChange={setSelectedLeadId}
+                placeholder="Select target lead to convert..."
+                className="w-full bg-background border-white/10 hover:border-primary/50 transition-colors h-12 shadow-sm focus:ring-primary/20"
+              />
+            </div>
           </div>
         </div>
+
+        {metrics && (
+          <>
+            <Card className="bg-gradient-to-br from-primary/10 via-background to-background border-primary/20 flex flex-col justify-center">
+              <div className="p-4 sm:p-5">
+                <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+                  {metrics.isClosedView ? "Total Closed Value" : "Total Pipeline Value"}
+                </div>
+                <div className="text-3xl font-bold text-primary">
+                  ${Math.round(metrics.totalValue).toLocaleString()}
+                </div>
+              </div>
+            </Card>
+            <Card className="bg-gradient-to-br from-blue-500/10 via-background to-background border-blue-500/20 flex flex-col justify-center">
+              <div className="p-4 sm:p-5">
+                <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+                  {metrics.isClosedView ? "Closed Opportunities" : "Active Opportunities"}
+                </div>
+                <div className="text-3xl font-bold text-blue-500">
+                  {metrics.countDeals}
+                </div>
+              </div>
+            </Card>
+            <Card className="bg-gradient-to-br from-emerald-500/10 via-background to-background border-emerald-500/20 flex flex-col justify-center">
+              <div className="p-4 sm:p-5">
+                <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+                  Avg. Deal Size
+                </div>
+                <div className="text-3xl font-bold text-emerald-500">
+                  ${Math.round(metrics.avgDealSize).toLocaleString()}
+                </div>
+              </div>
+            </Card>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">

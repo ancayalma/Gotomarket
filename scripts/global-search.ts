@@ -1,5 +1,4 @@
-
-import { prismadbCrm } from  "../lib/prisma-crm";
+import { crmDbAdapter } from "../lib/database/db-adapter";
 
 async function run() {
     const dbs = ["intelligent_agent", "ledger1crm", "basalt-onyx", "ledger1cms", "BasaltCRM"];
@@ -12,12 +11,12 @@ async function run() {
         u.pathname = `/${db}`;
 
         // Using raw command to list all collections and search them
-        const collectionsResult = await (prismadbCrm as any).$runCommandRaw({ listCollections: 1 });
+        const collectionsResult: any = await crmDbAdapter.executeRawCommand({ listCollections: 1 });
         const collections = collectionsResult.cursor.firstBatch.map((c: any) => c.name);
 
         for (const coll of collections) {
             try {
-                const count = await (prismadbCrm as any).$runCommandRaw({
+                const count: any = await crmDbAdapter.executeRawCommand({
                     count: coll,
                     query: { $or: [{ name: targetName }, { companyName: targetName }, { fullName: targetName }] }
                 });

@@ -85,34 +85,7 @@ export function DataTableRowActions<TData>({
     }
   };
 
-  const onPushToLeads = async () => {
-    setLoading(true);
-    try {
-      const payload = {
-        first_name: "Direct",
-        last_name: account.name,
-        company: account.name,
-        email: (row.original as any).email,
-        phone: (row.original as any).office_phone,
-        description: (row.original as any).description,
-        accountIDs: account.id,
-      };
-      await axios.post("/api/crm/leads", payload);
-      toast({
-        title: "Success",
-        description: "Account pushed to leads successfully",
-      });
-      router.push("/crm/leads");
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to push account to leads",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const onUnWatch = async () => {
     setLoading(true);
@@ -180,9 +153,9 @@ export function DataTableRowActions<TData>({
             <Mail className="mr-2 w-4 h-4" />
             Send Email
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onPushToLeads}>
+          <DropdownMenuItem onClick={() => router.push(`/crm/contacts/new?accountId=${account?.id}`)}>
             <Users className="mr-2 w-4 h-4" />
-            Convert to Lead
+            Add Contact
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onWatch}>

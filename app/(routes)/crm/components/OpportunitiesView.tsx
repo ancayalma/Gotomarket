@@ -68,40 +68,42 @@ const OpportunitiesView = ({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-primary/10 via-background to-background border-primary/20">
-          <CardHeader className="py-4">
-            <CardDescription className="text-xs uppercase tracking-wider font-semibold">
-              {isClosedView ? "Total Closed Value" : "Total Pipeline Value"}
-            </CardDescription>
-            <CardTitle className="text-3xl font-bold text-primary">
-              ${totalValue.toLocaleString()}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="bg-gradient-to-br from-blue-500/10 via-background to-background border-blue-500/20">
-          <CardHeader className="py-4">
-            <CardDescription className="text-xs uppercase tracking-wider font-semibold">
-              {isClosedView ? "Closed Opportunities" : "Active Opportunities"}
-            </CardDescription>
-            <CardTitle className="text-3xl font-bold text-blue-500">
-              {countDeals}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="bg-gradient-to-br from-emerald-500/10 via-background to-background border-emerald-500/20">
-          <CardHeader className="py-4">
-            <CardDescription className="text-xs uppercase tracking-wider font-semibold">
-              Avg. Deal Size
-            </CardDescription>
-            <CardTitle className="text-3xl font-bold text-emerald-500">
-              ${Math.round(avgDealSize).toLocaleString()}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      {!isClosedView && <LeadOpportunitiesPanel />}
+      {!isClosedView ? (
+        <LeadOpportunitiesPanel metrics={{ totalValue, countDeals, avgDealSize, isClosedView }} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-gradient-to-br from-primary/10 via-background to-background border-primary/20">
+            <CardHeader className="py-4">
+              <CardDescription className="text-xs uppercase tracking-wider font-semibold">
+                {isClosedView ? "Total Closed Value" : "Total Pipeline Value"}
+              </CardDescription>
+              <CardTitle className="text-3xl font-bold text-primary">
+                ${totalValue.toLocaleString()}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="bg-gradient-to-br from-blue-500/10 via-background to-background border-blue-500/20">
+            <CardHeader className="py-4">
+              <CardDescription className="text-xs uppercase tracking-wider font-semibold">
+                {isClosedView ? "Closed Opportunities" : "Active Opportunities"}
+              </CardDescription>
+              <CardTitle className="text-3xl font-bold text-blue-500">
+                {countDeals}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="bg-gradient-to-br from-emerald-500/10 via-background to-background border-emerald-500/20">
+            <CardHeader className="py-4">
+              <CardDescription className="text-xs uppercase tracking-wider font-semibold">
+                Avg. Deal Size
+              </CardDescription>
+              <CardTitle className="text-3xl font-bold text-emerald-500">
+                ${Math.round(avgDealSize).toLocaleString()}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+      )}
 
       <Card>
         <CardHeader className="pb-3">

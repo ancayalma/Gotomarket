@@ -32,12 +32,14 @@ import { Switch } from "@/components/ui/switch";
 type NewTaskFormProps = {
   users: any[];
   accounts: any[];
+  accountId?: string;
   onFinish: () => void;
 };
 
 export function NewContactForm({
   users,
   accounts,
+  accountId,
   onFinish,
 }: NewTaskFormProps) {
   const router = useRouter();
@@ -86,7 +88,7 @@ export function NewContactForm({
       position: "",
       type: null,
       assigned_to: null,
-      assigned_account: null,
+      assigned_account: accountId || null,
       social_twitter: "",
       social_facebook: "",
       social_linkedin: "",

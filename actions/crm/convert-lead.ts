@@ -30,6 +30,37 @@ export async function convertLeadToOpportunity(leadId: string): Promise<ActionRe
             return { success: false, error: "Lead is already converted" };
         }
 
+        // 0.5 Create/Find Account (if applicable)
+        let accountId = lead.accountsIDs || "";
+
+        if (lead.company && !accountId) {
+            const existingAccount = await prismadb.crm_Accounts.findFirst({
+                where: { name: lead.company },
+            });
+            if (existingAccount) {
+                accountId = existingAccount.id;
+            } else {
+                const newAccount = await prismadb.crm_Accounts.create({
+                    data: {
+                        v: 0,
+                        name: lead.company,
+                        email: lead.email,
+                        office_phone: lead.phone,
+                        description: lead.description,
+                        assigned_to_user: lead.assigned_to ? { connect: { id: lead.assigned_to } } : undefined,
+                        assigned_team: lead.team_id ? { connect: { id: lead.team_id } } : undefined,
+                    }
+                });
+                accountId = newAccount.id;
+            }
+
+            // Sync account backwards to lead if we generated/found one
+            await prismadb.crm_Leads.update({
+                where: { id: lead.id },
+                data: { accountsIDs: accountId }
+            });
+        }
+
         // 1. Create/Find Contact
         let contactId = "";
         if (lead.email) {
@@ -38,6 +69,14 @@ export async function convertLeadToOpportunity(leadId: string): Promise<ActionRe
             });
             if (existingContact) {
                 contactId = existingContact.id;
+
+                // Ensure existing contact is bound to account
+                if (accountId && !existingContact.accountsIDs) {
+                    await prismadb.crm_Contacts.update({
+                        where: { id: contactId },
+                        data: { assigned_accounts: { connect: { id: accountId } } }
+                    });
+                }
             }
         }
 
@@ -54,6 +93,7 @@ export async function convertLeadToOpportunity(leadId: string): Promise<ActionRe
                     assigned_to_user: lead.assigned_to ? { connect: { id: lead.assigned_to } } : undefined,
                     crate_by_user: { connect: { id: session.user.id } }, // correct relation name from schema
                     type: "Prospect",
+                    assigned_accounts: accountId ? { connect: { id: accountId } } : undefined,
                 },
             });
             contactId = newContact.id;
@@ -81,15 +121,19 @@ export async function convertLeadToOpportunity(leadId: string): Promise<ActionRe
                 createdBy: session.user.id,
                 updatedBy: session.user.id,
                 created_by_user: { connect: { id: session.user.id } }, // Relation (sets created_by)
-                assigned_to_user: lead.assigned_to ? { connect: { id: lead.assigned_to } } : undefined,
+                assigned_to_user: lead.assigned_to ? { connect: { id: lead.assigned_to } } : { connect: { id: session.user.id } },
 
                 // Relations
                 ...projectData,
 
+                assigned_account: accountId ? { connect: { id: accountId } } : undefined,
+
                 contacts: {
                     connect: [{ id: contactId }]
                 },
-                contact: contactId, // legacy scalar if needed
+                // Removed invalid scalar contact: contactId
+                assigned_lead: { connect: { id: lead.id } },
+                assigned_team: lead.team_id ? { connect: { id: lead.team_id } } : undefined,
 
                 budget: 0,
                 expected_revenue: 0,
@@ -102,8 +146,6 @@ export async function convertLeadToOpportunity(leadId: string): Promise<ActionRe
             where: { id: leadId },
             data: {
                 status: "CONVERTED",
-                pipeline_stage: "Closed",
-                outreach_status: "CLOSED",
             },
         });
 

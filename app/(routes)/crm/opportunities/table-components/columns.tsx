@@ -127,17 +127,16 @@ export const columns: ColumnDef<Opportunity>[] = [
     enableHiding: true,
   },
   {
-    accessorKey: "budget",
+    accessorKey: "expected_revenue",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Budget" />
+      <DataTableColumnHeader column={column} title="Revenue" />
     ),
 
     cell: ({ row }) => {
-      //console.log(row.original.budget);
       return (
         <div>
-          {row.original.budget
-            ? row.original.budget.toLocaleString("en-US", {
+          {typeof row.original.expected_revenue === "number"
+            ? row.original.expected_revenue.toLocaleString("en-US", {
               style: "currency",
               currency: "USD",
             })
