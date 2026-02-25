@@ -32,6 +32,8 @@ import {
     RecentFilesWidget,
     RevenuePacingWidget,
     RevenueWidget,
+    ActualRevenueWidget,
+    UnrealizedRevenueWidget,
     ActivePipelineWidget,
     ActiveUsersWidget,
     SystemHealthWidget,
@@ -55,7 +57,8 @@ import {
     CloudLightning,
     Heart,
     Activity,
-    FolderPlus
+    FolderPlus,
+    DollarSign
 } from "lucide-react";
 import {
     Tooltip,
@@ -67,7 +70,9 @@ import { motion } from "framer-motion";
 
 // Widget tooltip descriptions
 const widgetTooltips: Record<string, string> = {
-    revenue: "Your total expected revenue from open opportunities. Click to view your full opportunity pipeline.",
+    actual_revenue: "Revenue from paid invoices. Real money in the bank.",
+    unrealized_revenue: "Revenue from unpaid or pending invoices. Contracted but not yet received.",
+    projected_revenue: "Total expected revenue, including paid invoices, unpaid invoices, and opportunity potential.",
     active_pipeline: "Number of active deals currently in your sales pipeline. Shows leads and opportunities at a glance.",
     active_users: "Total team members currently active in the system. Click to manage your team settings.",
     system_health: "Real-time system operational status. Monitors uptime and platform performance.",
@@ -200,6 +205,8 @@ interface EditableWidgetGridProps {
     // Stats Props
     revenue?: number;
     actualRevenue?: number;
+    unrealizedRevenue?: number;
+    forecastRevenue?: number;
     activePipelineCount?: number;
     totalLeads?: number;
     totalOpportunities?: number;
@@ -226,6 +233,8 @@ export const EditableWidgetGrid = ({
     aiInsights = [],
     revenue = 0,
     actualRevenue = 0,
+    unrealizedRevenue = 0,
+    forecastRevenue = 0,
     activePipelineCount = 0,
     totalLeads = 0,
     totalOpportunities = 0,
@@ -326,7 +335,19 @@ export const EditableWidgetGrid = ({
                 return <LeadWizardWidget data={leadGenStats} />;
             case "ai_insights":
                 return <AIInsightsWidget insights={aiInsights} />;
-            case "revenue":
+            case "actual_revenue":
+                return (
+                    <div className="h-full flex flex-col justify-start">
+                        <ActualRevenueWidget revenue={actualRevenue} />
+                    </div>
+                );
+            case "unrealized_revenue":
+                return (
+                    <div className="h-full flex flex-col justify-start">
+                        <UnrealizedRevenueWidget revenue={unrealizedRevenue} />
+                    </div>
+                );
+            case "projected_revenue":
                 return (
                     <div className="h-full flex flex-col justify-start">
                         <RevenueWidget revenue={revenue} teamData={teamData} />
@@ -399,7 +420,6 @@ export const EditableWidgetGrid = ({
                         centered={true}
                     />
                 );
-
             case "upcoming_meetings":
                 return (
                     <DashboardCard
@@ -425,7 +445,7 @@ export const EditableWidgetGrid = ({
             case "conversion_rate":
                 return <DashboardCard icon={ArrowUpRight} label="Conv. Rate" count={`${intelligenceStats?.conversionRate || 0}%`} description="Last 30 days" variant="success" hideIcon={true} />;
             case "avg_deal_size":
-                return <DashboardCard icon={Target} label="Actual Revenue" count={`$${(actualRevenue || 0).toLocaleString()}`} description="From paid invoices" variant="info" hideIcon={true} />;
+                return <DashboardCard icon={Target} label="Avg. Deal Size" count={`$${(intelligenceStats?.avgDealSize || 0).toLocaleString()}`} description="Active opportunities" variant="info" hideIcon={true} />;
             case "response_time":
                 return <DashboardCard icon={Timer} label="Resp. Time" count={`${intelligenceStats?.responseTime ?? 0}h`} description="Goal: < 2.0h" variant="warning" hideIcon={true} />;
             case "system_uptime":

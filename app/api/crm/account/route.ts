@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
+const isValidId = (id: any) => typeof id === "string" && id.length === 24;
+
 //Create new account route
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -42,16 +44,18 @@ export async function POST(req: Request) {
     } = body;
 
     const accountCount = await (prismadb.crm_Accounts as any).count({
-      where: { team_id: teamId }
+      where: { assigned_team: isValidId(teamId) ? { id: teamId } : undefined }
     });
     const generatedCompanyId = `BSLT-${(accountCount + 1).toString().padStart(4, "0")}`;
+
+    const escapeRegExp = (text: string) => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 
     let finalIndustryId = industry || null;
     if (industry && industry.trim() !== "") {
       const isObjectId = /^[0-9a-fA-F]{24}$/.test(industry);
       if (!isObjectId) {
         const existingIndustry = await (prismadb.crm_Industry_Type as any).findFirst({
-          where: { name: { equals: industry, mode: "insensitive" } }
+          where: { name: { equals: escapeRegExp(industry), mode: "insensitive" } }
         });
         if (existingIndustry) {
           finalIndustryId = existingIndustry.id;
@@ -80,7 +84,7 @@ export async function POST(req: Request) {
 
     const existingAccount = await (prismadb.crm_Accounts as any).findFirst({
       where: {
-        team_id: teamId,
+        assigned_team: isValidId(teamId) ? { id: teamId } : undefined,
         OR: searchOrConditions,
       },
     });
@@ -119,7 +123,7 @@ export async function POST(req: Request) {
     const newAccount = await (prismadb.crm_Accounts as any).create({
       data: {
         v: 0,
-        team_id: teamId,
+        assigned_team: isValidId(teamId) ? { connect: { id: teamId } } : undefined,
         createdBy: session.user.id,
         updatedBy: session.user.id,
         name,
@@ -190,12 +194,14 @@ export async function PUT(req: Request) {
       industry,
     } = body;
 
+    const escapeRegExp = (text: string) => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+
     let finalIndustryId = industry || null;
     if (industry && industry.trim() !== "") {
       const isObjectId = /^[0-9a-fA-F]{24}$/.test(industry);
       if (!isObjectId) {
         const existingIndustry = await (prismadb.crm_Industry_Type as any).findFirst({
-          where: { name: { equals: industry, mode: "insensitive" } }
+          where: { name: { equals: escapeRegExp(industry), mode: "insensitive" } }
         });
         if (existingIndustry) {
           finalIndustryId = existingIndustry.id;

@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import sendEmail from "@/lib/sendmail";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
+const isValidId = (id: any) => typeof id === "string" && id.length === 24;
+
 //Create route
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -47,13 +49,16 @@ export async function POST(req: Request) {
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
 
+    // Helper to escape regex special characters for case-insensitive search on MongoDB
+    const escapeRegExp = (text: string) => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+
     const existingContact = await (prismadb.crm_Contacts as any).findFirst({
       where: {
-        team_id: teamId,
+        assigned_team: isValidId(teamId) ? { id: teamId } : undefined,
         OR: [
-          ...(email ? [{ email: { equals: email, mode: "insensitive" } }] : []),
-          ...(mobile_phone ? [{ mobile_phone: { equals: mobile_phone, mode: "insensitive" } }] : []),
-          ...(office_phone ? [{ office_phone: { equals: office_phone, mode: "insensitive" } }] : []),
+          ...(email ? [{ email: { equals: escapeRegExp(email), mode: "insensitive" } }] : []),
+          ...(mobile_phone ? [{ mobile_phone: { equals: mobile_phone } }] : []),
+          ...(office_phone ? [{ office_phone: { equals: office_phone } }] : []),
         ],
       },
     });
@@ -86,7 +91,7 @@ export async function POST(req: Request) {
     const newContact = await (prismadb.crm_Contacts as any).create({
       data: {
         v: 0,
-        team_id: teamId, // Assign team
+        assigned_team: isValidId(teamId) ? { connect: { id: teamId } } : undefined,
         createdBy: userId,
         updatedBy: userId,
         ...(assigned_account !== null && assigned_account !== undefined
@@ -103,7 +108,9 @@ export async function POST(req: Request) {
             id: assigned_to,
           },
         },
-        birthday: birthday_day + "/" + birthday_month + "/" + birthday_year,
+        birthday: (birthday_day && birthday_month && birthday_year)
+          ? birthday_day + "/" + birthday_month + "/" + birthday_year
+          : null,
         description,
         email,
         personal_email,
@@ -214,7 +221,9 @@ export async function PUT(req: Request) {
             id: assigned_to,
           },
         },
-        birthday: birthday_day + "/" + birthday_month + "/" + birthday_year,
+        birthday: (birthday_day && birthday_month && birthday_year)
+          ? birthday_day + "/" + birthday_month + "/" + birthday_year
+          : null,
         description,
         email,
         personal_email,

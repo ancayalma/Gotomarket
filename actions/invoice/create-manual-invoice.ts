@@ -19,9 +19,20 @@ export async function createManualInvoice(data: FormData) {
         const amount = parseFloat(data.get("amount") as string);
         const number = data.get("number") as string;
         const description = data.get("description") as string;
+        const opportunityId = data.get("opportunityId") as string;
 
         if (!amount || !number) {
             return { error: "Missing required fields" };
+        }
+
+        // Fetch opportunity details if provided for better linking
+        let accountId: string | undefined;
+        if (opportunityId && opportunityId !== "none") {
+            const opp = await prismadb.crm_Opportunities.findUnique({
+                where: { id: opportunityId },
+                select: { account: true, lead_id: true }
+            });
+            if (opp?.account) accountId = opp.account;
         }
 
         const newInvoice = await prismadb.invoices.create({
@@ -29,9 +40,9 @@ export async function createManualInvoice(data: FormData) {
                 invoice_amount: amount.toString(),
                 invoice_number: number,
                 description: description || "Manual Invoice",
-                date_created: new Date(), // Schema: date_created
-                date_due: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Schema: date_due
-                invoice_currency: "USD", // Schema: invoice_currency
+                date_created: new Date(),
+                date_due: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                invoice_currency: "USD",
                 status: "Pending",
                 payment_status: "UNPAID",
 
@@ -39,10 +50,18 @@ export async function createManualInvoice(data: FormData) {
                 invoice_file_mimeType: "application/manual",
                 invoice_file_url: "",
 
-                assigned_user_id: session.user.id, // Schema: assigned_user_id
+                assigned_user_id: session.user.id,
+                assigned_account_id: accountId,
 
                 // Assign to team
                 team_id: teamId || undefined,
+
+                // Opportunity link - This triggers deduplication in health/revenue charts
+                ...(opportunityId && opportunityId !== "none" ? {
+                    opportunities: {
+                        connect: { id: opportunityId }
+                    }
+                } : {})
             }
         });
 

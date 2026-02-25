@@ -78,14 +78,16 @@ export async function POST(req: Request) {
       }
     });
 
+    const escapeRegExp = (text: string) => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+
     // --- 2. Batch Databases Queries (The "10/10" win) ---
     const [existingAccounts, existingContacts] = await Promise.all([
       (prismadb.crm_Accounts as any).findMany({
         where: {
           team_id: teamId,
           OR: [
-            { name: { in: Array.from(accountNames), mode: "insensitive" } },
-            { website: { in: Array.from(accountDomains), mode: "insensitive" } }
+            { name: { in: Array.from(accountNames).map(n => escapeRegExp(n)), mode: "insensitive" } },
+            { website: { in: Array.from(accountDomains).map(d => escapeRegExp(d)), mode: "insensitive" } }
           ]
         }
       }),
@@ -93,7 +95,7 @@ export async function POST(req: Request) {
         where: {
           team_id: teamId,
           OR: [
-            { email: { in: Array.from(contactEmails), mode: "insensitive" } },
+            { email: { in: Array.from(contactEmails).map(e => escapeRegExp(e)), mode: "insensitive" } },
             { mobile_phone: { in: Array.from(contactPhones) } }
           ]
         }

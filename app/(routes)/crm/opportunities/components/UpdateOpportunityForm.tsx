@@ -63,16 +63,16 @@ export function UpdateOpportunityForm({
 
   const formSchema = z.object({
     id: z.string().min(5).max(30),
-    name: z.string(),
+    name: z.string().nullable(),
     close_date: z.date({
       message: "An expected close date is required.",
-    }),
-    description: z.string(),
-    type: z.string(),
-    sales_stage: z.string(),
-    budget: z.string(),
-    currency: z.string(),
-    expected_revenue: z.string(),
+    }).nullable(),
+    description: z.string().nullable(),
+    type: z.string().nullable(),
+    sales_stage: z.string().nullable(),
+    budget: z.string().nullable(),
+    currency: z.string().nullable(),
+    expected_revenue: z.string().nullable(),
     next_step: z.string().optional().nullable(),
     assigned_to: z.string().optional().nullable(),
     account: z.string().optional().nullable(),
@@ -191,7 +191,7 @@ export function UpdateOpportunityForm({
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={field.value}
+                        selected={field.value || undefined}
                         //@ts-ignore
                         //TODO: fix this
                         onSelect={field.onChange}
@@ -232,7 +232,7 @@ export function UpdateOpportunityForm({
                       <FormLabel>Disposition</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        defaultValue={field.value || undefined}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -259,7 +259,7 @@ export function UpdateOpportunityForm({
                       <FormLabel>Sale stage</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        defaultValue={field.value || undefined}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -369,7 +369,7 @@ export function UpdateOpportunityForm({
                       <FormLabel>Assigned to</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        defaultValue={field.value || undefined}
                       >
                         <FormControl>
                           <SelectTrigger>

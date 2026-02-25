@@ -30,16 +30,18 @@ export const useDashboardLayout = () => {
 };
 
 export const defaultWidgets: WidgetItem[] = [
-    // --- SEGMENT 1: THE 9 KEY METRICS (IMAGE 1) ---
+    // --- SEGMENT 1: THE REVENUE & HEALTH METRICS ---
+    { id: "actual_revenue", isVisible: true },
+    { id: "unrealized_revenue", isVisible: true },
+    { id: "projected_revenue", isVisible: true },
     { id: "active_users", isVisible: true },
-    { id: "avg_deal_size", isVisible: true },
-    { id: "revenue", isVisible: true },
-    { id: "system_uptime", isVisible: true },
     { id: "active_pipeline", isVisible: true },
-    { id: "conversion_rate", isVisible: true },
-    { id: "system_health", isVisible: true },
     { id: "my_schedule", isVisible: true },
+    { id: "system_uptime", isVisible: true },
+    { id: "system_health", isVisible: true },
     { id: "response_time", isVisible: true },
+    { id: "conversion_rate", isVisible: false },
+    { id: "avg_deal_size", isVisible: false },
 
     { id: "divider-1", isVisible: true },
 
@@ -106,6 +108,7 @@ export const DashboardLayoutProvider = ({
             w.id !== "divider" &&
             w.id !== "divider-2" &&
             w.id !== "divider-3" &&
+            w.id !== "revenue" && // Old ID replaced by projected_revenue trio
             w.id !== "system_uptime_old" // any old IDs
         );
 

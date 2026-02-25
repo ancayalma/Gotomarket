@@ -26,6 +26,14 @@ export const getOpportunities = async () => {
           name: true,
         },
       },
+      assigned_account: true,
+      quotes: {
+        select: {
+          id: true,
+          title: true,
+          totalAmount: true,
+        },
+      },
     },
   });
   return data;

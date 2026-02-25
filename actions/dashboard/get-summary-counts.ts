@@ -14,8 +14,10 @@ export type DashboardCounts = {
   documents: number;
   opportunities: number; // Combined: CRM + Project opportunities
   users: number; // active users
-  revenue: number; // Projected Revenue (All Invoices)
+  revenue: number; // Total Projected (Actual + Unrealized + Forecast)
   actualRevenue: number; // Actual Revenue (Paid Invoices)
+  unrealizedRevenue: number; // Unrealized Revenue (Unpaid Invoices)
+  forecastRevenue: number; // Forecast Revenue (Opportunity Potential)
   storageMB: number; // total storage in MB (rounded to 2 decimals)
   leadPools: number;
 };
@@ -29,6 +31,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
 
   const teamId = teamInfo?.teamId;
   const isGlobalAdmin = teamInfo?.isGlobalAdmin;
+  const isActuallyGlobal = teamInfo?.isPlatformAdmin || teamInfo?.isGlobalAdmin;
 
   const dateFilter: any = {};
   if (from) dateFilter.gte = from;
@@ -40,9 +43,13 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
 
   // Helper to merge team filter with member restriction
   const getFilter = (modelField: "assigned_to" | "user" | "none" = "none", dateFieldName: string = "createdAt") => {
-    let base: any = teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" };
+    // If Global Admin or impersonating, allow empty filter (all records) if teamId is null
+    const normalizedRole = (teamRole || "").trim().toUpperCase();
+    const isAdmin = normalizedRole === "ADMIN" || normalizedRole === "OWNER" || isActuallyGlobal;
 
-    if (teamRole === "MEMBER") {
+    let base: any = teamId ? { team_id: teamId } : isActuallyGlobal ? {} : { team_id: "no-team-fallback" };
+
+    if (normalizedRole === "MEMBER") {
       if (modelField === "assigned_to") {
         base.assigned_to = teamInfo?.userId;
       } else if (modelField === "user") {
@@ -58,7 +65,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
 
   // For documents: members see only their assigned or created docs
   const getDocumentFilter = () => {
-    const base = teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" };
+    const base = teamId ? { team_id: teamId } : isActuallyGlobal ? {} : { team_id: "no-team-fallback" };
     const dateQuery = getCreatedAtFilter();
 
     if (teamRole === "MEMBER") {
@@ -76,9 +83,14 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
 
   // For project opportunities: members see only their created/assigned ones
   const getProjectOpportunityFilter = () => {
+    // Project_Opportunities does not have team_id directly, it inherits from assigned_project (Boards)
+    const base = teamId ? { assigned_project: { team_id: teamId } } : isActuallyGlobal ? {} : { assigned_project: { team_id: "no-team-fallback" } };
     const dateQuery = Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
-    if (teamRole === "MEMBER") {
+    const normalizedRole = (teamRole || "").trim().toUpperCase();
+
+    if (normalizedRole === "MEMBER") {
       return {
+        ...base,
         status: "OPEN",
         ...dateQuery,
         OR: [
@@ -87,7 +99,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
         ]
       };
     }
-    return { status: "OPEN", ...dateQuery };
+    return { ...base, status: "OPEN" as any, ...dateQuery };
   };
 
   const getAccountFilter = () => {
@@ -105,13 +117,14 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
   };
 
   const getInvoiceFilter = () => {
-    const base = teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" };
+    // SysAdms see everything by default if not strictly filtered
+    const base = teamId ? { team_id: teamId } : (isActuallyGlobal ? {} : { team_id: "no-team-fallback" });
     const dateQuery = Object.keys(dateFilter).length > 0 ? { date_created: dateFilter } : {};
     return { ...base, ...dateQuery };
   };
 
   const getLeadPoolFilter = () => {
-    const base = teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" };
+    const base = teamId ? { team_id: teamId } : isActuallyGlobal ? {} : { team_id: "no-team-fallback" };
     // For members, maybe restrict? For now, team-wide.
     return {
       ...base,
@@ -137,7 +150,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     prismadb.crm_Leads.count({ where: getFilter("assigned_to") }),
     prismadb.tasks.count({ where: getFilter("user") }),
     prismadb.boards.count({ where: getFilter("user") }),
-    prismadb.crm_Contacts.count({ where: getFilter("assigned_to", "cratedAt") }),
+    prismadb.crm_Contacts.count({ where: getFilter("assigned_to", "createdAt") }),
     prismadb.crm_Accounts.count({ where: getAccountFilter() }),
     prismadb.crm_Contracts.count({ where: getFilter("assigned_to") }),
     // Fetch all invoices with amount and status for revenue calculation
@@ -166,7 +179,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     prismadb.users.count({
       where: teamRole === "MEMBER"
         ? { id: teamInfo?.userId }
-        : { ...(teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" }), userStatus: "ACTIVE" as any }
+        : { ...(teamId ? { team_id: teamId } : isActuallyGlobal ? {} : { team_id: "no-team-fallback" }), userStatus: "ACTIVE" as any }
     }),
     prismadb.documents.aggregate({ where: getDocumentFilter(), _sum: { size: true } }),
     prismadb.crm_Lead_Pools.count({ where: getLeadPoolFilter() }),
@@ -246,7 +259,10 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
   }
 
   // Final Projected Revenue is the sum of all invoices + the un-invoiced potential from active deals
-  const revenue = invoiceRevenueTotal + activeOppRevenueRemnant + openProjectOppRevenueRemnant;
+  const forecastRevenue = activeOppRevenueRemnant + openProjectOppRevenueRemnant;
+  const unrealizedRevenue = invoiceRevenueTotal - actualRevenue;
+  const revenue = invoiceRevenueTotal + forecastRevenue;
+
   const invoicesCount = Array.isArray(invoices) ? invoices.length : 0;
 
   const storageBytes = Number((storageAgg as any)._sum?.size ?? 0);
@@ -263,8 +279,10 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     documents,
     opportunities,
     users,
-    revenue, // Projected
-    actualRevenue, // Actual
+    revenue, // Total Projected
+    actualRevenue, // Actual (Paid)
+    unrealizedRevenue, // Unrealized (Unpaid)
+    forecastRevenue, // Forecast (Remnant)
     storageMB,
     leadPools,
   };

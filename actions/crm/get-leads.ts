@@ -45,6 +45,18 @@ export const getLeads = async () => {
           name: true,
         },
       },
+      opportunities: {
+        include: {
+          quotes: {
+            select: {
+              id: true,
+              title: true,
+              totalAmount: true,
+            },
+          },
+          assigned_account: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",

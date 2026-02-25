@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import sendEmail from "@/lib/sendmail";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
+const isValidId = (id: any) => typeof id === "string" && id.length === 24;
+
 // Get leads for current team
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -96,7 +98,7 @@ export async function POST(req: Request) {
     if (searchOrConditions.length > 0) {
       existingLead = await (prismadb.crm_Leads as any).findFirst({
         where: {
-          team_id: teamId,
+          assigned_team: isValidId(teamId) ? { id: teamId } : undefined,
           OR: searchOrConditions,
         },
       });
@@ -127,7 +129,7 @@ export async function POST(req: Request) {
     const newLead = await (prismadb.crm_Leads as any).create({
       data: {
         v: 1,
-        team_id: teamId, // Assign team
+        assigned_team: isValidId(teamId) ? { connect: { id: teamId } } : undefined,
         createdBy: userId,
         updatedBy: userId,
         firstName: first_name,

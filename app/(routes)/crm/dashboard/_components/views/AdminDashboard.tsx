@@ -18,6 +18,8 @@ interface AdminDashboardProps {
     userName: string;
     revenue: number;
     actualRevenue: number;
+    unrealizedRevenue: number;
+    forecastRevenue: number;
     activePipelineCount: number;
     totalLeads: number;
     totalOpportunities: number;
@@ -54,6 +56,8 @@ const AdminDashboard = ({
     userName,
     revenue,
     actualRevenue,
+    unrealizedRevenue,
+    forecastRevenue,
     activePipelineCount,
     totalLeads,
     totalOpportunities,
@@ -165,6 +169,8 @@ const AdminDashboard = ({
                             aiInsights={aiInsights}
                             revenue={revenue}
                             actualRevenue={actualRevenue}
+                            unrealizedRevenue={unrealizedRevenue}
+                            forecastRevenue={forecastRevenue}
                             activeUsersCount={activeUsersCount}
                             myPipeline={myPipeline}
                             teamPipeline={teamPipeline}

@@ -29,8 +29,8 @@ export const RevenueWidget = ({ revenue, teamData }: { revenue: number, teamData
         <MetricDeepDiveWidget
             title="Projected Revenue"
             value={revenue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
-            description="Total value of all active deals"
-            icon={DollarSign}
+            description="Total value of paid + pending deals"
+            icon={TrendingUp}
             iconColor="text-emerald-400"
             variant="success"
             centered={true}
@@ -54,6 +54,40 @@ export const RevenueWidget = ({ revenue, teamData }: { revenue: number, teamData
                     )
                 }
             ]}
+        />
+    );
+};
+
+export const ActualRevenueWidget = ({ revenue }: { revenue: number }) => {
+    return (
+        <MetricDeepDiveWidget
+            title="Actual Revenue"
+            value={revenue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
+            description="Total from paid invoices"
+            icon={DollarSign}
+            iconColor="text-emerald-400"
+            variant="success"
+            centered={true}
+            deepDiveTitle="Financial Overview"
+            deepDiveData={[]}
+            deepDiveColumns={[]}
+        />
+    );
+};
+
+export const UnrealizedRevenueWidget = ({ revenue }: { revenue: number }) => {
+    return (
+        <MetricDeepDiveWidget
+            title="Unrealized Revenue"
+            value={revenue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
+            description="Contracted / Unpaid invoices"
+            icon={Activity}
+            iconColor="text-amber-400"
+            variant="warning"
+            centered={true}
+            deepDiveTitle="Pending Billings"
+            deepDiveData={[]}
+            deepDiveColumns={[]}
         />
     );
 };

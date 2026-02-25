@@ -18,6 +18,8 @@ export type UnifiedSalesData = {
     summary: {
         revenue: number;
         actualRevenue: number;
+        unrealizedRevenue: number;
+        forecastRevenue: number;
         activeDeals: number;
         leadsCount: number;
         opportunitiesCount: number;
@@ -67,6 +69,8 @@ export const getUnifiedSalesData = async (from?: Date, to?: Date): Promise<Unifi
         summary: {
             revenue: summaryCounts.revenue,
             actualRevenue: summaryCounts.actualRevenue,
+            unrealizedRevenue: summaryCounts.unrealizedRevenue,
+            forecastRevenue: summaryCounts.forecastRevenue,
             activeDeals,
             leadsCount: summaryCounts.leads,
             opportunitiesCount: summaryCounts.opportunities,

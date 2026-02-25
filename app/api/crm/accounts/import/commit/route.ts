@@ -68,12 +68,14 @@ export async function POST(req: Request) {
                 const domain = acc.domain?.toLowerCase().trim();
                 const dedupeKey = acc.dedupeKey || domain || name.toLowerCase();
 
+                const escapeRegExp = (text: string) => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+
                 let existingAccount = await tx.crm_Accounts.findFirst({
                     where: {
                         team_id: teamId,
                         OR: [
-                            { name: { equals: name, mode: "insensitive" } },
-                            ...(domain ? [{ website: { equals: domain, mode: "insensitive" } }] : [])
+                            { name: { equals: escapeRegExp(name), mode: "insensitive" } },
+                            ...(domain ? [{ website: { equals: escapeRegExp(domain), mode: "insensitive" } }] : [])
                         ]
                     }
                 });
@@ -145,11 +147,13 @@ export async function POST(req: Request) {
                 const linkedAccountId = (con.candidateKey ? accountMapByDedupe.get(con.candidateKey) : null)
                     || (con.accountName ? accountMapByName.get(con.accountName.toLowerCase()) : null);
 
+                const escapeRegExp = (text: string) => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+
                 let existingContact = await tx.crm_Contacts.findFirst({
                     where: {
                         team_id: teamId,
                         OR: [
-                            ...(email ? [{ email: { equals: email, mode: "insensitive" } }] : []),
+                            ...(email ? [{ email: { equals: escapeRegExp(email), mode: "insensitive" } }] : []),
                             ...(phone ? [{ mobile_phone: phone }] : [])
                         ]
                     }

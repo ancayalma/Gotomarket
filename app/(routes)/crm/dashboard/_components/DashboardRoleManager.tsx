@@ -186,6 +186,8 @@ const DashboardRoleManager = async () => {
                 userName={user?.name || "User"}
                 revenue={unifiedData?.summary?.revenue || 0}
                 actualRevenue={unifiedData?.summary?.actualRevenue || 0}
+                unrealizedRevenue={unifiedData?.summary?.unrealizedRevenue || 0}
+                forecastRevenue={unifiedData?.summary?.forecastRevenue || 0}
                 activePipelineCount={unifiedData?.summary?.activeDeals || 0}
                 totalLeads={unifiedData?.summary?.leadsCount || 0}
                 totalOpportunities={unifiedData?.summary?.opportunitiesCount || 0}
