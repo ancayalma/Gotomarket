@@ -1,117 +1,144 @@
 import { prismadb } from "@/lib/prisma";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { PrismaClient } from "@prisma/client";
+import { MongoClient, Db, Collection } from "mongodb";
 
 /**
  * DB_TARGET defines the current underlying database engine.
- * While Prisma handles the connection and ORM abstraction natively for both 
- * Azure CosmosDB (MongoDB API) and Native MongoDB (OVHCloud/Atlas),
- * Azure CosmosDB has certain limits and nuances (e.g., specific transaction limits,
- * $regex limitations, and complex raw aggregation differences) compared to native MongoDB.
- * 
- * We use this Adapter to wrap Prisma functionality and gracefully handle those quirks. 
- * If the platform switches back to Azure Cosmos DB in the future, simply change the DB_ENGINE
- * environment variable to "COSMOS_MONGO".
  */
 export type DBEngine = "COSMOS_MONGO" | "NATIVE_MONGO";
 
 export class DatabaseAdapter {
     private prisma: PrismaClient;
     private engine: DBEngine;
+    private mongoClient: MongoClient | null = null;
+    private mongoDb: Db | null = null;
+    private connectionUrl: string;
 
-    constructor(prisma: PrismaClient) {
+    constructor(prisma: PrismaClient, connectionUrl: string) {
         this.prisma = prisma;
-        // Determine engine from an environment variable, defaulting to native MongoDB.
-        // Set DB_ENGINE="NATIVE_MONGO" or "COSMOS_MONGO" in .env
+        this.connectionUrl = connectionUrl;
         this.engine = (process.env.DB_ENGINE as DBEngine) || "NATIVE_MONGO";
     }
 
-    /**
-     * Returns the current active database engine (Cosmos or Native MongoDB)
-     */
     public get engineType(): DBEngine {
         return this.engine;
     }
 
-    /**
-     * Access the underlying Prisma Client
-     */
     public get client(): PrismaClient {
         return this.prisma;
     }
 
     /**
-     * Helper for raw aggregations.
-     * Cosmos DB query optimization differs slightly from MongoDB, particularly 
-     * around unsupported aggregation pipeline stages.
+     * Lazily connects and retrieves the native MongoDB database object.
+     * This provides raw access to collections, avoiding Prisma's wrapping limitations.
+     */
+    public async getNativeDb(): Promise<Db> {
+        if (this.mongoDb) return this.mongoDb;
+
+        if (!this.mongoClient) {
+            this.mongoClient = new MongoClient(this.connectionUrl);
+            await this.mongoClient.connect();
+        }
+
+        // URL parsing to extract the default DB name
+        const dbName = new URL(this.connectionUrl).pathname.slice(1) || 'test';
+        this.mongoDb = this.mongoClient.db(dbName);
+        return this.mongoDb;
+    }
+
+    /**
+     * Retrieves a native MongoDB collection.
+     */
+    public async getNativeCollection(collectionName: string): Promise<Collection> {
+        const db = await this.getNativeDb();
+        return db.collection(collectionName);
+    }
+
+    /**
+     * Helper for raw aggregations using native MongoDB driver to avoid Prisma translation issues.
      */
     public async executeRawAggregation(collectionName: string, pipeline: any[]) {
-        // Modify pipelines dynamically based on the connected engine
         let optimizedPipeline = [...pipeline];
 
         if (this.engine === "COSMOS_MONGO") {
-            // Azure Cosmos DB might struggle with certain complex native MongoDB aggregations.
-            // E.g., strip out unsupported pipeline operators or simplify `$lookup` if necessary.
             console.log(`[DB Adapter] Running CosmosDB tailored aggregation on ${collectionName}`);
         } else {
             console.log(`[DB Adapter] Running Native MongoDB aggregation on ${collectionName}`);
         }
 
-        // Use Prisma's findRaw / aggregateRaw under the hood
-        const model = (this.prisma as any)[collectionName];
-        if (model && model.aggregateRaw) {
-            return model.aggregateRaw({ pipeline: optimizedPipeline });
+        try {
+            const collection = await this.getNativeCollection(collectionName);
+            return await collection.aggregate(optimizedPipeline).toArray();
+        } catch (error) {
+            console.warn(`[DB Adapter] Native aggregation failed, falling back to Prisma. Error:`, error);
+            // Fallback to Prisma
+            const model = (this.prisma as any)[collectionName];
+            if (model && model.aggregateRaw) {
+                return await model.aggregateRaw({ pipeline: optimizedPipeline });
+            }
+            throw error;
         }
-
-        throw new Error(`Collection ${collectionName} does not support raw aggregations.`);
     }
 
     /**
-     * Helper for raw queries, intercepting regex or complex filtering.
+     * Helper for raw queries using native MongoDB driver.
      */
     public async executeRawQuery(collectionName: string, filter: any, options?: any) {
         if (this.engine === "COSMOS_MONGO") {
-            // Cosmos DB handles $regex differently, sometimes requiring specific index hints.
             console.log(`[DB Adapter] Running CosmosDB tailored raw query on ${collectionName}`);
         }
 
-        const model = (this.prisma as any)[collectionName];
-        if (model && model.findRaw) {
-            return model.findRaw({ filter, options });
+        try {
+            const collection = await this.getNativeCollection(collectionName);
+            return await collection.find(filter, options).toArray();
+        } catch (error) {
+            console.warn(`[DB Adapter] Native find failed, falling back to Prisma. Error:`, error);
+            // Fallback to Prisma
+            const model = (this.prisma as any)[collectionName];
+            if (model && model.findRaw) {
+                return await model.findRaw({ filter, options });
+            }
+            throw error;
         }
-
-        throw new Error(`Collection ${collectionName} does not support raw queries.`);
     }
 
-    /**
-     * Cosmos DB for MongoDB has strict RU limits on transactions and older versions
-     * don't support multi-document transactions out of the box.
-     * Native MongoDB (replica sets on OVH) supports robust transactions.
-     */
     public async runTransaction<T>(callback: (prisma: any) => Promise<T>): Promise<T> {
         if (this.engine === "COSMOS_MONGO") {
-            // Azure Cosmos MongoDB RU based limits may throw exceptions on large transactions.
-            // A production app may intercept these and fallback to linear execution.
             console.log(`[DB Adapter] Executing Prisma transaction (Cosmos Compat mode)`);
             return (this.prisma as any).$transaction(callback);
         } else {
-            // Native MongoDB transaction
             console.log(`[DB Adapter] Executing Prisma transaction (Native MongoDB mode)`);
             return (this.prisma as any).$transaction(callback);
         }
     }
 
-    /**
-     * Executes a raw database command (e.g., listCollections, ping).
-     */
     public async executeRawCommand(command: any) {
         if (this.engine === "COSMOS_MONGO") {
             console.log(`[DB Adapter] Running CosmosDB tailored command`);
         }
-        return this.prisma.$runCommandRaw(command);
+        try {
+            const db = await this.getNativeDb();
+            return await db.command(command);
+        } catch (e) {
+            return this.prisma.$runCommandRaw(command);
+        }
     }
 }
 
-// Export a singleton instance of the adapter to be used throughout the app.
-export const dbAdapter = new DatabaseAdapter(prismadb);
-export const crmDbAdapter = new DatabaseAdapter(prismadbCrm);
+// Compute URL strings for primary and CRM instances
+const primaryDbUrl = process.env.DATABASE_URL || "";
+let crmDbUrl = process.env.CRM_DATABASE_URL;
+if (!crmDbUrl && primaryDbUrl) {
+    const dbName = process.env.PRISMA_DB_NAME || "BasaltCRM";
+    try {
+        const u = new URL(primaryDbUrl);
+        if (!u.pathname || u.pathname === "/") u.pathname = `/${dbName}`;
+        crmDbUrl = u.toString();
+    } catch {
+        crmDbUrl = `${primaryDbUrl}/${dbName}`;
+    }
+}
+
+export const dbAdapter = new DatabaseAdapter(prismadb, primaryDbUrl);
+export const crmDbAdapter = new DatabaseAdapter(prismadbCrm, crmDbUrl || "");
