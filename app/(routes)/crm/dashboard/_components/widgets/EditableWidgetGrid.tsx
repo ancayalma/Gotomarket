@@ -40,7 +40,8 @@ import {
     LeadPoolsWidget,
     LeadWizardWidget,
     AIInsightsWidget,
-    RevenueWidget as GenericStatsWidget
+    RevenueWidget as GenericStatsWidget,
+    CustomMetricWidget
 } from "../widgets";
 import {
     Users,
@@ -384,6 +385,7 @@ export const EditableWidgetGrid = ({
                         count="Good"
                         description="Based on 124 interactions"
                         variant="success"
+                        centered={true}
                     />
                 );
             case "campaign_performance":
@@ -394,6 +396,7 @@ export const EditableWidgetGrid = ({
                         count="3.2x"
                         description="Overall return on spend"
                         variant="info"
+                        centered={true}
                     />
                 );
 
@@ -405,6 +408,7 @@ export const EditableWidgetGrid = ({
                         count="3 Today"
                         description="Next: Lead Sync @ 2PM"
                         variant="default"
+                        centered={true}
                     />
                 );
             case "collaboration_feed":
@@ -415,6 +419,7 @@ export const EditableWidgetGrid = ({
                         count="12 Mentions"
                         description="Active campaign threads"
                         variant="info"
+                        centered={true}
                     />
                 );
             case "conversion_rate":
@@ -442,6 +447,20 @@ export const EditableWidgetGrid = ({
                     </div>
                 );
             default:
+                if (id.startsWith("custom_")) {
+                    // Fallback mock data for newly created widgets
+                    return (
+                        <CustomMetricWidget
+                            data={{
+                                name: id.replace("custom_", "").replace("_", " "),
+                                icon: "BarChart3",
+                                color: "primary",
+                                chartType: "METRIC",
+                                value: 124500,
+                            }}
+                        />
+                    );
+                }
                 return null;
         }
     };

@@ -15,6 +15,7 @@ export const MyScheduleWidget = ({ eventsCount = 0 }: { eventsCount?: number }) 
             count={eventsCount}
             description="Upcoming meetings"
             variant="info" // Use a distinct color variant if available, or fallback to something like 'violet' or 'info'
+            centered={true}
             onClick={() => router.push("/crm/calendar")}
             className="cursor-pointer hover:ring-1 hover:ring-blue-500/50 h-full"
         />

@@ -15,6 +15,7 @@ interface DashboardCardProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     primaryColor?: string;
     iconClassName?: string;
     hideIcon?: boolean;
+    centered?: boolean;
     labelClassName?: string;
     descriptionClassName?: string;
 }
@@ -28,7 +29,7 @@ const variantIconStyles: Record<CardVariant, string> = {
 };
 
 const DashboardCard = React.forwardRef<HTMLButtonElement, DashboardCardProps>(
-    ({ className, icon: Icon, label, count, description, variant = "default", iconClassName, primaryColor, hideIcon = false, labelClassName, descriptionClassName, ...props }, ref) => {
+    ({ className, icon: Icon, label, count, description, variant = "default", iconClassName, primaryColor, hideIcon = false, centered = false, labelClassName, descriptionClassName, ...props }, ref) => {
         return (
             <button
                 ref={ref}
@@ -52,8 +53,8 @@ const DashboardCard = React.forwardRef<HTMLButtonElement, DashboardCardProps>(
                     )}
                 />
 
-                <div className={cn("relative z-10 w-full h-full flex flex-col justify-center", hideIcon ? "items-center text-center gap-1" : "items-start pl-1")}>
-                    {hideIcon ? (
+                <div className={cn("relative z-10 w-full h-full flex flex-col justify-center", (hideIcon || centered) ? "items-center text-center gap-1" : "items-start pl-1")}>
+                    {(hideIcon || centered) ? (
                         // Centered Layout (Stats/Deep Dive)
                         <>
                             <h3 className={cn("font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent mb-0.5 py-0.5 px-2 leading-tight", labelClassName)}>

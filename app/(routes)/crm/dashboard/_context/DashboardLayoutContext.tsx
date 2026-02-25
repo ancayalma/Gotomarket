@@ -57,6 +57,23 @@ export const defaultWidgets: WidgetItem[] = [
     // --- SEGMENT 3: HUB GRID & EXTENDED ---
     { id: "crm_entities_grid", isVisible: true },
 
+    // --- SEGMENT 4: INTELLIGENCE & ANALYTICS ---
+    { id: "win_rate", isVisible: false },
+    { id: "lead_velocity", isVisible: false },
+    { id: "invoice_aging", isVisible: false },
+    { id: "meeting_efficiency", isVisible: false },
+    { id: "ai_savings", isVisible: false },
+    { id: "leaderboard", isVisible: false },
+    { id: "lead_sources", isVisible: false },
+    { id: "deal_forecast", isVisible: false },
+    { id: "activity_heatmap", isVisible: false },
+    { id: "customer_churn", isVisible: false },
+    { id: "ticket_volume", isVisible: false },
+    { id: "sales_cycle_length", isVisible: false },
+    { id: "high_priority_tasks", isVisible: false },
+    { id: "pending_approvals", isVisible: false },
+    { id: "unread_messages", isVisible: false },
+
     // Hidden/Optional Operations & Analytics
     { id: "team_activity", isVisible: false },
     { id: "recent_files", isVisible: false },

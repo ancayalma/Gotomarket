@@ -14,3 +14,5 @@ export * from "./AIInsightsWidget";
 export * from "./StatsWidgets";
 export * from "./MyScheduleWidget";
 export * from "./MetricDeepDiveWidget";
+export * from "./CustomMetricWidget";
+export * from "./CustomWidgetModal";

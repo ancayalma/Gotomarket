@@ -1073,6 +1073,7 @@ model Team {
   team_subscriptions crm_Subscriptions[]
   billing_invoices   crm_BillingInvoice[]
   ai_usage_logs      crm_AiUsageLog[]
+  custom_widgets     crm_CustomWidget[]
   navigation_configs NavigationConfig[]
   integrations       Tenant_Integrations?
 }
@@ -1091,6 +1092,37 @@ model CustomRole {
   users Users[]
 
   @@unique([team_id, name])
+}
+
+model crm_CustomWidget {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  icon        String   @default("BarChart3")
+  color       String   @default("primary")
+  
+  // Data Sourcing
+  dataSource  String   // "Leads", "Opportunities", "Invoices", "Tasks"
+  aggregation String   // "COUNT", "SUM", "AVG"
+  targetField String?  // e.g., "amount", "revenue"
+  
+  // Configuration
+  refreshInterval Int @default(300) // in seconds
+  chartType       String @default("METRIC") // "METRIC", "GAUGE", "SPARKLINE", "BAR"
+  
+  // Advanced Logic
+  filters         Json?    // Array of { field: string, operator: string, value: any }
+  targetValue     Float?   // Threshold for success/alerts
+  comparisonPeriod String? // "MONTH_OVER_MONTH", "YEAR_OVER_YEAR", "NONE"
+  
+  // Ownership
+  team_id     String   @db.ObjectId
+  team        Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  
+  created_at  DateTime @default(now()) @db.Date
+  updated_at  DateTime @updatedAt @db.Date
+
+  @@index([team_id])
 }
 
 enum BillingCycle {
