@@ -131,8 +131,6 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     crmOpportunities,
     projectOpportunities,
     users,
-    crmRevenueAgg,
-    projectRevenueAgg,
     storageAgg,
     leadPools,
   ] = await Promise.all([
@@ -145,59 +143,110 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     // Fetch all invoices with amount and status for revenue calculation
     prismadb.invoices.findMany({
       where: getInvoiceFilter(),
-      select: { invoice_amount: true, payment_status: true }
+      select: {
+        id: true,
+        invoice_amount: true,
+        payment_status: true,
+        opportunityIDs: true,
+        projectOpportunityIDs: true
+      }
     }),
     prismadb.documents.count({ where: getDocumentFilter() }), // Member-specific document filter
-    // Count CRM Opportunities
-    prismadb.crm_Opportunities.count({ where: getFilter("assigned_to") }),
-    // Count Project Opportunities - now filtered for members
-    (prismadb.project_Opportunities as any).count({ where: getProjectOpportunityFilter() }),
+    // Fetch CRM Opportunities for detailed revenue calculation
+    prismadb.crm_Opportunities.findMany({
+      where: { ...getFilter("assigned_to"), status: "ACTIVE" as any },
+      select: { id: true, expected_revenue: true, invoiceIDs: true }
+    }),
+    // Fetch Project Opportunities for detailed revenue calculation
+    (prismadb.project_Opportunities as any).findMany({
+      where: getProjectOpportunityFilter(),
+      select: { id: true, valueEstimate: true, invoiceIDs: true }
+    }),
     // Users: members see "1" (themselves), admins see team count
     prismadb.users.count({
       where: teamRole === "MEMBER"
         ? { id: teamInfo?.userId }
         : { ...(teamId ? { team_id: teamId } : teamInfo?.isImpersonating ? {} : { team_id: "no-team-fallback" }), userStatus: "ACTIVE" as any }
     }),
-    // CRM Opportunities expected revenue (already filtered for members)
-    prismadb.crm_Opportunities.aggregate({
-      where: { ...getFilter("assigned_to"), status: "ACTIVE" as any },
-      _sum: { expected_revenue: true }
-    }),
-    // Project Opportunities value estimate - now filtered for members
-    (prismadb.project_Opportunities as any).aggregate({
-      where: getProjectOpportunityFilter(),
-      _sum: { valueEstimate: true }
-    }),
     prismadb.documents.aggregate({ where: getDocumentFilter(), _sum: { size: true } }),
     prismadb.crm_Lead_Pools.count({ where: getLeadPoolFilter() }),
   ]);
 
-  // Combine opportunities from both CRM and Project systems
-  // UPDATE: User requested separation. ONLY Sales Pipeline counts as official "Opportunities" and "Revenue".
-  // Project Requests are just internal tasks.
-  const opportunities = crmOpportunities;
+  // Combine opportunities from both CRM and Project systems for the 'opportunities' count
+  const opportunities = (Array.isArray(crmOpportunities) ? crmOpportunities.length : 0) +
+    (Array.isArray(projectOpportunities) ? projectOpportunities.length : 0);
 
-  // Combine revenue from both CRM opportunities and Project opportunities
-  const crmRevenue = Number((crmRevenueAgg as any)._sum?.expected_revenue ?? 0);
-  const projectRevenue = Number((projectRevenueAgg as any)._sum?.valueEstimate ?? 0);
-
-  // Calculate Invoice-based Revenue
-  let projectedRevenue = 0;
+  // Calculate Invoice-based Revenue and track invoiced totals per opportunity
+  let invoiceRevenueTotal = 0;
   let actualRevenue = 0;
+  const invoicedCrmOppMap = new Map<string, number>();
+  const invoicedProjectOppMap = new Map<string, number>();
 
   if (Array.isArray(invoices)) {
     (invoices as any[]).forEach((inv) => {
       const amount = parseFloat((inv.invoice_amount || "0").replace(/[^0-9.-]+/g, ""));
       if (!isNaN(amount)) {
-        projectedRevenue += amount;
+        invoiceRevenueTotal += amount;
         if (inv.payment_status === "PAID") {
           actualRevenue += amount;
+        }
+
+        // Track how much of each deal is already invoiced to avoid double-counting
+        if (inv.opportunityIDs && Array.isArray(inv.opportunityIDs)) {
+          inv.opportunityIDs.forEach((id: string) => {
+            invoicedCrmOppMap.set(id, (invoicedCrmOppMap.get(id) || 0) + amount);
+          });
+        }
+        if (inv.projectOpportunityIDs && Array.isArray(inv.projectOpportunityIDs)) {
+          inv.projectOpportunityIDs.forEach((id: string) => {
+            invoicedProjectOppMap.set(id, (invoicedProjectOppMap.get(id) || 0) + amount);
+          });
         }
       }
     });
   }
 
-  const revenue = projectedRevenue;
+  // Calculate Opportunity-based Revenue (Un-invoiced components)
+  // "Source latest data": We add the portion of active opportunities that HAS NOT been invoiced yet.
+  let activeOppRevenueRemnant = 0;
+  if (Array.isArray(crmOpportunities)) {
+    crmOpportunities.forEach((opp: any) => {
+      const expected = Number(opp.expected_revenue || 0);
+      const alreadyInvoiced = invoicedCrmOppMap.get(opp.id) || 0;
+
+      // Also check if the opportunity record itself points to invoices (redundancy)
+      const hasExplicitInvoices = opp.invoiceIDs && opp.invoiceIDs.length > 0;
+
+      if (hasExplicitInvoices && alreadyInvoiced === 0) {
+        // If it has invoices but we didn't find them in the 'invoices' list (maybe different filters?),
+        // we should still be cautious about adding the full amount. 
+        // For now, if it has explicit invoices, we assume they are the source of truth if we skip.
+        // But the safest way to avoid the "XOINPAY" double-count is to skip if there's ANY link.
+        return;
+      }
+
+      // Add only the amount exceed what's already been invoiced
+      const remnant = Math.max(0, expected - alreadyInvoiced);
+      activeOppRevenueRemnant += remnant;
+    });
+  }
+
+  let openProjectOppRevenueRemnant = 0;
+  if (Array.isArray(projectOpportunities)) {
+    projectOpportunities.forEach((opp: any) => {
+      const estimate = Number(opp.valueEstimate || 0);
+      const alreadyInvoiced = invoicedProjectOppMap.get(opp.id) || 0;
+
+      const hasExplicitInvoices = opp.invoiceIDs && opp.invoiceIDs.length > 0;
+      if (hasExplicitInvoices && alreadyInvoiced === 0) return;
+
+      const remnant = Math.max(0, estimate - alreadyInvoiced);
+      openProjectOppRevenueRemnant += remnant;
+    });
+  }
+
+  // Final Projected Revenue is the sum of all invoices + the un-invoiced potential from active deals
+  const revenue = invoiceRevenueTotal + activeOppRevenueRemnant + openProjectOppRevenueRemnant;
   const invoicesCount = Array.isArray(invoices) ? invoices.length : 0;
 
   const storageBytes = Number((storageAgg as any)._sum?.size ?? 0);

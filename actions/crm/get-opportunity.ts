@@ -66,6 +66,14 @@ export const getOpportunity = async (opportunityId: string) => {
           title: true,
         },
       },
+      assigned_lead: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
     },
   });
   return data;

@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import sendEmail from "@/lib/sendmail";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
+const isValidId = (id: any) => typeof id === "string" && id.length === 24;
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -61,25 +63,25 @@ export async function POST(req: Request) {
     const newOpportunity = await (prismadb.crm_Opportunities as any).create({
       data: {
         v: 0,
-        assigned_team: teamId ? { connect: { id: teamId } } : undefined,
-        assigned_account: finalAccountId ? { connect: { id: finalAccountId } } : undefined,
-        assigned_to_user: finalAssignedTo ? { connect: { id: finalAssignedTo } } : { connect: { id: userId } },
-        assigned_project: assign_to_project ? { connect: { id: assign_to_project } } : undefined,
+        assigned_team: isValidId(teamId) ? { connect: { id: teamId } } : undefined,
+        assigned_account: isValidId(finalAccountId) ? { connect: { id: finalAccountId } } : undefined,
+        assigned_to_user: isValidId(finalAssignedTo) ? { connect: { id: finalAssignedTo } } : { connect: { id: userId } },
+        assigned_project: isValidId(assign_to_project) ? { connect: { id: assign_to_project } } : undefined,
         budget: Number(budget) || 0,
         lead_source: lead_source,
         close_date: close_date ? new Date(close_date) : undefined,
-        contacts: contact ? { connect: [{ id: contact }] } : undefined,
-        assigned_lead: lead ? { connect: { id: lead } } : undefined,
-        created_by_user: userId ? { connect: { id: userId } } : undefined,
-        last_activity_by: userId,
-        updatedBy: userId,
+        contacts: isValidId(contact) ? { connect: [{ id: contact }] } : undefined,
+        assigned_lead: isValidId(lead) ? { connect: { id: lead } } : undefined,
+        created_by_user: isValidId(userId) ? { connect: { id: userId } } : undefined,
+        last_activity_by: isValidId(userId) ? userId : undefined,
+        updatedBy: isValidId(userId) ? userId : undefined,
         currency: currency,
         description: description,
         expected_revenue: Number(expected_revenue) || 0,
         name: name,
         next_step: next_step,
-        assigned_sales_stage: (sales_stage && sales_stage.length === 24) ? { connect: { id: sales_stage } } : undefined,
-        assigned_type: (type && type.length === 24) ? { connect: { id: type } } : undefined,
+        assigned_sales_stage: isValidId(sales_stage) ? { connect: { id: sales_stage } } : undefined,
+        assigned_type: isValidId(type) ? { connect: { id: type } } : undefined,
         status: "ACTIVE",
       },
     });
@@ -146,22 +148,22 @@ export async function PUT(req: Request) {
     const updatedOpportunity = await (prismadb.crm_Opportunities as any).update({
       where: { id },
       data: {
-        assigned_account: account ? { connect: { id: account } } : undefined,
-        assigned_to_user: assigned_to ? { connect: { id: assigned_to } } : undefined,
-        assigned_project: assign_to_project ? { connect: { id: assign_to_project } } : undefined,
+        assigned_account: isValidId(account) ? { connect: { id: account } } : undefined,
+        assigned_to_user: isValidId(assigned_to) ? { connect: { id: assigned_to } } : undefined,
+        assigned_project: isValidId(assign_to_project) ? { connect: { id: assign_to_project } } : undefined,
         budget: Number(budget) || 0,
         lead_source: lead_source,
         close_date: close_date ? new Date(close_date) : undefined,
-        contacts: contact ? { set: [{ id: contact }] } : undefined,
-        assigned_lead: lead ? { connect: { id: lead } } : undefined,
-        updatedBy: userId,
+        contacts: isValidId(contact) ? { set: [{ id: contact }] } : undefined,
+        assigned_lead: isValidId(lead) ? { connect: { id: lead } } : undefined,
+        updatedBy: isValidId(userId) ? userId : undefined,
         currency: currency,
         description: description,
         expected_revenue: Number(expected_revenue) || 0,
         name: name,
         next_step: next_step,
-        assigned_sales_stage: (sales_stage && sales_stage.length === 24) ? { connect: { id: sales_stage } } : undefined,
-        assigned_type: (type && type.length === 24) ? { connect: { id: type } } : undefined,
+        assigned_sales_stage: isValidId(sales_stage) ? { connect: { id: sales_stage } } : undefined,
+        assigned_type: isValidId(type) ? { connect: { id: type } } : undefined,
         status: "ACTIVE",
       },
     });
