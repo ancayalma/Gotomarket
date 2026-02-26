@@ -5,15 +5,15 @@ import FluidNeuralWave from "@/app/components/FluidNeuralWave";
 
 export default function BasaltHero() {
     return (
-        <section id="hero" className="relative min-h-screen flex flex-col items-center justify-center pt-32 pb-20 px-6 overflow-hidden md:pt-0">
+        <section id="hero" className="relative min-h-screen flex flex-col items-center justify-center pt-28 md:pt-32 lg:pt-36 pb-20 px-6 overflow-hidden">
             {/* The Neural Background */}
             <div className="absolute inset-0 z-0">
                 <FluidNeuralWave className="opacity-40" />
             </div>
 
-            <div className="relative z-10 flex flex-col items-center text-center w-full max-w-6xl">
+            <div className="relative z-10 flex flex-col items-center text-center w-full max-w-6xl mb-16 sm:mb-24 md:mb-0">
                 {/* Status Indicator */}
-                <div className="inline-flex items-center gap-3 mb-12 px-5 py-2.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 backdrop-blur-md opacity-0 animate-fadeInUp">
+                <div className="inline-flex items-center gap-3 mb-10 px-5 py-2.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 backdrop-blur-md opacity-0 animate-fadeInUp">
                     <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
@@ -24,12 +24,17 @@ export default function BasaltHero() {
                 </div>
 
                 {/* Main Heading - Billboard Style */}
-                <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-extrabold tracking-tighter mb-10 leading-[0.85] opacity-0 animate-fadeInUp stagger-1 uppercase tracking-tight">
-                    <span className="block text-white">TOTAL</span>
-                    <span className="block bg-gradient-to-r from-cyan-400 via-white to-violet-500 bg-clip-text text-transparent">
-                        AGENCY
-                    </span>
-                </h1>
+                <div className="relative mb-10 opacity-0 animate-fadeInUp stagger-1">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-r from-cyan-500/20 via-fuchsia-500/10 to-violet-500/20 blur-[100px] rounded-full z-0 pointer-events-none" />
+                    <h1 className="relative z-10 text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] font-black tracking-tighter leading-[0.95] uppercase opacity-[0.85]">
+                        <span className="block text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] pb-1">
+                            TOTAL
+                        </span>
+                        <span className="block bg-gradient-to-r from-cyan-400 via-white to-violet-500 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(34,211,238,0.4)] pb-4 relative z-10">
+                            AGENCY
+                        </span>
+                    </h1>
+                </div>
 
                 {/* Mission Statement */}
                 <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed opacity-0 animate-fadeInUp stagger-2 font-light">
@@ -46,7 +51,7 @@ export default function BasaltHero() {
                         className="group relative h-16 px-10 flex items-center justify-center text-base font-bold tracking-wider rounded-2xl bg-white text-black hover:bg-cyan-400 transition-all duration-500 overflow-hidden"
                     >
                         <span className="relative z-10 flex items-center">
-                            DEPLOY CORE
+                            SCHEDULE A CALL
                             <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -61,25 +66,30 @@ export default function BasaltHero() {
 
                 {/* Infrastructure Tags */}
                 <div className="mt-12 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 opacity-0 animate-fadeInUp stagger-4 px-4">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] md:text-[10px] font-mono text-gray-500 whitespace-nowrap">
-                        <Cpu className="h-3 w-3" /> GRID SCALE PROVISION
+                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-all duration-500 hover:border-cyan-500/50 hover:bg-cyan-500/5">
+                        <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-all duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
+                            <Cpu className="h-16 w-16 text-cyan-400" />
+                        </div>
+                        <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-cyan-400 transition-colors uppercase tracking-widest">GRID SCALE PROVISION</span>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] md:text-[10px] font-mono text-gray-500 whitespace-nowrap">
-                        <Bot className="h-3 w-3" /> SYNAPTIC SDR CORES
+
+                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-all duration-500 hover:border-violet-500/50 hover:bg-violet-500/5">
+                        <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-all duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
+                            <Bot className="h-16 w-16 text-violet-400" />
+                        </div>
+                        <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-violet-400 transition-colors uppercase tracking-widest">SYNAPTIC SDR CORES</span>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] md:text-[10px] font-mono text-gray-500 whitespace-nowrap">
-                        <Zap className="h-3 w-3" /> 0.12s SYNAPTIC LATENCY
+
+                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-all duration-500 hover:border-blue-500/50 hover:bg-blue-500/5">
+                        <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-all duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
+                            <Zap className="h-16 w-16 text-blue-400" />
+                        </div>
+                        <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-blue-400 transition-colors uppercase tracking-widest">0.12s SYNAPTIC LATENCY</span>
                     </div>
                 </div>
             </div>
 
-            {/* Scroll Indicator */}
-            <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-10 opacity-0 animate-fadeInUp stagger-5">
-                <Link href="#features" className="flex flex-col items-center gap-2 text-gray-500 hover:text-cyan-500 transition-colors">
-                    <span className="text-[9px] md:text-[10px] font-mono tracking-widest uppercase">Initializing Core</span>
-                    <div className="w-px h-8 md:h-12 bg-gradient-to-b from-cyan-500 to-transparent animate-pulse" />
-                </Link>
-            </div>
+
         </section>
     );
 }

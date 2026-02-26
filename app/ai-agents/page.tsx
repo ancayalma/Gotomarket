@@ -68,9 +68,9 @@ export default function AliensPage() {
                             <div className="relative group rounded-[40px] overflow-hidden border border-white/10 bg-gradient-to-br from-white/5 to-transparent">
                                 <div className="flex flex-col lg:flex-row items-center">
                                     <div className="flex-1 p-12 lg:p-20">
-                                        <div className="flex items-center gap-4 mb-8">
-                                            <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                                                <Phone className="h-10 w-10" />
+                                        <div className="flex items-center gap-4 mb-8 relative z-10">
+                                            <div className="absolute -top-12 -left-12 opacity-10 group-hover:opacity-30 transition-all duration-700 pointer-events-none group-hover:scale-110 group-hover:rotate-12">
+                                                <Phone className="w-48 h-48 text-emerald-400" />
                                             </div>
                                             <div>
                                                 <div className="text-[10px] font-mono text-emerald-500 tracking-widest uppercase">ID: SDR-01</div>
@@ -121,9 +121,9 @@ export default function AliensPage() {
                             <div className="relative group rounded-[40px] overflow-hidden border border-white/10 bg-gradient-to-bl from-white/5 to-transparent">
                                 <div className="flex flex-col lg:flex-row-reverse items-center">
                                     <div className="flex-1 p-12 lg:p-20">
-                                        <div className="flex items-center gap-4 mb-8">
-                                            <div className="p-4 rounded-2xl bg-violet-500/10 text-violet-400 border border-violet-500/20">
-                                                <MessageSquare className="h-10 w-10" />
+                                        <div className="flex items-center gap-4 mb-8 relative z-10">
+                                            <div className="absolute -top-12 -left-12 opacity-10 group-hover:opacity-30 transition-all duration-700 pointer-events-none group-hover:scale-110 group-hover:rotate-12">
+                                                <MessageSquare className="w-48 h-48 text-violet-400" />
                                             </div>
                                             <div>
                                                 <div className="text-[10px] font-mono text-violet-500 tracking-widest uppercase">ID: CSM-X</div>

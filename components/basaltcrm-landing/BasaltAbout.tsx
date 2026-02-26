@@ -73,13 +73,20 @@ export default function BasaltAbout() {
                                 icon: <Cpu className="w-6 h-6 text-violet-500" />
                             },
                         ].map((spec) => (
-                            <div key={spec.title} className="p-8 glass-panel rounded-[32px] border border-white/10 bg-black/40 hover:bg-white/5 transition-all duration-500 group">
-                                <div className="mb-6">
-                                    {spec.icon}
+                            <div key={spec.title} className="p-8 glass-panel rounded-[32px] border border-white/10 bg-black/40 hover:bg-white/5 transition-all duration-500 group relative overflow-hidden">
+                                <div className="absolute -bottom-12 -right-12 opacity-10 group-hover:opacity-40 transition-all duration-700 pointer-events-none group-hover:scale-110 group-hover:-rotate-12">
+                                    {/* Clone the icon with larger size and relative classes */}
+                                    {typeof spec.icon === 'object' && spec.icon !== null && 'type' in spec.icon ? (
+                                        <spec.icon.type {...spec.icon.props} className="w-64 h-64" />
+                                    ) : (
+                                        spec.icon
+                                    )}
                                 </div>
-                                <div className="text-[10px] font-mono text-gray-500 mb-2 tracking-widest uppercase">{spec.title}</div>
-                                <div className="text-2xl font-bold text-white mb-4 tracking-tight group-hover:text-cyan-400 transition-colors uppercase">{spec.value}</div>
-                                <p className="text-sm text-gray-500 leading-relaxed">{spec.desc}</p>
+                                <div className="relative z-10">
+                                    <div className="text-[10px] font-mono text-gray-500 mb-2 tracking-widest uppercase">{spec.title}</div>
+                                    <div className="text-2xl font-bold text-white mb-4 tracking-tight group-hover:text-cyan-400 transition-colors uppercase">{spec.value}</div>
+                                    <p className="text-sm text-gray-500 leading-relaxed">{spec.desc}</p>
+                                </div>
                             </div>
                         ))}
                     </div>

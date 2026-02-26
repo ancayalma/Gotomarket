@@ -18,12 +18,12 @@ export default function BasaltFeatures() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-32">
                     {[
-                        { icon: Cpu, title: "NEURAL DISCOVERY", desc: "Autonomous ICP mapping using multi-agent site crawls.", tag: "PHASE 01" },
-                        { icon: Bot, title: "AGENCY CORES", desc: "Deploy digital workers for SDR and CSM roles.", tag: "PHASE 02" },
-                        { icon: TrendingUp, title: "COMMAND CENTER", desc: "Predictive revenue forecasting with sentiment deep-dives.", tag: "PHASE 03" },
-                        { icon: MessageSquare, title: "0.12s LATENCY", desc: "Real-time voice and text inference protocols.", tag: "INFRA" },
-                        { icon: Globe, title: "MULTI-MODAL", desc: "Social, technical, and firmographic signal harvesting.", tag: "DATA" },
-                        { icon: Shield, title: "SOC2 CORE", desc: "Enterprise-grade guardrails for neural data.", tag: "SECURITY" },
+                        { icon: Cpu, title: "NEURAL DISCOVERY", desc: "Autonomous ICP mapping using multi-agent site crawls.", tag: "PHASE 01", color: "text-cyan-400" },
+                        { icon: Bot, title: "AGENCY CORES", desc: "Deploy digital workers for SDR and CSM roles.", tag: "PHASE 02", color: "text-violet-400" },
+                        { icon: TrendingUp, title: "COMMAND CENTER", desc: "Predictive revenue forecasting with sentiment deep-dives.", tag: "PHASE 03", color: "text-emerald-400" },
+                        { icon: MessageSquare, title: "0.12s LATENCY", desc: "Real-time voice and text inference protocols.", tag: "INFRA", color: "text-blue-400" },
+                        { icon: Globe, title: "MULTI-MODAL", desc: "Social, technical, and firmographic signal harvesting.", tag: "DATA", color: "text-fuchsia-400" },
+                        { icon: Shield, title: "SOC2 CORE", desc: "Enterprise-grade guardrails for neural data.", tag: "SECURITY", color: "text-rose-400" },
                     ].map((feat, i) => (
                         <motion.div
                             key={i}
@@ -36,14 +36,16 @@ export default function BasaltFeatures() {
                             <div className="absolute top-0 right-0 p-4">
                                 <span className="text-[10px] font-mono text-gray-500 tracking-widest">{feat.tag}</span>
                             </div>
-                            <div className="p-4 rounded-2xl bg-cyan-500/10 text-cyan-400 w-fit mb-6 group-hover:scale-110 transition-transform duration-500">
-                                <feat.icon className="h-8 w-8" />
+
+                            <div className="absolute -bottom-12 -right-12 opacity-10 group-hover:opacity-60 transition-all duration-700 pointer-events-none group-hover:scale-125 group-hover:-rotate-12 group-hover:drop-shadow-[0_0_50px_rgba(255,255,255,0.2)]">
+                                <feat.icon className={`w-64 h-64 ${feat.color}`} />
                             </div>
-                            <h4 className="text-xl font-bold text-white mb-3 uppercase tracking-tight">{feat.title}</h4>
-                            <p className="text-gray-400 leading-relaxed text-sm">
+
+                            <h4 className="text-xl font-bold text-white mb-3 uppercase tracking-tight relative z-10">{feat.title}</h4>
+                            <p className="text-gray-400 leading-relaxed text-sm relative z-10">
                                 {feat.desc}
                             </p>
-                            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/0 to-transparent group-hover:via-cyan-500/50 transition-all duration-700" />
+                            <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-50 transition-all duration-700 ${feat.color}`} />
                         </motion.div>
                     ))}
                 </div>
