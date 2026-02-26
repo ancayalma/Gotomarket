@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { getBlobServiceClient } from "@/lib/azure-storage";
+import { getBlobServiceClient } from "@/lib/s3-storage";
 
 // POST /api/projects/[projectId]/upload-document
 // Accepts multipart/form-data { file } and uploads to Azure Blob Storage,
@@ -21,10 +21,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ projectId:
     const file = formData.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-    const conn = process.env.BLOB_STORAGE_CONNECTION_STRING;
-    const container = process.env.BLOB_STORAGE_CONTAINER;
-    if (!conn || !container) {
-      return NextResponse.json({ error: "Azure Blob not configured" }, { status: 500 });
+    const s3Access = process.env.S3_ACCESS_KEY;
+    const s3Secret = process.env.S3_SECRET_KEY;
+    const container = process.env.S3_BUCKET_NAME || "basaltcrm";
+    if (!s3Access || !s3Secret) {
+      return NextResponse.json({ error: "S3 Storage not configured" }, { status: 500 });
     }
 
     // Convert file to buffer

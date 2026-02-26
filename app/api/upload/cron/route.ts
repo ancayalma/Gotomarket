@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getBlobServiceClient } from "@/lib/azure-storage";
+import { getBlobServiceClient } from "@/lib/s3-storage";
 import { prismadb } from "@/lib/prisma";
 import type { DocumentSystemType } from "@prisma/client";
 import { requireCronAuth } from "@/lib/api-auth-guard";

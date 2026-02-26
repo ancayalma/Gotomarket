@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { validateImageFile } from "@/lib/image-processing";
-import { getBlobServiceClient } from "@/lib/azure-storage";
+import { getBlobServiceClient } from "@/lib/s3-storage";
 
 // Migrate profile photo upload to Azure Blob
 // POST /api/profile/upload-photo
@@ -28,10 +28,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    const conn = process.env.BLOB_STORAGE_CONNECTION_STRING;
-    const container = process.env.BLOB_STORAGE_CONTAINER;
-    if (!conn || !container) {
-      return NextResponse.json({ error: "Azure Blob not configured" }, { status: 500 });
+    const s3Access = process.env.S3_ACCESS_KEY;
+    const s3Secret = process.env.S3_SECRET_KEY;
+    const container = process.env.S3_BUCKET_NAME || "basaltcrm";
+    if (!s3Access || !s3Secret) {
+      return NextResponse.json({ error: "S3 Storage not configured" }, { status: 500 });
     }
 
     // Convert file to buffer

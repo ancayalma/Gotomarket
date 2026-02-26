@@ -39,7 +39,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ documentId
     // If it's a stored file, delete from storage too; otherwise skip (link-only docs)
     const key = (document[0] as any)?.key as string | undefined;
     if (key) {
-      const { deleteBlobIfConfigured } = await import("@/lib/azure-blob");
+      const { deleteBlobIfConfigured } = await import("@/lib/s3-blob");
       await deleteBlobIfConfigured(key);
     }
 

@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getGmailClientForUser } from "@/lib/gmail";
 import { getGraphClient } from "@/lib/microsoft";
 import { prismadb } from "@/lib/prisma";
-import { getBlobServiceClient } from "@/lib/azure-storage";
+import { getBlobServiceClient } from "@/lib/s3-storage";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 /**

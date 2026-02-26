@@ -1,5 +1,5 @@
 import { authOptions } from "@/lib/auth";
-import { getBlobServiceClient } from "@/lib/azure-storage";
+import { getBlobServiceClient } from "@/lib/s3-storage";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
@@ -60,10 +60,11 @@ export async function DELETE(request: Request, props: { params: Promise<{ invoic
     // 1. Attempt to delete from Azure Blob Storage (Best Effort)
     if (invoiceData?.invoice_file_url) {
       try {
-        const connectionString = process.env.BLOB_STORAGE_CONNECTION_STRING;
-        const containerName = process.env.BLOB_STORAGE_CONTAINER;
+        const s3Access = process.env.S3_ACCESS_KEY;
+        const s3Secret = process.env.S3_SECRET_KEY;
+        const containerName = process.env.S3_BUCKET_NAME || "basaltcrm";
 
-        if (connectionString && containerName) {
+        if (s3Access && s3Secret) {
           const blobServiceClient = getBlobServiceClient();
           const containerClient = blobServiceClient.getContainerClient(containerName);
 

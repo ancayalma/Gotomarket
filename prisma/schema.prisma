@@ -1164,8 +1164,11 @@ model Plan {
 
 enum SubscriptionPlan {
   FREE
-  TEAM
+  TESTING
+  INDIVIDUAL_BASIC
+  INDIVIDUAL_PRO
   ENTERPRISE
+  EXEMPT
 }
 
 enum TeamStatus {
@@ -1175,10 +1178,7 @@ enum TeamStatus {
 }
 
 enum Language {
-  cz
   en
-  de
-  uk
 }
 
 model system_Modules_Enabled {

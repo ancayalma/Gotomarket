@@ -1,13 +1,25 @@
 export const SUBSCRIPTION_PLANS = {
     FREE: {
-        name: "Testing Plan",
+        name: "Free",
         slug: "FREE",
-        price: 2, // From screenshot
+        price: 0,
+        features: ["crm"], // Adjust as needed
+        limits: {
+            max_users: 1,
+            max_storage: 50, // MB
+            credits: 0,
+            leadgen_credits: 0,
+        }
+    },
+    TESTING: {
+        name: "Testing Plan",
+        slug: "TESTING",
+        price: 2,
         features: ["crm", "projects", "documents", "invoices"],
         limits: {
             max_users: 1,
             max_storage: 500, // MB
-            credits: 50, // General monthly credits
+            credits: 50,
             leadgen_credits: 100,
         }
     },
@@ -36,8 +48,20 @@ export const SUBSCRIPTION_PLANS = {
         }
     },
     ENTERPRISE: {
-        name: "Platform Exempt",
+        name: "Enterprise",
         slug: "ENTERPRISE",
+        price: 0, // Contact us
+        features: ["all"],
+        limits: {
+            max_users: -1,
+            max_storage: -1,
+            credits: -1,
+            leadgen_credits: -1,
+        }
+    },
+    EXEMPT: {
+        name: "Platform Exempt",
+        slug: "EXEMPT",
         price: 0,
         features: ["all"],
         limits: {

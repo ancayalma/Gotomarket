@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     let avatarUrl = avatar;
     if (avatar && avatar.startsWith("data:image")) {
       try {
-        const { getBlobServiceClient } = await import("@/lib/azure-storage");
+        const { getBlobServiceClient } = await import("@/lib/s3-storage");
         const container = process.env.BLOB_STORAGE_CONTAINER;
         if (container) {
           const serviceClient = getBlobServiceClient();

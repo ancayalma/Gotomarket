@@ -33,13 +33,13 @@ export async function getEffectiveRoleModules(teamId: string, role: string, scop
 
         if (role === 'SUPER_ADMIN' || role === 'PLATFORM_ADMIN' || role === 'PLATFORM ADMIN') return ['*'];
 
-        const config = ROLE_CONFIGS[role as Exclude<TeamRole, 'SUPER_ADMIN'>];
+        const config = ROLE_CONFIGS[role as Exclude<TeamRole, 'SUPER_ADMIN' | 'PLATFORM_ADMIN'>];
         return config ? config.defaultModules : [];
 
     } catch (error) {
         console.error("Failed to fetch effective permissions:", error);
         if (role === 'SUPER_ADMIN' || role === 'PLATFORM_ADMIN' || role === 'PLATFORM ADMIN') return ['*'];
-        const config = ROLE_CONFIGS[role as Exclude<TeamRole, 'SUPER_ADMIN'>];
+        const config = ROLE_CONFIGS[role as Exclude<TeamRole, 'SUPER_ADMIN' | 'PLATFORM_ADMIN'>];
         return config ? config.defaultModules : [];
     }
 }

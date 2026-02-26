@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
 
             try {
                 // Dynamically import to ensure dependency availability
-                const { getBlobServiceClient } = await import("@/lib/azure-storage");
+                const { getBlobServiceClient } = await import("@/lib/s3-storage");
                 const serviceClient = getBlobServiceClient();
                 const containerName = process.env.BLOB_STORAGE_CONTAINER || "crm-uploads";
                 const containerClient = serviceClient.getContainerClient(containerName);
