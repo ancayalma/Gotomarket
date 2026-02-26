@@ -4935,3 +4935,5 @@ Value 'EXEMPT' not found in enum 'SubscriptionPlan'
 }
  GET /dashboard 500 in 7.3s (compile: 8ms, render: 7.3s)
 ✓ Finished filesystem cache database compaction in 13.8s
+○ Compiling /api/v1/agent/purchase/[sku] ...
+[AgentAPI] Purchase request for SKU: :sku
