@@ -45,3 +45,4 @@ backup
 *.tsbuildinfo
 next-env.d.ts
 lib/prisma-client/
+next_output.log
