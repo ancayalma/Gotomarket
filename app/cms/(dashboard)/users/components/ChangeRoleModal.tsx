@@ -4,6 +4,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { useSession } from "next-auth/react";
 import {
     Dialog,
     DialogContent,
@@ -31,7 +32,13 @@ interface ChangeRoleModalProps {
     currentRole: string;
 }
 
-const roles = [
+const allRoles = [
+    {
+        value: "PLATFORM_ADMIN",
+        label: "Platform Admin",
+        description: "God Mode: Complete global access to the platform.",
+        icon: Shield,
+    },
     {
         value: "ADMIN",
         label: "Admin",
@@ -62,6 +69,10 @@ export const ChangeRoleModal: React.FC<ChangeRoleModalProps> = ({
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [selectedRole, setSelectedRole] = useState(currentRole);
+    const { data: session } = useSession();
+
+    const isPlatformAdmin = (session?.user as any)?.team_role === "PLATFORM_ADMIN" || (session?.user as any)?.role === "PLATFORM_ADMIN";
+    const availableRoles = allRoles.filter(r => isPlatformAdmin || r.value !== "PLATFORM_ADMIN");
 
     const onConfirm = async () => {
         try {
@@ -102,7 +113,7 @@ export const ChangeRoleModal: React.FC<ChangeRoleModalProps> = ({
                                 <SelectValue placeholder="Select a role" />
                             </SelectTrigger>
                             <SelectContent>
-                                {roles.map((role) => (
+                                {availableRoles.map((role) => (
                                     <SelectItem key={role.value} value={role.value}>
                                         <div className="flex items-center gap-2">
                                             <role.icon className="w-4 h-4 text-muted-foreground" />
@@ -116,7 +127,7 @@ export const ChangeRoleModal: React.FC<ChangeRoleModalProps> = ({
 
                     {/* Role Description Helper */}
                     <div className="pl-[25%] text-sm text-muted-foreground">
-                        {roles.find(r => r.value === selectedRole)?.description}
+                        {availableRoles.find(r => r.value === selectedRole)?.description}
                     </div>
 
                 </div>

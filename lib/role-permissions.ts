@@ -10,9 +10,10 @@ export interface CrmModule {
 
 // All available CRM modules with Detailed Drill-Down
 
-export type TeamRole = "SUPER_ADMIN" | "ADMIN" | "MEMBER" | "VIEWER";
+export type TeamRole = "PLATFORM_ADMIN" | "SUPER_ADMIN" | "ADMIN" | "MEMBER" | "VIEWER";
 
 export const ALL_ROLES: { label: string; value: TeamRole }[] = [
+    { label: "Platform Admin", value: "PLATFORM_ADMIN" },
     { label: "Super Admin", value: "SUPER_ADMIN" },
     { label: "Admin", value: "ADMIN" },
     { label: "Member", value: "MEMBER" },
@@ -575,7 +576,7 @@ export const CRM_MODULES: CrmModule[] = [
     }
 ];
 
-export const ROLE_CONFIGS: Record<Exclude<TeamRole, 'SUPER_ADMIN'>, { label: string; description: string; defaultModules: string[] }> = {
+export const ROLE_CONFIGS: Record<Exclude<TeamRole, 'SUPER_ADMIN' | 'PLATFORM_ADMIN'>, { label: string; description: string; defaultModules: string[] }> = {
     ADMIN: {
         label: "Admin",
         description: "Full access to department resources",
@@ -607,6 +608,7 @@ export const ROLE_CONFIGS: Record<Exclude<TeamRole, 'SUPER_ADMIN'>, { label: str
 
 // Role Hierarchy Levels (Higher # = More Privilege)
 export const ROLE_HIERARCHY: Record<TeamRole, number> = {
+    PLATFORM_ADMIN: 1000,
     SUPER_ADMIN: 100,
     ADMIN: 50,
     MEMBER: 10,
@@ -615,6 +617,7 @@ export const ROLE_HIERARCHY: Record<TeamRole, number> = {
 
 // Matrix defining which roles can create which other roles
 export const ROLE_CREATION_MATRIX: Record<TeamRole, TeamRole[]> = {
+    PLATFORM_ADMIN: ['PLATFORM_ADMIN', 'SUPER_ADMIN', 'ADMIN', 'MEMBER', 'VIEWER'],
     SUPER_ADMIN: ['ADMIN', 'MEMBER', 'VIEWER'],
     ADMIN: ['MEMBER', 'VIEWER'],
     MEMBER: [],

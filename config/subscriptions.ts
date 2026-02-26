@@ -34,6 +34,18 @@ export const SUBSCRIPTION_PLANS = {
             credits: 10000,
             leadgen_credits: 5000,
         }
+    },
+    ENTERPRISE: {
+        name: "Platform Exempt",
+        slug: "ENTERPRISE",
+        price: 0,
+        features: ["all"],
+        limits: {
+            max_users: -1,
+            max_storage: -1,
+            credits: -1,
+            leadgen_credits: -1,
+        }
     }
 };
 

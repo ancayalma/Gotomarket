@@ -24,6 +24,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "engram1.blob.core.windows.net",
       },
+      {
+        protocol: "https",
+        hostname: "basaltcrm.s3.us-west-or.io.cloud.ovh.us",
+      },
     ],
   },
   env: {

@@ -12,7 +12,7 @@ export async function PATCH(
     try {
         const session = await getServerSession(authOptions);
 
-        if (!session) {
+        if (!session?.user?.email) {
             return new NextResponse("Unauthenticated", { status: 401 });
         }
 
@@ -23,18 +23,41 @@ export async function PATCH(
             return new NextResponse("Role is required", { status: 400 });
         }
 
+        const caller = await prismadb.users.findFirst({
+            where: { email: session.user.email }
+        });
+
+        if (!caller) {
+            return new NextResponse("Unauthenticated", { status: 401 });
+        }
+
+        // Only PLATFORM_ADMIN can assign PLATFORM_ADMIN role
+        if (team_role === "PLATFORM_ADMIN" && caller.team_role !== "PLATFORM_ADMIN") {
+            return new NextResponse("Unauthorized to assign PLATFORM_ADMIN", { status: 403 });
+        }
+
+        // Also prevent non-admins from changing roles
+        if (caller.team_role !== "PLATFORM_ADMIN" && caller.team_role !== "SUPER_ADMIN" && caller.team_role !== "ADMIN") {
+            return new NextResponse("Unauthorized", { status: 403 });
+        }
+
         // Validate role enum if necessary, but Prisma will catch invalid values if strictly typed
         // Allowed: "ADMIN" | "MEMBER" | "VIEWER"
+
+        const updateData: any = {
+            team_role,
+        };
+
+        if (team_role === "PLATFORM_ADMIN") {
+            updateData.is_admin = true;
+            updateData.is_account_admin = true;
+        }
 
         const user = await prismadb.users.update({
             where: {
                 id: params.userId,
             },
-            data: {
-                team_role,
-                // Ensure we don't accidentally set is_admin here unless explicitly desired. 
-                // We leave is_admin alone as it is likely for Super Admins.
-            },
+            data: updateData,
         });
 
         await logActivity(

@@ -83,12 +83,16 @@ export async function assignToDepartment(data: AssignToDepartmentInput): Promise
         }
 
         // Build update data
-        const updateData: { department_id?: string | null; team_role?: string } = {
+        const updateData: { department_id?: string | null; team_role?: string; is_admin?: boolean; is_account_admin?: boolean } = {
             department_id: data.departmentId,
         };
 
         if (data.role) {
             updateData.team_role = data.role;
+            if (data.role === "PLATFORM_ADMIN") {
+                updateData.is_admin = true;
+                updateData.is_account_admin = true;
+            }
         }
 
         // Update the user

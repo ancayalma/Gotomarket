@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { assignToDepartment, AssignToDepartmentInput } from "@/actions/departments/assign-to-department";
+import { useSession } from "next-auth/react";
 import { Loader2, Building2 } from "lucide-react";
 
 import {
@@ -53,6 +54,9 @@ export default function AssignDepartmentModal({
     const [selectedDeptId, setSelectedDeptId] = useState<string>(currentDepartmentId || "none");
     const [selectedRole, setSelectedRole] = useState<TeamRole>(currentRole || "MEMBER");
     const [isLoading, setIsLoading] = useState(false);
+    const { data: session } = useSession();
+
+    const isPlatformAdmin = (session?.user as any)?.team_role === "PLATFORM_ADMIN" || (session?.user as any)?.role === "PLATFORM_ADMIN";
 
     async function handleAssign() {
         setIsLoading(true);
@@ -132,9 +136,14 @@ export default function AssignDepartmentModal({
                             <SelectContent>
                                 {ALL_ROLES
                                     .filter(role => {
+                                        // Hide PLATFORM_ADMIN from anyone who isn't already a PLATFORM_ADMIN
+                                        if (role.value === 'PLATFORM_ADMIN' && !isPlatformAdmin) {
+                                            return false;
+                                        }
+
                                         // If Department is selected, typically exclude SUPER_ADMIN unless your logic allows Dept Super Admins
                                         // Assuming Depts only have ADMIN, MEMBER, VIEWER
-                                        if (selectedDeptId !== "none" && role.value === 'SUPER_ADMIN') {
+                                        if (selectedDeptId !== "none" && (role.value === 'SUPER_ADMIN' || role.value === 'PLATFORM_ADMIN')) {
                                             return false;
                                         }
                                         return true;

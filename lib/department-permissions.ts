@@ -298,7 +298,7 @@ export function hasMinimumRole(user: UserContext, minimumRole: TeamRole): boolea
  */
 export function normalizeRole(role: string | null): TeamRole {
     if (role === 'OWNER') return 'SUPER_ADMIN';
-    if (role && ['SUPER_ADMIN', 'ADMIN', 'MEMBER', 'VIEWER'].includes(role)) {
+    if (role && ['PLATFORM_ADMIN', 'SUPER_ADMIN', 'ADMIN', 'MEMBER', 'VIEWER'].includes(role)) {
         return role as TeamRole;
     }
     return 'MEMBER'; // Default

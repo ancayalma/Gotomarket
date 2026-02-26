@@ -1,0 +1,101 @@
+
+> basaltcrm-app@1.2.1p dev
+> cross-env NODE_OPTIONS=--no-deprecation next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.43:3000
+- Environments: .env
+
+✓ Starting...
+✓ Ready in 1784ms
+[GET /api/projects] Request started
+[GET /api/projects] No session
+ HEAD /api/projects 401 in 130ms (compile: 117ms, render: 13ms)
+○ Compiling /dashboard ...
+(node:74031) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ POST /api/analytics/track 200 in 364ms (compile: 22ms, render: 342ms)
+ POST /dashboard 200 in 533ms (compile: 13ms, render: 520ms)
+ POST /dashboard 200 in 335ms (compile: 4ms, render: 331ms)
+[GET /api/projects] Request started
+[GET /api/projects] Team Info: {
+  teamId: '6934998c7038863976a7a5fd',
+  isGlobalAdmin: false,
+  isPlatformAdmin: true,
+  isImpersonating: false,
+  teamRole: 'PLATFORM_ADMIN',
+  isAdmin: true,
+  userId: '693287a880deffaa87ba2d44'
+}
+[GET /api/projects] orConditions: [{"user":"693287a880deffaa87ba2d44"},{"sharedWith":{"has":"693287a880deffaa87ba2d44"}},{"team_id":"6934998c7038863976a7a5fd","visibility":"public"}]
+ POST /dashboard 200 in 276ms (compile: 3ms, render: 273ms)
+ GET /api/team/members 200 in 457ms (compile: 21ms, render: 435ms)
+ GET /dashboard 200 in 7.3s (compile: 3.3s, render: 3.9s)
+ POST /dashboard 200 in 261ms (compile: 1807µs, render: 259ms)
+ GET /api/projects 200 in 1406ms (compile: 1774µs, render: 1405ms)
+ GET /partners 200 in 1964ms (compile: 1265ms, render: 699ms)
+ POST /api/analytics/track 200 in 186ms (compile: 4ms, render: 182ms)
+ POST /partners 200 in 289ms (compile: 19ms, render: 270ms)
+ POST /api/analytics/track 200 in 203ms (compile: 10ms, render: 193ms)
+ GET /admin 200 in 3.7s (compile: 1722ms, render: 1938ms)
+ POST /admin 200 in 456ms (compile: 9ms, render: 447ms)
+ POST /admin 200 in 262ms (compile: 2ms, render: 260ms)
+ GET /admin 200 in 2.2s (compile: 255ms, render: 1920ms)
+[DEBUG CRM LAYOUT] {
+  userId: '693287a880deffaa87ba2d44',
+  teamRole: 'PLATFORM_ADMIN',
+  isSuperAdmin: true,
+  allowedModulesLength: 1,
+  modules: [ '*' ]
+}
+ POST /api/analytics/track 200 in 192ms (compile: 5ms, render: 187ms)
+ POST /crm/opportunities 200 in 290ms (compile: 3ms, render: 287ms)
+ POST /crm/opportunities 200 in 254ms (compile: 4ms, render: 250ms)
+ GET /crm/opportunities 200 in 3.1s (compile: 235ms, render: 2.8s)
+ GET /api/crm/leads 200 in 546ms (compile: 226ms, render: 320ms)
+ GET /api/crm/leads 200 in 549ms (compile: 229ms, render: 320ms)
+ POST /api/analytics/track 200 in 188ms (compile: 3ms, render: 185ms)
+ GET /projects 200 in 2.3s (compile: 626ms, render: 1718ms)
+ POST /projects 200 in 272ms (compile: 7ms, render: 265ms)
+ POST /projects 200 in 359ms (compile: 18ms, render: 340ms)
+ POST /projects 200 in 291ms (compile: 7ms, render: 285ms)
+ POST /projects 200 in 282ms (compile: 12ms, render: 270ms)
+ POST /projects 200 in 273ms (compile: 7ms, render: 266ms)
+ POST /projects 200 in 308ms (compile: 7ms, render: 302ms)
+ POST /projects 200 in 280ms (compile: 7ms, render: 273ms)
+ POST /projects 200 in 291ms (compile: 17ms, render: 274ms)
+ POST /projects 200 in 261ms (compile: 3ms, render: 258ms)
+ GET /partners 200 in 761ms (compile: 10ms, render: 751ms)
+ POST /api/analytics/track 200 in 228ms (compile: 4ms, render: 224ms)
+ POST /partners 200 in 279ms (compile: 5ms, render: 273ms)
+ POST /partners 200 in 293ms (compile: 4ms, render: 290ms)
+ POST /partners 200 in 275ms (compile: 8ms, render: 267ms)
+ POST /partners 200 in 291ms (compile: 8ms, render: 282ms)
+ POST /partners 200 in 281ms (compile: 7ms, render: 274ms)
+ POST /partners 200 in 278ms (compile: 7ms, render: 271ms)
+ POST /partners 200 in 256ms (compile: 6ms, render: 250ms)
+ POST /partners 200 in 269ms (compile: 4ms, render: 265ms)
+ POST /partners 200 in 272ms (compile: 8ms, render: 264ms)
+ POST /partners 200 in 271ms (compile: 6ms, render: 265ms)
+ POST /partners 200 in 269ms (compile: 4ms, render: 265ms)
+ POST /partners 200 in 270ms (compile: 6ms, render: 264ms)
+ POST /partners 200 in 277ms (compile: 3ms, render: 274ms)
+ POST /partners 200 in 277ms (compile: 8ms, render: 269ms)
+ POST /partners 200 in 352ms (compile: 30ms, render: 321ms)
+ POST /partners 200 in 303ms (compile: 20ms, render: 283ms)
+ POST /partners 200 in 292ms (compile: 17ms, render: 275ms)
+ POST /partners 200 in 277ms (compile: 7ms, render: 270ms)
+ POST /partners 200 in 289ms (compile: 10ms, render: 279ms)
+ POST /partners 200 in 269ms (compile: 6ms, render: 264ms)
+ POST /partners 200 in 298ms (compile: 22ms, render: 276ms)
+ POST /partners 200 in 284ms (compile: 8ms, render: 276ms)
+ POST /partners 200 in 300ms (compile: 20ms, render: 280ms)
+ POST /partners 200 in 300ms (compile: 17ms, render: 282ms)
+ POST /partners 200 in 338ms (compile: 17ms, render: 320ms)
+ POST /partners 200 in 321ms (compile: 23ms, render: 298ms)
+ POST /partners 200 in 346ms (compile: 28ms, render: 318ms)
+ POST /partners 200 in 302ms (compile: 20ms, render: 282ms)
+ POST /partners 200 in 298ms (compile: 22ms, render: 275ms)
+ POST /partners 200 in 296ms (compile: 18ms, render: 277ms)
+ POST /partners 200 in 465ms (compile: 26ms, render: 438ms)
