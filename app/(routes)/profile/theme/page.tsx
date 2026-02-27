@@ -20,6 +20,9 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeCard } from "./_components/ThemeCard";
 import { ThemeEditor, type CustomTheme } from "./_components/ThemeEditor";
 import { THEME_PRESETS, type ThemePreset } from "@/app/providers/ThemeProvider";
+import { checkTeamFeature } from "@/lib/subscription";
+import { Shield, Lock } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 // Theme metadata with colors for the card dots
 const THEME_METADATA: Record<
@@ -87,6 +90,9 @@ export default function ThemeStudioPage() {
     const [initialReducedMotion, setInitialReducedMotion] = useState(false);
     const [initialHighContrast, setInitialHighContrast] = useState(false);
 
+    const { data: session } = useSession();
+    const [hasAccess, setHasAccess] = useState(true);
+
     // 1. Mount Initialization
     useEffect(() => {
         setMounted(true);
@@ -106,6 +112,24 @@ export default function ThemeStudioPage() {
             setCustomThemes(JSON.parse(saved));
         }
     }, []);
+
+    // Feature flagging access check
+    useEffect(() => {
+        const checkAccess = () => {
+            const user = session?.user as any;
+            if (user?.assigned_team) {
+                const access = checkTeamFeature(user.assigned_team, "custom_themes");
+                setHasAccess(access);
+
+                // Force Midnight Protocol if no access
+                if (!access && theme !== "midnight-protocol") {
+                    setTheme("midnight-protocol");
+                }
+            }
+        };
+
+        if (session) checkAccess();
+    }, [session, theme, setTheme]);
 
     // 2. Theme Capture (Runs when theme is first resolved)
     useEffect(() => {
@@ -245,7 +269,37 @@ export default function ThemeStudioPage() {
     const currentCustom = customThemes.find((t) => t.id === currentTheme);
 
     return (
-        <div className="flex flex-col min-h-full">
+        <div className="flex flex-col min-h-full relative overflow-hidden">
+            {!hasAccess && (
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-md p-10 text-center">
+                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-8 rotate-12 group-hover:rotate-0 transition-transform border border-primary/20">
+                        <Lock className="w-10 h-10 text-primary" />
+                    </div>
+                    <h1 className="text-4xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase mb-4">
+                        Visual Studio Restricted
+                    </h1>
+                    <p className="text-muted-foreground max-w-lg mb-10 text-lg">
+                        Custom themes and the Visual Studio are exclusive to <strong>Individual Basic</strong> and <strong>Pro</strong> members.
+                        FREE users are locked to the <span className="text-primary font-bold">Midnight Protocol</span> interface.
+                    </p>
+                    <div className="flex gap-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => router.push("/profile")}
+                            className="px-8 py-6 h-auto text-lg font-bold uppercase italic border-primary/20"
+                        >
+                            Go Back
+                        </Button>
+                        <Button
+                            onClick={() => router.push("/pricing")}
+                            className="px-8 py-6 h-auto text-lg font-bold uppercase italic shadow-2xl shadow-primary/30 hover:scale-105 transition-all bg-primary"
+                        >
+                            Upgrade Now
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="px-6 py-6 md:px-8 lg:px-10">
                 <div className="flex items-center gap-3 mb-1">

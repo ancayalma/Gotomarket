@@ -12,6 +12,7 @@ type DBPlan = {
 type TeamWithPlan = {
     subscription_plan?: string | null; // Old Enum
     assigned_plan?: DBPlan | null;      // New Relation
+    module_overrides?: string[];
 }
 
 export const getSubscriptionPlan = (slug?: string) => {
@@ -42,9 +43,14 @@ export const checkTeamLimit = (
         if (metric === 'max_users') limit = team.assigned_plan.max_users;
         if (metric === 'max_storage') limit = team.assigned_plan.max_storage;
         if (metric === 'credits') limit = team.assigned_plan.max_credits;
-        if (metric === 'leadgen_credits' as any) {
-            // This maps to the plan's default; current usage/balance is in TeamAiConfig
-            // But we can still return the total allowed if needed
+
+        // Handle extended metrics if they exist on the DB model, 
+        // fallback to config defaults if not in DB yet
+        if (metric === 'leadgen_credits') {
+            limit = (team.assigned_plan as any).leadgen_credits ?? getSubscriptionPlan(team.assigned_plan.slug).limits.leadgen_credits;
+        }
+        if (metric === 'emails_per_month') {
+            limit = (team.assigned_plan as any).emails_per_month ?? getSubscriptionPlan(team.assigned_plan.slug).limits.emails_per_month;
         }
 
         if (limit === -1) return true;
@@ -68,6 +74,10 @@ export const checkTeamFeature = (
     team: TeamWithPlan,
     featureName: string
 ) => {
+    // 0. Check Override (Highest Priority)
+    if (team.module_overrides?.includes("all")) return true;
+    if (team.module_overrides?.includes(featureName)) return true;
+
     // 1. Check DB Plan
     if (team.assigned_plan) {
         if (team.assigned_plan.features.includes("all")) return true;

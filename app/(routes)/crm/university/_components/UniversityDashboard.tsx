@@ -156,11 +156,22 @@ const UNIVERSITY_TABS = [
     },
 ];
 
-export default function UniversityDashboard() {
+interface UniversityDashboardProps {
+    plan?: string;
+}
+
+export default function UniversityDashboard({ plan }: UniversityDashboardProps) {
     const [activeTab, setActiveTab] = useState<TabId>("getting-started");
     const [activeStage, setActiveStage] = useState<string | undefined>(undefined);
 
-    const currentTab = useMemo(() => UNIVERSITY_TABS.find(t => t.id === activeTab), [activeTab]);
+    const availableTabs = useMemo(() => {
+        if (plan === "FREE") {
+            return UNIVERSITY_TABS.filter(t => !["performance", "certification", "prompt-lab"].includes(t.id));
+        }
+        return UNIVERSITY_TABS;
+    }, [plan]);
+
+    const currentTab = useMemo(() => availableTabs.find(t => t.id === activeTab) || availableTabs[0], [activeTab, availableTabs]);
 
     return (
         <div className="space-y-6 pb-10">
@@ -183,9 +194,12 @@ export default function UniversityDashboard() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
-                className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 md:gap-3 mb-6 bg-transparent"
+                className={cn(
+                    "grid gap-2 md:gap-3 mb-6 bg-transparent",
+                    availableTabs.length <= 4 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-4 lg:grid-cols-8"
+                )}
             >
-                {UNIVERSITY_TABS.map((tab, index: number) => (
+                {availableTabs.map((tab, index: number) => (
                     <TabNavigationCard
                         key={tab.id}
                         id={tab.id}
@@ -221,7 +235,7 @@ export default function UniversityDashboard() {
                             overviewWhy="CRM platforms can be overwhelming. Starting here ensures you understand the high-level relationship between accounts, leads, and sales automation before you start clicking."
                             overviewHow="Follow the 'Critical Path' guide below. Complete each milestone to earn your first platform badge and unlock more advanced outreach tools."
                         />
-                        <GettingStarted />
+                        <GettingStarted plan={plan} />
                     </motion.div>
                 )}
 
@@ -255,17 +269,19 @@ export default function UniversityDashboard() {
                         </FlowDiagramCard>
 
                         {/* Stats Charts */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                        >
-                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                <BarChart3 className="w-5 h-5 text-muted-foreground" />
-                                Pipeline Analytics (Sample Data)
-                            </h3>
-                            <FlowStatsCharts />
-                        </motion.div>
+                        {plan !== "FREE" && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5 text-muted-foreground" />
+                                    Pipeline Analytics (Sample Data)
+                                </h3>
+                                <FlowStatsCharts />
+                            </motion.div>
+                        )}
 
                         {/* Auto-Conversion Flow */}
                         <FlowDiagramCard

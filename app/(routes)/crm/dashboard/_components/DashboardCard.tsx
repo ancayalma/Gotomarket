@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Shield } from "lucide-react";
 import React from "react";
 
 export type CardVariant = "default" | "success" | "info" | "violet" | "warning";
@@ -12,6 +12,7 @@ interface DashboardCardProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     count?: number | string;
     description?: string;
     variant?: CardVariant;
+    isLocked?: boolean;
     primaryColor?: string;
     iconClassName?: string;
     hideIcon?: boolean;
@@ -29,19 +30,21 @@ const variantIconStyles: Record<CardVariant, string> = {
 };
 
 const DashboardCard = React.forwardRef<HTMLButtonElement, DashboardCardProps>(
-    ({ className, icon: Icon, label, count, description, variant = "default", iconClassName, primaryColor, hideIcon = false, centered = false, labelClassName, descriptionClassName, ...props }, ref) => {
+    ({ className, icon: Icon, label, count, description, variant = "default", isLocked = false, iconClassName, primaryColor, hideIcon = false, centered = false, labelClassName, descriptionClassName, ...props }, ref) => {
         return (
             <button
                 ref={ref}
+                disabled={isLocked && !props.onClick}
                 className={cn(
                     "relative group w-full p-3 overflow-hidden transition-all duration-300",
-                    "bg-[#09090b] border border-[#27272a] hover:border-primary/50 rounded-2xl", // Reduced radius
-                    "h-[110px]", // More compact height
+                    "bg-[#09090b] border border-[#27272a] hover:border-primary/50 rounded-2xl",
+                    "h-[110px]",
+                    isLocked && "opacity-80 grayscale-[0.5] hover:grayscale-0",
                     className
                 )}
                 {...props}
             >
-                {/* Giant Watermark Icon (Colorful) - Positioned Right */}
+                {/* Giant Watermark Icon */}
                 <Icon
                     className={cn(
                         "absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-colors duration-500 pointer-events-none",
@@ -52,6 +55,10 @@ const DashboardCard = React.forwardRef<HTMLButtonElement, DashboardCardProps>(
                         variant === "warning" && "text-amber-500/10 group-hover:text-amber-500/20"
                     )}
                 />
+
+                {isLocked && (
+                    <Shield className="absolute top-2 right-2 w-3.5 h-3.5 text-primary opacity-60 group-hover:opacity-100 transition-opacity" />
+                )}
 
                 <div className={cn("relative z-10 w-full h-full flex flex-col justify-center", (hideIcon || centered) ? "items-center text-center gap-1" : "items-start pl-1")}>
                     {(hideIcon || centered) ? (

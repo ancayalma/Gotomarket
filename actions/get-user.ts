@@ -8,7 +8,14 @@ export const getUser = async () => {
     where: {
       id: session?.user?.id,
     },
+    include: {
+      assigned_team: {
+        include: {
+          assigned_plan: true
+        }
+      }
+    }
   });
   if (!data) throw new Error("User not found");
-  return data;
+  return data as any;
 };

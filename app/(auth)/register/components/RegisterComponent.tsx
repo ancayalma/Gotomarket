@@ -5,8 +5,12 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import React from "react";
-import { FingerprintIcon, User } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { Plus, Check, Shield, Zap, Target, Users as UsersIcon, HardDrive, CreditCard, ChevronRight, Sparkles, Calendar, Info, Wallet, FingerprintIcon, User, Upload } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -37,14 +41,30 @@ import { Icons } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { PaymentModal } from "@/app/(routes)/invoice/detail/[invoiceId]/_components/PaymentModal";
 
-export function RegisterComponent({ availablePlans }: { availablePlans: any[] }) {
+interface RegisterComponentProps {
+  availablePlans: any[];
+  initialPlanSlug?: string;
+  initialCycle?: string;
+}
+
+export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycle }: RegisterComponentProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  //Local states
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
-  const [show, setShow] = React.useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [show, setShow] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [activeInvoiceId, setActiveInvoiceId] = useState<string | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState<string>("");
+
+  // New Billing States
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">((initialCycle as any) || "monthly");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
+  const [wallet, setWallet] = useState("");
 
   const formSchema = z.object({
     companyName: z.string().min(2, "Company name is required").max(50),
@@ -75,23 +95,49 @@ export function RegisterComponent({ availablePlans }: { availablePlans: any[] })
     },
   });
 
+  React.useEffect(() => {
+    if (initialPlanSlug) {
+      const plan = availablePlans.find(p => p.slug.toLowerCase() === initialPlanSlug.toLowerCase());
+      if (plan) {
+        form.setValue("planId", plan.id);
+      } else if (initialPlanSlug.toLowerCase() === "enterprise") {
+        form.setValue("planId", "enterprise-contact");
+      }
+    }
+  }, [initialPlanSlug, availablePlans, form]);
+
   const onSubmit = async (data: BillboardFormValues) => {
     setIsLoading(true);
     try {
-      const response = await axios.post("/api/user", data);
-      toast({
-        title: "Success",
-        description: "User created successfully, please login.",
+      const response = await axios.post("/api/user", {
+        ...data,
+        billingCycle,
+        paymentMethod,
+        wallet: wallet.startsWith("0x") ? wallet : undefined
       });
 
-      if (response.status === 200) {
-        router.push("/");
+      if (response.data.requiresPayment && response.data.paymentUrl) {
+        setPaymentUrl(response.data.paymentUrl);
+        setActiveInvoiceId(response.data.invoiceId);
+        setPaymentAmount(response.data.amount);
+        setPaymentModalOpen(true);
+
+        toast({
+          title: "Account Created (Pending Payment)",
+          description: "Please complete the secure checkout to activate your team.",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "User created successfully, please login.",
+        });
+        router.push("/sign-in");
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error?.response?.data,
+        description: error?.response?.data || "Something went wrong.",
       });
     } finally {
       setIsLoading(false);
@@ -112,6 +158,7 @@ export function RegisterComponent({ availablePlans }: { availablePlans: any[] })
       <CardContent className="grid gap-4 overflow-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} suppressHydrationWarning={true}>
+            {/* Avatar Section */}
             <div className="flex flex-col items-center justify-center space-y-4 py-4">
               <FormField
                 control={form.control}
@@ -121,43 +168,52 @@ export function RegisterComponent({ availablePlans }: { availablePlans: any[] })
                     <FormLabel className="mb-2">Profile Photo</FormLabel>
                     <FormControl>
                       <div className="flex flex-col items-center space-y-4">
-                        <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                        <div
+                          className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-dashed border-primary/30 flex items-center justify-center bg-muted/20 group hover:border-primary/60 transition-all cursor-pointer shadow-sm hover:shadow-md"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
                           {field.value ? (
-                            <img
-                              src={field.value}
-                              alt="Avatar Preview"
-                              className="h-full w-full object-cover"
-                            />
+                            <>
+                              <img src={field.value} alt="Avatar Preview" className="h-full w-full object-cover transition-transform group-hover:scale-110" />
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <Upload className="h-6 w-6 text-white" />
+                              </div>
+                            </>
                           ) : (
-                            <User className="h-12 w-12 text-gray-300" />
+                            <div className="flex flex-col items-center">
+                              <User className="h-10 w-10 text-muted-foreground group-hover:text-primary transition-colors" />
+                              <span className="text-[10px] text-muted-foreground mt-1 uppercase font-medium">Upload</span>
+                            </div>
                           )}
                         </div>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="max-w-[200px]"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                field.onChange(reader.result as string);
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
+                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => field.onChange(reader.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }} />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-9 px-4 rounded-full"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload className="h-3.5 w-3.5 mr-2" />
+                          {field.value ? "Change Avatar" : "Choose Profile Photo"}
+                        </Button>
                       </div>
                     </FormControl>
-                    <FormDescription className="text-xs text-center">
-                      Maximum size 2MB. Auto-fits to square.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <div className="grid gap-2">
+
+            {/* Form Fields */}
+            <div className="grid gap-4">
               <FormField
                 control={form.control}
                 name="companyName"
@@ -165,195 +221,295 @@ export function RegisterComponent({ availablePlans }: { availablePlans: any[] })
                   <FormItem>
                     <FormLabel>Company / Team Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input
-                        disabled={isLoading}
-                        placeholder="Acme Inc."
-                        {...field}
-                      />
+                      <Input disabled={isLoading} placeholder="Acme Inc." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="planId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subscription Plan <span className="text-red-500">*</span></FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
+
+              <div className="flex flex-col space-y-6">
+                {/* Billing Cycle Toggle */}
+                <div className="flex flex-col space-y-3">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Billing Strategic Cycle</Label>
+                  <div className="flex bg-zinc-900/50 p-1.5 rounded-xl border border-white/5 relative">
+                    <button
+                      type="button"
+                      onClick={() => { setBillingCycle("monthly"); setPaymentMethod("card"); }}
+                      className={cn(
+                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-all",
+                        billingCycle === "monthly" ? "bg-zinc-800 text-white shadow-lg border border-white/10" : "text-zinc-500 hover:text-zinc-300"
+                      )}
                     >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a plan" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availablePlans.map((plan) => (
-                          <SelectItem key={plan.id} value={plan.id}>
-                            {plan.name} - {plan.price === 0 ? "Free" : `${plan.price} ${plan.currency}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input
-                        disabled={isLoading}
-                        placeholder="John Doe"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input
-                        disabled={isLoading}
-                        placeholder="jdoe"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-mail <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input
-                        disabled={isLoading}
-                        placeholder="name@domain.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="language"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Choose your language <span className="text-red-500">*</span></FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      Monthly
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBillingCycle("annual")}
+                      className={cn(
+                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-all relative overflow-hidden",
+                        billingCycle === "annual" ? "bg-zinc-800 text-white shadow-lg border border-white/10" : "text-zinc-500 hover:text-zinc-300"
+                      )}
                     >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a language" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="flex overflow-y-auto h-56">
-                        {["en"].map(
-                          (lng: string, index: number) => (
-                            <SelectItem key={index} value={lng}>
-                              {languageLabels[lng] || lng}
+                      Annual Account
+                      <span className={cn("ml-2 text-[9px] px-1.5 py-0.5 rounded-full",
+                        (paymentMethod === 'crypto' && wallet.length === 42) ? "bg-emerald-500/20 text-emerald-400" : "bg-primary/20 text-primary")}>
+                        {(paymentMethod === 'crypto' && wallet.length === 42) ? '-25%' : '-20%'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="planId"
+                  render={({ field }) => {
+                    const selectedPlan = availablePlans.find(p => p.id === field.value);
+                    const isFree = selectedPlan?.price === 0 || selectedPlan?.slug === "FREE";
+                    return (
+                      <FormItem>
+                        <FormLabel>Selected Tier <span className="text-red-500">*</span></FormLabel>
+                        <Select disabled={isLoading} onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-12 bg-zinc-900/50 border-white/10 hover:border-primary/50 transition-all font-bold italic">
+                              <SelectValue placeholder="Identify your strategy" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-zinc-950 border-zinc-800">
+                            {availablePlans
+                              .filter(plan => !["TESTING", "EXEMPT"].includes(plan.slug))
+                              .map((plan) => (
+                                <SelectItem key={plan.id} value={plan.id}>
+                                  <div className="flex flex-col py-1">
+                                    <span className="font-bold">{plan.name}</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                                      {plan.price === 0 ? "FREE FOREVER" : `${plan.currency || "$"} ${plan.price} / MONTH`}
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            <SelectItem value="enterprise-contact">
+                              <div className="flex flex-col py-1">
+                                <span className="font-bold">Enterprise</span>
+                                <span className="text-[10px] text-amber-500 uppercase tracking-widest font-black">Contact Sales</span>
+                              </div>
                             </SelectItem>
-                          )
+                          </SelectContent>
+                        </Select>
+
+                        {selectedPlan && (
+                          <div className="mt-4 p-5 rounded-2xl border border-primary/20 bg-primary/5 animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden">
+                            <div className="absolute -right-4 -bottom-4 opacity-5">
+                              <Shield className="w-24 h-24 rotate-12" />
+                            </div>
+                            <div className="relative z-10">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Zap className="w-4 h-4 text-primary animate-pulse" />
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">System Module DNA (RBAC)</span>
+                              </div>
+                              <ul className="grid grid-cols-2 gap-2">
+                                {selectedPlan.features.includes("all") ? (
+                                  <li className="col-span-2 text-[11px] text-white font-bold flex items-center gap-2">
+                                    <Check className="w-3 h-3 text-primary" />
+                                    FULL ECOSYSTEM (29+ MODULES)
+                                  </li>
+                                ) : (
+                                  selectedPlan.features.map((f: string) => (
+                                    <li key={f} className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                                      <div className="w-1 h-1 rounded-full bg-primary/40" />
+                                      {f.charAt(0).toUpperCase() + f.slice(1).replace(/_/g, ' ')}
+                                    </li>
+                                  )).slice(0, 8)
+                                )}
+                              </ul>
+                              <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                                <div className="flex flex-col">
+                                  <span className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Initial Settlement</span>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-xl font-black italic">
+                                      ${billingCycle === "monthly"
+                                        ? selectedPlan.price
+                                        : Math.round((paymentMethod === 'crypto' && wallet.length === 42) ? (selectedPlan.price * 12 * 0.75) : (selectedPlan.price * 12 * 0.8))}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground font-bold uppercase">{billingCycle === "annual" ? "/ Year" : "/ Mo"}</span>
+                                  </div>
+                                </div>
+                                {billingCycle === "annual" && (
+                                  <Badge variant="outline" className="text-emerald-400 border-emerald-400/30 bg-emerald-400/5 font-black italic">
+                                    {(paymentMethod === 'crypto' && wallet.length === 42) ? "25% P2P DISCOUNT" : "20% ANNUAL DISCOUNT"}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex items-center w-full ">
+
+                        {!isFree && selectedPlan && (
+                          <div className="mt-6">
+                            <Label className="text-[10px] text-zinc-500 uppercase tracking-widest font-black mb-2 block ml-1">P2P Discount Activator</Label>
+                            <div className="relative group">
+                              <div className={cn("absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-primary rounded-xl blur opacity-10 transition duration-500", wallet.length === 42 ? "opacity-40" : "group-hover:opacity-20")}></div>
+                              <div className="relative">
+                                <Wallet className={cn("absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors", wallet.length === 42 ? "text-emerald-400" : "text-zinc-600")} />
+                                <Input
+                                  placeholder="Paste Wallet (0x...) for 25% Off"
+                                  value={wallet}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setWallet(val);
+                                    if (val.length === 42 && val.startsWith("0x")) {
+                                      setPaymentMethod("crypto");
+                                      setBillingCycle("annual");
+                                    } else if (val.length === 0) {
+                                      setPaymentMethod("card");
+                                    }
+                                  }}
+                                  className={cn("bg-zinc-900/50 border-white/10 h-12 text-xs font-mono pl-11", wallet.length === 42 ? "border-emerald-500/50 text-emerald-400" : "")}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input disabled={isLoading} placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input disabled={isLoading} placeholder="jdoe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
-                  name="password"
+                  name="email"
                   render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
+                    <FormItem>
+                      <FormLabel>E-mail <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input
-                          className="w-full"
-                          disabled={isLoading}
-                          placeholder="Password"
-                          type={show ? "text" : "password"}
-                          {...field}
-                        />
+                        <Input disabled={isLoading} placeholder="name@domain.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <span
-                  className="flex px-4 pt-7 w-16"
-                  onClick={() => setShow(!show)}
-                >
-                  <FingerprintIcon size={25} className="text-gray-400" />
-                </span>
-              </div>
-              <div className="flex items-center w-full ">
+
                 <FormField
                   control={form.control}
-                  name="confirmPassword"
+                  name="language"
                   render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel>Confirm Password <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Input
-                          className="w-full"
-                          disabled={isLoading}
-                          placeholder="Password"
-                          type={show ? "text" : "password"}
-                          {...field}
-                        />
-                      </FormControl>
+                    <FormItem>
+                      <FormLabel>Choose your language <span className="text-red-500">*</span></FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a language" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="h-56">
+                          {["en"].map((lng, index) => (
+                            <SelectItem key={index} value={lng}>{languageLabels[lng] || lng}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <span
-                  className="flex px-4 pt-7 w-16"
-                  onClick={() => setShow(!show)}
-                >
-                  <FingerprintIcon size={25} className="text-gray-400" />
-                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="relative">
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
+                          <FormControl>
+                            <Input disabled={isLoading} placeholder="Password" type={show ? "text" : "password"} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <button type="button" className="absolute right-3 top-[38px] text-gray-400" onClick={() => setShow(!show)}>
+                      <FingerprintIcon size={20} />
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <FormField
+                      control={form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirm Password <span className="text-red-500">*</span></FormLabel>
+                          <FormControl>
+                            <Input disabled={isLoading} placeholder="Password" type={show ? "text" : "password"} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <button type="button" className="absolute right-3 top-[38px] text-gray-400" onClick={() => setShow(!show)}>
+                      <FingerprintIcon size={20} />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="grid gap-2 py-5">
-              <Button disabled={isLoading || !form.formState.isValid} type="submit">
-                Create Account
+            <div className="grid gap-2 py-6">
+              <Button disabled={isLoading || !form.formState.isValid} type="submit" className="w-full py-6 font-bold text-lg">
+                Activate Intelligence Engine
               </Button>
             </div>
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-5">
-        <div className="text-sm text-gray-500">
-          Already have an account?{" "}
-          <Link href={"/sign-in"} className="text-primary">
-            sign-in
-          </Link>
+      <CardFooter className="flex flex-col space-y-4 pt-0">
+        <div className="text-sm text-gray-500 text-center">
+          Already have an account? <Link href="/sign-in" className="text-primary hover:underline font-bold">sign-in</Link>
         </div>
       </CardFooter>
+
+      {paymentUrl && activeInvoiceId && (
+        <PaymentModal
+          open={paymentModalOpen}
+          onOpenChange={(open) => {
+            setPaymentModalOpen(open);
+            if (!open) router.push("/sign-in");
+          }}
+          url={paymentUrl}
+          amount={paymentAmount}
+          currency="USDC"
+          invoiceId={activeInvoiceId}
+        />
+      )}
     </Card>
   );
 }

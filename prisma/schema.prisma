@@ -1044,6 +1044,9 @@ model Team {
   captcha_config TeamCaptchaConfig?
   RolePermission RolePermission[]
   workflows      crm_Workflow[]     @relation(name: "WorkflowTeam")
+  
+  // Custom Feature Overrides for this team
+  module_overrides String[]
 
   // Dynamic Schema Engine
   custom_objects CustomObjectDefinition[]
@@ -1165,7 +1168,6 @@ model Plan {
 
 enum SubscriptionPlan {
   FREE
-  TESTING
   INDIVIDUAL_BASIC
   INDIVIDUAL_PRO
   ENTERPRISE

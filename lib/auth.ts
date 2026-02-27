@@ -142,6 +142,13 @@ export const authOptions: NextAuthOptions = {
         where: {
           email: tokenEmail,
         },
+        include: {
+          assigned_team: {
+            include: {
+              assigned_plan: true,
+            },
+          },
+        },
       });
 
       if (!user) {
@@ -160,9 +167,6 @@ export const authOptions: NextAuthOptions = {
                   : "PENDING",
             },
           });
-
-          // Try to prevent redundant notifications
-          // await newUserNotify(newUser);
 
           //Put new created user data in session
           session.user.id = newUser.id;
@@ -183,8 +187,7 @@ export const authOptions: NextAuthOptions = {
           return session;
         }
       } else {
-        // User already exists in localDB, put user data in session (avoid DB writes here)
-        //User allready exist in localDB, put user data in session
+        // User already exists in localDB, put user data in session
         session.user.id = user.id;
         session.user.name = user.name;
         session.user.email = user.email;
@@ -197,10 +200,13 @@ export const authOptions: NextAuthOptions = {
         session.user.team_id = user.team_id;
         session.user.team_role = user.team_role;
         session.user.mustChangePassword = user.mustChangePassword;
+        session.user.assigned_team = user.assigned_team;
 
         // Fetch role and permissions if available
         if (user.roleId) {
-          const role = await prismadb.role.findUnique({ where: { id: user.roleId } });
+          const role = await prismadb.role.findUnique({
+            where: { id: user.roleId },
+          });
           if (role) {
             session.user.role = role.name;
             session.user.permissions = role.permissions;
@@ -208,7 +214,6 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      //console.log(session, "session");
       return session;
     },
   },

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -13,18 +14,19 @@ export default function PricingClient() {
     const plans = {
         individual: [
             {
-                title: "Testing Plan",
-                price: billingCycle === "monthly" ? "$2" : "$18",
-                period: billingCycle === "monthly" ? "/ month" : "/ year",
-                description: "Perfect for testing the waters.",
+                title: "Free",
+                price: "$0",
+                period: "/ month",
+                description: "Essential tools for small teams and startups.",
                 features: [
-                    "Basic CRM Features",
-                    "Lead Generation: Manual only",
-                    "Email Campaigns: 250 / month",
-                    "Community Support",
-                    "1 User",
+                    "Basic CRM & Project Management",
+                    "LeadGen Credits: 100 / month",
+                    "Email Campaigns: 2,500 / month",
+                    "Basic AI Lead Discovery (1:1 Ratio)",
+                    "Max 100 Accounts Staging Capacity",
+                    "1 User License",
                 ],
-                buttonText: "Get Started Free",
+                buttonText: "Start for Free",
                 buttonVariant: "outline" as const,
                 popular: false,
             },
@@ -32,14 +34,14 @@ export default function PricingClient() {
                 title: "Individual Basic",
                 price: billingCycle === "monthly" ? "$50" : "$450",
                 period: billingCycle === "monthly" ? "/ month" : "/ year",
-                description: "Essential tools for solo professionals.",
+                description: "Standard CRM with enhanced lead enrichment.",
                 features: [
-                    "Lead Generation: 500 / month",
-                    "Email Campaigns: 2,500 / month",
-                    "Basic AI Lead Enrichment",
-                    "Workflow Automation",
-                    "Standard Support",
-                    "2 Users",
+                    "LeadGen Credits: 1,000 / month",
+                    "Email Campaigns: 15,000 / month",
+                    "Standard AI Lead Enrichment",
+                    "Max 750 Accounts Staging Capacity",
+                    "Workflow Automation & Templates",
+                    "2 User Licenses",
                 ],
                 buttonText: "Start Basic",
                 buttonVariant: "outline" as const,
@@ -51,28 +53,48 @@ export default function PricingClient() {
                 period: billingCycle === "monthly" ? "/ month" : "/ year",
                 description: "Power user features for maximum growth.",
                 features: [
-                    "Lead Generation: 2,500 / month",
-                    "Email Campaigns: 12,500 / month",
-                    "Advanced AI Lead Enrichment",
-                    "VoiceHub AI Calling (billed per minute)",
-                    "SMS Campaigns add-on",
-                    "Priority Support & Advanced Reporting",
-                    "4 Users",
+                    "LeadGen Credits: 5,000 / month",
+                    "Email Campaigns: 50,000 / month",
+                    "Full Agentic & Deep Research",
+                    "Max 3,000 Accounts Staging Capacity",
+                    "VoiceHub AI Calling (per-minute)",
+                    "Dedicated Support & Custom Reports",
+                    "4 User Licenses",
                 ],
-                buttonText: "Start Pro",
+                buttonText: "Go Pro",
                 buttonVariant: "primary" as const,
                 popular: true,
                 badge: "MOST POPULAR",
                 glowColor: "cyan",
             },
         ],
+    };
 
+    const enterprisePlan = {
+        title: "Enterprise",
+        price: "Contact Us",
+        period: "Custom Pricing",
+        description: "Bespoke solutions for high-scale organizations.",
+        features: [
+            "Custom Feature Engineering",
+            "Unlimited Lead Generation",
+            "Unlimited Email & SMS Volume",
+            "White-label Branding Options",
+            "Direct Slack/Discord Support",
+            "Single Sign-On (SSO) Integration",
+        ],
+        buttonText: "Request Quote",
+        buttonVariant: "outline" as const,
     };
 
     return (
         <main className="pt-32 pb-20">
             {/* Hero Section */}
             <section className="text-center px-4 mb-12">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest mb-6">
+                    <Sparkles className="w-3 h-3" />
+                    New 2026 Pricing
+                </div>
                 <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
                     Simple, Transparent <span className="text-primary">Pricing</span>
                 </h1>
@@ -114,11 +136,46 @@ export default function PricingClient() {
                         className="grid grid-cols-1 md:grid-cols-3 gap-8"
                     >
                         {plans.individual.map((plan, index) => (
-                            <PricingCard key={index} {...plan} />
+                            <PricingCard key={index} {...plan} billingCycle={billingCycle} />
                         ))}
                     </motion.div>
                 </AnimatePresence>
             </section>
+
+            {/* Enterprise Tier - Premium Highlight */}
+            <section className="container mx-auto px-4 max-w-7xl mb-24">
+                <div className="relative p-1 rounded-3xl bg-gradient-to-r from-zinc-800 via-zinc-400 to-zinc-800 shadow-2xl">
+                    <div className="bg-[#05050a] rounded-[22px] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-10">
+                        <div className="flex-1">
+                            <Badge className="bg-zinc-800 text-zinc-300 border-zinc-700 mb-4 px-4 py-1">ENTERPRISE TIER</Badge>
+                            <h2 className="text-3xl md:text-5xl font-black text-white mb-6">Need something <span className="text-zinc-400">Custom Built?</span></h2>
+                            <p className="text-gray-400 text-lg leading-relaxed max-w-xl">
+                                For organizations requiring high-volume processing, custom agent behaviors, or private infrastructure. Get a custom solution tailored to your specific workflow.
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+                                {enterprisePlan.features.map((f, i) => (
+                                    <div key={i} className="flex items-center gap-2 text-sm text-zinc-300">
+                                        <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center">
+                                            <Check className="w-3 h-3 text-zinc-400" />
+                                        </div>
+                                        {f}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="w-full md:w-auto text-center bg-zinc-900/50 p-8 rounded-2xl border border-zinc-800 backdrop-blur-sm">
+                            <div className="text-4xl font-bold text-white mb-2">Speak with Sales</div>
+                            <p className="text-zinc-500 text-sm mb-6">Standard 24h response time</p>
+                            <Link href="#contact" className="w-full inline-block">
+                                <Button className="w-full py-7 text-xl bg-white text-black hover:bg-zinc-200 font-bold transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                                    Book a Demo
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Optional Add-ons */}
             <section className="container mx-auto px-4 max-w-5xl mb-24">
                 <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500/10 via-cyan-500/10 to-primary/10 border border-primary/30 p-1">
@@ -173,7 +230,7 @@ export default function PricingClient() {
 
 
             {/* Get in Touch CTA */}
-            <section className="container mx-auto px-4 max-w-4xl mb-24">
+            <section id="contact" className="container mx-auto px-4 max-w-4xl mb-24">
                 <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 border border-primary/30 p-1">
                     <div className="bg-[#0A0A12] rounded-3xl p-8 md:p-12 backdrop-blur-xl">
                         <div className="text-center mb-10">
@@ -300,6 +357,7 @@ function PricingCard({
     popular,
     badge,
     glowColor,
+    billingCycle,
 }: {
     title: string;
     price: string;
@@ -311,6 +369,7 @@ function PricingCard({
     popular?: boolean;
     badge?: string;
     glowColor?: string;
+    billingCycle: string;
 }) {
     return (
         <div
@@ -331,7 +390,7 @@ function PricingCard({
 
             <div className="flex items-baseline mb-8">
                 <span className="text-4xl font-extrabold tracking-tight">{price}</span>
-                <span className="text-gray-400 ml-2 text-sm font-medium">{period}</span>
+                <span className="text-gray-400 ml-2 text-sm font-medium">/{billingCycle === 'annual' ? 'year' : 'month'}</span>
             </div>
 
             <ul className="space-y-4 mb-8 flex-1">
@@ -343,7 +402,7 @@ function PricingCard({
                 ))}
             </ul>
 
-            <Link href="/register" className="w-full mt-auto">
+            <Link href={`/register?plan=${title.toLowerCase().replace(/ /g, '-')}&cycle=${billingCycle}`} className="w-full mt-auto">
                 <Button
                     className={`w-full py-6 text-lg rounded-[10px] font-semibold transition-all duration-300 ${buttonVariant === "primary"
                         ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)]"
@@ -360,40 +419,36 @@ function PricingCard({
 function IndividualComparisonTable() {
     const features = [
         {
-            category: "Lead Generation",
-            values: ["Manual only", "500 / month", "2,500 / month"]
+            category: "LeadGen Credits",
+            values: ["100 / month", "1,000 / month", "5,000 / month", "Unlimited"]
         },
         {
             category: "Email Campaigns",
-            values: ["250 / month", "2,500 / month", "12,500 / month"]
+            values: ["2,500 / month", "15,000 / month", "50,000 / month", "Unlimited"]
         },
         {
             category: "AI Lead Enrichment",
-            values: ["—", "Basic", "Advanced"]
+            values: ["Basic Discovery", "Standard Enrichment", "Advanced Agentic", "Full Bespoke"]
         },
         {
             category: "VoiceHub AI Calling",
-            values: ["—", "—", "✓ (per-minute billing)"]
+            values: ["—", "—", "✓ (per-minute)", "Included/Custom"]
         },
         {
-            category: "SMS Campaigns",
-            values: ["—", "—", "Add-on available"]
+            category: "Account Capacity",
+            values: ["100 Leads", "750 Leads", "3,000 Leads", "Unlimited"]
         },
         {
             category: "Workflow Automation",
-            values: ["—", "✓", "✓"]
+            values: ["—", "✓", "✓", "✓"]
         },
         {
-            category: "Users",
-            values: ["1", "2", "4"]
+            category: "User Licenses",
+            values: ["1", "2", "4", "Custom"]
         },
         {
-            category: "Support",
-            values: ["Community", "Standard", "Priority"]
-        },
-        {
-            category: "Reporting & Analytics",
-            values: ["Basic", "Standard", "Advanced"]
+            category: "Support Tier",
+            values: ["Community", "Priority Community", "Priority 24/7", "Dedicated White-glove"]
         },
     ];
 
@@ -404,12 +459,13 @@ function IndividualComparisonTable() {
                     <thead>
                         <tr className="border-b border-white/10">
                             <th className="text-left p-6 text-gray-400 font-medium">Feature</th>
-                            <th className="p-6 text-center font-bold">Testing Plan</th>
+                            <th className="p-6 text-center font-bold">Free</th>
                             <th className="p-6 text-center font-bold">Individual Basic</th>
                             <th className="p-6 text-center font-bold bg-primary/5 border-l border-r border-primary/30 relative">
                                 <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none"></div>
                                 <span className="relative text-primary">Individual Pro</span>
                             </th>
+                            <th className="p-6 text-center font-bold">Enterprise</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -420,8 +476,8 @@ function IndividualComparisonTable() {
                                 <td className="p-6 text-center text-gray-400">{feature.values[1]}</td>
                                 <td className="p-6 text-center bg-primary/5 border-l border-r border-primary/20 text-cyan-400 font-medium">
                                     {feature.values[2]}
-
                                 </td>
+                                <td className="p-6 text-center text-gray-400">{feature.values[3]}</td>
                             </tr>
                         ))}
                     </tbody>

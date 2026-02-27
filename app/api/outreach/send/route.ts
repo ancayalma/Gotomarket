@@ -11,6 +11,7 @@ import { z } from "zod";
 import { sendViaGmail } from "@/lib/gmail";
 import React from "react";
 import { ensureContactForLead } from "@/actions/crm/lead-conversions";
+import { claimOnboardingBonus } from "@/actions/crm/onboarding-bonus";
 
 /**
  * POST /api/outreach/send
@@ -434,6 +435,12 @@ export async function POST(req: Request) {
       errors: results.filter((r) => r.status === "error").length,
       results,
     };
+
+    // Gamification: award bonus credits for first outreach email (fire-and-forget)
+    if (summary.sent > 0 && !testMode) {
+      claimOnboardingBonus("first_outreach_email").catch(() => { });
+    }
+
     return NextResponse.json(summary, { status: 200 });
   } catch (error) {
 

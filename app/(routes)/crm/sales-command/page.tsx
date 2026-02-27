@@ -11,6 +11,7 @@ import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getBoards } from "@/actions/projects/get-boards";
 import { getTasks } from "@/actions/projects/get-tasks";
 import { LearnLink } from "@/components/ui/LearnLink";
+import { UpgradeGate } from "@/components/UpgradeGate";
 
 export default async function SalesCommandPage({
     searchParams
@@ -51,7 +52,15 @@ export default async function SalesCommandPage({
 
     // Basic Module Access Check
     if (!hasAccess('sales_command') && !hasAccess('sales_command.my_command') && !hasAccess('sales_command.team_command')) {
-        return <div>Access Denied</div>;
+        return (
+            <UpgradeGate
+                featureId="sales_command"
+                title="Sales Command Locked"
+                description="Advanced Pipeline Management and Command Centers require an upgraded Individual Basic plan or higher."
+            >
+                <div />
+            </UpgradeGate>
+        );
     }
 
     // Data Fetching for Sales Command Provider

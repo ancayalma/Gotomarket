@@ -21,14 +21,21 @@ import PortalSettingsPanel from "../../crm/leads/components/PortalSettingsPanel"
 import DashboardCard from "../../crm/dashboard/_components/DashboardCard";
 import { User, PenTool, Link, Clock, Calendar, MessageSquare, Shield } from "lucide-react";
 
+import { checkTeamFeature } from "@/lib/subscription";
+
 interface ProfileTabsProps {
-    data: Users;
+    data: Users & {
+        assigned_team: any;
+    };
 }
 
 export function ProfileTabs({ data }: ProfileTabsProps) {
     const searchParams = useSearchParams();
     const defaultTab = searchParams.get("tab") || "general";
     const [activeTab, setActiveTab] = useState(defaultTab);
+
+    // Feature flagging
+    const hasSignatureAccess = data.assigned_team ? checkTeamFeature(data.assigned_team, "personalized_signature") : false;
 
     const getHeader = () => {
         switch (activeTab) {
@@ -90,10 +97,11 @@ export function ProfileTabs({ data }: ProfileTabsProps) {
                         <DashboardCard
                             icon={PenTool}
                             label="Signature"
-                            description="Email identity"
+                            description={hasSignatureAccess ? "Email identity" : "Premium Feature"}
                             variant="default"
                             hideIcon={true}
                             className="data-[state=active]:ring-2 data-[state=active]:ring-primary data-[state=active]:border-primary/50"
+                            isLocked={!hasSignatureAccess}
                         />
                     </TabsTrigger>
                     <TabsTrigger value="integration" asChild>
@@ -178,7 +186,7 @@ export function ProfileTabs({ data }: ProfileTabsProps) {
                     </TabsContent>
 
                     <TabsContent value="signature" className="mt-0">
-                        <SignatureBuilder hasAccess={true} />
+                        <SignatureBuilder hasAccess={hasSignatureAccess} />
                     </TabsContent>
 
                     <TabsContent value="integration" className="mt-0">

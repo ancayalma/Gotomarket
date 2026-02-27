@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLearn } from "@/components/providers/learn-provider";
 import { TAB_LABELS, TAB_COLORS } from "@/components/ui/LearnLink";
+import { getTeamCreditsInfo } from "@/actions/crm/credits";
 import {
     Popover,
     PopoverContent,
@@ -34,11 +35,36 @@ export default function UtilityBar() {
     const [notes, setNotes] = useState("");
     const [tasks, setTasks] = useState<{ id: string, text: string, completed: boolean }[]>([]);
     const [isDialerOpen, setIsDialerOpen] = useState(false);
+    const [creditsInfo, setCreditsInfo] = useState<{
+        teamSlug?: string;
+        used: number;
+        remaining: number;
+        monthlyLimit: number;
+        isUnlimited: boolean;
+        displayString: string;
+    } | null>(null);
     const { activeTab, tooltipLabel, overviewTitle, overviewWhat, overviewWhy, overviewHow, dismissKey } = useLearn();
     const router = useRouter();
     const [isLearnOpen, setIsLearnOpen] = useState(false);
 
     useEffect(() => {
+        const fetchCredits = async () => {
+            try {
+                const info = await getTeamCreditsInfo();
+                setCreditsInfo({
+                    teamSlug: (info as any).teamSlug,
+                    used: (info as any).used || 0,
+                    remaining: (info as any).remaining || 0,
+                    monthlyLimit: info.monthlyLimit || 0,
+                    isUnlimited: info.isUnlimited || false,
+                    displayString: (info as any).displayString || "???",
+                });
+            } catch (err) {
+                setCreditsInfo(null);
+            }
+        };
+        fetchCredits();
+
         const savedNotes = localStorage.getItem("crm-utility-notes");
         if (savedNotes) setNotes(savedNotes);
 
@@ -100,6 +126,122 @@ export default function UtilityBar() {
                     </div>
 
                     <div className="flex items-center gap-1 sm:gap-4">
+                        {/* LeadGen Credits Widget */}
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-full border border-border/50 cursor-pointer hover:bg-muted/80 transition-colors group" title="LeadGen Credits">
+                                    <Sparkles className="h-3.5 w-3.5 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                                    <div className="flex flex-col gap-0.5">
+                                        <span className="text-[10px] font-bold tracking-wider text-muted-foreground whitespace-nowrap leading-none">
+                                            L-GEN: <span className="text-foreground">{creditsInfo ? creditsInfo.displayString : "Loading..."}</span>
+                                        </span>
+                                        {creditsInfo && !creditsInfo.isUnlimited && creditsInfo.monthlyLimit > 0 && (
+                                            <div className="w-full h-[3px] rounded-full bg-white/10 overflow-hidden min-w-[60px]">
+                                                <div
+                                                    className={cn(
+                                                        "h-full rounded-full transition-all duration-700 ease-out",
+                                                        creditsInfo.remaining / creditsInfo.monthlyLimit > 0.5
+                                                            ? "bg-gradient-to-r from-emerald-500 to-cyan-400"
+                                                            : creditsInfo.remaining / creditsInfo.monthlyLimit > 0.2
+                                                                ? "bg-gradient-to-r from-amber-500 to-orange-400"
+                                                                : "bg-gradient-to-r from-red-500 to-pink-500"
+                                                    )}
+                                                    style={{ width: `${Math.max(2, (creditsInfo.remaining / creditsInfo.monthlyLimit) * 100)}%` }}
+                                                />
+                                            </div>
+                                        )}
+                                        {creditsInfo?.isUnlimited && (
+                                            <div className="w-full h-[3px] rounded-full overflow-hidden min-w-[60px] bg-gradient-to-r from-cyan-500/40 via-violet-500/40 to-cyan-500/40 animate-pulse" />
+                                        )}
+                                    </div>
+                                </div>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 p-0 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl" side="top" align="center" sideOffset={12}>
+                                <div className="p-4 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                                                <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-foreground">LeadGen Credits</p>
+                                                <p className="text-[9px] text-muted-foreground uppercase tracking-wider">
+                                                    {creditsInfo?.isUnlimited ? "Unlimited Plan" : "Monthly Allocation"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {creditsInfo?.isUnlimited && (
+                                            <span className="text-[9px] font-bold bg-gradient-to-r from-cyan-500/20 to-violet-500/20 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/20">
+                                                ∞ UNLIMITED
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Progress Bar */}
+                                    {creditsInfo && !creditsInfo.isUnlimited && creditsInfo.monthlyLimit > 0 && (
+                                        <div className="space-y-1.5">
+                                            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                                                <div
+                                                    className={cn(
+                                                        "h-full rounded-full transition-all duration-700 ease-out",
+                                                        creditsInfo.remaining / creditsInfo.monthlyLimit > 0.5
+                                                            ? "bg-gradient-to-r from-emerald-500 to-cyan-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
+                                                            : creditsInfo.remaining / creditsInfo.monthlyLimit > 0.2
+                                                                ? "bg-gradient-to-r from-amber-500 to-orange-400 shadow-[0_0_8px_rgba(245,158,11,0.3)]"
+                                                                : "bg-gradient-to-r from-red-500 to-pink-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]"
+                                                    )}
+                                                    style={{ width: `${Math.max(2, (creditsInfo.remaining / creditsInfo.monthlyLimit) * 100)}%` }}
+                                                />
+                                            </div>
+                                            <div className="flex justify-between text-[10px]">
+                                                <span className="text-muted-foreground">{creditsInfo.used} used</span>
+                                                <span className="font-bold text-foreground">{creditsInfo.remaining} remaining</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Unlimited tracking */}
+                                    {creditsInfo?.isUnlimited && (
+                                        <div className="space-y-1.5">
+                                            <div className="w-full h-2 rounded-full overflow-hidden bg-gradient-to-r from-cyan-500/20 via-violet-500/20 to-cyan-500/20">
+                                                <div className="h-full bg-gradient-to-r from-cyan-500 to-violet-500 animate-pulse" style={{ width: '100%' }} />
+                                            </div>
+                                            <div className="flex justify-between text-[10px]">
+                                                <span className="text-muted-foreground">{creditsInfo.used} used this period</span>
+                                                <span className="font-bold text-cyan-400">Unlimited</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Stat Grid */}
+                                    <div className="grid grid-cols-3 gap-2 pt-1">
+                                        <div className="text-center p-2 rounded-lg bg-white/5 border border-white/5">
+                                            <div className="text-sm font-mono font-bold text-foreground">{creditsInfo?.used ?? 0}</div>
+                                            <div className="text-[8px] text-muted-foreground uppercase tracking-wider font-semibold">Used</div>
+                                        </div>
+                                        <div className="text-center p-2 rounded-lg bg-white/5 border border-white/5">
+                                            <div className="text-sm font-mono font-bold text-foreground">
+                                                {creditsInfo?.isUnlimited ? "∞" : creditsInfo?.remaining ?? 0}
+                                            </div>
+                                            <div className="text-[8px] text-muted-foreground uppercase tracking-wider font-semibold">Left</div>
+                                        </div>
+                                        <div className="text-center p-2 rounded-lg bg-white/5 border border-white/5">
+                                            <div className="text-sm font-mono font-bold text-foreground">
+                                                {creditsInfo?.isUnlimited ? "∞" : creditsInfo?.monthlyLimit ?? 0}
+                                            </div>
+                                            <div className="text-[8px] text-muted-foreground uppercase tracking-wider font-semibold">Limit</div>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-[9px] text-muted-foreground text-center pt-1 border-t border-white/5">
+                                        Credits reset monthly • Use-it-or-lose-it
+                                    </p>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+
+                        <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
+
                         {/* Calendar */}
                         <Link href="/crm/calendar">
                             <Button variant="ghost" size="sm" className="gap-2 text-xs font-semibold hover:bg-blue-500/10 hover:text-blue-500 transition-all px-2 sm:px-3">

@@ -1,46 +1,33 @@
-
 import fs from 'fs';
 import path from 'path';
+import { CRM_MODULES } from '../lib/role-permissions';
 
-const CRM_ROOT = path.join(process.cwd(), 'app', '(routes)', 'crm');
 const FEATURES_FILE = path.join(process.cwd(), 'CRM_FEATURES_OVERVIEW.md');
 
-/**
- * Ignore these folders when scanning for modules
- */
-const IGNORE = ['components', 'layout', 'api', 'utils', 'hooks', 'types', 'styles'];
-
 function scanModules() {
-    console.log('🔍 Scanning CRM Modules (Features)...');
+    console.log('🔍 Generating CRM Module Overview from Role Permissions...');
 
-    if (!fs.existsSync(CRM_ROOT)) {
-        console.error('❌ CRM Root not found:', CRM_ROOT);
-        process.exit(1);
-    }
+    const modules = CRM_MODULES;
 
-    const items = fs.readdirSync(CRM_ROOT, { withFileTypes: true });
-    const modules: string[] = [];
-
-    items.forEach((item) => {
-        if (item.isDirectory() && !IGNORE.includes(item.name)) {
-            modules.push(item.name);
-        }
-    });
-
-    console.log('✅ Found modules:', modules);
+    console.log(`✅ Processing ${modules.length} top-level modules.`);
 
     // Build the Markdown Content
     const title = "# CRM Core Feature List";
     const lastUpdate = `> Last Scan: ${new Date().toLocaleString()}\n`;
-    const description = "Automatically updated list of functional modules found in the CRM filesystem.\n";
+    const description = "Automatically generated list of functional modules defined in the permission system.\n";
 
     let content = `${title}\n\n${lastUpdate}\n${description}\n`;
 
     content += "## Active Feature Modules\n\n";
+    content += "| Module Name | Identifier | Route | Description |\n";
+    content += "| :--- | :--- | :--- | :--- |\n";
+
     modules.forEach(mod => {
-        const capitalized = mod.charAt(0).toUpperCase() + mod.slice(1).replace(/-/g, ' ');
-        content += `- **${capitalized}**: Located in \`/crm/${mod}\`\n`;
+        content += `| **${mod.name}** | \`${mod.id}\` | \`${mod.route || 'N/A'}\` | ${mod.description || ''} |\n`;
     });
+
+    content += "\n## System Requirements\n- Every module listed here is gated via `lib/role-permissions.ts`.\n";
+    content += "- New modules must be added to the permission matrix to be visible to users.\n";
 
     content += "\n## System Requirements\n- Every module listed here should have a corresponding policy in `lib/role-permissions.ts`.\n";
 

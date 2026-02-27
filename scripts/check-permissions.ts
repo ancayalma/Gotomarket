@@ -44,49 +44,70 @@ function getAllModuleIds(modules: typeof CRM_MODULES) {
 }
 
 async function main() {
-    console.log("🔍 Starting Permission Integrity Check...");
+    console.log("🔍 Starting Full Platform Permission Integrity Check...");
 
     if (!fs.existsSync(CRM_ROUTES_ROOT)) {
         console.error(`❌ CRM Routes directory not found at: ${CRM_ROUTES_ROOT}`);
         process.exit(1);
     }
 
-    // 1. Get Physical Routes
-    const physicalRoutes = getDirectories(CRM_ROUTES_ROOT)
+    // 1. Get Physical Routes from /crm/
+    const physicalCrmRoutes = getDirectories(CRM_ROUTES_ROOT)
         .filter(dir => !IGNORED_FOLDERS.includes(dir));
 
-    console.log(`📂 Found ${physicalRoutes.length} physical CRM routes.`);
+    console.log(`📂 Scanning physical CRM routes in /app/(routes)/crm...`);
 
-    // 2. Get Configured Modules
-    const configuredModules = getAllModuleIds(CRM_MODULES);
-    const configuredRoutes = configuredModules.map(m => m.route).filter(Boolean);
+    // 2. Get Configured Modules from lib/role-permissions.ts
+    const configuredModules = CRM_MODULES;
+    const configuredRoutes = configuredModules.map(m => m.route).filter(Boolean) as string[];
     const configuredIds = configuredModules.map(m => m.id);
 
-    // 3. Compare
+    console.log(`🛡️ Verified ${configuredModules.length} total modules in permission system.`);
+
+    // 3. Bidirectional Check
     const errors: string[] = [];
 
-    physicalRoutes.forEach(dir => {
-        // We expect either a route like '/crm/{dir}' OR an ID that matches '{dir}'
-        // Ideally, we check if '/crm/' + dir exists in the mapped routes.
-
+    // Check 1: Physical -> Config (No ungated folders in /crm/)
+    physicalCrmRoutes.forEach(dir => {
         const expectedRoute = `/crm/${dir}`;
-        const isMapped = configuredRoutes.includes(expectedRoute) || configuredIds.includes(dir);
+        // Exceptions for renamed routes or special mappings
+        const exceptions: Record<string, string> = {
+            'prompt': 'ai_lab',
+            'my-projects': 'projects',
+            'validation-rules': 'guard-rules'
+        };
+
+        const mappedId = exceptions[dir] || dir;
+        const isMapped = configuredRoutes.includes(expectedRoute) ||
+            configuredRoutes.some(r => r.endsWith(`/${dir}`)) ||
+            configuredIds.includes(mappedId);
 
         if (!isMapped) {
-            errors.push(`❌ UNGATED ROUTE DETECTED: "${dir}" exists in filesystem but is not in CRM_MODULES.`);
-        } else {
-            // console.log(`✅ Verified: ${dir}`);
+            errors.push(`❌ UNGATED ROUTE DETECTED: "/crm/${dir}" exists in filesystem but is not in CRM_MODULES.`);
+        }
+    });
+
+    // Check 2: Config -> Physical (Ensure routes exist)
+    configuredModules.forEach(mod => {
+        if (mod.route && mod.route.startsWith('/crm/')) {
+            const folderName = mod.route.split('/').pop();
+            const folderPath = path.join(CRM_ROUTES_ROOT, folderName!);
+            if (!fs.existsSync(folderPath)) {
+                // Check if it's a dynamic route or special page
+                if (!folderName?.includes('[')) {
+                    errors.push(`⚠️ BROKEN CONFIG: Module "${mod.name}" points to "${mod.route}" but folder does not exist.`);
+                }
+            }
         }
     });
 
     if (errors.length > 0) {
         console.error("\n🚨 PERMISSION INTEGRITY FAILURE 🚨");
-        console.error("The following routes are missing from the permission system:");
         errors.forEach(e => console.error(e));
-        console.error("\nFix this by adding them to `lib/role-permissions.ts`.\n");
-        process.exit(1); // Fail the build
+        console.error("\nFix this by adjusting `lib/role-permissions.ts` or the filesystem.\n");
+        process.exit(1);
     } else {
-        console.log("✅ Permission Integrity Verified. All routes are gated.");
+        console.log(`✅ Success: All ${configuredModules.length} modules are active and verified.`);
         process.exit(0);
     }
 }

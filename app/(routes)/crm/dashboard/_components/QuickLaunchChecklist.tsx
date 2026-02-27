@@ -22,6 +22,7 @@ import {
     Loader2
 } from "lucide-react";
 import { dismissQuickLaunch } from "../_actions/dismiss-quick-launch";
+import { claimOnboardingBonus } from "@/actions/crm/onboarding-bonus";
 import { toast } from "sonner";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -132,6 +133,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
 
     // Tier 5: When all done, show Mastery Paths promotion for 5s then dismiss
     const [showMasteryPromo, setShowMasteryPromo] = useState(false);
+    const [bonusCredited, setBonusCredited] = useState(false);
 
     const handleSessionDismiss = () => {
         setDismissed(true);
@@ -153,9 +155,6 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
             const res = await dismissQuickLaunch();
             if (!res.success) {
                 console.error("Failed to dismiss on server:", res.error);
-                // We keep it dismissed locally anyway to not annoy the user, 
-                // but we might want to show a toast if we really care about the sync.
-                // toast.error("Could not sync dismissal to database, but will remember locally.");
             }
         } catch (error) {
             console.error("Error in handleForeverDismiss:", error);
@@ -163,6 +162,22 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
             setIsDismissing(false);
         }
     }, [isDismissing]);
+
+    // Award bonus credits when all steps are complete
+    useEffect(() => {
+        if (allDone && mounted && !bonusCredited) {
+            setBonusCredited(true);
+            claimOnboardingBonus("quick_launch_complete").then((res) => {
+                if (res.success) {
+                    toast.success(res.message || "🎉 You earned 25 bonus LeadGen credits!", {
+                        duration: 6000,
+                        description: "Bonus credits have been added to your balance.",
+                    });
+                }
+                // If already claimed or paid plan, we silently ignore
+            }).catch(() => { });
+        }
+    }, [allDone, mounted, bonusCredited]);
 
     useEffect(() => {
         if (allDone && mounted) {
@@ -290,7 +305,21 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                             transition={{ duration: 0.3, ease: "easeInOut" }}
                             className="overflow-hidden"
                         >
-                            <div className="px-6 pb-6 pt-2">
+                            <div className="px-6 pb-6 pt-2 space-y-3">
+                                {/* Bonus Credits Reward Banner */}
+                                <div className="flex items-center gap-3 p-4 rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-transparent to-cyan-500/8 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/25">
+                                        <Sparkles className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-emerald-400">+25 Bonus Credits Earned!</p>
+                                        <p className="text-[10px] text-white/45 leading-relaxed">
+                                            Completing Quick Launch unlocked bonus LeadGen credits for your team.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Mastery Paths CTA */}
                                 <div className="flex items-center gap-4 p-5 rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 via-transparent to-pink-500/8">
                                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-500/25">
                                         <Medal className="w-6 h-6 text-white" />

@@ -67,10 +67,13 @@ export async function resetLeadGenCredits(teamId: string) {
 export async function consumeLeadGenCredits(teamId: string, amount: number) {
     const current = await getTeamLeadGenCredits(teamId);
 
-    if (current < amount) {
+    // -1 signifies unlimited. If we have a negative balance, we are operating in unlimited tracking mode.
+    if (current >= 0 && current < amount) {
         throw new Error(`Insufficient LeadGen credits. Required ${amount}, available ${current}.`);
     }
 
+    // For tracking unlimited usage upwards, if current is < 0 (meaning unlimited config mode),
+    // we can actually decrement it further (e.g., -100 used). The UI can display this as `used = Math.abs(current)`.
     await prismadb.teamAiConfig.update({
         where: { team_id: teamId },
         data: {

@@ -26,7 +26,8 @@ import {
   Palette,
   User as UserIcon,
   Share2,
-  GripVertical
+  GripVertical,
+  Shield
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
@@ -1169,7 +1170,39 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
     }
   };
 
-  if (!hasAccess) return <div className="p-10 text-center text-muted-foreground">Access Denied</div>;
+  if (!hasAccess) {
+    return (
+      <Card className="border-primary/20 bg-primary/5 backdrop-blur-sm overflow-hidden relative">
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/60 backdrop-blur-[2px] p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6 animate-pulse">
+            <Shield className="w-8 h-8 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight mb-2 uppercase italic">Signature Studio Restricted</h2>
+          <p className="text-muted-foreground max-w-md mb-8">
+            Personalized HTML email signatures are reserved for <strong>Basic</strong> and <strong>Pro</strong> tiers.
+            Upgrade today to build your professional brand identity.
+          </p>
+          <Button
+            onClick={() => window.location.href = "/pricing"}
+            className="px-8 py-6 h-auto text-lg font-bold uppercase italic shadow-xl shadow-primary/20 hover:scale-105 transition-all"
+          >
+            Upgrade Now
+          </Button>
+        </div>
+
+        <CardHeader className="opacity-20 pointer-events-none select-none">
+          <CardTitle>Email Signature Studio</CardTitle>
+          <CardDescription>Design your professional identity.</CardDescription>
+        </CardHeader>
+        <CardContent className="opacity-10 pointer-events-none select-none blur-sm">
+          <div className="grid grid-cols-2 gap-8 h-[600px]">
+            <div className="bg-muted rounded-xl animate-pulse" />
+            <div className="bg-muted rounded-xl animate-pulse" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 h-full">

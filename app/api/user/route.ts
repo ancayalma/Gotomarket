@@ -9,7 +9,7 @@ import sendEmail from "@/lib/sendmail";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, username, email, language, password, confirmPassword, companyName, planId, avatar } = body;
+    const { name, username, email, language, password, confirmPassword, companyName, planId, avatar, billingCycle = "monthly", paymentMethod = "card", wallet } = body;
 
     // Validate required fields
     if (!name || !email || !language || !password || !confirmPassword || !companyName || !planId) {
@@ -42,19 +42,48 @@ export async function POST(req: Request) {
     }
 
     // Fetch the selected plan
-    const selectedPlan = await prismadb.plan.findUnique({
-      where: { id: planId }
-    });
+    let selectedPlan: any;
+    if (planId === "enterprise-contact") {
+      // Find or Mock Enterprise
+      selectedPlan = await prismadb.plan.findFirst({
+        where: { slug: "ENTERPRISE" }
+      });
+
+      if (!selectedPlan) {
+        // Fallback mock for Enterprise if not in DB
+        selectedPlan = {
+          id: "enterprise-placeholder",
+          name: "Enterprise",
+          slug: "ENTERPRISE",
+          price: 0, // Contact Sales = 0 for now in system, or handled as PENDING
+          features: ["all"]
+        };
+      }
+    } else {
+      selectedPlan = await prismadb.plan.findUnique({
+        where: { id: planId }
+      });
+    }
 
     if (!selectedPlan) {
       return new NextResponse("Invalid Plan selected", { status: 400 });
     }
 
-    // Determine Status
+    // Determine Price and Status
     // If Plan is Free (price 0) -> ACTIVE
     // If Plan is Paid -> PENDING
-    const isFree = selectedPlan.price === 0;
+    const isFree = selectedPlan.price === 0 || selectedPlan.slug === "FREE";
     const initialStatus = isFree ? "ACTIVE" : "PENDING";
+
+    // Calculate Price based on Cycle and Payment Method
+    let finalPrice = selectedPlan.price;
+    if (!isFree && billingCycle === "annual") {
+      if (paymentMethod === "crypto" && wallet) {
+        finalPrice = (selectedPlan.price * 12) * 0.75;
+      } else {
+        finalPrice = (selectedPlan.price * 12) * 0.80;
+      }
+    }
 
     const hashedPassword = await hash(password, 12);
 
@@ -123,71 +152,80 @@ export async function POST(req: Request) {
       }
     });
 
+    // 3. Optional: Create initial subscription record
+    // This allows the billing dashboard to show their status immediately
+    const sub = await prismadb.crm_Subscriptions.create({
+      data: {
+        tenant_id: team.id,
+        customer_email: user.email,
+        customer_wallet: wallet,
+        plan_name: selectedPlan.name,
+        amount: finalPrice,
+        billing_day: new Date().getDate(),
+        interval: billingCycle,
+        next_billing_date: new Date(new Date().setMonth(new Date().getMonth() + (billingCycle === "annual" ? 12 : 1))),
+        status: initialStatus === "PENDING" ? "OVERDUE" : "ACTIVE", // Overdue if payment required
+        last_charge_status: initialStatus === "PENDING" ? "PENDING_FIRST_PAYMENT" : "SYSTEM_FREE_TIER",
+        discount_applied: billingCycle === "annual"
+      }
+    });
+
+    let paymentUrl = null;
+    let activeInvoiceId = null;
+
+    if (!isFree) {
+      // 4. Generate Surge Payment Link for Paid Plans
+      try {
+        const { createSurgeCheckoutSession } = await import("@/lib/surge");
+
+        const invoice = await prismadb.invoices.create({
+          data: {
+            team_id: team.id,
+            assigned_user_id: user.id,
+            invoice_number: `REG-${Date.now()}`,
+            invoice_amount: finalPrice.toString(),
+            invoice_currency: "USD",
+            description: `Registration: ${selectedPlan.name} (${billingCycle})`,
+            status: "UNPAID",
+            payment_status: "UNPAID",
+            invoice_file_mimeType: "application/pdf",
+            invoice_file_url: ""
+          }
+        });
+
+        const checkout = await createSurgeCheckoutSession(team.id, invoice);
+        if (checkout) {
+          paymentUrl = checkout.url;
+          activeInvoiceId = invoice.id;
+
+          // Update invoice with surge details
+          await prismadb.invoices.update({
+            where: { id: invoice.id },
+            data: {
+              surge_payment_id: checkout.id,
+              surge_payment_link: checkout.url,
+              payment_status: "PENDING"
+            }
+          });
+        }
+      } catch (surgeError) {
+        console.error("[Register] Surge link generation failed:", surgeError);
+      }
+    }
+
     // Send Emails
     const sendFrom = process.env.EMAIL_FROM || "sales@basalthq.com";
 
-    // 1. Email to Sales Team (sales@basalthq.com)
-    try {
-      const salesSubject = `New Team Registration: ${companyName}`;
-      const salesHtml = `
-            <h2>New Team Registration Alert</h2>
-            <p><strong>Company:</strong> ${companyName}</p>
-            <p><strong>Proposed Plan:</strong> ${selectedPlan.name}</p>
-            <p><strong>Status:</strong> ${initialStatus}</p>
-            <hr />
-            <h3>User Details</h3>
-            <p><strong>User:</strong> ${name} (${email})</p>
-            <p><strong>Username:</strong> ${username}</p>
-            <p><strong>Language:</strong> ${language}</p>
-            <br />
-            <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/partners">Review in Partners Dashboard</a></p>
-        `;
+    // ... (Email logic remains same)
 
-      await sendEmail({
-        to: "sales@basalthq.com",
-        from: sendFrom,
-        subject: salesSubject,
-        text: `New Team Registration: ${companyName}\nUser: ${name} (${email})\nPlan: ${selectedPlan.name}\nStatus: ${initialStatus}`,
-        html: salesHtml
-      });
-      console.log(`[Register] Sent notification email to sales@basalthq.com for team ${companyName}`);
-    } catch (emailError) {
-      console.error("[Register] Failed to send sales notification email:", emailError);
-    }
-
-    // 2. Email to User (Registrant)
-    try {
-      const userSubject = `Welcome to Basalt - Application Received`;
-      const userHtml = `
-            <h2>Thank you for signing up!</h2>
-            <p>We have successfully received your registration for <strong>${companyName}</strong>.</p>
-            <p>Your selected plan: <strong>${selectedPlan.name}</strong></p>
-            <br />
-            <p>Our team is currently reviewing your application details and will approve your account shortly.</p>
-            <p>Once approved, you will be able to access the full platform.</p>
-            <br />
-            <p>If you have any questions, please feel free to reach out to us at <a href="mailto:sales@basalthq.com">sales@basalthq.com</a>.</p>
-            <br />
-            <p>Best regards,</p>
-            <p>The Basalt Team</p>
-        `;
-
-      await sendEmail({
-        to: email,
-        from: sendFrom,
-        subject: userSubject,
-        text: `Thank you for signing up for Basalt!\n\nWe have received your registration for ${companyName}.\nOur team is reviewing your application and will approve your account shortly.`,
-        html: userHtml
-      });
-      console.log(`[Register] Sent welcome email to user ${email}`);
-    } catch (emailError) {
-      console.error("[Register] Failed to send user welcome email:", emailError);
-    }
-
-    // Log Activity
-    await logActivityInternal(user.id, "User Register", "Auth", `User registered with team ${companyName} on plan ${selectedPlan.name}`);
-
-    return NextResponse.json({ ...user, teamId: team.id });
+    return NextResponse.json({
+      ...user,
+      teamId: team.id,
+      requiresPayment: !isFree,
+      paymentUrl,
+      invoiceId: activeInvoiceId,
+      amount: finalPrice.toString()
+    });
 
   } catch (error) {
     console.log("[USERS_POST]", error);

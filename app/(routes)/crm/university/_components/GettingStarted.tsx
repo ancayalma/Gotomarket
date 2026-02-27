@@ -275,7 +275,7 @@ function StepCard({
 
 // ─── Admin Guide ─────────────────────────────────────────────────────────────
 
-function AdminGuide({ compact = false }: { compact?: boolean }) {
+function AdminGuide({ plan, compact = false }: { plan?: string; compact?: boolean }) {
     const router = useRouter();
     const [completed, setCompleted] = useState<Record<string, boolean>>({});
     const [mounted, setMounted] = useState(false);
@@ -320,9 +320,9 @@ function AdminGuide({ compact = false }: { compact?: boolean }) {
                     <CheckCircle2 className="w-8 h-8 text-emerald-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                         <p className="font-bold text-emerald-400">You're all set! 🎉</p>
-                        <p className="text-xs text-white/40 mt-0.5">Your first outreach campaign is live. Now level up with Mastery Paths.</p>
+                        <p className="text-xs text-white/40 mt-0.5">Your first outreach campaign is live.{plan !== "FREE" ? " Now level up with Mastery Paths." : ""}</p>
                     </div>
-                    {!compact && (
+                    {!compact && plan !== "FREE" && (
                         <button
                             onClick={() => router.push("/crm/university")}
                             className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25 transition-all flex-shrink-0"
@@ -403,7 +403,7 @@ function AdminGuide({ compact = false }: { compact?: boolean }) {
 
 // ─── Member Guide ─────────────────────────────────────────────────────────────
 
-function MemberGuide({ isPreview = false }: { isPreview?: boolean }) {
+function MemberGuide({ plan, isPreview = false }: { plan?: string; isPreview?: boolean }) {
     const router = useRouter();
     const [completed, setCompleted] = useState<Record<string, boolean>>({});
     const [mounted, setMounted] = useState(false);
@@ -460,7 +460,7 @@ function MemberGuide({ isPreview = false }: { isPreview?: boolean }) {
                     <CheckCircle2 className="w-8 h-8 text-emerald-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                         <p className="font-bold text-emerald-400">You're on your way! 🎉</p>
-                        <p className="text-xs text-white/40 mt-0.5">Keep working your List and converting contacts. Check Mastery Paths to level up your skills.</p>
+                        <p className="text-xs text-white/40 mt-0.5">Keep working your List and converting contacts.{plan !== "FREE" ? " Check Mastery Paths to level up your skills." : ""}</p>
                     </div>
                 </motion.div>
             )}
@@ -503,7 +503,7 @@ function MemberGuide({ isPreview = false }: { isPreview?: boolean }) {
 
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
-export default function GettingStarted() {
+export default function GettingStarted({ plan }: { plan?: string }) {
     const { data: session } = useSession();
     const [viewMode, setViewMode] = useState<"admin" | "member">("admin");
 
@@ -565,11 +565,11 @@ export default function GettingStarted() {
             <div className="max-w-4xl mx-auto">
                 {viewMode === "admin" ? (
                     <div className="space-y-6">
-                        <AdminGuide />
+                        <AdminGuide plan={plan} />
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        <MemberGuide isPreview={isAdmin} />
+                        <MemberGuide plan={plan} isPreview={isAdmin} />
                         {isAdmin && (
                             <div className="p-4 rounded-xl border border-white/5 bg-white/[0.02] mt-4">
                                 <p className="text-[11px] text-white/30 leading-relaxed italic">

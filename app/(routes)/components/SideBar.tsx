@@ -52,6 +52,11 @@ const SideBar = async () => {
     features = getSubscriptionPlan(slug).features;
   }
 
+  // Add overrides to features list
+  if (team?.module_overrides) {
+    features = Array.from(new Set([...features, ...team.module_overrides]));
+  }
+
   const teamRole = currentUserInfo.teamRole || "MEMBER";
   const isPartnerAdmin = currentUserInfo.isPlatformAdmin || (user as any).assigned_team?.slug === "basalt" || (user as any).assigned_team?.slug === "basalthq";
 

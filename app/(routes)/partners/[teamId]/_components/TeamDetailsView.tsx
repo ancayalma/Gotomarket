@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { LayoutDashboard, Users, MessageSquare, Mail, Copy, Shield, Phone, AtSign, Building2, Bot } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, Mail, Copy, Shield, Phone, AtSign, Building2, Bot, Package } from "lucide-react";
 import { toast } from "sonner";
 
 import TeamSettingsForm from "./TeamSettingsForm";
@@ -9,6 +9,7 @@ import TeamMembersTable from "./TeamMembersTable";
 import SmsConfigForm from "./SmsConfigForm";
 import TeamRolesView from "./TeamRolesView";
 import DepartmentsView from "./DepartmentsView";
+import TeamModulesView from "./TeamModulesView";
 import { TeamEmailSettings } from "@/components/email/TeamEmailSettings";
 import { EmailDeliveryStats } from "@/components/email/EmailDeliveryStats";
 import { TeamAiSettings } from "@/components/ai/TeamAiSettings";
@@ -118,6 +119,17 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
             color: "from-indigo-500/20 to-purple-500/20",
             iconColor: "text-indigo-500",
         });
+
+        if (currentUserInfo?.isGlobalAdmin) {
+            cards.push({
+                id: "modules",
+                title: "Tier Modules",
+                description: "Team Overrides",
+                icon: Package,
+                color: "from-amber-500/20 to-orange-500/20",
+                iconColor: "text-amber-500",
+            });
+        }
     }
 
 
@@ -296,6 +308,14 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
                     <div className="bg-card border rounded-lg p-6">
                         <TeamAiSettings teamId={team.id} />
                     </div>
+                )}
+                {activeTab === "modules" && currentUserInfo?.isGlobalAdmin && (
+                    <TeamModulesView
+                        teamId={team.id}
+                        teamName={team.name}
+                        currentPlan={team.assigned_plan}
+                        initialOverrides={team.module_overrides || []}
+                    />
                 )}
             </div>
         </div>
