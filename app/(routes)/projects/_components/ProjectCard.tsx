@@ -10,21 +10,19 @@ export type ProjectCardData = {
 };
 
 export const ProjectCard = ({ card, loading = false }: { card: ProjectCardData, loading?: boolean }) => (
-    <div className="group relative overflow-hidden rounded-2xl border border-[#27272a] bg-[#09090b] p-3 transition-all duration-300 h-[110px] w-full cursor-pointer">
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-background hover:border-primary/50 p-3 transition-all duration-300 h-[110px] w-full cursor-pointer">
         {/* Giant Watermark Icon - Positioned Right */}
         <card.icon
-            className={`absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-colors duration-500 pointer-events-none opacity-10 group-hover:opacity-20 ${card.iconColor}`}
+            className={`absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-all duration-700 pointer-events-none opacity-10 group-hover:opacity-50 group-hover:scale-125 group-hover:-rotate-0 group-hover:text-primary ${card.iconColor}`}
         />
 
-        <div className="relative z-10 w-full h-full flex flex-col justify-center items-start pl-1">
-            <div className="space-y-0.5">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground/90 group-hover:text-foreground transition-colors">
-                    {card.title}
-                </span>
-                <span className="block text-xl font-bold tracking-tight text-foreground">
-                    {card.description}
-                </span>
-            </div>
+        <div className="relative z-10 w-full h-full flex flex-col items-start pl-1 justify-center">
+            <h3 className="font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-0.5 px-2 leading-tight mb-0.5">
+                {card.title}
+            </h3>
+            <span className="block text-xl font-bold tracking-tight text-foreground mt-0.5 px-2 truncate">
+                {card.description}
+            </span>
         </div>
 
         {/* Subtle Glow on Hover */}

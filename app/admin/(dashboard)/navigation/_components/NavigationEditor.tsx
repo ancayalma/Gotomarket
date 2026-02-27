@@ -177,8 +177,8 @@ export function NavigationEditor({
     useEffect(() => {
         const link = document.createElement("link");
         link.rel = "stylesheet";
-        const fontQuery = AVAILABLE_FONTS.map(f => f.replace(/\s+/g, "+")).join("&family=");
-        link.href = `https://fonts.googleapis.com/css2?family=${fontQuery}&display=swap`;
+        const query = "family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700;800;900&family=Lato:wght@400;700;900&family=Lexend:wght@400;500;600;700;800;900&family=Ubuntu:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Public+Sans:wght@400;500;600;700;800;900&display=swap";
+        link.href = `https://fonts.googleapis.com/css2?${query}`;
         document.head.appendChild(link);
     }, []);
 

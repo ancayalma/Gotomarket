@@ -69,6 +69,26 @@ const THEME_METADATA: Record<
         description: "Natural energy, grounded calm.",
         colors: ["bg-emerald-900", "bg-green-500", "bg-lime-400"],
     },
+    "toxic-vapor": {
+        name: "Toxic Vapor",
+        description: "Neon Lime / Acid Indigo",
+        colors: ["bg-zinc-950", "bg-lime-400", "bg-indigo-600"],
+    },
+    "solar-flare": {
+        name: "Solar Flare",
+        description: "Vivid Orange / Molten Gold",
+        colors: ["bg-orange-950", "bg-orange-500", "bg-yellow-400"],
+    },
+    "super-nova": {
+        name: "Supernova Whiteout",
+        description: "Studio Light / High-Viz Pink",
+        colors: ["bg-slate-50", "bg-pink-500", "bg-black"],
+    },
+    "obsidian-eclipse": {
+        name: "Obsidian Eclipse",
+        description: "Midnight Teal / Obsidian Gold",
+        colors: ["bg-neutral-950", "bg-teal-400", "bg-yellow-500"],
+    },
 };
 
 export default function ThemeStudioPage() {

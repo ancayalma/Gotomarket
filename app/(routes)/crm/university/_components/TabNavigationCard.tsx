@@ -32,24 +32,24 @@ export default function TabNavigationCard({
             className={cn(
                 "group relative overflow-hidden rounded-2xl border transition-all duration-300 h-[100px] w-full flex flex-col justify-center items-center text-center",
                 isActive
-                    ? cn("bg-[#09090b] border-primary/50 ring-1 ring-primary/20 scale-[1.02] shadow-lg shadow-primary/10")
-                    : cn("bg-[#09090b]/60 border-[#27272a] hover:border-primary/30 opacity-90 hover:opacity-100")
+                    ? cn("bg-background border-primary/50 ring-1 ring-primary/20 scale-[1.02] shadow-lg shadow-primary/10")
+                    : cn("bg-background/60 border-border hover:border-primary/50 opacity-90 hover:opacity-100")
             )}
         >
             {/* Giant Watermark Icon - Positioned Right */}
             <Icon
                 className={cn(
-                    "absolute -right-2 -bottom-2 w-20 h-20 -rotate-12 transition-all duration-500 pointer-events-none",
-                    isActive ? "opacity-20 scale-110" : "opacity-5 group-hover:opacity-10",
+                    "absolute -right-2 -bottom-2 w-20 h-20 -rotate-12 transition-all duration-700 pointer-events-none group-hover:scale-125 group-hover:-rotate-0 group-hover:text-primary",
+                    isActive ? "opacity-30 scale-110" : "opacity-10 group-hover:opacity-50",
                     color
                 )}
             />
 
-            <div className="relative z-10 w-full px-2 text-center">
+            <div className="relative z-10 w-full px-2 text-center group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-primary-foreground group-hover:bg-clip-text">
                 <span
                     className={cn(
                         "block text-[13px] font-black tracking-wider transition-colors uppercase leading-tight px-1",
-                        isActive ? "text-foreground" : "text-muted-foreground/80 group-hover:text-foreground"
+                        isActive ? "text-primary" : "text-muted-foreground/80 group-hover:text-transparent"
                     )}
                 >
                     {label}

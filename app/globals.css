@@ -610,6 +610,143 @@
     --microtext-font: "Geist Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 
+  /* Toxic-Vapor - Neon Lime / Acid Indigo */
+  [data-theme='toxic-vapor'] {
+    --background: 80 10% 4%;
+    --foreground: 75 10% 98%;
+    --muted: 80 15% 10%;
+    --muted-foreground: 75 10% 65%;
+    --popover: 80 10% 4%;
+    --popover-foreground: 75 10% 98%;
+    --card: 80 15% 7%;
+    --card-foreground: 75 10% 98%;
+    --border: 75 100% 50% / 0.25;
+    --input: 80 15% 12%;
+    --primary: 75 100% 50%;
+    --primary-foreground: 80 10% 4%;
+    --secondary: 80 15% 10%;
+    --secondary-foreground: 75 10% 98%;
+    --accent: 260 100% 60% / 0.3;
+    --accent-foreground: 260 100% 70%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+    --ring: 75 100% 50%;
+    --radius: 0.5rem;
+    --osiris-gradient: radial-gradient(900px circle at 8% 12%, rgba(190, 255, 0, 0.25), transparent 52%),
+      radial-gradient(720px circle at 92% 18%, rgba(79, 70, 229, 0.2), transparent 58%),
+      linear-gradient(to bottom, #0a0e05, #000000);
+    --glass-bg: hsla(80, 10%, 4%, 0.65);
+    --glass-border: hsla(75, 100%, 50%, 0.35);
+    --glass-shadow: 0 10px 40px hsla(75, 100%, 50%, 0.25);
+    --microtext-font: "Geist Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* Solar-Flare - Vivid Orange / Molten Gold */
+  [data-theme='solar-flare'] {
+    --background: 15 15% 4%;
+    --foreground: 25 10% 98%;
+    --muted: 15 20% 10%;
+    --muted-foreground: 25 10% 65%;
+    --popover: 15 15% 4%;
+    --popover-foreground: 25 10% 98%;
+    --card: 15 20% 7%;
+    --card-foreground: 25 10% 98%;
+    --border: 25 100% 50% / 0.3;
+    --input: 15 20% 12%;
+    --primary: 25 100% 50%;
+    --primary-foreground: 15 15% 4%;
+    --secondary: 15 20% 10%;
+    --secondary-foreground: 25 10% 98%;
+    --accent: 45 100% 50% / 0.3;
+    --accent-foreground: 45 100% 50%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+    --ring: 25 100% 50%;
+    --radius: 0.5rem;
+    --osiris-gradient: radial-gradient(900px circle at 8% 12%, rgba(255, 100, 0, 0.3), transparent 52%),
+      radial-gradient(720px circle at 92% 18%, rgba(255, 215, 0, 0.2), transparent 58%),
+      linear-gradient(to bottom, #120604, #000000);
+    --glass-bg: hsla(15, 15%, 4%, 0.65);
+    --glass-border: hsla(25, 100%, 50%, 0.4);
+    --glass-shadow: 0 10px 40px hsla(25, 100%, 50%, 0.3);
+    --microtext-font: "Geist Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* Supernova Whiteout - Studio Light / High-Viz Pink */
+  [data-theme='super-nova'] {
+    --background: 220 20% 98%;
+    --foreground: 220 40% 10%;
+    --muted: 220 20% 92%;
+    --muted-foreground: 220 20% 40%;
+    --popover: 220 20% 98%;
+    --popover-foreground: 220 40% 10%;
+    --card: 220 20% 95%;
+    --card-foreground: 220 40% 10%;
+    --border: 220 20% 86% / 0.5;
+    --input: 220 20% 94%;
+    --primary: 330 100% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 190 100% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 330 100% 45% / 0.1;
+    --accent-foreground: 330 100% 45%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 330 100% 45%;
+    --radius: 0.5rem;
+    --osiris-gradient: radial-gradient(900px circle at 8% 12%, rgba(255, 0, 150, 0.08), transparent 52%),
+      radial-gradient(720px circle at 92% 18%, rgba(0, 200, 255, 0.05), transparent 58%),
+      linear-gradient(to bottom, #f8fafc, #eff6ff);
+    --glass-bg: hsla(220, 20%, 98%, 0.85);
+    --glass-border: hsla(220, 20%, 80%, 0.5);
+    --glass-shadow: 0 10px 40px hsla(220, 20%, 30%, 0.1);
+    --microtext-font: "Geist Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* Handle input styles for light theme specifically */
+  [data-theme='super-nova'] input,
+  [data-theme='super-nova'] textarea,
+  [data-theme='super-nova'] select {
+    background-color: hsl(var(--input)) !important;
+    color: hsl(var(--foreground)) !important;
+    border-color: hsla(var(--border), 0.5) !important;
+  }
+
+  [data-theme='super-nova'] .bg-primary\/20 {
+    background-color: hsla(var(--primary), 0.15) !important;
+  }
+
+  /* Obsidian-Eclipse - Midnight Teal / Obsidian Gold */
+  [data-theme='obsidian-eclipse'] {
+    --background: 20 10% 3%;
+    --foreground: 191 10% 98%;
+    --muted: 20 15% 8%;
+    --muted-foreground: 191 10% 65%;
+    --popover: 20 10% 3%;
+    --popover-foreground: 191 10% 98%;
+    --card: 20 15% 5%;
+    --card-foreground: 191 10% 98%;
+    --border: 191 100% 50% / 0.2;
+    --input: 20 15% 10%;
+    --primary: 191 100% 50%;
+    --primary-foreground: 20 10% 3%;
+    --secondary: 20 15% 8%;
+    --secondary-foreground: 191 10% 98%;
+    --accent: 45 100% 50% / 0.4;
+    --accent-foreground: 45 100% 50%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+    --ring: 191 100% 50%;
+    --radius: 0.50rem;
+    --osiris-gradient: radial-gradient(900px circle at 8% 12%, rgba(45, 212, 191, 0.15), transparent 52%),
+      radial-gradient(720px circle at 92% 18%, rgba(234, 179, 8, 0.15), transparent 58%),
+      linear-gradient(to bottom, #0d0906, #000000);
+    --glass-bg: hsla(20, 10%, 3%, 0.75);
+    --glass-border: hsla(191, 100%, 50%, 0.3);
+    --glass-shadow: 0 12px 50px hsla(191, 100%, 50%, 0.15), 0 0 20px hsla(45, 100%, 50%, 0.05);
+    --microtext-font: "Geist Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
   /* ========================================
      Accessibility Utilities
      ======================================== */
@@ -755,6 +892,26 @@
 /* Forest Spectrum - Shift to green #22C55E */
 [data-theme='forest-spectrum'] .themed-logo {
   filter: brightness(0) saturate(100%) invert(60%) sepia(70%) saturate(600%) hue-rotate(85deg) brightness(105%);
+}
+
+/* Cyber-Pulse -> Toxic-Vapor - Neon Lime */
+[data-theme='toxic-vapor'] .themed-logo {
+  filter: brightness(0) saturate(100%) invert(80%) sepia(100%) saturate(1000%) hue-rotate(45deg) brightness(110%);
+}
+
+/* Solar-Flare - Vivid Orange */
+[data-theme='solar-flare'] .themed-logo {
+  filter: brightness(0) saturate(100%) invert(50%) sepia(100%) saturate(2000%) hue-rotate(5deg) brightness(110%);
+}
+
+/* Supernova Whiteout - Deep Pink / Dark Logo on Light */
+[data-theme='super-nova'] .themed-logo {
+  filter: brightness(0) saturate(100%) invert(30%) sepia(100%) saturate(2000%) hue-rotate(300deg) brightness(90%);
+}
+
+/* Obsidian-Eclipse - Teal & Gold */
+[data-theme='obsidian-eclipse'] .themed-logo {
+  filter: brightness(0) saturate(100%) invert(75%) sepia(50%) saturate(800%) hue-rotate(130deg) brightness(110%);
 }
 
 /* Sidebar: hamburger toggle and menu item glassmorphism */

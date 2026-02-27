@@ -164,19 +164,17 @@ export function ManualInvoiceDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <div className="group relative overflow-hidden rounded-2xl border border-[#27272a] bg-[#09090b] p-3 transition-all duration-300 h-[110px] w-full cursor-pointer hover:border-primary/50">
+                <div className="group relative w-full p-3 overflow-hidden transition-all duration-300 bg-background border border-border hover:border-primary/50 rounded-2xl h-[110px] cursor-pointer">
                     <PlusCircle
-                        className="absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-colors duration-500 pointer-events-none opacity-10 group-hover:opacity-20 text-emerald-400"
+                        className="absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-all duration-700 pointer-events-none opacity-10 group-hover:opacity-50 group-hover:scale-125 group-hover:-rotate-0 group-hover:text-primary text-emerald-400"
                     />
-                    <div className="relative z-10 w-full h-full flex flex-col justify-center items-start pl-1">
-                        <div className="space-y-0.5">
-                            <span className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground/90 group-hover:text-foreground transition-colors">
-                                Create New
-                            </span>
-                            <span className="block text-xl font-bold tracking-tight text-foreground">
-                                Manual Invoice
-                            </span>
-                        </div>
+                    <div className="relative z-10 w-full h-full flex flex-col items-start pl-1 justify-center">
+                        <h3 className="font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-0.5 px-2 leading-tight mb-0.5">
+                            Create New
+                        </h3>
+                        <span className="block text-xl font-bold tracking-tight text-foreground mt-0.5 px-2">
+                            Manual Invoice
+                        </span>
                     </div>
                     {/* Subtle Glow on Hover */}
                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />

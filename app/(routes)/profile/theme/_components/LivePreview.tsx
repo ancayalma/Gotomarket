@@ -17,14 +17,29 @@ interface LivePreviewProps {
     };
     radius?: string;
     themeName: string;
+    fonts?: {
+        heading: string;
+        body: string;
+        button: string;
+        headingWeight: string;
+        bodyWeight: string;
+        buttonWeight: string;
+        headingStyle: string;
+        bodyStyle: string;
+        buttonStyle: string;
+    };
 }
 
-export function LivePreview({ colors, radius = "0.5rem", themeName }: LivePreviewProps) {
+export function LivePreview({ colors, radius = "0.5rem", themeName, fonts }: LivePreviewProps) {
     const hsl = (value: string) => `hsl(${value})`;
     const hsla = (value: string, alpha: number) => `hsl(${value} / ${alpha})`;
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4" style={{
+            fontFamily: fonts?.body ? `'${fonts.body}', sans-serif` : 'inherit',
+            fontWeight: fonts?.bodyWeight || 'inherit',
+            fontStyle: fonts?.bodyStyle || 'inherit',
+        }}>
             {/* Header */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
                 <Eye className="w-4 h-4" />
@@ -78,7 +93,11 @@ export function LivePreview({ colors, radius = "0.5rem", themeName }: LivePrevie
                                 >
                                     Total Revenue
                                 </p>
-                                <h3 className="text-2xl font-bold tracking-tight mb-2">
+                                <h3 className="text-2xl tracking-tight mb-2" style={{
+                                    fontFamily: fonts?.heading ? `'${fonts.heading}', sans-serif` : 'inherit',
+                                    fontWeight: fonts?.headingWeight || '700',
+                                    fontStyle: fonts?.headingStyle || 'normal',
+                                }}>
                                     $124,500.00
                                 </h3>
                                 <div className="flex items-center gap-1.5 text-xs font-medium">
@@ -172,11 +191,14 @@ export function LivePreview({ colors, radius = "0.5rem", themeName }: LivePrevie
                                 }}
                             />
                             <button
-                                className="px-4 py-2 text-sm font-medium shadow-sm transition-all hover:opacity-90 active:scale-95 flex items-center gap-2"
+                                className="px-4 py-2 text-sm shadow-sm transition-all hover:opacity-90 active:scale-95 flex items-center gap-2"
                                 style={{
                                     backgroundColor: hsl(colors.primary),
                                     color: hsl(colors.primaryForeground),
                                     borderRadius: radius,
+                                    fontFamily: fonts?.button ? `'${fonts.button}', sans-serif` : 'inherit',
+                                    fontWeight: fonts?.buttonWeight || '500',
+                                    fontStyle: fonts?.buttonStyle || 'normal',
                                 }}
                             >
                                 Save

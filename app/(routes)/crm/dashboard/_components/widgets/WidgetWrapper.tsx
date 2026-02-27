@@ -36,13 +36,13 @@ export const WidgetWrapper = ({
 }: WidgetWrapperProps) => {
     return (
         <Card className={cn("flex flex-col h-[400px] bg-black/40 border-white/10 backdrop-blur-xl group/widget", className)}>
-            <CardHeader className="p-4 pb-2 space-y-0">
-                <div className="flex items-center justify-between mb-3">
+            <CardHeader className="p-3 pb-1 space-y-0">
+                <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2.5">
-                        <div className={cn("p-2 rounded-xl bg-white/5 shadow-sm group-hover/widget:scale-110 transition-transform duration-300", iconColor)}>
-                            <Icon size={18} />
+                        <div className={cn("p-1.5 rounded-lg bg-white/5 shadow-sm group-hover/widget:scale-110 transition-transform duration-300", iconColor)}>
+                            <Icon size={16} />
                         </div>
-                        <CardTitle className="text-base font-black uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-2 px-2 leading-relaxed">
+                        <CardTitle className="text-[11px] font-bold uppercase tracking-wider text-foreground/90 py-0.5 px-2 leading-none">
                             {title} {count !== undefined && <span className="text-muted-foreground ml-1 font-medium not-italic">({count})</span>}
                         </CardTitle>
                     </div>
@@ -51,10 +51,10 @@ export const WidgetWrapper = ({
 
                 {onSearch && (
                     <div className="relative group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" size={14} />
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" size={12} />
                         <Input
                             placeholder={`Search ${title.toLowerCase()}...`}
-                            className="pl-9 h-9 bg-white/5 border-white/10 focus:bg-white/10 focus:border-primary/50 transition-all text-xs rounded-lg"
+                            className="pl-8 h-8 bg-white/5 border-white/10 focus:bg-white/10 focus:border-primary/50 transition-all text-[11px] rounded-lg"
                             onChange={(e) => onSearch(e.target.value)}
                             value={searchValue}
                         />

@@ -37,7 +37,7 @@ const DashboardCard = React.forwardRef<HTMLButtonElement, DashboardCardProps>(
                 disabled={isLocked && !props.onClick}
                 className={cn(
                     "relative group w-full p-3 overflow-hidden transition-all duration-300",
-                    "bg-[#09090b] border border-[#27272a] hover:border-primary/50 rounded-2xl",
+                    "bg-background border border-border hover:border-primary/50 rounded-2xl",
                     "h-[110px]",
                     isLocked && "opacity-80 grayscale-[0.5] hover:grayscale-0",
                     className
@@ -47,12 +47,12 @@ const DashboardCard = React.forwardRef<HTMLButtonElement, DashboardCardProps>(
                 {/* Giant Watermark Icon */}
                 <Icon
                     className={cn(
-                        "absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-colors duration-500 pointer-events-none",
-                        variant === "default" && "text-muted-foreground/5 group-hover:text-muted-foreground/10",
-                        variant === "success" && "text-emerald-500/10 group-hover:text-emerald-500/20",
-                        variant === "info" && "text-cyan-500/10 group-hover:text-cyan-500/20",
-                        variant === "violet" && "text-violet-500/10 group-hover:text-violet-500/20",
-                        variant === "warning" && "text-amber-500/10 group-hover:text-amber-500/20"
+                        "absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-all duration-700 pointer-events-none opacity-10 group-hover:opacity-50 group-hover:scale-125 group-hover:-rotate-0 group-hover:text-primary",
+                        variant === "default" && "text-muted-foreground",
+                        variant === "success" && "text-emerald-500",
+                        variant === "info" && "text-cyan-500",
+                        variant === "violet" && "text-violet-500",
+                        variant === "warning" && "text-amber-500"
                     )}
                 />
 

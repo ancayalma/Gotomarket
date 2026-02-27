@@ -1176,6 +1176,7 @@ enum SubscriptionPlan {
   INDIVIDUAL_PRO
   ENTERPRISE
   EXEMPT
+  TESTING
 }
 
 enum TeamStatus {

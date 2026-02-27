@@ -23,10 +23,10 @@ export const NavigationCard = ({ card, loading = false, className, isActive, onC
     <div
         onClick={onClick}
         className={cn(
-            "group relative overflow-hidden rounded-2xl border-[1px] transition-all duration-300 h-[110px] w-full cursor-pointer",
+            "group relative w-full p-3 overflow-hidden transition-all duration-300 bg-background border border-[1px] rounded-2xl h-[110px] cursor-pointer",
             isActive
-                ? "border-primary/50 bg-[#18181b] ring-2 ring-primary/30"
-                : "border-[#27272a] bg-[#09090b] hover:border-white/20 hover:bg-[#121214]",
+                ? "border-primary/50 ring-2 ring-primary/30"
+                : "border-border hover:border-primary/50",
             className
         )}
     >
@@ -39,20 +39,18 @@ export const NavigationCard = ({ card, loading = false, className, isActive, onC
         {/* Giant Watermark Icon - Positioned Right */}
         <card.icon
             className={cn(
-                "absolute -right-6 -bottom-6 w-36 h-36 -rotate-12 transition-all duration-500 pointer-events-none opacity-10 group-hover:opacity-20 group-hover:scale-110",
+                "absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-all duration-700 pointer-events-none group-hover:scale-125 group-hover:-rotate-0 group-hover:text-primary",
+                isActive ? "opacity-30 scale-110" : "opacity-10 group-hover:opacity-50",
                 card.iconColor
             )}
         />
 
-        <div className="absolute top-5 left-6 right-6 z-10 space-y-1">
-            <span className={cn(
-                "block text-[11px] font-bold uppercase tracking-wider transition-colors leading-none",
-                card.iconColor
-            )}>
+        <div className="relative z-10 w-full h-full flex flex-col items-start pl-1 justify-center">
+            <h3 className="font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-0.5 px-2 leading-tight mb-0.5">
                 {card.title}
-            </span>
+            </h3>
             <span className={cn(
-                "block text-sm font-bold tracking-tight leading-tight transition-colors text-white truncate",
+                "block text-xl font-bold tracking-tight text-foreground mt-0.5 px-2 truncate",
             )}>
                 {card.description}
             </span>

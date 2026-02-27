@@ -16,6 +16,7 @@ import {
     Type,
     Palette,
     Layers,
+    Italic
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -52,7 +53,52 @@ const PRESET_COLORS: Record<ThemePreset, Partial<typeof DEFAULT_CUSTOM_COLORS>> 
     "crimson-night": { primary: "0 80% 50%", accent: "0 80% 15%" },
     "monochrome-studio": { primary: "0 0% 100%", accent: "0 0% 20%" },
     "forest-spectrum": { primary: "150 60% 50%", accent: "150 60% 15%" },
+    "toxic-vapor": {
+        primary: "75 100% 50%",
+        accent: "260 100% 60%",
+        background: "80 10% 4%",
+        surface: "80 15% 7%",
+        elevated: "80 15% 12%",
+    },
+    "solar-flare": {
+        primary: "25 100% 50%",
+        accent: "45 100% 50%",
+        background: "15 15% 4%",
+        surface: "15 20% 7%",
+        elevated: "15 20% 12%",
+    },
+    "super-nova": {
+        primary: "330 100% 45%",
+        accent: "0 0% 0%",
+        background: "220 20% 98%",
+        foreground: "220 40% 10%",
+        surface: "220 20% 95%",
+        elevated: "220 20% 94%",
+        mutedForeground: "220 20% 40%",
+        primaryForeground: "0 0% 100%",
+    },
+    "obsidian-eclipse": {
+        primary: "191 65% 58%",
+        accent: "45 90% 50%",
+        background: "20 10% 3%",
+        surface: "20 15% 5%",
+        elevated: "20 15% 10%",
+    },
 };
+
+const AVAILABLE_FONTS = [
+    "Inter",
+    "Roboto",
+    "Montserrat",
+    "Poppins",
+    "Outfit",
+    "Open Sans",
+    "Lato",
+    "Lexend",
+    "Ubuntu",
+    "Plus Jakarta Sans",
+    "Public Sans"
+];
 
 export interface CustomTheme {
     id: string;
@@ -60,6 +106,17 @@ export interface CustomTheme {
     colors: typeof DEFAULT_CUSTOM_COLORS;
     radius: string;
     motion: "fast" | "fluid";
+    fonts?: {
+        heading: string;
+        body: string;
+        button: string;
+        headingWeight?: string;
+        bodyWeight?: string;
+        buttonWeight?: string;
+        headingStyle?: string;
+        bodyStyle?: string;
+        buttonStyle?: string;
+    };
     createdAt: number;
     shared?: boolean;
 }
@@ -93,9 +150,64 @@ export function ThemeEditor({
         return { ...DEFAULT_CUSTOM_COLORS };
     });
 
-    // System Feel State
+    // System Feel & Typography State
     const [radius, setRadius] = useState<string>(editingTheme?.radius || DEFAULT_RADIUS);
     const [motion, setMotion] = useState<"fast" | "fluid">(editingTheme?.motion || "fluid");
+    const [headingFont, setHeadingFont] = useState<string>(editingTheme?.fonts?.heading || activeCustomTheme?.fonts?.heading || "Inter");
+    const [bodyFont, setBodyFont] = useState<string>(editingTheme?.fonts?.body || activeCustomTheme?.fonts?.body || "Inter");
+    const [buttonFont, setButtonFont] = useState<string>(editingTheme?.fonts?.button || activeCustomTheme?.fonts?.button || "Inter");
+
+    const [headingWeight, setHeadingWeight] = useState<string>(editingTheme?.fonts?.headingWeight || activeCustomTheme?.fonts?.headingWeight || "700");
+    const [bodyWeight, setBodyWeight] = useState<string>(editingTheme?.fonts?.bodyWeight || activeCustomTheme?.fonts?.bodyWeight || "400");
+    const [buttonWeight, setButtonWeight] = useState<string>(editingTheme?.fonts?.buttonWeight || activeCustomTheme?.fonts?.buttonWeight || "600");
+
+    const [headingStyle, setHeadingStyle] = useState<string>(editingTheme?.fonts?.headingStyle || activeCustomTheme?.fonts?.headingStyle || "normal");
+    const [bodyStyle, setBodyStyle] = useState<string>(editingTheme?.fonts?.bodyStyle || activeCustomTheme?.fonts?.bodyStyle || "normal");
+    const [buttonStyle, setButtonStyle] = useState<string>(editingTheme?.fonts?.buttonStyle || activeCustomTheme?.fonts?.buttonStyle || "normal");
+
+    // Load fonts into preview
+    useEffect(() => {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        const query = "family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Outfit:wght@400;500;600;700;800;900&family=Open+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Lato:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Lexend:wght@400;500;600;700;800;900&family=Ubuntu:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&display=swap";
+        link.href = `https://fonts.googleapis.com/css2?${query}`;
+        document.head.appendChild(link);
+    }, []);
+
+    // 2. Dynamic Studio Skinning - Live adaptive UI for all themes
+    useEffect(() => {
+
+        const style = document.createElement("style");
+        style.id = "theme-studio-skin";
+        style.textContent = `
+            .theme-studio-root {
+                --background: ${colors.background} !important;
+                --foreground: ${colors.foreground} !important;
+                --card: ${colors.surface} !important;
+                --muted: ${colors.surface} !important;
+                --muted-foreground: ${colors.mutedForeground} !important;
+                --primary: ${colors.primary} !important;
+                --primary-foreground: ${colors.primaryForeground} !important;
+                --border: ${colors.primary} / 0.15 !important;
+                --accent: ${colors.accent} !important;
+                --input: ${colors.elevated} !important;
+                --ring: ${colors.primary} !important;
+            }
+            .theme-studio-root input, 
+            .theme-studio-root select,
+            .theme-studio-root textarea {
+                color: hsl(${colors.foreground}) !important;
+                background-color: hsl(${colors.surface}) !important;
+                border-color: hsla(${colors.primary}, 0.2) !important;
+            }
+        `;
+        document.getElementById("theme-studio-skin")?.remove();
+        document.head.appendChild(style);
+
+        return () => {
+            document.getElementById("theme-studio-skin")?.remove();
+        };
+    }, [colors, activeThemeId]);
 
     // Apply preview styles to document
     useEffect(() => {
@@ -127,6 +239,26 @@ export function ThemeEditor({
         --input: ${colors.elevated} !important;
         --ring: ${colors.primary} !important;
         --radius: ${radius} !important;
+        --font-heading: '${headingFont}', sans-serif;
+        --font-body: '${bodyFont}', sans-serif;
+        --font-button: '${buttonFont}', sans-serif;
+      }
+
+      /* Apply font overrides directly for the preview session */
+      body {
+        font-family: var(--font-body) !important;
+        font-weight: ${bodyWeight} !important;
+        font-style: ${bodyStyle} !important;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-heading) !important;
+        font-weight: ${headingWeight} !important;
+        font-style: ${headingStyle} !important;
+      }
+      button {
+        font-family: var(--font-button) !important;
+        font-weight: ${buttonWeight} !important;
+        font-style: ${buttonStyle} !important;
       }
     `;
 
@@ -145,7 +277,7 @@ export function ThemeEditor({
             document.getElementById("theme-editor-preview")?.remove();
             document.documentElement.classList.remove("reduced-motion");
         };
-    }, [colors, radius, motion]);
+    }, [colors, radius, motion, headingFont, bodyFont, buttonFont, headingWeight, bodyWeight, buttonWeight, headingStyle, bodyStyle, buttonStyle]);
 
     const updateColor = (key: keyof typeof colors, value: string) => {
         if (colors[key] === value) return;
@@ -161,6 +293,15 @@ export function ThemeEditor({
         setColors({ ...DEFAULT_CUSTOM_COLORS });
         setRadius(DEFAULT_RADIUS);
         setMotion("fluid");
+        setHeadingFont("Inter");
+        setBodyFont("Inter");
+        setButtonFont("Inter");
+        setHeadingWeight("700");
+        setBodyWeight("400");
+        setButtonWeight("600");
+        setHeadingStyle("normal");
+        setBodyStyle("normal");
+        setButtonStyle("normal");
         setThemeName("My Custom Theme");
     };
 
@@ -175,6 +316,17 @@ export function ThemeEditor({
             colors,
             radius,
             motion,
+            fonts: {
+                heading: headingFont,
+                body: bodyFont,
+                button: buttonFont,
+                headingWeight,
+                bodyWeight,
+                buttonWeight,
+                headingStyle,
+                bodyStyle,
+                buttonStyle,
+            },
             createdAt: editingTheme?.createdAt || Date.now(),
         };
 
@@ -210,6 +362,17 @@ export function ThemeEditor({
             colors,
             radius,
             motion,
+            fonts: {
+                heading: headingFont,
+                body: bodyFont,
+                button: buttonFont,
+                headingWeight,
+                bodyWeight,
+                buttonWeight,
+                headingStyle,
+                bodyStyle,
+                buttonStyle,
+            },
             exportedAt: new Date().toISOString(),
         };
         const blob = new Blob([JSON.stringify(exportData, null, 2)], {
@@ -240,6 +403,17 @@ export function ThemeEditor({
                         if (data.name) setThemeName(data.name);
                         if (data.radius) setRadius(data.radius);
                         if (data.motion) setMotion(data.motion);
+                        if (data.fonts) {
+                            if (data.fonts.heading) setHeadingFont(data.fonts.heading);
+                            if (data.fonts.body) setBodyFont(data.fonts.body);
+                            if (data.fonts.button) setButtonFont(data.fonts.button);
+                            if (data.fonts.headingWeight) setHeadingWeight(data.fonts.headingWeight);
+                            if (data.fonts.bodyWeight) setBodyWeight(data.fonts.bodyWeight);
+                            if (data.fonts.buttonWeight) setButtonWeight(data.fonts.buttonWeight);
+                            if (data.fonts.headingStyle) setHeadingStyle(data.fonts.headingStyle);
+                            if (data.fonts.bodyStyle) setBodyStyle(data.fonts.bodyStyle);
+                            if (data.fonts.buttonStyle) setButtonStyle(data.fonts.buttonStyle);
+                        }
                     }
                 } catch {
                     alert("Invalid theme file");
@@ -268,7 +442,7 @@ export function ThemeEditor({
     const contrastResult = checkContrast();
 
     return (
-        <div className="flex flex-col min-h-full">
+        <div className="flex flex-col min-h-full theme-studio-root">
             {/* Header */}
             <div className="px-6 py-6 md:px-8 lg:px-10">
                 <div className="flex items-center gap-3 mb-1">
@@ -309,12 +483,12 @@ export function ThemeEditor({
                             <div className="flex-1">
                                 <Label className="text-sm font-medium mb-2 block">Quick Start Presets</Label>
                                 <div className="flex gap-2 overflow-x-auto pb-1">
-                                    {THEME_PRESETS.map((preset) => (
+                                    {THEME_PRESETS.map((preset: ThemePreset) => (
                                         <button
                                             key={preset}
                                             onClick={() => loadPreset(preset)}
                                             className="w-8 h-8 rounded-full border border-border/50 hover:scale-110 transition-transform flex-shrink-0"
-                                            style={{ backgroundColor: `hsl(${PRESET_COLORS[preset].primary})` }}
+                                            style={{ backgroundColor: `hsl(${PRESET_COLORS[preset as ThemePreset].primary})` }}
                                             title={preset}
                                         />
                                     ))}
@@ -327,57 +501,7 @@ export function ThemeEditor({
                         {/* 4-Quadrant Visual Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
 
-                            {/* Q1: Backgrounds */}
-                            <div>
-                                <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
-                                    <Layers className="w-4 h-4" />
-                                    Background & Surface
-                                </h3>
-                                <div className="space-y-3">
-                                    <ColorPicker
-                                        label="App Background"
-                                        description="Main application canvas (bg0)"
-                                        value={colors.background}
-                                        onChange={(v) => updateColor("background", v)}
-                                    />
-                                    <ColorPicker
-                                        label="Surface Cards"
-                                        description="Panels and containers (bg1)"
-                                        value={colors.surface}
-                                        onChange={(v) => updateColor("surface", v)}
-                                    />
-                                    <ColorPicker
-                                        label="Elevated Elements"
-                                        description="Modals and sticky headers (bg2)"
-                                        value={colors.elevated}
-                                        onChange={(v) => updateColor("elevated", v)}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Q2: Typography */}
-                            <div>
-                                <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
-                                    <Type className="w-4 h-4" />
-                                    Typography
-                                </h3>
-                                <div className="space-y-3">
-                                    <ColorPicker
-                                        label="Primary Text"
-                                        description="Headings and main content"
-                                        value={colors.foreground}
-                                        onChange={(v) => updateColor("foreground", v)}
-                                    />
-                                    <ColorPicker
-                                        label="Muted Text"
-                                        description="Subtitles and metadata"
-                                        value={colors.mutedForeground}
-                                        onChange={(v) => updateColor("mutedForeground", v)}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Q3: Brand Core */}
+                            {/* Q1: Brand Core */}
                             <div>
                                 <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
                                     <Palette className="w-4 h-4" />
@@ -411,7 +535,7 @@ export function ThemeEditor({
                                 </div>
                             </div>
 
-                            {/* Q4: System Feel */}
+                            {/* Q2: System Feel */}
                             <div>
                                 <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
                                     <MousePointer2 className="w-4 h-4" />
@@ -473,6 +597,163 @@ export function ThemeEditor({
                                 </div>
                             </div>
 
+                            {/* Q3: Backgrounds */}
+                            <div>
+                                <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+                                    <Layers className="w-4 h-4" />
+                                    Background & Surface
+                                </h3>
+                                <div className="space-y-3">
+                                    <ColorPicker
+                                        label="App Background"
+                                        description="Main application canvas (bg0)"
+                                        value={colors.background}
+                                        onChange={(v) => updateColor("background", v)}
+                                    />
+                                    <ColorPicker
+                                        label="Surface Cards"
+                                        description="Panels and containers (bg1)"
+                                        value={colors.surface}
+                                        onChange={(v) => updateColor("surface", v)}
+                                    />
+                                    <ColorPicker
+                                        label="Elevated Elements"
+                                        description="Modals and sticky headers (bg2)"
+                                        value={colors.elevated}
+                                        onChange={(v) => updateColor("elevated", v)}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Q4: Typography & Fonts */}
+                            <div>
+                                <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+                                    <Type className="w-4 h-4" />
+                                    Typography & Fonts
+                                </h3>
+                                <div className="space-y-4">
+                                    <div className="space-y-3">
+                                        <ColorPicker
+                                            label="Primary Text"
+                                            description="Headings and main content"
+                                            value={colors.foreground}
+                                            onChange={(v) => updateColor("foreground", v)}
+                                        />
+                                        <ColorPicker
+                                            label="Muted Text"
+                                            description="Subtitles and metadata"
+                                            value={colors.mutedForeground}
+                                            onChange={(v) => updateColor("mutedForeground", v)}
+                                        />
+                                    </div>
+
+                                    <div className="pt-2 border-t border-border/50 space-y-4">
+                                        <div>
+                                            <Label className="text-xs font-semibold text-muted-foreground mb-1 block">Heading Font</Label>
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={headingFont}
+                                                    onChange={(e) => setHeadingFont(e.target.value)}
+                                                    className="flex-1 bg-card/60 border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                                                    style={{ fontFamily: headingFont }}
+                                                >
+                                                    {AVAILABLE_FONTS.map(font => (
+                                                        <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
+                                                    ))}
+                                                </select>
+                                                <select
+                                                    value={headingWeight}
+                                                    onChange={(e) => setHeadingWeight(e.target.value)}
+                                                    className="w-[100px] bg-card/60 border border-border/50 rounded-lg px-2 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                                                >
+                                                    <option value="400">Regular</option>
+                                                    <option value="500">Medium</option>
+                                                    <option value="600">Semibold</option>
+                                                    <option value="700">Bold</option>
+                                                    <option value="800">ExtraBold</option>
+                                                    <option value="900">Black</option>
+                                                </select>
+                                                <button
+                                                    onClick={() => setHeadingStyle(headingStyle === "italic" ? "normal" : "italic")}
+                                                    className={`w-9 rounded-lg border flex items-center justify-center transition-colors ${headingStyle === "italic" ? "bg-primary/20 border-primary text-primary" : "bg-card/60 border-border/50 text-muted-foreground hover:bg-muted"}`}
+                                                    title="Italic"
+                                                >
+                                                    <Italic className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs font-semibold text-muted-foreground mb-1 block">Body Font</Label>
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={bodyFont}
+                                                    onChange={(e) => setBodyFont(e.target.value)}
+                                                    className="flex-1 bg-card/60 border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                                                    style={{ fontFamily: bodyFont }}
+                                                >
+                                                    {AVAILABLE_FONTS.map(font => (
+                                                        <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
+                                                    ))}
+                                                </select>
+                                                <select
+                                                    value={bodyWeight}
+                                                    onChange={(e) => setBodyWeight(e.target.value)}
+                                                    className="w-[100px] bg-card/60 border border-border/50 rounded-lg px-2 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                                                >
+                                                    <option value="400">Regular</option>
+                                                    <option value="500">Medium</option>
+                                                    <option value="600">Semibold</option>
+                                                    <option value="700">Bold</option>
+                                                    <option value="800">ExtraBold</option>
+                                                    <option value="900">Black</option>
+                                                </select>
+                                                <button
+                                                    onClick={() => setBodyStyle(bodyStyle === "italic" ? "normal" : "italic")}
+                                                    className={`w-9 rounded-lg border flex items-center justify-center transition-colors ${bodyStyle === "italic" ? "bg-primary/20 border-primary text-primary" : "bg-card/60 border-border/50 text-muted-foreground hover:bg-muted"}`}
+                                                    title="Italic"
+                                                >
+                                                    <Italic className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs font-semibold text-muted-foreground mb-1 block">Button Font</Label>
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={buttonFont}
+                                                    onChange={(e) => setButtonFont(e.target.value)}
+                                                    className="flex-1 bg-card/60 border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                                                    style={{ fontFamily: buttonFont }}
+                                                >
+                                                    {AVAILABLE_FONTS.map(font => (
+                                                        <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
+                                                    ))}
+                                                </select>
+                                                <select
+                                                    value={buttonWeight}
+                                                    onChange={(e) => setButtonWeight(e.target.value)}
+                                                    className="w-[100px] bg-card/60 border border-border/50 rounded-lg px-2 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                                                >
+                                                    <option value="400">Regular</option>
+                                                    <option value="500">Medium</option>
+                                                    <option value="600">Semibold</option>
+                                                    <option value="700">Bold</option>
+                                                    <option value="800">ExtraBold</option>
+                                                    <option value="900">Black</option>
+                                                </select>
+                                                <button
+                                                    onClick={() => setButtonStyle(buttonStyle === "italic" ? "normal" : "italic")}
+                                                    className={`w-9 rounded-lg border flex items-center justify-center transition-colors ${buttonStyle === "italic" ? "bg-primary/20 border-primary text-primary" : "bg-card/60 border-border/50 text-muted-foreground hover:bg-muted"}`}
+                                                    title="Italic"
+                                                >
+                                                    <Italic className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -497,6 +778,17 @@ export function ThemeEditor({
                                     error: "0 84% 60%",
                                 }}
                                 radius={radius}
+                                fonts={{
+                                    heading: headingFont,
+                                    body: bodyFont,
+                                    button: buttonFont,
+                                    headingWeight,
+                                    bodyWeight,
+                                    buttonWeight,
+                                    headingStyle,
+                                    bodyStyle,
+                                    buttonStyle,
+                                }}
                             />
 
                             {/* Readability Check */}
