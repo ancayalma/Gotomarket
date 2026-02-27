@@ -718,7 +718,7 @@ SIGNATURE_HTML = '''<table cellpadding="0" cellspacing="0" border="0" class="sig
 <td style="padding-right: 6px;"><a href="https://www.instagram.com/theutilityco/" target="_blank"><img src="https://storage.googleapis.com/tgl_cdn/images/Social/icons8-instagram-50.png" width="22" height="22" alt="Instagram" style="display: block; border: 0; vertical-align: middle;"></a></td>
 <td style="padding-right: 6px;"><a href="https://medium.com/@theutilityco" target="_blank"><img src="https://storage.googleapis.com/tgl_cdn/images/Social/icons8-medium-50.png" width="22" height="22" alt="Medium" style="display: block; border: 0; vertical-align: middle;"></a></td>
 <td style="padding-right: 6px;"><a href="https://www.patreon.com/c/TheUtilityCompany" target="_blank"><img src="https://storage.googleapis.com/tgl_cdn/images/Social/YouTube.png" width="22" height="22" alt="YouTube" style="display: block; border: 0; vertical-align: middle;"></a></td>
-<td><a href="https://discord.gg/q4tFymyAnx" target="_blank"><img src="https://storage.googleapis.com/tgl_cdn/images/Social/Discord-Symbol-Blurple.png" height="22" alt="Discord" style="display: block; border: 0; max-width: 24px; object-fit: contain; vertical-align: middle;"></a></td>
+<td><a href="https://discord.gg/G9Sp8CAQmV" target="_blank"><img src="https://storage.googleapis.com/tgl_cdn/images/Social/Discord-Symbol-Blurple.png" height="22" alt="Discord" style="display: block; border: 0; max-width: 24px; object-fit: contain; vertical-align: middle;"></a></td>
 </tr>
 </tbody>
 </table>

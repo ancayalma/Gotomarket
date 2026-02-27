@@ -79,7 +79,7 @@ export default function GlobalError({
 
                             <div className="pt-8">
                                 <Link
-                                    href="https://discord.gg/gcgNugyWkg"
+                                    href="https://discord.gg/G9Sp8CAQmV"
                                     target="_blank"
                                     className="px-8 py-4 rounded-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-lg tracking-wide shadow-lg hover:shadow-[#5865F2]/50 transition-all duration-300 flex items-center justify-center gap-3 group mx-auto w-fit"
                                 >

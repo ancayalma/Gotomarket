@@ -22,7 +22,7 @@ const SupportComponent = () => {
           <Button asChild variant={"secondary"}>
             <Link
               className="border rounded-md p-2"
-              href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.com/invite/gcgNugyWkg"}
+              href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/G9Sp8CAQmV"}
               target="_blank"
             >
               <DiscordLogoIcon />

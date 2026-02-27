@@ -14,7 +14,7 @@ export async function GET() {
             settings = await prismadb.socialSettings.create({
                 data: {
                     xTwitterUrl: "https://x.com/BasaltAI",
-                    discordUrl: "https://discord.gg/gcgNugyWkg",
+                    discordUrl: "https://discord.gg/G9Sp8CAQmV",
                     githubUrl: "https://github.com/BasaltHQ/crm-official",
                 }
             });

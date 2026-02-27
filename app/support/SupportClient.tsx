@@ -34,7 +34,7 @@ export default function SupportClient() {
                         title="Community Discord"
                         description="Join our active community of developers and users. Ask questions and share tips."
                         actionText="Join Discord"
-                        href="https://discord.gg/gcgNugyWkg"
+                        href="https://discord.gg/G9Sp8CAQmV"
                     />
 
                     {/* Email Support */}

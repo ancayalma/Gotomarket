@@ -65,7 +65,7 @@ export default function DevelopersPage() {
             <p className="text-gray-400 mb-8 max-w-xl mx-auto">
               Our engineering team is always available on Discord to help you build your custom integrations.
             </p>
-            <a href="https://discord.gg/gcgNugyWkg" className="inline-flex items-center gap-2 px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-full transition-all">
+            <a href="https://discord.gg/G9Sp8CAQmV" className="inline-flex items-center gap-2 px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-full transition-all">
               Join Discord Community
             </a>
           </div>

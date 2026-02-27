@@ -21,7 +21,7 @@ const socialLinks = [
     { label: 'Twitter', href: 'https://x.com/BasaltHQ' },
     { label: 'LinkedIn', href: 'https://linkedin.com/company/basalthq' },
     { label: 'GitHub', href: 'https://github.com/BasaltHQ/crm-official' },
-    { label: 'Discord', href: 'https://discord.gg/gcgNugyWkg' },
+    { label: 'Discord', href: 'https://discord.gg/G9Sp8CAQmV' },
 ];
 
 export default function BasaltFooter() {
