@@ -21,7 +21,7 @@ export default function AirdropLandingPage() {
                 </div>
 
                 <div className="space-y-4">
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                         WE HAVE <br />
                         <span className="bg-gradient-to-r from-[#F54029] to-[#ff8c00] bg-clip-text text-transparent">
                             RELOCATED

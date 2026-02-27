@@ -302,7 +302,7 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                     <Mail className="w-5 h-5 text-primary" />
                     Team Email Settings
                 </CardTitle>

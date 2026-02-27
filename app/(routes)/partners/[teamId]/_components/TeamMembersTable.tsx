@@ -227,7 +227,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Team Members</CardTitle>
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Members</CardTitle>
                     <CardDescription>
                         Manage users assigned to this team.
                     </CardDescription>
@@ -242,7 +242,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Add Team Member</DialogTitle>
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Add Team Member</DialogTitle>
                             <DialogDescription>
                                 Search for existing system users to add to this team.
                             </DialogDescription>
@@ -305,7 +305,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
             <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Change Password</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Change Password</DialogTitle>
                         <DialogDescription>
                             Enter a new password for this user.
                         </DialogDescription>
@@ -431,7 +431,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
             <Dialog open={migrationOpen} onOpenChange={setMigrationOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Spawn New Team</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Spawn New Team</DialogTitle>
                         <DialogDescription>
                             Create a new team/bucket and move {selectedMigrationMember?.name || selectedMigrationMember?.email} to it as the Owner.
                         </DialogDescription>
@@ -495,7 +495,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
             <Dialog open={moveExistingOpen} onOpenChange={setMoveExistingOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 font-bold uppercase tracking-tight">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Shield className="w-5 h-5 text-amber-500" />
                             Move to Existing Team
                         </DialogTitle>

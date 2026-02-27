@@ -27,7 +27,7 @@ export default async function CMSActivityPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20 shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Activities</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Total Activities</CardTitle>
                         <Activity className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
@@ -39,7 +39,7 @@ export default async function CMSActivityPage() {
                 </Card>
                 <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/20 shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Recent (24h)</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Recent (24h)</CardTitle>
                         <Clock className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
@@ -51,7 +51,7 @@ export default async function CMSActivityPage() {
                 </Card>
                 <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20 shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">System Health</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">System Health</CardTitle>
                         <Shield className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>

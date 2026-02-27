@@ -121,7 +121,7 @@ export default function AIPromptLab() {
                                     <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
                                         <Settings2 className="w-4 h-4" />
                                     </div>
-                                    <CardTitle className="text-sm">Sandbox Mode</CardTitle>
+                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Sandbox Mode</CardTitle>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

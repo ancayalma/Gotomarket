@@ -76,7 +76,7 @@ const ForcePasswordChangeModal = ({ isOpen }: ForcePasswordChangeModalProps) => 
                         </div>
 
                         <div className="p-8">
-                            <Dialog.Title className="text-2xl font-bold text-white text-center mb-2">
+                            <Dialog.Title className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2 text-center mb-2">
                                 Secure Your Account
                             </Dialog.Title>
                             <Dialog.Description className="text-muted-foreground text-center text-sm mb-8">

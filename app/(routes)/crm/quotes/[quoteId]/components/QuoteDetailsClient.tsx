@@ -350,7 +350,7 @@ export default function QuoteDetailsClient({ quote }: { quote: Quote }) {
                                 <FileText className="h-8 w-8" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-black tracking-tight">{quote.title}</h1>
+                                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{quote.title}</h1>
                                 <p className="text-muted-foreground font-mono">{quote.quoteNumber}</p>
                             </div>
                         </div>

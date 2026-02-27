@@ -57,7 +57,7 @@ export default function LocationsPage() {
                                     <Link key={location.slug} href={`/location/${location.slug}`}>
                                         <Card className="border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-cyan-500/30 transition-all duration-300 h-full group cursor-pointer">
                                             <CardHeader>
-                                                <CardTitle className="flex items-center justify-between text-white">
+                                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                                     <div className="flex items-center gap-2">
                                                         <MapPin className="w-5 h-5 text-cyan-400" />
                                                         <span>{location.name}</span>

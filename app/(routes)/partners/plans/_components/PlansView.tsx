@@ -163,7 +163,7 @@ const PlansView = ({ initialPlans }: Props) => {
                                 </div>
                                 <Badge variant="outline" className="font-mono text-[10px] tracking-widest uppercase py-0">{plan.slug}</Badge>
                             </div>
-                            <CardTitle className="text-2xl font-black italic uppercase tracking-tight">{plan.name}</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{plan.name}</CardTitle>
                             <CardDescription className="line-clamp-1">{plan.description || "Global subscription tier"}</CardDescription>
                         </CardHeader>
 

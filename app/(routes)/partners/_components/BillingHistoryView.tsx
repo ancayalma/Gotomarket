@@ -90,7 +90,7 @@ export const BillingHistoryView = ({ subscriptions, invoices = [] }: BillingHist
     return (
         <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
             <CardHeader className="border-b border-zinc-800 bg-zinc-900/50 flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                     <CreditCard className="w-5 h-5 text-indigo-400" />
                     Platform Billing History
                 </CardTitle>

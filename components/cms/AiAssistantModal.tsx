@@ -75,7 +75,7 @@ export function AiAssistantModal({
 
                     {/* Content */}
                     <div className="relative z-10">
-                        <DialogTitle className="text-xl font-bold mb-2 flex items-center gap-3 text-white">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <div className={cn("p-2 rounded-lg", mode === 'create' ? "bg-blue-500/10" : "bg-purple-500/10")}>
                                 {mode === "create" ? (
                                     <Sparkles className={cn("h-5 w-5", mode === 'create' ? "text-blue-400" : "text-purple-400")} />

@@ -154,7 +154,7 @@ export const LeadWizardQuickModal = ({
                             <Wand2 size={20} className="text-cyan-400" />
                         </div>
                         <div>
-                            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 Quick Discovery Session
                                 <Sparkles
                                     size={14}

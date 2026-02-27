@@ -191,7 +191,7 @@ export default function ChatBoard({ sessionId, initialMessages, isTemporary, onR
                         <Menu className="w-5 h-5" />
                     </Button>
                     <div className="flex flex-col">
-                        <h1 className="font-semibold text-sm sm:text-base flex items-center gap-2">
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                             {sessionTitle || "Varuni AI Assistant"}
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                         </h1>

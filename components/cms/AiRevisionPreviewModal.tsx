@@ -97,7 +97,7 @@ export function AiRevisionPreviewModal({
                                 <Wand2 className="h-5 w-5 text-purple-400" />
                             </div>
                             <div>
-                                <DialogTitle className="text-lg font-bold text-white">Review AI Changes</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Review AI Changes</DialogTitle>
                                 <DialogDescription className="text-slate-400 text-xs">
                                     Compare the original content with the AI's suggestions.
                                 </DialogDescription>

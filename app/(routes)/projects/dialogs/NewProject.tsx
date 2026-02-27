@@ -167,7 +167,7 @@ const NewProjectDialog = ({ customTrigger, entityName = "Project", apiEndpoint =
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader className="pb-2">
-          <DialogTitle className="flex items-center gap-2 text-2xl font-bold py-1">
+          <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
             <FolderKanban className="w-6 h-6 text-primary" />
             Create Delivery Project
           </DialogTitle>

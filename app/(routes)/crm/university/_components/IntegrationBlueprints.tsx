@@ -184,7 +184,7 @@ export default function IntegrationBlueprints() {
                     <CardHeader className="border-b border-white/5 bg-white/[0.02] p-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
-                                <CardTitle className="text-2xl font-black flex items-center gap-3">
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                     <Share2 className="w-7 h-7 text-blue-400" />
                                     Integration Ecosystem
                                 </CardTitle>
@@ -208,7 +208,7 @@ export default function IntegrationBlueprints() {
                     <CardHeader className="border-b border-white/5 bg-white/[0.02] p-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
-                                <CardTitle className="text-2xl font-black flex items-center gap-3">
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                     <Zap className="w-7 h-7 text-emerald-400" />
                                     Data Flow & Webhooks
                                 </CardTitle>
@@ -274,7 +274,7 @@ export default function IntegrationBlueprints() {
                                             {int.status}
                                         </Badge>
                                     </div>
-                                    <CardTitle className="text-base group-hover:text-white transition-colors">{int.name}</CardTitle>
+                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{int.name}</CardTitle>
                                     <CardDescription className="text-xs">{int.category}</CardDescription>
                                 </CardHeader>
                                 <CardContent>

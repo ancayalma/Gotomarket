@@ -99,7 +99,7 @@ export const RelocateEntityDialog = ({ entityId, entityType, entityName, isGloba
                         <div className="h-8 w-8 rounded-lg bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
                             <Shield className="h-4 w-4 text-amber-500" />
                         </div>
-                        <DialogTitle className="text-amber-500 font-bold uppercase tracking-tight">God Mode Relocation</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">God Mode Relocation</DialogTitle>
                     </div>
                     <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
                         You are about to transfer <span className="text-white font-bold">"{entityName}"</span> and all of its associated records (Leads, Contacts, Opportunities, Tasks, etc.) to another team.

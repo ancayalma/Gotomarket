@@ -44,7 +44,7 @@ const RightViewModalNoTrigger = ({
           <div className="flex flex-col h-full">
             <div className="flex justify-between w-full">
               <Dialog.Title className="font-semibold p-3 w-full" asChild>
-                <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
+                <h4 className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                   {title}
                 </h4>
               </Dialog.Title>

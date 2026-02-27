@@ -3,7 +3,8 @@ import Imap from "imap";
 import { simpleParser, ParsedMail } from "mailparser";
 import { Readable } from "stream";
 import axios from "axios";
-import { requireApiAuth } from "@/lib/api-auth-guard";
+import { requireCronAuth } from "@/lib/api-auth-guard";
+import { NextRequest } from "next/server";
 // TLS workaround: disable certificate verification to avoid DEPTH_ZERO_SELF_SIGNED_CERT
 // WARNING: Do not leave this enabled in production without proper CA configuration.
 if (process.env.NODE_ENV === "development") {
@@ -19,10 +20,10 @@ const imapConfig: Imap.Config = {
   tlsOptions: { rejectUnauthorized: false },
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   // ── Auth guard ──
-  const session = await requireApiAuth();
-  if (session instanceof Response) return session;
+  const auth = requireCronAuth(request);
+  if (auth !== true) return auth;
 
   try {
     console.log("Starting email check...");

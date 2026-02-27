@@ -140,7 +140,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
     return (
         <Card className="w-[220px] shadow-lg max-h-[70vh]">
             <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
+                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                     <Shield className="h-4 w-4 text-orange-500" />
                     Add Steps
                 </CardTitle>

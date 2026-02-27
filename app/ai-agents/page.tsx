@@ -34,7 +34,7 @@ export default function AliensPage() {
                                 <span className="text-[10px] font-mono text-cyan-400 tracking-[0.4em] uppercase">NEURAL CORES ONLINE</span>
                             </div>
 
-                            <h1 className="text-6xl md:text-9xl font-black tracking-tight mb-8 leading-[0.85] uppercase">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                                 <span className="block text-white">THE AGENTIC</span>
                                 <span className="block bg-gradient-to-r from-cyan-400 via-white to-violet-500 bg-clip-text text-transparent">
                                     STACK

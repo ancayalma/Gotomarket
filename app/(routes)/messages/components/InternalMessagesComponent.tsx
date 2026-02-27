@@ -761,7 +761,7 @@ export function InternalMessagesComponent({
                 <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
                     <DialogContent className="sm:max-w-[600px]">
                         <DialogHeader>
-                            <DialogTitle>New Message</DialogTitle>
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">New Message</DialogTitle>
                             <DialogDescription>
                                 Send a message to a team member
                             </DialogDescription>
@@ -1617,7 +1617,7 @@ export function InternalMessagesComponent({
             <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
                 <DialogContent className="sm:max-w-[600px]">
                     <DialogHeader>
-                        <DialogTitle>New Message</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">New Message</DialogTitle>
                         <DialogDescription>
                             Send a message to a team member
                         </DialogDescription>
@@ -1681,7 +1681,7 @@ export function InternalMessagesComponent({
             <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <AlertTriangle className="h-5 w-5" />
                             Delete Forever?
                         </DialogTitle>

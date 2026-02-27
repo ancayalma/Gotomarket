@@ -193,7 +193,7 @@ export default function ProjectWorkflowGuide() {
                                             <div className={`p-2.5 rounded-lg bg-background/50 ${role.iconColor}`}>
                                                 <Icon className="w-5 h-5" />
                                             </div>
-                                            <CardTitle className="text-base">{role.title}</CardTitle>
+                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{role.title}</CardTitle>
                                         </div>
                                     </CardHeader>
                                     <CardContent>
@@ -279,7 +279,7 @@ export default function ProjectWorkflowGuide() {
                                                 </div>
                                                 <div>
                                                     <Badge variant="outline" className="mb-1">{phase.phase}</Badge>
-                                                    <CardTitle className="text-base">{phase.title}</CardTitle>
+                                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{phase.title}</CardTitle>
                                                 </div>
                                             </div>
                                             <Badge variant="secondary">{phase.actor}</Badge>
@@ -325,7 +325,7 @@ export default function ProjectWorkflowGuide() {
                                     <CardHeader className="pb-2">
                                         <div className="flex items-center gap-2">
                                             <Icon className="w-5 h-5 text-primary" />
-                                            <CardTitle className="text-sm">{rule.title}</CardTitle>
+                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{rule.title}</CardTitle>
                                         </div>
                                     </CardHeader>
                                     <CardContent>

@@ -65,7 +65,7 @@ export default async function VoiceHubPage() {
                                     <span className="w-2 h-2 rounded-full-button-frame bg-cyan-400 animate-pulse" />
                                     Live on Base & Ethereum
                                 </div>
-                                <h1 className="text-5xl lg:text-7xl font-bold leading-tight tracking-tight">
+                                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                                     Real-Time <br />
                                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-400">
                                         AI Voice

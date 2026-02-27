@@ -135,7 +135,7 @@ const NewTaskInProjectDialog = ({ users, boardId, sections }: Props) => {
           </pre>
         </div> */}
         <DialogHeader>
-          <DialogTitle className="p-2">Create New Task</DialogTitle>
+          <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create New Task</DialogTitle>
           <DialogDescription className="p-2">
             Fill out the form below to create a new task.
           </DialogDescription>

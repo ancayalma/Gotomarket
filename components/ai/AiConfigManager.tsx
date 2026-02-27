@@ -358,7 +358,7 @@ export const AiConfigManager = ({
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
                 <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4">
                     <div className="space-y-1">
-                        <CardTitle className="text-xl flex items-center gap-2 text-amber-500">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Zap className="w-6 h-6 fill-amber-500/20" />
                             LeadGen Intelligence Credits
                         </CardTitle>
@@ -431,7 +431,7 @@ export const AiConfigManager = ({
                                             {meta.icon}
                                         </div>
                                         <div>
-                                            <CardTitle className="text-lg flex items-center gap-2">
+                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                                 {meta.name}
                                                 {activeModel && (
                                                     <Badge className="bg-primary/20 text-primary border-primary/30 shadow-[0_0_10px_rgba(var(--primary),0.3)]">
@@ -610,7 +610,7 @@ export const AiConfigManager = ({
                                 <Cpu className="w-6 h-6" />
                             </div>
                             <div>
-                                <CardTitle className="text-lg">Custom Model Request</CardTitle>
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Custom Model Request</CardTitle>
                                 <CardDescription>
                                     Need a model not listed above? Submit a request to your platform admin.
                                 </CardDescription>
@@ -714,7 +714,7 @@ export const AiConfigManager = ({
             <Dialog open={requestModalOpen} onOpenChange={setRequestModalOpen}>
                 <DialogContent className="sm:max-w-lg bg-card border-border/50">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <div className="p-2 rounded-lg bg-violet-500/10 text-violet-400">
                                 <Cpu className="w-5 h-5" />
                             </div>

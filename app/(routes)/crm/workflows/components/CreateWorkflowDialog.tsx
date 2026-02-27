@@ -158,7 +158,7 @@ export function CreateWorkflowDialog({ teamId, children }: CreateWorkflowDialogP
             </DialogTrigger>
             <DialogContent className="sm:max-w-[560px]">
                 <DialogHeader>
-                    <DialogTitle>Create New FlowState</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create New FlowState</DialogTitle>
                     <DialogDescription>
                         Choose your flow type, set up the basics, then design in the visual editor.
                     </DialogDescription>

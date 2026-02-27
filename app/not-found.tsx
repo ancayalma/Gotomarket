@@ -22,7 +22,7 @@ export default function NotFound() {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     className="relative mb-8"
                 >
-                    <h1 className="text-[12rem] md:text-[16rem] font-black tracking-tight leading-none select-none text-white/5">
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                         404
                     </h1>
                     <div className="absolute inset-0 flex items-center justify-center">

@@ -134,7 +134,7 @@ export const HuggingFaceBrowser = ({ onModelAdded, onSelect }: HuggingFaceBrowse
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-3xl max-h-[85vh] bg-card border-border/50 flex flex-col">
                     <DialogHeader className="shrink-0">
-                        <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <img
                                 src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg"
                                 alt="Hugging Face"

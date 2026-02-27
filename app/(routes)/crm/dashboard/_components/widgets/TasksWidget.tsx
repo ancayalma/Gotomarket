@@ -147,7 +147,7 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-4 border-white/10 bg-slate-950/90 backdrop-blur-xl">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold">Refine Task</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Refine Task</DialogTitle>
                     </DialogHeader>
                     {isLoadingTask ? (
                         <div className="flex items-center justify-center flex-1 h-full">

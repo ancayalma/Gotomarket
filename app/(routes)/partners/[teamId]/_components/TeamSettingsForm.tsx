@@ -64,7 +64,7 @@ const TeamStatusCard = ({ teamId, currentStatus, currentReason }: { teamId: stri
             <CardHeader className="py-4 px-6 border-b border-white/5">
                 <div className="flex justify-between items-center">
                     <div>
-                        <CardTitle className="text-base font-bold">Access Control</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Access Control</CardTitle>
                         <CardDescription className="text-[11px]">Control team access and activation status.</CardDescription>
                     </div>
                     <Badge variant={status === "ACTIVE" ? "default" : status === "PENDING" ? "secondary" : "destructive"} className="uppercase tracking-wider text-[9px] h-5 px-2">
@@ -195,7 +195,7 @@ const TeamSettingsForm = ({ team, availablePlans = [] }: Props) => {
             <Card className="bg-zinc-900/40 border border-[#27272a] overflow-hidden">
                 <CardHeader className="py-4 px-6 border-b border-white/5">
                     <div>
-                        <CardTitle className="text-base font-bold">Team Profile</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Profile</CardTitle>
                         <CardDescription className="text-[11px]">
                             Update core team details and subscription plan.
                         </CardDescription>
@@ -274,7 +274,7 @@ const TeamSettingsForm = ({ team, availablePlans = [] }: Props) => {
                     <CardHeader className="py-4 px-6">
                         <div className="flex flex-row items-center justify-between gap-4">
                             <div>
-                                <CardTitle className="text-base font-bold text-red-500">Danger Zone</CardTitle>
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Danger Zone</CardTitle>
                                 <CardDescription className="text-[10px] text-red-500/60 leading-relaxed uppercase tracking-wide">
                                     Permanently delete team and all associated data records.
                                 </CardDescription>

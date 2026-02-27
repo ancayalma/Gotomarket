@@ -203,7 +203,7 @@ export function LoginComponent() {
   return (
     <Card className="shadow-lg my-5 w-full max-w-md sm:max-w-lg mx-auto bg-transparent border-border/40 backdrop-blur-sm">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-white">Login</CardTitle>
+        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Login</CardTitle>
         <CardDescription className="text-gray-300">Click here to login with: </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -331,7 +331,7 @@ export function LoginComponent() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle className="p-5">Password Reset</DialogTitle>
+                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Password Reset</DialogTitle>
                 <DialogDescription className="p-5">
                   Enter your email address and we will send new password to your
                   e-mail.

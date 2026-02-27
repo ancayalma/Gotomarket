@@ -152,7 +152,7 @@ export function OpportunityActions({ opportunityId, data, status, hasAccount }: 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[#0a0a0a] border-white/10">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-white">Edit Opportunity</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Edit Opportunity</DialogTitle>
                     </DialogHeader>
                     <div className="p-4">
                         <UpdateOpportunityForm

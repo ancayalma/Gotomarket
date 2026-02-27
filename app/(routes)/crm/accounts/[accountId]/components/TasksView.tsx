@@ -113,7 +113,7 @@ const AccountsTasksView = ({ data, account }: TasksViewProps) => {
           <div>
             <CardTitle
               onClick={() => router.push("/projects/tasks")}
-              className="cursor-pointer"
+              className="cursor-pointer text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2"
             >
               Tasks
             </CardTitle>
@@ -162,7 +162,7 @@ const AccountsTasksView = ({ data, account }: TasksViewProps) => {
                 </Button>
                 <SheetContent className="min-w-[500px] space-y-2">
                   <SheetHeader>
-                    <SheetTitle>Create new Task</SheetTitle>
+                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create new Task</SheetTitle>
                   </SheetHeader>
                   <div className="h-full overflow-y-auto">
                     <NewTaskForm

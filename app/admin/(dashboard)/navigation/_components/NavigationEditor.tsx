@@ -440,7 +440,7 @@ export function NavigationEditor({
                             <Layout className="w-7 h-7" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black text-white tracking-tight">Navigation Manager</h1>
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Navigation Manager</h1>
                             <p className="text-sm text-muted-foreground font-medium">Customize sidebar categories, items, and typography</p>
                         </div>
                     </div>

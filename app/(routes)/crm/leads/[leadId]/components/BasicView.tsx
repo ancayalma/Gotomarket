@@ -72,7 +72,7 @@ export function BasicView({ data }: OppsViewProps) {
                 <User size={24} />
               </div>
               <div>
-                <CardTitle className="text-2xl font-bold text-white tracking-tight">
+                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                   {data.firstName} {data.lastName}
                 </CardTitle>
                 <CardDescription className="text-white/40 text-xs font-mono">ID: {data.id}</CardDescription>

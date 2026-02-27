@@ -77,7 +77,7 @@ const OpportunitiesView = ({
               <CardDescription className="text-xs uppercase tracking-wider font-semibold">
                 {isClosedView ? "Total Closed Value" : "Total Pipeline Value"}
               </CardDescription>
-              <CardTitle className="text-3xl font-bold text-primary">
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 ${totalValue.toLocaleString()}
               </CardTitle>
             </CardHeader>
@@ -87,7 +87,7 @@ const OpportunitiesView = ({
               <CardDescription className="text-xs uppercase tracking-wider font-semibold">
                 {isClosedView ? "Closed Opportunities" : "Active Opportunities"}
               </CardDescription>
-              <CardTitle className="text-3xl font-bold text-blue-500">
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 {countDeals}
               </CardTitle>
             </CardHeader>
@@ -97,7 +97,7 @@ const OpportunitiesView = ({
               <CardDescription className="text-xs uppercase tracking-wider font-semibold">
                 Avg. Deal Size
               </CardDescription>
-              <CardTitle className="text-3xl font-bold text-emerald-500">
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 ${Math.round(avgDealSize).toLocaleString()}
               </CardTitle>
             </CardHeader>
@@ -111,7 +111,7 @@ const OpportunitiesView = ({
             <div>
               <CardTitle
                 onClick={() => router.push("/crm/opportunities")}
-                className="cursor-pointer"
+                className="cursor-pointer text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2"
               >
                 {isClosedView ? "Won / Lost Deals" : "Sales Pipeline"}
               </CardTitle>
@@ -129,7 +129,7 @@ const OpportunitiesView = ({
                 </Button>
                 <SheetContent className="min-w-[1000px] space-y-2 border-l border-white/10 glass">
                   <SheetHeader>
-                    <SheetTitle>Create new opportunity</SheetTitle>
+                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create new opportunity</SheetTitle>
                   </SheetHeader>
                   <div className="h-full overflow-y-auto pt-4 custom-scrollbar pr-2">
                     <NewOpportunityForm

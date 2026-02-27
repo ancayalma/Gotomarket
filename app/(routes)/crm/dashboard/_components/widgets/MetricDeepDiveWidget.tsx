@@ -24,7 +24,7 @@ const DeepDiveModal = ({ isOpen, onClose, title, data, columns }: DeepDiveModalP
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col bg-[#09090b] border-[#27272a] text-white">
                 <DialogHeader className="px-6 py-4 border-b border-white/5">
-                    <DialogTitle className="text-xl font-bold tracking-tight uppercase flex items-center gap-2">
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                         <ListFilter className="text-primary" size={20} />
                         {title}
                     </DialogTitle>

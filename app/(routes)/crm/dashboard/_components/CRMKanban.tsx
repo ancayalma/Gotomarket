@@ -174,7 +174,7 @@ const CRMKanban = ({
                   ref={provided.innerRef}
                   className="mx-1 w-full min-w-[300px] overflow-hidden pb-10"
                 >
-                  <CardTitle className="flex gap-2 p-3 justify-between">
+                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                     <span className="text-sm font-bold">{stage.name}</span>
                     <PlusCircledIcon
                       className="w-5 h-5 cursor-pointer"
@@ -204,7 +204,7 @@ const CRMKanban = ({
                               ref={provided.innerRef}
                               className="my-2 w-full"
                             >
-                              <CardTitle className="p-2 text-sm">
+                              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <div className="flex justify-between p-2">
                                   <span className="font-bold">
                                     {opportunity.name}
@@ -337,7 +337,7 @@ const CRMKanban = ({
             </Droppable>
           ))}
           <Card className="mx-1 w-full min-w-[300px] overflow-hidden pb-10">
-            <CardTitle className="flex gap-2 p-3 justify-between">
+            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
               <span className="text-sm font-bold">Lost</span>
             </CardTitle>
             <CardContent className="w-full h-full overflow-y-scroll space-y-2">
@@ -345,7 +345,7 @@ const CRMKanban = ({
                 .filter((opportunity: any) => opportunity.status === "INACTIVE")
                 .map((opportunity: any, index: number) => (
                   <Card key={index}>
-                    <CardTitle className="p-2 text-sm">
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                       <span className="font-bold">{opportunity?.name}</span>
                     </CardTitle>
                     <CardContent className="text-xs text-muted-foreground">

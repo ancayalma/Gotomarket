@@ -140,7 +140,7 @@ export default function ProductBundleManager({ product, allProducts, onClose }: 
                             <Layers className="h-6 w-6" />
                         </div>
                         <div>
-                            <DialogTitle>Bundle Builder: {product.name}</DialogTitle>
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Bundle Builder: {product.name}</DialogTitle>
                             <DialogDescription>
                                 Add components and define quantities for this product bundle.
                             </DialogDescription>

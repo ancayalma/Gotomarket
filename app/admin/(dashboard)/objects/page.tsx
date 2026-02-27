@@ -104,7 +104,7 @@ export default function ObjectManagerPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Object Manager</h1>
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Object Manager</h1>
                     <p className="text-muted-foreground">
                         Create and manage custom data objects for your CRM.
                     </p>
@@ -118,7 +118,7 @@ export default function ObjectManagerPage() {
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Create Custom Object</DialogTitle>
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Custom Object</DialogTitle>
                             <DialogDescription>
                                 Define a new database entity. API Name must be unique.
                             </DialogDescription>

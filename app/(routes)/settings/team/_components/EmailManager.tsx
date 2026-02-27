@@ -103,7 +103,7 @@ export function EmailManager({ teamId }: EmailManagerProps) {
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Email History</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Email History</DialogTitle>
                     <DialogDescription>
                         View and manage all emails sent by your team.
                     </DialogDescription>
@@ -232,7 +232,7 @@ export function EmailManager({ teamId }: EmailManagerProps) {
                     <Dialog open={!!selectedEmail} onOpenChange={(open) => !open && setSelectedEmail(null)}>
                         <DialogContent className="max-w-2xl">
                             <DialogHeader>
-                                <DialogTitle>Email Details</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Email Details</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4 text-sm">

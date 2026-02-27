@@ -65,7 +65,7 @@ export function BlogPostModal({ post, isOpen, onClose }: BlogPostModalProps) {
                                 </span>
                             </div>
 
-                            <DialogTitle className="text-3xl md:text-4xl font-bold text-white mb-8 leading-tight">
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 {post.title}
                             </DialogTitle>
                             <DialogDescription className="sr-only">

@@ -393,7 +393,7 @@ const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <CardTitle className="leading-tight">{team.name}</CardTitle>
+                                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{team.name}</CardTitle>
                                                 {effectiveStatus === "PENDING" && (
                                                     <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-500 border-yellow-500/20">Pending</Badge>
                                                 )}
@@ -483,7 +483,7 @@ const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
             <Dialog open={renewalOpen} onOpenChange={setRenewalOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit Renewal Date</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Edit Renewal Date</DialogTitle>
                         <DialogDescription>
                             Manually set the next renewal date for {renewalTeam?.name}.
                         </DialogDescription>

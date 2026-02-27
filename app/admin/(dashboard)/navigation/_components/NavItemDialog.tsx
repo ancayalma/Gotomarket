@@ -57,7 +57,7 @@ export function NavItemDialog({ isOpen, onClose, onSave, item }: Props) {
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px] bg-[#18181b] border-primary/20 text-primary font-sans">
                 <DialogHeader>
-                    <DialogTitle className="text-primary">{item?.id ? "Edit Item" : "Add New Item"}</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{item?.id ? "Edit Item" : "Add New Item"}</DialogTitle>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">

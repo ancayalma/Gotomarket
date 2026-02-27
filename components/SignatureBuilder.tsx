@@ -1191,7 +1191,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
         </div>
 
         <CardHeader className="opacity-20 pointer-events-none select-none">
-          <CardTitle>Email Signature Studio</CardTitle>
+          <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Email Signature Studio</CardTitle>
           <CardDescription>Design your professional identity.</CardDescription>
         </CardHeader>
         <CardContent className="opacity-10 pointer-events-none select-none blur-sm">
@@ -1220,7 +1220,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
             <TabsContent value="content" className="space-y-4 animate-in fade-in-50">
               <Card>
                 <CardHeader>
-                  <CardTitle>Personal Details</CardTitle>
+                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Personal Details</CardTitle>
                   <CardDescription>Enter your contact information.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
@@ -1278,7 +1278,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
             <TabsContent value="images" className="space-y-4 animate-in fade-in-50">
               <Card>
                 <CardHeader>
-                  <CardTitle>Imagery</CardTitle>
+                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Imagery</CardTitle>
                   <CardDescription>Upload professional headshot and company logo.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -1407,7 +1407,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
             <TabsContent value="design" className="space-y-4 animate-in fade-in-50">
               <Card>
                 <CardHeader>
-                  <CardTitle>Look & Feel</CardTitle>
+                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Look & Feel</CardTitle>
                   <CardDescription>Customize the aesthetics.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">

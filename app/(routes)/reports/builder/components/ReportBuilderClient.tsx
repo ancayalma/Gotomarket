@@ -193,7 +193,7 @@ export default function ReportBuilderClient() {
                                     <div className="p-2 bg-muted rounded-lg group-hover:bg-primary/10">
                                         <Database className="h-5 w-5 text-muted-foreground" />
                                     </div>
-                                    <CardTitle className="text-sm font-bold uppercase tracking-wide">{obj.label}</CardTitle>
+                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{obj.label}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-xs text-muted-foreground">
@@ -209,7 +209,7 @@ export default function ReportBuilderClient() {
                 {step === 2 && selectedObject && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Choose columns for {selectedObject.label}</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Choose columns for {selectedObject.label}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -238,7 +238,7 @@ export default function ReportBuilderClient() {
                 {step === 3 && selectedObject && (
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Filter your results</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Filter your results</CardTitle>
                             <Button variant="outline" size="sm" onClick={addFilter} className="gap-2">
                                 <Plus className="h-4 w-4" />
                                 Add Filter
@@ -303,7 +303,7 @@ export default function ReportBuilderClient() {
                     <div className="space-y-6">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle>Preview: {selectedFields.length} Columns | {reportResults.length} Rows</CardTitle>
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Preview: {selectedFields.length} Columns | {reportResults.length} Rows</CardTitle>
                                 <div className="flex items-center gap-2">
                                     <Button
                                         variant={chartType === "table" ? "secondary" : "ghost"}

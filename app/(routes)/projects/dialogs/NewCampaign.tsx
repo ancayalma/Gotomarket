@@ -244,7 +244,7 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
             <FolderKanban className="w-5 h-5" />
             New {entityName}
           </DialogTitle>

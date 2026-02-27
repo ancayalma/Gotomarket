@@ -4,7 +4,12 @@ import axios from "axios";
 
 export async function runCronJob() {
   const response = await axios.get(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/invoice/get-invoice-from-email`
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/invoice/get-invoice-from-email`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.CRON_SECRET}`,
+      },
+    }
   );
   const data = await response.data;
   console.log("Response from cron job:", data);

@@ -53,7 +53,7 @@ export function EmailDeliveryStats({ teamId }: EmailDeliveryStatsProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                     <MailCheck className="w-5 h-5 text-primary" />
                     Recent Deliveries
                 </CardTitle>

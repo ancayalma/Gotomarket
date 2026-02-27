@@ -149,7 +149,7 @@ export function WorkflowList({ workflows }: WorkflowListProps) {
                                         <div className="p-1.5 bg-orange-100 dark:bg-orange-900/30 rounded">
                                             <Zap className="h-4 w-4 text-orange-600" />
                                         </div>
-                                        <CardTitle className="text-lg">{workflow.name}</CardTitle>
+                                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{workflow.name}</CardTitle>
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

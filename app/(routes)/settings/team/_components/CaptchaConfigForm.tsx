@@ -57,7 +57,7 @@ export function CaptchaConfigForm({ teamId, initialConfig }: CaptchaConfigFormPr
                         <Shield className="w-5 h-5" />
                     </div>
                     <div>
-                        <CardTitle>Spam Protection (Cloudflare Turnstile)</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Spam Protection (Cloudflare Turnstile)</CardTitle>
                         <CardDescription>
                             Configure team-wide keys for form spam protection.
                         </CardDescription>

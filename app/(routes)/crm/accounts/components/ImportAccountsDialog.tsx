@@ -166,7 +166,7 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
             </DialogTrigger>
             <DialogContent className="max-w-2xl bg-zinc-950 text-white border-zinc-800">
                 <DialogHeader>
-                    <DialogTitle>Import Accounts & Contacts</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Import Accounts & Contacts</DialogTitle>
                 </DialogHeader>
 
                 {step === "upload" && (

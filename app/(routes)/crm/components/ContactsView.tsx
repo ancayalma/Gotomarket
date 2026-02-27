@@ -58,7 +58,7 @@ const ContactsView = ({ data, crmData }: any) => {
           </div>
           <SheetContent className="sm:max-w-[850px] w-full space-y-2">
             <SheetHeader>
-              <SheetTitle>Create new Contact</SheetTitle>
+              <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create new Contact</SheetTitle>
             </SheetHeader>
             <div className="h-full overflow-y-auto">
               <NewContactForm

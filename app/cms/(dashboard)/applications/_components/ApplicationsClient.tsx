@@ -138,7 +138,7 @@ export function ApplicationsClient({ initialApplications }: { initialApplication
             <Dialog open={!!selectedApp} onOpenChange={(open) => !open && setSelectedApp(null)}>
                 <DialogContent className="max-w-2xl bg-[#0F0F1A] border-white/10 text-white">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold flex items-center justify-between">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             Candidate Profile
                             {selectedApp?.jiraTicketId && (
                                 <Badge variant="outline" className="border-blue-500/50 text-blue-400 bg-blue-500/10 font-normal">

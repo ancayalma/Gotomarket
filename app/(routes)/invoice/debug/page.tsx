@@ -48,7 +48,7 @@ export default function DebugPage() {
     return (
         <div className="p-8 space-y-8">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">Invoice OCR / Blob Debugger</h1>
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Invoice OCR / Blob Debugger</h1>
                 <Button onClick={fetchBlobs} disabled={loading}>
                     {loading ? <Loader2 className="animate-spin mr-2" /> : null}
                     Refresh Blob List
@@ -57,7 +57,7 @@ export default function DebugPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card>
-                    <CardHeader><CardTitle>Recent Blobs (Azure)</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Recent Blobs (Azure)</CardTitle></CardHeader>
                     <CardContent>
                         <div className="space-y-2">
                             {blobs.map((b) => (
@@ -83,7 +83,7 @@ export default function DebugPage() {
                 </Card>
 
                 <Card>
-                    <CardHeader><CardTitle>OCR Result</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">OCR Result</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         {processingBlob && <div className="text-muted-foreground">Processing {processingBlob}...</div>}
                         {ocrResult && (

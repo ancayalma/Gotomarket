@@ -51,7 +51,7 @@ export const AdminResetPasswordModal: React.FC<AdminResetPasswordModalProps> = (
                 <DialogHeader>
                     <div className="flex items-center gap-2 text-amber-600 mb-2">
                         <AlertTriangle className="h-5 w-5" />
-                        <DialogTitle>Reset Password</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Reset Password</DialogTitle>
                     </div>
                     <DialogDescription asChild>
                         <div>

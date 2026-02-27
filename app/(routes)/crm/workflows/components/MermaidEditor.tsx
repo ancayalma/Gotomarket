@@ -462,7 +462,7 @@ graph TB
                     {/* Editor Column */}
                     <Card className="flex flex-col h-full border-white/10 bg-background/50 backdrop-blur-sm">
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-base flex items-center gap-2">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <Code className="w-4 h-4 text-primary" />
                                 Mermaid Editor
                             </CardTitle>
@@ -484,7 +484,7 @@ graph TB
                     {/* Preview Column */}
                     <Card className="flex flex-col h-full border-white/10 bg-background/50 backdrop-blur-sm overflow-hidden relative">
                         <CardHeader className="pb-3 border-b border-white/5 z-10 bg-background/50 backdrop-blur-sm">
-                            <CardTitle className="text-base flex items-center gap-2">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <Play className="w-4 h-4 text-emerald-500" />
                                 Live Preview
                                 {activePages.length > 1 && (
@@ -600,7 +600,7 @@ graph TB
             <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
                 <DialogContent className="sm:max-w-2xl border-white/10 glass">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Save className="w-5 h-5 text-primary" /> Save Diagram
                         </DialogTitle>
                         <DialogDescription>
@@ -710,7 +710,7 @@ graph TB
             <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
                 <DialogContent className="sm:max-w-lg border-white/10 glass">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <FolderOpen className="w-5 h-5 text-primary" /> Saved Diagrams
                         </DialogTitle>
                         <DialogDescription>
@@ -764,7 +764,7 @@ graph TB
             <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
                 <DialogContent className="sm:max-w-lg border-white/10 glass">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Link className="w-5 h-5 text-primary" /> Share Diagram
                         </DialogTitle>
                         <DialogDescription>
@@ -833,7 +833,7 @@ graph TB
             <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
                 <DialogContent className="sm:max-w-md border-white/10 glass">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Mail className="w-5 h-5 text-primary" /> Email Diagram
                         </DialogTitle>
                         <DialogDescription>

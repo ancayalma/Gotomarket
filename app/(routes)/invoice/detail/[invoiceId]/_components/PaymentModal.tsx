@@ -139,7 +139,7 @@ export const PaymentModal = ({ open, onOpenChange, url, amount, currency, invoic
                             <ShieldCheck className="w-6 h-6 text-blue-500" />
                         </div>
                         <div>
-                            <DialogTitle className="text-lg font-bold text-white leading-tight uppercase tracking-tight">Secure Settlement Layer</DialogTitle>
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Secure Settlement Layer</DialogTitle>
                             <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
                                 Paying {amount} {currency || "USDC"} via Basalt Surge
                             </p>

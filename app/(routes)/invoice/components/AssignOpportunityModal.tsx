@@ -74,7 +74,7 @@ export default function AssignOpportunityModal({ isOpen, onClose, invoiceId }: A
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px] w-[95vw]">
                 <DialogHeader>
-                    <DialogTitle>Assign to Opportunity</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Assign to Opportunity</DialogTitle>
                     <DialogDescription>
                         Search for an opportunity.
                     </DialogDescription>

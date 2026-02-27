@@ -59,7 +59,7 @@ const TaskPage = async (props: TaskPageProps) => {
           </pre> */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>{task.title}</CardTitle>
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{task.title}</CardTitle>
               <CardDescription>{task.content}</CardDescription>
             </CardHeader>
             <CardContent>

@@ -268,7 +268,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                         <FileText className="h-32 w-32 rotate-12" />
                     </div>
                     <CardHeader className="pb-4 relative z-10">
-                        <CardTitle className="text-xl font-black uppercase tracking-widest flex items-center gap-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Shield className="h-6 w-6 text-primary" />
                             Proposal Command Center
                         </CardTitle>
@@ -434,7 +434,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
 
                 <Card className="glass border-white/10 shadow-xl overflow-hidden">
                     <CardHeader className="flex flex-row items-center justify-between pb-4 bg-white/5">
-                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <ShoppingCart className="h-5 w-5 text-primary" />
                             Line Items
                         </CardTitle>
@@ -631,7 +631,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card className="glass border-white/10 shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-bold flex items-center gap-2 text-white/60">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <MessageSquare className="h-4 w-4" />
                                 Project Notes
                             </CardTitle>
@@ -647,7 +647,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                     </Card>
                     <Card className="glass border-white/10 shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-bold flex items-center gap-2 text-white/60">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <Settings2 className="h-4 w-4" />
                                 Terms & Conditions
                             </CardTitle>
@@ -666,7 +666,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card className="glass border-white/10 shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-bold flex items-center gap-2 text-white/60">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <MessageSquare className="h-4 w-4" />
                                 Payer memo (optional)
                             </CardTitle>
@@ -726,7 +726,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                         <Calculator className="h-20 w-20" />
                     </div>
                     <CardHeader className="relative z-10 border-b border-white/10">
-                        <CardTitle className="text-lg font-black uppercase tracking-tighter flex items-center gap-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             Financial Summary
                         </CardTitle>
                     </CardHeader>
@@ -803,7 +803,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                 {/* CPQ Insights */}
                 <Card className="glass border-white/10 bg-white/5">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Settings2 className="h-3 w-3" />
                             CPQ Metrics
                         </CardTitle>

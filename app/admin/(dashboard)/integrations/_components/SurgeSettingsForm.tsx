@@ -52,7 +52,7 @@ export const SurgeSettingsForm = ({ initialData }: Props) => {
         <Card className="border border-indigo-500/20 bg-indigo-500/5 shadow-none w-full h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="space-y-1">
-                    <CardTitle className="text-xl flex items-center gap-2">
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                         <Image
                             src="/Surge32.png"
                             alt="Surge Logo"

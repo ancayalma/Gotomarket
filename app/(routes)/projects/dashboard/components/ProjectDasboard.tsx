@@ -112,7 +112,7 @@ const ProjectDashboardCockpit = ({
             <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
             <CardHeader className="relative z-10">
-              <CardTitle className="text-xl font-black group-hover:text-primary transition-colors">
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 {task.title === "" ? "Untitled" : task.title}
               </CardTitle>
               <CardDescription className="text-muted-foreground/80">{task.content}</CardDescription>
@@ -156,7 +156,7 @@ const ProjectDashboardCockpit = ({
                 </SheetTrigger>
                 <SheetContent className="rounded-l-[40px] border-l-primary/20">
                   <SheetHeader>
-                    <SheetTitle className="text-2xl font-black">Team Pulse</SheetTitle>
+                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Pulse</SheetTitle>
                   </SheetHeader>
                   <TeamConversations taskId={task.id} data={task.comments} />
                 </SheetContent>
@@ -217,7 +217,7 @@ const ProjectDashboardCockpit = ({
             <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
             <CardHeader className="relative z-10">
-              <CardTitle className="text-xl font-black group-hover:text-primary transition-colors">
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 {task.title === "" ? "Untitled" : task.title}
               </CardTitle>
               <CardDescription className="text-muted-foreground/80">{task.content}</CardDescription>
@@ -261,7 +261,7 @@ const ProjectDashboardCockpit = ({
                 </SheetTrigger>
                 <SheetContent className="rounded-l-[40px] border-l-primary/20">
                   <SheetHeader>
-                    <SheetTitle className="text-2xl font-black">Team Pulse</SheetTitle>
+                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Pulse</SheetTitle>
                   </SheetHeader>
                   <TeamConversations taskId={task.id} data={task.comments} />
                 </SheetContent>

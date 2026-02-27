@@ -27,7 +27,7 @@ const PendingPage = async () => {
         <code>{JSON.stringify(session, null, 2)}</code>
       </pre> */}
       <div className="flex flex-col">
-        <h1 className="text-3xl">
+        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
           {process.env.NEXT_PUBLIC_APP_NAME} - your account must be allowed by
           Admin
         </h1>

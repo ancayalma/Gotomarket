@@ -24,7 +24,7 @@ export default async function DealRoomPage(props: Props) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-slate-50">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold text-slate-900">Proposal Expired</h1>
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Proposal Expired</h1>
                     <p className="text-slate-500">This secure room is no longer accessible. Please contact your representative.</p>
                 </div>
             </div>

@@ -138,7 +138,7 @@ export function SmartEmailModal({
                                 <Mail className="h-5 w-5 text-emerald-400" />
                             </div>
                             <div>
-                                <DialogTitle className="text-xl font-bold text-white tracking-tight">Compose Tracking Email</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Compose Tracking Email</DialogTitle>
                                 <DialogDescription className="text-white/50 text-xs">
                                     Sending as <span className="text-emerald-400 font-medium">{process.env.NEXT_PUBLIC_APP_NAME || "Basalt CRM"}</span> to {recipientName || recipientEmail}
                                 </DialogDescription>

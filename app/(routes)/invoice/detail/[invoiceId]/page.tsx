@@ -72,7 +72,7 @@ const InvoiceDetailPage = async (props: InvoiceDetailProps) => {
               </SheetTrigger>
               <SheetContent className="bg-zinc-950 border-zinc-800 w-full sm:max-w-md">
                 <SheetHeader className="pb-8">
-                  <SheetTitle className="text-xl font-bold flex items-center gap-2 uppercase tracking-tight">
+                  <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                     <History className="text-blue-500 w-5 h-5" /> History & Comments
                   </SheetTitle>
                 </SheetHeader>

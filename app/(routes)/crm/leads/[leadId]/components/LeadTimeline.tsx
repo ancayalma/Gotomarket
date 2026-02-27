@@ -223,7 +223,7 @@ export function LeadTimeline({ leadId, leadEmail, leadName, contactId, accountId
             <Dialog open={!!selectedMessage} onOpenChange={(open) => !open && setSelectedMessage(null)}>
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#0a0a0a] border-white/10 text-white p-0 overflow-hidden">
                     <div className="sticky top-0 bg-[#0a0a0a] border-b border-white/10 p-6 z-20">
-                        <DialogTitle className="flex items-center gap-3 text-lg">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
                                 <Mail className="h-5 w-5" />
                             </div>
@@ -334,7 +334,7 @@ export function LeadTimeline({ leadId, leadEmail, leadName, contactId, accountId
                     <CardHeader className="py-3 flex flex-row items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-emerald-400" />
-                            <CardTitle className="text-xs font-bold uppercase tracking-widest text-emerald-400/80">AI Conversation Overview</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">AI Conversation Overview</CardTitle>
                         </div>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowAiSummary(false)}>
                             <ChevronUp className="h-3 w-3" />

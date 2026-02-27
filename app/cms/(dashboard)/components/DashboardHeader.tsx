@@ -15,7 +15,7 @@ export default function DashboardHeader({ userName }: DashboardHeaderProps) {
         <div className="mb-8 space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                         Welcome back, {userName}
                     </h1>
                     <p className="text-slate-400 mt-1">

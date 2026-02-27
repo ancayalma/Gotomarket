@@ -170,7 +170,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                             <div className="absolute -top-20 -left-20 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none opacity-50" />
 
                             <DialogHeader className="mb-8 relative z-10">
-                                <DialogTitle className="flex items-center gap-2 text-2xl tracking-tight font-bold">
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                     <Sparkles className="text-cyan-400 w-6 h-6" />
                                     Subscriptions
                                 </DialogTitle>

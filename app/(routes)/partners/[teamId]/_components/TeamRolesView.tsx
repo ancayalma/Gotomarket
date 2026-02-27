@@ -250,7 +250,7 @@ const TeamRolesView = ({ teamId, roleCounts, customRoles }: Props) => {
                                             <Icon className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <CardTitle className="text-base">{role.name}</CardTitle>
+                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{role.name}</CardTitle>
                                             <CardDescription className="text-xs">{role.description}</CardDescription>
                                         </div>
                                     </div>
@@ -316,7 +316,7 @@ const TeamRolesView = ({ teamId, roleCounts, customRoles }: Props) => {
                                                     <Shield className="w-4 h-4" />
                                                 </div>
                                                 <div>
-                                                    <CardTitle className="text-base">{role.name}</CardTitle>
+                                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{role.name}</CardTitle>
                                                     <CardDescription className="text-xs">
                                                         {role.description || "Custom team role"}
                                                     </CardDescription>
@@ -389,7 +389,7 @@ const TeamRolesView = ({ teamId, roleCounts, customRoles }: Props) => {
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Add Custom Role</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Add Custom Role</DialogTitle>
                         <DialogDescription>Create a new role with specific module access.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -441,7 +441,7 @@ const TeamRolesView = ({ teamId, roleCounts, customRoles }: Props) => {
             <Dialog open={isConfigureModalOpen} onOpenChange={setIsConfigureModalOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Configure Access: {selectedRole?.name}</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Configure Access: {selectedRole?.name}</DialogTitle>
                         <DialogDescription>Select which modules this role can access.</DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
@@ -473,7 +473,7 @@ const TeamRolesView = ({ teamId, roleCounts, customRoles }: Props) => {
             <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
                 <DialogContent className="max-w-sm">
                     <DialogHeader>
-                        <DialogTitle>Delete Role</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Delete Role</DialogTitle>
                         <DialogDescription>
                             Are you sure you want to delete the "{selectedRole?.name}" role? Users with this role will be moved to the default Member role.
                         </DialogDescription>

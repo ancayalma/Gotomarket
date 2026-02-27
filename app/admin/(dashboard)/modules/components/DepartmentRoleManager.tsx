@@ -168,7 +168,7 @@ export default function DepartmentRoleManager({ teamId, departments, orgData }: 
             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Create Department</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Department</DialogTitle>
                         <DialogDescription>Create a new department to organize your team.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -202,7 +202,7 @@ export default function DepartmentRoleManager({ teamId, departments, orgData }: 
             }}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit Department</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Edit Department</DialogTitle>
                         <DialogDescription>Update department details or remove it.</DialogDescription>
                     </DialogHeader>
 

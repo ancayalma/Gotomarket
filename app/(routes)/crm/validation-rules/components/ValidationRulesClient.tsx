@@ -189,7 +189,7 @@ export function ValidationRulesClient({ rules, teamId }: Props) {
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[520px]">
                             <DialogHeader>
-                                <DialogTitle>Formula Tester</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Formula Tester</DialogTitle>
                                 <DialogDescription>
                                     Test a formula against sample data to see if it evaluates correctly.
                                 </DialogDescription>
@@ -257,7 +257,7 @@ export function ValidationRulesClient({ rules, teamId }: Props) {
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[560px]">
                             <DialogHeader>
-                                <DialogTitle>Create Guard Rule</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Guard Rule</DialogTitle>
                                 <DialogDescription>
                                     Define a formula that — when TRUE — blocks the record from being saved.
                                 </DialogDescription>

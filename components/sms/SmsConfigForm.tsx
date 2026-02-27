@@ -344,7 +344,7 @@ export default function SmsConfigForm({ teamId, teamName }: SmsConfigFormProps) 
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                             <Building2 className="w-5 h-5" />
-                            <CardTitle>Brand Registration</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Brand Registration</CardTitle>
                         </div>
                         <StatusBadge status={config.brand_status} />
                     </div>
@@ -551,7 +551,7 @@ export default function SmsConfigForm({ teamId, teamName }: SmsConfigFormProps) 
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                             <MessageSquare className="w-5 h-5" />
-                            <CardTitle>Campaign Registration</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Campaign Registration</CardTitle>
                         </div>
                         <StatusBadge status={config.campaign_status} />
                     </div>
@@ -675,7 +675,7 @@ export default function SmsConfigForm({ teamId, teamName }: SmsConfigFormProps) 
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <Phone className="w-5 h-5" />
-                        <CardTitle>Phone Number</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Phone Number</CardTitle>
                     </div>
                     <CardDescription>
                         10DLC phone number assigned after campaign approval
@@ -725,7 +725,7 @@ export default function SmsConfigForm({ teamId, teamName }: SmsConfigFormProps) 
             {/* Configuration Section */}
             <Card>
                 <CardHeader>
-                    <CardTitle>SMS Settings</CardTitle>
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">SMS Settings</CardTitle>
                     <CardDescription>
                         Enable/disable SMS and set usage limits
                     </CardDescription>

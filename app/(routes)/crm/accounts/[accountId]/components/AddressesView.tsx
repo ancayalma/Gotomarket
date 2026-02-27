@@ -28,7 +28,7 @@ export function AddressesView({ data }: AddressesViewProps) {
                         <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
                             <Home size={18} />
                         </div>
-                        <CardTitle className="text-base font-bold tracking-tight">Billing Address</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Billing Address</CardTitle>
                     </div>
                 </CardHeader>
                 <CardContent className="gap-1 pt-4">
@@ -50,7 +50,7 @@ export function AddressesView({ data }: AddressesViewProps) {
                         <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400">
                             <Truck size={18} />
                         </div>
-                        <CardTitle className="text-base font-bold tracking-tight">Shipping Address</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Shipping Address</CardTitle>
                     </div>
                 </CardHeader>
                 <CardContent className="gap-1 pt-4">

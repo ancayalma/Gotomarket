@@ -94,7 +94,7 @@ export function CustomReportsPanel({ savedReports }: CustomReportsPanelProps) {
                 </SheetTrigger>
                 <SheetContent className="w-full sm:max-w-lg">
                     <SheetHeader>
-                        <SheetTitle className="flex items-center gap-2">
+                        <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <FileText className="w-5 h-5" />
                             Your Custom Reports
                         </SheetTitle>
@@ -163,7 +163,7 @@ export function CustomReportsPanel({ savedReports }: CustomReportsPanelProps) {
             <Dialog open={!!selectedReport} onOpenChange={(open) => !open && setSelectedReport(null)}>
                 <DialogContent className="sm:max-w-[700px] max-h-[80vh]">
                     <DialogHeader>
-                        <DialogTitle>{selectedReport?.title}</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{selectedReport?.title}</DialogTitle>
                         <DialogDescription>
                             Created on {selectedReport && formatDate(selectedReport.createdAt)}
                         </DialogDescription>

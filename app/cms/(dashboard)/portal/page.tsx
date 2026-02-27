@@ -75,7 +75,7 @@ export default async function PortalSettingsPage() {
     return (
         <div className="p-8 max-w-4xl mx-auto">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold">Message Portal Settings</h1>
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Message Portal Settings</h1>
                 <p className="text-muted-foreground">
                     Configure your team&apos;s SMS message portal branding and settings.
                 </p>

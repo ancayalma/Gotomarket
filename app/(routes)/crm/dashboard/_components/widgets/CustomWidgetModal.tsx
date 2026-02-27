@@ -140,7 +140,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="bg-[#09090b] border-white/10 text-white max-w-4xl p-0 overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.6)] border-t-primary border-t-2">
                 <DialogHeader className="sr-only">
-                    <DialogTitle>Intelligence Architect Wizard</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Intelligence Architect Wizard</DialogTitle>
                     <DialogDescription>Design and forge custom dashboard metrics</DialogDescription>
                 </DialogHeader>
                 <div className="flex h-[700px]">

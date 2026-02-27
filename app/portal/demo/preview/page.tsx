@@ -196,7 +196,7 @@ function DemoPreviewContent() {
                                 </div>
                             )}
                             <div>
-                                <h1 className="font-bold text-lg" style={{ color: textPrimary }}>
+                                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2" style={{ color: textPrimary }}>
                                     {name}
                                 </h1>
                                 <p className="text-xs" style={{ color: textSecondary }}>
@@ -366,7 +366,7 @@ function DemoPreviewContent() {
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div className="flex-1">
-                        <h1 className="font-semibold" style={{ color: textPrimary }}>
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2" style={{ color: textPrimary }}>
                             {selectedMessage.subject}
                         </h1>
                         <p className="text-xs" style={{ color: textSecondary }}>

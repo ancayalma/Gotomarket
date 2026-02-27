@@ -184,7 +184,7 @@ export function ManualInvoiceDialog() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Create Manual Invoice</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Manual Invoice</DialogTitle>
                     <DialogDescription>
                         Hierarchical billing: Lead → Opportunity → Deal Item.
                     </DialogDescription>

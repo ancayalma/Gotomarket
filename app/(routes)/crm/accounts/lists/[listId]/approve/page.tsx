@@ -148,7 +148,7 @@ export default function ApprovalCenterPage() {
                                 <CardHeader className="bg-muted/20 pb-4">
                                     <div className="flex justify-between items-start gap-4">
                                         <div>
-                                            <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                                 <Building2 className="w-5 h-5 text-muted-foreground" />
                                                 {candidate.companyName || candidate.domain || "Unknown Company"}
                                             </CardTitle>

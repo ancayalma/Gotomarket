@@ -347,7 +347,7 @@ export default function CasesClient({
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Plus className="w-5 h-5 text-violet-400" />
                             Create New Case
                         </DialogTitle>

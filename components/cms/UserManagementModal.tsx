@@ -92,7 +92,7 @@ export function UserManagementModal({ isOpen, onClose, user }: UserManagementMod
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-lg bg-zinc-950/95 backdrop-blur-xl border border-white/10 text-white shadow-2xl">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-white">{user ? "Edit User" : "Add Team Member"}</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{user ? "Edit User" : "Add Team Member"}</DialogTitle>
                     <DialogDescription className="text-zinc-400">
                         Manage account details, role assignment, and access status.
                     </DialogDescription>

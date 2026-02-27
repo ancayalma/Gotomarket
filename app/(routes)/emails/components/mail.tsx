@@ -108,7 +108,7 @@ export function MailComponent({
             <div className="flex-1 overflow-auto">
               <Tabs defaultValue="all">
                 <div className="flex items-center px-4 py-2">
-                  <h1 className="text-xl font-bold">Inbox</h1>
+                  <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Inbox</h1>
                   <TabsList className="ml-auto">
                     <TabsTrigger value="all">All</TabsTrigger>
                     <TabsTrigger value="unread">Unread</TabsTrigger>
@@ -265,7 +265,7 @@ export function MailComponent({
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
           <Tabs defaultValue="all">
             <div className="flex items-center px-4 py-2">
-              <h1 className="text-xl font-bold">Inbox</h1>
+              <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Inbox</h1>
               <TabsList className="ml-auto">
                 <TabsTrigger
                   value="all"

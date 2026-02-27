@@ -13,7 +13,7 @@ export default function DevelopersPage() {
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-20">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
               Build the <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400">Future</span>
             </h1>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">

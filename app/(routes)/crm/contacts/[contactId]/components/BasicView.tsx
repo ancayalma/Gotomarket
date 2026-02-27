@@ -40,7 +40,7 @@ export async function BasicView({ data }: OppsViewProps) {
         <CardHeader className="pb-3">
           <div className="flex w-full justify-between">
             <div>
-              <CardTitle>
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 {data.first_name} {data.last_name}
               </CardTitle>
               <CardDescription>ID:{data.id}</CardDescription>
@@ -191,7 +191,7 @@ export async function BasicView({ data }: OppsViewProps) {
       <div className="grid grid-cols-1 gap-3 w-full">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>Contacts</CardTitle>
+            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Contacts</CardTitle>
           </CardHeader>
           <CardContent className="gap-1">
             <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
@@ -266,7 +266,7 @@ export async function BasicView({ data }: OppsViewProps) {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>Social networks</CardTitle>
+            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Social networks</CardTitle>
           </CardHeader>
           <CardContent className="gap-1">
             <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
@@ -342,7 +342,7 @@ export async function BasicView({ data }: OppsViewProps) {
         }
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>Notes</CardTitle>
+            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Notes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-1">

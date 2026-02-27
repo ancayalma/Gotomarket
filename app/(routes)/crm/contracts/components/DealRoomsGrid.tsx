@@ -69,7 +69,7 @@ export const DealRoomsGrid = ({ data }: DealRoomsGridProps) => {
                                     </div>
                                 )}
                             </div>
-                            <CardTitle className="text-xl font-bold line-clamp-1 group-hover:text-primary transition-colors">{contract.title}</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{contract.title}</CardTitle>
                             <CardDescription className="line-clamp-1">
                                 {contract.assigned_account?.name || "No Account"}
                             </CardDescription>

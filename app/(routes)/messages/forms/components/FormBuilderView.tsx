@@ -976,7 +976,7 @@ ${hasCaptcha ? `<script src="https://challenges.cloudflare.com/turnstile/v0/api.
                                             <ChevronRight className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
                                         )}
                                         <div className="min-w-0">
-                                            <CardTitle className="text-base truncate">{form.name}</CardTitle>
+                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{form.name}</CardTitle>
                                             {form.description && (
                                                 <CardDescription className="truncate">{form.description}</CardDescription>
                                             )}
@@ -1128,7 +1128,7 @@ ${hasCaptcha ? `<script src="https://challenges.cloudflare.com/turnstile/v0/api.
                             <CardHeader className="pb-3">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <CardTitle className="text-lg truncate">{form.name}</CardTitle>
+                                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{form.name}</CardTitle>
                                         {form.description && (
                                             <CardDescription className="line-clamp-2 mt-1">{form.description}</CardDescription>
                                         )}
@@ -1242,7 +1242,7 @@ ${hasCaptcha ? `<script src="https://challenges.cloudflare.com/turnstile/v0/api.
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
                     <DialogHeader>
-                        <DialogTitle>Create New Form</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create New Form</DialogTitle>
                         <DialogDescription>
                             Build a lead capture form for your website
                         </DialogDescription>
@@ -1765,7 +1765,7 @@ ${hasCaptcha ? `<script src="https://challenges.cloudflare.com/turnstile/v0/api.
             <Dialog open={showCustomizeDialog} onOpenChange={setShowCustomizeDialog}>
                 <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
                     <DialogHeader className="px-6 py-4 border-b">
-                        <DialogTitle>Form Settings: {selectedForm?.name}</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Form Settings: {selectedForm?.name}</DialogTitle>
                         <DialogDescription>
                             Configure behavior, appearance, and integrations
                         </DialogDescription>
@@ -2066,7 +2066,7 @@ ${hasCaptcha ? `<script src="https://challenges.cloudflare.com/turnstile/v0/api.
             < Dialog open={showEmbedDialog} onOpenChange={setShowEmbedDialog} >
                 <DialogContent className="max-w-3xl max-h-[80vh]">
                     <DialogHeader>
-                        <DialogTitle>Embed Form: {selectedForm?.name}</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Embed Form: {selectedForm?.name}</DialogTitle>
                         <DialogDescription>
                             Copy the code below to add this form to your website
                         </DialogDescription>

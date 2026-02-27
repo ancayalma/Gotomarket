@@ -510,7 +510,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[500px] border-primary/20 bg-background/95 backdrop-blur-xl">
                             <DialogHeader>
-                                <DialogTitle className="text-xl">Import Products</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Import Products</DialogTitle>
                                 <DialogDescription>Select an e-commerce platform to import products from.</DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-3 py-4">
@@ -1003,7 +1003,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                 <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden border-primary/20 bg-background/95 backdrop-blur-xl">
                     <form onSubmit={handleEditSubmit} className="flex flex-col max-h-[90vh]">
                         <div className="px-6 py-4 border-b border-primary/10">
-                            <DialogTitle className="text-xl font-bold">
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 Edit Product
                             </DialogTitle>
                             <DialogDescription>

@@ -293,7 +293,7 @@ export default function CaseDetailClient({
                 <div className="flex-1 flex flex-col min-w-0 border-r border-border/30">
                     {/* Subject */}
                     <div className="px-5 py-4 border-b border-border/30">
-                        <h1 className="text-lg font-semibold leading-tight">{activeCase.subject}</h1>
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{activeCase.subject}</h1>
                         {activeCase.description && (
                             <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{activeCase.description}</p>
                         )}

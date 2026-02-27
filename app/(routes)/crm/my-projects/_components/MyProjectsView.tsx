@@ -433,7 +433,7 @@ export default function MyProjectsView({ userId }: Props) {
                 {/* My Assignments Card */}
                 <Card className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-transparent border-none">
                     <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-base">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <FolderKanban className="w-5 h-5 text-indigo-400" />
                             My Assignments
                         </CardTitle>
@@ -446,7 +446,7 @@ export default function MyProjectsView({ userId }: Props) {
                 {/* Need More Leads Card */}
                 <Card className="bg-muted/30">
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Sparkles className="w-5 h-5 text-amber-400" />
                             Need More Leads?
                         </CardTitle>

@@ -247,7 +247,7 @@ export function FormSubmissionsView({ submissions, forms, initialFormId = "all",
             {/* Filters */}
             <Card>
                 <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                         <Filter className="h-5 w-5" />
                         Filters
                     </CardTitle>
@@ -305,7 +305,7 @@ export function FormSubmissionsView({ submissions, forms, initialFormId = "all",
             {/* Submissions Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Submissions ({filteredSubmissions.length})</CardTitle>
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Submissions ({filteredSubmissions.length})</CardTitle>
                     <CardDescription>
                         Click on a row to expand and see full submission data. Create leads with one click.
                     </CardDescription>
@@ -472,7 +472,7 @@ export function FormSubmissionsView({ submissions, forms, initialFormId = "all",
             <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
                 <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
                     <DialogHeader className="p-6 pb-2">
-                        <DialogTitle>Submission Details</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Submission Details</DialogTitle>
                         <DialogDescription>
                             Submitted via {selectedSubmission?.form?.name} on{" "}
                             {selectedSubmission && format(new Date(selectedSubmission.createdAt), "PPpp")}
@@ -563,7 +563,7 @@ export function FormSubmissionsView({ submissions, forms, initialFormId = "all",
             <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
                 <DialogContent className="max-w-xl">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Mail className="h-5 w-5" />
                             Send Email
                         </DialogTitle>

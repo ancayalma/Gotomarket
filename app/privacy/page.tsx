@@ -22,7 +22,7 @@ export default function PrivacyPage() {
 
                 <main className="py-20 md:py-32">
                     <div className="container mx-auto px-4 max-w-3xl">
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Privacy Policy</h1>
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Privacy Policy</h1>
                         <p className="text-gray-400 mb-12">Last updated: December 1, 2025</p>
 
                         <div className="prose prose-invert prose-lg max-w-none text-gray-300 space-y-12">

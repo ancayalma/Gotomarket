@@ -152,7 +152,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
   return (
     <Card className="shadow-lg my-5 w-full max-w-lg sm:max-w-xl mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Create Account</CardTitle>
+        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Account</CardTitle>
         <CardDescription>Enter your information to create an account.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 overflow-auto">

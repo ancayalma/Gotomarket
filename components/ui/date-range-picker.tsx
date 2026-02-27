@@ -141,7 +141,7 @@ export function DateRangePicker({
                     {TriggerButton}
                 </DialogTrigger>
                 <DialogContent className={cn("w-auto p-0 bg-zinc-950 border-white/10 max-w-[95vw]", popoverClassName)}>
-                    <DialogTitle className="sr-only">Select Date Range</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Select Date Range</DialogTitle>
                     {CalendarContent}
                 </DialogContent>
             </Dialog>

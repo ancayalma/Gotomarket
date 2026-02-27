@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
                     <div className="h-12 w-12 bg-blue-600 rounded-xl mx-auto flex items-center justify-center mb-4">
                         <Lock className="h-6 w-6 text-white" />
                     </div>
-                    <h1 className="text-2xl font-bold">Admin Login</h1>
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Admin Login</h1>
                     <p className="text-gray-400 mt-2">Enter your credentials to access the dashboard</p>
                 </div>
 

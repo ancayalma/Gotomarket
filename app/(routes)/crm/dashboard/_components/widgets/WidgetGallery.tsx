@@ -91,7 +91,7 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
             </SheetTrigger>
             <SheetContent className="bg-[#0a0a0a] border-white/10 text-white w-[400px] sm:w-[540px] flex flex-col p-0">
                 <SheetHeader className="p-6 border-b border-white/5">
-                    <SheetTitle className="text-white text-2xl font-black uppercase tracking-tighter">Widget Gallery</SheetTitle>
+                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Widget Gallery</SheetTitle>
                     <SheetDescription className="text-white/60">
                         Add intelligence widgets and quick access icons to your dashboard.
                     </SheetDescription>

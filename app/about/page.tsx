@@ -28,7 +28,7 @@ export default function AboutPage() {
                     <section className="py-20 md:py-32 text-center relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
                         <div className="container mx-auto px-4 relative z-10">
-                            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                                 Democratizing <span className="text-primary">AI Intelligence</span>
                             </h1>
                             <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">

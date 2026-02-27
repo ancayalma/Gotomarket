@@ -80,7 +80,7 @@ export const ProjectsGrid = ({ data }: ProjectsGridProps) => {
                             </div>
                         </div>
                         <div className="mt-4">
-                            <CardTitle className="text-2xl font-black group-hover:text-primary transition-colors">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 {board.title}
                             </CardTitle>
                             <CardDescription className="line-clamp-2 mt-2 min-h-[40px]">

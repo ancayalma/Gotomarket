@@ -161,7 +161,7 @@ export default function ObjectDetailPage() {
                     <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">{objectDef.name} ({objectDef.apiName})</h1>
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{objectDef.name} ({objectDef.apiName})</h1>
                     <p className="text-muted-foreground">{objectDef.description || "No description provided."}</p>
                 </div>
                 <div className="ml-auto flex gap-2">
@@ -193,7 +193,7 @@ export default function ObjectDetailPage() {
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Create Custom Field</DialogTitle>
+                                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Custom Field</DialogTitle>
                                     <DialogDescription>Add a new column to this object.</DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4 py-4">

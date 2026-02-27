@@ -339,7 +339,7 @@ export default function ListsView() {
                                     <CardHeader className="pb-3">
                                         <div className="flex justify-between items-start">
                                             <div className="space-y-1">
-                                                <CardTitle className="text-lg font-bold tracking-tight">{pool.name}</CardTitle>
+                                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{pool.name}</CardTitle>
                                                 <CardDescription className="line-clamp-1 text-xs">
                                                     {pool.description || "No description provided."}
                                                 </CardDescription>

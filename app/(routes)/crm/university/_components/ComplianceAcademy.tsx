@@ -147,7 +147,7 @@ export default function ComplianceAcademy() {
 
                     <Card className="bg-white/[0.02] border-white/10 overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 p-8 border-b border-white/5">
-                            <CardTitle className="text-lg font-black tracking-tight text-white uppercase">The Golden Rules</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">The Golden Rules</CardTitle>
                             <CardDescription className="text-xs font-medium text-gray-500">Industry standards for high deliverability.</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">

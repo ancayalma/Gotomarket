@@ -379,7 +379,7 @@ const Kanban = (props: any) => {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="p-2">Create new section</DialogTitle>
+            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create new section</DialogTitle>
             <DialogDescription className="p-2">
               Fill out the form below to create a new section to this project.
             </DialogDescription>

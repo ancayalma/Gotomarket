@@ -78,7 +78,7 @@ export const AddProviderModal = ({ userId }: AddProviderModalProps) => {
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-lg bg-card border-border/50">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Sparkles className="w-5 h-5 text-primary" />
                             Add New AI Provider
                         </DialogTitle>

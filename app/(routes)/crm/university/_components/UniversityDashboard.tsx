@@ -480,7 +480,7 @@ export default function UniversityDashboard({ plan }: UniversityDashboardProps) 
                         {/* Conversion Rules - Plain English */}
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-base">What Happens Automatically</CardTitle>
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">What Happens Automatically</CardTitle>
                             </CardHeader>
                             <CardContent className="grid gap-4 md:grid-cols-2">
                                 <motion.div

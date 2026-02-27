@@ -48,7 +48,7 @@ export default async function MessagePortalPage({ params }: PageProps) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
                 <div className="max-w-md text-center">
-                    <h1 className="text-xl font-semibold text-gray-800 mb-2">
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                         You've Opted Out
                     </h1>
                     <p className="text-gray-600">
@@ -75,7 +75,7 @@ export default async function MessagePortalPage({ params }: PageProps) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
                 <div className="max-w-md text-center">
-                    <h1 className="text-xl font-semibold text-gray-800 mb-2">
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                         No Messages Yet
                     </h1>
                     <p className="text-gray-600">
