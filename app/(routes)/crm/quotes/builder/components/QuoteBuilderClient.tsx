@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
+
 import {
     Plus,
     Trash2,
@@ -20,8 +21,13 @@ import {
     FileText,
     Settings2,
     MessageSquare,
-    Shield
+    Shield,
+    X,
+    Paperclip,
+    FileIcon
 } from "lucide-react";
+
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -70,13 +76,15 @@ interface QuoteBuilderClientProps {
 }
 
 interface LineItem {
-    productId: string;
+    productId?: string;
     productName: string;
-    sku: string;
+    description?: string;
+    sku?: string;
     quantity: number;
     unitPrice: number;
     discount: number; // percentage
 }
+
 
 export default function QuoteBuilderClient({ products, initialAccounts = [], initialContacts = [], initialLeads = [] }: QuoteBuilderClientProps) {
     const router = useRouter();
@@ -90,7 +98,16 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
         new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days default
     );
     const [items, setItems] = useState<LineItem[]>([]);
+    const [taxRate, setTaxRate] = useState(0);
+    const [showTax, setShowTax] = useState(false);
+    const [payerMemo, setPayerMemo] = useState("");
+
+    const [attachments, setAttachments] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+
 
     // Dynamic Lists & Search
     const [accounts, setAccounts] = useState(initialAccounts);
@@ -140,6 +157,17 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
         toast.success(`Added ${product.name} to quote`);
     };
 
+    const addCustomItem = () => {
+        setItems([...items, {
+            productName: "New Line Item",
+            quantity: 1,
+            unitPrice: 0,
+            discount: 0
+        }]);
+        toast.success("Added custom line item");
+    };
+
+
     const removeItem = (index: number) => {
         setItems(items.filter((_, i) => i !== index));
     };
@@ -149,6 +177,38 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
         (newItems[index] as any)[field] = value;
         setItems(newItems);
     };
+
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setAttachments((prev) => [...prev, data.document.document_file_url]);
+                toast.success("File uploaded successfully");
+            } else {
+                const error = await response.json();
+                toast.error(error.error || "Failed to upload file");
+            }
+        } catch (error) {
+            toast.error("An error occurred during upload");
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
 
     const handleSave = async () => {
         if (!selectedAccount) {
@@ -169,12 +229,19 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                 leadId: selectedLead || undefined,
                 items: items.map(item => ({
                     productId: item.productId,
+                    name: item.productId ? undefined : item.productName,
+                    description: item.description,
                     quantity: Number(item.quantity),
                     unitPrice: Number(item.unitPrice),
                     discount: Number(item.discount),
                     totalPrice: (item.quantity * item.unitPrice) * (1 - item.discount / 100)
                 })),
-                totalAmount: total,
+                totalAmount: total + (total * (taxRate / 100)),
+                taxRate: taxRate,
+                notes: notes,
+                terms: terms,
+                payerMemo: payerMemo,
+                attachments: attachments,
                 expirationDate: expirationDate
             });
 
@@ -190,6 +257,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
             setIsSaving(false);
         }
     };
+
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 pb-20">
@@ -370,18 +438,29 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                             <ShoppingCart className="h-5 w-5 text-primary" />
                             Line Items
                         </CardTitle>
-                        <div className="w-[300px]">
-                            <Combobox
-                                options={products.map(p => ({
-                                    label: `${p.name} (${p.sku}) - $${p.price}`,
-                                    value: p.id
-                                }))}
-                                value=""
-                                onChange={addItem}
-                                placeholder="Add a product..."
-                                className="bg-primary text-primary-foreground border-none hover:bg-primary/90 transition-all font-bold"
-                            />
+                        <div className="flex items-center gap-3">
+                            <div className="w-[300px]">
+                                <Combobox
+                                    options={products.map(p => ({
+                                        label: `${p.name} (${p.sku}) - $${p.price}`,
+                                        value: p.id
+                                    }))}
+                                    value=""
+                                    onChange={addItem}
+                                    placeholder="Add a product..."
+                                    className="bg-primary text-primary-foreground border-none hover:bg-primary/90 transition-all font-bold"
+                                />
+                            </div>
+                            <Button
+                                onClick={addCustomItem}
+                                variant="outline"
+                                className="h-11 border-dashed border-white/20 hover:border-primary/50 hover:bg-primary/5 transition-all font-bold tracking-tight"
+                            >
+                                <Plus className="h-4 w-4 mr-2 text-primary" />
+                                Add Line Item
+                            </Button>
                         </div>
+
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
@@ -411,17 +490,29 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                     items.map((item, idx) => (
                                         <TableRow key={idx} className="hover:bg-white/5 transition-colors border-white/5 group">
                                             <TableCell className="pl-6 py-4">
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-sm text-white/90">{item.productName}</span>
-                                                    <span className="text-[10px] uppercase font-mono text-white/40 tracking-tighter">{item.sku}</span>
+                                                <div className="flex flex-col gap-1">
+                                                    {item.productId ? (
+                                                        <>
+                                                            <span className="font-bold text-sm text-white/90">{item.productName}</span>
+                                                            <span className="text-[10px] uppercase font-mono text-white/40 tracking-tighter">{item.sku}</span>
+                                                        </>
+                                                    ) : (
+                                                        <Input
+                                                            value={item.productName}
+                                                            onChange={(e) => updateItem(idx, 'productName', e.target.value)}
+                                                            className="h-8 bg-white/5 border-white/10 focus:border-primary/50 text-sm font-bold"
+                                                            placeholder="Custom item name..."
+                                                        />
+                                                    )}
                                                 </div>
                                             </TableCell>
+
                                             <TableCell>
                                                 <Input
                                                     type="number"
                                                     min="1"
-                                                    value={item.quantity}
-                                                    onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))}
+                                                    value={item.quantity === 0 ? "" : item.quantity}
+                                                    onChange={(e) => updateItem(idx, 'quantity', e.target.value === "" ? 0 : Number(e.target.value))}
                                                     className="h-9 text-center bg-white/5 border-white/10 focus:border-primary/50 w-20"
                                                 />
                                             </TableCell>
@@ -430,8 +521,8 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-white/30">$</span>
                                                     <Input
                                                         type="number"
-                                                        value={item.unitPrice}
-                                                        onChange={(e) => updateItem(idx, 'unitPrice', Number(e.target.value))}
+                                                        value={item.unitPrice === 0 ? "" : item.unitPrice}
+                                                        onChange={(e) => updateItem(idx, 'unitPrice', e.target.value === "" ? 0 : Number(e.target.value))}
                                                         className="h-9 pl-5 text-right font-mono bg-white/5 border-white/10 focus:border-primary/50 w-28"
                                                     />
                                                 </div>
@@ -442,13 +533,14 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                                         type="number"
                                                         max="100"
                                                         min="0"
-                                                        value={item.discount}
-                                                        onChange={(e) => updateItem(idx, 'discount', Number(e.target.value))}
+                                                        value={item.discount === 0 ? "" : item.discount}
+                                                        onChange={(e) => updateItem(idx, 'discount', e.target.value === "" ? 0 : Number(e.target.value))}
                                                         className="h-9 text-center bg-white/5 border-white/10 focus:border-primary/50 w-16 pr-1"
                                                     />
                                                     <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-white/30">%</span>
                                                 </div>
                                             </TableCell>
+
                                             <TableCell className="text-right font-mono font-black pr-6 text-primary">
                                                 ${((item.quantity * item.unitPrice) * (1 - item.discount / 100)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </TableCell>
@@ -465,10 +557,77 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                         </TableRow>
                                     ))
                                 )}
+
+                                {showTax && (
+                                    <TableRow className="border-white/5 bg-white/[0.01]">
+                                        <TableCell className="pl-6 py-4">
+                                            <span className="text-sm font-bold text-white/90">Sales tax (%)</span>
+                                        </TableCell>
+                                        <TableCell></TableCell>
+                                        <TableCell>
+                                            <div className="relative">
+                                                <Input
+                                                    type="number"
+                                                    value={taxRate === 0 ? "" : taxRate}
+                                                    onChange={(e) => setTaxRate(e.target.value === "" ? 0 : Number(e.target.value))}
+                                                    className="h-9 text-right font-mono bg-white/5 border-white/10 focus:border-primary/50 w-28 pr-6"
+                                                />
+                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/30">%</span>
+                                            </div>
+                                        </TableCell>
+
+                                        <TableCell></TableCell>
+                                        <TableCell></TableCell>
+                                        <TableCell className="pr-4">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => { setShowTax(false); setTaxRate(0); }}
+                                                className="h-8 w-8 text-white/20 hover:text-destructive hover:bg-destructive/10 transition-all"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>
+                    {!showTax || items.length > 0 ? (
+                        <CardFooter className="py-6 px-6 bg-white/[0.02] border-t border-white/5 flex flex-col gap-6">
+                            <div className="w-full flex items-center justify-between">
+                                <div className="flex items-center gap-6">
+                                    <Button
+                                        variant="ghost"
+                                        onClick={addCustomItem}
+                                        className="text-xs font-bold text-white/40 hover:text-primary transition-all p-0 h-auto"
+                                    >
+                                        <Plus className="h-3 w-3 mr-2" />
+                                        Add line item
+                                    </Button>
+                                    {!showTax && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => setShowTax(true)}
+                                            className="text-xs font-bold text-white/40 hover:text-primary transition-all p-0 h-auto"
+                                        >
+                                            Add sales tax
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-white/30">Running Total</span>
+                                    <span className="text-3xl font-black text-primary font-mono tabular-nums leading-none">
+                                        ${(total + (total * (taxRate / 100))).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </span>
+                                </div>
+                            </div>
+                        </CardFooter>
+                    ) : null}
+
+
                 </Card>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card className="glass border-white/10 shadow-xl">
                         <CardHeader className="pb-2">
@@ -503,6 +662,61 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                         </CardContent>
                     </Card>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="glass border-white/10 shadow-xl">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-bold flex items-center gap-2 text-white/60">
+                                <MessageSquare className="h-4 w-4" />
+                                Payer memo (optional)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Textarea
+                                placeholder="Add a memo for the payer..."
+                                value={payerMemo}
+                                onChange={(e) => setPayerMemo(e.target.value)}
+                                className="bg-white/5 border-white/10 min-h-[100px] focus:border-primary/50 transition-all"
+                            />
+
+                            {attachments.length > 0 && (
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    {attachments.map((url, idx) => (
+                                        <div key={idx} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] text-white/60">
+                                            <FileIcon className="h-3 w-3" />
+                                            {url.split('/').pop()?.slice(-20)}
+                                            <button
+                                                onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
+                                                className="hover:text-destructive transition-colors ml-1"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                        <CardFooter className="pt-0">
+                            <input
+                                type="file"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleFileUpload}
+                            />
+                            <Button
+                                variant="link"
+                                className="text-[10px] text-primary p-0 h-auto flex items-center gap-2"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                            >
+                                {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                                Upload attachment
+                            </Button>
+                        </CardFooter>
+
+                    </Card>
+                </div>
+
             </div>
 
             {/* Right Column: Totals & Status */}
@@ -526,15 +740,32 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                 <span className="text-white/40 uppercase tracking-widest font-bold">Applied Savings</span>
                                 <span className="font-mono text-emerald-500">-${totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
+                            <div className="flex justify-between items-center text-xs pt-2 border-t border-white/5">
+                                <span className="text-white/40 uppercase tracking-widest font-bold">Sales Tax (%)</span>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        type="number"
+                                        value={taxRate}
+                                        onChange={(e) => setTaxRate(Number(e.target.value))}
+                                        className="h-8 w-20 text-right bg-white/5 border-white/10 focus:border-primary/50 font-mono text-xs"
+                                    />
+                                    <span className="text-[10px] text-white/40">%</span>
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-white/40 uppercase tracking-widest font-bold">Tax Amount</span>
+                                <span className="font-mono text-white/60">${(total * (taxRate / 100)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
                             <Separator className="bg-white/10" />
                             <div className="flex justify-between items-end">
                                 <div className="flex flex-col">
                                     <span className="text-[10px] uppercase font-black text-primary tracking-widest">Total Investment</span>
                                     <span className="text-4xl font-black text-white font-mono tracking-tighter">
-                                        ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        ${(total + (total * (taxRate / 100))).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             </div>
+
                         </div>
 
                         <div className="space-y-3 pt-4 border-t border-white/5">

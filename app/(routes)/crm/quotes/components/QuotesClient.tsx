@@ -12,8 +12,18 @@ import {
     Clock,
     CheckCircle2,
     XCircle,
-    AlertCircle
+    AlertCircle,
+    Download,
+    Mail,
+    Loader2,
+    Save
 } from "lucide-react";
+import { generateQuotePDF } from "@/lib/generate-quote-pdf";
+import { SmartEmailModal } from "@/components/modals/SmartEmailModal";
+import AlertModal from "@/components/modals/alert-modal";
+import { cancelQuote, deleteQuote } from "@/actions/crm/quotes";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,6 +61,27 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
 export default function QuotesClient({ initialQuotes }: QuotesClientProps) {
     const [quotes, setQuotes] = useState(initialQuotes);
     const [searchQuery, setSearchQuery] = useState("");
+    const [isGenerating, setIsGenerating] = useState<string | null>(null);
+
+    // Email Modal State
+    const [emailModalOpen, setEmailModalOpen] = useState(false);
+    const [selectedEmailInfo, setSelectedEmailInfo] = useState<{
+        email: string;
+        name: string;
+        leadId?: string;
+        contactId?: string;
+    } | null>(null);
+
+    // Cancel Modal State
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [quoteToCancel, setQuoteToCancel] = useState<string | null>(null);
+
+    // Delete Modal State
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [quoteToDelete, setQuoteToDelete] = useState<string | null>(null);
+
 
     const filteredQuotes = quotes.filter(q =>
         q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -58,8 +89,148 @@ export default function QuotesClient({ initialQuotes }: QuotesClientProps) {
         q.account?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const handleDownloadPdf = (quote: any) => {
+        try {
+            setIsGenerating(quote.id);
+
+            // Calculate Address
+            const addressParts = [];
+            if (quote.account?.billing_street) addressParts.push(quote.account.billing_street);
+            if (quote.account?.billing_city || quote.account?.billing_state || quote.account?.billing_postal_code) {
+                const line2 = [quote.account.billing_city, quote.account.billing_state, quote.account.billing_postal_code]
+                    .filter(Boolean)
+                    .join(", ");
+                if (line2) addressParts.push(line2);
+            }
+            if (quote.account?.billing_country) addressParts.push(quote.account.billing_country);
+            const customerAddress = addressParts.length > 0 ? addressParts.join("\n") : undefined;
+
+            const doc = generateQuotePDF({
+                quoteNumber: quote.quoteNumber,
+                title: quote.title,
+                createdAt: quote.createdAt,
+                expirationDate: quote.expirationDate,
+                accountName: quote.account?.name,
+                contactName: quote.contact ? `${quote.contact.first_name} ${quote.contact.last_name}` : undefined,
+                totalAmount: quote.totalAmount,
+                taxRate: quote.taxRate,
+                customerAddress,
+                companyName: quote.team?.name,
+                logoUrl: quote.team?.logo_url,
+                subtotal: quote.items?.reduce((acc: number, item: any) => acc + item.totalPrice, 0) || quote.totalAmount,
+                items: quote.items?.map((item: any) => ({
+                    name: item.name || item.product?.name || "Product",
+                    description: item.description,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    discount: item.discount,
+                    totalPrice: item.totalPrice
+                })) || []
+            });
+
+            doc.save(`Proposal_${quote.quoteNumber}.pdf`);
+            toast.success("PDF Generated Successfully");
+        } catch (error) {
+            console.error("[PDF_DOWNLOAD_ERROR]", error);
+            toast.error("Failed to generate PDF");
+        } finally {
+            setIsGenerating(null);
+        }
+    };
+
+    const handleOpenEmailModal = (quote: any) => {
+        const email = quote.contact?.email || quote.lead?.email;
+        if (!email) {
+            toast.error("No email address found for this quote's contact or lead.");
+            return;
+        }
+
+        const name = quote.contact ?
+            `${quote.contact.first_name} ${quote.contact.last_name}` :
+            `${quote.lead?.firstName} ${quote.lead?.lastName}`;
+
+        setSelectedEmailInfo({
+            email,
+            name,
+            leadId: quote.leadId,
+            contactId: quote.contactId
+        });
+        setEmailModalOpen(true);
+    };
+
+    const handleCancel = async () => {
+        if (!quoteToCancel) return;
+
+        try {
+            setIsCancelling(true);
+            const result = await cancelQuote(quoteToCancel);
+            if (result.success) {
+                toast.success("Quote cancelled successfully");
+                setQuotes((prev) => prev.map(q => q.id === quoteToCancel ? { ...q, status: "REJECTED" } : q));
+            } else {
+                toast.error(result.error || "Failed to cancel quote");
+            }
+        } catch (error) {
+            toast.error("An error occurred while cancelling the quote");
+        } finally {
+            setIsCancelling(false);
+            setCancelModalOpen(false);
+            setQuoteToCancel(null);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!quoteToDelete) return;
+
+        try {
+            setIsDeleting(true);
+            const result = await deleteQuote(quoteToDelete);
+            if (result.success) {
+                toast.success("Quote deleted successfully");
+                setQuotes((prev) => prev.filter(q => q.id !== quoteToDelete));
+            } else {
+                toast.error(result.error || "Failed to delete quote");
+            }
+        } catch (error) {
+            toast.error("An error occurred while deleting the quote");
+        } finally {
+            setIsDeleting(false);
+            setDeleteModalOpen(false);
+            setQuoteToDelete(null);
+        }
+    };
+
     return (
         <div className="space-y-6">
+            {selectedEmailInfo && (
+                <SmartEmailModal
+                    open={emailModalOpen}
+                    onOpenChange={setEmailModalOpen}
+                    recipientEmail={selectedEmailInfo.email}
+                    recipientName={selectedEmailInfo.name}
+                    leadId={selectedEmailInfo.leadId}
+                    contactId={selectedEmailInfo.contactId}
+                />
+            )}
+
+            <AlertModal
+                isOpen={cancelModalOpen}
+                onClose={() => setCancelModalOpen(false)}
+                onConfirm={handleCancel}
+                loading={isCancelling}
+                title="Cancel Quote"
+                description="Are you sure you want to cancel this quote? This will mark it as Rejected."
+            />
+
+            <AlertModal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                onConfirm={handleDelete}
+                loading={isDeleting}
+                title="Delete Quote"
+                description="Are you sure you want to permanently delete this quote? This action cannot be undone."
+            />
+
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="relative w-full md:w-96">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -180,12 +351,43 @@ export default function QuotesClient({ initialQuotes }: QuotesClientProps) {
                                                                 <ExternalLink className="h-3.5 w-3.5" /> View Details
                                                             </DropdownMenuItem>
                                                         </Link>
-                                                        <DropdownMenuItem className="gap-2">
-                                                            <FileText className="h-3.5 w-3.5" /> Generate PDF
+                                                        <DropdownMenuItem
+                                                            className="gap-2 cursor-pointer"
+                                                            onClick={() => handleDownloadPdf(quote)}
+                                                            disabled={isGenerating === quote.id}
+                                                        >
+                                                            {isGenerating === quote.id ? (
+                                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                            ) : (
+                                                                <Download className="h-3.5 w-3.5" />
+                                                            )}
+                                                            Download PDF
                                                         </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            className="gap-2 cursor-pointer"
+                                                            onClick={() => handleOpenEmailModal(quote)}
+                                                        >
+                                                            <Mail className="h-3.5 w-3.5" /> Send via Email
+                                                        </DropdownMenuItem>
+
                                                         <div className="h-px bg-muted my-1" />
-                                                        <DropdownMenuItem className="gap-2 text-destructive">
+                                                        <DropdownMenuItem
+                                                            className="gap-2 text-destructive cursor-pointer"
+                                                            onClick={() => {
+                                                                setQuoteToCancel(quote.id);
+                                                                setCancelModalOpen(true);
+                                                            }}
+                                                        >
                                                             <XCircle className="h-3.5 w-3.5" /> Cancel Quote
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            className="gap-2 text-destructive cursor-pointer font-bold"
+                                                            onClick={() => {
+                                                                setQuoteToDelete(quote.id);
+                                                                setDeleteModalOpen(true);
+                                                            }}
+                                                        >
+                                                            <Plus className="h-3.5 w-3.5 rotate-45" /> Delete Quote
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>

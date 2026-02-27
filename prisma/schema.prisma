@@ -147,6 +147,7 @@ model crm_Leads {
   team_id       String? @db.ObjectId
   assigned_team Team?   @relation(fields: [team_id], references: [id])
 
+
   // Department assignment for scoped access
   assigned_department_id String? @db.ObjectId
   additional_emails      String[]
@@ -3558,6 +3559,11 @@ model crm_Quotes {
   quoteNumber    String    @unique
   status         String    @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED
   totalAmount    Float     @default(0)
+  taxRateValue   Float     @default(0)
+  notes          String?
+  terms          String?
+  payerMemo      String?
+  attachments    String[]
   expirationDate DateTime?
 
   accountId     String? @db.ObjectId
@@ -3580,17 +3586,20 @@ model crm_Quotes {
 }
 
 model crm_QuoteItems {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  quoteId    String @db.ObjectId
-  productId  String @db.ObjectId
-  quantity   Int    @default(1)
-  unitPrice  Float
-  discount   Float  @default(0)
-  totalPrice Float
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  quoteId     String  @db.ObjectId
+  productId   String? @db.ObjectId
+  name        String? // For custom line items
+  description String?
+  quantity    Int     @default(1)
+  unitPrice   Float
+  discount    Float   @default(0)
+  totalPrice  Float
 
-  quote   crm_Quotes   @relation(fields: [quoteId], references: [id])
-  product crm_Products @relation(fields: [productId], references: [id])
+  quote   crm_Quotes    @relation(fields: [quoteId], references: [id])
+  product crm_Products? @relation(fields: [productId], references: [id])
 }
+
 
 model DashboardPreference {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId

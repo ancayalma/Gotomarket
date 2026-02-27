@@ -15,8 +15,19 @@ import {
     XCircle,
     AlertCircle,
     Package,
-    Loader2
+    Loader2,
+    FileIcon,
+    Paperclip,
+    Save,
+    Plus
 } from "lucide-react";
+
+import { generateQuotePDF } from "@/lib/generate-quote-pdf";
+import { saveQuoteAsDocument } from "@/actions/crm/quotes/save-pdf";
+import { cancelQuote, deleteQuote } from "@/actions/crm/quotes";
+import AlertModal from "@/components/modals/alert-modal";
+
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import {
@@ -37,15 +48,18 @@ import { toast } from "sonner";
 
 interface QuoteItem {
     id: string;
-    product: {
+    product?: {
         name: string;
         sku: string;
     };
+    name?: string;
+    description?: string;
     quantity: number;
     unitPrice: number;
     discount: number;
     totalPrice: number;
 }
+
 
 interface Quote {
     id: string;
@@ -53,12 +67,43 @@ interface Quote {
     quoteNumber: string;
     status: string;
     totalAmount: number;
+    taxRate?: number;
+    notes?: string;
+    terms?: string;
+    payerMemo?: string;
+    attachments?: string[];
     expirationDate: string | null;
     createdAt: string;
-    account?: { name: string; address?: string };
-    contact?: { first_name: string; last_name: string; email?: string };
+    accountId?: string;
+    contactId?: string;
+    leadId?: string;
+    team_id: string;
+    account?: {
+        name: string;
+        billing_street?: string;
+        billing_city?: string;
+        billing_state?: string;
+        billing_postal_code?: string;
+        billing_country?: string;
+    };
+    contact?: {
+        first_name: string;
+        last_name: string;
+        email?: string;
+    };
+    lead?: {
+        firstName?: string;
+        lastName: string;
+        company?: string;
+    };
+    team?: {
+        name: string;
+        logo_url?: string;
+    };
     items: QuoteItem[];
 }
+
+
 
 const statusMap: Record<string, { label: string; color: string; icon: any }> = {
     DRAFT: { label: "Draft", color: "bg-slate-500/10 text-slate-500 border-slate-500/20", icon: Clock },
@@ -75,6 +120,12 @@ export default function QuoteDetailsClient({ quote }: { quote: Quote }) {
     const router = useRouter();
     const contentRef = useRef<HTMLDivElement>(null);
     const [isEmailing, setIsEmailing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
 
     const handlePrint = useReactToPrint({
         contentRef,
@@ -100,6 +151,126 @@ export default function QuoteDetailsClient({ quote }: { quote: Quote }) {
         }
     };
 
+    const handleCancel = async () => {
+        try {
+            setIsCancelling(true);
+            const result = await cancelQuote(quote.id);
+            if (result.success) {
+                toast.success("Quote cancelled successfully");
+                router.refresh(); // Refresh to show new status
+            } else {
+                toast.error(result.error || "Failed to cancel quote");
+            }
+        } catch (error) {
+            toast.error("An error occurred while cancelling the quote");
+        } finally {
+            setIsCancelling(false);
+            setCancelModalOpen(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        try {
+            setIsDeleting(true);
+            const result = await deleteQuote(quote.id);
+            if (result.success) {
+                toast.success("Quote deleted successfully");
+                router.push("/crm/quotes");
+            } else {
+                toast.error(result.error || "Failed to delete quote");
+            }
+        } catch (error) {
+            toast.error("An error occurred while deleting the quote");
+        } finally {
+            setIsDeleting(false);
+            setDeleteModalOpen(false);
+        }
+    };
+
+    const handleSaveToCrm = async () => {
+        setIsSaving(true);
+        try {
+            // 1. Calculate Address
+            const addressParts = [];
+            if (quote.account?.billing_street) addressParts.push(quote.account.billing_street);
+            if (quote.account?.billing_city || quote.account?.billing_state || quote.account?.billing_postal_code) {
+                const line2 = [quote.account.billing_city, quote.account.billing_state, quote.account.billing_postal_code]
+                    .filter(Boolean)
+                    .join(", ");
+                if (line2) addressParts.push(line2);
+            }
+            if (quote.account?.billing_country) addressParts.push(quote.account.billing_country);
+            const customerAddress = addressParts.length > 0 ? addressParts.join("\n") : undefined;
+
+            // 2. Generate PDF
+            const doc = generateQuotePDF({
+                quoteNumber: quote.quoteNumber,
+                title: quote.title,
+                createdAt: quote.createdAt,
+                expirationDate: quote.expirationDate,
+                accountName: quote.account?.name,
+                contactName: quote.contact ? `${quote.contact.first_name} ${quote.contact.last_name}` : undefined,
+                totalAmount: quote.totalAmount,
+                taxRate: quote.taxRate,
+                customerAddress,
+                companyName: quote.team?.name,
+                logoUrl: quote.team?.logo_url,
+                subtotal: quote.items.reduce((acc, item) => acc + item.totalPrice, 0),
+                items: quote.items.map(item => ({
+                    name: item.name || item.product?.name || "Product",
+                    description: item.description,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    discount: item.discount,
+                    totalPrice: item.totalPrice
+                })),
+                notes: quote.notes,
+                terms: quote.terms,
+                payerMemo: quote.payerMemo
+            });
+
+
+            const blob = doc.output("blob");
+            const file = new File([blob], `${quote.quoteNumber}.pdf`, { type: "application/pdf" });
+
+            // 2. Upload to S3 via /api/upload
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const uploadRes = await fetch("/api/upload", {
+                method: "POST",
+                body: formData
+            });
+
+            if (!uploadRes.ok) throw new Error("Failed to upload PDF to storage");
+            const uploadData = await uploadRes.json();
+            const documentUrl = uploadData.document.document_file_url;
+
+            // 3. Save as CRM Document
+            const result = await saveQuoteAsDocument({
+                quoteId: quote.id,
+                documentUrl,
+                documentName: `Quote Proposal: ${quote.quoteNumber}`,
+                leadId: quote.leadId,
+                accountId: quote.accountId,
+                contactId: quote.contactId,
+                teamId: quote.team_id
+            });
+
+            if (result.success) {
+                toast.success("Quote PDF saved to CRM Documents!");
+            } else {
+                toast.error(result.error || "Failed to link document");
+            }
+        } catch (error: any) {
+            console.error("[SAVE_TO_CRM]", error);
+            toast.error(error.message || "An error occurred while saving to CRM");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+
     const StatusIcon = statusMap[quote.status]?.icon || Clock;
 
     return (
@@ -116,6 +287,15 @@ export default function QuoteDetailsClient({ quote }: { quote: Quote }) {
                         Print / PDF
                     </Button>
                     <Button
+                        variant="outline"
+                        className="gap-2 border-primary/20 hover:bg-primary/5 text-primary"
+                        onClick={handleSaveToCrm}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Save to CRM
+                    </Button>
+                    <Button
                         className="gap-2 bg-primary"
                         onClick={sendEmail}
                         disabled={isEmailing}
@@ -123,8 +303,43 @@ export default function QuoteDetailsClient({ quote }: { quote: Quote }) {
                         {isEmailing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                         Send via Email
                     </Button>
+                    <Button
+                        variant="destructive"
+                        className="gap-2"
+                        onClick={() => setCancelModalOpen(true)}
+                        disabled={quote.status === "REJECTED"}
+                    >
+                        <XCircle className="h-4 w-4" />
+                        Cancel Quote
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        className="gap-2 font-bold"
+                        onClick={() => setDeleteModalOpen(true)}
+                    >
+                        <Plus className="h-4 w-4 rotate-45" />
+                        Delete Quote
+                    </Button>
                 </div>
             </div>
+
+            <AlertModal
+                isOpen={cancelModalOpen}
+                onClose={() => setCancelModalOpen(false)}
+                onConfirm={handleCancel}
+                loading={isCancelling}
+                title="Cancel Quote"
+                description="Are you sure you want to cancel this quote? This will mark it as Rejected."
+            />
+
+            <AlertModal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                onConfirm={handleDelete}
+                loading={isDeleting}
+                title="Delete Quote"
+                description="Are you sure you want to permanently delete this quote? This action cannot be undone."
+            />
 
             {/* Quote Content (Printable Area) */}
             <Card ref={contentRef} className="border-none shadow-none bg-card">
@@ -212,10 +427,16 @@ export default function QuoteDetailsClient({ quote }: { quote: Quote }) {
                                         <TableRow key={item.id}>
                                             <TableCell className="pl-6">
                                                 <div className="flex flex-col">
-                                                    <span className="font-semibold text-foreground">{item.product.name}</span>
-                                                    <span className="text-[10px] font-mono text-muted-foreground leading-none">{item.product.sku}</span>
+                                                    <span className="font-semibold text-foreground">{item.product?.name || item.name}</span>
+                                                    {item.product?.sku && (
+                                                        <span className="text-[10px] font-mono text-muted-foreground leading-none">{item.product.sku}</span>
+                                                    )}
+                                                    {item.description && (
+                                                        <span className="text-xs text-muted-foreground">{item.description}</span>
+                                                    )}
                                                 </div>
                                             </TableCell>
+
                                             <TableCell className="text-center font-medium">{item.quantity}</TableCell>
                                             <TableCell className="text-right font-mono">${item.unitPrice.toLocaleString()}</TableCell>
                                             <TableCell className="text-center">
@@ -245,9 +466,15 @@ export default function QuoteDetailsClient({ quote }: { quote: Quote }) {
                             <div className="flex justify-between items-center text-sm font-medium">
                                 <span className="text-muted-foreground">Volume Discount Applied</span>
                                 <span className="font-mono text-emerald-600">
-                                    -${(quote.items.reduce((acc, i) => acc + (i.unitPrice * i.quantity), 0) - quote.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    -${(quote.items.reduce((acc, i) => acc + (i.unitPrice * i.quantity), 0) - (quote.totalAmount / (1 + (quote.taxRate || 0) / 100))).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
+                            {quote.taxRate && (
+                                <div className="flex justify-between items-center text-sm font-medium">
+                                    <span className="text-muted-foreground">Sales Tax ({quote.taxRate}%)</span>
+                                    <span className="font-mono">${(quote.totalAmount - (quote.totalAmount / (1 + quote.taxRate / 100))).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                </div>
+                            )}
                             <Separator />
                             <div className="flex justify-between items-center pt-2">
                                 <span className="text-lg font-black uppercase tracking-tighter">Total Proposal</span>
@@ -258,19 +485,61 @@ export default function QuoteDetailsClient({ quote }: { quote: Quote }) {
                         </div>
                     </div>
 
+                    {/* Payer Memo */}
+                    {quote.payerMemo && (
+                        <div className="bg-muted/30 rounded-xl p-6 border">
+                            <h3 className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-3 flex items-center gap-2">
+                                <FileText className="h-3 w-3" />
+                                Payer Memo
+                            </h3>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{quote.payerMemo}</p>
+
+                            {quote.attachments && quote.attachments.length > 0 && (
+                                <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-white/30 flex items-center gap-2">
+                                        <Paperclip className="h-3 w-3" />
+                                        Attachments
+                                    </h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {quote.attachments.map((url, idx) => (
+                                            <a
+                                                key={idx}
+                                                href={url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 bg-primary/5 hover:bg-primary/10 border border-primary/10 rounded-lg px-3 py-1.5 text-xs text-primary transition-colors"
+                                            >
+                                                <FileIcon className="h-4 w-4" />
+                                                <span className="font-medium">{url.split('/').pop()?.slice(-30)}</span>
+                                                <ExternalLink className="h-3 w-3 opacity-50" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+
+
                     {/* Terms */}
                     <div className="bg-primary/5 rounded-xl p-6 border border-primary/10">
                         <h3 className="text-xs font-black uppercase text-primary tracking-widest mb-3 flex items-center gap-2">
                             <AlertCircle className="h-3 w-3" />
                             Terms & Conditions
                         </h3>
-                        <ul className="text-xs text-muted-foreground space-y-2 list-disc pl-4 italic">
-                            <li>All prices are quoted in USD and subject to applicable taxes.</li>
-                            <li>This proposal is strictly valid until the expiration date shown above.</li>
-                            <li>Standard implementation timelines begin upon acceptance and deposit payment.</li>
-                            <li>Pricing includes 12 months of premium support and maintenance.</li>
-                        </ul>
+                        {quote.terms ? (
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap italic">{quote.terms}</p>
+                        ) : (
+                            <ul className="text-xs text-muted-foreground space-y-2 list-disc pl-4 italic">
+                                <li>All prices are quoted in USD and subject to applicable taxes.</li>
+                                <li>This proposal is strictly valid until the expiration date shown above.</li>
+                                <li>Standard implementation timelines begin upon acceptance and deposit payment.</li>
+                                <li>Pricing includes 12 months of premium support and maintenance.</li>
+                            </ul>
+                        )}
                     </div>
+
                 </CardContent>
 
                 <CardFooter className="flex justify-center border-t py-8 bg-muted/20 mt-12">

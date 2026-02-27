@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   CalendarDays,
   CoinsIcon,
@@ -20,7 +21,10 @@ import {
   Facebook,
   Twitter,
   Mail,
+  FileText,
+  ExternalLink
 } from "lucide-react";
+
 import moment from "moment";
 import Link from "next/link";
 import { EnvelopeClosedIcon, LightningBoltIcon } from "@radix-ui/react-icons";
@@ -231,6 +235,35 @@ export function BasicView({ data }: OppsViewProps) {
               </div>
             </div>
           </div>
+
+          {data.quotes && data.quotes.length > 0 && (
+            <div className="p-6 border-t border-white/5 bg-primary/5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-4 flex items-center gap-2">
+                <FileText className="h-3 w-3" /> Active Proposals & Quotes
+              </p>
+              <div className="space-y-3">
+                {data.quotes.map((quote: any) => (
+                  <Link
+                    key={quote.id}
+                    href={`/crm/quotes/${quote.id}`}
+                    className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-white/90">{quote.title}</span>
+                      <span className="text-[10px] font-mono text-white/40 uppercase">{quote.quoteNumber} · ${quote.totalAmount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="text-[9px] uppercase border-white/10 bg-white/5 text-white/50">
+                        {quote.status}
+                      </Badge>
+                      <ExternalLink className="h-3 w-3 text-white/20 group-hover:text-primary transition-colors" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
         </CardContent>
       </Card>
     </div>
