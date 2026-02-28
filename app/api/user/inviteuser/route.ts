@@ -4,8 +4,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateRandomPassword } from "@/lib/utils";
 import { logActivity } from "@/actions/audit";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 import { hash } from "bcryptjs";
+import { hashPassword } from "@/lib/password-utils";
 
 import InviteUserEmail from "@/emails/InviteUser";
 import sendEmail from "@/lib/sendmail";
@@ -18,15 +20,23 @@ export async function POST(req: Request) {
     return new NextResponse("Unauthenticated", { status: 401 });
   }
 
+  const teamInfo = await getCurrentUserTeamId();
+  if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) {
+    return NextResponse.json(
+      { error: "No active team found to invite user to." },
+      { status: 400 }
+    );
+  }
+
   try {
     const body = await req.json();
-    const { name, email, language, assigned_modules } = body;
+    const { name, email, language, assigned_modules, role = "MEMBER" } = body;
 
     if (!name || !email || !language) {
       return NextResponse.json(
         { error: "Name, Email, and Language is required!" },
         {
-          status: 200,
+          status: 400,
         }
       );
     }
@@ -39,22 +49,19 @@ export async function POST(req: Request) {
 
     const message = `You have been invited to ${process.env.NEXT_PUBLIC_APP_NAME} \n\n Your username is: ${email} \n\n Your password is: ${password} \n\n Please login to ${appUrl} \n\n Thank you \n\n ${process.env.NEXT_PUBLIC_APP_NAME}`;
 
-
-
     //Check if user already exists in local database
     const checkexisting = await prismadb.users.findFirst({
       where: {
         email: email,
       },
     });
-    //console.log(checkexisting, "checkexisting");
 
     //If user already exists, return error else create user and send email
     if (checkexisting) {
       return NextResponse.json(
         { error: "User already exist, reset password instead!" },
         {
-          status: 200,
+          status: 400,
         }
       );
     } else {
@@ -70,8 +77,10 @@ export async function POST(req: Request) {
             email,
             userStatus: "ACTIVE",
             userLanguage: "en",
-            password: await hash(password, 12),
+            password: await hashPassword(password),
             assigned_modules: assigned_modules || [],
+            team_id: teamInfo.teamId, // Assign to the current team
+            team_role: role, // Default to MEMBER or provided role
           },
         });
 
@@ -102,7 +111,7 @@ export async function POST(req: Request) {
         await logActivity(
           "Invited User",
           "User Management",
-          `Invited user ${email}`
+          `Invited user ${email} to team ${teamInfo.teamId}`
         );
 
         return NextResponse.json(user, { status: 200 });

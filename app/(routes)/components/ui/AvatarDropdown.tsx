@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import useAvatarStore from "@/store/useAvatarStore";
 import { BillingModal } from "@/components/modals/BillingModal";
+import { useSignedUrl } from "@/hooks/use-signed-url";
 
 type Props = {
   avatar: string;
@@ -40,6 +41,8 @@ const AvatarDropdown = ({ avatar, userId, name, email }: Props) => {
     setNewAvatar(getAvatar);
   }, [getAvatar]);
 
+  const { signedUrl } = useSignedUrl(newAvatar);
+
   //console.log(newAvatar, "newAvatar");
   return (
     <>
@@ -48,8 +51,8 @@ const AvatarDropdown = ({ avatar, userId, name, email }: Props) => {
           <Avatar>
             <AvatarImage
               src={
-                newAvatar
-                  ? newAvatar
+                signedUrl
+                  ? signedUrl
                   : `${process.env.NEXT_PUBLIC_APP_URL}/images/nouser.png`
               }
             />

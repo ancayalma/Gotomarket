@@ -6,6 +6,7 @@ import GitHubProvider from "next-auth/providers/github";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { comparePassword } from "@/lib/password-utils";
 import { newUserNotify } from "./new-user-notify";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { logActivityInternal } from "@/actions/audit";
@@ -29,6 +30,8 @@ export const authOptions: NextAuthOptions = {
   //adapter: PrismaAdapter(prismadb),
   session: {
     strategy: "jwt",
+    maxAge: 8 * 60 * 60, // SOC2: 8-hour session cap
+    updateAge: 60 * 60, // Refresh token every hour
   },
 
   providers: [
@@ -56,6 +59,8 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "email", type: "text" },
         password: { label: "password", type: "password" },
+        mfaCode: { label: "mfaCode", type: "text" }, // For TOTP
+        mfaToken: { label: "mfaToken", type: "text" }, // For WebAuthn/Fallback
       },
 
       async authorize(credentials) {
@@ -94,7 +99,7 @@ export const authOptions: NextAuthOptions = {
           );
         }
 
-        const isCorrectPassword = await bcrypt.compare(
+        const isCorrectPassword = await comparePassword(
           trimmedPassword,
           user.password
         );
@@ -103,7 +108,40 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Password is incorrect");
         }
 
-        //console.log(user, "user");
+        // SOC2/NIST MFA Check
+        const userAny = user as any;
+        if (userAny.mfaEnabled) {
+          const mfaCode = (credentials as any).mfaCode;
+          const mfaToken = (credentials as any).mfaToken;
+
+          // 1. Check TOTP 6-digit code
+          if (userAny.mfaMethod === "TOTP" && mfaCode) {
+            const { verifyTotpToken } = await import("./mfa-utils");
+            const isValid = await verifyTotpToken(mfaCode, userAny.mfaSecret || "");
+            if (!isValid) throw new Error("Invalid verification code");
+          }
+          // 2. Check Fallback / WebAuthn Token
+          else if (mfaToken) {
+            const { jwtVerify } = await import("jose");
+            try {
+              const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "fallback_secret");
+              const { payload } = await jwtVerify(mfaToken, secret);
+              if (payload.sub !== user.id || !payload.mfaVerified) {
+                throw new Error("Invalid MFA token");
+              }
+            } catch (e) {
+              throw new Error("MFA verification expired. Please try again.");
+            }
+          }
+          // 3. Initiate MFA Challenge
+          else {
+            throw new Error(`MFA_REQUIRED:${userAny.mfaMethod}`);
+          }
+        }
+
+        // Record successful login step (SOC2 Compliance)
+        await logActivityInternal(userAny.id, "LOGIN_SUCCESS", "auth", userAny.mfaEnabled ? "Step 1: Credentials" : "Full login", userAny.team_id);
+
         return user;
       },
     }),
@@ -119,7 +157,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         // Log the login activity
-        await logActivityInternal(user.id, "User Login", "Auth", "User logged in successfully");
+        await logActivityInternal(user.id, "LOGIN_SUCCESS", "Auth", "User logged in successfully", user.team_id);
       } catch (_err) {
         // swallow to avoid deadlocks during concurrent sign-ins
         console.error("Error in signIn event:", _err);
@@ -200,6 +238,7 @@ export const authOptions: NextAuthOptions = {
         session.user.team_id = user.team_id;
         session.user.team_role = user.team_role;
         session.user.mustChangePassword = user.mustChangePassword;
+        session.user.termsAccepted = typeof (user as any).termsAccepted === "boolean" ? (user as any).termsAccepted : false;
         session.user.assigned_team = user.assigned_team;
 
         // Fetch role and permissions if available

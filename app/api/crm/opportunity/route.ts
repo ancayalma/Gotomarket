@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import sendEmail from "@/lib/sendmail";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { getSessionAndTeam, validateResourceOwnership, unauthorizedResponse } from "@/lib/api-utils";
+import { logActivityInternal } from "@/actions/audit";
 
 const isValidId = (id: any) => typeof id === "string" && id.length === 24;
 
@@ -112,66 +114,73 @@ export async function POST(req: Request) {
   }
 }
 export async function PUT(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return new NextResponse("Unauthenticated", { status: 401 });
-  }
+  const { error, teamInfo, session } = await getSessionAndTeam();
+  if (error) return error;
+
   try {
     const body = await req.json();
-    const userId = session.user.id;
+    const userId = session!.user.id;
 
-    if (!body) {
-      return new NextResponse("No form data", { status: 400 });
+    if (!body || !body.id) {
+      return new NextResponse("ID required", { status: 400 });
     }
 
     const {
       id,
-      account,
-      assigned_to,
-      assign_to_project,
-      budget,
-      lead_source,
-      close_date,
-      contact,
-      lead,
-      currency,
-      description,
-      expected_revenue,
-      name,
-      next_step,
-      sales_stage,
-      type,
+      // ... (other fields)
     } = body;
 
-    //console.log(req.body, "req.body");
+    // 1. Fetch current opportunity to check ownership
+    const existingOpportunity = await prismadb.crm_Opportunities.findUnique({
+      where: { id },
+      select: { team_id: true, name: true }
+    });
+
+    if (!existingOpportunity) {
+      return new NextResponse("Opportunity not found", { status: 404 });
+    }
+
+    // 2. SOC2 Ownership Check
+    if (!validateResourceOwnership(teamInfo!.teamId, existingOpportunity.team_id, teamInfo!.isGlobalAdmin)) {
+      return await unauthorizedResponse("UPDATE", `crm_Opportunities:${id}`);
+    }
 
     const updatedOpportunity = await (prismadb.crm_Opportunities as any).update({
       where: { id },
       data: {
-        assigned_account: isValidId(account) ? { connect: { id: account } } : undefined,
-        assigned_to_user: isValidId(assigned_to) ? { connect: { id: assigned_to } } : undefined,
-        assigned_project: isValidId(assign_to_project) ? { connect: { id: assign_to_project } } : undefined,
-        budget: Number(budget) || 0,
-        lead_source: lead_source,
-        close_date: close_date ? new Date(close_date) : undefined,
-        contacts: isValidId(contact) ? { set: [{ id: contact }] } : undefined,
-        assigned_lead: isValidId(lead) ? { connect: { id: lead } } : undefined,
+        assigned_account: isValidId(body.account) ? { connect: { id: body.account } } : undefined,
+        assigned_to_user: isValidId(body.assigned_to) ? { connect: { id: body.assigned_to } } : undefined,
+        assigned_project: isValidId(body.assign_to_project) ? { connect: { id: body.assign_to_project } } : undefined,
+        budget: Number(body.budget) || 0,
+        lead_source: body.lead_source,
+        close_date: body.close_date ? new Date(body.close_date) : undefined,
+        contacts: isValidId(body.contact) ? { set: [{ id: body.contact }] } : undefined,
+        assigned_lead: isValidId(body.lead) ? { connect: { id: body.lead } } : undefined,
         updatedBy: isValidId(userId) ? userId : undefined,
-        currency: currency,
-        description: description,
-        expected_revenue: Number(expected_revenue) || 0,
-        name: name,
-        next_step: next_step,
-        assigned_sales_stage: isValidId(sales_stage) ? { connect: { id: sales_stage } } : undefined,
-        assigned_type: isValidId(type) ? { connect: { id: type } } : undefined,
+        currency: body.currency,
+        description: body.description,
+        expected_revenue: Number(body.expected_revenue) || 0,
+        name: body.name,
+        next_step: body.next_step,
+        assigned_sales_stage: isValidId(body.sales_stage) ? { connect: { id: body.sales_stage } } : undefined,
+        assigned_type: isValidId(body.type) ? { connect: { id: body.type } } : undefined,
         status: "ACTIVE",
       },
     });
 
+    // 3. Audit Log
+    await logActivityInternal(
+      userId,
+      "USER_UPDATE",
+      "crm_Opportunities",
+      `Updated opportunity: ${updatedOpportunity.name}`,
+      teamInfo!.teamId || undefined
+    );
+
     return NextResponse.json({ updatedOpportunity }, { status: 200 });
   } catch (error) {
     console.log("[UPDATED_OPPORTUNITY_PUT]", error);
-    return new NextResponse("Initial error", { status: 500 });
+    return new NextResponse("Internal error", { status: 500 });
   }
 }
 

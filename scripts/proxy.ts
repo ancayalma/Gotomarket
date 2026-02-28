@@ -51,7 +51,9 @@ const RATE_LIMIT_EXEMPT_PREFIXES = [
 
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute window
 const RATE_LIMIT_MAX_REQUESTS = 60;  // 60 requests per window per IP
-const RATE_LIMIT_MAX_PASSWORD_RESET = 5; // 5 password reset requests per window
+const RATE_LIMIT_MAX_PASSWORD_RESET = 3; // Reduced to 3 per minute
+const RATE_LIMIT_MAX_AUTH_ATTEMPTS = 5; // Max 5 login attempts per minute per IP
+const RATE_LIMIT_MAX_MFA_VERIFY = 10;   // Max 10 MFA verification attempts per minute
 
 type RateLimitEntry = { count: number; resetAt: number };
 const rateLimitMap = new Map<string, RateLimitEntry>();
@@ -106,7 +108,10 @@ function isRateLimitExempt(pathname: string): boolean {
 
 // ─── Security Headers ────────────────────────────────────────────────────────
 
-function applySecurityHeaders(response: NextResponse): void {
+function applySecurityHeaders(response: NextResponse, requestId?: string): void {
+    if (requestId) {
+        response.headers.set("X-Request-ID", requestId);
+    }
     // Strict Transport Security — force HTTPS for 1 year, include subdomains
     response.headers.set(
         "Strict-Transport-Security",
@@ -180,6 +185,10 @@ export default function proxy(request: NextRequest) {
     const method = request.method;
     const isApiRoute = pathname.startsWith("/api/");
 
+    // Generate a unique Request ID for SOC2 traceability
+    const requestId = crypto.randomUUID();
+    request.headers.set("X-Request-ID", requestId);
+
     // ── CORS preflight ──
     if (method === "OPTIONS" && isApiRoute) {
         const preflightResponse = new NextResponse(null, { status: 204 });
@@ -194,8 +203,22 @@ export default function proxy(request: NextRequest) {
 
         // Tighter limit for sensitive endpoints
         const isPasswordReset = pathname.startsWith("/api/user/passwordReset");
-        const maxRequests = isPasswordReset ? RATE_LIMIT_MAX_PASSWORD_RESET : RATE_LIMIT_MAX_REQUESTS;
-        const rateLimitKey = isPasswordReset ? `pw:${clientIp}` : `api:${clientIp}`;
+        const isLogin = pathname.includes("/api/auth/callback/credentials") || (pathname.startsWith("/api/auth") && method === "POST");
+        const isMfa = pathname.startsWith("/api/mfa/verify");
+
+        let maxRequests = RATE_LIMIT_MAX_REQUESTS;
+        let rateLimitKey = `api:${clientIp}`;
+
+        if (isPasswordReset) {
+            maxRequests = RATE_LIMIT_MAX_PASSWORD_RESET;
+            rateLimitKey = `pw:${clientIp}`;
+        } else if (isLogin) {
+            maxRequests = RATE_LIMIT_MAX_AUTH_ATTEMPTS;
+            rateLimitKey = `login:${clientIp}`;
+        } else if (isMfa) {
+            maxRequests = RATE_LIMIT_MAX_MFA_VERIFY;
+            rateLimitKey = `mfa:${clientIp}`;
+        }
 
         const { allowed, remaining, resetAt } = checkRateLimit(rateLimitKey, maxRequests);
 
@@ -223,7 +246,7 @@ export default function proxy(request: NextRequest) {
         applyCors(request, response);
 
         // Apply security headers
-        applySecurityHeaders(response);
+        applySecurityHeaders(response, requestId);
 
         return response;
     }
@@ -232,7 +255,7 @@ export default function proxy(request: NextRequest) {
 
     const response = NextResponse.next();
 
-    applySecurityHeaders(response);
+    applySecurityHeaders(response, requestId);
 
     // Apply CORS to API responses (should be covered above, but for safety in case exempt API routes fall through)
     if (isApiRoute) {

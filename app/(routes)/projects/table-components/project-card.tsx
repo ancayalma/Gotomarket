@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sheet";
 import UpdateProjectForm from "../forms/UpdateProject";
 import { taskSchema } from "../data/schema";
+import { SafeImage } from "@/components/SafeImage";
 
 interface ProjectCardProps {
     row: Row<Task>;
@@ -80,7 +81,7 @@ export function ProjectCard({ row }: ProjectCardProps) {
                         <Link href={`/projects/boards/${project.id}`} prefetch={false}>
                             <div className="font-semibold flex items-center gap-2 hover:text-primary transition-colors">
                                 {project.brand_logo_url ? (
-                                    <img src={project.brand_logo_url} alt="Logo" className="h-8 w-8 object-contain rounded" />
+                                    <SafeImage src={project.brand_logo_url} alt="Logo" className="h-8 w-8 object-contain rounded" />
                                 ) : (
                                     <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
                                 )}

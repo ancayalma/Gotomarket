@@ -35,7 +35,22 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions) {
 
     const fromAddress = `"${config.from_name || config.from_email}" <${config.from_email}>`;
 
-    // 3. AWS SES
+    // 3a. PLATFORM_SES (uses the platform's own SES credentials)
+    if (config.provider === "PLATFORM_SES") {
+        try {
+            await sendSystemEmail({
+                ...options,
+                from: options.from || fromAddress,
+            });
+            console.log(`[TeamEmail] Sent via PLATFORM_SES (Team: ${teamId}, From: ${config.from_email})`);
+            return;
+        } catch (error) {
+            console.error("[TeamEmail] PLATFORM_SES Send Failed:", error);
+            throw error;
+        }
+    }
+
+    // 3b. AWS SES (team's own credentials)
     if (config.provider === "AWS_SES") {
         if (!config.aws_access_key_id || !config.aws_secret_access_key) {
             console.error("[TeamEmail] Missing AWS Credentials");

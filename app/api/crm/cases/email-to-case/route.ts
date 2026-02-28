@@ -7,6 +7,13 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 // POST: Email-to-Case — Parse inbound email and create a case
 export async function POST(req: Request) {
     try {
+        // SOC2: Validate inbound API token to prevent unauthorized case creation
+        const token = req.headers.get("authorization") || req.headers.get("BASALT_TOKEN");
+        const storedToken = process.env.BASALT_TOKEN;
+        if (storedToken && token?.trim() !== storedToken.trim()) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
+
         const body = await req.json();
         const { from, subject, body: emailBody, to, messageId } = body;
 

@@ -20,8 +20,8 @@ const ForcePasswordChangeModal = ({ isOpen }: ForcePasswordChangeModalProps) => 
     const router = useRouter();
 
     const passwordRequirements = [
-        { label: "At least 8 characters", met: newPassword.length >= 8 },
-        { label: "Matches confirmation", met: newPassword.length > 0 && newPassword === confirmPassword },
+        { label: "At least 8 characters (Passphrase recommended)", met: newPassword.length >= 8 },
+        { label: "Passwords match", met: newPassword.length > 0 && newPassword === confirmPassword },
     ];
 
     const allMet = passwordRequirements.every(req => req.met);

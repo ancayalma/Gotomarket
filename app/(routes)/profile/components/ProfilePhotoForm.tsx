@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 
 import useAvatarStore from "@/store/useAvatarStore";
+import { useSignedUrl } from "@/hooks/use-signed-url";
 
 interface ProfileFormProps {
   data: Users;
@@ -16,6 +17,7 @@ interface ProfileFormProps {
 
 export function ProfilePhotoForm({ data }: ProfileFormProps) {
   const [avatar, setAvatar] = useState(data.avatar || "");
+  const { signedUrl } = useSignedUrl(avatar);
   const [isUploading, setIsUploading] = useState(false);
 
   const { toast } = useToast();
@@ -98,7 +100,7 @@ export function ProfilePhotoForm({ data }: ProfileFormProps) {
     <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-5">
       <div>
         <Avatar className="h-24 w-24">
-          <AvatarImage src={avatar || "/images/nouser.png"} alt="avatar" />
+          <AvatarImage src={signedUrl || "/images/nouser.png"} alt="avatar" />
           <AvatarFallback>
             {data.name?.charAt(0) || "U"}
           </AvatarFallback>

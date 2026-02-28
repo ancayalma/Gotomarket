@@ -2,24 +2,45 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { hash } from "bcryptjs";
+import { hashPassword } from "@/lib/password-utils";
 import { logActivityInternal } from "@/actions/audit";
 import sendEmail from "@/lib/sendmail";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, username, email, language, password, confirmPassword, companyName, planId, avatar, billingCycle = "monthly", paymentMethod = "card", wallet } = body;
+    const {
+      name, username, email, language, password, confirmPassword,
+      companyName, planId, avatar, billingCycle = "monthly",
+      paymentMethod = "card", wallet, termsAccepted
+    } = body;
 
     // Validate required fields
     if (!name || !email || !language || !password || !confirmPassword || !companyName || !planId) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
+    // SOC2 Consent Requirement
+    if (!termsAccepted) {
+      return new NextResponse("You must accept the Terms of Service and Privacy Policy.", { status: 400 });
+    }
+
     if (password !== confirmPassword) {
       return new NextResponse("Password does not match", { status: 400 });
     }
 
+    // NIST 800-63B Alignment: Length over complexity.
+    if (!password || password.length < 8) {
+      return new NextResponse(
+        "Password must be at least 8 characters long. We recommend a long passphrase.",
+        { status: 400 }
+      );
+    }
+    if (password.length > 128) {
+      return new NextResponse("Password too long (max 128 characters).", { status: 400 });
+    }
+
+    // ... (rest of validation) ...
     // Check if user already exists
     const checkexisting = await prismadb.users.findFirst({
       where: {
@@ -44,18 +65,16 @@ export async function POST(req: Request) {
     // Fetch the selected plan
     let selectedPlan: any;
     if (planId === "enterprise-contact") {
-      // Find or Mock Enterprise
       selectedPlan = await prismadb.plan.findFirst({
         where: { slug: "ENTERPRISE" }
       });
 
       if (!selectedPlan) {
-        // Fallback mock for Enterprise if not in DB
         selectedPlan = {
           id: "enterprise-placeholder",
           name: "Enterprise",
           slug: "ENTERPRISE",
-          price: 0, // Contact Sales = 0 for now in system, or handled as PENDING
+          price: 0,
           features: ["all"]
         };
       }
@@ -69,13 +88,9 @@ export async function POST(req: Request) {
       return new NextResponse("Invalid Plan selected", { status: 400 });
     }
 
-    // Determine Price and Status
-    // If Plan is Free (price 0) -> ACTIVE
-    // If Plan is Paid -> PENDING
     const isFree = selectedPlan.price === 0 || selectedPlan.slug === "FREE";
     const initialStatus = isFree ? "ACTIVE" : "PENDING";
 
-    // Calculate Price based on Cycle and Payment Method
     let finalPrice = selectedPlan.price;
     if (!isFree && billingCycle === "annual") {
       if (paymentMethod === "crypto" && wallet) {
@@ -85,7 +100,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const hashedPassword = await hash(password, 12);
+    const hashedPassword = await hashPassword(password);
 
     let avatarUrl = avatar;
     if (avatar && avatar.startsWith("data:image")) {
@@ -100,7 +115,7 @@ export async function POST(req: Request) {
           const buffer = Buffer.from(base64Data, "base64");
           const mimeType = avatar.split(";")[0].split(":")[1];
           const extension = mimeType.split("/")[1] || "png";
-          const key = `avatars/public/${Date.now()}_${Math.random().toString(36).substring(7)}.${extension}`;
+          const key = `avatars / public / ${Date.now()}_${Math.random().toString(36).substring(7)}.${extension} `;
 
           const blobClient = containerClient.getBlockBlobClient(key);
           await blobClient.uploadData(buffer, {
@@ -115,7 +130,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const user = await prismadb.users.create({
+    const user = await (prismadb.users as any).create({
       data: {
         name,
         username,
@@ -124,8 +139,10 @@ export async function POST(req: Request) {
         userLanguage: "en",
         password: hashedPassword,
         userStatus: initialStatus === "PENDING" ? "PENDING" : "ACTIVE",
-        is_admin: false, // Default to false
-        is_account_admin: true, // They are the owner of their account/team
+        is_admin: false,
+        is_account_admin: true,
+        termsAccepted: true,
+        termsAcceptedAt: new Date(),
       },
     });
 
@@ -170,6 +187,31 @@ export async function POST(req: Request) {
       }
     });
 
+    // 4. Auto-trigger SES email verification (PLATFORM_SES) for the new team owner
+    // The user's registration email is used — AWS SES sends a verification link immediately.
+    // When they click it, their team is verified and can send outreach without any Settings page visit.
+    try {
+      const { verifyEmailIdentity } = await import("@/lib/aws/ses-verify");
+
+      // Create the TeamEmailConfig record with PLATFORM_SES
+      await prismadb.teamEmailConfig.create({
+        data: {
+          team_id: team.id,
+          provider: "PLATFORM_SES",
+          from_email: email,
+          from_name: companyName,
+          verification_status: "PENDING",
+        }
+      });
+
+      // Trigger the SES verification email (uses platform system credentials)
+      await verifyEmailIdentity(email);
+      console.log(`[Register] SES verification triggered for ${email} (Team: ${team.id})`);
+    } catch (sesError) {
+      // Non-blocking — registration still succeeds if SES trigger fails
+      console.error("[Register] Auto SES verification failed (non-fatal):", sesError);
+    }
+
     let paymentUrl = null;
     let activeInvoiceId = null;
 
@@ -182,7 +224,7 @@ export async function POST(req: Request) {
           data: {
             team_id: team.id,
             assigned_user_id: user.id,
-            invoice_number: `REG-${Date.now()}`,
+            invoice_number: `REG - ${Date.now()} `,
             invoice_amount: finalPrice.toString(),
             invoice_currency: "USD",
             description: `Registration: ${selectedPlan.name} (${billingCycle})`,

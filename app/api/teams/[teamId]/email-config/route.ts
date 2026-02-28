@@ -17,20 +17,20 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
         return NextResponse.json(null);
     }
 
-    // Proactively check status if it was pending and is AWS SES
-    if (config.provider === "AWS_SES" && config.verification_status === "PENDING" && config.aws_access_key_id && config.aws_secret_access_key) {
-        const currentStatus = await getIdentityVerificationStatus(config.from_email, {
-            accessKeyId: config.aws_access_key_id,
-            secretAccessKey: config.aws_secret_access_key,
-            region: config.aws_region
-        });
+    // Proactively check status if it was pending
+    if ((config.provider === "AWS_SES" || config.provider === "PLATFORM_SES") && config.verification_status === "PENDING") {
+        // PLATFORM_SES uses system env credentials (no team-level keys)
+        const creds = config.provider === "AWS_SES" && config.aws_access_key_id && config.aws_secret_access_key
+            ? { accessKeyId: config.aws_access_key_id, secretAccessKey: config.aws_secret_access_key, region: config.aws_region }
+            : undefined; // undefined = fallback to system env
+
+        const currentStatus = await getIdentityVerificationStatus(config.from_email, creds);
 
         if (currentStatus !== "PENDING") {
             const updated = await prismadb.teamEmailConfig.update({
                 where: { id: config.id },
                 data: { verification_status: currentStatus }
             });
-            // Return safe version
             return NextResponse.json({
                 ...updated,
                 aws_access_key_id: updated.aws_access_key_id ? "HasValue" : null,
@@ -99,7 +99,17 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
         let verificationStatus = "PENDING";
 
         // Verification Logic
-        if (provider === "AWS_SES") {
+        if (provider === "PLATFORM_SES") {
+            // Use the platform's own SES credentials (from env vars)
+            const triggerVerification = !existingConfig || existingConfig.from_email !== from_email || existingConfig.provider !== "PLATFORM_SES";
+
+            if (triggerVerification) {
+                await verifyEmailIdentity(from_email); // no creds = uses system env
+            } else {
+                const status = await getIdentityVerificationStatus(from_email); // no creds = uses system env
+                if (status === "SUCCESS") verificationStatus = "VERIFIED";
+            }
+        } else if (provider === "AWS_SES") {
             if (!finalAwsKey || !finalAwsSecret) return NextResponse.json({ error: "AWS Credentials required" }, { status: 400 });
 
             const triggerVerification = !existingConfig || existingConfig.from_email !== from_email || existingConfig.provider !== "AWS_SES";
@@ -215,7 +225,10 @@ export async function DELETE(req: Request, props: { params: Promise<{ teamId: st
     }
 
     try {
-        if (config.provider === "AWS_SES" && config.aws_access_key_id && config.aws_secret_access_key) {
+        if (config.provider === "PLATFORM_SES") {
+            // Use system env credentials
+            await deleteEmailIdentity(config.from_email);
+        } else if (config.provider === "AWS_SES" && config.aws_access_key_id && config.aws_secret_access_key) {
             await deleteEmailIdentity(config.from_email, {
                 accessKeyId: config.aws_access_key_id,
                 secretAccessKey: config.aws_secret_access_key,

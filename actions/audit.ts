@@ -4,19 +4,29 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+import { headers } from "next/headers";
+
 export async function logActivityInternal(
     userId: string,
     action: string,
     resource: string,
-    details?: string
+    details?: string,
+    team_id?: string
 ) {
     try {
-        await prismadb.systemActivity.create({
+        const headerList = await headers();
+        const ipAddress = headerList.get("x-forwarded-for") || headerList.get("x-real-ip") || "unknown";
+        const userAgent = headerList.get("user-agent") || "unknown";
+
+        await (prismadb as any).systemActivity.create({
             data: {
                 userId,
+                team_id,
                 action,
                 resource,
                 details,
+                ipAddress,
+                userAgent,
             },
         });
     } catch (error) {
@@ -32,9 +42,10 @@ export async function logActivity(
     try {
         const session = await getServerSession(authOptions);
         const userId = (session?.user as any)?.id;
+        const team_id = (session?.user as any)?.team_id;
         if (!userId) return;
 
-        await logActivityInternal(userId, action, resource, details);
+        await logActivityInternal(userId, action, resource, details, team_id);
     } catch (error) {
         console.error("Failed to log activity:", error);
     }

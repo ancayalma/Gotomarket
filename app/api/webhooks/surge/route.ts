@@ -1,21 +1,32 @@
 
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import crypto from "crypto";
 
-// This should be in env
 const SURGE_WEBHOOK_SECRET = process.env.SURGE_WEBHOOK_SECRET;
+
+function verifyWebhookSignature(payload: string, signature: string | null, secret: string): boolean {
+    if (!signature) return false;
+    const expected = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+}
 
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
+        const rawBody = await req.text();
 
-        // TODO: Verify Signature
-        // Surge usually sends a header 'X-Surge-Signature'
-        // const signature = req.headers.get('X-Surge-Signature');
-        // if (!verifySignature(JSON.stringify(body), signature, SURGE_WEBHOOK_SECRET)) {
-        //     return new NextResponse("Invalid Signature", { status: 401 });
-        // }
+        // SOC2: Verify webhook signature to prevent forged payment confirmations
+        if (SURGE_WEBHOOK_SECRET) {
+            const signature = req.headers.get("X-Surge-Signature") || req.headers.get("x-surge-signature");
+            if (!verifyWebhookSignature(rawBody, signature, SURGE_WEBHOOK_SECRET)) {
+                console.error("[Surge Webhook] Invalid signature — blocked.");
+                return new NextResponse("Invalid Signature", { status: 401 });
+            }
+        } else {
+            console.warn("[Surge Webhook] SURGE_WEBHOOK_SECRET not set — signature verification skipped. THIS IS INSECURE.");
+        }
 
+        const body = JSON.parse(rawBody);
         const { type, data } = body;
 
         if (type === "payment.confirmed" || type === "payment.succeeded") {

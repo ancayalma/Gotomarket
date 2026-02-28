@@ -11,6 +11,8 @@ import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
 import UtilityBar from "@/components/UtilityBar";
 import { LearnProvider } from "@/components/providers/learn-provider";
 import ForcePasswordChangeCheck from "@/components/auth/ForcePasswordChangeCheck";
+import TermsConsentCheck from "@/components/auth/TermsConsentCheck";
+import IdleSessionTimeout from "@/components/auth/IdleSessionTimeout";
 import ThemeGuard from "@/components/ThemeGuard";
 
 
@@ -89,6 +91,8 @@ export default async function AppLayout({
   return (
     <LearnProvider>
       <ThemeGuard>
+        <IdleSessionTimeout />
+        <TermsConsentCheck />
         <ForcePasswordChangeCheck />
         <div className="fixed inset-0 flex h-[100dvh] overflow-hidden">
           <SideBar />

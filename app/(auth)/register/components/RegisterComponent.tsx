@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import React, { useRef, useState } from "react";
-import { Plus, Check, Shield, Zap, Target, Users as UsersIcon, HardDrive, CreditCard, ChevronRight, Sparkles, Calendar, Info, Wallet, FingerprintIcon, User, Upload } from "lucide-react";
+import { Plus, Check, Shield, Zap, Target, Users as UsersIcon, HardDrive, CreditCard, ChevronRight, Sparkles, Calendar, Info, Wallet, Eye, EyeOff, User, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -73,9 +73,15 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
     username: z.string().min(3).max(50),
     email: z.string().email(),
     language: z.string().min(2).max(50),
-    password: z.string().min(8).max(50),
-    confirmPassword: z.string().min(8).max(50),
+    password: z
+      .string()
+      .min(8, "Minimum length is 8 characters. 15+ recommended for security.")
+      .max(128), // Support long passphrases per NIST
+    confirmPassword: z.string(),
     avatar: z.string().optional(),
+    termsAccepted: z.boolean().refine((val) => val === true, {
+      message: "You must accept the Terms of Service and Privacy Policy.",
+    }),
   });
 
   type BillboardFormValues = z.infer<typeof formSchema>;
@@ -92,6 +98,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
       password: "",
       confirmPassword: "",
       avatar: "",
+      termsAccepted: false,
     },
   });
 
@@ -107,6 +114,11 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
   }, [initialPlanSlug, availablePlans, form]);
 
   const onSubmit = async (data: BillboardFormValues) => {
+    if (data.password !== data.confirmPassword) {
+      form.setError("confirmPassword", { message: "Passwords do not match" });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await axios.post("/api/user", {
@@ -457,8 +469,8 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                         </FormItem>
                       )}
                     />
-                    <button type="button" className="absolute right-3 top-[38px] text-gray-400" onClick={() => setShow(!show)}>
-                      <FingerprintIcon size={20} />
+                    <button type="button" className="absolute right-3 top-[38px] text-gray-400 hover:text-primary transition-colors" onClick={() => setShow(!show)}>
+                      {show ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                   <div className="relative">
@@ -475,11 +487,38 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                         </FormItem>
                       )}
                     />
-                    <button type="button" className="absolute right-3 top-[38px] text-gray-400" onClick={() => setShow(!show)}>
-                      <FingerprintIcon size={20} />
+                    <button type="button" className="absolute right-3 top-[38px] text-gray-400 hover:text-primary transition-colors" onClick={() => setShow(!show)}>
+                      {show ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="termsAccepted"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/10 bg-zinc-900/50 p-4 relative mb-2">
+                      <div className="flex items-start space-x-3">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={isLoading}
+                            className="mt-0.5"
+                          />
+                        </FormControl>
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium leading-none text-zinc-300">
+                            I accept the <Link href="/terms" className="text-primary hover:underline italic font-bold">Terms of Service</Link> and <Link href="/privacy" className="text-primary hover:underline italic font-bold">Privacy Policy</Link>
+                          </label>
+                          <FormDescription className="text-[10px] text-zinc-500 max-w-[90%] block">
+                            By enabling this, you agree to our terms and conditions and privacy policy for data processing and platform usage.
+                          </FormDescription>
+                        </div>
+                      </div>
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
 

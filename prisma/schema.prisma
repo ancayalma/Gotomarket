@@ -164,6 +164,14 @@ enum crm_Lead_Status {
   CONVERTED
 }
 
+enum MfaMethod {
+  NONE
+  TOTP
+  WEBAUTHN
+  SMS
+  EMAIL
+}
+
 enum crm_Lead_Type {
   DEMO
 }
@@ -906,6 +914,8 @@ model Users {
   userStatus           ActiveStatus             @default(PENDING)
   userLanguage         Language                 @default(en)
   mustChangePassword   Boolean                  @default(false)
+  termsAccepted        Boolean                  @default(false)
+  termsAcceptedAt      DateTime?                @db.Date
   tasksComment         tasksComments[]
   created_by_documents Documents[]              @relation(name: "created_by_user")
   assigned_documents   Documents[]              @relation(name: "assigned_to_user")
@@ -992,6 +1002,14 @@ model Users {
   ai_usage_logs              crm_AiUsageLog[]    @relation(name: "AiUsageUser")
   quickLaunchDismissed       Boolean             @default(false)
   dismissedAIInsights        String[]
+
+  // MFA & NIST Compliance
+  mfaEnabled                 Boolean             @default(false)
+  mfaMethod                  MfaMethod           @default(NONE)
+  mfaSecret                  String?             // For TOTP
+  mfaPhone                   String?             // For SMS
+  mfaBackupCodes             String?             // JSON string of hashed backup codes
+  authenticators             Authenticator[]     // For WebAuthn (Fingerprint/Biometrics)
 }
 
 model Team {
@@ -1084,6 +1102,18 @@ model Team {
   custom_widgets     crm_CustomWidget[]
   navigation_configs NavigationConfig[]
   integrations       Tenant_Integrations?
+  system_activities  SystemActivity[]
+}
+
+model Authenticator {
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  credentialID         String   @unique
+  publicKey            String
+  counter              Int
+  transports           String[]
+  userId               String   @db.ObjectId
+  user                 Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt            DateTime @default(now()) @db.Date
 }
 
 model CustomRole {
@@ -1237,6 +1267,7 @@ model microsoft_Tokens {
 }
 
 enum EmailProvider {
+  PLATFORM_SES
   AWS_SES
   RESEND
   SENDGRID
@@ -1250,7 +1281,7 @@ model TeamEmailConfig {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   team_id String @unique @db.ObjectId
 
-  provider EmailProvider @default(AWS_SES)
+  provider EmailProvider @default(PLATFORM_SES)
 
   // Common
   from_name  String?
@@ -1280,6 +1311,13 @@ model TeamEmailConfig {
   smtp_port     Int?
   smtp_user     String?
   smtp_password String?
+
+  // Domain Verification (Enterprise / Individual_Pro only)
+  custom_domain              String?  // e.g. "acmecorp.com"
+  domain_verification_token  String?  // TXT record value returned by SES
+  domain_dkim_tokens         String[] // CNAME DKIM records returned by SES
+  domain_status              String?  // "PENDING_APPROVAL" | "DNS_PENDING" | "VERIFIED" | "FAILED"
+  domain_requested_at        DateTime? @db.Date
 
   verification_status String @default("PENDING") // PENDING, VERIFIED, FAILED
 
@@ -1954,12 +1992,16 @@ model SupportTicket {
 model SystemActivity {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String?  @db.ObjectId
-  action    String
-  resource  String
-  details   String?
+  team_id   String?  @db.ObjectId
+  action    String   // e.g. "LOGIN_SUCCESS", "RECORD_DELETE", "ROLE_CHANGE"
+  resource  String   // e.g. "auth", "crm_Leads", "Role"
+  details   String?  // JSON string or summary
+  ipAddress String?
+  userAgent String?
   createdAt DateTime @default(now()) @db.Date
 
   user Users? @relation(name: "UserSystemActivities", fields: [userId], references: [id], onDelete: Cascade)
+  team Team?  @relation(fields: [team_id], references: [id]) 
 }
 
 model PageView {

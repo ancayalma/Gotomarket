@@ -17,7 +17,11 @@ export default async function TeamSettingsPage() {
 
     const user = await prismadb.users.findUnique({
         where: { email: session.user.email },
-        include: { assigned_team: true }
+        include: {
+            assigned_team: {
+                include: { assigned_plan: { select: { slug: true } } }
+            }
+        }
     });
 
     if (!user?.assigned_team) {
@@ -35,7 +39,10 @@ export default async function TeamSettingsPage() {
             <div className="space-y-8">
                 <TeamAiSettings teamId={user.assigned_team.id} />
                 <div className="grid gap-6 md:grid-cols-2">
-                    <TeamEmailSettings teamId={user.assigned_team.id} />
+                    <TeamEmailSettings
+                        teamId={user.assigned_team.id}
+                        planSlug={user.assigned_team.assigned_plan?.slug || user.assigned_team.subscription_plan || "FREE"}
+                    />
                     <EmailDeliveryStats teamId={user.assigned_team.id} />
                 </div>
             </div>

@@ -28,8 +28,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/components/ui/use-toast";
-import { FingerprintIcon } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Smartphone,
+  Fingerprint,
+  Loader2,
+  ShieldCheck,
+  Lock,
+  KeyRound
+} from "lucide-react";
 import axios from "axios";
+import { startAuthentication } from "@simplewebauthn/browser";
 import {
   Dialog,
   DialogContent,
@@ -48,7 +58,11 @@ export function LoginComponent() {
   const [open, setOpen] = useState(false);
 
   const [email, setEmail] = useState("");
+  const [mfaStep, setMfaStep] = useState<"login" | "verify">("login");
+  const [mfaMethod, setMfaMethod] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
   const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
 
   const router = useRouter();
   const dashboardPath = `/dashboard`;
@@ -137,31 +151,43 @@ export function LoginComponent() {
     setIsLoading(true);
     try {
       const normalizedEmail = data.email.trim().toLowerCase();
+      setEmail(normalizedEmail); // Store for MFA fallback if needed
+
       const status = await signIn("credentials", {
         redirect: false,
         email: normalizedEmail,
         password: data.password,
         callbackUrl: process.env.NEXT_PUBLIC_APP_URL,
       });
-      //console.log(status, "status");
+
       if (status?.error) {
         const msg = status.error as string;
+
+        // Catch MFA Required signal
+        if (msg.startsWith("MFA_REQUIRED:")) {
+          const method = msg.split(":")[1];
+          setMfaMethod(method);
+          setMfaStep("verify");
+
+          // If it's WebAuthn, we can auto-trigger the biometric prompt
+          if (method === "WEBAUTHN") {
+            triggerWebAuthn(normalizedEmail);
+          }
+          return;
+        }
+
         toast({
           variant: "destructive",
           title: "Error",
           description: msg,
         });
-        // If the account exists but has no password set (OAuth-only), prefill and open reset dialog
+
         if (typeof msg === "string" && msg.toLowerCase().includes("no password is set")) {
-          setEmail(normalizedEmail);
           setOpen(true);
         }
       }
       if (status?.ok) {
-        // console.log("Status OK");
-        toast({
-          description: "Login successful.",
-        });
+        toast({ description: "Login successful." });
         router.replace(dashboardPath);
       }
     } catch (error: any) {
@@ -169,7 +195,85 @@ export function LoginComponent() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error!,
+        description: "An unexpected error occurred during login.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function triggerWebAuthn(email: string) {
+    setIsLoading(true);
+    try {
+      // 1. Get auth options from backend
+      const res = await axios.post("/api/auth/mfa/webauthn/auth-options", { email });
+      const options = res.data;
+
+      // 2. Trigger browser biometric prompt
+      const asseResp = await startAuthentication(options);
+
+      // 3. Verify with backend
+      const verifyRes = await axios.post("/api/auth/mfa/webauthn/auth-verify", {
+        body: asseResp,
+        currentOptions: options,
+        email
+      });
+
+      if (verifyRes.data.success) {
+        // 4. Finalize login with NextAuth using the mfaToken
+        const status = await signIn("credentials", {
+          redirect: false,
+          email,
+          password: form.getValues().password,
+          mfaToken: verifyRes.data.mfaToken,
+          callbackUrl: dashboardPath,
+        });
+
+        if (status?.ok) {
+          toast({ description: "Biometric login successful." });
+          router.replace(dashboardPath);
+        } else {
+          throw new Error("Final authentication failed");
+        }
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Failed",
+        description: "Biometric verification failed. Please use your authenticator app code instead."
+      });
+      setMfaMethod("TOTP"); // Fallback to TOTP if WebAuthn fails
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleMfaVerify() {
+    setIsLoading(true);
+    try {
+      const status = await signIn("credentials", {
+        redirect: false,
+        email,
+        password: form.getValues().password,
+        mfaCode: mfaCode,
+        callbackUrl: dashboardPath,
+      });
+
+      if (status?.error) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Code",
+          description: "The verification code is incorrect."
+        });
+      } else {
+        toast({ description: "Login successful." });
+        router.replace(dashboardPath);
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to verify MFA code."
       });
     } finally {
       setIsLoading(false);
@@ -207,113 +311,165 @@ export function LoginComponent() {
         <CardDescription className="text-gray-300">Click here to login with: </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <Button variant="outline" onClick={loginWithGitHub} className="px-0">
-            <Icons.gitHub className="mr-2 h-4 w-4" />
-            Github
-          </Button>
-          <Button
-            variant="outline"
-            onClick={loginWithGoogle}
-            disabled={isLoading}
-            className="px-0"
-          >
-            {isLoading ? (
-              <Icons.google className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Icons.google className="mr-2 h-4 w-4" />
-            )}{" "}
-            Google
-          </Button>
-          <Button
-            variant="outline"
-            onClick={loginWithMicrosoft}
-            disabled={isLoading}
-            className="px-0"
-          >
-            <Icons.microsoft className="mr-2 h-4 w-4" />
-            Microsoft
-          </Button>
-        </div>
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-transparent px-2 text-gray-400">
-              Or continue with
-            </span>
-          </div>
-        </div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid gap-2">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-white">E-mail</FormLabel>
-                    <FormControl>
-                      <Input
-                        disabled={isLoading}
-                        placeholder="John Doe"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex items-center w-full ">
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel className="text-white">Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          className="w-full"
-                          disabled={isLoading}
-                          placeholder="Password"
-                          type={show ? "text" : "password"}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <span
-                  className="flex px-4 pt-7 w-16"
-                  onClick={() => setShow(!show)}
-                >
-                  <FingerprintIcon size={25} className="text-gray-400" />
+        {mfaStep === "login" ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <Button variant="outline" onClick={loginWithGitHub} className="px-0">
+                <Icons.gitHub className="mr-2 h-4 w-4" />
+                Github
+              </Button>
+              <Button
+                variant="outline"
+                onClick={loginWithGoogle}
+                disabled={isLoading}
+                className="px-0"
+              >
+                {isLoading ? (
+                  <Icons.google className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Icons.google className="mr-2 h-4 w-4" />
+                )}{" "}
+                Google
+              </Button>
+              <Button
+                variant="outline"
+                onClick={loginWithMicrosoft}
+                disabled={isLoading}
+                className="px-0"
+              >
+                <Icons.microsoft className="mr-2 h-4 w-4" />
+                Microsoft
+              </Button>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-transparent px-2 text-gray-400">
+                  Or continue with
                 </span>
               </div>
             </div>
-            <div className="grid gap-2 py-8">
-              <Button
-                disabled={isLoading}
-                type="submit"
-                className="flex gap-2 h-12"
-              >
-                <span
-                  className={
-                    isLoading
-                      ? " border rounded-full px-3 py-2 animate-spin"
-                      : "hidden"
-                  }
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="grid gap-2">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-white">E-mail</FormLabel>
+                        <FormControl>
+                          <Input
+                            disabled={isLoading}
+                            placeholder="John Doe"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex items-center w-full ">
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel className="text-white">Password</FormLabel>
+                          <FormControl>
+                            <Input
+                              className="w-full"
+                              disabled={isLoading}
+                              placeholder="Password"
+                              type={showPassword ? "text" : "password"}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <span
+                      className="flex px-4 pt-7 w-16 cursor-pointer"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff size={25} className="text-gray-400" /> : <Eye size={25} className="text-gray-400" />}
+                    </span>
+                  </div>
+                </div>
+                <div className="grid gap-2 py-8">
+                  <Button
+                    disabled={isLoading}
+                    type="submit"
+                    className="flex gap-2 h-12"
+                  >
+                    {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <span>{isLoading ? "Loading ..." : "Login"}</span>
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </>
+        ) : (
+          <div className="space-y-6 py-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="p-3 bg-primary/10 rounded-full mb-2">
+                {mfaMethod === "WEBAUTHN" ? <Fingerprint className="h-8 w-8 text-primary" /> : <Smartphone className="h-8 w-8 text-primary" />}
+              </div>
+              <h3 className="text-xl font-bold">Two-Step Verification</h3>
+              <p className="text-sm text-gray-400">
+                {mfaMethod === "WEBAUTHN"
+                  ? "Verify your identity using biometrics or a security key."
+                  : "Enter the 6-digit code from your authenticator app."}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {mfaMethod === "TOTP" ? (
+                <>
+                  <Input
+                    placeholder="000 000"
+                    className="text-center text-2xl font-mono tracking-[0.5em] h-14 bg-white/5 border-white/10"
+                    maxLength={6}
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value)}
+                    autoFocus
+                  />
+                  <Button
+                    className="w-full h-12"
+                    onClick={handleMfaVerify}
+                    disabled={isLoading || mfaCode.length !== 6}
+                  >
+                    {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Verify & Login
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  className="w-full h-12 gap-2"
+                  onClick={() => triggerWebAuthn(email)}
+                  disabled={isLoading}
                 >
-                  N
-                </span>
-                <span className={isLoading ? " " : "hidden"}>Loading ...</span>
-                <span className={isLoading ? "hidden" : ""}>Login</span>
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-5 w-5" />}
+                  Start Biometric Verification
+                </Button>
+              )}
+
+              <Button
+                variant="ghost"
+                className="w-full text-xs text-gray-500 hover:text-white"
+                onClick={() => {
+                  setMfaStep("login");
+                  setMfaCode("");
+                }}
+              >
+                Back to credentials
               </Button>
             </div>
-          </form>
-        </Form>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex flex-col space-y-5">
         <div className="text-sm text-gray-300">

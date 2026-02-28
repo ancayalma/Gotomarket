@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { hash, compare } from "bcryptjs";
+import { hashPassword, comparePassword } from "@/lib/password-utils";
 
 /**
  * POST /api/user/set-password
@@ -35,8 +36,15 @@ export async function POST(req: Request) {
   const newPassword = body?.newPassword?.trim();
   const currentPassword = body?.currentPassword?.trim() || null;
 
+  // NIST 800-63B Alignment: Length over complexity.
   if (!newPassword || newPassword.length < 8) {
-    return new NextResponse("New password must be at least 8 characters.", { status: 400 });
+    return new NextResponse(
+      "Password must be at least 8 characters long. We recommend a long passphrase.",
+      { status: 400 }
+    );
+  }
+  if (newPassword.length > 128) {
+    return new NextResponse("Password too long (max 128 characters).", { status: 400 });
   }
 
   try {
@@ -54,14 +62,14 @@ export async function POST(req: Request) {
       if (!currentPassword) {
         return new NextResponse("Current password is required.", { status: 400 });
       }
-      const ok = await compare(currentPassword, user.password);
+      const ok = await comparePassword(currentPassword, user.password);
       if (!ok) {
         return new NextResponse("Current password is incorrect.", { status: 400 });
       }
     }
 
     // Hash and set new password
-    const hashed = await hash(newPassword, 12);
+    const hashed = await hashPassword(newPassword);
     await prismadb.users.update({
       where: { id: user.id },
       data: {

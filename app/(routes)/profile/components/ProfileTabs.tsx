@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileForm } from "./ProfileForm";
 import { ProfilePhotoForm } from "./ProfilePhotoForm";
 import { PasswordChangeForm } from "./PasswordChange";
+import { MfaSettings } from "./MfaSettings";
 
 import { OpenAiForm } from "./OpenAiForm";
 import SignatureBuilder from "@/components/SignatureBuilder";
@@ -181,6 +182,14 @@ export function ProfileTabs({ data }: ProfileTabsProps) {
                                     Manage your password and account security settings.
                                 </p>
                                 <PasswordChangeForm userId={data.id} />
+                            </div>
+                            <Separator />
+                            <div>
+                                <h3 className="text-lg font-medium">Extra Protection (MFA)</h3>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    Secure your account using biometric passkeys or 6-digit TOTP codes (NIST Standard).
+                                </p>
+                                <MfaSettings user={data} />
                             </div>
                         </div>
                     </TabsContent>

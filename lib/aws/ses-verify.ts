@@ -83,3 +83,38 @@ export async function deleteEmailIdentity(email: string, creds?: SESCredentials)
         // Ignore if not found
     }
 }
+
+/**
+ * Triggers domain verification via SES. Returns DKIM tokens for DNS configuration.
+ * The domain owner must add CNAME records for DKIM + a TXT record for domain ownership.
+ */
+export async function verifyDomainIdentity(domain: string, creds?: SESCredentials): Promise<{
+    dkimTokens: string[];
+    verificationToken?: string;
+}> {
+    const client = getClient(creds);
+    try {
+        const command = new CreateEmailIdentityCommand({
+            EmailIdentity: domain,
+        });
+        const response = await client.send(command);
+
+        // SESv2 returns DkimAttributes with signing tokens
+        const dkimTokens = response.DkimAttributes?.Tokens || [];
+
+        return {
+            dkimTokens,
+            // The TXT record for domain verification is: _amazonses.<domain> TXT <token>
+            // SESv2 handles this automatically via DKIM, but we return the tokens for reference
+            verificationToken: dkimTokens[0] || undefined,
+        };
+    } catch (error: any) {
+        if (error.name === "AlreadyExistsException") {
+            // Domain already registered — fetch existing DKIM status
+            const status = await getIdentityVerificationStatus(domain, creds);
+            return { dkimTokens: [], verificationToken: undefined };
+        }
+        console.error("[SES_DOMAIN_VERIFY]", error);
+        throw new Error(`Failed to initiate domain verification: ${error.message}`);
+    }
+}

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "react-hot-toast";
-import { Loader2, Mail, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
+import { Loader2, Mail, CheckCircle2, AlertCircle, ShieldCheck, Globe, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
     Select,
@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 
-type EmailProvider = "AWS_SES" | "RESEND" | "SENDGRID" | "MAILGUN" | "POSTMARK" | "SMTP" | "GOOGLE_GMAIL";
+type EmailProvider = "PLATFORM_SES" | "AWS_SES" | "RESEND" | "SENDGRID" | "MAILGUN" | "POSTMARK" | "SMTP" | "GOOGLE_GMAIL";
 
 interface EmailConfig {
     id: string;
@@ -53,14 +53,15 @@ interface EmailConfig {
 
 interface TeamEmailSettingsProps {
     teamId: string;
+    planSlug?: string;
 }
 
-export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
+export function TeamEmailSettings({ teamId, planSlug }: TeamEmailSettingsProps) {
     const [loading, setLoading] = useState(false);
     const [config, setConfig] = useState<EmailConfig | null>(null);
 
     // Form State
-    const [provider, setProvider] = useState<EmailProvider>("AWS_SES");
+    const [provider, setProvider] = useState<EmailProvider>("PLATFORM_SES");
     const [emailInput, setEmailInput] = useState("");
     const [nameInput, setNameInput] = useState("");
 
@@ -95,6 +96,14 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
     // Modal state
     const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
 
+    // Domain Verification State
+    const [domainInput, setDomainInput] = useState("");
+    const [domainStatus, setDomainStatus] = useState<string | null>(null);
+    const [domainDkimTokens, setDomainDkimTokens] = useState<string[]>([]);
+    const [domainLoading, setDomainLoading] = useState(false);
+
+    const isDomainEligible = ["INDIVIDUAL_PRO", "ENTERPRISE", "EXEMPT", "TESTING"].includes(planSlug || "");
+
     useEffect(() => {
         if (!teamId) return;
         fetchConfig();
@@ -124,6 +133,23 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
             }
         } catch (error) {
             console.error("Failed to fetch email config", error);
+        }
+
+        // Fetch domain status if eligible
+        if (isDomainEligible) {
+            try {
+                const domainRes = await fetch(`/api/teams/${teamId}/email-config/domain`);
+                if (domainRes.ok) {
+                    const domainData = await domainRes.json();
+                    if (domainData.domain) {
+                        setDomainInput(domainData.domain);
+                        setDomainStatus(domainData.status);
+                        setDomainDkimTokens(domainData.dkimTokens || []);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch domain status", error);
+            }
         }
     };
 
@@ -171,7 +197,9 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
         }
 
         // Provider specific validation
-        if (provider === "AWS_SES") {
+        if (provider === "PLATFORM_SES") {
+            // No credentials needed — uses platform's SES
+        } else if (provider === "AWS_SES") {
             if (!config && (!awsAccessKey || !awsSecretKey)) {
                 toast.error("AWS Credentials are required for new setup");
                 return;
@@ -324,7 +352,8 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
                             <SelectValue placeholder="Select Provider" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="AWS_SES">AWS SES</SelectItem>
+                            <SelectItem value="PLATFORM_SES">BasaltCRM Email (Recommended)</SelectItem>
+                            <SelectItem value="AWS_SES">AWS SES (Bring Your Own)</SelectItem>
                             <SelectItem value="RESEND">Resend.com</SelectItem>
                             <SelectItem value="SENDGRID">Twilio SendGrid</SelectItem>
                             <SelectItem value="MAILGUN">Mailgun</SelectItem>
@@ -360,6 +389,28 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
                 </div>
 
                 {/* 3. Provider Specific Settings */}
+                {provider === "PLATFORM_SES" && (
+                    <div className="space-y-3 p-4 border rounded-lg bg-primary/5 border-primary/20">
+                        <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
+                            <h4 className="text-sm font-semibold">Platform Email Service</h4>
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            Your email will be verified and sent through <strong>BasaltCRM&apos;s managed email infrastructure</strong>. No AWS credentials are needed.
+                        </p>
+                        <div className="p-3 bg-white/5 border border-primary/10 rounded-md text-xs leading-relaxed">
+                            <p className="font-semibold text-primary mb-1">How it works:</p>
+                            <ol className="list-decimal pl-4 space-y-1">
+                                <li>Enter your <strong>Sender Email Address</strong> above (e.g., <code>sales@yourcompany.com</code>).</li>
+                                <li>Click <strong>Save Configuration</strong> — a verification email is sent to that address by AWS SES.</li>
+                                <li>Open the email and <strong>click the verification link</strong>.</li>
+                                <li>Come back here and click <strong>Check Status</strong> — the badge will turn green.</li>
+                                <li>You&apos;re all set! Campaigns, quotes, and invoices will send from your verified email.</li>
+                            </ol>
+                        </div>
+                    </div>
+                )}
+
                 {provider === "AWS_SES" && (
                     <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
                         <div className="flex items-center gap-2 mb-2">
@@ -602,6 +653,98 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
                     </div>
                 )}
 
+                {/* 3b. Domain Verification (Enterprise / Pro only) */}
+                {isDomainEligible && (
+                    <div className="space-y-4 p-4 border rounded-lg bg-indigo-500/5 border-indigo-500/20">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Globe className="w-4 h-4 text-indigo-500" />
+                            <h4 className="text-sm font-semibold">Custom Domain Verification</h4>
+                            <Badge variant="outline" className="text-[10px] border-indigo-500/30 text-indigo-400">
+                                Pro / Enterprise
+                            </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Verify your domain to send emails from <strong>any address</strong> under it (e.g., <code>sales@yourdomain.com</code>, <code>support@yourdomain.com</code>).
+                            Our team will provide you with the DNS records after review.
+                        </p>
+
+                        <div className="flex gap-2">
+                            <Input
+                                placeholder="yourdomain.com"
+                                value={domainInput}
+                                onChange={(e) => setDomainInput(e.target.value)}
+                                disabled={domainLoading || domainStatus === "VERIFIED"}
+                                className="max-w-xs"
+                            />
+                            {!domainStatus || domainStatus === "FAILED" ? (
+                                <Button
+                                    variant="outline"
+                                    className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10"
+                                    disabled={domainLoading || !domainInput}
+                                    onClick={async () => {
+                                        if (!domainInput.includes(".")) { toast.error("Enter a valid domain"); return; }
+                                        setDomainLoading(true);
+                                        try {
+                                            const res = await fetch(`/api/teams/${teamId}/email-config/domain`, {
+                                                method: "POST",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ domain: domainInput })
+                                            });
+                                            const data = await res.json();
+                                            if (!res.ok) throw new Error(data.error);
+                                            setDomainStatus(data.status);
+                                            toast.success(data.message || "Domain verification requested!");
+                                        } catch (err: any) {
+                                            toast.error(err.message || "Failed to request domain verification");
+                                        } finally {
+                                            setDomainLoading(false);
+                                        }
+                                    }}
+                                >
+                                    {domainLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4 mr-1" />}
+                                    Request Domain Verification
+                                </Button>
+                            ) : domainStatus === "PENDING_APPROVAL" ? (
+                                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                                    Pending Admin Review
+                                </Badge>
+                            ) : domainStatus === "DNS_PENDING" ? (
+                                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                    Waiting for DNS Propagation
+                                </Badge>
+                            ) : domainStatus === "VERIFIED" ? (
+                                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                                    <CheckCircle2 className="w-3 h-3 mr-1" /> Domain Verified
+                                </Badge>
+                            ) : null}
+                        </div>
+
+                        {domainStatus === "DNS_PENDING" && domainDkimTokens.length > 0 && (
+                            <div className="mt-3 p-3 bg-white/5 border border-blue-500/10 rounded-md">
+                                <p className="text-xs font-semibold text-blue-400 mb-2">DNS Records (add these to your domain):</p>
+                                <div className="space-y-2">
+                                    {domainDkimTokens.map((token, i) => (
+                                        <div key={i} className="flex items-center gap-2 text-[11px] font-mono bg-black/30 p-2 rounded">
+                                            <span className="text-muted-foreground">CNAME</span>
+                                            <span className="text-blue-300 truncate">{token}._domainkey.{domainInput}</span>
+                                            <span className="text-muted-foreground">→</span>
+                                            <span className="text-green-300 truncate">{token}.dkim.amazonses.com</span>
+                                            <button
+                                                className="ml-auto text-muted-foreground hover:text-white transition-colors"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(`${token}._domainkey.${domainInput} CNAME ${token}.dkim.amazonses.com`);
+                                                    toast.success("Copied!");
+                                                }}
+                                            >
+                                                <Copy className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* 4. Actions & Status */}
                 <div className="flex flex-col gap-4 pt-4 border-t">

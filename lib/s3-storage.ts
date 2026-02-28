@@ -1,8 +1,10 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
  * Acts as a shim for existing Azure Blob implementations
  * Redirects uploads and deletes to OVH S3.
+ * SOC2 Update: Removed public-read ACLs and added presigned URL support.
  */
 export function getBlobServiceClient() {
     const s3Endpoint = process.env.S3_ENDPOINT || "https://s3.us-west-or.io.cloud.ovh.us/";
@@ -26,6 +28,13 @@ export function getBlobServiceClient() {
     });
 
     return {
+        getPresignedUrl: async (key: string, expiresIn: number = 3600) => {
+            const command = new GetObjectCommand({
+                Bucket: s3BucketName,
+                Key: key,
+            });
+            return await getSignedUrl(s3Client, command, { expiresIn });
+        },
         getContainerClient: (containerFallbackName: string) => {
             return {
                 createIfNotExists: async () => ({ succeeded: true }),
@@ -38,7 +47,7 @@ export function getBlobServiceClient() {
                                 Key: key,
                                 Body: buffer instanceof ArrayBuffer ? Buffer.from(buffer) : buffer,
                                 ContentType: contentType,
-                                ACL: "public-read"
+                                // ACL: "public-read" // REMOVED FOR SOC2 COMPLIANCE
                             }));
                         },
                         deleteIfExists: async () => {
@@ -52,6 +61,7 @@ export function getBlobServiceClient() {
                                 return { succeeded: false };
                             }
                         },
+                        // This URL will now be private. Use getPresignedUrl for temporary access.
                         url: `https://${s3BucketName}.s3.${s3Region}.io.cloud.ovh.us/${key}`
                     };
                 }

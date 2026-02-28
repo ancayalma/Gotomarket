@@ -300,7 +300,7 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
                                 <SystemResendConfig {...systemResendData} />
                             </div>
                         )}
-                        <TeamEmailSettings teamId={team.id} />
+                        <TeamEmailSettings teamId={team.id} planSlug={team.assigned_plan?.slug || team.subscription_plan || "FREE"} />
                         <EmailDeliveryStats teamId={team.id} />
                     </div>
                 )}

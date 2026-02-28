@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import sendEmail from "@/lib/sendmail";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { getSessionAndTeam, validateResourceOwnership, unauthorizedResponse } from "@/lib/api-utils";
+import { logActivityInternal } from "@/actions/audit";
 
 const isValidId = (id: any) => typeof id === "string" && id.length === 24;
 
@@ -181,39 +183,38 @@ export async function POST(req: Request) {
 
 //UPdate a lead route
 export async function PUT(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return new NextResponse("Unauthenticated", { status: 401 });
-  }
+  const { error, teamInfo, session } = await getSessionAndTeam();
+  if (error) return error;
+
   try {
     const body = await req.json();
-    const userId = session.user.id;
+    const userId = session!.user.id;
 
-    if (!body) {
-      return new NextResponse("No form data", { status: 400 });
+    if (!body || !body.id) {
+      return new NextResponse("Lead ID is required", { status: 400 });
     }
 
     const {
       id,
       firstName,
       lastName,
-      company,
-      jobTitle,
-      email,
-      phone,
-      description,
-      lead_source,
-      refered_by,
-      campaign,
-      assigned_to,
-      accountIDs,
-      status,
-      type,
-      social_twitter,
-      social_facebook,
-      social_linkedin,
-      project,
+      // ... (destructured fields)
     } = body;
+
+    // 1. Fetch current lead to check ownership
+    const existingLead = await prismadb.crm_Leads.findUnique({
+      where: { id },
+      select: { team_id: true }
+    });
+
+    if (!existingLead) {
+      return new NextResponse("Lead not found", { status: 404 });
+    }
+
+    // 2. SOC2 Ownership Check
+    if (!validateResourceOwnership(teamInfo!.teamId, existingLead.team_id, teamInfo!.isGlobalAdmin)) {
+      return await unauthorizedResponse("UPDATE", `crm_Leads:${id}`);
+    }
 
     const updatedLead = await prismadb.crm_Leads.update({
       where: {
@@ -222,49 +223,56 @@ export async function PUT(req: Request) {
       data: {
         v: 1,
         updatedBy: userId,
-        firstName,
-        lastName,
-        company,
-        jobTitle,
-        email,
-        phone,
-        description,
-        lead_source,
-        refered_by,
-        campaign,
-        social_twitter,
-        social_facebook,
-        social_linkedin,
-        assigned_to: assigned_to || userId,
-        accountsIDs: accountIDs,
-        status,
-        type,
-        project,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        company: body.company,
+        jobTitle: body.jobTitle,
+        email: body.email,
+        phone: body.phone,
+        description: body.description,
+        lead_source: body.lead_source,
+        refered_by: body.refered_by,
+        campaign: body.campaign,
+        social_twitter: body.social_twitter,
+        social_facebook: body.social_facebook,
+        social_linkedin: body.social_linkedin,
+        assigned_to: body.assigned_to || userId,
+        accountsIDs: body.accountIDs,
+        status: body.status,
+        type: body.type,
+        project: body.project,
       },
     });
 
-    if (assigned_to !== userId) {
+    // 3. Audit Log
+    await logActivityInternal(
+      userId,
+      "USER_UPDATE",
+      "crm_Leads",
+      `Updated lead: ${updatedLead.firstName} ${updatedLead.lastName}`,
+      teamInfo!.teamId || undefined
+    );
+
+    if (body.assigned_to && body.assigned_to !== userId) {
       const notifyRecipient = await prismadb.users.findFirst({
         where: {
-          id: assigned_to,
+          id: body.assigned_to,
         },
       });
 
-      if (!notifyRecipient) {
-        return new NextResponse("No user found", { status: 400 });
+      if (notifyRecipient) {
+        await sendEmail({
+          from: process.env.EMAIL_FROM as string,
+          to: notifyRecipient.email || "info@softbase.com",
+          subject: `Lead ${firstName} ${lastName} has been updated and assigned to you.`,
+          text: `Lead ${firstName} ${lastName} has been updated and assigned to you. You can click here for detail: ${process.env.NEXT_PUBLIC_APP_URL}/crm/leads/${updatedLead.id}`,
+        });
       }
-
-      await sendEmail({
-        from: process.env.EMAIL_FROM as string,
-        to: notifyRecipient.email || "info@softbase.com",
-        subject: `New lead ${firstName} ${lastName} has been added to the system and assigned to you.`,
-        text: `New lead ${firstName} ${lastName} has been added to the system and assigned to you. You can click here for detail: ${process.env.NEXT_PUBLIC_APP_URL}/crm/leads/${updatedLead.id}`,
-      });
     }
 
     return NextResponse.json({ updatedLead }, { status: 200 });
   } catch (error) {
-    console.log("[UPDATED_LEAD_POST]", error);
-    return new NextResponse("Initial error", { status: 500 });
+    console.log("[UPDATED_LEAD_PUT]", error);
+    return new NextResponse("Internal error", { status: 500 });
   }
 }
