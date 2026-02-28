@@ -37,16 +37,24 @@ export const WidgetWrapper = ({
     return (
         <Card className={cn("flex flex-col h-[400px] bg-black/40 border-white/10 backdrop-blur-xl group/widget", className)}>
             <CardHeader className="p-3 pb-1 space-y-0">
-                <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2.5">
-                        <div className={cn("p-1.5 rounded-lg bg-white/5 shadow-sm group-hover/widget:scale-110 transition-transform duration-300", iconColor)}>
-                            <Icon size={16} />
-                        </div>
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
-                            {title} {count !== undefined && <span className="text-muted-foreground ml-1 font-medium not-italic">({count})</span>}
+                <div className="flex items-center justify-between h-10 mb-1">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {count !== undefined ? (
+                            <div className={cn("min-w-[28px] h-7 px-1.5 rounded-lg bg-white/5 shadow-sm group-hover/widget:scale-110 transition-transform duration-300 shrink-0 flex items-center justify-center", iconColor)}>
+                                <span className="text-sm font-bold">{count}</span>
+                            </div>
+                        ) : (
+                            <div className={cn("p-1.5 rounded-lg bg-white/5 shadow-sm group-hover/widget:scale-110 transition-transform duration-300 shrink-0", iconColor)}>
+                                <Icon size={16} />
+                            </div>
+                        )}
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-none truncate">
+                            {title}
                         </CardTitle>
                     </div>
-                    {rightAction}
+                    <div className="shrink-0 ml-2">
+                        {rightAction}
+                    </div>
                 </div>
 
                 {onSearch && (
