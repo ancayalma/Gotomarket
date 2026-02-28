@@ -471,58 +471,55 @@ export function LoginComponent() {
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col space-y-5">
-        <div className="text-sm text-gray-300">
-          Need account? Register{" "}
-          <Link href={"/register"} className="text-primary">
-            here
-          </Link>
-        </div>
-        <div className="text-sm text-gray-300">
-          Need password reset? Click
-          {/* Dialog start */}
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger className="text-primary">
-              <span className="px-2">here</span>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Password Reset</DialogTitle>
-                <DialogDescription className="p-5">
-                  Enter your email address and we will send new password to your
-                  e-mail.
-                </DialogDescription>
-              </DialogHeader>
-              {isLoading ? (
-                <LoadingComponent />
-              ) : (
-                <div className="flex px-2 space-x-5 py-5">
-                  <Input
-                    id="reset-email"
-                    name="reset-email"
-                    type="email"
-                    placeholder="name@domain.com"
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <Button
-                    disabled={email === ""}
-                    onClick={() => {
-                      onPasswordReset(email);
-                    }}
-                  >
-                    Reset
-                  </Button>
-                </div>
-              )}
-              <DialogTrigger asChild>
-                <Button variant={"destructive"} className="w-full mt-5">
-                  Cancel
+      <CardFooter className="flex flex-col gap-3 pt-2 pb-4">
+        <Link href="/register" className="w-full">
+          <Button variant="outline" className="w-full h-10 text-sm font-medium border-white/10 hover:border-primary/50 hover:bg-primary/5 transition-all">
+            Need an account? <span className="text-primary ml-1 font-semibold">Register</span>
+          </Button>
+        </Link>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" className="w-full h-9 text-xs text-muted-foreground hover:text-primary transition-colors">
+              <KeyRound className="w-3.5 h-3.5 mr-1.5" />
+              Forgot your password?
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Password Reset</DialogTitle>
+              <DialogDescription className="p-5">
+                Enter your email address and we will send new password to your
+                e-mail.
+              </DialogDescription>
+            </DialogHeader>
+            {isLoading ? (
+              <LoadingComponent />
+            ) : (
+              <div className="flex px-2 space-x-5 py-5">
+                <Input
+                  id="reset-email"
+                  name="reset-email"
+                  type="email"
+                  placeholder="name@domain.com"
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <Button
+                  disabled={email === ""}
+                  onClick={() => {
+                    onPasswordReset(email);
+                  }}
+                >
+                  Reset
                 </Button>
-              </DialogTrigger>
-            </DialogContent>
-          </Dialog>
-          {/* Dialog end */}
-        </div>
+              </div>
+            )}
+            <DialogTrigger asChild>
+              <Button variant={"destructive"} className="w-full mt-5">
+                Cancel
+              </Button>
+            </DialogTrigger>
+          </DialogContent>
+        </Dialog>
       </CardFooter>
     </Card>
   );

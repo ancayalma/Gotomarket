@@ -11,7 +11,7 @@ export const AuthFooterWrapper = () => {
 
     if (pathname.includes("/sign-in")) {
         // Match the base width of the login card, avoiding expansion on larger screens to ensure it doesn't look "too wide"
-        widthClass = "w-full max-w-sm";
+        widthClass = "w-full max-w-md sm:max-w-lg";
     } else if (pathname.includes("/register")) {
         // Register page has p-10 (5rem) padding, so we must subtract that to match the card width exactly
         // widthClass = "w-[calc(100%-5rem)] max-w-lg sm:max-w-xl mx-auto";

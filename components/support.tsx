@@ -14,33 +14,27 @@ const SupportComponent = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="flex flex-col space-y-2 mt-3 min-w-[400px]"
+        className="flex flex-col gap-1.5 mt-3 w-auto p-2"
         align={"end"}
       >
-        <div className="flex w-full justify-between items-center gap-2">
-          <span className="text-sm">Need help? Join us on</span>
-          <Button asChild variant={"secondary"}>
-            <Link
-              className="border rounded-md p-2"
-              href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/G9Sp8CAQmV"}
-              target="_blank"
-            >
-              <DiscordLogoIcon />
-            </Link>
-          </Button>
-        </div>
-        <div className="flex w-full justify-between items-center gap-2">
-          <span className="text-sm "> Find a bug? Create an issue on</span>
-          <Button asChild variant={"secondary"}>
-            <Link
-              className="border rounded-md p-2"
-              href={process.env.NEXT_PUBLIC_GITHUB_ISSUES_URL || "https://github.com/BasaltHQ/crm-official/issues"}
-              target="_blank"
-            >
-              <GitHubLogoIcon />
-            </Link>
-          </Button>
-        </div>
+        <Button asChild variant="ghost" className="h-9 justify-start gap-2.5 px-3">
+          <Link
+            href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/G9Sp8CAQmV"}
+            target="_blank"
+          >
+            <DiscordLogoIcon className="w-4 h-4 shrink-0" />
+            <span className="text-sm">Need help? Join us on Discord</span>
+          </Link>
+        </Button>
+        <Button asChild variant="ghost" className="h-9 justify-start gap-2.5 px-3">
+          <Link
+            href={process.env.NEXT_PUBLIC_GITHUB_ISSUES_URL || "https://github.com/BasaltHQ/crm-official/issues"}
+            target="_blank"
+          >
+            <GitHubLogoIcon className="w-4 h-4 shrink-0" />
+            <span className="text-sm">Find a bug? Report on GitHub</span>
+          </Link>
+        </Button>
       </PopoverContent>
     </Popover>
   );
