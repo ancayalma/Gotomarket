@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useMemo, useRef } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
     ReactFlow,
@@ -16,6 +16,8 @@ import {
     Panel,
     useReactFlow,
     ReactFlowProvider,
+    ConnectionMode,
+    MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -30,6 +32,14 @@ import {
     Loader2,
     Bug,
     Zap,
+    Maximize,
+    Minus,
+    Plus,
+    Lock,
+    Unlock,
+    MousePointer2,
+    PenTool,
+    Image as ImageIcon,
 } from "lucide-react";
 import { activateWorkflow, pauseWorkflow, updateWorkflow } from "@/actions/crm/workflows";
 import { toast } from "sonner";
@@ -43,6 +53,7 @@ import { ScreenNode } from "./nodes/ScreenNode";
 import { UpdateRecordNode } from "./nodes/UpdateRecordNode";
 import { LoopNode } from "./nodes/LoopNode";
 import { ApprovalNode } from "./nodes/ApprovalNode";
+import { MediaNode } from "./nodes/MediaNode";
 import { NodePalette } from "./NodePalette";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { DebugPanel, ExecutionLog, ExecutionStep } from "./DebugPanel";
@@ -72,16 +83,20 @@ const nodeTypes: Record<string, any> = {
     updateRecord: UpdateRecordNode,
     loop: LoopNode,
     approval: ApprovalNode,
+    media: MediaNode,
 };
 
 function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
     const router = useRouter();
+    const { fitView, zoomIn, zoomOut } = useReactFlow();
+
     const [saving, setSaving] = useState(false);
     const [activating, setActivating] = useState(false);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [debugOpen, setDebugOpen] = useState(false);
     const [execution, setExecution] = useState<ExecutionLog | null>(null);
     const [running, setRunning] = useState(false);
+    const [isLocked, setIsLocked] = useState(false);
 
     // Parse nodes and edges from workflow
     const initialNodes = useMemo(() => {
@@ -109,11 +124,16 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
     );
 
     const onConnect = useCallback(
-        (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+        (params: Connection) => setEdges((eds) => addEdge({
+            ...params,
+            animated: true,
+            style: { strokeWidth: 3, stroke: "#06b6d4" },
+            markerEnd: { type: MarkerType.ArrowClosed, color: "#06b6d4" }
+        }, eds)),
         [setEdges]
     );
 
-    // Node click → open config panel
+    // Node click ? open config panel
     const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
         setSelectedNodeId(node.id);
     }, []);
@@ -138,7 +158,7 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
         [setNodes]
     );
 
-    // Canvas click → deselect
+    // Canvas click ? deselect
     const onPaneClick = useCallback(() => {
         setSelectedNodeId(null);
     }, []);
@@ -182,12 +202,18 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
     const addNode = (type: string, label: string) => {
         const newNode: Node = {
             id: `${type}-${Date.now()}`,
-            type,
+            type: type === "note" || type === "image" || type === "svg" ? "media" : type,
             position: {
-                x: 250 + Math.random() * 100,
-                y: 150 + nodes.length * 100
+                x: 400 + Math.random() * 50,
+                y: 200 + nodes.length * 50
             },
-            data: { label },
+            data: {
+                label,
+                shape: "rounded",
+                type: type === "note" || type === "image" || type === "svg" ? type : undefined,
+                content: type === "note" ? "" : undefined,
+                url: type === "image" ? "" : undefined,
+            },
         };
         setNodes((nds) => [...nds, newNode]);
     };
@@ -252,7 +278,7 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
             // Simulate processing time
             await new Promise((r) => setTimeout(r, 300 + Math.random() * 400));
 
-            // Check for missing config → simulate error
+            // Check for missing config ? simulate error
             const data = currentNode.data as Record<string, unknown>;
             if (currentNode.type === "action") {
                 const actionType = data.actionType as string;
@@ -335,7 +361,7 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
         setRunning(false);
 
         if (log.status === "completed") {
-            toast.success(`FlowState executed — ${log.steps.length} steps completed`);
+            toast.success(`FlowState executed ? ${log.steps.length} steps completed`);
         } else {
             toast.error("FlowState execution failed. Check debug console.");
         }
@@ -366,26 +392,27 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-background">
+        <div className="flex flex-col h-screen bg-[#06080a] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b bg-card shrink-0">
+            <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#0a0c0e]/80 backdrop-blur-xl shrink-0 z-50">
                 <div className="flex items-center gap-4">
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => router.push("/crm/workflows")}
+                        className="hover:bg-white/5"
                     >
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{workflow.name}</h1>
-                            <Badge variant={statusBadge[workflow.status]?.variant || "secondary"}>
+                            <h1 className="text-xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-1.5 whitespace-nowrap">{workflow.name}</h1>
+                            <Badge variant={statusBadge[workflow.status]?.variant || "secondary"} className="text-[10px] py-0 px-1.5 h-4">
                                 {statusBadge[workflow.status]?.label || workflow.status}
                             </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                            {workflow.description || "No description"}
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                            FlowState Editor
                         </p>
                     </div>
                 </div>
@@ -395,60 +422,44 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
                         variant="outline"
                         onClick={simulateExecution}
                         disabled={running || nodes.length === 0}
-                        className="gap-2"
+                        className="gap-2 h-9 border-white/10 bg-white/5"
                     >
                         {running ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                             <Zap className="h-4 w-4 text-orange-500" />
                         )}
-                        {running ? "Running..." : "Run"}
+                        <span className="text-xs font-bold uppercase tracking-wider">{running ? "Running..." : "Run Flow"}</span>
                     </Button>
 
-                    {/* Debug Toggle */}
-                    <Button
-                        variant={debugOpen ? "secondary" : "ghost"}
-                        size="icon"
-                        onClick={() => setDebugOpen(!debugOpen)}
-                        className="relative"
-                    >
-                        <Bug className="h-4 w-4" />
-                        {execution && (
-                            <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ${execution.status === "completed" ? "bg-green-500" :
-                                    execution.status === "failed" ? "bg-red-500" : "bg-blue-500"
-                                }`} />
-                        )}
-                    </Button>
-
-                    <Separator orientation="vertical" className="h-6" />
-
-                    <Button variant="outline" onClick={handleSave} disabled={saving}>
+                    <Button variant="outline" onClick={handleSave} disabled={saving} className="h-9 border-white/10 bg-white/5 gap-2">
                         {saving ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                            <Save className="mr-2 h-4 w-4" />
+                            <Save className="h-4 w-4 text-cyan-400" />
                         )}
-                        Save
+                        <span className="text-xs font-bold uppercase tracking-wider">Save</span>
                     </Button>
                     <Button
                         onClick={handleToggleStatus}
                         disabled={activating}
                         variant={workflow.status === "ACTIVE" ? "outline" : "default"}
+                        className={`h-9 gap-2 ${workflow.status === "ACTIVE" ? "border-white/10 bg-white/5" : "bg-cyan-500 hover:bg-cyan-400 text-black"}`}
                     >
                         {activating ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                         ) : workflow.status === "ACTIVE" ? (
-                            <Pause className="mr-2 h-4 w-4" />
+                            <Pause className="h-4 w-4" />
                         ) : (
-                            <Play className="mr-2 h-4 w-4" />
+                            <Play className="h-4 w-4" />
                         )}
-                        {workflow.status === "ACTIVE" ? "Pause" : "Activate"}
+                        <span className="text-xs font-bold uppercase tracking-wider">{workflow.status === "ACTIVE" ? "Pause" : "Activate"}</span>
                     </Button>
                 </div>
             </div>
 
             {/* Main area: Canvas + Config Panel */}
-            <div className="flex-1 flex min-h-0">
+            <div className="flex-1 flex min-h-0 relative">
                 {/* Canvas */}
                 <div className="flex-1 relative flex flex-col min-w-0">
                     <div className="flex-1 relative">
@@ -461,20 +472,102 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
                             onNodeClick={onNodeClick}
                             onPaneClick={onPaneClick}
                             nodeTypes={nodeTypes}
+                            colorMode="dark"
                             fitView
                             snapToGrid
                             snapGrid={[15, 15]}
                             defaultEdgeOptions={{
                                 animated: true,
-                                style: { stroke: "#f97316", strokeWidth: 2 },
+                                style: { stroke: "#06b6d4", strokeWidth: 3 },
+                                markerEnd: { type: MarkerType.ArrowClosed, color: "#06b6d4" },
                             }}
+                            nodesDraggable={!isLocked}
+                            nodesConnectable={!isLocked}
+                            elementsSelectable={!isLocked}
+                            connectionMode={ConnectionMode.Loose}
+                            selectionMode={isLocked ? undefined : 0 as any} // Allow selection unless locked
+                            connectionLineStyle={{ stroke: "#06b6d4", strokeWidth: 3 }}
                         >
-                            <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
-                            <Controls />
+                            <Background variant={BackgroundVariant.Dots} gap={25} size={1} color="#ffffff10" />
+
+                            <Controls
+                                showInteractive={false}
+                                position="bottom-right"
+                                className="bg-[#0f1115] border border-white/10 rounded-lg overflow-hidden [&_button]:!bg-[#0f1115] [&_button]:!border-white/5 [&_button:hover]:!bg-white/5 [&_svg]:!fill-white"
+                            />
 
                             {/* Node Palette */}
-                            <Panel position="top-left" className="m-4">
+                            <Panel position="top-left" className="ml-6 mt-6">
                                 <NodePalette onAddNode={addNode} />
+                            </Panel>
+
+                            {/* Global Toolbar */}
+                            <Panel position="top-center" className="mt-6">
+                                <div className="flex items-center gap-1 p-1 bg-[#0f1115]/90 backdrop-blur-md border border-white/10 rounded-full shadow-2xl">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-full hover:bg-white/10"
+                                        onClick={() => fitView()}
+                                        title="Fit View"
+                                    >
+                                        <Maximize className="w-4 h-4" />
+                                    </Button>
+                                    <div className="w-px h-4 bg-white/10 mx-1" />
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-full hover:bg-white/10"
+                                        onClick={() => zoomOut()}
+                                        title="Zoom Out"
+                                    >
+                                        <Minus className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-full hover:bg-white/10"
+                                        onClick={() => zoomIn()}
+                                        title="Zoom In"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </Button>
+                                    <div className="w-px h-4 bg-white/10 mx-1" />
+                                    <Button
+                                        variant={isLocked ? "secondary" : "ghost"}
+                                        size="icon"
+                                        className={`h-8 w-8 rounded-full transition-colors ${isLocked ? "bg-amber-500/20 text-amber-500 hover:bg-amber-500/30" : "hover:bg-white/10"}`}
+                                        onClick={() => setIsLocked(!isLocked)}
+                                        title={isLocked ? "Unlock Canvas" : "Lock Canvas"}
+                                    >
+                                        {isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                                    </Button>
+                                    <div className="w-px h-4 bg-white/10 mx-1" />
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-full hover:bg-white/10"
+                                        onClick={() => setDebugOpen(!debugOpen)}
+                                        title="Debug Logs"
+                                    >
+                                        <Bug className={`w-4 h-4 ${debugOpen ? "text-cyan-400" : ""}`} />
+                                    </Button>
+                                </div>
+                            </Panel>
+
+                            {/* Floating Stats */}
+                            <Panel position="bottom-left" className="ml-6 mb-6">
+                                <div className="px-3 py-1.5 bg-[#0f1115]/80 backdrop-blur-sm border border-white/5 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-4">
+                                    <div className="flex items-center gap-1.5">
+                                        <MousePointer2 className="w-3 h-3" />
+                                        <span>{nodes.length} Steps</span>
+                                    </div>
+                                    <div className="w-px h-2 bg-white/10" />
+                                    <div className="flex items-center gap-1.5">
+                                        <Zap className="w-3 h-3" />
+                                        <span>{edges.length} Links</span>
+                                    </div>
+                                </div>
                             </Panel>
                         </ReactFlow>
                     </div>
@@ -491,12 +584,14 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
 
                 {/* Node Config Side Panel */}
                 {selectedNode && (
-                    <NodeConfigPanel
-                        node={selectedNode}
-                        onClose={closeConfigPanel}
-                        onUpdateNode={handleUpdateNode}
-                        allNodes={nodes}
-                    />
+                    <div className="w-[350px] border-l border-white/5 bg-[#0a0c0e]/95 backdrop-blur-xl shrink-0 z-40 overflow-y-auto">
+                        <NodeConfigPanel
+                            node={selectedNode}
+                            onClose={closeConfigPanel}
+                            onUpdateNode={handleUpdateNode}
+                            allNodes={nodes}
+                        />
+                    </div>
                 )}
             </div>
         </div>

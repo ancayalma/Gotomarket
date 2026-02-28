@@ -213,7 +213,7 @@ export const CRM_MODULES: CrmModule[] = [
                 description: 'AI operations',
                 children: [
                     { id: 'ai_lab.actions.generate', name: 'Generate Prompt', description: 'Run generation' },
-                    { id: 'ai_lab.actions.push_voicehub', name: 'Push to VoiceHub', description: 'Deploy to voice agent' },
+                    { id: 'ai_lab.actions.push_voicehub', name: 'Push to BasaltECHO', description: 'Deploy to BasaltECHO voice agent' },
                 ]
             }
         ]

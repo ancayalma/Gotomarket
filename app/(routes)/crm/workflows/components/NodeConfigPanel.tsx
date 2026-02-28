@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { Node } from "@xyflow/react";
-import { X, Zap, GitBranch, Clock, Repeat, Mail, MessageSquare, CheckSquare, Bell, Database, LayoutGrid, CheckCircle2, FileEdit, Plus, Trash2, GripVertical } from "lucide-react";
+import { X, Zap, GitBranch, Clock, Repeat, Mail, MessageSquare, CheckSquare, Bell, Database, LayoutGrid, CheckCircle2, FileEdit, Plus, Trash2, GripVertical, StickyNote, Image as ImageIcon, FileCode, MousePointer2, PenTool } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,6 +73,7 @@ const nodeTypeInfo: Record<string, { icon: typeof Zap; label: string; color: str
     updateRecord: { icon: Database, label: "Record Op", color: "text-cyan-500", bgColor: "bg-cyan-500/10" },
     screen: { icon: LayoutGrid, label: "Screen", color: "text-purple-500", bgColor: "bg-purple-500/10" },
     approval: { icon: CheckCircle2, label: "Approval", color: "text-rose-500", bgColor: "bg-rose-500/10" },
+    media: { icon: ImageIcon, label: "Visual Asset", color: "text-cyan-400", bgColor: "bg-cyan-400/10" },
 };
 
 export function NodeConfigPanel({ node, onClose, onUpdateNode, allNodes }: NodeConfigPanelProps) {
@@ -130,6 +131,31 @@ export function NodeConfigPanel({ node, onClose, onUpdateNode, allNodes }: NodeC
 
                     <Separator />
 
+                    {/* Shape & Style */}
+                    <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/50">Visual Style</Label>
+                        <div className="flex p-1 bg-muted/30 rounded-lg gap-1">
+                            {[
+                                { value: "rounded", label: "Rounded", icon: MousePointer2 },
+                                { value: "capsule", label: "Capsule", icon: PenTool },
+                                { value: "square", label: "Square", icon: LayoutGrid },
+                            ].map((s) => (
+                                <Button
+                                    key={s.value}
+                                    variant={(data.shape as string || "rounded") === s.value ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="flex-1 h-8 text-[11px] gap-1.5"
+                                    onClick={() => updateData("shape", s.value)}
+                                >
+                                    <s.icon className="h-3.5 w-3.5" />
+                                    {s.label}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <Separator />
+
                     {/* === TRIGGER CONFIG === */}
                     {nodeType === "trigger" && (
                         <TriggerConfig data={data} updateData={updateData} />
@@ -168,6 +194,11 @@ export function NodeConfigPanel({ node, onClose, onUpdateNode, allNodes }: NodeC
                     {/* === APPROVAL CONFIG === */}
                     {nodeType === "approval" && (
                         <ApprovalConfig data={data} updateData={updateData} />
+                    )}
+
+                    {/* === MEDIA CONFIG === */}
+                    {nodeType === "media" && (
+                        <MediaConfig data={data} updateData={updateData} />
                     )}
                 </div>
             </ScrollArea>
@@ -944,6 +975,99 @@ function ApprovalConfig({ data, updateData }: ConfigProps) {
                 <p className="text-[10px] text-muted-foreground">
                     First Response: one approval is enough. Unanimous: all must approve.
                 </p>
+            </div>
+        </div>
+    );
+}
+
+// --- MEDIA (Sticky Note, Image, SVG) ---
+function MediaConfig({ data, updateData }: ConfigProps) {
+    const type = data.type as string || "note";
+
+    return (
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Label className="text-xs font-medium">Asset Type</Label>
+                <div className="flex p-1 bg-muted/30 rounded-lg gap-1">
+                    {[
+                        { value: "note", label: "Note", icon: StickyNote },
+                        { value: "image", label: "Image", icon: ImageIcon },
+                        { value: "svg", label: "SVG", icon: FileCode },
+                    ].map((t) => (
+                        <Button
+                            key={t.value}
+                            variant={type === t.value ? "secondary" : "ghost"}
+                            size="sm"
+                            className="flex-1 h-8 text-[11px] gap-1.5"
+                            onClick={() => updateData("type", t.value)}
+                        >
+                            <t.icon className="h-3.5 w-3.5" />
+                            {t.label}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+
+            {type === "note" && (
+                <div className="space-y-2">
+                    <Label className="text-xs font-medium">Content</Label>
+                    <Textarea
+                        value={(data.content as string) || ""}
+                        onChange={(e) => updateData("content", e.target.value)}
+                        placeholder="Type your note here..."
+                        className="text-sm min-h-[120px]"
+                    />
+                </div>
+            )}
+
+            {type === "image" && (
+                <div className="space-y-2">
+                    <Label className="text-xs font-medium">Image URL</Label>
+                    <Input
+                        value={(data.url as string) || ""}
+                        onChange={(e) => updateData("url", e.target.value)}
+                        placeholder="https://..."
+                        className="text-sm"
+                    />
+                    <p className="text-[10px] text-muted-foreground italic">SVG, PNG, JPG supported</p>
+                </div>
+            )}
+
+            {type === "svg" && (
+                <div className="space-y-2">
+                    <Label className="text-xs font-medium">SVG Code</Label>
+                    <Textarea
+                        value={(data.content as string) || ""}
+                        onChange={(e) => updateData("content", e.target.value)}
+                        placeholder="<svg ...>"
+                        className="text-sm font-mono min-h-[150px]"
+                        spellCheck={false}
+                    />
+                    <p className="text-[10px] text-muted-foreground italic">Paste raw SVG tags</p>
+                </div>
+            )}
+
+            <Separator />
+
+            <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                    <Label className="text-xs font-medium">Width (px)</Label>
+                    <Input
+                        type="number"
+                        value={(data.width as number) || ""}
+                        onChange={(e) => updateData("width", parseInt(e.target.value) || 0)}
+                        className="text-sm"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label className="text-xs font-medium">Height (px)</Label>
+                    <Input
+                        type="number"
+                        value={(data.height as number) || ""}
+                        onChange={(e) => updateData("height", parseInt(e.target.value) || 0)}
+                        className="text-sm"
+                    />
+                </div>
             </div>
         </div>
     );

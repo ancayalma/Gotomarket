@@ -23,6 +23,9 @@ import {
     CheckCircle2,
     FileEdit,
     Shield,
+    StickyNote,
+    Image as ImageIcon,
+    FileCode,
 } from "lucide-react";
 
 interface NodePaletteProps {
@@ -134,14 +137,40 @@ const nodeCategories = [
             },
         ],
     },
+    {
+        title: "Visuals & Assets",
+        items: [
+            {
+                type: "note",
+                label: "Sticky Note",
+                description: "Add a text annotation",
+                icon: StickyNote,
+                color: "text-amber-500",
+            },
+            {
+                type: "image",
+                label: "Image Asset",
+                description: "Embed an image URL",
+                icon: ImageIcon,
+                color: "text-blue-400",
+            },
+            {
+                type: "svg",
+                label: "SVG Vector",
+                description: "Paste SVG code",
+                icon: FileCode,
+                color: "text-cyan-400",
+            },
+        ],
+    },
 ];
 
 export function NodePalette({ onAddNode }: NodePaletteProps) {
     return (
-        <Card className="w-[220px] shadow-lg max-h-[70vh]">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
-                    <Shield className="h-4 w-4 text-orange-500" />
+        <Card className="w-[220px] shadow-2xl max-h-[70vh] bg-[#0f1115]/95 backdrop-blur-md border-white/10">
+            <CardHeader className="pb-3 pt-5">
+                <CardTitle className="text-xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-none py-1 flex items-center gap-2 whitespace-nowrap overflow-visible">
+                    <Shield className="h-4 w-4 text-orange-500 shrink-0" />
                     Add Steps
                 </CardTitle>
                 <CardDescription className="text-xs">
