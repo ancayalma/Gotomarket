@@ -18,6 +18,8 @@ import {
     ReactFlowProvider,
     ConnectionMode,
     MarkerType,
+    MiniMap,
+    SelectionMode,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -38,8 +40,6 @@ import {
     Lock,
     Unlock,
     MousePointer2,
-    PenTool,
-    Image as ImageIcon,
 } from "lucide-react";
 import { activateWorkflow, pauseWorkflow, updateWorkflow } from "@/actions/crm/workflows";
 import { toast } from "sonner";
@@ -57,6 +57,10 @@ import { MediaNode } from "./nodes/MediaNode";
 import { NodePalette } from "./NodePalette";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 import { DebugPanel, ExecutionLog, ExecutionStep } from "./DebugPanel";
+import { InteractiveEdge } from "./InteractiveEdge";
+import { GroupNode } from "./nodes/GroupNode";
+import { useHelperLines } from "./useHelperLines";
+import { Copy, Clipboard, Undo, Redo, Trash2 } from "lucide-react";
 
 interface Workflow {
     id: string;
@@ -73,7 +77,6 @@ interface WorkflowEditorProps {
     workflow: Workflow;
 }
 
-// Use Record<string, any> to satisfy React Flow's flexible node type requirements
 const nodeTypes: Record<string, any> = {
     trigger: TriggerNode,
     delay: DelayNode,
@@ -84,6 +87,11 @@ const nodeTypes: Record<string, any> = {
     loop: LoopNode,
     approval: ApprovalNode,
     media: MediaNode,
+    group: GroupNode,
+};
+
+const edgeTypes = {
+    interactive: InteractiveEdge,
 };
 
 function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
@@ -97,6 +105,12 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
     const [execution, setExecution] = useState<ExecutionLog | null>(null);
     const [running, setRunning] = useState(false);
     const [isLocked, setIsLocked] = useState(false);
+    const { helperLines, setHelperLines, calculateHelperLines } = useHelperLines();
+
+    // History & Clipboard
+    const [history, setHistory] = useState<{ nodes: Node[], edges: Edge[] }[]>([]);
+    const [redoStack, setRedoStack] = useState<{ nodes: Node[], edges: Edge[] }[]>([]);
+    const [clipboard, setClipboard] = useState<{ nodes: Node[], edges: Edge[] } | null>(null);
 
     // Parse nodes and edges from workflow
     const initialNodes = useMemo(() => {
@@ -123,27 +137,36 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
         [nodes, selectedNodeId]
     );
 
+    const onNodeDrag = useCallback(
+        (_: any, node: Node) => {
+            calculateHelperLines(node, nodes);
+        },
+        [nodes, calculateHelperLines]
+    );
+
+    const onNodeDragStop = useCallback(() => {
+        setHelperLines({});
+    }, [setHelperLines]);
+
     const onConnect = useCallback(
         (params: Connection) => setEdges((eds) => addEdge({
             ...params,
             animated: true,
-            style: { strokeWidth: 3, stroke: "#06b6d4" },
+            type: "interactive",
+            style: { strokeWidth: 4, stroke: "#06b6d4", filter: "drop-shadow(0 0 8px rgba(6, 182, 212, 0.4))" },
             markerEnd: { type: MarkerType.ArrowClosed, color: "#06b6d4" }
         }, eds)),
         [setEdges]
     );
 
-    // Node click ? open config panel
     const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
         setSelectedNodeId(node.id);
     }, []);
 
-    // Close config panel
     const closeConfigPanel = useCallback(() => {
         setSelectedNodeId(null);
     }, []);
 
-    // Update node data from the config panel
     const handleUpdateNode = useCallback(
         (nodeId: string, newData: Record<string, unknown>) => {
             setNodes((nds) =>
@@ -158,7 +181,6 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
         [setNodes]
     );
 
-    // Canvas click ? deselect
     const onPaneClick = useCallback(() => {
         setSelectedNodeId(null);
     }, []);
@@ -180,7 +202,6 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
 
     const handleToggleStatus = async () => {
         setActivating(true);
-
         await updateWorkflow(workflow.id, {
             nodes: JSON.parse(JSON.stringify(nodes)),
             edges: JSON.parse(JSON.stringify(edges))
@@ -203,6 +224,7 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
         const newNode: Node = {
             id: `${type}-${Date.now()}`,
             type: type === "note" || type === "image" || type === "svg" ? "media" : type,
+            dragHandle: type === "group" ? ".group-drag-handle" : undefined,
             position: {
                 x: 400 + Math.random() * 50,
                 y: 200 + nodes.length * 50
@@ -211,19 +233,82 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
                 label,
                 shape: "rounded",
                 type: type === "note" || type === "image" || type === "svg" ? type : undefined,
-                content: type === "note" ? "" : undefined,
-                url: type === "image" ? "" : undefined,
             },
         };
         setNodes((nds) => [...nds, newNode]);
     };
 
-    // ============ RUN / DEBUG ============
+    const takeSnapshot = useCallback(() => {
+        setHistory(prev => [...prev.slice(-49), { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }]);
+        setRedoStack([]);
+    }, [nodes, edges]);
+
+    const undo = useCallback(() => {
+        if (history.length === 0) return;
+        const previous = history[history.length - 1];
+        setRedoStack(prev => [...prev, { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }]);
+        setNodes(previous.nodes);
+        setEdges(previous.edges);
+        setHistory(prev => prev.slice(0, -1));
+        toast.info("Undo: Reverted changes");
+    }, [history, nodes, edges, setNodes, setEdges]);
+
+    const redo = useCallback(() => {
+        if (redoStack.length === 0) return;
+        const next = redoStack[redoStack.length - 1];
+        setHistory(prev => [...prev, { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }]);
+        setNodes(next.nodes);
+        setEdges(next.edges);
+        setRedoStack(prev => prev.slice(0, -1));
+        toast.info("Redo: Applied forward");
+    }, [redoStack, nodes, edges, setNodes, setEdges]);
+
+    const copySelected = useCallback(() => {
+        const selectedNodes = nodes.filter(n => n.selected);
+        const selectedEdges = edges.filter(e => e.selected);
+        if (selectedNodes.length === 0) return;
+        setClipboard({ nodes: JSON.parse(JSON.stringify(selectedNodes)), edges: JSON.parse(JSON.stringify(selectedEdges)) });
+        toast.success(`Copied ${selectedNodes.length} objects`);
+    }, [nodes, edges]);
+
+    const paste = useCallback(() => {
+        if (!clipboard) return;
+        takeSnapshot();
+        const idMap: Record<string, string> = {};
+        const newNodes = clipboard.nodes.map(n => {
+            const newId = `${n.type}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+            idMap[n.id] = newId;
+            return {
+                ...n,
+                id: newId,
+                position: { x: n.position.x + 40, y: n.position.y + 40 },
+                selected: true,
+            };
+        });
+
+        const newEdges = clipboard.edges.map(e => ({
+            ...e,
+            id: `e-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            source: idMap[e.source] || e.source,
+            target: idMap[e.target] || e.target,
+            selected: true,
+        }));
+
+        setNodes(nds => [...nds.map(n => ({ ...n, selected: false })), ...newNodes]);
+        setEdges(eds => [...eds.map(e => ({ ...e, selected: false })), ...newEdges]);
+        toast.success(`Pasted ${newNodes.length} objects`);
+    }, [clipboard, takeSnapshot, setNodes, setEdges]);
+
+    const deleteSelected = useCallback(() => {
+        takeSnapshot();
+        setNodes(nds => nds.filter(n => !n.selected));
+        setEdges(eds => eds.filter(e => !e.selected));
+        toast.success("Deleted selected objects");
+    }, [takeSnapshot, setNodes, setEdges]);
 
     const simulateExecution = useCallback(async () => {
         setRunning(true);
         setDebugOpen(true);
-
         const now = Date.now();
         const log: ExecutionLog = {
             id: `exec-${now}`,
@@ -236,12 +321,10 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
         };
         setExecution({ ...log });
 
-        // Walk nodes in topological-ish order (simplified: just follow edges from trigger)
         const nodeMap = new Map(nodes.map((n) => [n.id, n]));
         const visited = new Set<string>();
         const queue: string[] = [];
 
-        // Find the trigger node
         const trigger = nodes.find((n) => n.type === "trigger");
         if (trigger) queue.push(trigger.id);
 
@@ -253,7 +336,6 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
         };
 
         let hasError = false;
-
         while (queue.length > 0 && !hasError) {
             const currentId = queue.shift()!;
             if (visited.has(currentId)) continue;
@@ -274,115 +356,32 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
 
             log.steps.push(step);
             setExecution({ ...log });
+            await new Promise((r) => setTimeout(r, 600));
 
-            // Simulate processing time
-            await new Promise((r) => setTimeout(r, 300 + Math.random() * 400));
-
-            // Check for missing config ? simulate error
             const data = currentNode.data as Record<string, unknown>;
-            if (currentNode.type === "action") {
-                const actionType = data.actionType as string;
-                if (actionType === "send_email" && !data.emailTo) {
-                    step.status = "failed";
-                    step.error = "Email recipient (To) is not configured";
-                    step.endTime = Date.now();
-                    log.status = "failed";
-                    log.endTime = Date.now();
-                    hasError = true;
-                    setExecution({ ...log });
-                    continue;
-                }
+            if (currentNode.type === "action" && data.actionType === "send_email" && !data.emailTo) {
+                step.status = "failed";
+                step.error = "Email (To) not configured";
+                hasError = true;
+            } else {
+                step.status = "completed";
             }
 
-            if (currentNode.type === "condition") {
-                const conditions = data.conditions as Array<{ field: string }>;
-                if (!conditions || conditions.length === 0) {
-                    step.status = "failed";
-                    step.error = "No conditions defined for decision node";
-                    step.endTime = Date.now();
-                    log.status = "failed";
-                    log.endTime = Date.now();
-                    hasError = true;
-                    setExecution({ ...log });
-                    continue;
-                }
-
-                // Simulate: take the "true" branch
-                step.branch = "true";
-                step.outputData = { evaluatedTo: true };
-            }
-
-            if (currentNode.type === "approval") {
-                step.branch = "approved";
-                step.outputData = { decision: "approved", approver: "manager@team.com" };
-            }
-
-            if (currentNode.type === "loop") {
-                step.branch = "body";
-                step.outputData = { iterationCount: 3 };
-            }
-
-            if (currentNode.type === "delay") {
-                step.outputData = {
-                    duration: data.duration || 1,
-                    unit: data.unit || "minutes",
-                    note: "Simulated (skipped wait)"
-                };
-            }
-
-            if (currentNode.type === "updateRecord") {
-                step.outputData = {
-                    operation: data.operation || "UPDATE",
-                    objectType: data.objectType || "Unknown",
-                    recordsAffected: Math.floor(Math.random() * 5) + 1,
-                };
-            }
-
-            if (currentNode.type === "screen") {
-                step.outputData = { userInput: { status: "(simulated input)" } };
-            }
-
-            step.status = "completed";
             step.endTime = Date.now();
             setExecution({ ...log });
-
-            // Queue outgoing nodes
-            const outgoing = getOutgoingNodeIds(currentId);
-            for (const nextId of outgoing) {
-                queue.push(nextId);
-            }
+            if (!hasError) queue.push(...getOutgoingNodeIds(currentId));
         }
 
-        if (!hasError) {
-            log.status = "completed";
-            log.endTime = Date.now();
-        }
+        log.status = hasError ? "failed" : "completed";
+        log.endTime = Date.now();
         setExecution({ ...log });
         setRunning(false);
-
-        if (log.status === "completed") {
-            toast.success(`FlowState executed ? ${log.steps.length} steps completed`);
-        } else {
-            toast.error("FlowState execution failed. Check debug console.");
-        }
     }, [nodes, edges, workflow]);
 
-    const handleHighlightNode = useCallback(
-        (nodeId: string) => {
-            setSelectedNodeId(nodeId);
-            // Center on node
-            const node = nodes.find((n) => n.id === nodeId);
-            if (node) {
-                setNodes((nds) =>
-                    nds.map((n) => ({
-                        ...n,
-                        selected: n.id === nodeId,
-                    }))
-                );
-            }
-        },
-        [nodes, setNodes]
-    );
+    const handleHighlightNode = useCallback((nodeId: string) => {
+        setSelectedNodeId(nodeId);
+        setNodes((nds) => nds.map((n) => ({ ...n, selected: n.id === nodeId })));
+    }, [setNodes]);
 
     const statusBadge: Record<string, { label: string; variant: "secondary" | "default" | "outline" | "destructive" }> = {
         DRAFT: { label: "Draft", variant: "secondary" },
@@ -396,12 +395,7 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#0a0c0e]/80 backdrop-blur-xl shrink-0 z-50">
                 <div className="flex items-center gap-4">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push("/crm/workflows")}
-                        className="hover:bg-white/5"
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => router.push("/crm/workflows")} className="hover:bg-white/5">
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div>
@@ -411,56 +405,27 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
                                 {statusBadge[workflow.status]?.label || workflow.status}
                             </Badge>
                         </div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                            FlowState Editor
-                        </p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">FlowState Editor</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {/* Run Button */}
-                    <Button
-                        variant="outline"
-                        onClick={simulateExecution}
-                        disabled={running || nodes.length === 0}
-                        className="gap-2 h-9 border-white/10 bg-white/5"
-                    >
-                        {running ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <Zap className="h-4 w-4 text-orange-500" />
-                        )}
+                    <Button variant="outline" onClick={simulateExecution} disabled={running || nodes.length === 0} className="gap-2 h-9 border-white/10 bg-white/5">
+                        {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4 text-orange-500" />}
                         <span className="text-xs font-bold uppercase tracking-wider">{running ? "Running..." : "Run Flow"}</span>
                     </Button>
-
                     <Button variant="outline" onClick={handleSave} disabled={saving} className="h-9 border-white/10 bg-white/5 gap-2">
-                        {saving ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <Save className="h-4 w-4 text-cyan-400" />
-                        )}
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 text-cyan-400" />}
                         <span className="text-xs font-bold uppercase tracking-wider">Save</span>
                     </Button>
-                    <Button
-                        onClick={handleToggleStatus}
-                        disabled={activating}
-                        variant={workflow.status === "ACTIVE" ? "outline" : "default"}
-                        className={`h-9 gap-2 ${workflow.status === "ACTIVE" ? "border-white/10 bg-white/5" : "bg-cyan-500 hover:bg-cyan-400 text-black"}`}
-                    >
-                        {activating ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : workflow.status === "ACTIVE" ? (
-                            <Pause className="h-4 w-4" />
-                        ) : (
-                            <Play className="h-4 w-4" />
-                        )}
+                    <Button onClick={handleToggleStatus} disabled={activating} variant={workflow.status === "ACTIVE" ? "outline" : "default"} className={`h-9 gap-2 ${workflow.status === "ACTIVE" ? "border-white/10 bg-white/5" : "bg-cyan-500 hover:bg-cyan-400 text-black"}`}>
+                        {activating ? <Loader2 className="h-4 w-4 animate-spin" /> : workflow.status === "ACTIVE" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                         <span className="text-xs font-bold uppercase tracking-wider">{workflow.status === "ACTIVE" ? "Pause" : "Activate"}</span>
                     </Button>
                 </div>
             </div>
 
-            {/* Main area: Canvas + Config Panel */}
+            {/* Main area */}
             <div className="flex-1 flex min-h-0 relative">
-                {/* Canvas */}
                 <div className="flex-1 relative flex flex-col min-w-0">
                     <div className="flex-1 relative">
                         <ReactFlow
@@ -471,128 +436,66 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
                             onConnect={onConnect}
                             onNodeClick={onNodeClick}
                             onPaneClick={onPaneClick}
+                            onNodeDrag={onNodeDrag}
+                            onNodeDragStop={onNodeDragStop}
                             nodeTypes={nodeTypes}
+                            edgeTypes={edgeTypes}
                             colorMode="dark"
                             fitView
                             snapToGrid
-                            snapGrid={[15, 15]}
+                            snapGrid={[20, 20]}
                             defaultEdgeOptions={{
                                 animated: true,
-                                style: { stroke: "#06b6d4", strokeWidth: 3 },
+                                type: "interactive",
+                                style: { stroke: "#06b6d4", strokeWidth: 3, filter: "drop-shadow(0 0 5px rgba(6, 182, 212, 0.4))" },
                                 markerEnd: { type: MarkerType.ArrowClosed, color: "#06b6d4" },
                             }}
                             nodesDraggable={!isLocked}
                             nodesConnectable={!isLocked}
-                            elementsSelectable={!isLocked}
                             connectionMode={ConnectionMode.Loose}
-                            selectionMode={isLocked ? undefined : 0 as any} // Allow selection unless locked
-                            connectionLineStyle={{ stroke: "#06b6d4", strokeWidth: 3 }}
+                            selectionMode={SelectionMode.Partial}
+                            proOptions={{ hideAttribution: true }}
                         >
-                            <Background variant={BackgroundVariant.Dots} gap={25} size={1} color="#ffffff10" />
+                            <Background variant={BackgroundVariant.Lines} gap={40} size={1} color="#ffffff05" />
+                            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#ffffff08" />
 
-                            <Controls
-                                showInteractive={false}
-                                position="bottom-right"
-                                className="bg-[#0f1115] border border-white/10 rounded-lg overflow-hidden [&_button]:!bg-[#0f1115] [&_button]:!border-white/5 [&_button:hover]:!bg-white/5 [&_svg]:!fill-white"
-                            />
+                            <Controls position="bottom-right" className="bg-[#0f1115] border border-white/10 rounded-lg overflow-hidden [&_button]:!bg-[#0f1115] [&_button:hover]:!bg-white/5 shadow-2xl scale-110" />
+                            <MiniMap position="bottom-right" className="!bg-[#0f1115]/80 !border-white/10 !rounded-xl m-8 h-[120px] w-[180px]" nodeColor={(n) => n.type === 'trigger' ? '#f97316' : '#3b82f6'} />
 
-                            {/* Node Palette */}
+                            {helperLines.v && <div className="absolute top-0 bottom-0 border-l border-cyan-500/50 z-50 pointer-events-none" style={{ left: helperLines.v }} />}
+                            {helperLines.h && <div className="absolute left-0 right-0 border-t border-cyan-500/50 z-50 pointer-events-none" style={{ top: helperLines.h }} />}
+
                             <Panel position="top-left" className="ml-6 mt-6">
                                 <NodePalette onAddNode={addNode} />
                             </Panel>
 
-                            {/* Global Toolbar */}
-                            <Panel position="top-center" className="mt-6">
-                                <div className="flex items-center gap-1 p-1 bg-[#0f1115]/90 backdrop-blur-md border border-white/10 rounded-full shadow-2xl">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 rounded-full hover:bg-white/10"
-                                        onClick={() => fitView()}
-                                        title="Fit View"
-                                    >
-                                        <Maximize className="w-4 h-4" />
-                                    </Button>
-                                    <div className="w-px h-4 bg-white/10 mx-1" />
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 rounded-full hover:bg-white/10"
-                                        onClick={() => zoomOut()}
-                                        title="Zoom Out"
-                                    >
-                                        <Minus className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 rounded-full hover:bg-white/10"
-                                        onClick={() => zoomIn()}
-                                        title="Zoom In"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                    </Button>
-                                    <div className="w-px h-4 bg-white/10 mx-1" />
-                                    <Button
-                                        variant={isLocked ? "secondary" : "ghost"}
-                                        size="icon"
-                                        className={`h-8 w-8 rounded-full transition-colors ${isLocked ? "bg-amber-500/20 text-amber-500 hover:bg-amber-500/30" : "hover:bg-white/10"}`}
-                                        onClick={() => setIsLocked(!isLocked)}
-                                        title={isLocked ? "Unlock Canvas" : "Lock Canvas"}
-                                    >
-                                        {isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                                    </Button>
-                                    <div className="w-px h-4 bg-white/10 mx-1" />
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 rounded-full hover:bg-white/10"
-                                        onClick={() => setDebugOpen(!debugOpen)}
-                                        title="Debug Logs"
-                                    >
-                                        <Bug className={`w-4 h-4 ${debugOpen ? "text-cyan-400" : ""}`} />
-                                    </Button>
+                            <Panel position="top-left" className="ml-[250px] mt-6 flex gap-2">
+                                <div className="flex items-center gap-1 p-1.5 bg-[#0f1115]/90 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={history.length === 0}><Undo className="w-4 h-4" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={redoStack.length === 0}><Redo className="w-4 h-4" /></Button>
+                                    <Separator orientation="vertical" className="h-4 mx-1 bg-white/10" />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copySelected}><Copy className="w-4 h-4" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={paste}><Clipboard className="w-4 h-4" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:bg-rose-500/10" onClick={deleteSelected}><Trash2 className="w-4 h-4" /></Button>
+                                    <Separator orientation="vertical" className="h-4 mx-1 bg-white/10" />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => fitView()} title="Fit View"><Maximize className="w-4 h-4" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomOut()} title="Zoom Out"><Minus className="w-4 h-4" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomIn()} title="Zoom In"><Plus className="w-4 h-4" /></Button>
+                                    <Separator orientation="vertical" className="h-4 mx-1 bg-white/10" />
+                                    <Button variant={isLocked ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setIsLocked(!isLocked)} title={isLocked ? "Unlock Canvas" : "Lock Canvas"}>{isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="h-4 w-4" />}</Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDebugOpen(!debugOpen)} title="Debug Logs"><Bug className={`w-4 h-4 ${debugOpen ? "text-cyan-400" : ""}`} /></Button>
                                 </div>
                             </Panel>
 
-                            {/* Floating Stats */}
-                            <Panel position="bottom-left" className="ml-6 mb-6">
-                                <div className="px-3 py-1.5 bg-[#0f1115]/80 backdrop-blur-sm border border-white/5 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-4">
-                                    <div className="flex items-center gap-1.5">
-                                        <MousePointer2 className="w-3 h-3" />
-                                        <span>{nodes.length} Steps</span>
-                                    </div>
-                                    <div className="w-px h-2 bg-white/10" />
-                                    <div className="flex items-center gap-1.5">
-                                        <Zap className="w-3 h-3" />
-                                        <span>{edges.length} Links</span>
-                                    </div>
-                                </div>
-                            </Panel>
+                            {selectedNode && (
+                                <Panel position="top-right" className="h-full">
+                                    <NodeConfigPanel node={selectedNode} onClose={closeConfigPanel} onUpdateNode={handleUpdateNode} allNodes={nodes} />
+                                </Panel>
+                            )}
                         </ReactFlow>
                     </div>
-
-                    {/* Debug Panel (bottom of canvas) */}
-                    <DebugPanel
-                        execution={execution}
-                        isOpen={debugOpen}
-                        onClose={() => setDebugOpen(false)}
-                        onHighlightNode={handleHighlightNode}
-                        onClear={() => setExecution(null)}
-                    />
+                    <DebugPanel execution={execution} isOpen={debugOpen} onClose={() => setDebugOpen(false)} onHighlightNode={handleHighlightNode} onClear={() => setExecution(null)} />
                 </div>
-
-                {/* Node Config Side Panel */}
-                {selectedNode && (
-                    <div className="w-[350px] border-l border-white/5 bg-[#0a0c0e]/95 backdrop-blur-xl shrink-0 z-40 overflow-y-auto">
-                        <NodeConfigPanel
-                            node={selectedNode}
-                            onClose={closeConfigPanel}
-                            onUpdateNode={handleUpdateNode}
-                            allNodes={nodes}
-                        />
-                    </div>
-                )}
             </div>
         </div>
     );

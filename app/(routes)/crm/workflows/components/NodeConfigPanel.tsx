@@ -98,20 +98,20 @@ export function NodeConfigPanel({ node, onClose, onUpdateNode, allNodes }: NodeC
     };
 
     return (
-        <div className="w-[380px] border-l bg-card flex flex-col h-full shadow-lg animate-in slide-in-from-right-5 duration-200">
+        <div className="w-[420px] flex flex-col h-full bg-[#0f1115]/95 backdrop-blur-3xl border-l border-white/10 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-right duration-500 z-40 overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b">
-                <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded ${info.bgColor}`}>
-                        <Icon className={`h-4 w-4 ${info.color}`} />
+            <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-gradient-to-r from-white/5 to-transparent">
+                <div className="flex items-center gap-4">
+                    <div className={`p-2.5 rounded-xl shadow-2xl ${info.bgColor} ring-1 ring-white/10`}>
+                        <Icon className={`h-5 w-5 ${info.color}`} />
                     </div>
                     <div>
-                        <div className="text-xs text-muted-foreground font-medium uppercase">{info.label}</div>
-                        <div className="text-sm font-semibold">{(data.label as string) || "Configure"}</div>
+                        <div className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] leading-none mb-1.5 opacity-60">{info.label}</div>
+                        <div className="text-lg font-black italic tracking-tighter text-white uppercase leading-none truncate max-w-[220px]">{(data.label as string) || "Properties"}</div>
                     </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-                    <X className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all" onClick={onClose}>
+                    <X className="h-5 w-5" />
                 </Button>
             </div>
 
@@ -273,15 +273,14 @@ function TriggerConfig({ data, updateData }: ConfigProps) {
             )}
 
             <div className="space-y-2">
-                <Label className="text-xs font-medium">Filter Criteria</Label>
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/50">Filter Criteria</Label>
                 <Textarea
                     value={(data.filterCriteria as string) || ""}
                     onChange={(e) => updateData("filterCriteria", e.target.value)}
                     placeholder='e.g., status == "NEW" AND priority == "HIGH"'
-                    className="text-sm font-mono"
-                    rows={3}
+                    className="text-sm font-mono bg-black/40 border-white/5 focus:border-cyan-500/50 min-h-[100px] resize-none w-full"
                 />
-                <p className="text-[10px] text-muted-foreground">Optional formula — only fire if TRUE</p>
+                <p className="text-[10px] text-muted-foreground italic leading-tight">Optional formula — Only execution continues if logic is TRUE</p>
             </div>
         </div>
     );
