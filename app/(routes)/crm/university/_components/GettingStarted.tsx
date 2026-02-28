@@ -184,7 +184,7 @@ function StepCard({
             <button
                 onClick={onToggle}
                 className={[
-                    "relative z-10 flex-shrink-0 rounded-full flex items-center justify-center font-bold border-2 transition-all duration-300",
+                    "relative z-10 flex-shrink-0 rounded-full flex items-center justify-center font-bold border-2 transition-colors duration-300",
                     compact ? "w-7 h-7 text-[10px]" : "w-11 h-11 text-sm",
                     isCompleted
                         ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
@@ -250,14 +250,14 @@ function StepCard({
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <button
                                             onClick={onNavigate}
-                                            className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-white/8 hover:bg-white/12 border border-white/10 text-white/70 hover:text-white transition-all"
+                                            className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-white/8 hover:bg-white/12 border border-white/10 text-white/70 hover:text-white transition-colors"
                                         >
                                             <ArrowRight className="w-3 h-3" />
                                             Take me there
                                         </button>
                                         <button
                                             onClick={onToggle}
-                                            className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 transition-all"
+                                            className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 transition-colors"
                                         >
                                             <CheckCircle2 className="w-3 h-3" />
                                             Mark as done
@@ -325,7 +325,7 @@ function AdminGuide({ plan, compact = false }: { plan?: string; compact?: boolea
                     {!compact && plan !== "FREE" && (
                         <button
                             onClick={() => router.push("/crm/university")}
-                            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25 transition-all flex-shrink-0"
+                            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25 transition-colors flex-shrink-0"
                         >
                             <GraduationCap className="w-3.5 h-3.5" />
                             Mastery Paths
@@ -537,7 +537,7 @@ export default function GettingStarted({ plan }: { plan?: string }) {
                         <button
                             onClick={() => setViewMode("admin")}
                             className={[
-                                "px-6 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2",
+                                "px-6 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2",
                                 viewMode === "admin"
                                     ? "bg-orange-500/20 text-orange-400 shadow-lg shadow-orange-500/10 border border-orange-500/20"
                                     : "text-white/40 hover:text-white/70 hover:bg-white/5"
@@ -549,7 +549,7 @@ export default function GettingStarted({ plan }: { plan?: string }) {
                         <button
                             onClick={() => setViewMode("member")}
                             className={[
-                                "px-6 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2",
+                                "px-6 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2",
                                 viewMode === "member"
                                     ? "bg-blue-500/20 text-blue-400 shadow-lg shadow-blue-500/10 border border-blue-500/20"
                                     : "text-white/40 hover:text-white/70 hover:bg-white/5"

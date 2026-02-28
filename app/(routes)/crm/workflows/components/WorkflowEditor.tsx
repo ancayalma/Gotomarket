@@ -400,7 +400,7 @@ function WorkflowEditorInner({ workflow }: WorkflowEditorProps) {
                     </Button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-1.5 whitespace-nowrap">{workflow.name}</h1>
+                            <h1 className="text-xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-1.5 whitespace-nowrap">{workflow.name}</h1>
                             <Badge variant={statusBadge[workflow.status]?.variant || "secondary"} className="text-[10px] py-0 px-1.5 h-4">
                                 {statusBadge[workflow.status]?.label || workflow.status}
                             </Badge>

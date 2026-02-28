@@ -90,14 +90,14 @@ export function InteractiveEdge({
                     className="nodrag nopan flex items-center gap-1 group"
                 >
                     <button
-                        className="w-6 h-6 bg-[#0f1115] border border-white/10 rounded-full flex items-center justify-center text-white/40 hover:text-cyan-400 hover:border-cyan-500/50 transition-all hover:scale-125 shadow-2xl"
+                        className="w-6 h-6 bg-[#0f1115] border border-white/10 rounded-full flex items-center justify-center text-white/40 hover:text-cyan-400 hover:border-cyan-500/50 transition-[color,background-color,border-color,transform] hover:scale-125 shadow-2xl"
                         onClick={onAddNode}
                         title="Insert Step"
                     >
                         <Plus className="w-3.5 h-3.5" />
                     </button>
                     <button
-                        className="w-6 h-6 bg-[#0f1115] border border-white/10 rounded-full flex items-center justify-center text-white/40 hover:text-rose-400 hover:border-rose-500/50 transition-all hover:scale-125 shadow-2xl opacity-0 group-hover:opacity-100"
+                        className="w-6 h-6 bg-[#0f1115] border border-white/10 rounded-full flex items-center justify-center text-white/40 hover:text-rose-400 hover:border-rose-500/50 transition-[color,background-color,border-color,transform] hover:scale-125 shadow-2xl opacity-0 group-hover:opacity-100"
                         onClick={onEdgeClick}
                         title="Delete Link"
                     >

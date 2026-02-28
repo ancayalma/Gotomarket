@@ -23,28 +23,29 @@ import { SortableWidget } from "./SortableWidget";
 import { Plus, X, Info } from "lucide-react";
 import { EntityBreakdown } from "../../../../dashboard/components/EntityBreakdown";
 import DashboardCard from "../DashboardCard";
+import { LeadsWidget } from "./LeadsWidget";
+import { TasksWidget } from "./TasksWidget";
+import { ProjectsWidget } from "./ProjectsWidget";
+import { MessagesWidget } from "./MessagesWidget";
+import { TeamActivityWidget } from "./TeamActivityWidget";
+import { RecentFilesWidget } from "./RecentFilesWidget";
+import { RevenuePacingWidget } from "./RevenuePacingWidget";
 import {
-    LeadsWidget,
-    TasksWidget,
-    ProjectsWidget,
-    MessagesWidget,
-    TeamActivityWidget,
-    RecentFilesWidget,
-    RevenuePacingWidget,
     RevenueWidget,
     ActualRevenueWidget,
     UnrealizedRevenueWidget,
     ActivePipelineWidget,
     ActiveUsersWidget,
     SystemHealthWidget,
-    MyScheduleWidget,
-    OutreachROIWidget,
-    LeadPoolsWidget,
-    LeadWizardWidget,
-    AIInsightsWidget,
-    RevenueWidget as GenericStatsWidget,
-    CustomMetricWidget
-} from "../widgets";
+} from "./StatsWidgets";
+import { MyScheduleWidget } from "./MyScheduleWidget";
+import { OutreachROIWidget } from "./OutreachROIWidget";
+import { LeadPoolsWidget } from "./LeadPoolsWidget";
+import { LeadWizardWidget } from "./LeadWizardWidget";
+import { AIInsightsWidget } from "./AIInsightsWidget";
+import { CustomMetricWidget } from "./CustomMetricWidget";
+// Alias for reuse as a generic stats widget
+const GenericStatsWidget = RevenueWidget;
 import {
     Users,
     Zap,
@@ -113,7 +114,7 @@ function WidgetInfoButton({ tooltip, widgetName }: { tooltip: string; widgetName
                     e.stopPropagation();
                     setIsOpen(true);
                 }}
-                className="md:hidden absolute top-2 right-2 z-30 w-5 h-5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 hover:border-white/40 transition-all duration-200"
+                className="md:hidden absolute top-2 right-2 z-30 w-5 h-5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 hover:border-white/40 transition-colors duration-200"
                 aria-label={`Info about ${widgetName}`}
             >
                 <Info className="w-3 h-3" />
@@ -188,62 +189,46 @@ function WidgetWithTooltip({ id, children }: { id: string; children: React.React
     );
 }
 
-interface EditableWidgetGridProps {
-    newLeads: any[];
-    dailyTasks: any[];
-    userId: string;
-    newProjects: any[];
-    messages: any[];
-    teamActivity?: any[];
-    recentFiles?: any[];
-    revenuePacing?: any;
-    outreachStats?: any;
-    leadPools?: any[];
-    leadGenStats?: any;
-    intelligenceStats?: any;
-    aiInsights?: any[];
-    // Stats Props
-    revenue?: number;
-    actualRevenue?: number;
-    unrealizedRevenue?: number;
-    forecastRevenue?: number;
-    activePipelineCount?: number;
-    totalLeads?: number;
-    totalOpportunities?: number;
-    activeUsersCount?: number;
-    myPipeline?: React.ReactNode;
-    teamPipeline?: React.ReactNode;
-    crmEntities?: any[];
-    teamData?: any;
-}
 
-export const EditableWidgetGrid = ({
-    newLeads,
-    dailyTasks,
-    userId,
-    newProjects,
-    messages,
-    teamActivity = [],
-    recentFiles = [],
-    revenuePacing = null,
-    outreachStats = null,
-    leadPools = [],
-    leadGenStats = null,
-    intelligenceStats = null,
-    aiInsights = [],
-    revenue = 0,
-    actualRevenue = 0,
-    unrealizedRevenue = 0,
-    forecastRevenue = 0,
-    activePipelineCount = 0,
-    totalLeads = 0,
-    totalOpportunities = 0,
-    activeUsersCount = 0,
-    myPipeline,
-    teamPipeline,
-    crmEntities = [],
-    teamData = null
-}: EditableWidgetGridProps) => {
+import { useDashboardData } from "../../_context/DashboardDataContext";
+
+
+/**
+ * EditableWidgetGrid — Composition Pattern: Context Consumer
+ *
+ * Previously received 27 forwarded props from AdminDashboard.
+ * Now reads all data directly from DashboardDataContext.
+ * Zero props needed.
+ */
+export const EditableWidgetGrid = () => {
+    const {
+        newLeads,
+        dailyTasks,
+        userId,
+        newProjects,
+        messages,
+        teamActivity,
+        recentFiles,
+        revenuePacing,
+        outreachStats,
+        leadPools,
+        leadGenStats,
+        intelligenceStats,
+        aiInsights,
+        revenue,
+        actualRevenue,
+        unrealizedRevenue,
+        forecastRevenue,
+        activePipelineCount,
+        totalLeads,
+        totalOpportunities,
+        activeUsersCount,
+        myPipeline,
+        teamPipeline,
+        crmEntities,
+        teamData,
+    } = useDashboardData();
+
     const { widgets, updateLayout, isEditMode, toggleWidgetVisibility } = useDashboardLayout();
     const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -558,7 +543,7 @@ export const EditableWidgetGrid = ({
                                 {hiddenWidgets.map((widget) => (
                                     <div
                                         key={widget.id}
-                                        className="relative group cursor-pointer border border-dashed border-white/20 rounded-xl p-4 hover:bg-white/5 hover:border-emerald-500/50 transition-all font-sans"
+                                        className="relative group cursor-pointer border border-dashed border-white/20 rounded-xl p-4 hover:bg-white/5 hover:border-emerald-500/50 transition-colors font-sans"
                                         onClick={() => toggleWidgetVisibility(widget.id, true)}
                                     >
                                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-500 text-white rounded-full p-1">

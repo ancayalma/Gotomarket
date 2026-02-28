@@ -123,7 +123,7 @@ function Spotlight({ rect }: { rect: Rect }) {
     const w = rect.width + PADDING * 2;
     const h = rect.height + PADDING * 2;
 
-    const baseStyle = "fixed bg-black/70 backdrop-blur-[1px] transition-all duration-500 z-[9998]";
+    const baseStyle = "fixed bg-black/70 backdrop-blur-[1px] transition-colors duration-500 z-[9998]";
 
     return (
         <>
@@ -264,7 +264,7 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
                         <div
                             key={i}
                             className={[
-                                "h-1.5 rounded-full transition-all duration-300",
+                                "h-1.5 rounded-full transition-colors duration-300",
                                 i === stepIndex
                                     ? `flex-1 bg-gradient-to-r ${step.iconGradient}`
                                     : i < stepIndex
@@ -279,7 +279,7 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
                 <div className="flex items-center gap-2">
                     <button
                         onClick={onSkip}
-                        className="flex-1 py-2 rounded-xl text-xs font-semibold text-white/35 hover:text-white/60 border border-white/8 hover:border-white/15 transition-all"
+                        className="flex-1 py-2 rounded-xl text-xs font-semibold text-white/35 hover:text-white/60 border border-white/8 hover:border-white/15 transition-colors"
                     >
                         Skip tour
                     </button>

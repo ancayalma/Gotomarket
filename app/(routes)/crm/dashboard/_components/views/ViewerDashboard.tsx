@@ -13,7 +13,7 @@ const ViewerDashboard = ({ revenue, activePipelineCount }: ViewerDashboardProps)
     return (
         <div className="flex flex-col space-y-8">
             <div>
-                <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                     Executive Summary
                 </h2>
                 <p className="text-muted-foreground/80 text-base font-medium tracking-wide italic border-l-2 border-primary/30 pl-4 mb-8">

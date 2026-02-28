@@ -69,7 +69,7 @@ export const AddProviderModal = ({ userId }: AddProviderModalProps) => {
             <Button
                 onClick={() => setOpen(true)}
                 variant="outline"
-                className="border-dashed border-2 border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 gap-2"
+                className="border-dashed border-2 border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 transition-colors duration-300 gap-2"
             >
                 <Plus className="w-4 h-4" />
                 Add Provider
@@ -78,7 +78,7 @@ export const AddProviderModal = ({ userId }: AddProviderModalProps) => {
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-lg bg-card border-border/50">
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Sparkles className="w-5 h-5 text-primary" />
                             Add New AI Provider
                         </DialogTitle>
@@ -143,7 +143,7 @@ export const AddProviderModal = ({ userId }: AddProviderModalProps) => {
                                         key={color.value}
                                         type="button"
                                         onClick={() => setSelectedColor(color)}
-                                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${selectedColor.value === color.value
+                                        className={`w-8 h-8 rounded-full border-2 transition-colors duration-200 ${selectedColor.value === color.value
                                             ? "border-white scale-110 ring-2 ring-primary/50"
                                             : "border-transparent hover:border-white/30"
                                             }`}

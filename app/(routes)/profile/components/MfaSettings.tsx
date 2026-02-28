@@ -96,7 +96,7 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                             <Shield className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Multi-Factor Authentication</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Multi-Factor Authentication</CardTitle>
                             <CardDescription>Secure your account with NIST-compliant authentication factors.</CardDescription>
                         </div>
                     </div>
@@ -116,7 +116,7 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                 {setupStep === "idle" ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* TOTP Option */}
-                        <div className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all group">
+                        <div className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors group">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="p-2 bg-blue-500/10 rounded-lg group-hover:scale-110 transition-transform">
                                     <Smartphone className="h-6 w-6 text-blue-400" />
@@ -137,7 +137,7 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                         </div>
 
                         {/* WebAuthn Option */}
-                        <div className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all group">
+                        <div className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors group">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="p-2 bg-emerald-500/10 rounded-lg group-hover:scale-110 transition-transform">
                                     <Fingerprint className="h-6 w-6 text-emerald-400" />

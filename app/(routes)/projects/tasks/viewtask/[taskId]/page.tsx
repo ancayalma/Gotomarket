@@ -59,12 +59,12 @@ const TaskPage = async (props: TaskPageProps) => {
           </pre> */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{task.title}</CardTitle>
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{task.title}</CardTitle>
               <CardDescription>{task.content}</CardDescription>
             </CardHeader>
             <CardContent>
               <div>
-                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                   <Calendar className="mt-px h-5 w-5" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">
@@ -75,7 +75,7 @@ const TaskPage = async (props: TaskPageProps) => {
                     </p>
                   </div>
                 </div>
-                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                   <Calendar className="mt-px h-5 w-5" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">Date due</p>
@@ -84,7 +84,7 @@ const TaskPage = async (props: TaskPageProps) => {
                     </p>
                   </div>
                 </div>
-                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                   <Calendar className="mt-px h-5 w-5" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">
@@ -95,7 +95,7 @@ const TaskPage = async (props: TaskPageProps) => {
                     </p>
                   </div>
                 </div>
-                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                   <Shield className="mt-px h-5 w-5" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">Priority</p>
@@ -108,7 +108,7 @@ const TaskPage = async (props: TaskPageProps) => {
                     </Badge>
                   </div>
                 </div>
-                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                   <Shield className="mt-px h-5 w-5" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">Status</p>
@@ -123,7 +123,7 @@ const TaskPage = async (props: TaskPageProps) => {
                     </Badge>
                   </div>
                 </div>
-                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                   <User className="mt-px h-5 w-5" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">
@@ -134,7 +134,7 @@ const TaskPage = async (props: TaskPageProps) => {
                     </p>
                   </div>
                 </div>
-                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+                <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                   <User className="mt-px h-5 w-5" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">

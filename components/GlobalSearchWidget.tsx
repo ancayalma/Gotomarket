@@ -92,7 +92,7 @@ export default function GlobalSearchWidget({ className }: GlobalSearchWidgetProp
     return (
         <div ref={wrapperRef} className={cn("relative flex items-center w-full max-w-2xl", className)}>
             <div className={cn(
-                "flex items-center transition-all duration-300 ease-in-out border rounded-full bg-background/50 w-full px-3 py-2 shadow-sm border-gray-800 focus-within:ring-1 focus-within:ring-ring focus-within:border-primary",
+                "flex items-center transition-colors duration-300 ease-in-out border rounded-full bg-background/50 w-full px-3 py-2 shadow-sm border-gray-800 focus-within:ring-1 focus-within:ring-ring focus-within:border-primary",
             )}>
                 <Search className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
 
@@ -133,7 +133,7 @@ export default function GlobalSearchWidget({ className }: GlobalSearchWidgetProp
                                             setShowResults(false);
                                         }}
                                     >
-                                        <div className={cn("shrink-0 w-1 h-8 rounded-full transition-all group-hover:h-full group-hover:w-1", info.color)} />
+                                        <div className={cn("shrink-0 w-1 h-8 rounded-full transition-[height] group-hover:h-full group-hover:w-1", info.color)} />
 
                                         <div className="flex items-center justify-center h-8 w-8 rounded-full bg-accent text-muted-foreground shrink-0">
                                             <info.icon className="h-4 w-4" />

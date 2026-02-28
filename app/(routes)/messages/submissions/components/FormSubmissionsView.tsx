@@ -247,7 +247,7 @@ export function FormSubmissionsView({ submissions, forms, initialFormId = "all",
             {/* Filters */}
             <Card>
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                         <Filter className="h-5 w-5" />
                         Filters
                     </CardTitle>
@@ -305,7 +305,7 @@ export function FormSubmissionsView({ submissions, forms, initialFormId = "all",
             {/* Submissions Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Submissions ({filteredSubmissions.length})</CardTitle>
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Submissions ({filteredSubmissions.length})</CardTitle>
                     <CardDescription>
                         Click on a row to expand and see full submission data. Create leads with one click.
                     </CardDescription>
@@ -472,7 +472,7 @@ export function FormSubmissionsView({ submissions, forms, initialFormId = "all",
             <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
                 <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
                     <DialogHeader className="p-6 pb-2">
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Submission Details</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Submission Details</DialogTitle>
                         <DialogDescription>
                             Submitted via {selectedSubmission?.form?.name} on{" "}
                             {selectedSubmission && format(new Date(selectedSubmission.createdAt), "PPpp")}
@@ -483,7 +483,7 @@ export function FormSubmissionsView({ submissions, forms, initialFormId = "all",
                             <div className="space-y-6 py-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {Object.entries(selectedSubmission.data).map(([key, value]) => (
-                                        <div key={key} className="group border rounded-xl p-4 bg-muted/30 hover:border-primary/50 transition-all">
+                                        <div key={key} className="group border rounded-xl p-4 bg-muted/30 hover:border-primary/50 transition-colors">
                                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">
                                                 {key.replace(/_/g, " ")}
                                             </span>
@@ -563,7 +563,7 @@ export function FormSubmissionsView({ submissions, forms, initialFormId = "all",
             <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
                 <DialogContent className="max-w-xl">
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Mail className="h-5 w-5" />
                             Send Email
                         </DialogTitle>

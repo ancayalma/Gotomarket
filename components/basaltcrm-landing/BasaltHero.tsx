@@ -48,7 +48,7 @@ export default function BasaltHero() {
                     <Link
                         href="https://calendar.google.com/appointments/schedules/AcZssZ2Vduqr0QBnEAM50SeixE8a7kXuKt62zEFjQCQ8_xvoO6iF3hluVQHpaM6RYWMGB110_zM3MUF0"
                         target="_blank"
-                        className="group relative h-16 px-10 flex items-center justify-center text-base font-bold tracking-wider rounded-2xl bg-white text-black hover:bg-cyan-400 transition-all duration-500 overflow-hidden"
+                        className="group relative h-16 px-10 flex items-center justify-center text-base font-bold tracking-wider rounded-2xl bg-white text-black hover:bg-cyan-400 transition-colors duration-500 overflow-hidden"
                     >
                         <span className="relative z-10 flex items-center">
                             SCHEDULE A CALL
@@ -58,7 +58,7 @@ export default function BasaltHero() {
                     </Link>
                     <Link
                         href="/features"
-                        className="h-16 px-10 flex items-center justify-center text-base font-bold tracking-wider rounded-2xl border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-300 backdrop-blur-xl"
+                        className="h-16 px-10 flex items-center justify-center text-base font-bold tracking-wider rounded-2xl border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-colors duration-300 backdrop-blur-xl"
                     >
                         SYSTEM SPECS
                     </Link>
@@ -66,22 +66,22 @@ export default function BasaltHero() {
 
                 {/* Infrastructure Tags */}
                 <div className="mt-12 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 opacity-0 animate-fadeInUp stagger-4 px-4">
-                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-all duration-500 hover:border-cyan-500/50 hover:bg-cyan-500/5">
-                        <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-all duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
+                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-colors duration-500 hover:border-cyan-500/50 hover:bg-cyan-500/5">
+                        <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-[opacity,transform] duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
                             <Cpu className="h-16 w-16 text-cyan-400" />
                         </div>
                         <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-cyan-400 transition-colors uppercase tracking-widest">GRID SCALE PROVISION</span>
                     </div>
 
-                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-all duration-500 hover:border-violet-500/50 hover:bg-violet-500/5">
-                        <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-all duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
+                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-colors duration-500 hover:border-violet-500/50 hover:bg-violet-500/5">
+                        <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-[opacity,transform] duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
                             <Bot className="h-16 w-16 text-violet-400" />
                         </div>
                         <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-violet-400 transition-colors uppercase tracking-widest">SYNAPTIC SDR CORES</span>
                     </div>
 
-                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-all duration-500 hover:border-blue-500/50 hover:bg-blue-500/5">
-                        <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-all duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
+                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-colors duration-500 hover:border-blue-500/50 hover:bg-blue-500/5">
+                        <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-[opacity,transform] duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
                             <Zap className="h-16 w-16 text-blue-400" />
                         </div>
                         <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-blue-400 transition-colors uppercase tracking-widest">0.12s SYNAPTIC LATENCY</span>

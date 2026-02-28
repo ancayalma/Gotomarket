@@ -35,7 +35,7 @@ export default async function CareersPage() {
                     {/* Hero Section */}
                     <section className="py-20 md:py-32 text-center">
                         <div className="container mx-auto px-4">
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                                 Build the <span className="text-primary">Future</span> with Us
                             </h1>
                             <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10">

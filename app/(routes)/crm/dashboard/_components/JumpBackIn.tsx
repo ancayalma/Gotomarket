@@ -104,7 +104,7 @@ export default function JumpBackIn({ align = "left", className, userId }: JumpBa
                             <Link
                                 href={item.href}
                                 className={cn(
-                                    "group flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border",
+                                    "group flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-colors border",
                                     colorClasses
                                 )}
                             >

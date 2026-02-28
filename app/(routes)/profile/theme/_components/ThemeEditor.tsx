@@ -450,7 +450,7 @@ export function ThemeEditor({
                     <span className="text-sm text-muted-foreground">Theme Studio</span>
                 </div>
 
-                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                     Create Your Theme
                 </h1>
                 <p className="text-muted-foreground">
@@ -576,7 +576,7 @@ export function ThemeEditor({
                                         <div className="grid grid-cols-2 gap-2">
                                             <button
                                                 onClick={() => setMotion("fast")}
-                                                className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${motion === "fast"
+                                                className={`px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${motion === "fast"
                                                     ? "bg-primary/20 border-primary text-primary"
                                                     : "bg-transparent border-border text-muted-foreground hover:bg-muted"
                                                     }`}
@@ -585,7 +585,7 @@ export function ThemeEditor({
                                             </button>
                                             <button
                                                 onClick={() => setMotion("fluid")}
-                                                className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${motion === "fluid"
+                                                className={`px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${motion === "fluid"
                                                     ? "bg-primary/20 border-primary text-primary"
                                                     : "bg-transparent border-border text-muted-foreground hover:bg-muted"
                                                     }`}

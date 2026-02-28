@@ -48,7 +48,7 @@ const PulseIndicator = ({ value, status }: { value: number; status: any }) => {
                     cy={center}
                 />
                 <circle
-                    className={`${status.color} transition-all duration-1000`}
+                    className={`${status.color} transition-colors duration-1000`}
                     strokeWidth="2.5"
                     strokeDasharray={circumference}
                     strokeDashoffset={offset}
@@ -124,7 +124,7 @@ export const ProjectsWidget = ({ projects: initialProjects }: ProjectsWidgetProp
                         return (
                             <div
                                 key={item.id}
-                                className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.04] transition-all duration-300 relative overflow-hidden"
+                                className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.04] transition-colors duration-300 relative overflow-hidden"
                             >
                                 <div className="shrink-0 relative z-10">
                                     <PulseIndicator value={item.progression || 0} status={status} />
@@ -160,7 +160,7 @@ export const ProjectsWidget = ({ projects: initialProjects }: ProjectsWidgetProp
                                         <Button
                                             size="icon"
                                             variant="ghost"
-                                            className={`h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 ${status.bg} ${status.color} hover:bg-white/10 transition-all duration-300`}
+                                            className={`h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 ${status.bg} ${status.color} hover:bg-white/10 transition-[color,background-color,border-color,opacity] duration-300`}
                                         >
                                             <ArrowRight className="h-4 w-4" />
                                         </Button>

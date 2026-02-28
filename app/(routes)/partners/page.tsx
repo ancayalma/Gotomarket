@@ -76,7 +76,7 @@ const PartnersPage = async () => {
 
                 {/* Global Stats Row - Billboard Style */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/40 p-5 transition-all duration-300 hover:border-white/10">
+                    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/40 p-5 transition-colors duration-300 hover:border-white/10">
                         <UsersIcon className="absolute -right-4 -bottom-4 w-24 h-24 -rotate-12 opacity-5 text-white pointer-events-none transition-transform duration-500 group-hover:scale-110" />
                         <div className="relative z-10">
                             <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-1">Total Teams</div>
@@ -87,7 +87,7 @@ const PartnersPage = async () => {
                         </div>
                     </div>
 
-                    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/40 p-5 transition-all duration-300 hover:border-white/10">
+                    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/40 p-5 transition-colors duration-300 hover:border-white/10">
                         <div className="absolute -right-4 -bottom-4 w-24 h-24 -rotate-12 opacity-5 text-green-500 pointer-events-none transition-transform duration-500 group-hover:scale-110">
                             <CheckCircle2 className="w-full h-full" />
                         </div>
@@ -100,7 +100,7 @@ const PartnersPage = async () => {
                         </div>
                     </div>
 
-                    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/40 p-5 transition-all duration-300 hover:border-white/10">
+                    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/40 p-5 transition-colors duration-300 hover:border-white/10">
                         <div className="absolute -right-4 -bottom-4 w-24 h-24 -rotate-12 opacity-5 text-indigo-500 pointer-events-none transition-transform duration-500 group-hover:scale-110">
                             <UsersIcon className="w-full h-full" />
                         </div>

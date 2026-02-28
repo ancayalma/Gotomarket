@@ -268,7 +268,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                         <FileText className="h-32 w-32 rotate-12" />
                     </div>
                     <CardHeader className="pb-4 relative z-10">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Shield className="h-6 w-6 text-primary" />
                             Proposal Command Center
                         </CardTitle>
@@ -284,7 +284,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                     placeholder="e.g. Enterprise Software License Q1"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
-                                    className="font-black text-lg bg-white/5 border-white/10 focus:border-primary/50 transition-all h-14 uppercase"
+                                    className="font-black text-lg bg-white/5 border-white/10 focus:border-primary/50 transition-colors h-14 uppercase"
                                 />
                             </div>
                             <div className="flex-1 space-y-2 w-full">
@@ -296,7 +296,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                         <Button
                                             variant="outline"
                                             className={cn(
-                                                "w-full justify-start text-left font-black text-lg bg-white/5 border-white/10 h-14 transition-all hover:bg-white/10",
+                                                "w-full justify-start text-left font-black text-lg bg-white/5 border-white/10 h-14 transition-colors hover:bg-white/10",
                                                 !expirationDate && "text-muted-foreground"
                                             )}
                                         >
@@ -399,7 +399,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                     isLoading={isSearching.contacts}
                                     placeholder={selectedAccount ? "Search account contacts..." : "Select account first..."}
                                     className={cn(
-                                        "h-11 transition-all",
+                                        "h-11 transition-colors",
                                         !selectedAccount ? "bg-white/[0.02] border-white/5 text-white/20" : "bg-white/5 border-white/10"
                                     )}
                                 />
@@ -423,7 +423,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                     isLoading={isSearching.leads}
                                     placeholder={selectedAccount ? "Search account leads..." : "Select account first..."}
                                     className={cn(
-                                        "h-11 transition-all",
+                                        "h-11 transition-colors",
                                         !selectedAccount ? "bg-white/[0.02] border-white/5 text-white/20" : "bg-white/5 border-white/10"
                                     )}
                                 />
@@ -434,7 +434,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
 
                 <Card className="glass border-white/10 shadow-xl overflow-hidden">
                     <CardHeader className="flex flex-row items-center justify-between pb-4 bg-white/5">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <ShoppingCart className="h-5 w-5 text-primary" />
                             Line Items
                         </CardTitle>
@@ -448,13 +448,13 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                     value=""
                                     onChange={addItem}
                                     placeholder="Add a product..."
-                                    className="bg-primary text-primary-foreground border-none hover:bg-primary/90 transition-all font-bold"
+                                    className="bg-primary text-primary-foreground border-none hover:bg-primary/90 transition-colors font-bold"
                                 />
                             </div>
                             <Button
                                 onClick={addCustomItem}
                                 variant="outline"
-                                className="h-11 border-dashed border-white/20 hover:border-primary/50 hover:bg-primary/5 transition-all font-bold tracking-tight"
+                                className="h-11 border-dashed border-white/20 hover:border-primary/50 hover:bg-primary/5 transition-colors font-bold tracking-tight"
                             >
                                 <Plus className="h-4 w-4 mr-2 text-primary" />
                                 Add Line Item
@@ -549,7 +549,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() => removeItem(idx)}
-                                                    className="h-8 w-8 text-white/20 hover:text-destructive hover:bg-destructive/10 transition-all opacity-0 group-hover:opacity-100"
+                                                    className="h-8 w-8 text-white/20 hover:text-destructive hover:bg-destructive/10 transition-[color,background-color,border-color,opacity] opacity-0 group-hover:opacity-100"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -583,7 +583,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => { setShowTax(false); setTaxRate(0); }}
-                                                className="h-8 w-8 text-white/20 hover:text-destructive hover:bg-destructive/10 transition-all"
+                                                className="h-8 w-8 text-white/20 hover:text-destructive hover:bg-destructive/10 transition-colors"
                                             >
                                                 <X className="h-4 w-4" />
                                             </Button>
@@ -600,7 +600,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                     <Button
                                         variant="ghost"
                                         onClick={addCustomItem}
-                                        className="text-xs font-bold text-white/40 hover:text-primary transition-all p-0 h-auto"
+                                        className="text-xs font-bold text-white/40 hover:text-primary transition-colors p-0 h-auto"
                                     >
                                         <Plus className="h-3 w-3 mr-2" />
                                         Add line item
@@ -609,7 +609,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                         <Button
                                             variant="ghost"
                                             onClick={() => setShowTax(true)}
-                                            className="text-xs font-bold text-white/40 hover:text-primary transition-all p-0 h-auto"
+                                            className="text-xs font-bold text-white/40 hover:text-primary transition-colors p-0 h-auto"
                                         >
                                             Add sales tax
                                         </Button>
@@ -631,7 +631,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card className="glass border-white/10 shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <MessageSquare className="h-4 w-4" />
                                 Project Notes
                             </CardTitle>
@@ -641,13 +641,13 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                 placeholder="Add internal notes or special instructions..."
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                className="bg-white/5 border-white/10 min-h-[120px] focus:border-primary/50 transition-all"
+                                className="bg-white/5 border-white/10 min-h-[120px] focus:border-primary/50 transition-colors"
                             />
                         </CardContent>
                     </Card>
                     <Card className="glass border-white/10 shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <Settings2 className="h-4 w-4" />
                                 Terms & Conditions
                             </CardTitle>
@@ -657,7 +657,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                 placeholder="Specify legal terms, payment schedules, etc."
                                 value={terms}
                                 onChange={(e) => setTerms(e.target.value)}
-                                className="bg-white/5 border-white/10 min-h-[120px] focus:border-primary/50 transition-all font-mono text-[10px]"
+                                className="bg-white/5 border-white/10 min-h-[120px] focus:border-primary/50 transition-colors font-mono text-[10px]"
                             />
                         </CardContent>
                     </Card>
@@ -666,7 +666,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card className="glass border-white/10 shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <MessageSquare className="h-4 w-4" />
                                 Payer memo (optional)
                             </CardTitle>
@@ -676,7 +676,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                                 placeholder="Add a memo for the payer..."
                                 value={payerMemo}
                                 onChange={(e) => setPayerMemo(e.target.value)}
-                                className="bg-white/5 border-white/10 min-h-[100px] focus:border-primary/50 transition-all"
+                                className="bg-white/5 border-white/10 min-h-[100px] focus:border-primary/50 transition-colors"
                             />
 
                             {attachments.length > 0 && (
@@ -726,7 +726,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                         <Calculator className="h-20 w-20" />
                     </div>
                     <CardHeader className="relative z-10 border-b border-white/10">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             Financial Summary
                         </CardTitle>
                     </CardHeader>
@@ -770,7 +770,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
 
                         <div className="space-y-3 pt-4 border-t border-white/5">
                             <Button
-                                className="w-full h-14 text-lg font-black gap-2 bg-primary text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 uppercase tracking-widest"
+                                className="w-full h-14 text-lg font-black gap-2 bg-primary text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-xl shadow-primary/20 uppercase tracking-widest"
                                 onClick={handleSave}
                                 disabled={isSaving}
                             >
@@ -803,7 +803,7 @@ export default function QuoteBuilderClient({ products, initialAccounts = [], ini
                 {/* CPQ Insights */}
                 <Card className="glass border-white/10 bg-white/5">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Settings2 className="h-3 w-3" />
                             CPQ Metrics
                         </CardTitle>

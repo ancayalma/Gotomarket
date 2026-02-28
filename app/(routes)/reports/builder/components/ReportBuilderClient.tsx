@@ -159,7 +159,7 @@ export default function ReportBuilderClient() {
                 ].map((s) => (
                     <div key={s.n} className="flex items-center gap-2">
                         <div className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all",
+                            "h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
                             step === s.n ? "bg-primary text-primary-foreground shadow-lg scale-110" :
                                 step > s.n ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
                         )}>
@@ -184,7 +184,7 @@ export default function ReportBuilderClient() {
                             <Card
                                 key={obj.id}
                                 className={cn(
-                                    "cursor-pointer hover:border-primary transition-all",
+                                    "cursor-pointer hover:border-primary transition-colors",
                                     selectedObject?.id === obj.id ? "ring-2 ring-primary border-primary bg-primary/5" : ""
                                 )}
                                 onClick={() => setSelectedObject(obj)}
@@ -193,7 +193,7 @@ export default function ReportBuilderClient() {
                                     <div className="p-2 bg-muted rounded-lg group-hover:bg-primary/10">
                                         <Database className="h-5 w-5 text-muted-foreground" />
                                     </div>
-                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{obj.label}</CardTitle>
+                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{obj.label}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-xs text-muted-foreground">
@@ -209,7 +209,7 @@ export default function ReportBuilderClient() {
                 {step === 2 && selectedObject && (
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Choose columns for {selectedObject.label}</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Choose columns for {selectedObject.label}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -238,7 +238,7 @@ export default function ReportBuilderClient() {
                 {step === 3 && selectedObject && (
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Filter your results</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Filter your results</CardTitle>
                             <Button variant="outline" size="sm" onClick={addFilter} className="gap-2">
                                 <Plus className="h-4 w-4" />
                                 Add Filter
@@ -303,7 +303,7 @@ export default function ReportBuilderClient() {
                     <div className="space-y-6">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Preview: {selectedFields.length} Columns | {reportResults.length} Rows</CardTitle>
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Preview: {selectedFields.length} Columns | {reportResults.length} Rows</CardTitle>
                                 <div className="flex items-center gap-2">
                                     <Button
                                         variant={chartType === "table" ? "secondary" : "ghost"}

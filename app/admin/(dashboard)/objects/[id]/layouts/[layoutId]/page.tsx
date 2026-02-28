@@ -114,7 +114,7 @@ export default function LayoutEditorPage() {
                         <ArrowLeft className="w-4 h-4" />
                     </Button>
                     <div>
-                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Layout Editor: {layout.name}</h1>
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Layout Editor: {layout.name}</h1>
                         <p className="text-muted-foreground">{objectDef?.name} Object</p>
                     </div>
                 </div>
@@ -168,7 +168,7 @@ export default function LayoutEditorPage() {
                         {layout.sections?.map((section: any, idx: number) => (
                             <Card key={idx} className="border-dashed border-2">
                                 <CardHeader className="py-3 bg-muted/10 flex flex-row items-center justify-between">
-                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{section.title}</CardTitle>
+                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{section.title}</CardTitle>
                                     <Button variant="ghost" size="sm"><Settings className="w-3 h-3" /></Button>
                                 </CardHeader>
                                 <CardContent className="min-h-[100px] p-4 bg-background/50">

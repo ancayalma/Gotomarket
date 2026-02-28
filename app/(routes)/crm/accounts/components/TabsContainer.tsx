@@ -83,7 +83,7 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
           {/* Sidebar content */}
           <div
             className={cn(
-              "flex flex-col bg-muted/30 border-r border-border/50 py-6 gap-2 transition-all duration-300 overflow-y-auto h-full w-full",
+              "flex flex-col bg-muted/30 border-r border-border/50 py-6 gap-2 transition-colors duration-300 overflow-y-auto h-full w-full",
               isCollapsed ? "items-center" : ""
             )}
           >
@@ -94,7 +94,7 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
                 onMouseEnter={() => setHoveredLabel(item.label)}
                 onMouseLeave={() => setHoveredLabel(null)}
                 className={cn(
-                  "group flex items-center relative transition-all duration-200 rounded-lg",
+                  "group flex items-center relative transition-colors duration-200 rounded-lg",
                   isCollapsed
                     ? "w-8 h-8 justify-center mx-auto hover:bg-primary/10 hover:ring-1 hover:ring-primary/50"
                     : "justify-start px-4 py-2 gap-3 w-full",
@@ -124,7 +124,7 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
               <div className="absolute bottom-12 left-0 right-0 flex justify-center pointer-events-none pb-4">
                 <span
                   className={cn(
-                    "text-[10px] uppercase tracking-widest font-semibold whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-all duration-300",
+                    "text-[10px] uppercase tracking-widest font-semibold whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-colors duration-300",
                     hoveredLabel || leadsNavItems.find(i => i.id === selected)?.label ? "opacity-100" : "opacity-0",
                     hoveredLabel ? "text-primary scale-105" : "text-primary/70"
                   )}
@@ -149,7 +149,7 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
       {!isMember && (
         <div
           className={cn(
-            "md:hidden fixed left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border/50 flex items-center justify-around z-40 px-2 shadow-sm overflow-y-hidden transition-all duration-300",
+            "md:hidden fixed left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border/50 flex items-center justify-around z-40 px-2 shadow-sm overflow-y-hidden transition-colors duration-300",
             isMobileExpanded ? "h-16 py-1" : "h-12"
           )}
           style={{ bottom: layer2Expanded ? '136px' : '128px' }}
@@ -178,7 +178,7 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
 
                 {/* Label - Only visible when expanded */}
                 <span className={cn(
-                  "text-[9px] uppercase tracking-wider font-semibold truncate max-w-full px-1 transition-all duration-200",
+                  "text-[9px] uppercase tracking-wider font-semibold truncate max-w-full px-1 transition-colors duration-200",
                   isMobileExpanded ? "opacity-100 h-auto" : "opacity-0 h-0 overflow-hidden"
                 )}>
                   {item.label.split(' ')[0]}

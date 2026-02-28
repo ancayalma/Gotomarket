@@ -147,11 +147,11 @@ export const NewMessageModal = ({ customTrigger }: NewMessageModalProps) => {
             <DialogTrigger asChild>
                 {customTrigger || <Button size="sm">New Message</Button>}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] bg-black/90 border-white/10 backdrop-blur-2xl transition-all duration-300">
+            <DialogContent className="sm:max-w-[500px] bg-black/90 border-white/10 backdrop-blur-2xl transition-colors duration-300">
                 <DialogHeader>
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center justify-between">
-                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 {sendEmail ? "Send Email" : "New Internal Message"}
                             </DialogTitle>
                         </div>

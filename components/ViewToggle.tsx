@@ -30,7 +30,7 @@ export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
                     type="button"
                     onClick={() => onChange('table')}
                     className={cn(
-                        "p-1.5 rounded transition-all",
+                        "p-1.5 rounded transition-colors",
                         value === 'table'
                             ? "bg-primary/20 text-primary border border-primary/30"
                             : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -62,7 +62,7 @@ export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
                     type="button"
                     onClick={() => onChange('compact')}
                     className={cn(
-                        "p-1.5 rounded transition-all",
+                        "p-1.5 rounded transition-colors",
                         value === 'compact'
                             ? "bg-primary/20 text-primary border border-primary/30"
                             : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -92,7 +92,7 @@ export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
                     type="button"
                     onClick={() => onChange('card')}
                     className={cn(
-                        "p-1.5 rounded transition-all",
+                        "p-1.5 rounded transition-colors",
                         value === 'card'
                             ? "bg-primary/20 text-primary border border-primary/30"
                             : "text-muted-foreground hover:text-foreground hover:bg-white/5"

@@ -227,7 +227,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Members</CardTitle>
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Members</CardTitle>
                     <CardDescription>
                         Manage users assigned to this team.
                     </CardDescription>
@@ -242,7 +242,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Add Team Member</DialogTitle>
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Add Team Member</DialogTitle>
                             <DialogDescription>
                                 Search for existing system users to add to this team.
                             </DialogDescription>
@@ -305,7 +305,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
             <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Change Password</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Change Password</DialogTitle>
                         <DialogDescription>
                             Enter a new password for this user.
                         </DialogDescription>
@@ -431,7 +431,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
             <Dialog open={migrationOpen} onOpenChange={setMigrationOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Spawn New Team</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Spawn New Team</DialogTitle>
                         <DialogDescription>
                             Create a new team/bucket and move {selectedMigrationMember?.name || selectedMigrationMember?.email} to it as the Owner.
                         </DialogDescription>
@@ -495,7 +495,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
             <Dialog open={moveExistingOpen} onOpenChange={setMoveExistingOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Shield className="w-5 h-5 text-amber-500" />
                             Move to Existing Team
                         </DialogTitle>
@@ -524,7 +524,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                                                 <div
                                                     key={team.id}
                                                     onClick={() => setSelectedTargetTeamId(team.id)}
-                                                    className={`p-3 flex flex-col cursor-pointer transition-all border-b border-white/5 last:border-0 ${selectedTargetTeamId === team.id ? "bg-amber-500/10 border-l-4 border-amber-500" : "hover:bg-white/5"}`}
+                                                    className={`p-3 flex flex-col cursor-pointer transition-colors border-b border-white/5 last:border-0 ${selectedTargetTeamId === team.id ? "bg-amber-500/10 border-l-4 border-amber-500" : "hover:bg-white/5"}`}
                                                 >
                                                     <span className="text-sm font-bold tracking-tight">{team.name}</span>
                                                     <span className="text-[10px] text-muted-foreground uppercase font-mono tracking-tighter">{team.slug}</span>
@@ -546,7 +546,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                                         key={role}
                                         type="button"
                                         variant={selectedTargetRole === role ? "default" : "outline"}
-                                        className={`h-10 text-xs font-bold uppercase tracking-widest transition-all ${selectedTargetRole === role ? "bg-amber-500 hover:bg-amber-600 text-black border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "border-white/10 hover:bg-white/5"}`}
+                                        className={`h-10 text-xs font-bold uppercase tracking-widest transition-colors ${selectedTargetRole === role ? "bg-amber-500 hover:bg-amber-600 text-black border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "border-white/10 hover:bg-white/5"}`}
                                         onClick={() => setSelectedTargetRole(role)}
                                     >
                                         {role}

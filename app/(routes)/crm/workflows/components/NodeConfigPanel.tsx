@@ -110,7 +110,7 @@ export function NodeConfigPanel({ node, onClose, onUpdateNode, allNodes }: NodeC
                         <div className="text-lg font-black italic tracking-tighter text-white uppercase leading-none truncate max-w-[220px]">{(data.label as string) || "Properties"}</div>
                     </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all" onClick={onClose}>
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors" onClick={onClose}>
                     <X className="h-5 w-5" />
                 </Button>
             </div>

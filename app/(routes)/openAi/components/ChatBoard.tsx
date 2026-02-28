@@ -191,7 +191,7 @@ export default function ChatBoard({ sessionId, initialMessages, isTemporary, onR
                         <Menu className="w-5 h-5" />
                     </Button>
                     <div className="flex flex-col">
-                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                             {sessionTitle || "Varuni AI Assistant"}
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                         </h1>
@@ -210,7 +210,7 @@ export default function ChatBoard({ sessionId, initialMessages, isTemporary, onR
                     <div className="flex items-center gap-2 px-2 text-xs text-muted-foreground hidden md:flex">
                         <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
-                                className={`h-full transition-all ${percentUsed >= 90 ? "bg-red-500" : percentUsed >= 75 ? "bg-yellow-500" : "bg-blue-500"}`}
+                                className={`h-full transition-colors ${percentUsed >= 90 ? "bg-red-500" : percentUsed >= 75 ? "bg-yellow-500" : "bg-blue-500"}`}
                                 style={{ width: `${Math.min(100, percentUsed)}%` }}
                             />
                         </div>
@@ -294,7 +294,7 @@ export default function ChatBoard({ sessionId, initialMessages, isTemporary, onR
             {/* Composer */}
             <div className="p-4 pb-20 md:pb-4 bg-gradient-to-t from-background via-background/95 to-transparent z-20">
                 <div className="max-w-3xl mx-auto">
-                    <form onSubmit={onSubmit} className="relative flex items-end gap-2 p-2 bg-card border rounded-2xl shadow-lg focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                    <form onSubmit={onSubmit} className="relative flex items-end gap-2 p-2 bg-card border rounded-2xl shadow-lg focus-within:ring-2 focus-within:ring-primary/20 transition-colors">
                         <Textarea
                             className="min-h-[50px] max-h-[200px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 py-3 px-4"
                             placeholder="Message Varuni..."

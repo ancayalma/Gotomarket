@@ -440,7 +440,7 @@ export function NavigationEditor({
                             <Layout className="w-7 h-7" />
                         </div>
                         <div>
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Navigation Manager</h1>
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Navigation Manager</h1>
                             <p className="text-sm text-muted-foreground font-medium">Customize sidebar categories, items, and typography</p>
                         </div>
                     </div>
@@ -452,7 +452,7 @@ export function NavigationEditor({
                                 <select
                                     value={scope}
                                     onChange={(e) => setScope(e.target.value as any)}
-                                    className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-primary font-bold focus:outline-none focus:ring-2 ring-primary/50 cursor-pointer hover:bg-primary/10 transition-all"
+                                    className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-primary font-bold focus:outline-none focus:ring-2 ring-primary/50 cursor-pointer hover:bg-primary/10 transition-colors"
                                 >
                                     <option value="TEAM" className="bg-[#18181b]">Team Default (Global)</option>
                                     <option value="USER" className="bg-[#18181b]">Personal Override</option>
@@ -470,7 +470,7 @@ export function NavigationEditor({
                             <button
                                 onClick={handleReset}
                                 disabled={isPending}
-                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/5 hover:bg-red-500/10 text-primary/70 hover:text-red-400 border border-primary/20 transition-all text-xs font-black uppercase tracking-wider"
+                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/5 hover:bg-red-500/10 text-primary/70 hover:text-red-400 border border-primary/20 transition-colors text-xs font-black uppercase tracking-wider"
                             >
                                 <RotateCcw className="w-4 h-4" /> Reset
                             </button>
@@ -478,7 +478,7 @@ export function NavigationEditor({
                             <button
                                 onClick={handleSave}
                                 disabled={isPending}
-                                className="flex items-center gap-2 px-7 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/20 transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50"
+                                className="flex items-center gap-2 px-7 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/20 transition-colors text-xs font-black uppercase tracking-widest disabled:opacity-50"
                             >
                                 <Save className="w-4 h-4" /> {isPending ? "Saving..." : "Save Changes"}
                             </button>
@@ -495,7 +495,7 @@ export function NavigationEditor({
                             onClick={() => setIsTypographyCollapsed(!isTypographyCollapsed)}
                             className="flex items-center gap-3 group/typo cursor-pointer text-left"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/10 group-hover/typo:bg-primary/20 transition-all">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/10 group-hover/typo:bg-primary/20 transition-colors">
                                 <Type className="w-5 h-5" />
                             </div>
                             <div>
@@ -512,7 +512,7 @@ export function NavigationEditor({
                             <button
                                 onClick={() => setViewMode("edit")}
                                 className={cn(
-                                    "px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2",
+                                    "px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-2",
                                     viewMode === "edit" ? "bg-primary text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-white"
                                 )}
                             >
@@ -521,7 +521,7 @@ export function NavigationEditor({
                             <button
                                 onClick={() => setViewMode("preview")}
                                 className={cn(
-                                    "px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2",
+                                    "px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-2",
                                     viewMode === "preview" ? "bg-primary text-primary-foreground shadow-lg" : "text-primary/60 hover:text-primary"
                                 )}
                             >
@@ -531,11 +531,11 @@ export function NavigationEditor({
                     </div>
 
                     <div className={cn(
-                        "grid grid-cols-1 xl:grid-cols-2 gap-6 transition-all duration-300 overflow-hidden",
+                        "grid grid-cols-1 xl:grid-cols-2 gap-6 transition-colors duration-300 overflow-hidden",
                         isTypographyCollapsed ? "max-h-0 opacity-0 pointer-events-none" : "max-h-[1000px] opacity-100"
                     )}>
                         {/* Menu Titles (Group Labels) */}
-                        <div className="space-y-6 p-6 rounded-2xl bg-white/5 border border-white/5 relative overflow-hidden group/card hover:bg-white/[0.07] transition-all duration-300">
+                        <div className="space-y-6 p-6 rounded-2xl bg-white/5 border border-white/5 relative overflow-hidden group/card hover:bg-white/[0.07] transition-colors duration-300">
                             <div className="flex items-center justify-between mb-4 relative z-10">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/10 shadow-inner">
@@ -560,7 +560,7 @@ export function NavigationEditor({
 
                             {/* Massive background text */}
                             <div
-                                className="absolute -bottom-8 -right-8 text-8xl font-black text-white/[0.03] select-none pointer-events-none transition-all duration-700 blur-[3px] group-hover/card:blur-[1px] group-hover/card:text-white/[0.06] uppercase italic"
+                                className="absolute -bottom-8 -right-8 text-8xl font-black text-white/[0.03] select-none pointer-events-none transition-colors duration-700 blur-[3px] group-hover/card:blur-[1px] group-hover/card:text-white/[0.06] uppercase italic"
                                 style={{ fontFamily: titleFont }}
                             >
                                 {titleFont}
@@ -572,7 +572,7 @@ export function NavigationEditor({
                                     <select
                                         value={titleFont}
                                         onChange={(e) => setTitleFont(e.target.value)}
-                                        className="w-full bg-[#0c0c0e]/80 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 ring-primary/50 transition-all font-sans appearance-none cursor-pointer hover:border-primary/40"
+                                        className="w-full bg-[#0c0c0e]/80 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 ring-primary/50 transition-colors font-sans appearance-none cursor-pointer hover:border-primary/40"
                                         style={{ fontFamily: titleFont }}
                                     >
                                         {AVAILABLE_FONTS.map(font => (
@@ -585,7 +585,7 @@ export function NavigationEditor({
                                     <select
                                         value={titleFontSize}
                                         onChange={(e) => setTitleFontSize(e.target.value)}
-                                        className="w-full bg-[#0c0c0e]/80 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 ring-primary/50 transition-all cursor-pointer hover:border-primary/40"
+                                        className="w-full bg-[#0c0c0e]/80 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 ring-primary/50 transition-colors cursor-pointer hover:border-primary/40"
                                     >
                                         {["8px", "9px", "10px", "11px", "12px", "13px"].map(size => (
                                             <option key={size} value={size} className="bg-[#18181b]">{size}</option>
@@ -598,7 +598,7 @@ export function NavigationEditor({
                                 <button
                                     onClick={() => setTitleFontWeight(titleFontWeight === "900" ? "400" : "900")}
                                     className={cn(
-                                        "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/20 transition-all text-[10px] font-black uppercase tracking-widest",
+                                        "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/20 transition-colors text-[10px] font-black uppercase tracking-widest",
                                         titleFontWeight === "900" ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-black/20 text-muted-foreground hover:bg-white/5"
                                     )}
                                 >
@@ -607,7 +607,7 @@ export function NavigationEditor({
                                 <button
                                     onClick={() => setTitleFontStyle(titleFontStyle === "italic" ? "normal" : "italic")}
                                     className={cn(
-                                        "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/20 transition-all text-[10px] font-black uppercase tracking-widest",
+                                        "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/20 transition-colors text-[10px] font-black uppercase tracking-widest",
                                         titleFontStyle === "italic" ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-black/20 text-muted-foreground hover:bg-white/5"
                                     )}
                                 >
@@ -617,7 +617,7 @@ export function NavigationEditor({
                         </div>
 
                         {/* Navigation Items */}
-                        <div className="space-y-6 p-6 rounded-2xl bg-white/5 border border-white/5 relative overflow-hidden group/card hover:bg-white/[0.07] transition-all duration-300">
+                        <div className="space-y-6 p-6 rounded-2xl bg-white/5 border border-white/5 relative overflow-hidden group/card hover:bg-white/[0.07] transition-colors duration-300">
                             <div className="flex items-center justify-between mb-4 relative z-10">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/10 shadow-inner">
@@ -642,7 +642,7 @@ export function NavigationEditor({
 
                             {/* Massive background text */}
                             <div
-                                className="absolute -bottom-8 -right-8 text-8xl font-black text-white/[0.03] select-none pointer-events-none transition-all duration-700 blur-[3px] group-hover/card:blur-[1px] group-hover/card:text-white/[0.06] uppercase italic"
+                                className="absolute -bottom-8 -right-8 text-8xl font-black text-white/[0.03] select-none pointer-events-none transition-colors duration-700 blur-[3px] group-hover/card:blur-[1px] group-hover/card:text-white/[0.06] uppercase italic"
                                 style={{ fontFamily: itemFont }}
                             >
                                 {itemFont}
@@ -654,7 +654,7 @@ export function NavigationEditor({
                                     <select
                                         value={itemFont}
                                         onChange={(e) => setItemFont(e.target.value)}
-                                        className="w-full bg-[#0c0c0e]/80 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 ring-primary/50 transition-all font-sans appearance-none cursor-pointer hover:border-primary/40"
+                                        className="w-full bg-[#0c0c0e]/80 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 ring-primary/50 transition-colors font-sans appearance-none cursor-pointer hover:border-primary/40"
                                         style={{ fontFamily: itemFont }}
                                     >
                                         {AVAILABLE_FONTS.map(font => (
@@ -667,7 +667,7 @@ export function NavigationEditor({
                                     <select
                                         value={itemFontSize}
                                         onChange={(e) => setItemFontSize(e.target.value)}
-                                        className="w-full bg-[#0c0c0e]/80 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 ring-primary/50 transition-all cursor-pointer hover:border-primary/40"
+                                        className="w-full bg-[#0c0c0e]/80 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 ring-primary/50 transition-colors cursor-pointer hover:border-primary/40"
                                     >
                                         {["12px", "14px", "16px", "18px", "20px", "22px"].map(size => (
                                             <option key={size} value={size} className="bg-[#18181b]">{size}</option>
@@ -680,7 +680,7 @@ export function NavigationEditor({
                                 <button
                                     onClick={() => setItemFontWeight(itemFontWeight === "900" ? "400" : "900")}
                                     className={cn(
-                                        "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/20 transition-all text-[10px] font-black uppercase tracking-widest",
+                                        "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/20 transition-colors text-[10px] font-black uppercase tracking-widest",
                                         itemFontWeight === "900" ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-black/20 text-muted-foreground hover:bg-white/5"
                                     )}
                                 >
@@ -689,7 +689,7 @@ export function NavigationEditor({
                                 <button
                                     onClick={() => setItemFontStyle(itemFontStyle === "italic" ? "normal" : "italic")}
                                     className={cn(
-                                        "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/20 transition-all text-[10px] font-black uppercase tracking-widest",
+                                        "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/20 transition-colors text-[10px] font-black uppercase tracking-widest",
                                         itemFontStyle === "italic" ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-black/20 text-muted-foreground hover:bg-white/5"
                                     )}
                                 >
@@ -704,7 +704,7 @@ export function NavigationEditor({
             {/* Tree Content Area */}
             <div className="flex-1 min-h-0 flex gap-6 overflow-hidden mt-2">
                 <div className={cn(
-                    "flex-1 overflow-y-auto p-2 custom-scrollbar transition-all duration-300",
+                    "flex-1 overflow-y-auto p-2 custom-scrollbar transition-colors duration-300",
                     viewMode === "preview" && "opacity-0 scale-95 pointer-events-none"
                 )}>
                     <div className="max-w-4xl mx-auto space-y-4 pb-20">
@@ -757,7 +757,7 @@ export function NavigationEditor({
 
                         <button
                             onClick={handleAddNewSection}
-                            className="w-full py-6 rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 hover:bg-primary/5 text-primary/60 hover:text-primary transition-all flex items-center justify-center gap-3 text-xs font-black uppercase tracking-widest"
+                            className="w-full py-6 rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 hover:bg-primary/5 text-primary/60 hover:text-primary transition-colors flex items-center justify-center gap-3 text-xs font-black uppercase tracking-widest"
                         >
                             <Plus className="w-5 h-5" /> Add New Section
                         </button>
@@ -811,7 +811,7 @@ export function NavigationEditor({
                                 </p>
                                 <button
                                     onClick={() => setViewMode("edit")}
-                                    className="mt-10 px-8 py-3 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-black uppercase tracking-widest border border-primary/20 transition-all shadow-xl shadow-primary/5"
+                                    className="mt-10 px-8 py-3 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-black uppercase tracking-widest border border-primary/20 transition-colors shadow-xl shadow-primary/5"
                                 >
                                     Close Preview
                                 </button>

@@ -9,7 +9,7 @@ export const metadata = {
     description: "Real-time event notifications for your external applications. Configure webhooks for payment confirmations, voice events, email status, and form submissions.",
 };
 
-const cardClass = "p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition-all";
+const cardClass = "p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition-colors";
 const codeBlockClass = "bg-[#0a0a0a] border border-white/10 rounded-xl p-5 font-mono text-sm overflow-x-auto text-gray-300 leading-relaxed";
 const sectionTitle = "text-2xl font-semibold mt-14 mb-6 text-white flex items-center";
 const badgeClass = (color: string) => `inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${color}`;
@@ -180,7 +180,7 @@ export default function WebhooksPage() {
 
                         {/* Hero */}
                         <div className="mb-16">
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 mb-2">
                                 Webhooks
                             </h1>
                             <p className="text-lg text-gray-400 max-w-3xl">

@@ -152,7 +152,7 @@ export function AdminBillingDashboard({
             {/* Top Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Subscription Status */}
-                <Card className="bg-zinc-900/60 border-zinc-800 overflow-hidden group hover:border-zinc-700 transition-all">
+                <Card className="bg-zinc-900/60 border-zinc-800 overflow-hidden group hover:border-zinc-700 transition-colors">
                     <CardContent className="p-5 relative">
                         <div className="absolute -right-4 -bottom-4 w-20 h-20 -rotate-12 opacity-5 pointer-events-none">
                             <CreditCard className="w-full h-full text-indigo-500" />
@@ -179,7 +179,7 @@ export function AdminBillingDashboard({
                 </Card>
 
                 {/* Next Billing */}
-                <Card className="bg-zinc-900/60 border-zinc-800 overflow-hidden group hover:border-zinc-700 transition-all">
+                <Card className="bg-zinc-900/60 border-zinc-800 overflow-hidden group hover:border-zinc-700 transition-colors">
                     <CardContent className="p-5 relative">
                         <div className="absolute -right-4 -bottom-4 w-20 h-20 -rotate-12 opacity-5 pointer-events-none">
                             <Calendar className="w-full h-full text-cyan-500" />
@@ -195,7 +195,7 @@ export function AdminBillingDashboard({
                 </Card>
 
                 {/* AI Usage This Month */}
-                <Card className="bg-zinc-900/60 border-zinc-800 overflow-hidden group hover:border-zinc-700 transition-all">
+                <Card className="bg-zinc-900/60 border-zinc-800 overflow-hidden group hover:border-zinc-700 transition-colors">
                     <CardContent className="p-5 relative">
                         <div className="absolute -right-4 -bottom-4 w-20 h-20 -rotate-12 opacity-5 pointer-events-none">
                             <Cpu className="w-full h-full text-violet-500" />
@@ -211,7 +211,7 @@ export function AdminBillingDashboard({
                 </Card>
 
                 {/* BasaltECHO Balance */}
-                <Card className="bg-zinc-900/60 border-zinc-800 overflow-hidden group hover:border-zinc-700 transition-all">
+                <Card className="bg-zinc-900/60 border-zinc-800 overflow-hidden group hover:border-zinc-700 transition-colors">
                     <CardContent className="p-5 relative">
                         <div className="absolute -right-4 -bottom-4 w-20 h-20 -rotate-12 opacity-5 pointer-events-none">
                             <Radio className="w-full h-full text-emerald-500" />
@@ -259,7 +259,7 @@ export function AdminBillingDashboard({
                 <TabsContent value="subscription" className="mt-4">
                     <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
                         <CardHeader className="border-b border-zinc-800 bg-zinc-900/50 flex flex-row items-center justify-between">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <CreditCard className="w-5 h-5 text-indigo-400" />
                                 Subscription & Payment History
                             </CardTitle>
@@ -343,7 +343,7 @@ export function AdminBillingDashboard({
                                 const meta = getServiceMeta(s.service);
                                 const Icon = meta.icon;
                                 return (
-                                    <Card key={s.service} className="bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 transition-all">
+                                    <Card key={s.service} className="bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 transition-colors">
                                         <CardContent className="p-4">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <Icon className={`w-4 h-4 ${meta.color}`} />
@@ -361,7 +361,7 @@ export function AdminBillingDashboard({
                     {/* AI Usage Invoices */}
                     <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
                         <CardHeader className="border-b border-zinc-800 bg-zinc-900/50">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <Cpu className="w-5 h-5 text-violet-400" />
                                 AI Consumption Receipts
                             </CardTitle>
@@ -462,7 +462,7 @@ export function AdminBillingDashboard({
                 <TabsContent value="echo" className="mt-4">
                     <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
                         <CardHeader className="border-b border-zinc-800 bg-zinc-900/50">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 <Radio className="w-5 h-5 text-emerald-400" />
                                 BasaltECHO Credit Balance
                             </CardTitle>
@@ -509,7 +509,7 @@ export function AdminBillingDashboard({
                                             </div>
                                             <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
                                                 <div
-                                                    className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full transition-all duration-500"
+                                                    className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full transition-colors duration-500"
                                                     style={{ width: `${Math.min(100, ((echoBalance.usedSeconds || 0) / echoBalance.purchasedSeconds) * 100)}%` }}
                                                 />
                                             </div>

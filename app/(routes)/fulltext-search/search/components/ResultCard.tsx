@@ -22,7 +22,7 @@ export const ResultCard = ({
     return (
         <Link
             href={href}
-            className="group flex items-center p-3 rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md hover:bg-accent/50 transition-all duration-200"
+            className="group flex items-center p-3 rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md hover:bg-accent/50 transition-[color,background-color,border-color,box-shadow] duration-200"
         >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
                 <Icon className="h-5 w-5 text-primary" />

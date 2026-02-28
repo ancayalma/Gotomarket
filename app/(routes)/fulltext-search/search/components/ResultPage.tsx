@@ -30,7 +30,7 @@ const ResultPage = ({ results, search }: Props) => {
   return (
     <div className="flex flex-col w-full h-full p-6 space-y-8 overflow-y-auto pb-20">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
           Search Results
         </h1>
         <p className="text-muted-foreground">

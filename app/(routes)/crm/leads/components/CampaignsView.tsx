@@ -197,7 +197,7 @@ function StatCard({ title, value, icon: Icon, color }: any) {
     return (
         <Card className="border-none shadow-sm overflow-hidden relative">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{title}</CardTitle>
+                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{title}</CardTitle>
                 <Icon className={`w-4 h-4 ${color}`} />
             </CardHeader>
             <CardContent>

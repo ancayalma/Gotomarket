@@ -77,7 +77,7 @@ const OpportunitiesView = ({
               <CardDescription className="text-xs uppercase tracking-wider font-semibold">
                 {isClosedView ? "Total Closed Value" : "Total Pipeline Value"}
               </CardDescription>
-              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 ${totalValue.toLocaleString()}
               </CardTitle>
             </CardHeader>
@@ -87,7 +87,7 @@ const OpportunitiesView = ({
               <CardDescription className="text-xs uppercase tracking-wider font-semibold">
                 {isClosedView ? "Closed Opportunities" : "Active Opportunities"}
               </CardDescription>
-              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 {countDeals}
               </CardTitle>
             </CardHeader>
@@ -97,7 +97,7 @@ const OpportunitiesView = ({
               <CardDescription className="text-xs uppercase tracking-wider font-semibold">
                 Avg. Deal Size
               </CardDescription>
-              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 ${Math.round(avgDealSize).toLocaleString()}
               </CardTitle>
             </CardHeader>
@@ -111,7 +111,7 @@ const OpportunitiesView = ({
             <div>
               <CardTitle
                 onClick={() => router.push("/crm/opportunities")}
-                className="cursor-pointer text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2"
+                className="cursor-pointer text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2"
               >
                 {isClosedView ? "Won / Lost Deals" : "Sales Pipeline"}
               </CardTitle>
@@ -122,14 +122,14 @@ const OpportunitiesView = ({
             <div className="flex space-x-2">
               <Sheet open={open} onOpenChange={() => setOpen(false)}>
                 <Button
-                  className="my-2 cursor-pointer shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+                  className="my-2 cursor-pointer shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow"
                   onClick={() => setOpen(true)}
                 >
                   + New Opportunity
                 </Button>
                 <SheetContent className="min-w-[1000px] space-y-2 border-l border-white/10 glass">
                   <SheetHeader>
-                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create new opportunity</SheetTitle>
+                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create new opportunity</SheetTitle>
                   </SheetHeader>
                   <div className="h-full overflow-y-auto pt-4 custom-scrollbar pr-2">
                     <NewOpportunityForm

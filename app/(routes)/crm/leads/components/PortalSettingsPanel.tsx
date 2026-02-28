@@ -453,7 +453,7 @@ export default function PortalSettingsPanel() {
         return (
             <Card className="border-muted">
                 <CardHeader>
-                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                         <MessageSquare className="w-5 h-5" />
                         No Team Assigned
                     </CardTitle>
@@ -471,7 +471,7 @@ export default function PortalSettingsPanel() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Globe className="w-5 h-5 text-primary" />
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">SMS Portals</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">SMS Portals</CardTitle>
                         </div>
                         <div className="flex items-center gap-2">
                             <DropdownMenu>
@@ -557,7 +557,7 @@ export default function PortalSettingsPanel() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <LinkIcon className="w-5 h-5 text-primary" />
-                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Portal URL</CardTitle>
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Portal URL</CardTitle>
                             </div>
                             <Badge variant="outline" className="text-green-500 border-green-500/30">
                                 Active
@@ -603,7 +603,7 @@ export default function PortalSettingsPanel() {
                     <CardHeader>
                         <div className="flex items-center gap-2">
                             <LinkIcon className="w-5 h-5 text-primary" />
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Portal URL</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Portal URL</CardTitle>
                         </div>
                         <CardDescription>Choose a custom slug for your portal URL, or leave blank for auto-generated.</CardDescription>
                     </CardHeader>
@@ -657,7 +657,7 @@ export default function PortalSettingsPanel() {
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <FolderKanban className="w-5 h-5 text-primary" />
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Portal Logo & Project</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Portal Logo & Project</CardTitle>
                     </div>
                     <CardDescription>
                         {isCreateMode ? "Select a project to link this portal to and auto-populate branding." : "Choose a logo from your projects or upload a custom one."}
@@ -674,7 +674,7 @@ export default function PortalSettingsPanel() {
                                         <button
                                             key={campaign.id}
                                             onClick={() => setFormData({ ...formData, campaign_id: campaign.id })}
-                                            className={`relative p-3 rounded-xl border-2 transition-all ${formData.campaign_id === campaign.id ? "border-primary bg-primary/5" : "border-muted hover:border-muted-foreground/30"
+                                            className={`relative p-3 rounded-xl border-2 transition-colors ${formData.campaign_id === campaign.id ? "border-primary bg-primary/5" : "border-muted hover:border-muted-foreground/30"
                                                 }`}
                                         >
                                             {formData.campaign_id === campaign.id && (
@@ -725,7 +725,7 @@ export default function PortalSettingsPanel() {
                                         <button
                                             key={campaign.id}
                                             onClick={() => setFormData({ ...formData, campaign_id: campaign.id })}
-                                            className={`relative p-3 rounded-xl border-2 transition-all ${formData.campaign_id === campaign.id ? "border-primary bg-primary/5" : "border-muted hover:border-muted-foreground/30"}`}
+                                            className={`relative p-3 rounded-xl border-2 transition-colors ${formData.campaign_id === campaign.id ? "border-primary bg-primary/5" : "border-muted hover:border-muted-foreground/30"}`}
                                         >
                                             {formData.campaign_id === campaign.id && (
                                                 <div className="absolute top-1 right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
@@ -778,7 +778,7 @@ export default function PortalSettingsPanel() {
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-primary" />
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Theme & Appearance</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Theme & Appearance</CardTitle>
                     </div>
                     <CardDescription>Configure light/dark mode and visual effects.</CardDescription>
                 </CardHeader>
@@ -839,7 +839,7 @@ export default function PortalSettingsPanel() {
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <Palette className="w-5 h-5 text-primary" />
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Portal Branding</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Portal Branding</CardTitle>
                     </div>
                     <CardDescription>Customize colors for light and dark modes.</CardDescription>
                 </CardHeader>
@@ -991,7 +991,7 @@ export default function PortalSettingsPanel() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Smartphone className="w-5 h-5 text-primary" />
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Mobile Preview</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Mobile Preview</CardTitle>
                         </div>
                         <div className="flex items-center gap-2">
                             <Button variant={previewDark ? "outline" : "default"} size="sm" onClick={() => setPreviewDark(false)}>
@@ -1061,7 +1061,7 @@ export default function PortalSettingsPanel() {
 
                                     {/* Screen content */}
                                     <div
-                                        className="absolute inset-0 overflow-y-auto transition-all duration-300 pt-12 px-4"
+                                        className="absolute inset-0 overflow-y-auto transition-colors duration-300 pt-12 px-4"
                                         style={{
                                             background: previewDark
                                                 ? `radial-gradient(ellipse at top, ${currentPrimary}12 0%, transparent 50%), linear-gradient(180deg, #000000 0%, #0a0a0a 50%, #000000 100%)`

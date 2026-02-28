@@ -169,7 +169,7 @@ export default function AssignPoolMembersModal({
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-lg">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                         <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-green-500/20">
                             <Database className="w-5 h-5 text-emerald-400" />
                         </div>
@@ -265,7 +265,7 @@ export default function AssignPoolMembersModal({
                                                 key={member.id}
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
-                                                className="flex items-center justify-between p-3 rounded-lg border hover:border-emerald-500/30 hover:bg-accent/30 transition-all group"
+                                                className="flex items-center justify-between p-3 rounded-lg border hover:border-emerald-500/30 hover:bg-accent/30 transition-colors group"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <Avatar className="h-9 w-9">

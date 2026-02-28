@@ -108,20 +108,14 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Command",
                 iconName: "Radio",
-                href: "/crm/sales-command",
-                children: [
-                    { id: "sub_command_leads", type: "item", label: "Leads", href: "/crm/leads", iconName: "Users" }
-                ]
+                href: "/crm/sales-command"
             },
             {
                 id: "nav_leads",
                 type: "item",
                 label: "Leads",
                 iconName: "Users",
-                href: "/crm/leads",
-                children: [
-                    { id: "sub_leads_all", type: "item", label: "All Leads", href: "/crm/leads", iconName: "Users" }
-                ]
+                href: "/crm/leads"
             },
             {
                 id: "nav_deals",
@@ -314,8 +308,23 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Learn",
                 iconName: "GraduationCap",
                 href: "/crm/university"
+            },
+            {
+                id: "nav_platform",
+                type: "item",
+                label: "Platform",
+                iconName: "Globe",
+                href: "/partners",
+                permissions: { minRole: "PLATFORM_ADMIN" },
+                children: [
+                    { id: "sub_platform_team", type: "item", label: "Team Management", href: "/partners" },
+                    { id: "sub_platform_keys", type: "item", label: "System Keys", href: "/partners/ai-system-config" },
+                    { id: "sub_platform_pricing", type: "item", label: "Model Pricing", href: "/partners/ai-pricing" },
+                    { id: "sub_platform_email", type: "item", label: "System Email", href: "/partners/email-system-config" },
+                    { id: "sub_platform_plans", type: "item", label: "Manage Plans", href: "/partners/plans" }
+                ]
             }
         ]
-    },
+    }
 
 ];

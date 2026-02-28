@@ -334,12 +334,12 @@ export default function ListsView() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredPools?.map((pool) => (
-                                <Card key={pool.id} className="overflow-hidden border-none shadow-md hover:shadow-lg transition-all group bg-card/50 backdrop-blur-sm border border-white/5">
+                                <Card key={pool.id} className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow group bg-card/50 backdrop-blur-sm border border-white/5">
                                     <div className="h-1.5 w-full" style={{ backgroundColor: pool.color || "#6366f1" }} />
                                     <CardHeader className="pb-3">
                                         <div className="flex justify-between items-start">
                                             <div className="space-y-1">
-                                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{pool.name}</CardTitle>
+                                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{pool.name}</CardTitle>
                                                 <CardDescription className="line-clamp-1 text-xs">
                                                     {pool.description || "No description provided."}
                                                 </CardDescription>

@@ -223,7 +223,7 @@ export function LeadTimeline({ leadId, leadEmail, leadName, contactId, accountId
             <Dialog open={!!selectedMessage} onOpenChange={(open) => !open && setSelectedMessage(null)}>
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#0a0a0a] border-white/10 text-white p-0 overflow-hidden">
                     <div className="sticky top-0 bg-[#0a0a0a] border-b border-white/10 p-6 z-20">
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
                                 <Mail className="h-5 w-5" />
                             </div>
@@ -269,7 +269,7 @@ export function LeadTimeline({ leadId, leadEmail, leadName, contactId, accountId
                                                         </div>
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                             {attachments.map((att: any) => (
-                                                                <div key={att.id} className="flex items-center justify-between bg-white/5 border border-white/5 rounded-xl p-2 px-3 group/att hover:border-primary/30 transition-all">
+                                                                <div key={att.id} className="flex items-center justify-between bg-white/5 border border-white/5 rounded-xl p-2 px-3 group/att hover:border-primary/30 transition-colors">
                                                                     <div className="flex items-center gap-2 min-w-0">
                                                                         <div className="h-7 w-7 rounded bg-white/5 flex items-center justify-center text-white/40">
                                                                             <FileText size={14} />
@@ -334,7 +334,7 @@ export function LeadTimeline({ leadId, leadEmail, leadName, contactId, accountId
                     <CardHeader className="py-3 flex flex-row items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-emerald-400" />
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">AI Conversation Overview</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">AI Conversation Overview</CardTitle>
                         </div>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowAiSummary(false)}>
                             <ChevronUp className="h-3 w-3" />
@@ -378,7 +378,7 @@ export function LeadTimeline({ leadId, leadEmail, leadName, contactId, accountId
                             </div>
 
                             {/* Content */}
-                            <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-[#0f0f0f] border border-white/5 p-4 rounded-2xl shadow-xl transition-all hover:bg-white/[0.02] group/card hover:border-white/10">
+                            <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-[#0f0f0f] border border-white/5 p-4 rounded-2xl shadow-xl transition-colors hover:bg-white/[0.02] group/card hover:border-white/10">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
                                         <time className="font-mono text-[10px] uppercase font-bold text-white/30">
@@ -455,7 +455,7 @@ export function LeadTimeline({ leadId, leadEmail, leadName, contactId, accountId
                                             <Button
                                                 size="sm"
                                                 variant="outline"
-                                                className="h-7 text-[10px] font-bold border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all rounded-full"
+                                                className="h-7 text-[10px] font-bold border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-colors rounded-full"
                                                 onClick={() => handleViewFull(activity)}
                                                 disabled={fullMsgLoading}
                                             >
@@ -466,7 +466,7 @@ export function LeadTimeline({ leadId, leadEmail, leadName, contactId, accountId
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    className="h-7 text-[10px] font-bold border-primary/30 bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all rounded-full"
+                                                    className="h-7 text-[10px] font-bold border-primary/30 bg-primary/5 text-primary hover:bg-primary hover:text-white transition-colors rounded-full"
                                                     onClick={() => setEmailOpen(true)}
                                                 >
                                                     <Reply className="h-3 w-3 mr-1" />

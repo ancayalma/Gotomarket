@@ -92,7 +92,7 @@ export function AddDepartmentMemberModal({ isOpen, onClose, departmentId, depart
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Add Members to {departmentName}</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Add Members to {departmentName}</DialogTitle>
                     <DialogDescription>
                         Select a team member to add to this department and assign their role.
                     </DialogDescription>

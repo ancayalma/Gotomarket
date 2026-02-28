@@ -83,7 +83,7 @@ function ChannelCard({ channel, delay = 0 }: ChannelCardProps) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay }}
-            className="p-5 rounded-xl border bg-card hover:shadow-md transition-all"
+            className="p-5 rounded-xl border bg-card hover:shadow-md transition-shadow"
         >
             <div className="flex items-start gap-3">
                 <div className={cn(

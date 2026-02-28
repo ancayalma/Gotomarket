@@ -115,7 +115,7 @@ export function MetricsSummaryCard({
         colors.bg,
         colors.border,
         size === "large" ? "p-8" : "p-6",
-        "hover:shadow-lg transition-all duration-300",
+        "hover:shadow-lg transition-shadow duration-300",
         `hover:${colors.glow}`,
         href && "cursor-pointer"
       )}

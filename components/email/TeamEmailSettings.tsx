@@ -330,7 +330,7 @@ export function TeamEmailSettings({ teamId, planSlug }: TeamEmailSettingsProps) 
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                     <Mail className="w-5 h-5 text-primary" />
                     Team Email Settings
                 </CardTitle>
@@ -758,7 +758,7 @@ export function TeamEmailSettings({ teamId, planSlug }: TeamEmailSettingsProps) 
                             <>
                                 <Button
                                     variant="outline"
-                                    className="border-rose-500/20 text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/40 transition-all font-semibold"
+                                    className="border-rose-500/20 text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/40 transition-colors font-semibold"
                                     onClick={() => setIsRemoveDialogOpen(true)}
                                     disabled={loading}
                                 >
@@ -786,7 +786,7 @@ export function TeamEmailSettings({ teamId, planSlug }: TeamEmailSettingsProps) 
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter className="pt-6 sm:justify-center gap-3">
-                                            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white transition-all w-28">
+                                            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white transition-colors w-28">
                                                 Cancel
                                             </AlertDialogCancel>
                                             <AlertDialogAction

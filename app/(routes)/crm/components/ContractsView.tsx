@@ -73,7 +73,7 @@ const ContractsView = ({ data, crmData, accountId }: any) => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic uppercase leading-tight py-4">
+          <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic uppercase leading-tight py-4">
             {isRoomView ? "Digital Sales Rooms" : "Contract Management"}
           </h2>
           <p className="text-muted-foreground/80 mt-1 text-base font-medium tracking-wide">

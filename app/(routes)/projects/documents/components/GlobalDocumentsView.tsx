@@ -118,7 +118,7 @@ export default function GlobalDocumentsView() {
                 <div className="flex items-center border rounded-md p-1 bg-muted/50">
                     <button
                         onClick={() => setViewMode("list")}
-                        className={`p-1.5 rounded-sm transition-all ${viewMode === "list"
+                        className={`p-1.5 rounded-sm transition-colors ${viewMode === "list"
                             ? "bg-background shadow-sm text-primary"
                             : "text-muted-foreground hover:text-foreground"
                             }`}
@@ -127,7 +127,7 @@ export default function GlobalDocumentsView() {
                     </button>
                     <button
                         onClick={() => setViewMode("grid")}
-                        className={`p-1.5 rounded-sm transition-all ${viewMode === "grid"
+                        className={`p-1.5 rounded-sm transition-colors ${viewMode === "grid"
                             ? "bg-background shadow-sm text-primary"
                             : "text-muted-foreground hover:text-foreground"
                             }`}
@@ -190,7 +190,7 @@ export default function GlobalDocumentsView() {
                                 {group.docs.map((doc: any) => (
                                     <Card
                                         key={doc.id}
-                                        className="group hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-200"
+                                        className="group hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-[color,background-color,border-color,box-shadow] duration-200"
                                     >
                                         <CardContent className="p-3">
                                             <div className="aspect-square rounded-lg bg-muted/50 flex items-center justify-center mb-2 overflow-hidden">

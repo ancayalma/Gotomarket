@@ -144,7 +144,7 @@ export default function LeadGenWizardPage() {
         name={name}
         value={state[name] as string}
         onChange={onChange}
-        className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+        className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors"
         placeholder={placeholder}
       />
     </div>
@@ -158,7 +158,7 @@ export default function LeadGenWizardPage() {
         value={state[name] as string}
         onChange={onChange}
         rows={rows}
-        className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all resize-none"
+        className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors resize-none"
         placeholder={placeholder}
       />
     </div>
@@ -318,7 +318,7 @@ export default function LeadGenWizardPage() {
 
   const renderTopConfiguration = () => (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div className="relative group overflow-hidden rounded-xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 p-4 backdrop-blur-md shadow-sm transition-all hover:border-indigo-500/40">
+      <div className="relative group overflow-hidden rounded-xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 p-4 backdrop-blur-md shadow-sm transition-colors hover:border-indigo-500/40">
         <label className="text-[10px] uppercase tracking-wider font-semibold text-indigo-400 mb-1.5 block flex items-center gap-1.5">
           <FolderKanban className="w-3 h-3" /> Assign to Campaign
         </label>
@@ -335,7 +335,7 @@ export default function LeadGenWizardPage() {
       </div>
 
       {/* Campaign Name */}
-      <div className="md:col-span-2 relative group overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+      <div className="md:col-span-2 relative group overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-md shadow-sm transition-colors hover:bg-white/10">
         <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 block">
           Pool Name
         </label>
@@ -350,7 +350,7 @@ export default function LeadGenWizardPage() {
       </div>
 
       {/* Leads Limit */}
-      <div className="relative group overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-md shadow-sm transition-all hover:bg-white/10">
+      <div className="relative group overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-md shadow-sm transition-colors hover:bg-white/10">
         <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 block">
           Leads Limit (Max 100)
         </label>
@@ -377,7 +377,7 @@ export default function LeadGenWizardPage() {
           key={card.id}
           type="button"
           onClick={() => { setMode(card.id as WizardMode); if (card.id === 'step-by-step') setStep(1); }}
-          className={`group relative overflow-hidden rounded-xl border p-5 transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] text-left ${mode === card.id
+          className={`group relative overflow-hidden rounded-xl border p-5 transition-[box-shadow,transform] duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] text-left ${mode === card.id
             ? "border-primary/50 bg-white/10 ring-2 ring-primary/30"
             : "border-white/10 bg-white/5 hover:bg-white/10"
             }`}
@@ -423,7 +423,7 @@ export default function LeadGenWizardPage() {
               </button>
               <button
                 type="button"
-                className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 transition-all shadow-lg shadow-indigo-500/20"
+                className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 transition-colors shadow-lg shadow-indigo-500/20"
                 onClick={() => { setCurrentAiField(null); setAiWriterOpen(true); }}
               >
                 <Wand2 className="w-3.5 h-3.5" /> Write AI
@@ -445,7 +445,7 @@ export default function LeadGenWizardPage() {
         <button
           type="submit"
           disabled={submitting || !state.name || (mode === 'ai-only' && !state.aiPrompt)}
-          className="group relative px-8 py-4 rounded-xl font-semibold text-white shadow-2xl transition-all hover:scale-[1.02] disabled:opacity-50 disabled:grayscale disabled:hover:scale-100 w-full md:w-auto"
+          className="group relative px-8 py-4 rounded-xl font-semibold text-white shadow-2xl transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:grayscale disabled:hover:scale-100 w-full md:w-auto"
         >
           <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient" />
           <span className="relative flex items-center justify-center gap-2">
@@ -510,7 +510,7 @@ export default function LeadGenWizardPage() {
 
               <div className="flex justify-between pt-4">
                 <button type="button" onClick={() => setStep(2)} className="px-6 py-2.5 border border-white/10 rounded-lg hover:bg-white/5 transition-colors">Back</button>
-                <button type="submit" disabled={submitting} className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg shadow-lg hover:shadow-indigo-500/25 transition-all">
+                <button type="submit" disabled={submitting} className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg shadow-lg hover:shadow-indigo-500/25 transition-shadow">
                   {submitting ? "Launching..." : "Launch Lead Gen"}
                 </button>
               </div>
@@ -560,7 +560,7 @@ export default function LeadGenWizardPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="group relative px-8 py-4 rounded-xl font-semibold text-white shadow-2xl transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 w-full md:w-auto"
+          className="group relative px-8 py-4 rounded-xl font-semibold text-white shadow-2xl transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 w-full md:w-auto"
         >
           <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-zinc-600 via-slate-600 to-zinc-600 bg-[length:200%_auto] animate-gradient" />
           <span className="relative flex items-center justify-center gap-2">

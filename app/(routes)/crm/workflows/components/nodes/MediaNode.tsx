@@ -22,7 +22,7 @@ export function MediaNode({ id, data, selected }: MediaNodeProps) {
 
     return (
         <div
-            className={`group relative p-1 transition-all rounded-lg w-full h-full ${selected ? "ring-2 ring-cyan-500 ring-offset-2 ring-offset-[#0f1115]" : ""
+            className={`group relative p-1 transition-colors rounded-lg w-full h-full ${selected ? "ring-2 ring-cyan-500 ring-offset-2 ring-offset-[#0f1115]" : ""
                 }`}
         >
             {selected && (

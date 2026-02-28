@@ -102,7 +102,7 @@ function EntityCard({ entity, delay = 0, showArrow = true, onClick }: EntityCard
                 className={cn(
                     "flex-1 p-4 rounded-xl border cursor-pointer",
                     "bg-card border-border",
-                    "hover:shadow-lg hover:border-primary/50 transition-all",
+                    "hover:shadow-lg hover:border-primary/50 transition-[color,background-color,border-color,box-shadow]",
                     "group"
                 )}
             >

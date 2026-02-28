@@ -48,7 +48,7 @@ export const WidgetWrapper = ({
                                 <Icon size={16} />
                             </div>
                         )}
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-none truncate">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-none truncate">
                             {title}
                         </CardTitle>
                     </div>
@@ -62,7 +62,7 @@ export const WidgetWrapper = ({
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" size={12} />
                         <Input
                             placeholder={`Search ${title.toLowerCase()}...`}
-                            className="pl-8 h-8 bg-white/5 border-white/10 focus:bg-white/10 focus:border-primary/50 transition-all text-[11px] rounded-lg"
+                            className="pl-8 h-8 bg-white/5 border-white/10 focus:bg-white/10 focus:border-primary/50 transition-colors text-[11px] rounded-lg"
                             onChange={(e) => onSearch(e.target.value)}
                             value={searchValue}
                         />
@@ -87,9 +87,9 @@ export const WidgetWrapper = ({
                     </Link>
                 )}
                 <div className="flex items-center gap-3 ml-auto text-[10px] text-muted-foreground/60 font-medium">
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1.5" suppressHydrationWarning>
                         <RefreshCcw size={10} className="hover:rotate-180 transition-transform duration-500 cursor-pointer" />
-                        As of Today at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        As of Today at {new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date())}
                     </span>
                 </div>
             </CardFooter>

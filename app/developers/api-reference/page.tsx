@@ -12,7 +12,7 @@ export const metadata = {
 /* ------------------------------------------------------------------ */
 /* Shared Styles                                                      */
 /* ------------------------------------------------------------------ */
-const cardClass = "group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition-all hover:bg-white/[0.07]";
+const cardClass = "group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition-colors hover:bg-white/[0.07]";
 const badgeClass = (color: string) => `inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider ${color}`;
 const codeBlockClass = "bg-[#0a0a0a] border border-white/10 rounded-xl p-5 font-mono text-sm overflow-x-auto text-gray-300 leading-relaxed";
 
@@ -129,7 +129,7 @@ export default function ApiReferencePage() {
 
                         {/* Hero */}
                         <div className="mb-16">
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 mb-2">
                                 Master API Reference
                             </h1>
                             <p className="text-lg text-gray-400 max-w-3xl">

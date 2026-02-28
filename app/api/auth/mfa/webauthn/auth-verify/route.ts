@@ -36,8 +36,8 @@ export async function POST(req: Request) {
             data: { counter: verification.authenticationInfo.newCounter },
         });
 
-        // Generate a short-lived token to prove MFA was completed
-        const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "fallback_secret");
+        if (!process.env.NEXTAUTH_SECRET) throw new Error("Critical: NEXTAUTH_SECRET is not set");
+        const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
         const mfaToken = await new SignJWT({ sub: user.id, mfaVerified: true })
             .setProtectedHeader({ alg: "HS256" })
             .setIssuedAt()

@@ -332,7 +332,7 @@ export default function CertificationPaths() {
                                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                                     >
                                         <Card className={cn(
-                                            "relative overflow-hidden transition-all duration-300 border bg-black/40 group",
+                                            "relative overflow-hidden transition-colors duration-300 border bg-black/40 group",
                                             allDone
                                                 ? "border-emerald-500/40 bg-emerald-500/[0.03] shadow-[0_0_25px_rgba(16,185,129,0.05)]"
                                                 : locked
@@ -342,7 +342,7 @@ export default function CertificationPaths() {
                                             <CardHeader className="p-4 pb-2">
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className={cn(
-                                                        "w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-all duration-500",
+                                                        "w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-colors duration-500",
                                                         allDone
                                                             ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 rotate-[360deg]"
                                                             : locked
@@ -387,7 +387,7 @@ export default function CertificationPaths() {
                                                     {milestone.requirements.map((req, ridx) => (
                                                         <div key={ridx} className="flex items-center gap-3 group/item">
                                                             <div className={cn(
-                                                                "w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-all",
+                                                                "w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-colors",
                                                                 req.done
                                                                     ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
                                                                     : "border-white/10 bg-white/5"
@@ -417,7 +417,7 @@ export default function CertificationPaths() {
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${(doneCount / totalCount) * 100}%` }}
                                                             className={cn(
-                                                                "h-full transition-all duration-500",
+                                                                "h-full transition-colors duration-500",
                                                                 allDone ? "bg-emerald-500" : "bg-blue-500"
                                                             )}
                                                         />
@@ -444,7 +444,7 @@ export default function CertificationPaths() {
                 <div className="lg:col-span-2 space-y-6">
                     <div className="flex items-center justify-between">
                         <div className="space-y-1">
-                            <h3 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4">
+                            <h3 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4">
                                 Revenue & Points Simulator
                             </h3>
                             <p className="text-gray-500 text-sm font-medium">Calculate the ROI and Mastery Points of your sales activity.</p>
@@ -535,7 +535,7 @@ export default function CertificationPaths() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.1 * idx }}
-                                className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center justify-between group hover:bg-white/[0.05] hover:border-white/20 transition-all cursor-pointer"
+                                className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center justify-between group hover:bg-white/[0.05] hover:border-white/20 transition-colors cursor-pointer"
                             >
                                 <div className="flex items-center gap-4">
                                     <div className={cn(
@@ -581,7 +581,7 @@ export default function CertificationPaths() {
                                 ))}
                             </div>
                         </div>
-                        <button className="px-12 py-6 bg-amber-500 text-black font-black uppercase text-xs tracking-[0.3em] rounded-2xl hover:bg-amber-400 hover:scale-105 active:scale-95 transition-all shadow-[0_10px_40px_rgba(245,158,11,0.3)]">
+                        <button className="px-12 py-6 bg-amber-500 text-black font-black uppercase text-xs tracking-[0.3em] rounded-2xl hover:bg-amber-400 hover:scale-105 active:scale-95 transition-[color,background-color,border-color,transform] shadow-[0_10px_40px_rgba(245,158,11,0.3)]">
                             Claim Status
                         </button>
                     </div>

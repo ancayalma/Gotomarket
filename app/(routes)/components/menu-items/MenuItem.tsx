@@ -33,7 +33,7 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
             <Link href={isLocked ? "#" : href} onClick={isLocked ? (e) => e.preventDefault() : onClick} className="flex-shrink-0">
                 <div
                     className={cn(
-                        "relative flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-all duration-200 gap-0.5",
+                        "relative flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-colors duration-200 gap-0.5",
                         isActive
                             ? "bg-primary/20 text-primary"
                             : "text-muted-foreground",
@@ -73,7 +73,7 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
             <Link href={isLocked ? "#" : href} onClick={isLocked ? (e) => e.preventDefault() : onClick} className={cn(isLocked && "cursor-not-allowed")}>
                 <div
                     className={cn(
-                        "relative w-full flex items-center rounded-xl transition-all duration-200 group text-sm font-medium",
+                        "relative w-full flex items-center rounded-xl transition-colors duration-200 group text-sm font-medium",
                         isOpen ? "py-1.5 px-2" : "flex-col py-2 px-1 justify-center gap-0.5",
                         isActive
                             ? "text-primary"
@@ -89,7 +89,7 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                     {/* Icon */}
                     <div className={cn(
                         "relative z-10 flex items-center justify-center min-w-[24px]",
-                        !isOpen && "w-8 h-8 rounded-md transition-all duration-200 hover:bg-white/10 hover:ring-1 hover:ring-white/70 group/icon"
+                        !isOpen && "w-8 h-8 rounded-md transition-colors duration-200 hover:bg-white/10 hover:ring-1 hover:ring-white/70 group/icon"
                     )}>
                         <Icon
                             className={cn(
@@ -112,7 +112,7 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                         transition={{ duration: 0.2 }}
                         className={cn(
                             "ml-2.5 whitespace-nowrap z-10 flex items-center gap-2 uppercase tracking-tight py-0 px-2 leading-normal",
-                            isActive ? "bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-all duration-300"
+                            isActive ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-colors duration-300"
                         )}
                         style={{
                             fontFamily: 'var(--nav-item-font)',

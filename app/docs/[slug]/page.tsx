@@ -25,7 +25,7 @@ function MarkdownRenderer({ content }: { content: string }) {
                 if (line.trim() === '') return <br key={i} />;
 
                 // Headers
-                if (line.startsWith('# ')) return <h1 key={i} className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{line.substring(2)}</h1>;
+                if (line.startsWith('# ')) return <h1 key={i} className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{line.substring(2)}</h1>;
                 if (line.startsWith('## ')) return <h2 key={i} className="text-2xl font-semibold mt-8 mb-4 text-white flex items-center"><span className="w-1 h-6 bg-primary mr-3 rounded-full"></span>{line.substring(3)}</h2>;
                 if (line.startsWith('### ')) return <h3 key={i} className="text-xl font-medium mt-6 mb-3 text-white/90">{line.substring(4)}</h3>;
 
@@ -133,7 +133,7 @@ export default async function DocDetailPage(props: { params: Promise<{ slug: str
                     <div className="flex items-center gap-2 text-sm text-primary font-medium mb-4 uppercase tracking-wider">
                         <span>{doc.category}</span>
                     </div>
-                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{doc.title}</h1>
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{doc.title}</h1>
                 </header>
 
                 {doc.videoUrl && (

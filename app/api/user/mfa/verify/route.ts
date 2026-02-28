@@ -17,7 +17,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Missing code or secret" }, { status: 400 });
     }
 
-    const isValid = verifyTotpToken(code, secret);
+    const isValid = await verifyTotpToken(code, secret);
 
     if (!isValid) {
         return NextResponse.json({ error: "Invalid verification code" }, { status: 400 });

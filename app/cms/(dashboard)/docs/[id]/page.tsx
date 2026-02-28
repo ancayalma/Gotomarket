@@ -256,7 +256,7 @@ export default function DocEditorPage({ params }: { params: Promise<{ id: string
                     <Button
                         type="submit"
                         disabled={loading}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 border border-blue-500/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 border border-blue-500/50 transition-transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         Save Article

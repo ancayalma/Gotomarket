@@ -86,18 +86,31 @@ const SideBar = async () => {
 
   const activeNavStructure = deduplicateStructure(rawStructure);
 
-  const ensureCommandHasLeads = (items: NavItem[]) => {
-    items.forEach(item => {
-      if (item.id === "nav_command") {
-        if (!item.children || item.children.length === 0) {
-          item.children = [{ id: "sub_command_leads", type: "item", label: "Leads", href: "/crm/leads", iconName: "Users" }];
-        }
-      } else if (item.children) {
-        ensureCommandHasLeads(item.children);
+  const ensurePlatformMenu = (items: NavItem[]) => {
+    if (!isPartnerAdmin) return;
+    const systemGroup = items.find(i => i.id === "group_system");
+    if (systemGroup && systemGroup.children) {
+      const hasPlatform = systemGroup.children.some((i: any) => i.id === "nav_platform");
+      if (!hasPlatform) {
+        systemGroup.children.push({
+          id: "nav_platform",
+          type: "item",
+          label: "Platform",
+          iconName: "Globe",
+          href: "/partners",
+          permissions: { minRole: "PLATFORM_ADMIN" },
+          children: [
+            { id: "sub_platform_team", type: "item", label: "Team Management", href: "/partners" },
+            { id: "sub_platform_keys", type: "item", label: "System Keys", href: "/partners/ai-system-config" },
+            { id: "sub_platform_pricing", type: "item", label: "Model Pricing", href: "/partners/ai-pricing" },
+            { id: "sub_platform_email", type: "item", label: "System Email", href: "/partners/email-system-config" },
+            { id: "sub_platform_plans", type: "item", label: "Manage Plans", href: "/partners/plans" }
+          ]
+        });
       }
-    });
+    }
   };
-  ensureCommandHasLeads(activeNavStructure);
+  ensurePlatformMenu(activeNavStructure);
 
   return <DynamicModuleMenu
     navStructure={activeNavStructure}

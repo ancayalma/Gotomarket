@@ -281,7 +281,7 @@ export const TeamPortalForm = ({ teamId, initialPortal }: TeamPortalFormProps) =
                             <Button
                                 type="submit"
                                 disabled={isPending}
-                                className="min-w-[140px] h-11 text-base shadow-lg shadow-teal-500/20 hover:shadow-teal-500/30 transition-all bg-teal-600 hover:bg-teal-700"
+                                className="min-w-[140px] h-11 text-base shadow-lg shadow-teal-500/20 hover:shadow-teal-500/30 transition-[color,background-color,border-color,box-shadow] bg-teal-600 hover:bg-teal-700"
                             >
                                 {isPending ? "Saving..." : portal ? "Update Portal" : "Create Portal"}
                             </Button>

@@ -15,7 +15,7 @@ export default function DashboardHeader({ userName }: DashboardHeaderProps) {
         <div className="mb-8 space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                         Welcome back, {userName}
                     </h1>
                     <p className="text-slate-400 mt-1">
@@ -26,7 +26,7 @@ export default function DashboardHeader({ userName }: DashboardHeaderProps) {
                 {/* Active Users Button - Kept dark */}
                 <button
                     onClick={() => setShowActiveUsers(true)}
-                    className="relative p-2 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/5 transition-all group"
+                    className="relative p-2 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/5 transition-colors group"
                     title="Active Users"
                 >
                     <Users className="h-5 w-5 text-slate-400 group-hover:text-white" />

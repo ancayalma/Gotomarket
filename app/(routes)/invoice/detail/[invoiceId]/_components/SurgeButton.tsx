@@ -61,7 +61,7 @@ export const SurgeButton = ({ invoiceId, paymentLink, paymentStatus, amount, cur
                 disabled={loading}
                 variant="default"
                 className={cn(
-                    "font-bold py-5 px-6 rounded-xl transition-all duration-300 shadow-lg",
+                    "font-bold py-5 px-6 rounded-xl transition-colors duration-300 shadow-lg",
                     activeLink
                         ? "bg-[#0052FF] hover:bg-[#0052FF]/90 text-white shadow-blue-600/20"
                         : "bg-blue-600/10 border border-blue-500/50 text-blue-400 hover:bg-blue-600/20 shadow-none"

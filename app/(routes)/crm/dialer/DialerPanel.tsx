@@ -521,7 +521,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
                     variant="ghost"
                     size="sm"
                     onClick={() => key === 'CLR' ? clearDial() : appendDial(String(key))}
-                    className="h-8 bg-white/[0.03] border border-white/[0.05] hover:bg-amber-500/10 hover:border-amber-500/30 text-base font-bold transition-all p-0"
+                    className="h-8 bg-white/[0.03] border border-white/[0.05] hover:bg-amber-500/10 hover:border-amber-500/30 text-base font-bold transition-colors p-0"
                   >
                     {key}
                   </Button>

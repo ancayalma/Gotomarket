@@ -132,7 +132,7 @@ export default function DealRoomView({ dealRoom, contract }: DealRoomProps) {
                             <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary">
                                 <FileText className="h-8 w-8" />
                             </div>
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{contract.title}</h1>
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{contract.title}</h1>
                             <p className="text-muted-foreground max-w-2xl mx-auto">
                                 We are excited to partner with **{contract.assigned_account?.name || "you"}**.
                                 This proposal outlines the scope, timeline, and investment for our collaboration.
@@ -143,7 +143,7 @@ export default function DealRoomView({ dealRoom, contract }: DealRoomProps) {
                     {/* Contract Details / Scope */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Scope of Work</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Scope of Work</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="prose dark:prose-invert max-w-none">
@@ -180,7 +180,7 @@ export default function DealRoomView({ dealRoom, contract }: DealRoomProps) {
                     {/* Pricing Config */}
                     <Card className="border-emerald-500/20 shadow-lg shadow-emerald-500/5">
                         <CardHeader className="bg-emerald-500/5 border-b border-emerald-500/10">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Investment</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Investment</CardTitle>
                             <CardDescription>Tailor your package</CardDescription>
                         </CardHeader>
                         <CardContent className="pt-6 space-y-4">

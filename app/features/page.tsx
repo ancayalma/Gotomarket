@@ -38,7 +38,7 @@ export default function FeaturesPage() {
                                 <span className="text-[10px] font-mono text-cyan-400 tracking-[0.4em] uppercase">SYSTEM CAPABILITIES</span>
                             </div>
 
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                                 <span className="block text-white">REVENUE</span>
                                 <span className="block bg-gradient-to-r from-violet-400 via-white to-cyan-500 bg-clip-text text-transparent">
                                     SYNAPSES
@@ -106,7 +106,7 @@ export default function FeaturesPage() {
                                         </div>
                                     </div>
                                     <div className="flex-1 w-full bg-black/60 p-6 md:p-12 border-t lg:border-t-0 lg:border-l border-white/5">
-                                        <div className="rounded-3xl glass-panel border border-white/10 group-hover:border-cyan-500/30 transition-all duration-700 min-h-[600px] lg:h-full flex items-center justify-center overflow-hidden">
+                                        <div className="rounded-3xl glass-panel border border-white/10 group-hover:border-cyan-500/30 transition-colors duration-700 min-h-[600px] lg:h-full flex items-center justify-center overflow-hidden">
                                             <div className="w-full max-w-2xl transform scale-[0.85] sm:scale-95 md:scale-100">
                                                 <LeadGenDashboard />
                                             </div>
@@ -168,7 +168,7 @@ export default function FeaturesPage() {
                                         </div>
                                     </div>
                                     <div className="flex-1 w-full bg-black/60 p-6 md:p-12 border-t lg:border-t-0 lg:border-r border-white/5">
-                                        <div className="rounded-3xl glass-panel border border-white/10 group-hover:border-violet-500/30 transition-all duration-700 min-h-[600px] lg:h-full flex items-center justify-center overflow-hidden">
+                                        <div className="rounded-3xl glass-panel border border-white/10 group-hover:border-violet-500/30 transition-colors duration-700 min-h-[600px] lg:h-full flex items-center justify-center overflow-hidden">
                                             <div className="w-full max-w-2xl transform scale-[0.85] sm:scale-95 md:scale-100">
                                                 <AgentInterface />
                                             </div>
@@ -230,7 +230,7 @@ export default function FeaturesPage() {
                                         </div>
                                     </div>
                                     <div className="flex-1 w-full bg-black/60 p-6 md:p-12 border-t lg:border-t-0 lg:border-l border-white/5">
-                                        <div className="rounded-3xl glass-panel border border-white/10 group-hover:border-emerald-500/30 transition-all duration-700 min-h-[700px] lg:h-full flex items-center justify-center overflow-hidden">
+                                        <div className="rounded-3xl glass-panel border border-white/10 group-hover:border-emerald-500/30 transition-colors duration-700 min-h-[700px] lg:h-full flex items-center justify-center overflow-hidden">
                                             <div className="w-full max-w-2xl transform scale-[0.85] sm:scale-95 md:scale-100 p-2">
                                                 <AnalyticsGraph />
                                             </div>
@@ -316,7 +316,7 @@ export default function FeaturesPage() {
                         <div className="container mx-auto px-4 text-center">
                             <h2 className="text-5xl md:text-8xl font-black mb-12 uppercase">Ready for <span className="text-cyan-500">Agency?</span></h2>
                             <Link href="/register">
-                                <Button className="bg-white hover:bg-cyan-500 text-black px-16 py-12 text-2xl rounded-3xl font-black tracking-widest transition-all duration-500 shadow-[0_0_80px_rgba(255,255,255,0.1)]">
+                                <Button className="bg-white hover:bg-cyan-500 text-black px-16 py-12 text-2xl rounded-3xl font-black tracking-widest transition-colors duration-500 shadow-[0_0_80px_rgba(255,255,255,0.1)]">
                                     INITIALIZE CORE
                                 </Button>
                             </Link>

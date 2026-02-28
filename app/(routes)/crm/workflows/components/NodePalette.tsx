@@ -169,7 +169,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
     return (
         <Card className="w-[220px] shadow-2xl max-h-[70vh] bg-[#0f1115]/95 backdrop-blur-md border-white/10">
             <CardHeader className="pb-3 pt-5">
-                <CardTitle className="text-xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-none py-1 flex items-center gap-2 whitespace-nowrap overflow-visible">
+                <CardTitle className="text-xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-none py-1 flex items-center gap-2 whitespace-nowrap overflow-visible">
                     <Shield className="h-4 w-4 text-orange-500 shrink-0" />
                     Add Steps
                 </CardTitle>

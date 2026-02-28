@@ -190,13 +190,13 @@ export default function PublicLibraryPage() {
                         <div className="flex bg-slate-900 border border-white/10 rounded-lg p-1">
                             <button
                                 onClick={() => setViewMode("grid")}
-                                className={cn("p-2 rounded-md transition-all", viewMode === "grid" ? "bg-slate-800 text-white shadow-sm" : "text-slate-400 hover:text-white")}
+                                className={cn("p-2 rounded-md transition-colors", viewMode === "grid" ? "bg-slate-800 text-white shadow-sm" : "text-slate-400 hover:text-white")}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>
                             </button>
                             <button
                                 onClick={() => setViewMode("list")}
-                                className={cn("p-2 rounded-md transition-all", viewMode === "list" ? "bg-slate-800 text-white shadow-sm" : "text-slate-400 hover:text-white")}
+                                className={cn("p-2 rounded-md transition-colors", viewMode === "list" ? "bg-slate-800 text-white shadow-sm" : "text-slate-400 hover:text-white")}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6" /><line x1="8" x2="21" y1="12" y2="12" /><line x1="8" x2="21" y1="18" y2="18" /><line x1="3" x2="3.01" y1="6" y2="6" /><line x1="3" x2="3.01" y1="12" y2="12" /><line x1="3" x2="3.01" y1="18" y2="18" /></svg>
                             </button>
@@ -225,7 +225,7 @@ export default function PublicLibraryPage() {
                 <div
                     {...getRootProps()}
                     className={cn(
-                        "border-2 border-dashed border-white/10 rounded-2xl p-8 mb-8 text-center transition-all cursor-pointer group",
+                        "border-2 border-dashed border-white/10 rounded-2xl p-8 mb-8 text-center transition-colors cursor-pointer group",
                         isDragActive ? "border-emerald-500/50 bg-emerald-500/5 text-emerald-400" : "hover:border-white/20 hover:bg-white/5",
                         uploading && "pointer-events-none opacity-50"
                     )}
@@ -262,7 +262,7 @@ export default function PublicLibraryPage() {
                                         key={item.id}
                                         onClick={() => setSelectedItem(item)}
                                         className={cn(
-                                            "group relative aspect-square rounded-xl overflow-hidden cursor-pointer border transition-all",
+                                            "group relative aspect-square rounded-xl overflow-hidden cursor-pointer border transition-colors",
                                             selectedItem?.id === item.id
                                                 ? "border-emerald-500 ring-2 ring-emerald-500/20 shadow-lg shadow-emerald-500/10 z-10 scale-[1.02]"
                                                 : "border-white/5 hover:border-white/20 bg-slate-900/50"
@@ -342,7 +342,7 @@ export default function PublicLibraryPage() {
             </div>
 
             {selectedItem && (
-                <aside className="w-80 border-l border-white/10 bg-[#0F1115] h-full overflow-y-auto z-20 transition-all flex flex-col">
+                <aside className="w-80 border-l border-white/10 bg-[#0F1115] h-full overflow-y-auto z-20 transition-colors flex flex-col">
                     <div className="p-6 space-y-6 flex-1">
                         <div className="flex items-start justify-between">
                             <h2 className="text-lg font-semibold text-white">Details</h2>
@@ -357,7 +357,7 @@ export default function PublicLibraryPage() {
                             ) : (
                                 <img src={selectedItem.url} alt="Preview" className="w-full h-full object-contain" />
                             )}
-                            <a href={selectedItem.url} target="_blank" className="absolute top-2 right-2 p-1.5 bg-black/50 backdrop-blur rounded hover:bg-emerald-600 text-white opacity-0 group-hover:opacity-100 transition-all">
+                            <a href={selectedItem.url} target="_blank" className="absolute top-2 right-2 p-1.5 bg-black/50 backdrop-blur rounded hover:bg-emerald-600 text-white opacity-0 group-hover:opacity-100 transition-[color,background-color,border-color,opacity]">
                                 <Maximize2 className="h-3.5 w-3.5" />
                             </a>
                         </div>
@@ -366,7 +366,7 @@ export default function PublicLibraryPage() {
                             onClick={handleGenerateSEO}
                             disabled={isGenerating}
                             className={cn(
-                                "w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all shadow-lg shadow-purple-900/20",
+                                "w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-colors shadow-lg shadow-purple-900/20",
                                 "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white",
                                 isGenerating ? "opacity-75 cursor-not-allowed" : "hover:shadow-purple-500/20 hover:scale-[1.02]"
                             )}

@@ -95,7 +95,7 @@ const ProjectDashboardCockpit = ({
     <div className="flex flex-col md:flex-row items-start justify-center h-full w-full overflow-auto">
       <div className="w-full md:w-1/2">
         <div>
-          <h2 className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-tight uppercase leading-relaxed py-1 px-1">
+          <h2 className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent tracking-tight uppercase leading-relaxed py-1 px-1">
             Tasks due Today <span className="text-primary/40 ml-2">({dashboardData?.getTaskPastDue?.length})</span>
           </h2>
           {/*         <pre>
@@ -106,13 +106,13 @@ const ProjectDashboardCockpit = ({
         {dashboardData?.getTaskPastDue?.map((task: Tasks) => (
           <Card
             key={task.id}
-            className="m-2 group relative overflow-hidden border-primary/10 bg-background/40 backdrop-blur-xl hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 rounded-3xl"
+            className="m-2 group relative overflow-hidden border-primary/10 bg-background/40 backdrop-blur-xl hover:shadow-2xl hover:shadow-primary/5 transition-shadow duration-500 rounded-3xl"
           >
             {/* Ambient background glow */}
             <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
             <CardHeader className="relative z-10">
-              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 {task.title === "" ? "Untitled" : task.title}
               </CardTitle>
               <CardDescription className="text-muted-foreground/80">{task.content}</CardDescription>
@@ -156,7 +156,7 @@ const ProjectDashboardCockpit = ({
                 </SheetTrigger>
                 <SheetContent className="rounded-l-[40px] border-l-primary/20">
                   <SheetHeader>
-                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Pulse</SheetTitle>
+                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Pulse</SheetTitle>
                   </SheetHeader>
                   <TeamConversations taskId={task.id} data={task.comments} />
                 </SheetContent>
@@ -204,20 +204,20 @@ const ProjectDashboardCockpit = ({
       </div>
       <div className="w-full pt-5 md:w-1/2 md:pt-0">
         <div>
-          <h2 className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-tight uppercase leading-relaxed py-1 px-1">
+          <h2 className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent tracking-tight uppercase leading-relaxed py-1 px-1">
             Tasks due in 7 days <span className="text-primary/40 ml-2">({dashboardData?.getTaskPastDueInSevenDays?.length})</span>
           </h2>
         </div>
         {dashboardData?.getTaskPastDueInSevenDays?.map((task: Tasks) => (
           <Card
             key={task.id}
-            className="m-2 group relative overflow-hidden border-primary/10 bg-background/40 backdrop-blur-xl hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 rounded-3xl"
+            className="m-2 group relative overflow-hidden border-primary/10 bg-background/40 backdrop-blur-xl hover:shadow-2xl hover:shadow-primary/5 transition-shadow duration-500 rounded-3xl"
           >
             {/* Ambient background glow */}
             <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
             <CardHeader className="relative z-10">
-              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                 {task.title === "" ? "Untitled" : task.title}
               </CardTitle>
               <CardDescription className="text-muted-foreground/80">{task.content}</CardDescription>
@@ -261,7 +261,7 @@ const ProjectDashboardCockpit = ({
                 </SheetTrigger>
                 <SheetContent className="rounded-l-[40px] border-l-primary/20">
                   <SheetHeader>
-                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Pulse</SheetTitle>
+                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Pulse</SheetTitle>
                   </SheetHeader>
                   <TeamConversations taskId={task.id} data={task.comments} />
                 </SheetContent>

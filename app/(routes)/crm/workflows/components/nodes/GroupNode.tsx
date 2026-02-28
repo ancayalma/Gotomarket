@@ -10,7 +10,7 @@ interface GroupNodeProps {
 
 export function GroupNode({ data, selected }: GroupNodeProps) {
     return (
-        <div className={`group relative w-full h-full p-6 border-2 border-dashed transition-all duration-300 rounded-3xl ${selected
+        <div className={`group relative w-full h-full p-6 border-2 border-dashed transition-colors duration-300 rounded-3xl ${selected
                 ? "bg-white/5 border-cyan-500/50 shadow-[0_0_80px_rgba(6,182,212,0.15)] ring-2 ring-cyan-500/20"
                 : "bg-white/[0.02] border-white/5"
             }`}>

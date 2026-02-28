@@ -119,7 +119,7 @@ const TaskViewActions = ({
       <Sheet open={openEdit} onOpenChange={(open) => setOpenEdit(open)}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto md:overflow-y-hidden">
           <SheetHeader>
-            <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Edit Task</SheetTitle>
+            <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Edit Task</SheetTitle>
           </SheetHeader>
           <UpdateTaskDialog
             users={users}

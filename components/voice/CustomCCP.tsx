@@ -949,7 +949,7 @@ export default function CustomCCP({
                     key={key}
                     variant="outline"
                     onClick={() => handlePadClick(key)}
-                    className="h-10 text-lg font-medium transition-all active:scale-95 hover:bg-primary/10 hover:border-primary/50 text-foreground"
+                    className="h-10 text-lg font-medium transition-[color,background-color,border-color,transform] active:scale-95 hover:bg-primary/10 hover:border-primary/50 text-foreground"
                   >
                     {key}
                   </Button>
@@ -961,7 +961,7 @@ export default function CustomCCP({
                     key={key}
                     variant="outline"
                     onClick={() => handlePadClick(key)}
-                    className={`h-10 text-lg font-medium transition-all active:scale-95 ${key === "Clear" ? "text-xs text-muted-foreground uppercase tracking-widest" : "hover:bg-primary/5 hover:border-primary/30 text-foreground"}`}
+                    className={`h-10 text-lg font-medium transition-[color,background-color,border-color,transform] active:scale-95 ${key === "Clear" ? "text-xs text-muted-foreground uppercase tracking-widest" : "hover:bg-primary/5 hover:border-primary/30 text-foreground"}`}
                   >
                     {key === "Clear" ? "CLR" : key}
                   </Button>

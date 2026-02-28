@@ -68,7 +68,7 @@ const RightViewModal = ({
           <div className={`flex flex-col h-full ${width}`}>
             <div className="flex justify-between w-full">
               <Dialog.Title className="font-semibold p-3 w-full" asChild>
-                <span className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                <span className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                   {title}
                 </span>
               </Dialog.Title>

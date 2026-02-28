@@ -193,7 +193,7 @@ export default async function IndustryPage(props: Props) {
 
                             {/* Right: Agent Descriptions */}
                             <div className="space-y-6">
-                                <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-all">
+                                <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors">
                                     <div className="flex items-center gap-3 mb-3">
                                         <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
                                             <Target className="w-5 h-5 text-blue-400" />
@@ -206,7 +206,7 @@ export default async function IndustryPage(props: Props) {
                                     </p>
                                 </div>
 
-                                <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-all">
+                                <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors">
                                     <div className="flex items-center gap-3 mb-3">
                                         <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
                                             <TrendingUp className="w-5 h-5 text-green-400" />
@@ -219,7 +219,7 @@ export default async function IndustryPage(props: Props) {
                                     </p>
                                 </div>
 
-                                <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-all">
+                                <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors">
                                     <div className="flex items-center gap-3 mb-3">
                                         <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
                                             <HeartHandshake className="w-5 h-5 text-amber-400" />
@@ -232,7 +232,7 @@ export default async function IndustryPage(props: Props) {
                                     </p>
                                 </div>
 
-                                <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-all">
+                                <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors">
                                     <div className="flex items-center gap-3 mb-3">
                                         <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
                                             <Clock className="w-5 h-5 text-purple-400" />

@@ -33,14 +33,14 @@ export default function BasaltHero() {
                     <Link
                         href="https://calendar.google.com/appointments/schedules/AcZssZ2Vduqr0QBnEAM50SeixE8a7kXuKt62zEFjQCQ8_xvoO6iF3hluVQHpaM6RYWMGB110_zM3MUF0"
                         target="_blank"
-                        className="h-14 px-10 flex items-center justify-center text-sm font-bold tracking-wider rounded-full bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_30px_rgba(6,182,212,0.4)] hover:shadow-[0_0_50px_rgba(6,182,212,0.6)] transition-all duration-300"
+                        className="h-14 px-10 flex items-center justify-center text-sm font-bold tracking-wider rounded-full bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_30px_rgba(6,182,212,0.4)] hover:shadow-[0_0_50px_rgba(6,182,212,0.6)] transition-[color,background-color,border-color,box-shadow] duration-300"
                     >
                         SCHEDULE A DEMO
                         <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                     <Link
                         href="/register"
-                        className="h-14 px-10 flex items-center justify-center text-sm font-bold tracking-wider rounded-full border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-300 backdrop-blur-sm"
+                        className="h-14 px-10 flex items-center justify-center text-sm font-bold tracking-wider rounded-full border border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-colors duration-300 backdrop-blur-sm"
                     >
                         GET STARTED FREE
                     </Link>
@@ -55,7 +55,7 @@ export default function BasaltHero() {
                         { value: '100%', label: 'AUTOMATED PIPELINES' },
                     ].map((stat) => (
                         <div key={stat.label} className="text-center group">
-                            <div className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-500 group-hover:from-cyan-400 group-hover:to-teal-500 transition-all duration-300 mb-1">
+                            <div className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-500 group-hover:from-cyan-400 group-hover:to-teal-500 transition-colors duration-300 mb-1">
                                 {stat.value}
                             </div>
                             <div className="text-xs font-mono tracking-wider text-gray-500">

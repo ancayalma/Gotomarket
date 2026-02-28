@@ -206,7 +206,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
             className={cn(
               "absolute -right-3 top-16 z-[100]",
               "h-6 w-6 rounded-full flex items-center justify-center",
-              "bg-primary text-primary-foreground shadow-md transition-all duration-200",
+              "bg-primary text-primary-foreground shadow-md transition-colors duration-200",
               "opacity-0 group-hover:opacity-100",
               "hover:scale-110 focus:outline-none ring-2 ring-background"
             )}

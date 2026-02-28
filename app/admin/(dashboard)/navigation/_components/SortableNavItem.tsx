@@ -48,7 +48,7 @@ export function SortableNavItem({
             ref={setNodeRef}
             style={style}
             className={cn(
-                "group relative flex items-center gap-3 p-3 my-1 rounded-xl border transition-all duration-200",
+                "group relative flex items-center gap-3 p-3 my-1 rounded-xl border transition-colors duration-200",
                 item.type === "group"
                     ? "bg-primary/5 border-primary/20"
                     : "bg-background/50 border-primary/10 hover:border-primary/30",
@@ -82,7 +82,7 @@ export function SortableNavItem({
                         className={cn(
                             "truncate uppercase tracking-tight",
                             item.type === 'group'
-                                ? "bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-[2px]"
+                                ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent tracking-[2px]"
                                 : "text-primary/90"
                         )}
                         style={{

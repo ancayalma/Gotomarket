@@ -164,12 +164,12 @@ export function ManualInvoiceDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <div className="group relative w-full p-3 overflow-hidden transition-all duration-300 bg-background border border-border hover:border-primary/50 rounded-2xl h-[110px] cursor-pointer">
+                <div className="group relative w-full p-3 overflow-hidden transition-colors duration-300 bg-background border border-border hover:border-primary/50 rounded-2xl h-[110px] cursor-pointer">
                     <PlusCircle
-                        className="absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-all duration-700 pointer-events-none opacity-10 group-hover:opacity-50 group-hover:scale-125 group-hover:-rotate-0 group-hover:text-primary text-emerald-400"
+                        className="absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-[color,background-color,border-color,transform] duration-700 pointer-events-none opacity-10 group-hover:opacity-50 group-hover:scale-125 group-hover:-rotate-0 group-hover:text-primary text-emerald-400"
                     />
                     <div className="relative z-10 w-full h-full flex flex-col items-start pl-1 justify-center">
-                        <h3 className="font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-0.5 px-2 leading-tight mb-0.5">
+                        <h3 className="font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent py-0.5 px-2 leading-tight mb-0.5">
                             Create New
                         </h3>
                         <span className="block text-xl font-bold tracking-tight text-foreground mt-0.5 px-2">
@@ -182,7 +182,7 @@ export function ManualInvoiceDialog() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Manual Invoice</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Manual Invoice</DialogTitle>
                     <DialogDescription>
                         Hierarchical billing: Lead → Opportunity → Deal Item.
                     </DialogDescription>

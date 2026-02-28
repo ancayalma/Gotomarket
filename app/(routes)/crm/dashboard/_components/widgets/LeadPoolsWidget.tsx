@@ -46,7 +46,7 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                     <div className="flex h-2 w-full rounded-full overflow-hidden bg-white/5 relative shadow-inner">
                         {/* Shimmering background for progress */}
                         <div
-                            className="h-full bg-violet-600 shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all duration-1000 ease-out"
+                            className="h-full bg-violet-600 shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-colors duration-1000 ease-out"
                             style={{ width: `${totalContacted > 0 ? (totalOpened / totalContacted) * 100 : 0}%` }}
                         />
                         {/* Contacted marker */}
@@ -62,7 +62,7 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                         <div
                             key={pool.id}
                             onClick={() => router.push(`/crm/accounts/lists/${pool.id}`)}
-                            className="bg-white/5 border border-white/5 rounded-xl p-3 hover:bg-white/10 hover:border-violet-500/30 transition-all cursor-pointer group relative overflow-hidden"
+                            className="bg-white/5 border border-white/5 rounded-xl p-3 hover:bg-white/10 hover:border-violet-500/30 transition-colors cursor-pointer group relative overflow-hidden"
                         >
                             <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <TrendingUp size={10} className="text-violet-400" />
@@ -91,9 +91,9 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                 </div>
 
                 {/* Automation Status */}
-                <div className="group flex items-center gap-3 bg-gradient-to-r from-violet-500/10 to-transparent rounded-xl p-3 border border-violet-500/20 hover:border-violet-500/40 transition-all cursor-pointer">
+                <div className="group flex items-center gap-3 bg-gradient-to-r from-violet-500/10 to-transparent rounded-xl p-3 border border-violet-500/20 hover:border-violet-500/40 transition-colors cursor-pointer">
                     <div className="relative">
-                        <div className="absolute inset-0 bg-violet-500/40 blur-md rounded-full group-hover:bg-violet-400/60 transition-all animate-pulse" />
+                        <div className="absolute inset-0 bg-violet-500/40 blur-md rounded-full group-hover:bg-violet-400/60 transition-colors animate-pulse" />
                         <div className="relative p-2 bg-violet-500/20 rounded-lg text-violet-400 border border-violet-500/30">
                             <Zap size={14} className="group-hover:scale-110 transition-transform" />
                         </div>

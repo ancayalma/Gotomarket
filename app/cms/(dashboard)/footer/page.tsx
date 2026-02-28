@@ -139,7 +139,7 @@ export default function FooterAdminPage() {
         <div className="p-8 max-w-6xl mx-auto space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Footer Management</h1>
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Footer Management</h1>
                     <p className="text-slate-400 mt-1">Manage footer sections, links, and settings.</p>
                 </div>
                 <button
@@ -159,7 +159,7 @@ export default function FooterAdminPage() {
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Tagline</label>
                         <input
-                            className="w-full p-2 border rounded-md bg-slate-900 border-white/10 text-white placeholder:text-slate-500 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                            className="w-full p-2 border rounded-md bg-slate-900 border-white/10 text-white placeholder:text-slate-500 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
                             value={settings.tagline}
                             onChange={(e) => setSettings({ ...settings, tagline: e.target.value })}
                         />
@@ -167,7 +167,7 @@ export default function FooterAdminPage() {
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Copyright Text</label>
                         <input
-                            className="w-full p-2 border rounded-md bg-slate-900 border-white/10 text-white placeholder:text-slate-500 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                            className="w-full p-2 border rounded-md bg-slate-900 border-white/10 text-white placeholder:text-slate-500 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
                             value={settings.copyrightText}
                             onChange={(e) => setSettings({ ...settings, copyrightText: e.target.value })}
                         />
@@ -175,7 +175,7 @@ export default function FooterAdminPage() {
                     <div className="space-y-2">
                         <label className="text-sm font-medium">X (Twitter) URL</label>
                         <input
-                            className="w-full p-2 border rounded-md bg-slate-900 border-white/10 text-white placeholder:text-slate-500 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                            className="w-full p-2 border rounded-md bg-slate-900 border-white/10 text-white placeholder:text-slate-500 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
                             value={settings.socialXUrl}
                             onChange={(e) => setSettings({ ...settings, socialXUrl: e.target.value })}
                         />
@@ -183,7 +183,7 @@ export default function FooterAdminPage() {
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Discord URL</label>
                         <input
-                            className="w-full p-2 border rounded-md bg-slate-900 border-white/10 text-white placeholder:text-slate-500 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                            className="w-full p-2 border rounded-md bg-slate-900 border-white/10 text-white placeholder:text-slate-500 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
                             value={settings.socialDiscordUrl}
                             onChange={(e) => setSettings({ ...settings, socialDiscordUrl: e.target.value })}
                         />
@@ -255,7 +255,7 @@ export default function FooterAdminPage() {
 
                             <button
                                 onClick={() => addLink(sIndex)}
-                                className="w-full py-2 border border-dashed border-white/20 rounded-md text-sm text-slate-400 hover:bg-white/5 hover:text-white flex items-center justify-center gap-2 transition-all"
+                                className="w-full py-2 border border-dashed border-white/20 rounded-md text-sm text-slate-400 hover:bg-white/5 hover:text-white flex items-center justify-center gap-2 transition-colors"
                             >
                                 <Plus className="h-3 w-3" /> Add Link
                             </button>

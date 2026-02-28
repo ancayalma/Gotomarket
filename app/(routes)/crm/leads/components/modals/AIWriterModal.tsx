@@ -63,7 +63,7 @@ export default function AIWriterModal({ isOpen, onClose, onInsert, initialPrompt
                             What should I write?
                         </label>
                         <textarea
-                            className="w-full h-24 rounded-lg bg-background border border-input p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                            className="w-full h-24 rounded-lg bg-background border border-input p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors resize-none"
                             placeholder="e.g. Write a friendly follow-up email to a lead who hasn't responded in 3 days..."
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
@@ -74,7 +74,7 @@ export default function AIWriterModal({ isOpen, onClose, onInsert, initialPrompt
                     <button
                         onClick={handleGenerate}
                         disabled={loading || !prompt.trim()}
-                        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-500/10"
+                        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-500/10"
                     >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                         {loading ? "Generating..." : "Generate Draft"}

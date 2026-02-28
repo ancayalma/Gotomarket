@@ -102,7 +102,7 @@ export default function DashboardGrid() {
                     const CardContent = (
                         <div className="relative h-full">
                             <div className={cn(
-                                "h-full p-6 rounded-2xl bg-[#0A0A0B] border border-white/5 hover:border-white/10 transition-all duration-300 relative overflow-hidden group hover:shadow-2xl hover:shadow-black/50",
+                                "h-full p-6 rounded-2xl bg-[#0A0A0B] border border-white/5 hover:border-white/10 transition-[color,background-color,border-color,box-shadow] duration-300 relative overflow-hidden group hover:shadow-2xl hover:shadow-black/50",
                             )}>
                                 {/* Gradient Blob Background */}
                                 <div className={cn("absolute -right-20 -top-20 h-40 w-40 rounded-full blur-3xl opacity-20 transition-opacity group-hover:opacity-40", item.iconColor.replace("text-", "bg-"))} />
@@ -124,7 +124,7 @@ export default function DashboardGrid() {
                                 </div>
 
                                 <div className="mt-5 relative z-10">
-                                    <h3 className="text-lg font-bold text-white group-hover:tracking-wide transition-all duration-300">{item.title}</h3>
+                                    <h3 className="text-lg font-bold text-white group-hover:tracking-wide transition-colors duration-300">{item.title}</h3>
                                     <p className="text-sm text-slate-400 mt-1 font-medium">{item.description}</p>
                                 </div>
 

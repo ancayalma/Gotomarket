@@ -19,7 +19,7 @@ export default function SecondaryNavbar() {
                             className="text-xs font-medium text-gray-400 hover:text-white transition-colors flex items-center group"
                         >
                             {link.label}
-                            <ChevronRight className="h-3 w-3 ml-1 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                            <ChevronRight className="h-3 w-3 ml-1 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-opacity" />
                         </Link>
                     ))}
                 </nav>

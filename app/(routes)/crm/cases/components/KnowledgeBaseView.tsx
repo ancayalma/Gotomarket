@@ -45,7 +45,7 @@ export default function KnowledgeBaseView({ initialArticles }: KnowledgeBaseView
                             <BookOpen className="w-5 h-5 text-emerald-500" />
                         </div>
                         <div>
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Knowledge Base</h1>
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Knowledge Base</h1>
                             <p className="text-xs text-muted-foreground">Internal documentation & customer guides</p>
                         </div>
                     </div>
@@ -75,7 +75,7 @@ export default function KnowledgeBaseView({ initialArticles }: KnowledgeBaseView
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {articles.map((article) => (
-                            <Card key={article.id} className="group hover:border-emerald-500/30 transition-all cursor-pointer bg-card/50 hover:bg-card">
+                            <Card key={article.id} className="group hover:border-emerald-500/30 transition-colors cursor-pointer bg-card/50 hover:bg-card">
                                 <CardHeader className="pb-3">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-center gap-2 mb-2">
@@ -94,7 +94,7 @@ export default function KnowledgeBaseView({ initialArticles }: KnowledgeBaseView
                                             </Badge>
                                         )}
                                     </div>
-                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                         {article.title}
                                     </CardTitle>
                                 </CardHeader>

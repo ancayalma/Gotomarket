@@ -258,7 +258,7 @@ export default function Gantt({ data }: GanttProps) {
                       <div key={t.id} className="relative h-10 hover:bg-muted/30 transition-colors group/row">
                         <div
                           className={cn(
-                            "absolute top-1.5 h-7 rounded-md shadow-sm border backdrop-blur-md bg-gradient-to-b flex items-center px-3 gap-2 cursor-pointer transition-all hover:scale-[1.01] hover:brightness-110 hover:z-20 hover:shadow-md",
+                            "absolute top-1.5 h-7 rounded-md shadow-sm border backdrop-blur-md bg-gradient-to-b flex items-center px-3 gap-2 cursor-pointer transition-[box-shadow,transform] hover:scale-[1.01] hover:brightness-110 hover:z-20 hover:shadow-md",
                             barClass
                           )}
                           style={{ left: x + 4, width: w - 8 }}

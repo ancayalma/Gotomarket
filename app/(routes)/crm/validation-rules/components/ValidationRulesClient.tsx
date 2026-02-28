@@ -189,7 +189,7 @@ export function ValidationRulesClient({ rules, teamId }: Props) {
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[520px]">
                             <DialogHeader>
-                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Formula Tester</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Formula Tester</DialogTitle>
                                 <DialogDescription>
                                     Test a formula against sample data to see if it evaluates correctly.
                                 </DialogDescription>
@@ -257,7 +257,7 @@ export function ValidationRulesClient({ rules, teamId }: Props) {
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[560px]">
                             <DialogHeader>
-                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Guard Rule</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Guard Rule</DialogTitle>
                                 <DialogDescription>
                                     Define a formula that — when TRUE — blocks the record from being saved.
                                 </DialogDescription>
@@ -388,7 +388,7 @@ export function ValidationRulesClient({ rules, teamId }: Props) {
                             </div>
                             <div className="grid gap-3">
                                 {objRules.map(rule => (
-                                    <Card key={rule.id} className={`transition-all ${!rule.is_active ? "opacity-50" : ""}`}>
+                                    <Card key={rule.id} className={`transition-colors ${!rule.is_active ? "opacity-50" : ""}`}>
                                         <CardContent className="p-4">
                                             <div className="flex items-start justify-between">
                                                 <div className="flex-1 mr-4">

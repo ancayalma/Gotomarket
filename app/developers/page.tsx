@@ -80,7 +80,7 @@ export default function DevelopersPage() {
           <div className="max-w-7xl mx-auto">
             {/* Hero */}
             <div className="text-center mb-20">
-              <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+              <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                 Build the <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400">Future</span>
               </h1>
               <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
@@ -110,7 +110,7 @@ export default function DevelopersPage() {
                   key={card.title}
                   href={card.href}
                   {...(card.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                  className="group p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/50 transition-all hover:bg-white/[0.07] flex flex-col"
+                  className="group p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/50 transition-colors hover:bg-white/[0.07] flex flex-col"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="p-3 rounded-lg bg-cyan-950/30 group-hover:bg-cyan-950/50 transition-colors">
@@ -137,7 +137,7 @@ export default function DevelopersPage() {
                   <a
                     key={link.label}
                     href={link.href}
-                    className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/5 hover:border-cyan-500/30 hover:bg-white/[0.07] transition-all text-sm text-gray-400 hover:text-white"
+                    className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/5 hover:border-cyan-500/30 hover:bg-white/[0.07] transition-colors text-sm text-gray-400 hover:text-white"
                   >
                     <div className="p-2 rounded-lg bg-white/5">{link.icon}</div>
                     {link.label}
@@ -152,7 +152,7 @@ export default function DevelopersPage() {
               <p className="text-gray-400 mb-8 max-w-xl mx-auto">
                 Our engineering team is always available on Discord to help you build your custom integrations.
               </p>
-              <a href="https://discord.gg/gcgNugyWkg" className="inline-flex items-center gap-2 px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-full transition-all">
+              <a href="https://discord.gg/gcgNugyWkg" className="inline-flex items-center gap-2 px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-full transition-colors">
                 Join Discord Community
               </a>
             </div>

@@ -108,7 +108,7 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                 {/* Sidebar content */}
                 <div
                     className={cn(
-                        "flex flex-col bg-muted/10 border-r border-border/50 py-4 gap-1 transition-all duration-300 overflow-y-auto h-full w-full",
+                        "flex flex-col bg-muted/10 border-r border-border/50 py-4 gap-1 transition-colors duration-300 overflow-y-auto h-full w-full",
                         isCollapsed ? "items-center" : ""
                     )}
                 >
@@ -123,7 +123,7 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                                 key={item.label}
                                 onClick={() => router.push(item.href)}
                                 className={cn(
-                                    "flex items-center gap-3 text-sm font-medium transition-all text-left relative rounded-lg",
+                                    "flex items-center gap-3 text-sm font-medium transition-colors text-left relative rounded-lg",
                                     isActive
                                         ? "bg-primary/10 text-primary border-r-2 border-primary"
                                         : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
@@ -138,7 +138,7 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                                     <div className="flex items-center gap-2 truncate">
                                         <span className={cn(
                                             "truncate font-black uppercase tracking-tighter text-base",
-                                            isActive ? "bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-all duration-300"
+                                            isActive ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-colors duration-300"
                                         )}>
                                             {item.label}
                                         </span>
@@ -162,7 +162,7 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
             {/* Mobile Stacked Bottom Nav (Layer 2) */}
             <div
                 className={cn(
-                    "md:hidden fixed bottom-[80px] left-0 right-0 bg-muted/10 backdrop-blur supports-[backdrop-filter]:bg-muted/60 border-t border-border/50 flex items-center justify-around z-50 px-2 shadow-sm overflow-x-auto overflow-y-hidden no-scrollbar transition-all duration-300",
+                    "md:hidden fixed bottom-[80px] left-0 right-0 bg-muted/10 backdrop-blur supports-[backdrop-filter]:bg-muted/60 border-t border-border/50 flex items-center justify-around z-50 px-2 shadow-sm overflow-x-auto overflow-y-hidden no-scrollbar transition-colors duration-300",
                     isMobileExpanded ? "h-14" : "h-12"
                 )}
                 onClick={() => setIsMobileExpanded(!isMobileExpanded)}
@@ -193,7 +193,7 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                             <item.icon className="w-4 h-4" />
 
                             <span className={cn(
-                                "text-[9px] uppercase tracking-wider font-semibold truncate max-w-full px-1 transition-all duration-200",
+                                "text-[9px] uppercase tracking-wider font-semibold truncate max-w-full px-1 transition-colors duration-200",
                                 isMobileExpanded ? "opacity-100 h-auto" : "opacity-0 h-0 overflow-hidden"
                             )}>
                                 {item.label.split(' ')[0]}

@@ -79,7 +79,7 @@ export default function TeamPage() {
         <div className="p-8 space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Team & Admins</h1>
+                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Team & Admins</h1>
                     <p className="text-slate-400 mt-1">Manage system access, roles, and permissions.</p>
                 </div>
                 <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">

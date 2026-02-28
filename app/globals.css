@@ -750,6 +750,8 @@
   /* ========================================
      Accessibility Utilities
      ======================================== */
+
+  /* Class-based reduced motion (manual toggle from settings) */
   :root.reduced-motion *,
   :root.reduced-motion *::before,
   :root.reduced-motion *::after {
@@ -765,6 +767,23 @@
   }
 }
 
+/* ========================================
+   OS-level reduced motion preference
+   This respects the user's operating system setting
+   (System Preferences > Accessibility > Reduce Motion)
+   without requiring the manual .reduced-motion class.
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -773,6 +792,7 @@
   html {
     min-height: 100%;
     overflow-x: hidden;
+    color-scheme: dark; /* Fixes native scrollbars, inputs, and form controls in dark mode */
     @apply bg-background;
     /* Ensure overscroll area is dark */
     background-color: hsl(var(--background));

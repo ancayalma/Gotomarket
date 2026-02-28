@@ -147,7 +147,7 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-4 border-white/10 bg-slate-950/90 backdrop-blur-xl">
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Refine Task</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Refine Task</DialogTitle>
                     </DialogHeader>
                     {isLoadingTask ? (
                         <div className="flex items-center justify-center flex-1 h-full">
@@ -197,15 +197,15 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
                             return (
                                 <div
                                     key={task.id}
-                                    className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.04] transition-all duration-300"
+                                    className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.04] transition-colors duration-300"
                                 >
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                         <div className="shrink-0">
                                             <div
                                                 onClick={() => handleTaskComplete(task.id)}
-                                                className="h-5 w-5 rounded-md border-2 border-white/10 bg-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 cursor-pointer flex items-center justify-center transition-all duration-200 group/check"
+                                                className="h-5 w-5 rounded-md border-2 border-white/10 bg-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 cursor-pointer flex items-center justify-center transition-colors duration-200 group/check"
                                             >
-                                                <div className="h-2 w-2 rounded-sm bg-emerald-500 opacity-0 scale-50 group-hover/check:opacity-50 group-hover/check:scale-100 transition-all duration-200" />
+                                                <div className="h-2 w-2 rounded-sm bg-emerald-500 opacity-0 scale-50 group-hover/check:opacity-50 group-hover/check:scale-100 transition-colors duration-200" />
                                             </div>
                                         </div>
 
@@ -249,7 +249,7 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-white/10 transition-all duration-300"
+                                                    className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-white/10 transition-[color,background-color,border-color,opacity] duration-300"
                                                 >
                                                     <ArrowRight className="h-4 w-4" />
                                                 </Button>

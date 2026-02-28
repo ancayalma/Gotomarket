@@ -252,7 +252,7 @@ export default function AccountListDetailsPage() {
                                             {lead.accountId ? (
                                                 <button
                                                     onClick={() => router.push(`/crm/accounts/${lead.accountId}`)}
-                                                    className="hover:underline text-left transition-all"
+                                                    className="hover:underline text-left transition-colors"
                                                 >
                                                     {lead.company || lead.lastName}
                                                 </button>
@@ -271,7 +271,7 @@ export default function AccountListDetailsPage() {
                                                 {lead.contactId ? (
                                                     <button
                                                         onClick={() => router.push(`/crm/contacts/${lead.contactId}`)}
-                                                        className="font-medium hover:underline text-left transition-all"
+                                                        className="font-medium hover:underline text-left transition-colors"
                                                     >
                                                         {lead.firstName} {lead.lastName}
                                                     </button>

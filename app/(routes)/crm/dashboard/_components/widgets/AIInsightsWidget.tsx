@@ -45,7 +45,7 @@ export const AIInsightsWidget = ({ insights = [] }: AIInsightsWidgetProps) => {
             className="overflow-hidden group/command"
         >
             {/* Neural Pulse - Premium Aesthetic */}
-            <div className="absolute -top-12 -right-12 w-32 h-32 bg-violet-600/10 rounded-full blur-[40px] pointer-events-none group-hover/command:bg-violet-600/20 transition-all duration-700" />
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-violet-600/10 rounded-full blur-[40px] pointer-events-none group-hover/command:bg-violet-600/20 transition-colors duration-700" />
 
             <div className="space-y-4 pt-4 relative z-10">
                 {insights.length === 0 ? (
@@ -64,7 +64,7 @@ export const AIInsightsWidget = ({ insights = [] }: AIInsightsWidgetProps) => {
                     insights.map((insight) => (
                         <div key={insight.id} className="space-y-4">
                             <div
-                                className="p-4 rounded-xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5 hover:border-violet-500/40 hover:from-violet-500/[0.05] hover:to-transparent transition-all duration-300 cursor-pointer group/item shadow-sm relative overflow-hidden"
+                                className="p-4 rounded-xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5 hover:border-violet-500/40 hover:from-violet-500/[0.05] hover:to-transparent transition-colors duration-300 cursor-pointer group/item shadow-sm relative overflow-hidden"
                                 onClick={() => router.push(insight.actionHref)}
                             >
                                 <div className="flex items-start gap-4">
@@ -80,7 +80,7 @@ export const AIInsightsWidget = ({ insights = [] }: AIInsightsWidgetProps) => {
                                                 )}
                                                 <button
                                                     onClick={(e) => handleDismiss(e, insight.id)}
-                                                    className="p-1 rounded-md bg-white/5 border border-white/5 hover:bg-emerald-500/20 hover:border-emerald-500/40 text-white/40 hover:text-emerald-400 transition-all"
+                                                    className="p-1 rounded-md bg-white/5 border border-white/5 hover:bg-emerald-500/20 hover:border-emerald-500/40 text-white/40 hover:text-emerald-400 transition-colors"
                                                     title="Mark as complete"
                                                 >
                                                     <Check size={12} />
@@ -93,7 +93,7 @@ export const AIInsightsWidget = ({ insights = [] }: AIInsightsWidgetProps) => {
 
                                         {/* Action link */}
                                         <div className="mt-3 flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-violet-400 translate-y-1 opacity-0 group-hover/item:translate-y-0 group-hover/item:opacity-100 transition-all duration-300">
+                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-violet-400 translate-y-1 opacity-0 group-hover/item:translate-y-0 group-hover/item:opacity-100 transition-colors duration-300">
                                                 {insight.action} <ChevronRight size={12} className="group-hover/item:translate-x-0.5 transition-transform" />
                                             </div>
                                             <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">{insight.priority} Priority</span>
@@ -120,7 +120,7 @@ export const AIInsightsWidget = ({ insights = [] }: AIInsightsWidgetProps) => {
                                                 {/* Confidence Bar */}
                                                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                                                     <div
-                                                        className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-1000 delay-300"
+                                                        className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-colors duration-1000 delay-300"
                                                         style={{ width: `${assumption.confidence * 10}%` }}
                                                     />
                                                 </div>

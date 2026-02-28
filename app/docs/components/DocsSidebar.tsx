@@ -33,7 +33,7 @@ export default async function DocsSidebar() {
                                 <li key={doc.id}>
                                     <Link
                                         href={`/docs/${doc.slug}`}
-                                        className="block py-1.5 text-sm text-gray-400 hover:text-white hover:translate-x-1 transition-all"
+                                        className="block py-1.5 text-sm text-gray-400 hover:text-white hover:translate-x-1 transition-colors"
                                     >
                                         {doc.title}
                                     </Link>

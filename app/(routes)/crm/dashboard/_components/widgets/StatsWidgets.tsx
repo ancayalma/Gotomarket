@@ -5,7 +5,6 @@ import { DollarSign, TrendingUp, Users2, Activity } from "lucide-react";
 import DashboardCard from "../DashboardCard";
 import { useRouter } from "next/navigation";
 import { getRevenueSparkline } from "@/actions/dashboard/get-revenue-sparkline";
-import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { cn } from "@/lib/utils";
 
 // --- REVENUE WIDGET ---

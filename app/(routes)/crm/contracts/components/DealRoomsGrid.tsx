@@ -56,7 +56,7 @@ export const DealRoomsGrid = ({ data }: DealRoomsGridProps) => {
                 const hasRoom = room && room.is_active;
 
                 return (
-                    <Card key={contract.id} className="group overflow-hidden border-primary/10 hover:border-primary/30 transition-all duration-300 bg-background/50 backdrop-blur-sm shadow-lg shadow-black/5 hover:shadow-primary/5">
+                    <Card key={contract.id} className="group overflow-hidden border-primary/10 hover:border-primary/30 transition-[color,background-color,border-color,box-shadow] duration-300 bg-background/50 backdrop-blur-sm shadow-lg shadow-black/5 hover:shadow-primary/5">
                         <CardHeader className="pb-3 relative">
                             <div className="flex items-center justify-between mb-2">
                                 <Badge variant={hasRoom ? "default" : "outline"} className={hasRoom ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-orange-500/10 text-orange-500 border-orange-500/20"}>
@@ -69,7 +69,7 @@ export const DealRoomsGrid = ({ data }: DealRoomsGridProps) => {
                                     </div>
                                 )}
                             </div>
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{contract.title}</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{contract.title}</CardTitle>
                             <CardDescription className="line-clamp-1">
                                 {contract.assigned_account?.name || "No Account"}
                             </CardDescription>
@@ -113,7 +113,7 @@ export const DealRoomsGrid = ({ data }: DealRoomsGridProps) => {
                         <CardFooter className="pt-2 gap-2">
                             {hasRoom ? (
                                 <>
-                                    <Button variant="outline" className="flex-1 gap-2 border-primary/20 hover:bg-primary/5 transition-all" onClick={() => window.open(`/proposal/${room.slug}`, '_blank')}>
+                                    <Button variant="outline" className="flex-1 gap-2 border-primary/20 hover:bg-primary/5 transition-colors" onClick={() => window.open(`/proposal/${room.slug}`, '_blank')}>
                                         <ExternalLink className="w-4 h-4" />
                                         View Live
                                     </Button>

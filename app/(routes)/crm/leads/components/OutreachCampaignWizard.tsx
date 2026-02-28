@@ -795,7 +795,7 @@ export default function OutreachCampaignWizard({
             {/* Step Content */}
             <Card className="max-w-6xl mx-auto">
                 <CardHeader>
-                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{steps[currentStep - 1].title}</CardTitle>
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{steps[currentStep - 1].title}</CardTitle>
                     <CardDescription>
                         {currentStep === 1 && "Set up your sequence basics and select target leads"}
                         {currentStep === 2 && "Define your sequence context and product briefing for AI personalization"}

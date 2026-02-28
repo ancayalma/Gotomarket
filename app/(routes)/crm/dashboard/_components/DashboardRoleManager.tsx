@@ -29,6 +29,7 @@ import ViewerDashboard from "./views/ViewerDashboard";
 import LoadingBox from "@/app/(routes)/dashboard/components/loading-box";
 import MyPipelineSection from "@/app/(routes)/dashboard/components/MyPipelineSection";
 import TeamPipelineSection from "@/app/(routes)/dashboard/components/TeamPipelineSection";
+import { DashboardDataProvider } from "../_context/DashboardDataContext";
 
 const DashboardRoleManager = async () => {
     const teamInfo = await getCurrentUserTeamId();
@@ -180,50 +181,56 @@ const DashboardRoleManager = async () => {
 
         const projectEntities: any[] = [];
 
+        // Pack all widget data into context — this eliminates 22+ forwarded props
+        const dashboardData = {
+            userId,
+            userName: user?.name || "User",
+            revenue: unifiedData?.summary?.revenue || 0,
+            actualRevenue: unifiedData?.summary?.actualRevenue || 0,
+            unrealizedRevenue: unifiedData?.summary?.unrealizedRevenue || 0,
+            forecastRevenue: unifiedData?.summary?.forecastRevenue || 0,
+            activePipelineCount: unifiedData?.summary?.activeDeals || 0,
+            totalLeads: unifiedData?.summary?.leadsCount || 0,
+            totalOpportunities: unifiedData?.summary?.opportunitiesCount || 0,
+            activeUsersCount,
+            crmEntities,
+            projectEntities,
+            newLeads: newLeads as any[],
+            newProjects: newProjects as any[],
+            dailyTasks: dailyTasks as any[],
+            messages: messages as any[],
+            teamActivity: teamActivity as any[],
+            recentFiles: recentFiles as any[],
+            revenuePacing,
+            outreachStats,
+            leadPools: leadPools as any[],
+            leadGenStats,
+            intelligenceStats,
+            aiInsights: aiInsights as any[],
+            myPipeline: (
+                <Suspense key="personal-pipeline-suspense" fallback={<LoadingBox />}>
+                    <MyPipelineSection userId={userId} />
+                </Suspense>
+            ),
+            teamPipeline: (
+                <Suspense key="team-pipeline-suspense" fallback={<LoadingBox />}>
+                    <TeamPipelineSection />
+                </Suspense>
+            ),
+            teamData: unifiedData?.teamData,
+            newLeadsCount: Array.isArray(newLeads) ? newLeads.length : 0,
+            newProjectsCount: Array.isArray(newProjects) ? newProjects.length : 0,
+            allTasksCount: counts.tasks,
+            messagesCount: Array.isArray(messages) ? messages.length : 0,
+        };
+
         return (
-            <AdminDashboard
-                userId={userId}
-                userName={user?.name || "User"}
-                revenue={unifiedData?.summary?.revenue || 0}
-                actualRevenue={unifiedData?.summary?.actualRevenue || 0}
-                unrealizedRevenue={unifiedData?.summary?.unrealizedRevenue || 0}
-                forecastRevenue={unifiedData?.summary?.forecastRevenue || 0}
-                activePipelineCount={unifiedData?.summary?.activeDeals || 0}
-                totalLeads={unifiedData?.summary?.leadsCount || 0}
-                totalOpportunities={unifiedData?.summary?.opportunitiesCount || 0}
-                activeUsersCount={activeUsersCount}
-                crmEntities={crmEntities}
-                projectEntities={projectEntities}
-                newLeads={newLeads}
-                newProjects={newProjects}
-                dailyTasks={dailyTasks}
-                messages={messages}
-                teamActivity={teamActivity}
-                recentFiles={recentFiles}
-                revenuePacing={revenuePacing}
-                outreachStats={outreachStats}
-                leadPools={leadPools}
-                leadGenStats={leadGenStats}
-                intelligenceStats={intelligenceStats}
-                aiInsights={aiInsights}
-                newLeadsCount={Array.isArray(newLeads) ? newLeads.length : 0}
-                newProjectsCount={Array.isArray(newProjects) ? newProjects.length : 0}
-                allTasksCount={counts.tasks}
-                messagesCount={Array.isArray(messages) ? messages.length : 0}
-                myPipeline={
-                    <Suspense key="personal-pipeline-suspense" fallback={<LoadingBox />}>
-                        <MyPipelineSection userId={userId} />
-                    </Suspense>
-                }
-                teamPipeline={
-                    <Suspense key="team-pipeline-suspense" fallback={<LoadingBox />}>
-                        <TeamPipelineSection />
-                    </Suspense>
-                }
-                initialLayout={initialLayout as any}
-                teamData={unifiedData?.teamData}
-                quickLaunchDismissed={user?.quickLaunchDismissed || false}
-            />
+            <DashboardDataProvider data={dashboardData}>
+                <AdminDashboard
+                    initialLayout={initialLayout as any}
+                    quickLaunchDismissed={user?.quickLaunchDismissed || false}
+                />
+            </DashboardDataProvider>
         );
     }
 

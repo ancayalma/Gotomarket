@@ -208,7 +208,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : closeDialog())}>
       <DialogTrigger asChild>
-        <Button className="bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 group transition-all duration-300 transform hover:scale-[1.02]">
+        <Button className="bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 group transition-[color,background-color,border-color,transform] duration-300 transform hover:scale-[1.02]">
           <FileUp className="w-4 h-4 mr-2 group-hover:animate-bounce" />
           Import Leads
         </Button>
@@ -248,7 +248,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                       <h3 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Destination List</h3>
                     </div>
 
-                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-4 transition-all hover:border-zinc-700 group">
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-4 transition-colors hover:border-zinc-700 group">
                       <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/50">
                         <div className="flex items-center gap-3">
                           <Plus className={cn("w-4 h-4 transition-colors", createNewPool ? "text-indigo-400" : "text-zinc-600")} />
@@ -271,7 +271,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                             exit={{ opacity: 0, height: 0 }}
                           >
                             <select
-                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-zinc-300 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-all appearance-none cursor-pointer"
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-zinc-300 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-colors appearance-none cursor-pointer"
                               value={poolId}
                               onChange={(e) => setPoolId(e.target.value)}
                             >
@@ -297,13 +297,13 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                             className="space-y-3"
                           >
                             <input
-                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-zinc-300 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-all"
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-zinc-300 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-colors"
                               placeholder="List name (e.g. Q1 Global Growth)"
                               value={newPoolName}
                               onChange={(e) => setNewPoolName(e.target.value)}
                             />
                             <textarea
-                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-zinc-300 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-all resize-none h-20"
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-zinc-300 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-colors resize-none h-20"
                               placeholder="Description (optional context for your team)"
                               value={newPoolDescription}
                               onChange={(e) => setNewPoolDescription(e.target.value)}
@@ -324,7 +324,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                     <div
                       onClick={() => fileInputRef.current?.click()}
                       className={cn(
-                        "group relative aspect-video rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-8 cursor-pointer overflow-hidden",
+                        "group relative aspect-video rounded-2xl border-2 border-dashed transition-colors flex flex-col items-center justify-center p-8 cursor-pointer overflow-hidden",
                         file
                           ? "bg-emerald-500/5 border-emerald-500/30"
                           : "bg-zinc-900/50 border-zinc-800 hover:border-indigo-500/40 hover:bg-zinc-900/80"
@@ -363,7 +363,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                       ) : (
                         <>
                           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                          <FileText className="w-12 h-12 text-zinc-600 mb-4 group-hover:text-indigo-400 group-hover:scale-110 transition-all duration-300" />
+                          <FileText className="w-12 h-12 text-zinc-600 mb-4 group-hover:text-indigo-400 group-hover:scale-110 transition-[color,background-color,border-color,transform] duration-300" />
                           <p className="text-zinc-400 font-medium text-center">
                             Drop your <span className="text-white">CSV</span> or <span className="text-white">Excel</span> here
                           </p>
@@ -436,13 +436,13 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
               >
                 {/* Bento Statistics Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl space-y-1 group hover:border-indigo-500/30 transition-all">
+                  <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl space-y-1 group hover:border-indigo-500/30 transition-colors">
                     <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-black">Universe Total</p>
                     <p className="text-4xl font-extrabold text-white leading-none">{preview.stats.totalRows}</p>
                     <p className="text-[10px] text-zinc-600 italic">Raw lines detected</p>
                   </div>
 
-                  <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl space-y-1 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+                  <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl space-y-1 relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
                     <div className="absolute top-2 right-2 p-2 bg-emerald-500/10 rounded-full border border-emerald-500/20 group-hover:scale-110 transition-transform">
                       <Building2 className="w-3 h-3 text-emerald-400" />
                     </div>
@@ -451,7 +451,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                     <p className="text-[10px] text-zinc-600 font-medium">Valid organizations</p>
                   </div>
 
-                  <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl space-y-1 relative overflow-hidden group hover:border-blue-500/30 transition-all">
+                  <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl space-y-1 relative overflow-hidden group hover:border-blue-500/30 transition-colors">
                     <div className="absolute top-2 right-2 p-2 bg-blue-500/10 rounded-full border border-blue-500/20 group-hover:scale-110 transition-transform">
                       <Users className="w-3 h-3 text-blue-400" />
                     </div>
@@ -460,7 +460,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                     <p className="text-[10px] text-zinc-600 font-medium">Named decision makers</p>
                   </div>
 
-                  <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl space-y-1 group hover:border-amber-500/30 transition-all">
+                  <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl space-y-1 group hover:border-amber-500/30 transition-colors">
                     <p className="text-[10px] uppercase tracking-widest text-amber-500/70 font-black">Anomalies</p>
                     <p className="text-4xl font-extrabold text-amber-500 leading-none">{preview.stats.corruptRows}</p>
                     <p className="text-[10px] text-zinc-600 italic">Rows flagged for review</p>

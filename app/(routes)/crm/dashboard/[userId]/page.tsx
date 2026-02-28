@@ -28,7 +28,7 @@ function StageBar({ label, value, total }: { label: string; value: number; total
         <span className="text-muted-foreground">{value} / {total} ({pct}%)</span>
       </div>
       <div className="h-2 w-full rounded bg-slate-200">
-        <div className="h-2 rounded bg-slate-800 transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-2 rounded bg-slate-800 transition-colors" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );

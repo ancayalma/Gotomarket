@@ -99,7 +99,7 @@ const DeleteProjectDialog = ({ boardId, boardName }: Props) => {
       </DialogTrigger>
       <DialogContent className="">
         <DialogHeader>
-          <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Delete campaign</DialogTitle>
+          <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Delete campaign</DialogTitle>
           <DialogDescription className="p-2">
             Are you sure you want to delete this campaign? You will not be able
             to recover it. All tasks will be deleted as well.

@@ -293,7 +293,7 @@ export default function ChatApp() {
               <div
                 key={s.id}
                 className={cn(
-                  "group flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:bg-muted/50",
+                  "group flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
                   activeSessionId === s.id && "bg-muted shadow-sm border border-border/50"
                 )}
                 onClick={() => {

@@ -4,7 +4,10 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Inbox, GraduationCap, ArrowRight, Zap, Folder, Rocket } from "lucide-react";
 import { useGreeting } from "@/app/hooks/use-greeting";
-import { LeadsWidget, TasksWidget, ProjectsWidget, MessagesWidget } from "../widgets";
+import { LeadsWidget } from "../widgets/LeadsWidget";
+import { TasksWidget } from "../widgets/TasksWidget";
+import { ProjectsWidget } from "../widgets/ProjectsWidget";
+import { MessagesWidget } from "../widgets/MessagesWidget";
 import DashboardCard from "../DashboardCard";
 import { QuickLaunchChecklist, type ChecklistCounts } from "../QuickLaunchChecklist";
 import { ProductTour } from "@/components/ui/ProductTour";
@@ -61,7 +64,7 @@ const MemberDashboard = ({
             <div>
                 <div className="flex items-center gap-3 mb-2">
                     <Sparkles className="w-6 h-6 text-primary animate-pulse" />
-                    <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4">
+                    <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4">
                         {greeting}{userName ? `, ${userName}` : ""}
                     </h2>
                 </div>
@@ -91,7 +94,7 @@ const MemberDashboard = ({
                         </div>
                         <button
                             onClick={() => router.push("/crm/university")}
-                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/6 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white/80 transition-all flex-shrink-0"
+                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/6 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white/80 transition-colors flex-shrink-0"
                         >
                             <GraduationCap className="w-3.5 h-3.5" />
                             Learn the platform

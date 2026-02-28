@@ -139,7 +139,7 @@ export default function PublicFormPage() {
             <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
                 <Card className="w-full max-w-md">
                     <CardHeader>
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Error</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Error</CardTitle>
                         <CardDescription>{error || "Form not found"}</CardDescription>
                     </CardHeader>
                 </Card>
@@ -188,7 +188,7 @@ export default function PublicFormPage() {
             <form onSubmit={handleSubmit} className="w-full max-w-lg">
                 <div style={containerStyle} className="p-6 md:p-8 shadow-sm border bg-white">
                     <div className="mb-8 space-y-2">
-                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{form.name}</h1>
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{form.name}</h1>
                         {form.description && (
                             <p className="text-sm opacity-80">{form.description}</p>
                         )}

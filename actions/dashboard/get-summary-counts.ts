@@ -150,7 +150,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     prismadb.crm_Leads.count({ where: getFilter("assigned_to") }),
     prismadb.tasks.count({ where: getFilter("user") }),
     prismadb.boards.count({ where: getFilter("user") }),
-    prismadb.crm_Contacts.count({ where: getFilter("assigned_to", "createdAt") }),
+    prismadb.crm_Contacts.count({ where: getFilter("assigned_to", "cratedAt") }),
     prismadb.crm_Accounts.count({ where: getAccountFilter() }),
     prismadb.crm_Contracts.count({ where: getFilter("assigned_to") }),
     // Fetch all invoices with amount and status for revenue calculation

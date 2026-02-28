@@ -34,7 +34,7 @@ export default async function BlogPage() {
                 <main className="py-20 md:py-32">
                     <div className="container mx-auto px-4">
                         <div className="text-center mb-20">
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                                 The BasaltHQ <span className="text-primary">Blog</span>
                             </h1>
                             <p className="text-xl text-gray-400 max-w-2xl mx-auto">

@@ -19,7 +19,7 @@ export default function AdminSettingsPage() {
     return (
         <div className="p-8 max-w-5xl mx-auto space-y-8">
             <div className="mb-8">
-                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Settings</h1>
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Settings</h1>
                 <p className="text-slate-400 mt-1">Manage your profile and system preferences.</p>
             </div>
 
@@ -183,7 +183,7 @@ function TeamSettings() {
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Add New Admin</DialogTitle>
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Add New Admin</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleAddUser} className="space-y-4 pt-4">
                             <div>

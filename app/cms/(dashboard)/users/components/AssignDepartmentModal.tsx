@@ -89,7 +89,7 @@ export default function AssignDepartmentModal({
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-[425px] bg-[#0A0A0A] border-amber-500/20">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                         <Building2 className="w-5 h-5 text-amber-500" />
                         Assign Department
                     </DialogTitle>

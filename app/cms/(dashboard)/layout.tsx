@@ -93,7 +93,7 @@ function NavLink({ href, icon, label }: { href: string; icon: React.ReactNode; l
     return (
         <Link
             href={href}
-            className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-300 rounded-md hover:bg-white/5 hover:text-white transition-all duration-200 group"
+            className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-300 rounded-md hover:bg-white/5 hover:text-white transition-colors duration-200 group"
         >
             <span className="h-5 w-5 text-slate-400 group-hover:text-blue-400 transition-colors">{icon}</span>
             {label}

@@ -34,7 +34,7 @@ export default function AliensPage() {
                                 <span className="text-[10px] font-mono text-cyan-400 tracking-[0.4em] uppercase">NEURAL CORES ONLINE</span>
                             </div>
 
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                                 <span className="block text-white">THE AGENTIC</span>
                                 <span className="block bg-gradient-to-r from-cyan-400 via-white to-violet-500 bg-clip-text text-transparent">
                                     STACK
@@ -48,12 +48,12 @@ export default function AliensPage() {
 
                             <div className="flex flex-col sm:flex-row justify-center gap-6">
                                 <Link href="/register">
-                                    <Button className="bg-white hover:bg-cyan-400 text-black px-12 py-10 text-xl rounded-2xl shadow-[0_0_60px_rgba(255,255,255,0.1)] font-bold tracking-widest transition-all duration-500">
+                                    <Button className="bg-white hover:bg-cyan-400 text-black px-12 py-10 text-xl rounded-2xl shadow-[0_0_60px_rgba(255,255,255,0.1)] font-bold tracking-widest transition-colors duration-500">
                                         DEPLOY CORES
                                     </Button>
                                 </Link>
                                 <Link href="/features">
-                                    <Button variant="outline" className="border-white/10 text-white hover:bg-white/5 px-12 py-10 text-xl rounded-2xl font-bold tracking-widest backdrop-blur-xl transition-all duration-300">
+                                    <Button variant="outline" className="border-white/10 text-white hover:bg-white/5 px-12 py-10 text-xl rounded-2xl font-bold tracking-widest backdrop-blur-xl transition-colors duration-300">
                                         VIEW INTERFACE
                                     </Button>
                                 </Link>
@@ -69,7 +69,7 @@ export default function AliensPage() {
                                 <div className="flex flex-col lg:flex-row items-center">
                                     <div className="flex-1 p-12 lg:p-20">
                                         <div className="flex items-center gap-4 mb-8 relative z-10">
-                                            <div className="absolute -top-12 -left-12 opacity-10 group-hover:opacity-30 transition-all duration-700 pointer-events-none group-hover:scale-110 group-hover:rotate-12">
+                                            <div className="absolute -top-12 -left-12 opacity-10 group-hover:opacity-30 transition-[opacity,transform] duration-700 pointer-events-none group-hover:scale-110 group-hover:rotate-12">
                                                 <Phone className="w-48 h-48 text-emerald-400" />
                                             </div>
                                             <div>
@@ -122,7 +122,7 @@ export default function AliensPage() {
                                 <div className="flex flex-col lg:flex-row-reverse items-center">
                                     <div className="flex-1 p-12 lg:p-20">
                                         <div className="flex items-center gap-4 mb-8 relative z-10">
-                                            <div className="absolute -top-12 -left-12 opacity-10 group-hover:opacity-30 transition-all duration-700 pointer-events-none group-hover:scale-110 group-hover:rotate-12">
+                                            <div className="absolute -top-12 -left-12 opacity-10 group-hover:opacity-30 transition-[opacity,transform] duration-700 pointer-events-none group-hover:scale-110 group-hover:rotate-12">
                                                 <MessageSquare className="w-48 h-48 text-violet-400" />
                                             </div>
                                             <div>

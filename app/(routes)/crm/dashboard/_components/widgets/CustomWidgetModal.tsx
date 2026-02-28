@@ -140,7 +140,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="bg-[#09090b] border-white/10 text-white max-w-4xl p-0 overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.6)] border-t-primary border-t-2">
                 <DialogHeader className="sr-only">
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Intelligence Architect Wizard</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Intelligence Architect Wizard</DialogTitle>
                     <DialogDescription>Design and forge custom dashboard metrics</DialogDescription>
                 </DialogHeader>
                 <div className="flex h-[700px]">
@@ -160,7 +160,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                             {steps.map((s) => (
                                 <div key={s.id} className="flex items-center gap-4 group">
                                     <div className={cn(
-                                        "w-10 h-10 rounded-2xl flex items-center justify-center border transition-all duration-700",
+                                        "w-10 h-10 rounded-2xl flex items-center justify-center border transition-colors duration-700",
                                         step === s.id
                                             ? "bg-primary border-primary text-white shadow-[0_0_20px_rgba(var(--primary),0.5)] rotate-12"
                                             : step > s.id
@@ -234,7 +234,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                                                         key={p.id}
                                                         onClick={() => setFormData({ ...formData, preset: p.id })}
                                                         className={cn(
-                                                            "flex items-start p-4 rounded-2xl border transition-all text-left gap-4",
+                                                            "flex items-start p-4 rounded-2xl border transition-colors text-left gap-4",
                                                             formData.preset === p.id
                                                                 ? "bg-primary/20 border-primary shadow-[inset_0_0_20px_rgba(var(--primary),0.05)]"
                                                                 : "bg-white/5 border-white/5 hover:border-white/20"
@@ -261,7 +261,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                                                             key={s.id}
                                                             onClick={() => setFormData({ ...formData, dataSource: s.id })}
                                                             className={cn(
-                                                                "flex flex-col items-center justify-center p-4 rounded-xl border transition-all gap-2",
+                                                                "flex flex-col items-center justify-center p-4 rounded-xl border transition-colors gap-2",
                                                                 formData.dataSource === s.id
                                                                     ? "bg-primary/10 border-primary text-primary"
                                                                     : "bg-white/5 border-white/5 text-white/20 hover:border-white/10"
@@ -286,7 +286,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                                                             key={a.id}
                                                             onClick={() => setFormData({ ...formData, aggregation: a.id })}
                                                             className={cn(
-                                                                "w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all",
+                                                                "w-full flex items-center justify-between p-4 rounded-xl border text-left transition-colors",
                                                                 formData.aggregation === a.id
                                                                     ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
                                                                     : "bg-white/5 border-white/5 text-white/20 hover:border-white/10"
@@ -311,7 +311,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                                                             key={c.id}
                                                             onClick={() => setFormData({ ...formData, comparison: c.id })}
                                                             className={cn(
-                                                                "w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all",
+                                                                "w-full flex items-center justify-between p-4 rounded-xl border text-left transition-colors",
                                                                 formData.comparison === c.id
                                                                     ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-400"
                                                                     : "bg-white/5 border-white/5 text-white/20 hover:border-white/10"
@@ -402,7 +402,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                                                             variant="ghost"
                                                             size="icon"
                                                             onClick={() => removeFilter(i)}
-                                                            className="h-12 w-12 rounded-2xl text-white/10 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
+                                                            className="h-12 w-12 rounded-2xl text-white/10 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
                                                         >
                                                             <Trash2 size={20} />
                                                         </Button>
@@ -428,7 +428,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                                                         key={t.id}
                                                         onClick={() => setFormData({ ...formData, chartType: t.id })}
                                                         className={cn(
-                                                            "flex flex-col items-center justify-center p-6 rounded-3xl border transition-all text-center gap-4 aspect-square",
+                                                            "flex flex-col items-center justify-center p-6 rounded-3xl border transition-colors text-center gap-4 aspect-square",
                                                             formData.chartType === t.id
                                                                 ? "bg-primary/20 border-primary shadow-[0_0_30px_rgba(var(--primary),0.2)]"
                                                                 : "bg-white/5 border-white/5 hover:border-white/20 opacity-30 hover:opacity-100"
@@ -454,7 +454,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                                                                 key={i.id}
                                                                 onClick={() => setFormData({ ...formData, icon: i.id })}
                                                                 className={cn(
-                                                                    "flex items-center justify-center h-12 rounded-xl border transition-all",
+                                                                    "flex items-center justify-center h-12 rounded-xl border transition-colors",
                                                                     formData.icon === i.id
                                                                         ? "bg-primary text-white border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]"
                                                                         : "bg-white/5 border-white/5 text-white/10 hover:text-white hover:border-white/20"
@@ -475,7 +475,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                                                             key={t.id}
                                                             onClick={() => setFormData({ ...formData, color: t.id })}
                                                             className={cn(
-                                                                "flex items-center h-12 rounded-xl border px-4 gap-3 transition-all",
+                                                                "flex items-center h-12 rounded-xl border px-4 gap-3 transition-colors",
                                                                 formData.color === t.id
                                                                     ? `${t.bg} ${t.border} ${t.text} ring-1 ring-white/10`
                                                                     : "bg-white/5 border-white/5 text-white/20 hover:border-white/20"
@@ -517,7 +517,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                                         <div className="pt-4">
                                             <Label className="text-[11px] font-black uppercase tracking-[0.3em] text-white/20 mb-6 block text-center">Manifest Visualization Preview</Label>
                                             <div className={cn(
-                                                "p-12 rounded-[50px] border border-white/10 bg-black relative group overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.8)] transition-all duration-1000",
+                                                "p-12 rounded-[50px] border border-white/10 bg-black relative group overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.8)] transition-colors duration-1000",
                                                 "hover:scale-[1.02] hover:border-primary/40 ring-1 ring-white/5"
                                             )}>
                                                 {/* Ambient Layer Gradient */}
@@ -544,7 +544,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                                                     </div>
 
                                                     <div className={cn(
-                                                        "p-8 rounded-[32px] shadow-2xl transition-all duration-1000 group-hover:rotate-12",
+                                                        "p-8 rounded-[32px] shadow-2xl transition-colors duration-1000 group-hover:rotate-12",
                                                         THEMES.find(t => t.id === formData.color)?.bg || "bg-primary/20",
                                                         THEMES.find(t => t.id === formData.color)?.text || "text-primary",
                                                         "shadow-black"
@@ -591,7 +591,7 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                             <Button
                                 onClick={() => step === 4 ? handleCreate() : setStep(step + 1)}
                                 className={cn(
-                                    "px-12 h-16 rounded-2xl font-black uppercase tracking-[0.3em] text-[11px] transition-all duration-700 gap-4",
+                                    "px-12 h-16 rounded-2xl font-black uppercase tracking-[0.3em] text-[11px] transition-colors duration-700 gap-4",
                                     step === 4
                                         ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_20px_40px_rgba(16,185,129,0.2)]"
                                         : "bg-primary hover:bg-primary/90 text-white shadow-[0_20px_40px_rgba(var(--primary),0.2)]"

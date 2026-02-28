@@ -60,7 +60,7 @@ export function SendInvoiceDialog({ open, onOpenChange, invoice }: Props) {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px] bg-zinc-950 border-zinc-800">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Send Invoice</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Send Invoice</DialogTitle>
                     <DialogDescription className="text-zinc-400">
                         Deliver the payment link to your client via email or text.
                     </DialogDescription>

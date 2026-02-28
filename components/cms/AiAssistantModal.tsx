@@ -75,7 +75,7 @@ export function AiAssistantModal({
 
                     {/* Content */}
                     <div className="relative z-10">
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <div className={cn("p-2 rounded-lg", mode === 'create' ? "bg-blue-500/10" : "bg-purple-500/10")}>
                                 {mode === "create" ? (
                                     <Sparkles className={cn("h-5 w-5", mode === 'create' ? "text-blue-400" : "text-purple-400")} />
@@ -96,7 +96,7 @@ export function AiAssistantModal({
                                 </label>
                                 <textarea
                                     autoFocus
-                                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:ring-0 focus:border-blue-500/50 outline-none transition-all resize-none min-h-[120px] text-base"
+                                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:ring-0 focus:border-blue-500/50 outline-none transition-colors resize-none min-h-[120px] text-base"
                                     placeholder={getPlaceholder()}
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
@@ -137,7 +137,7 @@ export function AiAssistantModal({
                                     onClick={handleAction}
                                     disabled={isGenerating || !input.trim()}
                                     className={cn(
-                                        "bg-gradient-to-r text-white border-0 shadow-lg shadow-blue-500/25 transition-all hover:opacity-90",
+                                        "bg-gradient-to-r text-white border-0 shadow-lg shadow-blue-500/25 transition-opacity hover:opacity-90",
                                         mode === 'create'
                                             ? "from-blue-600 via-indigo-600 to-purple-600"
                                             : "from-purple-600 via-pink-600 to-rose-600"

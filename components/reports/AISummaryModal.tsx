@@ -130,7 +130,7 @@ export function AISummaryModal({ data }: AISummaryModalProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[650px] bg-card text-card-foreground border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+          <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
             <Bot className="w-5 h-5 text-emerald-500" />
             AI Report Generator
           </DialogTitle>

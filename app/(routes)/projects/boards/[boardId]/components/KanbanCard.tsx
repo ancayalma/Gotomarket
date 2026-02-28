@@ -92,7 +92,7 @@ export function KanbanCardContent({
             {...provided?.draggableProps}
             {...dragHandleProps}
             className={cn(
-                "group relative flex flex-col gap-2 p-3 mb-3 rounded-xl border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md",
+                "group relative flex flex-col gap-2 p-3 mb-3 rounded-xl border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md",
                 isDragging && "shadow-lg rotate-2 scale-105 z-50 ring-2 ring-primary/20",
                 isComplete && "opacity-60 bg-muted/50"
             )}

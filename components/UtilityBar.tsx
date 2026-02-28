@@ -105,7 +105,7 @@ export default function UtilityBar() {
         <div className="relative shrink-0">
             {/* The Main Utility Bar */}
             <div className={cn(
-                "w-full bg-background/80 backdrop-blur-md border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out",
+                "w-full bg-background/80 backdrop-blur-md border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.1)] transition-colors duration-300 ease-in-out",
                 isMinimized ? "h-0 -translate-y-[-100%] opacity-0 overflow-hidden" : "h-12 translate-y-0 opacity-100"
             )}>
                 <div className="max-w-screen-2xl mx-auto h-full flex items-center justify-between px-4">
@@ -139,7 +139,7 @@ export default function UtilityBar() {
                                             <div className="w-full h-[3px] rounded-full bg-white/10 overflow-hidden min-w-[60px]">
                                                 <div
                                                     className={cn(
-                                                        "h-full rounded-full transition-all duration-700 ease-out",
+                                                        "h-full rounded-full transition-colors duration-700 ease-out",
                                                         creditsInfo.remaining / creditsInfo.monthlyLimit > 0.5
                                                             ? "bg-gradient-to-r from-emerald-500 to-cyan-400"
                                                             : creditsInfo.remaining / creditsInfo.monthlyLimit > 0.2
@@ -183,7 +183,7 @@ export default function UtilityBar() {
                                             <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
                                                 <div
                                                     className={cn(
-                                                        "h-full rounded-full transition-all duration-700 ease-out",
+                                                        "h-full rounded-full transition-colors duration-700 ease-out",
                                                         creditsInfo.remaining / creditsInfo.monthlyLimit > 0.5
                                                             ? "bg-gradient-to-r from-emerald-500 to-cyan-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
                                                             : creditsInfo.remaining / creditsInfo.monthlyLimit > 0.2
@@ -244,7 +244,7 @@ export default function UtilityBar() {
 
                         {/* Calendar */}
                         <Link href="/crm/calendar">
-                            <Button variant="ghost" size="sm" className="gap-2 text-xs font-semibold hover:bg-blue-500/10 hover:text-blue-500 transition-all px-2 sm:px-3">
+                            <Button variant="ghost" size="sm" className="gap-2 text-xs font-semibold hover:bg-blue-500/10 hover:text-blue-500 transition-colors px-2 sm:px-3">
                                 <Calendar className="h-4 w-4" />
                                 <span className="hidden lg:inline">Calendar</span>
                             </Button>
@@ -255,7 +255,7 @@ export default function UtilityBar() {
                         {/* Notes Popover */}
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="ghost" size="sm" className="gap-2 text-xs font-semibold hover:bg-amber-500/10 hover:text-amber-500 transition-all px-2 sm:px-3">
+                                <Button variant="ghost" size="sm" className="gap-2 text-xs font-semibold hover:bg-amber-500/10 hover:text-amber-500 transition-colors px-2 sm:px-3">
                                     <StickyNote className="h-4 w-4" />
                                     <span className="hidden lg:inline">Quick Notes</span>
                                 </Button>
@@ -282,7 +282,7 @@ export default function UtilityBar() {
                         {/* Tasks Popover */}
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="ghost" size="sm" className="gap-2 text-xs font-semibold hover:bg-emerald-500/10 hover:text-emerald-500 transition-all px-2 sm:px-3">
+                                <Button variant="ghost" size="sm" className="gap-2 text-xs font-semibold hover:bg-emerald-500/10 hover:text-emerald-500 transition-colors px-2 sm:px-3">
                                     <CheckSquare className="h-4 w-4" />
                                     <span className="hidden lg:inline">Checklist</span>
                                 </Button>
@@ -346,7 +346,7 @@ export default function UtilityBar() {
                             <Popover open={isLearnOpen} onOpenChange={setIsLearnOpen}>
                                 <PopoverTrigger asChild>
                                     <div className={cn(
-                                        "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all cursor-pointer group relative",
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors cursor-pointer group relative",
                                         "bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 hover:text-blue-400 border border-blue-500/20 hover:border-blue-500/50",
                                         "sm:px-4"
                                     )}>
@@ -439,7 +439,7 @@ export default function UtilityBar() {
                         <Popover open={isDialerOpen} onOpenChange={setIsDialerOpen}>
                             <PopoverTrigger asChild>
                                 <div className={cn(
-                                    "hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full transition-all cursor-pointer group",
+                                    "hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors cursor-pointer group",
                                     isDialerOpen
                                         ? "bg-emerald-500 text-white border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                                         : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 hover:text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/50"
@@ -472,12 +472,12 @@ export default function UtilityBar() {
 
             {/* Floating Expand Button (Circle) */}
             <div className={cn(
-                "absolute bottom-4 left-4 transition-all duration-500 z-[60]",
+                "absolute bottom-4 left-4 transition-colors duration-500 z-[60]",
                 isMinimized ? "translate-y-0 opacity-100 scale-100" : "translate-y-12 opacity-0 scale-50 pointer-events-none"
             )}>
                 <button
                     onClick={() => setIsMinimized(false)}
-                    className="w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all group border-2 border-background"
+                    className="w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform group border-2 border-background"
                     title="Expand Utility Bar"
                 >
                     <ChevronUp className="h-5 w-5 group-hover:-translate-y-0.5 transition-transform" />

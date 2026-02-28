@@ -43,7 +43,7 @@ export default function AdminDocsSidebar({ docs }: AdminDocsSidebarProps) {
                     </div>
                 </div>
                 <Link href={`/cms/docs/new`}>
-                    <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 border border-blue-500/50 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 border border-blue-500/50 transition-transform hover:scale-[1.02] active:scale-[0.98]">
                         <Plus className="mr-2 h-4 w-4" />
                         Create New Article
                     </Button>
@@ -82,7 +82,7 @@ export default function AdminDocsSidebar({ docs }: AdminDocsSidebarProps) {
                                             key={doc.id}
                                             href={`/cms/docs/${doc.id}`}
                                             className={cn(
-                                                "group flex items-center justify-between px-3 py-2 text-sm rounded-md transition-all duration-200 border border-transparent",
+                                                "group flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors duration-200 border border-transparent",
                                                 isActive
                                                     ? "bg-gradient-to-r from-primary/10 to-transparent text-primary font-medium border-l-primary/50"
                                                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:translate-x-1"

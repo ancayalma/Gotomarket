@@ -184,7 +184,7 @@ export default function IntegrationBlueprints() {
                     <CardHeader className="border-b border-white/5 bg-white/[0.02] p-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
-                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                     <Share2 className="w-7 h-7 text-blue-400" />
                                     Integration Ecosystem
                                 </CardTitle>
@@ -208,7 +208,7 @@ export default function IntegrationBlueprints() {
                     <CardHeader className="border-b border-white/5 bg-white/[0.02] p-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
-                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                     <Zap className="w-7 h-7 text-emerald-400" />
                                     Data Flow & Webhooks
                                 </CardTitle>
@@ -225,7 +225,7 @@ export default function IntegrationBlueprints() {
                             <MermaidDiagram chart={DATA_FLOW_CHART} mobileChart={DATA_FLOW_MOBILE} className="w-full" />
                         </div>
                         <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-white/5 bg-black/20">
-                            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4 hover:border-emerald-500/30 transition-all group">
+                            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4 hover:border-emerald-500/30 transition-colors group">
                                 <div className="flex items-center gap-4 text-lg font-black tracking-tight">
                                     <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
                                         <ShieldCheck className="w-6 h-6" />
@@ -236,7 +236,7 @@ export default function IntegrationBlueprints() {
                                     All outgoing webhooks are signed with a unique <strong className="text-emerald-400 font-mono">HMAC-SHA256</strong> secret per organization. Receiver systems can verify payloads to ensure they originated from your authorized Basalt instance.
                                 </p>
                             </div>
-                            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4 hover:border-blue-500/30 transition-all group">
+                            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4 hover:border-blue-500/30 transition-colors group">
                                 <div className="flex items-center gap-4 text-lg font-black tracking-tight">
                                     <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400">
                                         <Globe className="w-6 h-6" />
@@ -264,7 +264,7 @@ export default function IntegrationBlueprints() {
                             transition={{ delay: i * 0.1 }}
                             viewport={{ once: true }}
                         >
-                            <Card className={cn("h-full bg-white/5 border hover:bg-white/[0.08] transition-all group", int.borderColor)}>
+                            <Card className={cn("h-full bg-white/5 border hover:bg-white/[0.08] transition-colors group", int.borderColor)}>
                                 <CardHeader className="pb-3">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className={cn("p-2 rounded-lg bg-white/5", int.color)}>
@@ -274,7 +274,7 @@ export default function IntegrationBlueprints() {
                                             {int.status}
                                         </Badge>
                                     </div>
-                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{int.name}</CardTitle>
+                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{int.name}</CardTitle>
                                     <CardDescription className="text-xs">{int.category}</CardDescription>
                                 </CardHeader>
                                 <CardContent>

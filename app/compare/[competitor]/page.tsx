@@ -188,7 +188,7 @@ export default async function CompetitorPage(props: Props) {
 
                         <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                             {/* AI That Actually Works */}
-                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-8 hover:border-primary/30 transition-all duration-300">
+                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-8 hover:border-primary/30 transition-colors duration-300">
                                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
                                     <Bot className="w-6 h-6 text-primary" />
                                 </div>
@@ -213,7 +213,7 @@ export default async function CompetitorPage(props: Props) {
                             </div>
 
                             {/* Predictable Pricing */}
-                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-8 hover:border-primary/30 transition-all duration-300">
+                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-8 hover:border-primary/30 transition-colors duration-300">
                                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
                                     <DollarSign className="w-6 h-6 text-primary" />
                                 </div>
@@ -238,7 +238,7 @@ export default async function CompetitorPage(props: Props) {
                             </div>
 
                             {/* Modern Architecture */}
-                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-8 hover:border-primary/30 transition-all duration-300">
+                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-8 hover:border-primary/30 transition-colors duration-300">
                                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
                                     <Zap className="w-6 h-6 text-primary" />
                                 </div>

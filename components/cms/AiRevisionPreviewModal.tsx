@@ -97,7 +97,7 @@ export function AiRevisionPreviewModal({
                                 <Wand2 className="h-5 w-5 text-purple-400" />
                             </div>
                             <div>
-                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Review AI Changes</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Review AI Changes</DialogTitle>
                                 <DialogDescription className="text-slate-400 text-xs">
                                     Compare the original content with the AI's suggestions.
                                 </DialogDescription>
@@ -108,7 +108,7 @@ export function AiRevisionPreviewModal({
                             <button
                                 onClick={() => setActiveTab("diff")}
                                 className={cn(
-                                    "px-4 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2",
+                                    "px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-2",
                                     activeTab === "diff" ? "bg-purple-600 text-white shadow-lg" : "text-slate-400 hover:text-white"
                                 )}
                             >
@@ -117,7 +117,7 @@ export function AiRevisionPreviewModal({
                             <button
                                 onClick={() => setActiveTab("edit")}
                                 className={cn(
-                                    "px-4 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2",
+                                    "px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-2",
                                     activeTab === "edit" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-white"
                                 )}
                             >
@@ -202,7 +202,7 @@ export function AiRevisionPreviewModal({
                             </div>
                             <Button
                                 onClick={handleAccept}
-                                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white border-0 shadow-lg shadow-purple-500/25 transition-all hover:scale-105"
+                                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white border-0 shadow-lg shadow-purple-500/25 transition-transform hover:scale-105"
                             >
                                 <Check className="mr-2 h-4 w-4" />
                                 Accept & Apply

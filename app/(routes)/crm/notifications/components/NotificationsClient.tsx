@@ -154,7 +154,7 @@ export function NotificationsClient({ initialNotifications }: NotificationsClien
                             <div
                                 key={n.id}
                                 className={cn(
-                                    "p-6 flex gap-6 hover:bg-muted/30 transition-all cursor-pointer group relative items-center",
+                                    "p-6 flex gap-6 hover:bg-muted/30 transition-colors cursor-pointer group relative items-center",
                                     !n.isRead && "bg-primary/5",
                                     n.isCleared && "opacity-60"
                                 )}
@@ -163,13 +163,13 @@ export function NotificationsClient({ initialNotifications }: NotificationsClien
                                 {/* Task-like Done UI on the left */}
                                 <div
                                     className={cn(
-                                        "h-12 w-6 rounded-full border border-border/50 flex items-center justify-center transition-all bg-background shrink-0",
+                                        "h-12 w-6 rounded-full border border-border/50 flex items-center justify-center transition-colors bg-background shrink-0",
                                         n.isCleared ? "bg-emerald-500/10 border-emerald-500/50" : "group-hover:border-primary/50"
                                     )}
                                     onClick={(e) => handleClearNotification(e, n.id)}
                                 >
                                     <Check className={cn(
-                                        "h-4 w-4 transition-all",
+                                        "h-4 w-4 transition-colors",
                                         n.isCleared ? "text-emerald-500 opacity-100" : "text-muted-foreground opacity-0 group-hover:opacity-40"
                                     )} />
                                 </div>

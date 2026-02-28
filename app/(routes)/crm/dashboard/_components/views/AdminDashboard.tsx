@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useGreeting } from "@/app/hooks/use-greeting";
@@ -8,86 +9,59 @@ import { DollarSign, TrendingUp, Users2, Activity, UserPlus, FolderPlus, Clipboa
 import { EntityBreakdown } from "../../../../dashboard/components/EntityBreakdown";
 import JumpBackIn from "../JumpBackIn";
 import { DashboardLayoutProvider } from "../../_context/DashboardLayoutContext";
-import { EditableWidgetGrid } from "../widgets/EditableWidgetGrid";
+import { useDashboardData } from "../../_context/DashboardDataContext";
 import { EditDashboardButton } from "../EditDashboardButton";
 import { QuickLaunchChecklist, type ChecklistCounts } from "../QuickLaunchChecklist";
 import { ProductTour } from "@/components/ui/ProductTour";
 
+/**
+ * Dynamic import: EditableWidgetGrid is 580+ lines importing DnD Kit, Framer Motion,
+ * and all 18 widget components. Loading it dynamically reduces the initial JS bundle
+ * sent to the client. ssr: false is safe since this is already a "use client" component.
+ */
+const EditableWidgetGrid = dynamic(
+    () => import("../widgets/EditableWidgetGrid").then(mod => mod.EditableWidgetGrid),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-pulse">
+                {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-[400px] rounded-xl bg-white/5 border border-white/10" />
+                ))}
+            </div>
+        ),
+    }
+);
+
+/**
+ * AdminDashboard — Composition Pattern: Context Consumer
+ *
+ * Previously received 30+ forwarded props from DashboardRoleManager.
+ * Now reads all widget data from DashboardDataContext, keeping only
+ * UI-specific props (initialLayout, quickLaunchDismissed).
+ */
 interface AdminDashboardProps {
-    userId: string;
-    userName: string;
-    revenue: number;
-    actualRevenue: number;
-    unrealizedRevenue: number;
-    forecastRevenue: number;
-    activePipelineCount: number;
-    totalLeads: number;
-    totalOpportunities: number;
-    activeUsersCount: number;
-    myPipeline: React.ReactNode;
-    teamPipeline: React.ReactNode;
-    crmEntities: any[];
-    projectEntities: any[];
-    // Full Data for Widgets
-    newLeads: any[];
-    newProjects: any[];
-    dailyTasks: any[];
-    messages: any[];
-    teamActivity: any[];
-    recentFiles: any[];
-    revenuePacing: any;
-    outreachStats: any;
-    leadPools: any[];
-    leadGenStats: any;
-    intelligenceStats: any;
-    aiInsights: any[];
-    // Quick Action Counts
-    newLeadsCount: number;
-    newProjectsCount: number;
-    allTasksCount: number;
-    messagesCount: number;
     initialLayout?: any[];
-    teamData?: any;
     quickLaunchDismissed?: boolean;
 }
 
 const AdminDashboard = ({
-    userId,
-    userName,
-    revenue,
-    actualRevenue,
-    unrealizedRevenue,
-    forecastRevenue,
-    activePipelineCount,
-    totalLeads,
-    totalOpportunities,
-    activeUsersCount,
-    myPipeline,
-    teamPipeline,
-    crmEntities = [],
-    projectEntities = [],
-    newLeads = [],
-    newProjects = [],
-    dailyTasks = [],
-    messages = [],
-    teamActivity = [],
-    recentFiles = [],
-    revenuePacing = null,
-    outreachStats = null,
-    leadPools = [],
-    leadGenStats = null,
-    intelligenceStats = null,
-    aiInsights = [],
-    newLeadsCount = 0,
-    newProjectsCount = 0,
-    allTasksCount = 0,
-    messagesCount = 0,
     initialLayout,
-    teamData,
     quickLaunchDismissed = false
 }: AdminDashboardProps) => {
     const router = useRouter();
     const greeting = useGreeting();
+
+    // All widget data comes from context — zero prop drilling
+    const {
+        userId,
+        userName,
+        newProjects,
+        leadPools,
+        activeUsersCount,
+        outreachStats,
+        crmEntities,
+    } = useDashboardData();
 
     // ─── Quick Launch Checklist logic ───────────────────────────────────
     const [isLocallyDismissed, setIsLocallyDismissed] = React.useState(false);
@@ -99,8 +73,7 @@ const AdminDashboard = ({
         }
     }, []);
 
-    // Derive completion signals from existing data already passed to this component.
-    // "Campaigns" are tracked as boards/projects; outreachStats.totalSent > 0 means outreach is live.
+    // Derive completion signals from context data.
     const checklistCounts: ChecklistCounts = {
         campaigns: Array.isArray(newProjects) ? newProjects.length : 0,
         lists: Array.isArray(leadPools) ? leadPools.length : 0,
@@ -126,7 +99,7 @@ const AdminDashboard = ({
                     <div className="max-w-[1600px] mx-auto w-full space-y-8 pb-10">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-tight uppercase leading-relaxed py-4 px-4">
+                                <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent tracking-tight uppercase leading-relaxed py-4 px-4">
                                     {greeting}{userName ? `, ${userName}` : ""}
                                 </h2>
                                 <p className="text-muted-foreground/80 mt-2 text-base font-medium tracking-wide italic border-l-2 border-primary/30 pl-4">
@@ -152,31 +125,8 @@ const AdminDashboard = ({
                             </div>
                         )}
 
-                        {/* Intelligence & Operations Widgets - MOVED TO TOP */}
-                        <EditableWidgetGrid
-                            newLeads={newLeads}
-                            dailyTasks={dailyTasks}
-                            userId={userId}
-                            newProjects={newProjects}
-                            messages={messages}
-                            teamActivity={teamActivity}
-                            recentFiles={recentFiles}
-                            revenuePacing={revenuePacing}
-                            outreachStats={outreachStats}
-                            leadPools={leadPools}
-                            leadGenStats={leadGenStats}
-                            intelligenceStats={intelligenceStats}
-                            aiInsights={aiInsights}
-                            revenue={revenue}
-                            actualRevenue={actualRevenue}
-                            unrealizedRevenue={unrealizedRevenue}
-                            forecastRevenue={forecastRevenue}
-                            activeUsersCount={activeUsersCount}
-                            myPipeline={myPipeline}
-                            teamPipeline={teamPipeline}
-                            crmEntities={crmEntities}
-                            teamData={teamData}
-                        />
+                        {/* Intelligence & Operations Widgets — reads from DashboardDataContext */}
+                        <EditableWidgetGrid />
                     </div>
                 </div>
             </DashboardLayoutProvider>

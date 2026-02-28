@@ -307,7 +307,7 @@ export function LoginComponent() {
   return (
     <Card className="shadow-lg my-5 w-full max-w-md sm:max-w-lg mx-auto bg-transparent border-border/40 backdrop-blur-sm">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Login</CardTitle>
+        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Login</CardTitle>
         <CardDescription className="text-gray-300">Click here to login with: </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -362,8 +362,12 @@ export function LoginComponent() {
                         <FormLabel className="text-white">E-mail</FormLabel>
                         <FormControl>
                           <Input
+                            type="email"
+                            autoComplete="email"
+                            inputMode="email"
+                            spellCheck={false}
                             disabled={isLoading}
-                            placeholder="John Doe"
+                            placeholder="name@company.com"
                             {...field}
                           />
                         </FormControl>
@@ -381,8 +385,9 @@ export function LoginComponent() {
                           <FormControl>
                             <Input
                               className="w-full"
+                              autoComplete="current-password"
                               disabled={isLoading}
-                              placeholder="Password"
+                              placeholder="Enter your password…"
                               type={showPassword ? "text" : "password"}
                               {...field}
                             />
@@ -391,12 +396,15 @@ export function LoginComponent() {
                         </FormItem>
                       )}
                     />
-                    <span
-                      className="flex px-4 pt-7 w-16 cursor-pointer"
+                    <button
+                      type="button"
+                      className="flex px-4 pt-7 w-16 cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      tabIndex={0}
                     >
                       {showPassword ? <EyeOff size={25} className="text-gray-400" /> : <Eye size={25} className="text-gray-400" />}
-                    </span>
+                    </button>
                   </div>
                 </div>
                 <div className="grid gap-2 py-8">
@@ -406,7 +414,7 @@ export function LoginComponent() {
                     className="flex gap-2 h-12"
                   >
                     {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    <span>{isLoading ? "Loading ..." : "Login"}</span>
+                    <span>{isLoading ? "Signing in…" : "Sign In"}</span>
                   </Button>
                 </div>
               </form>
@@ -433,8 +441,11 @@ export function LoginComponent() {
                     placeholder="000 000"
                     className="text-center text-2xl font-mono tracking-[0.5em] h-14 bg-white/5 border-white/10"
                     maxLength={6}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    aria-label="Verification code"
                     value={mfaCode}
-                    onChange={(e) => setMfaCode(e.target.value)}
+                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
                     autoFocus
                   />
                   <Button
@@ -473,7 +484,7 @@ export function LoginComponent() {
       </CardContent>
       <CardFooter className="flex flex-col gap-3 pt-2 pb-4">
         <Link href="/register" className="w-full">
-          <Button variant="outline" className="w-full h-10 text-sm font-medium border-white/10 hover:border-primary/50 hover:bg-primary/5 transition-all">
+          <Button variant="outline" className="w-full h-10 text-sm font-medium border-white/10 hover:border-primary/50 hover:bg-primary/5 transition-colors">
             Need an account? <span className="text-primary ml-1 font-semibold">Register</span>
           </Button>
         </Link>
@@ -486,7 +497,7 @@ export function LoginComponent() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Password Reset</DialogTitle>
+              <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Password Reset</DialogTitle>
               <DialogDescription className="p-5">
                 Enter your email address and we will send new password to your
                 e-mail.
@@ -500,7 +511,10 @@ export function LoginComponent() {
                   id="reset-email"
                   name="reset-email"
                   type="email"
+                  autoComplete="email"
+                  inputMode="email"
                   placeholder="name@domain.com"
+                  aria-label="Email for password reset"
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <Button

@@ -140,7 +140,7 @@ export default function GlobalDialer() {
                         <button
                             onClick={() => setIsMinimized(false)}
                             className={cn(
-                                "flex items-center justify-center p-3 rounded-full shadow-xl transition-all hover:scale-105 active:scale-95",
+                                "flex items-center justify-center p-3 rounded-full shadow-xl transition-transform hover:scale-105 active:scale-95",
                                 "bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-400 border border-emerald-500/20 backdrop-blur-md"
                             )} title="Expand Numpad"
                         >
@@ -148,7 +148,7 @@ export default function GlobalDialer() {
                         </button>
                     ) : (
                         /* Expanded State: Pill with Text + Minimize Arrow */
-                        <div className="group flex items-center p-1 pl-4 pr-1 gap-2 rounded-full shadow-xl bg-emerald-600/15 border border-emerald-500/20 backdrop-blur-md transition-all hover:bg-emerald-600/20">
+                        <div className="group flex items-center p-1 pl-4 pr-1 gap-2 rounded-full shadow-xl bg-emerald-600/15 border border-emerald-500/20 backdrop-blur-md transition-colors hover:bg-emerald-600/20">
                             <button
                                 onClick={() => setShowPad(true)}
                                 className="flex items-center gap-2 text-emerald-400 font-semibold"

@@ -94,7 +94,7 @@ export const ChangeRoleModal: React.FC<ChangeRoleModalProps> = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Change Role</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Change Role</DialogTitle>
                     <DialogDescription>
                         Update the access level for <span className="font-medium text-foreground">{userName}</span>.
                     </DialogDescription>

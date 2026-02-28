@@ -9,7 +9,7 @@ export const metadata = {
     description: "Extend BasaltCRM with FlowState visual workflows, AI outreach sequences, LeadGen automation, voice agents, and custom cron jobs.",
 };
 
-const cardClass = "p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition-all";
+const cardClass = "p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition-colors";
 const codeBlockClass = "bg-[#0a0a0a] border border-white/10 rounded-xl p-5 font-mono text-sm overflow-x-auto text-gray-300 leading-relaxed";
 const sectionTitle = "text-2xl font-semibold mt-14 mb-6 text-white flex items-center";
 
@@ -116,7 +116,7 @@ export default function WorkflowsPage() {
 
                         {/* Hero */}
                         <div className="mb-16">
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 mb-2">
                                 Workflows & Automation
                             </h1>
                             <p className="text-lg text-gray-400 max-w-3xl">
@@ -298,10 +298,10 @@ POST /api/crm/workflows
                                 Start building workflows in the FlowState visual editor or integrate programmatically via the API.
                             </p>
                             <div className="flex gap-4 justify-center flex-wrap">
-                                <Link href="/sign-in" className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-full transition-all text-sm">
+                                <Link href="/sign-in" className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-full transition-colors text-sm">
                                     Open FlowState <SquareArrowOutUpRight className="w-4 h-4" />
                                 </Link>
-                                <Link href="/developers/api-reference" className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-full transition-all text-sm border border-white/10">
+                                <Link href="/developers/api-reference" className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-full transition-colors text-sm border border-white/10">
                                     API Reference
                                 </Link>
                             </div>

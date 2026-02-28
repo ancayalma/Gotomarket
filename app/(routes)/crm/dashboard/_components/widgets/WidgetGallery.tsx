@@ -91,7 +91,7 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
             </SheetTrigger>
             <SheetContent className="bg-[#0a0a0a] border-white/10 text-white w-[400px] sm:w-[540px] flex flex-col p-0">
                 <SheetHeader className="p-6 border-b border-white/5">
-                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Widget Gallery</SheetTitle>
+                    <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Widget Gallery</SheetTitle>
                     <SheetDescription className="text-white/60">
                         Add intelligence widgets and quick access icons to your dashboard.
                     </SheetDescription>
@@ -132,7 +132,7 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
                                             <div
                                                 key={widget.id}
                                                 className={cn(
-                                                    "flex items-center justify-between p-4 rounded-xl border transition-all group relative overflow-hidden",
+                                                    "flex items-center justify-between p-4 rounded-xl border transition-colors group relative overflow-hidden",
                                                     isAlreadyAdded
                                                         ? "bg-white/[0.02] border-white/5 opacity-40 grayscale pointer-events-none"
                                                         : "bg-gradient-to-r from-amber-500/10 to-transparent border-amber-500/20 hover:border-amber-500/50 hover:bg-amber-500/20"
@@ -182,7 +182,7 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
                                         <div
                                             key={widget.id}
                                             className={cn(
-                                                "flex items-center justify-between p-4 rounded-xl border transition-all group relative overflow-hidden",
+                                                "flex items-center justify-between p-4 rounded-xl border transition-colors group relative overflow-hidden",
                                                 isAlreadyAdded
                                                     ? "bg-white/[0.02] border-white/5 opacity-40 grayscale pointer-events-none"
                                                     : "bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/[0.08]"
@@ -229,7 +229,7 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
                                         <div
                                             key={widget.id}
                                             className={cn(
-                                                "flex items-center justify-between p-3 rounded-xl border transition-all group",
+                                                "flex items-center justify-between p-3 rounded-xl border transition-colors group",
                                                 isAlreadyAdded
                                                     ? "bg-white/[0.02] border-white/5 opacity-40 grayscale pointer-events-none"
                                                     : "bg-white/5 border-white/10 hover:border-emerald-500/50"
@@ -240,7 +240,7 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
                                                 disabled={isAlreadyAdded}
                                                 onClick={() => toggleWidgetVisibility(widget.id, true)}
                                                 className={cn(
-                                                    "p-1.5 rounded-lg transition-all",
+                                                    "p-1.5 rounded-lg transition-colors",
                                                     isAlreadyAdded
                                                         ? "bg-transparent text-white/20"
                                                         : "bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white"

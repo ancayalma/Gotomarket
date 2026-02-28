@@ -65,7 +65,7 @@ export default async function VoiceHubPage() {
                                     <span className="w-2 h-2 rounded-full-button-frame bg-cyan-400 animate-pulse" />
                                     Live on Base & Ethereum
                                 </div>
-                                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                                     Real-Time <br />
                                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-400">
                                         AI Voice
@@ -91,7 +91,7 @@ export default async function VoiceHubPage() {
                             >
                                 <Link
                                     href="/pricing"
-                                    className="group relative inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white transition-all duration-200 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-full-button-frame hover:from-cyan-500 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 focus:ring-offset-[#020617]"
+                                    className="group relative inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white transition-colors duration-200 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-full-button-frame hover:from-cyan-500 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 focus:ring-offset-[#020617]"
                                 >
                                     See Pricing
                                     <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -233,7 +233,7 @@ export default async function VoiceHubPage() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ duration: 0.5, delay: i * 0.1 }}
-                                    className="group p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-cyan-500/50 hover:bg-white/[0.08] transition-all duration-300"
+                                    className="group p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-cyan-500/50 hover:bg-white/[0.08] transition-colors duration-300"
                                 >
                                     <div className="w-12 h-12 rounded-lg bg-cyan-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                                         <feature.icon className="w-6 h-6 text-cyan-400" />
@@ -311,7 +311,7 @@ export default async function VoiceHubPage() {
                                     gradient: "from-indigo-500/10 to-violet-500/10"
                                 }
                             ].map((useCase, i) => (
-                                <div key={i} className={`p-8 rounded-2xl border border-white/5 bg-gradient-to-br ${useCase.gradient} hover:border-cyan-500/30 transition-all`}>
+                                <div key={i} className={`p-8 rounded-2xl border border-white/5 bg-gradient-to-br ${useCase.gradient} hover:border-cyan-500/30 transition-colors`}>
                                     <useCase.icon className="w-10 h-10 text-white mb-6 opacity-80" />
                                     <h3 className="text-2xl font-bold mb-6">{useCase.title}</h3>
                                     <ul className="space-y-3">
@@ -342,7 +342,7 @@ export default async function VoiceHubPage() {
                         </p>
                         <Link
                             href="/pricing"
-                            className="inline-flex items-center px-10 py-5 text-lg font-bold text-white bg-cyan-600 rounded-full-button-frame hover:bg-cyan-500 transition-all shadow-[0_0_40px_rgba(8,145,178,0.4)] hover:shadow-[0_0_60px_rgba(8,145,178,0.6)] transform hover:-translate-y-1"
+                            className="inline-flex items-center px-10 py-5 text-lg font-bold text-white bg-cyan-600 rounded-full-button-frame hover:bg-cyan-500 transition-[color,background-color,border-color,box-shadow] shadow-[0_0_40px_rgba(8,145,178,0.4)] hover:shadow-[0_0_60px_rgba(8,145,178,0.6)] transform hover:-translate-y-1"
                         >
                             View Pricing Plans
                             <ArrowRight className="ml-2 w-6 h-6" />

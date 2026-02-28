@@ -65,7 +65,7 @@ export default function NeuralStreamVisualizer() {
     if (!mounted) return <div className="w-full h-full bg-[#020205] rounded-[2rem] animate-pulse" />;
 
     return (
-        <div className={`relative w-full h-full flex flex-col items-center justify-center bg-[#020205] rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl transition-all duration-300 ${glitch ? 'brightness-150 saturate-200' : ''}`}>
+        <div className={`relative w-full h-full flex flex-col items-center justify-center bg-[#020205] rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl transition-colors duration-300 ${glitch ? 'brightness-150 saturate-200' : ''}`}>
             {/* Ultra-Tech Matrix Background */}
             <div className="absolute inset-0">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-500/5 via-transparent to-transparent" />

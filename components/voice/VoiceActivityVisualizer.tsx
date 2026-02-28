@@ -174,7 +174,7 @@ export default function VoiceActivityVisualizer({
               {label}
             </div>
           ) : null}
-          <div className="mt-1 h-2 w-2 rounded-full transition-all"
+          <div className="mt-1 h-2 w-2 rounded-full transition-colors"
             style={{
               background: active ? "radial-gradient(circle, #22d3ee 0%, #3b82f6 100%)" : "rgba(255,255,255,0.35)",
               boxShadow: active ? "0 0 18px rgba(59,130,246,0.8)" : "none",

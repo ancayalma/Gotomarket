@@ -24,7 +24,7 @@ const DeepDiveModal = ({ isOpen, onClose, title, data, columns }: DeepDiveModalP
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col bg-[#09090b] border-[#27272a] text-white">
                 <DialogHeader className="px-6 py-4 border-b border-white/5">
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                         <ListFilter className="text-primary" size={20} />
                         {title}
                     </DialogTitle>
@@ -100,7 +100,7 @@ export const MetricDeepDiveWidget = ({
             <div
                 onClick={() => setIsModalOpen(true)}
                 className={cn(
-                    "relative group w-full p-4 overflow-hidden transition-all duration-300 cursor-pointer",
+                    "relative group w-full p-4 overflow-hidden transition-colors duration-300 cursor-pointer",
                     "bg-[#09090b] border border-[#27272a] hover:border-primary/50 rounded-2xl h-[110px] flex flex-col justify-center",
                 )}
             >
@@ -112,7 +112,7 @@ export const MetricDeepDiveWidget = ({
                 />
 
                 <div className={cn("relative z-10 flex flex-col", centered ? "items-center text-center gap-1" : "items-start pl-1")}>
-                    <h3 className="font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-1 px-2 leading-tight">
+                    <h3 className="font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent py-1 px-2 leading-tight">
                         {title}
                     </h3>
 

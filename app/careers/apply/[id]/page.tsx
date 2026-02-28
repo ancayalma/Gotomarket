@@ -25,7 +25,7 @@ export default async function ApplyPage(props: { params: Promise<{ id: string }>
                 <main className="flex-1 py-32 container mx-auto px-4 max-w-3xl">
                     <div className="mb-12 text-center">
                         <span className="text-primary font-medium tracking-wider uppercase text-sm mb-2 block">Apply for</span>
-                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                             {job.title}
                         </h1>
                         <p className="text-xl text-gray-400">

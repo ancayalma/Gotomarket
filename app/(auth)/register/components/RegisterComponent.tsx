@@ -164,7 +164,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
   return (
     <Card className="shadow-lg my-5 w-full max-w-lg sm:max-w-xl mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Account</CardTitle>
+        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Account</CardTitle>
         <CardDescription>Enter your information to create an account.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 overflow-auto">
@@ -181,7 +181,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                     <FormControl>
                       <div className="flex flex-col items-center space-y-4">
                         <div
-                          className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-dashed border-primary/30 flex items-center justify-center bg-muted/20 group hover:border-primary/60 transition-all cursor-pointer shadow-sm hover:shadow-md"
+                          className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-dashed border-primary/30 flex items-center justify-center bg-muted/20 group hover:border-primary/60 transition-[color,background-color,border-color,box-shadow] cursor-pointer shadow-sm hover:shadow-md"
                           onClick={() => fileInputRef.current?.click()}
                         >
                           {field.value ? (
@@ -233,7 +233,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                   <FormItem>
                     <FormLabel>Company / Team Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input disabled={isLoading} placeholder="Acme Inc." {...field} />
+                      <Input disabled={isLoading} autoComplete="organization" placeholder="Acme Inc." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -249,7 +249,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                       type="button"
                       onClick={() => { setBillingCycle("monthly"); setPaymentMethod("card"); }}
                       className={cn(
-                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-all",
+                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors",
                         billingCycle === "monthly" ? "bg-zinc-800 text-white shadow-lg border border-white/10" : "text-zinc-500 hover:text-zinc-300"
                       )}
                     >
@@ -259,7 +259,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                       type="button"
                       onClick={() => setBillingCycle("annual")}
                       className={cn(
-                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-all relative overflow-hidden",
+                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors relative overflow-hidden",
                         billingCycle === "annual" ? "bg-zinc-800 text-white shadow-lg border border-white/10" : "text-zinc-500 hover:text-zinc-300"
                       )}
                     >
@@ -283,7 +283,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                         <FormLabel>Selected Tier <span className="text-red-500">*</span></FormLabel>
                         <Select disabled={isLoading} onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-12 bg-zinc-900/50 border-white/10 hover:border-primary/50 transition-all font-bold italic">
+                            <SelectTrigger className="h-12 bg-zinc-900/50 border-white/10 hover:border-primary/50 transition-colors font-bold italic">
                               <SelectValue placeholder="Identify your strategy" />
                             </SelectTrigger>
                           </FormControl>
@@ -396,7 +396,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                       <FormItem>
                         <FormLabel>Full Name <span className="text-red-500">*</span></FormLabel>
                         <FormControl>
-                          <Input disabled={isLoading} placeholder="John Doe" {...field} />
+                          <Input disabled={isLoading} autoComplete="name" placeholder="John Doe" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -409,7 +409,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                       <FormItem>
                         <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
                         <FormControl>
-                          <Input disabled={isLoading} placeholder="jdoe" {...field} />
+                          <Input disabled={isLoading} autoComplete="username" placeholder="jdoe" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -424,7 +424,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                     <FormItem>
                       <FormLabel>E-mail <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input disabled={isLoading} placeholder="name@domain.com" {...field} />
+                        <Input type="email" autoComplete="email" inputMode="email" disabled={isLoading} placeholder="name@domain.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -463,13 +463,13 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                         <FormItem>
                           <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
-                            <Input disabled={isLoading} placeholder="Password" type={show ? "text" : "password"} {...field} />
+                            <Input disabled={isLoading} autoComplete="new-password" placeholder="Create a password…" type={show ? "text" : "password"} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <button type="button" className="absolute right-3 top-[38px] text-gray-400 hover:text-primary transition-colors" onClick={() => setShow(!show)}>
+                    <button type="button" aria-label={show ? "Hide password" : "Show password"} className="absolute right-3 top-[38px] text-gray-400 hover:text-primary transition-colors" onClick={() => setShow(!show)}>
                       {show ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
@@ -481,13 +481,13 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                         <FormItem>
                           <FormLabel>Confirm Password <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
-                            <Input disabled={isLoading} placeholder="Password" type={show ? "text" : "password"} {...field} />
+                            <Input disabled={isLoading} autoComplete="new-password" placeholder="Confirm your password…" type={show ? "text" : "password"} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <button type="button" className="absolute right-3 top-[38px] text-gray-400 hover:text-primary transition-colors" onClick={() => setShow(!show)}>
+                    <button type="button" aria-label={show ? "Hide password" : "Show password"} className="absolute right-3 top-[38px] text-gray-400 hover:text-primary transition-colors" onClick={() => setShow(!show)}>
                       {show ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>

@@ -9,7 +9,7 @@ export const metadata = {
     description: "Secure your BasaltCRM integrations with OAuth 2.0 + PKCE, API Keys, and NextAuth.js multi-provider authentication.",
 };
 
-const cardClass = "p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition-all";
+const cardClass = "p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition-colors";
 const codeBlockClass = "bg-[#0a0a0a] border border-white/10 rounded-xl p-5 font-mono text-sm overflow-x-auto text-gray-300 leading-relaxed";
 const sectionTitle = "text-2xl font-semibold mt-12 mb-6 text-white flex items-center";
 
@@ -31,7 +31,7 @@ export default function AuthenticationPage() {
 
                         {/* Hero */}
                         <div className="mb-16">
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 mb-2">
                                 Authentication
                             </h1>
                             <p className="text-lg text-gray-400 max-w-3xl">

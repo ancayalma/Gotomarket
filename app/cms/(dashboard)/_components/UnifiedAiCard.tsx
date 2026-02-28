@@ -212,7 +212,7 @@ const UnifiedAiCard = async () => {
                     <form key={provider} action={saveConfig} suppressHydrationWarning>
                         <input type="hidden" name="provider" value={provider} />
 
-                        <div className={`group rounded-xl border transition-all duration-300 ${isEnabled
+                        <div className={`group rounded-xl border transition-colors duration-300 ${isEnabled
                             ? "border-border/50 bg-card/80 hover:border-border"
                             : "border-border/20 bg-card/30 opacity-50 hover:opacity-70"
                             }`}>
@@ -354,7 +354,7 @@ const UnifiedAiCard = async () => {
                                     <Button
                                         type="submit"
                                         size="sm"
-                                        className={`h-9 gap-1.5 px-4 shrink-0 transition-all duration-300 ${hasKey
+                                        className={`h-9 gap-1.5 px-4 shrink-0 transition-colors duration-300 ${hasKey
                                             ? "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"
                                             : ""
                                             }`}

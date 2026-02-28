@@ -271,7 +271,7 @@ export function ColorPicker({ label, description, value, onChange }: ColorPicker
     const { tints, shades } = generateTintsAndShades(hex);
 
     return (
-        <div className="flex items-center justify-between p-2 rounded-lg border border-border/40 bg-card/30 hover:border-border/80 hover:bg-card/50 transition-all duration-200 group">
+        <div className="flex items-center justify-between p-2 rounded-lg border border-border/40 bg-card/30 hover:border-border/80 hover:bg-card/50 transition-colors duration-200 group">
             <div className="flex-1 mr-4">
                 <Label className="text-xs font-medium text-foreground cursor-pointer group-hover:text-primary transition-colors">
                     {label}
@@ -409,7 +409,7 @@ export function ColorPicker({ label, description, value, onChange }: ColorPicker
                                         <button
                                             key={`${color}-${i}`}
                                             className={cn(
-                                                "w-full aspect-square rounded-sm border border-white/10 shadow-sm transition-all hover:scale-110 relative overflow-hidden",
+                                                "w-full aspect-square rounded-sm border border-white/10 shadow-sm transition-transform hover:scale-110 relative overflow-hidden",
                                                 hex.toLowerCase() === color.toLowerCase() && "ring-2 ring-white ring-offset-1 ring-offset-black"
                                             )}
                                             style={{ backgroundColor: color }}
@@ -437,7 +437,7 @@ export function ColorPicker({ label, description, value, onChange }: ColorPicker
                                         <button
                                             key={color}
                                             className={cn(
-                                                "w-full aspect-square rounded-sm border border-white/10 shadow-sm transition-all hover:scale-110 relative overflow-hidden",
+                                                "w-full aspect-square rounded-sm border border-white/10 shadow-sm transition-transform hover:scale-110 relative overflow-hidden",
                                                 hex.toLowerCase() === color.toLowerCase() && "ring-2 ring-white ring-offset-1 ring-offset-black"
                                             )}
                                             style={{ backgroundColor: color }}

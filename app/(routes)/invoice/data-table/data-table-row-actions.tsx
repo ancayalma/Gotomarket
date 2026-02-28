@@ -192,7 +192,7 @@ export function DataTableRowActions<TData>({
       <Sheet open={openView} onOpenChange={setOpenView}>
         <SheetContent className="min-w-[90vh]">
           <SheetHeader className="py-4">
-            <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{"Preview Invoice" + " - " + invoice?.id}</SheetTitle>
+            <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{"Preview Invoice" + " - " + invoice?.id}</SheetTitle>
           </SheetHeader>
           <div className="h-[90vh] pb-4">
             {invoice.invoice_file_url ? (
@@ -218,7 +218,7 @@ export function DataTableRowActions<TData>({
       <Sheet open={openRossumView} onOpenChange={setOpenRossumView}>
         <SheetContent className="min-w-[90vh] max-w-full">
           <SheetHeader>
-            <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{"Update Invoice" + " - " + invoice?.id}</SheetTitle>
+            <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{"Update Invoice" + " - " + invoice?.id}</SheetTitle>
             <SheetDescription>
               Update invoice metadata with Rossum cockpit
             </SheetDescription>

@@ -1,10 +1,17 @@
 
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 
-export const getCurrentUserTeamId = async () => {
+/**
+ * React.cache() ensures this only runs ONCE per server request,
+ * even when called from 12+ dashboard server actions in parallel.
+ * Without this, each action independently calls getServerSession + prismadb.users.findUnique,
+ * resulting in ~24 redundant DB/auth calls per dashboard load.
+ */
+export const getCurrentUserTeamId = cache(async () => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return null;
 
@@ -50,4 +57,4 @@ export const getCurrentUserTeamId = async () => {
         isAdmin: user?.is_admin || user?.team_role === "ADMIN" || user?.team_role === "OWNER" || isPlatformAdminRole,
         userId: user?.id || (session.user as any).id
     };
-}
+});

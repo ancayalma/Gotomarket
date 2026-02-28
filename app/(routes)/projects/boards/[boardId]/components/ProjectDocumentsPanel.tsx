@@ -82,13 +82,13 @@ export default function ProjectDocumentsPanel({ boardId }: Props) {
                 <div className="flex items-center border rounded-md p-1 bg-muted/50">
                     <button
                         onClick={() => setViewMode("list")}
-                        className={`p-1.5 rounded-sm transition-all ${viewMode === "list" ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                        className={`p-1.5 rounded-sm transition-colors ${viewMode === "list" ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}
                     >
                         <List className="h-4 w-4" />
                     </button>
                     <button
                         onClick={() => setViewMode("grid")}
-                        className={`p-1.5 rounded-sm transition-all ${viewMode === "grid" ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                        className={`p-1.5 rounded-sm transition-colors ${viewMode === "grid" ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}
                     >
                         <Grid className="h-4 w-4" />
                     </button>
@@ -171,7 +171,7 @@ export default function ProjectDocumentsPanel({ boardId }: Props) {
                     {filteredDocs.map((doc: any) => (
                         <Card
                             key={doc.id}
-                            className="group hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+                            className="group hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-[color,background-color,border-color,box-shadow] duration-200 cursor-pointer"
                         >
                             <CardContent className="p-4">
                                 <div className="aspect-square rounded-lg bg-muted/50 flex items-center justify-center mb-3 overflow-hidden">

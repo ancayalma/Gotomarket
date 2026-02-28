@@ -358,7 +358,7 @@ export const AiConfigManager = ({
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
                 <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4">
                     <div className="space-y-1">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Zap className="w-6 h-6 fill-amber-500/20" />
                             LeadGen Intelligence Credits
                         </CardTitle>
@@ -414,7 +414,7 @@ export const AiConfigManager = ({
 
                     return (
                         <Card key={provider} className={cn(
-                            "group bg-card/40 backdrop-blur-md border border-white/5 overflow-hidden transition-all duration-300 hover:border-white/10 hover:shadow-lg hover:shadow-primary/5",
+                            "group bg-card/40 backdrop-blur-md border border-white/5 overflow-hidden transition-[color,background-color,border-color,box-shadow] duration-300 hover:border-white/10 hover:shadow-lg hover:shadow-primary/5",
                             isCurrentProvider && "border-primary/30 shadow-md shadow-primary/5",
                             isExpanded ? "ring-1 ring-white/5" : ""
                         )}>
@@ -431,7 +431,7 @@ export const AiConfigManager = ({
                                             {meta.icon}
                                         </div>
                                         <div>
-                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                                 {meta.name}
                                                 {activeModel && (
                                                     <Badge className="bg-primary/20 text-primary border-primary/30 shadow-[0_0_10px_rgba(var(--primary),0.3)]">
@@ -524,7 +524,7 @@ export const AiConfigManager = ({
                                                     key={model.id}
                                                     onClick={() => handleSelectModel(model)}
                                                     className={cn(
-                                                        "relative p-4 rounded-xl border transition-all duration-200 cursor-pointer group/card",
+                                                        "relative p-4 rounded-xl border transition-colors duration-200 cursor-pointer group/card",
                                                         isSelected
                                                             ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary),0.15)] ring-1 ring-primary/30"
                                                             : "border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10"
@@ -610,7 +610,7 @@ export const AiConfigManager = ({
                                 <Cpu className="w-6 h-6" />
                             </div>
                             <div>
-                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Custom Model Request</CardTitle>
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Custom Model Request</CardTitle>
                                 <CardDescription>
                                     Need a model not listed above? Submit a request to your platform admin.
                                 </CardDescription>
@@ -628,7 +628,7 @@ export const AiConfigManager = ({
                                     });
                                     setRequestModalOpen(true);
                                 }}
-                                className="gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg shadow-violet-500/20 transition-all duration-300"
+                                className="gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg shadow-violet-500/20 transition-colors duration-300"
                             >
                                 <Plus className="w-4 h-4" />
                                 Request Model
@@ -685,7 +685,7 @@ export const AiConfigManager = ({
                         onClick={handleSave}
                         disabled={isPending || !selectedModelId}
                         size="lg"
-                        className="min-w-[180px] shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all font-semibold"
+                        className="min-w-[180px] shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-colors font-semibold"
                     >
                         {isPending ? (
                             "Saving Configuration..."
@@ -714,7 +714,7 @@ export const AiConfigManager = ({
             <Dialog open={requestModalOpen} onOpenChange={setRequestModalOpen}>
                 <DialogContent className="sm:max-w-lg bg-card border-border/50">
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <div className="p-2 rounded-lg bg-violet-500/10 text-violet-400">
                                 <Cpu className="w-5 h-5" />
                             </div>

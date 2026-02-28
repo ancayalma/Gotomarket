@@ -135,7 +135,7 @@ export default function DashboardNavGrid({ isMember = false }: Props) {
                 <Link
                     key={item.title}
                     href={item.href}
-                    className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 hover:bg-accent/50 transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02]"
+                    className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 hover:bg-accent/50 transition-[color,background-color,border-color,box-shadow,transform] duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02]"
                 >
                     {/* Glass Gradient Background - enhanced opacity for faint hue */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-20 group-hover:opacity-100 transition-opacity duration-300`} />

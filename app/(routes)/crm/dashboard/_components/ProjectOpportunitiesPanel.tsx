@@ -238,7 +238,7 @@ export default function LeadOpportunitiesPanel({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g., Q3 Enterprise Subscription Renewal"
-                  className="bg-background/40 border-white/10 focus:border-primary/50 h-11 transition-all"
+                  className="bg-background/40 border-white/10 focus:border-primary/50 h-11 transition-colors"
                 />
               </div>
 
@@ -253,7 +253,7 @@ export default function LeadOpportunitiesPanel({
                     value={expectedRevenue}
                     onChange={(e) => setExpectedRevenue(e.target.value)}
                     placeholder="25000"
-                    className="pl-14 bg-background/40 border-white/10 focus:border-primary/50 h-11 transition-all"
+                    className="pl-14 bg-background/40 border-white/10 focus:border-primary/50 h-11 transition-colors"
                   />
                 </div>
               </div>
@@ -264,14 +264,14 @@ export default function LeadOpportunitiesPanel({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Key drivers, urgency, constraints..."
-                  className="bg-background/40 border-white/10 focus:border-primary/50 h-11 transition-all"
+                  className="bg-background/40 border-white/10 focus:border-primary/50 h-11 transition-colors"
                 />
               </div>
 
               <Button
                 disabled={isSubmitting || !selectedLeadId}
                 onClick={onCreateOpportunity}
-                className="w-full h-12 mt-2 bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90 shadow-lg shadow-primary/25 border-0 text-white font-medium group transition-all"
+                className="w-full h-12 mt-2 bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90 shadow-lg shadow-primary/25 border-0 text-white font-medium group transition-colors"
               >
                 {isSubmitting ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Provisioning Deal...</>
@@ -339,7 +339,7 @@ export default function LeadOpportunitiesPanel({
                         key={o.id}
                         variants={itemVariants}
                         layout
-                        className="p-4 rounded-xl border border-white/5 bg-background shadow-sm hover:shadow-md hover:border-primary/20 hover:bg-primary/[0.02] transition-all group cursor-pointer relative overflow-hidden"
+                        className="p-4 rounded-xl border border-white/5 bg-background shadow-sm hover:shadow-md hover:border-primary/20 hover:bg-primary/[0.02] transition-[color,background-color,border-color,box-shadow] group cursor-pointer relative overflow-hidden"
                       >
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/50 to-blue-400/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div className="flex justify-between items-start">

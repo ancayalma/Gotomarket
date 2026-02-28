@@ -120,7 +120,7 @@ export default function MyProjectsView({ userId }: Props) {
             >
                 {/* My Tasks Button */}
                 <Link href={`/projects/tasks/${userId}`}>
-                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 hover:bg-accent/50 transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] h-full">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 hover:bg-accent/50 transition-[color,background-color,border-color,box-shadow,transform] duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] h-full">
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
                         <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-2">
                             <div className="p-3 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-border shadow-lg group-hover:scale-110 transition-transform duration-300 text-blue-400 ring-1 ring-white/20 group-hover:ring-white/40">
@@ -140,7 +140,7 @@ export default function MyProjectsView({ userId }: Props) {
 
                 {/* Gantt View Button */}
                 <Link href="/projects/gantt">
-                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 hover:bg-accent/50 transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] h-full">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 hover:bg-accent/50 transition-[color,background-color,border-color,box-shadow,transform] duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] h-full">
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-violet-500/20 opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
                         <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-2">
                             <div className="p-3 rounded-full bg-gradient-to-br from-purple-500/20 to-violet-500/20 border border-border shadow-lg group-hover:scale-110 transition-transform duration-300 text-purple-400 ring-1 ring-white/20 group-hover:ring-white/40">
@@ -160,7 +160,7 @@ export default function MyProjectsView({ userId }: Props) {
 
                 {/* Calendar Button */}
                 <Link href="/projects/calendar">
-                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 hover:bg-accent/50 transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] h-full">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 hover:bg-accent/50 transition-[color,background-color,border-color,box-shadow,transform] duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] h-full">
                         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-green-500/20 opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
                         <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-2">
                             <div className="p-3 rounded-full bg-gradient-to-br from-emerald-500/20 to-green-500/20 border border-border shadow-lg group-hover:scale-110 transition-transform duration-300 text-emerald-400 ring-1 ring-white/20 group-hover:ring-white/40">
@@ -180,7 +180,7 @@ export default function MyProjectsView({ userId }: Props) {
 
                 {/* Documents Button */}
                 <Link href="/documents">
-                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 hover:bg-accent/50 transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] h-full">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 hover:bg-accent/50 transition-[color,background-color,border-color,box-shadow,transform] duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] h-full">
                         <div className="absolute inset-0 bg-gradient-to-br from-sky-500/20 to-blue-500/20 opacity-20 group-hover:opacity-60 transition-opacity duration-300" />
                         <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-2">
                             <div className="p-3 rounded-full bg-gradient-to-br from-sky-500/20 to-blue-500/20 border border-border shadow-lg group-hover:scale-110 transition-transform duration-300 text-sky-400 ring-1 ring-white/20 group-hover:ring-white/40">
@@ -433,7 +433,7 @@ export default function MyProjectsView({ userId }: Props) {
                 {/* My Assignments Card */}
                 <Card className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-transparent border-none">
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <FolderKanban className="w-5 h-5 text-indigo-400" />
                             My Assignments
                         </CardTitle>
@@ -446,7 +446,7 @@ export default function MyProjectsView({ userId }: Props) {
                 {/* Need More Leads Card */}
                 <Card className="bg-muted/30">
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Sparkles className="w-5 h-5 text-amber-400" />
                             Need More Leads?
                         </CardTitle>

@@ -295,7 +295,7 @@ export default function ThemeStudioPage() {
                     <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-8 rotate-12 group-hover:rotate-0 transition-transform border border-primary/20">
                         <Lock className="w-10 h-10 text-primary" />
                     </div>
-                    <h1 className="text-4xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase mb-4">
+                    <h1 className="text-4xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase mb-4">
                         Visual Studio Restricted
                     </h1>
                     <p className="text-muted-foreground max-w-lg mb-10 text-lg">
@@ -312,7 +312,7 @@ export default function ThemeStudioPage() {
                         </Button>
                         <Button
                             onClick={() => router.push("/pricing")}
-                            className="px-8 py-6 h-auto text-lg font-bold uppercase italic shadow-2xl shadow-primary/30 hover:scale-105 transition-all bg-primary"
+                            className="px-8 py-6 h-auto text-lg font-bold uppercase italic shadow-2xl shadow-primary/30 hover:scale-105 transition-transform bg-primary"
                         >
                             Upgrade Now
                         </Button>
@@ -327,7 +327,7 @@ export default function ThemeStudioPage() {
                     <span className="text-sm text-muted-foreground">Appearance</span>
                 </div>
 
-                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                     Customize Your Experience
                 </h1>
                 <p className="text-muted-foreground">
@@ -475,7 +475,7 @@ export default function ThemeStudioPage() {
                             {customThemes.map((customTheme) => (
                                 <div
                                     key={customTheme.id}
-                                    className={`relative flex flex-col gap-3 p-4 rounded-xl border transition-all cursor-pointer ${currentTheme === customTheme.id
+                                    className={`relative flex flex-col gap-3 p-4 rounded-xl border transition-colors cursor-pointer ${currentTheme === customTheme.id
                                         ? "border-primary ring-2 ring-primary/30"
                                         : "border-border/50 hover:border-border"
                                         } bg-card/50 hover:bg-card/80`}

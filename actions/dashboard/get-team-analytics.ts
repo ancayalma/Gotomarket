@@ -122,15 +122,6 @@ export async function getTeamAnalytics(): Promise<TeamAnalytics> {
     userWhere.id = userId; // Fallback to just themselves if no team and not impersonating
   }
 
-  // Active team members (filtered by team)
-  const users = await prismadb.users.findMany({
-    where: userWhere,
-    select: { id: true, name: true, email: true, avatar: true },
-    orderBy: { name: "asc" },
-  });
-
-  const userIds = users.map((u) => u.id);
-
   // Build lead filter - team filter + member filter
   const leadWhere: any = {};
   if (teamId) {
@@ -143,33 +134,43 @@ export async function getTeamAnalytics(): Promise<TeamAnalytics> {
     leadWhere.assigned_to = userId;
   }
 
-  // Pre-fetch leads (filtered by team/member)
-  const allLeads = await prismadb.crm_Leads.findMany({
-    where: leadWhere,
-    select: {
-      id: true,
-      assigned_to: true,
-      email: true,
-      phone: true,
-      pipeline_stage: true,
-      outreach_sent_at: true,
-      outreach_meeting_booked_at: true,
-    },
-  });
+  // Active team members AND leads — both depend only on teamId, so fetch in parallel
+  const [users, allLeads] = await Promise.all([
+    prismadb.users.findMany({
+      where: userWhere,
+      select: { id: true, name: true, email: true, avatar: true },
+      orderBy: { name: "asc" },
+    }),
+    prismadb.crm_Leads.findMany({
+      where: leadWhere,
+      select: {
+        id: true,
+        assigned_to: true,
+        email: true,
+        phone: true,
+        pipeline_stage: true,
+        outreach_sent_at: true,
+        outreach_meeting_booked_at: true,
+      },
+    }),
+  ]);
 
   const leadIds = allLeads.map((l: any) => l.id);
 
   // Fetch activities once and reduce in-memory (Filtered by Lead IDs which are already team-scoped)
   const activityWhere: any = { lead: { in: leadIds } };
 
-  const emailActivities = await prismadb.crm_Lead_Activities.findMany({
-    where: { ...activityWhere, type: "email_sent" },
-    select: { user: true, lead: true },
-  });
-  const callActivities = await prismadb.crm_Lead_Activities.findMany({
-    where: { ...activityWhere, type: { contains: "call", mode: "insensitive" } },
-    select: { user: true, lead: true },
-  });
+  // Fetch both activity types in parallel — both depend only on leadIds
+  const [emailActivities, callActivities] = await Promise.all([
+    prismadb.crm_Lead_Activities.findMany({
+      where: { ...activityWhere, type: "email_sent" },
+      select: { user: true, lead: true },
+    }),
+    prismadb.crm_Lead_Activities.findMany({
+      where: { ...activityWhere, type: { contains: "call", mode: "insensitive" } },
+      select: { user: true, lead: true },
+    }),
+  ]);
 
   // Build maps keyed by `${userId}|${leadId}` => count
   const emailByUserLead = new Map<string, number>();

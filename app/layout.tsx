@@ -98,6 +98,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           name="viewport"
           content="width=device-width, height=device-height, initial-scale=1"
         />
+        {/* Mobile browser chrome colors — matches app background for immersive feel */}
+        <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <link rel="stylesheet" href="https://use.typekit.net/eur3bvn.css" />
       </head>
       <body className={inter.className} suppressHydrationWarning>

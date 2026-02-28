@@ -76,7 +76,7 @@ const ForcePasswordChangeModal = ({ isOpen }: ForcePasswordChangeModalProps) => 
                         </div>
 
                         <div className="p-8">
-                            <Dialog.Title className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2 text-center mb-2">
+                            <Dialog.Title className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2 text-center mb-2">
                                 Secure Your Account
                             </Dialog.Title>
                             <Dialog.Description className="text-muted-foreground text-center text-sm mb-8">
@@ -100,7 +100,7 @@ const ForcePasswordChangeModal = ({ isOpen }: ForcePasswordChangeModalProps) => 
                                                 value={newPassword}
                                                 onChange={(e) => setNewPassword(e.target.value)}
                                                 placeholder="••••••••"
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-white/10"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors placeholder:text-white/10"
                                             />
                                             <button
                                                 type="button"
@@ -127,7 +127,7 @@ const ForcePasswordChangeModal = ({ isOpen }: ForcePasswordChangeModalProps) => 
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                                 placeholder="••••••••"
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-white/10"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors placeholder:text-white/10"
                                             />
                                         </div>
                                     </div>
@@ -155,7 +155,7 @@ const ForcePasswordChangeModal = ({ isOpen }: ForcePasswordChangeModalProps) => 
                                     type="submit"
                                     disabled={!allMet || isLoading}
                                     className={cn(
-                                        "w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300",
+                                        "w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors duration-300",
                                         allMet
                                             ? "bg-primary text-white shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-[0.98]"
                                             : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"

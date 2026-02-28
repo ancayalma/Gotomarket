@@ -99,7 +99,7 @@ export function AddRoleModal({ isOpen, onClose, teamId, departments }: AddRoleMo
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create New Role</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create New Role</DialogTitle>
                     <DialogDescription>
                         Define a custom role with specific module access for your team.
                     </DialogDescription>
@@ -159,7 +159,7 @@ export function AddRoleModal({ isOpen, onClose, teamId, departments }: AddRoleMo
                                 <div
                                     key={module.id}
                                     className={cn(
-                                        "flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer",
+                                        "flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer",
                                         selectedModules.includes(module.id)
                                             ? "bg-primary/10 border-primary/30"
                                             : "bg-muted/20 border-border/50 hover:bg-muted/40"

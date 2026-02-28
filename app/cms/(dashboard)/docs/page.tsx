@@ -15,7 +15,7 @@ export default async function CMSDocsOverviewPage() {
     return (
         <div className="p-8 space-y-8 animate-in fade-in duration-500">
             <div>
-                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Documentation Center</h1>
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Documentation Center</h1>
                 <p className="text-slate-400 mt-2 text-lg">Manage your entire knowledge base from one unified interface.</p>
             </div>
 
@@ -23,7 +23,7 @@ export default async function CMSDocsOverviewPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="bg-slate-950/50 backdrop-blur-xl border-white/10 shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Total Articles</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Total Articles</CardTitle>
                         <BookOpen className="h-4 w-4 text-blue-400" />
                     </CardHeader>
                     <CardContent>
@@ -35,7 +35,7 @@ export default async function CMSDocsOverviewPage() {
                 </Card>
                 <Card className="bg-slate-950/50 backdrop-blur-xl border-white/10 shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Active Categories</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Active Categories</CardTitle>
                         <Layers className="h-4 w-4 text-emerald-400" />
                     </CardHeader>
                     <CardContent>
@@ -47,7 +47,7 @@ export default async function CMSDocsOverviewPage() {
                 </Card>
                 <Card className="bg-slate-950/50 backdrop-blur-xl border-white/10 shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">API Endpoints</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">API Endpoints</CardTitle>
                         <Zap className="h-4 w-4 text-orange-400" />
                     </CardHeader>
                     <CardContent>
@@ -72,7 +72,7 @@ export default async function CMSDocsOverviewPage() {
                             href={`/cms/docs/${doc.id}`}
                             className="block"
                         >
-                            <div className="flex items-center justify-between p-4 bg-slate-950/50 backdrop-blur-xl border border-white/10 rounded-lg hover:border-blue-500/50 hover:shadow-lg transition-all cursor-pointer">
+                            <div className="flex items-center justify-between p-4 bg-slate-950/50 backdrop-blur-xl border border-white/10 rounded-lg hover:border-blue-500/50 hover:shadow-lg transition-[color,background-color,border-color,box-shadow] cursor-pointer">
                                 <div>
                                     <h4 className="font-semibold text-white">{doc.title}</h4>
                                     <p className="text-sm text-slate-400">{doc.category} • {doc.slug}</p>

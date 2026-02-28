@@ -116,7 +116,7 @@ function MobileInfoButton({ tooltip, entityName }: { tooltip: string; entityName
           e.stopPropagation();
           setIsOpen(true);
         }}
-        className="md:hidden absolute top-2 right-2 z-30 w-5 h-5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 hover:border-white/40 transition-all duration-200"
+        className="md:hidden absolute top-2 right-2 z-30 w-5 h-5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 hover:border-white/40 transition-colors duration-200"
         aria-label={`Info about ${entityName}`}
       >
         <Info className="w-3 h-3" />

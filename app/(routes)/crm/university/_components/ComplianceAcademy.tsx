@@ -108,7 +108,7 @@ export default function ComplianceAcademy() {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.1 }}
                                 className={cn(
-                                    "relative p-8 rounded-3xl border bg-white/[0.02] transition-all hover:bg-white/[0.05] group",
+                                    "relative p-8 rounded-3xl border bg-white/[0.02] transition-colors hover:bg-white/[0.05] group",
                                     step.borderColor
                                 )}
                             >
@@ -147,13 +147,13 @@ export default function ComplianceAcademy() {
 
                     <Card className="bg-white/[0.02] border-white/10 overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 p-8 border-b border-white/5">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">The Golden Rules</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">The Golden Rules</CardTitle>
                             <CardDescription className="text-xs font-medium text-gray-500">Industry standards for high deliverability.</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
                             <div className="divide-y divide-white/5">
                                 {complianceRules.map((rule) => (
-                                    <div key={rule.title} className="p-6 space-y-3 group hover:bg-white/[0.03] transition-all cursor-default">
+                                    <div key={rule.title} className="p-6 space-y-3 group hover:bg-white/[0.03] transition-colors cursor-default">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">

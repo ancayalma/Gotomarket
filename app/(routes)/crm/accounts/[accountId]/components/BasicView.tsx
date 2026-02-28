@@ -47,7 +47,7 @@ export async function BasicView({ data }: OppsViewProps) {
         <CardHeader className="pb-3">
           <div className="flex w-full justify-between">
             <div>
-              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{data.name}</CardTitle>
+              <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{data.name}</CardTitle>
               <CardDescription>ID:{data.id}</CardDescription>
             </div>
             <div>
@@ -58,7 +58,7 @@ export async function BasicView({ data }: OppsViewProps) {
         <CardContent>
           <div className="grid grid-cols-1 w-full gap-y-1">
             <div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <CoinsIcon className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">
@@ -69,7 +69,7 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <Landmark className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Company ID</p>
@@ -78,7 +78,7 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <Percent className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">VAT number</p>
@@ -87,7 +87,7 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <File className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">
@@ -98,7 +98,7 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <EnvelopeClosedIcon className="mt-px h-5 w-5 shrink-0" />
                 <div className="space-y-1 min-w-0 flex-1">
                   <p className="text-sm font-medium leading-none">Email</p>
@@ -108,7 +108,7 @@ export async function BasicView({ data }: OppsViewProps) {
                   />
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <Globe2 className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Website</p>
@@ -121,7 +121,7 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <Phone className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">
@@ -132,7 +132,7 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <CoinsIcon className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Fax</p>
@@ -141,7 +141,7 @@ export async function BasicView({ data }: OppsViewProps) {
               </div>
             </div>
             <div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <User className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">
@@ -152,7 +152,7 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <CalendarDays className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Created</p>
@@ -167,7 +167,7 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <CalendarDays className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">
@@ -186,21 +186,21 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <LightningBoltIcon className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Status</p>
                   <p className="text-sm text-muted-foreground">{data.status}</p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <CoinsIcon className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Type</p>
                   <p className="text-sm text-muted-foreground">{data.type}</p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <CoinsIcon className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Member of</p>
@@ -209,7 +209,7 @@ export async function BasicView({ data }: OppsViewProps) {
                   </p>
                 </div>
               </div>
-              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+              <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                 <CoinsIcon className="mt-px h-5 w-5" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Industry</p>

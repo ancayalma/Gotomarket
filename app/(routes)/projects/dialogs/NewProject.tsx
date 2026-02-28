@@ -167,7 +167,7 @@ const NewProjectDialog = ({ customTrigger, entityName = "Project", apiEndpoint =
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader className="pb-2">
-          <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+          <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
             <FolderKanban className="w-6 h-6 text-primary" />
             Create Delivery Project
           </DialogTitle>
@@ -476,7 +476,7 @@ const NewProjectDialog = ({ customTrigger, entityName = "Project", apiEndpoint =
                 <Button
                   disabled={isLoading}
                   type="submit"
-                  className="px-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all active:scale-95"
+                  className="px-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-[color,background-color,border-color,transform] active:scale-95"
                 >
                   {isLoading ? "Initialising..." : "Create Project"}
                 </Button>

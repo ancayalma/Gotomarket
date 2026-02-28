@@ -69,7 +69,7 @@ export default function AIPromptLab() {
                             <motion.div
                                 key={persona.name}
                                 whileHover={{ scale: 1.01 }}
-                                className="group p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-blue-500/30 transition-all"
+                                className="group p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-blue-500/30 transition-colors"
                             >
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
@@ -121,7 +121,7 @@ export default function AIPromptLab() {
                                     <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
                                         <Settings2 className="w-4 h-4" />
                                     </div>
-                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Sandbox Mode</CardTitle>
+                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Sandbox Mode</CardTitle>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -161,7 +161,7 @@ export default function AIPromptLab() {
                                 </div>
                             </div>
 
-                            <button className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white font-bold text-sm shadow-xl shadow-emerald-500/10 transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+                            <button className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white font-bold text-sm shadow-xl shadow-emerald-500/10 transition-transform flex items-center justify-center gap-2 active:scale-[0.98]">
                                 <Play className="w-4 h-4 fill-white" />
                                 Test Instruction Set
                             </button>

@@ -141,7 +141,7 @@ export function MessagesMailComponent({
                         setIsCollapsed(false);
                         document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(false)}`;
                     }}
-                    className={cn(isCollapsed && "transition-all duration-300 ease-in-out")}
+                    className={cn(isCollapsed && "transition-colors duration-300 ease-in-out")}
                 >
                     <div className="flex items-center p-2">
                         <div className="w-full">
@@ -237,7 +237,7 @@ export function MessagesMailComponent({
                 <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
                     <Tabs defaultValue="all">
                         <div className="flex items-center px-4 py-2">
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{activeNav}</h1>
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{activeNav}</h1>
                             <TabsList className="ml-auto">
                                 <TabsTrigger value="all" className="text-zinc-600 dark:text-zinc-200">
                                     All

@@ -170,7 +170,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                             <div className="absolute -top-20 -left-20 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none opacity-50" />
 
                             <DialogHeader className="mb-8 relative z-10">
-                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                     <Sparkles className="text-cyan-400 w-6 h-6" />
                                     Subscriptions
                                 </DialogTitle>
@@ -184,7 +184,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                 <button
                                     onClick={() => { setBillingCycle("monthly"); setPaymentMethod("card"); }}
                                     className={cn(
-                                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-all",
+                                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors",
                                         billingCycle === "monthly" ? "bg-zinc-800 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
                                     )}
                                 >
@@ -193,7 +193,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                 <button
                                     onClick={() => setBillingCycle("annual")}
                                     className={cn(
-                                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-all relative overflow-hidden",
+                                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors relative overflow-hidden",
                                         billingCycle === "annual" ? "bg-zinc-800 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
                                     )}
                                 >
@@ -213,7 +213,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                         key={plan.name}
                                         onClick={() => setSelectedPlan(plan)}
                                         className={cn(
-                                            "w-full text-left p-4 rounded-2xl border transition-all duration-300 relative group overflow-hidden",
+                                            "w-full text-left p-4 rounded-2xl border transition-colors duration-300 relative group overflow-hidden",
                                             selectedPlan.name === plan.name
                                                 ? "border-primary/50 bg-primary/10 shadow-[0_0_30px_rgba(6,182,212,0.1)]"
                                                 : "border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/60 hover:border-zinc-700"
@@ -265,11 +265,11 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                         )}
                                     />
                                     <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                                        <div className={cn("w-2 h-2 rounded-full transition-all duration-300", isCryptoValid ? "bg-emerald-400 shadow-[0_0_10px_#34d399]" : "bg-zinc-700")} />
+                                        <div className={cn("w-2 h-2 rounded-full transition-colors duration-300", isCryptoValid ? "bg-emerald-400 shadow-[0_0_10px_#34d399]" : "bg-zinc-700")} />
                                     </div>
                                 </div>
 
-                                <div className={cn("overflow-hidden transition-all duration-500 ease-in-out", isCryptoValid ? "max-h-12 opacity-100 mt-3" : "max-h-0 opacity-0 mt-0")}>
+                                <div className={cn("overflow-hidden transition-colors duration-500 ease-in-out", isCryptoValid ? "max-h-12 opacity-100 mt-3" : "max-h-0 opacity-0 mt-0")}>
                                     <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
                                         <Sparkles className="w-3 h-3 text-emerald-400 animate-spin-slow" />
                                         <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider animate-pulse">
@@ -315,7 +315,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                     </p>
                                 </div>
 
-                                <Card className={cn("bg-zinc-900/50 border-zinc-800 mb-8 overflow-hidden transition-all duration-500", paymentMethod === 'crypto' ? "border-emerald-500/30 ring-1 ring-emerald-500/20" : "")}>
+                                <Card className={cn("bg-zinc-900/50 border-zinc-800 mb-8 overflow-hidden transition-colors duration-500", paymentMethod === 'crypto' ? "border-emerald-500/30 ring-1 ring-emerald-500/20" : "")}>
                                     <div className="flex flex-row md:items-center p-6 gap-6">
                                         <div className={cn("hidden md:flex w-12 h-12 rounded-full items-center justify-center flex-shrink-0", paymentMethod === 'crypto' ? "bg-emerald-500/10" : "bg-indigo-500/10")}>
                                             {paymentMethod === 'crypto' ? <Sparkles className="w-6 h-6 text-emerald-400" /> : <ShieldCheck className="w-6 h-6 text-indigo-400" />}
@@ -377,7 +377,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                 <div className="mt-auto">
                                     <Button
                                         className={cn(
-                                            "w-full h-16 rounded-2xl text-lg font-bold shadow-2xl transition-all group overflow-hidden relative",
+                                            "w-full h-16 rounded-2xl text-lg font-bold shadow-2xl transition-colors group overflow-hidden relative",
                                             paymentMethod === 'crypto'
                                                 ? "bg-emerald-600 hover:bg-emerald-500 hover:shadow-[0_0_40px_rgba(16,185,129,0.4)]"
                                                 : "bg-indigo-600 hover:bg-indigo-500 hover:shadow-[0_0_40px_rgba(79,70,229,0.4)]"

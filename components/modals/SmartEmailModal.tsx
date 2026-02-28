@@ -138,7 +138,7 @@ export function SmartEmailModal({
                                 <Mail className="h-5 w-5 text-emerald-400" />
                             </div>
                             <div>
-                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Compose Tracking Email</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Compose Tracking Email</DialogTitle>
                                 <DialogDescription className="text-white/50 text-xs">
                                     Sending as <span className="text-emerald-400 font-medium">{process.env.NEXT_PUBLIC_APP_NAME || "Basalt CRM"}</span> to {recipientName || recipientEmail}
                                 </DialogDescription>
@@ -173,7 +173,7 @@ export function SmartEmailModal({
                                             value={subject}
                                             onChange={(e) => setSubject(e.target.value)}
                                             placeholder="Special follow up regarding..."
-                                            className="h-10 bg-white/[0.02] border-white/10 focus:border-emerald-500/50 transition-all"
+                                            className="h-10 bg-white/[0.02] border-white/10 focus:border-emerald-500/50 transition-colors"
                                         />
                                     </div>
                                 </div>

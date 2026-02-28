@@ -57,7 +57,7 @@ export function NavItemDialog({ isOpen, onClose, onSave, item }: Props) {
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px] bg-[#18181b] border-primary/20 text-primary font-sans">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{item?.id ? "Edit Item" : "Add New Item"}</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{item?.id ? "Edit Item" : "Add New Item"}</DialogTitle>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
@@ -107,7 +107,7 @@ export function NavItemDialog({ isOpen, onClose, onSave, item }: Props) {
                                     type="button"
                                     onClick={() => setFormData({ ...formData, iconName: name })}
                                     className={cn(
-                                        "p-2 rounded-md hover:bg-primary/20 transition-all flex items-center justify-center border border-transparent",
+                                        "p-2 rounded-md hover:bg-primary/20 transition-colors flex items-center justify-center border border-transparent",
                                         formData.iconName === name ? "bg-primary/30 border-primary text-primary" : "text-primary/40 hover:text-primary/70"
                                     )}
                                     title={name}

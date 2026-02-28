@@ -154,7 +154,7 @@ export const LeadWizardQuickModal = ({
                             <Wand2 size={20} className="text-cyan-400" />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 Quick Discovery Session
                                 <Sparkles
                                     size={14}
@@ -180,7 +180,7 @@ export const LeadWizardQuickModal = ({
                             id="quickwizard-pool-name"
                             value={poolName}
                             onChange={(e) => setPoolName(e.target.value)}
-                            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.07] transition-all outline-none"
+                            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.07] transition-colors outline-none"
                             placeholder="e.g. Q1 SaaS Outreach, Fintech EU Pipeline..."
                             autoFocus
                         />
@@ -199,7 +199,7 @@ export const LeadWizardQuickModal = ({
                                 value={aiPrompt}
                                 onChange={(e) => setAiPrompt(e.target.value)}
                                 rows={4}
-                                className="relative w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.07] transition-all resize-none outline-none"
+                                className="relative w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.07] transition-colors resize-none outline-none"
                                 placeholder="e.g. B2B SaaS companies in the US with 50-200 employees. They should be in Fintech or Healthcare, using HubSpot and Stripe. Target VP of Sales and CTO roles..."
                             />
                             <div className="absolute bottom-2 right-2 flex gap-1.5">
@@ -237,7 +237,7 @@ export const LeadWizardQuickModal = ({
 
                     {/* Advanced Options Panel */}
                     <div
-                        className={`grid transition-all duration-300 ease-in-out ${showAdvanced ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                        className={`grid transition-colors duration-300 ease-in-out ${showAdvanced ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
                     >
                         <div className="overflow-hidden">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 pb-2">
@@ -302,7 +302,7 @@ export const LeadWizardQuickModal = ({
                             !poolName.trim() ||
                             !aiPrompt.trim()
                         }
-                        className="w-full h-12 relative overflow-hidden rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-600 bg-[length:200%_auto] hover:bg-right text-white font-bold text-sm shadow-xl shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all duration-500 disabled:opacity-40 disabled:shadow-none border-0 group"
+                        className="w-full h-12 relative overflow-hidden rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-600 bg-[length:200%_auto] hover:bg-right text-white font-bold text-sm shadow-xl shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-[color,background-color,border-color,box-shadow] duration-500 disabled:opacity-40 disabled:shadow-none border-0 group"
                     >
                         <span className="relative flex items-center justify-center gap-2.5">
                             {submitting ? (

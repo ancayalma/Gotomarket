@@ -1184,14 +1184,14 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
           </p>
           <Button
             onClick={() => window.location.href = "/pricing"}
-            className="px-8 py-6 h-auto text-lg font-bold uppercase italic shadow-xl shadow-primary/20 hover:scale-105 transition-all"
+            className="px-8 py-6 h-auto text-lg font-bold uppercase italic shadow-xl shadow-primary/20 hover:scale-105 transition-transform"
           >
             Upgrade Now
           </Button>
         </div>
 
         <CardHeader className="opacity-20 pointer-events-none select-none">
-          <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Email Signature Studio</CardTitle>
+          <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Email Signature Studio</CardTitle>
           <CardDescription>Design your professional identity.</CardDescription>
         </CardHeader>
         <CardContent className="opacity-10 pointer-events-none select-none blur-sm">
@@ -1220,7 +1220,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
             <TabsContent value="content" className="space-y-4 animate-in fade-in-50">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Personal Details</CardTitle>
+                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Personal Details</CardTitle>
                   <CardDescription>Enter your contact information.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
@@ -1278,7 +1278,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
             <TabsContent value="images" className="space-y-4 animate-in fade-in-50">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Imagery</CardTitle>
+                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Imagery</CardTitle>
                   <CardDescription>Upload professional headshot and company logo.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -1407,7 +1407,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
             <TabsContent value="design" className="space-y-4 animate-in fade-in-50">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Look & Feel</CardTitle>
+                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Look & Feel</CardTitle>
                   <CardDescription>Customize the aesthetics.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -1481,7 +1481,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
                       <div
                         onClick={() => startUpdate("imageShape", "circle")}
                         className={`
-                          flex-1 px-6 py-4 border-2 rounded-xl cursor-pointer flex flex-col items-center gap-3 transition-all duration-200
+                          flex-1 px-6 py-4 border-2 rounded-xl cursor-pointer flex flex-col items-center gap-3 transition-colors duration-200
                           ${data.imageShape === 'circle' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-muted hover:border-border hover:bg-muted/50'}
                         `}
                       >
@@ -1491,7 +1491,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
                       <div
                         onClick={() => startUpdate("imageShape", "rounded")}
                         className={`
-                          flex-1 px-6 py-4 border-2 rounded-xl cursor-pointer flex flex-col items-center gap-3 transition-all duration-200
+                          flex-1 px-6 py-4 border-2 rounded-xl cursor-pointer flex flex-col items-center gap-3 transition-colors duration-200
                           ${data.imageShape === 'rounded' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-muted hover:border-border hover:bg-muted/50'}
                         `}
                       >
@@ -1501,7 +1501,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
                       <div
                         onClick={() => startUpdate("imageShape", "oval")}
                         className={`
-                          flex-1 px-6 py-4 border-2 rounded-xl cursor-pointer flex flex-col items-center gap-3 transition-all duration-200
+                          flex-1 px-6 py-4 border-2 rounded-xl cursor-pointer flex flex-col items-center gap-3 transition-colors duration-200
                           ${data.imageShape === 'oval' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-muted hover:border-border hover:bg-muted/50'}
                         `}
                       >
@@ -1520,7 +1520,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
                           key={t}
                           onClick={() => startUpdate("template", t as any)}
                           className={`
-                            cursor-pointer rounded-xl border-2 p-4 py-5 text-center transition-all duration-200 flex items-center justify-center min-h-[70px]
+                            cursor-pointer rounded-xl border-2 p-4 py-5 text-center transition-colors duration-200 flex items-center justify-center min-h-[70px]
                             ${data.template === t ? "border-primary bg-primary/5 ring-1 ring-primary/20 shadow-sm" : "border-muted hover:border-border hover:bg-muted/30"}
                           `}
                         >
@@ -1673,7 +1673,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
             <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
 
             {/* The Preview container - Dark theme consistent */}
-            <div className="bg-card border rounded-lg shadow-lg p-8 min-h-[300px] flex items-center justify-center transition-all overflow-hidden relative">
+            <div className="bg-card border rounded-lg shadow-lg p-8 min-h-[300px] flex items-center justify-center transition-colors overflow-hidden relative">
               {/* Simulating email client dark mode reading pane */}
               <div
                 key={`${data.contactIconSize}-${data.template}-${data.accentColor}-${data.imageShape}-${data.contactFieldsOrder.join(',')}-${data.showSeparator}`}

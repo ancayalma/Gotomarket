@@ -139,7 +139,7 @@ export default function OAuthPage() {
                     <div
                         key={provider.id}
                         className={cn(
-                            "relative group bg-slate-900/50 border rounded-xl p-6 transition-all hover:shadow-xl",
+                            "relative group bg-slate-900/50 border rounded-xl p-6 transition-shadow hover:shadow-xl",
                             provider.connected
                                 ? "border-green-500/30 shadow-green-500/10"
                                 : "border-white/10 hover:border-blue-500/30",
@@ -178,7 +178,7 @@ export default function OAuthPage() {
                             onClick={() => handleConnectClick(provider)}
                             disabled={!!connectingId || provider.status === "coming_soon"}
                             className={cn(
-                                "w-full py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
+                                "w-full py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2",
                                 provider.connected
                                     ? "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-white/5"
                                     : provider.status === "coming_soon"

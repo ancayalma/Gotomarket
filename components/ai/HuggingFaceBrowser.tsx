@@ -121,7 +121,7 @@ export const HuggingFaceBrowser = ({ onModelAdded, onSelect }: HuggingFaceBrowse
             <Button
                 onClick={handleOpen}
                 variant="outline"
-                className="gap-2 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-all duration-300"
+                className="gap-2 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-colors duration-300"
             >
                 <img
                     src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg"
@@ -134,7 +134,7 @@ export const HuggingFaceBrowser = ({ onModelAdded, onSelect }: HuggingFaceBrowse
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-3xl max-h-[85vh] bg-card border-border/50 flex flex-col">
                     <DialogHeader className="shrink-0">
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <img
                                 src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg"
                                 alt="Hugging Face"
@@ -190,7 +190,7 @@ export const HuggingFaceBrowser = ({ onModelAdded, onSelect }: HuggingFaceBrowse
                                             key={model.id}
                                             onClick={() => setSelectedModel(isSelected ? null : model)}
                                             className={cn(
-                                                "group relative rounded-xl border p-3.5 cursor-pointer transition-all duration-200",
+                                                "group relative rounded-xl border p-3.5 cursor-pointer transition-colors duration-200",
                                                 isSelected
                                                     ? "border-yellow-500/40 bg-yellow-500/5 ring-1 ring-yellow-500/20"
                                                     : "border-border/30 bg-muted/10 hover:border-border/60 hover:bg-muted/20"

@@ -60,7 +60,7 @@ export function SupportInboxModal({ isOpen, onClose }: SupportInboxModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-4xl h-[600px] bg-[#0F1115]/80 backdrop-blur-xl border border-cyan-500/20 text-cyan-50 p-0 overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.15)] rounded-2xl flex flex-col">
-                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Support Inbox</DialogTitle>
+                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Support Inbox</DialogTitle>
 
                 {/* Header */}
                 <div className="bg-cyan-950/30 border-b border-cyan-500/20 p-4 flex justify-between items-center">
@@ -128,7 +128,7 @@ export function SupportInboxModal({ isOpen, onClose }: SupportInboxModalProps) {
                                         <button
                                             onClick={() => pushToJira(selectedTicket.id)}
                                             disabled={pushing}
-                                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {pushing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                             Push to Jira

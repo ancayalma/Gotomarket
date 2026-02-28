@@ -348,7 +348,7 @@ export default function VoiceDuoWaveVisualizer({
       <div className="relative flex items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-2">
           <div
-            className="h-2 w-2 rounded-full transition-all"
+            className="h-2 w-2 rounded-full transition-colors"
             style={{
               background: leftActiveRef.current
                 ? "radial-gradient(circle, #22d3ee 0%, #3b82f6 100%)"
@@ -361,7 +361,7 @@ export default function VoiceDuoWaveVisualizer({
         <div className="flex items-center gap-2">
           <div className="text-[11px] uppercase tracking-wide text-white/80 dark:text-white/70">{rightLabel}</div>
           <div
-            className="h-2 w-2 rounded-full transition-all"
+            className="h-2 w-2 rounded-full transition-colors"
             style={{
               background: rightActiveRef.current
                 ? "radial-gradient(circle, #8b5cf6 0%, #60a5fa 100%)"

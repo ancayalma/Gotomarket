@@ -95,7 +95,7 @@ export const ProviderRegistrySection = ({ providers, models }: ProviderRegistryP
                     <div
                         key={provider.id}
                         className={cn(
-                            "group rounded-xl border transition-all duration-300",
+                            "group rounded-xl border transition-colors duration-300",
                             provider.isActive
                                 ? "border-border/50 bg-card/80 hover:border-border"
                                 : "border-border/20 bg-card/30 opacity-60 hover:opacity-80"

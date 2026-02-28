@@ -233,7 +233,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                     strokeLinecap="round"
                                     strokeDasharray={`${2 * Math.PI * 20}`}
                                     strokeDashoffset={`${2 * Math.PI * 20 * (1 - progressPct / 100)}`}
-                                    className="transition-all duration-700"
+                                    className="transition-colors duration-700"
                                 />
                                 <defs>
                                     <linearGradient id="checklist-grad" x1="0" y1="0" x2="1" y2="1">
@@ -250,7 +250,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                         <div className="min-w-0">
                             <div className="flex items-center gap-2">
                                 <Sparkles className="w-4 h-4 text-violet-400 flex-shrink-0" />
-                                <h2 className="text-sm font-black italic uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-2 px-2 leading-relaxed">
+                                <h2 className="text-sm font-black italic uppercase tracking-tight bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent py-2 px-2 leading-relaxed">
                                     {allDone ? "You're all set! 🎉" : "Quick Launch — Get Started"}
                                 </h2>
                             </div>
@@ -363,7 +363,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                             whileHover={step.done ? {} : { scale: 1.02 }}
                                             whileTap={step.done ? {} : { scale: 0.98 }}
                                             className={[
-                                                "group relative flex flex-col items-start gap-2 rounded-xl p-4 text-left transition-all duration-200",
+                                                "group relative flex flex-col items-start gap-2 rounded-xl p-4 text-left transition-colors duration-200",
                                                 "border backdrop-blur-sm",
                                                 step.done
                                                     ? "border-emerald-500/20 bg-emerald-500/5 cursor-default"

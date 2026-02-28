@@ -93,7 +93,7 @@ const ProjectsPage = async () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-tight uppercase leading-[1.2] py-2">
+              <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent tracking-tight uppercase leading-[1.2] py-2">
                 Active Boards
               </h2>
               <p className="text-muted-foreground/80 mt-1 text-base font-medium tracking-wide">Your high-velocity delivery centers.</p>

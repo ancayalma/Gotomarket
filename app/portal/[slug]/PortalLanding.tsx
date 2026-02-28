@@ -159,7 +159,7 @@ export default function PortalLanding({ portal }: Props) {
                     aria-label="Toggle theme"
                 >
                     <div
-                        className="relative w-14 h-7 rounded-full p-0.5 transition-all duration-300"
+                        className="relative w-14 h-7 rounded-full p-0.5 transition-colors duration-300"
                         style={{
                             backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
                             boxShadow: isDark
@@ -168,7 +168,7 @@ export default function PortalLanding({ portal }: Props) {
                         }}
                     >
                         <div
-                            className="absolute top-0.5 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg"
+                            className="absolute top-0.5 w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-300 shadow-lg"
                             style={{
                                 left: isDark ? "calc(100% - 26px)" : "2px",
                                 backgroundColor: isDark ? "#1f2937" : "#ffffff",
@@ -192,7 +192,7 @@ export default function PortalLanding({ portal }: Props) {
                 <div className="text-center space-y-4">
                     {portal.logo_url ? (
                         <div
-                            className="mx-auto w-20 h-20 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300"
+                            className="mx-auto w-20 h-20 rounded-full flex items-center justify-center overflow-hidden transition-colors duration-300"
                             style={{
                                 backgroundColor: isDark ? "rgba(30,30,30,0.25)" : "rgba(255,255,255,0.25)",
                                 backdropFilter: "blur(24px) saturate(200%)",
@@ -214,7 +214,7 @@ export default function PortalLanding({ portal }: Props) {
                         </div>
                     ) : (
                         <div
-                            className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto transition-all duration-300"
+                            className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto transition-colors duration-300"
                             style={{
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 8px 32px ${primaryColor}50, 0 0 0 1px rgba(255,255,255,0.1)`,
@@ -224,7 +224,7 @@ export default function PortalLanding({ portal }: Props) {
                         </div>
                     )}
                     <h1
-                        className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2"
+                        className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2"
                         style={{ color: isDark ? "#ffffff" : "#111827" }}
                     >
                         {portal.portal_name}
@@ -241,7 +241,7 @@ export default function PortalLanding({ portal }: Props) {
 
                 {/* Phone Entry Form */}
                 <div
-                    className="rounded-3xl p-8 transition-all duration-300"
+                    className="rounded-3xl p-8 transition-colors duration-300"
                     style={{
                         backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.9)",
                         backdropFilter: portal.enable_glass_effect ? `blur(${portal.background_blur || 20}px)` : undefined,
@@ -291,7 +291,7 @@ export default function PortalLanding({ portal }: Props) {
                                         value={phone}
                                         onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                                         placeholder="(555) 123-4567"
-                                        className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all text-lg"
+                                        className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-colors text-lg"
                                         style={{
                                             backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#ffffff",
                                             border: error
@@ -309,7 +309,7 @@ export default function PortalLanding({ portal }: Props) {
                             <button
                                 type="submit"
                                 disabled={loading || phone.length < 10}
-                                className="w-full py-3.5 px-6 rounded-xl font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="w-full py-3.5 px-6 rounded-xl font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 style={{
                                     backgroundColor: primaryColor,
                                     boxShadow: `0 4px 14px ${primaryColor}50`,

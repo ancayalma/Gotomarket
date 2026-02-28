@@ -70,7 +70,7 @@ export const CustomMetricWidget = ({ data }: CustomMetricWidgetProps) => {
 
                         <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                             <div
-                                className={cn("h-full transition-all duration-1000", `bg-${data.color}-500`)}
+                                className={cn("h-full transition-colors duration-1000", `bg-${data.color}-500`)}
                                 style={{ width: `${percentage}%` }}
                             />
                         </div>
@@ -100,7 +100,7 @@ export const CustomMetricWidget = ({ data }: CustomMetricWidgetProps) => {
                         {[0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 1, 0.7, 0.9, 0.8].map((h, i) => (
                             <div
                                 key={i}
-                                className={cn("flex-1 rounded-t-sm transition-all duration-500", `bg-${data.color}-500/40`)}
+                                className={cn("flex-1 rounded-t-sm transition-colors duration-500", `bg-${data.color}-500/40`)}
                                 style={{ height: `${h * 100}%` }}
                             />
                         ))}

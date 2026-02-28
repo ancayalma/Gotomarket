@@ -286,7 +286,7 @@ export function ProjectsDataTable<TData, TValue>({
                     <a
                       key={row.id}
                       href={`/projects/boards/${orig?.id}`}
-                      className="group border rounded-lg p-3 bg-card hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+                      className="group border rounded-lg p-3 bg-card hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-[color,background-color,border-color,box-shadow] duration-200 cursor-pointer"
                     >
                       {orig?.brand_logo_url && (
                         <img src={orig.brand_logo_url} alt="" className="h-8 w-8 object-contain rounded mb-2" />

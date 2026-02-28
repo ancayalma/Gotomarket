@@ -92,7 +92,7 @@ export function LeadGenPurchaseModal({ isOpen, onClose }: LeadGenPurchaseModalPr
                             key={pkg.id}
                             onClick={() => setSelectedId(pkg.id)}
                             className={cn(
-                                "relative group cursor-pointer rounded-2xl border p-5 transition-all duration-300",
+                                "relative group cursor-pointer rounded-2xl border p-5 transition-colors duration-300",
                                 selectedId === pkg.id
                                     ? "bg-amber-500/10 border-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.1)]"
                                     : "bg-white/5 border-white/5 hover:border-white/10"
@@ -125,7 +125,7 @@ export function LeadGenPurchaseModal({ isOpen, onClose }: LeadGenPurchaseModalPr
                                 </div>
 
                                 <div className={cn(
-                                    "w-full h-10 rounded-xl flex items-center justify-center transition-all",
+                                    "w-full h-10 rounded-xl flex items-center justify-center transition-colors",
                                     selectedId === pkg.id
                                         ? "bg-amber-500 text-black font-black"
                                         : "bg-white/5 text-muted-foreground group-hover:bg-white/10"

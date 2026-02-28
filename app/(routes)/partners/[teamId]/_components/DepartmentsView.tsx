@@ -282,7 +282,7 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                             {departments.map((dept) => (
                                 <Card
                                     key={dept.id}
-                                    className="group relative overflow-hidden border p-6 transition-all duration-300 hover:shadow-lg hover:border-primary/30"
+                                    className="group relative overflow-hidden border p-6 transition-[color,background-color,border-color,box-shadow] duration-300 hover:shadow-lg hover:border-primary/30"
                                 >
                                     {/* Gradient Background */}
                                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -421,7 +421,7 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Department</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Department</DialogTitle>
                         <DialogDescription>
                             Create a new department to organize your team members and control access
                         </DialogDescription>
@@ -453,7 +453,7 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
             <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Rename Department</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Rename Department</DialogTitle>
                         <DialogDescription>
                             Update the department name
                         </DialogDescription>
@@ -484,7 +484,7 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
             <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Delete Department</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Delete Department</DialogTitle>
                         <DialogDescription>
                             Are you sure you want to delete <strong>{selectedDepartment?.name}</strong>?
                             Members will be moved back to the organization level.

@@ -34,7 +34,7 @@ const HubLabel = ({ label, isOpen, isDouble = false }: HubLabelProps) => {
                 className="overflow-hidden px-4"
             >
                 <span
-                    className="font-black tracking-[2px] uppercase bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent select-none py-0 pl-2 pr-4 leading-normal"
+                    className="font-black tracking-[2px] uppercase bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent select-none py-0 pl-2 pr-4 leading-normal"
                     style={{
                         fontFamily: 'var(--nav-title-font)',
                         fontSize: 'var(--nav-title-size)',

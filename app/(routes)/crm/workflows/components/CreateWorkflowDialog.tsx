@@ -158,7 +158,7 @@ export function CreateWorkflowDialog({ teamId, children }: CreateWorkflowDialogP
             </DialogTrigger>
             <DialogContent className="sm:max-w-[560px]">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create New FlowState</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create New FlowState</DialogTitle>
                     <DialogDescription>
                         Choose your flow type, set up the basics, then design in the visual editor.
                     </DialogDescription>
@@ -185,7 +185,7 @@ export function CreateWorkflowDialog({ teamId, children }: CreateWorkflowDialogP
                                                         field.onChange(ft.value);
                                                         form.setValue("trigger_type", "");
                                                     }}
-                                                    className={`flex items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-all ${isSelected
+                                                    className={`flex items-start gap-2.5 p-3 rounded-lg border-2 text-left transition-colors ${isSelected
                                                             ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                                                             : "border-border hover:border-primary/40 hover:bg-muted/30"
                                                         }`}

@@ -385,7 +385,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Search products by name, SKU or brand..."
-                            className="pl-3 h-10 bg-background/50 backdrop-blur-sm border-primary/20 focus:border-primary transition-all text-left"
+                            className="pl-3 h-10 bg-background/50 backdrop-blur-sm border-primary/20 focus:border-primary transition-colors text-left"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -393,7 +393,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
 
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" className="gap-2 h-10 border-primary/20 hover:bg-primary/5 transition-all">
+                            <Button variant="outline" className="gap-2 h-10 border-primary/20 hover:bg-primary/5 transition-colors">
                                 <Filter className="h-4 w-4" />
                                 <span className="hidden sm:inline">Advanced Filters</span>
                                 {(filters.category !== "all" || filters.brand !== "all" || filters.minPrice || filters.maxPrice || filters.stockStatus !== "all" || filters.type !== "all") && (
@@ -502,7 +502,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                         <DialogTrigger asChild>
                             <Button
                                 variant="ghost"
-                                className="gap-2 text-primary hover:bg-primary/5 hover:text-primary transition-all h-10"
+                                className="gap-2 text-primary hover:bg-primary/5 hover:text-primary transition-colors h-10"
                             >
                                 <CloudDownload className="h-4 w-4" />
                                 Import Products
@@ -510,7 +510,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[500px] border-primary/20 bg-background/95 backdrop-blur-xl">
                             <DialogHeader>
-                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Import Products</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Import Products</DialogTitle>
                                 <DialogDescription>Select an e-commerce platform to import products from.</DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-3 py-4">
@@ -529,7 +529,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                                     <button
                                         onClick={() => handlePlatformImport("surge")}
                                         disabled={!!isImporting}
-                                        className="flex items-center gap-4 p-4 rounded-lg border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all text-left group disabled:opacity-50"
+                                        className="flex items-center gap-4 p-4 rounded-lg border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 transition-colors text-left group disabled:opacity-50"
                                     >
                                         <div className="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
                                             {isImporting === "surge" ? <Loader2 className="h-5 w-5 text-indigo-400 animate-spin" /> : <Image src="/Surge32.png" alt="Surge" width={24} height={24} />}
@@ -546,7 +546,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                                     <button
                                         onClick={() => handlePlatformImport("shopify")}
                                         disabled={!!isImporting}
-                                        className="flex items-center gap-4 p-4 rounded-lg border border-green-500/20 bg-green-500/5 hover:bg-green-500/10 transition-all text-left group disabled:opacity-50"
+                                        className="flex items-center gap-4 p-4 rounded-lg border border-green-500/20 bg-green-500/5 hover:bg-green-500/10 transition-colors text-left group disabled:opacity-50"
                                     >
                                         <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
                                             {isImporting === "shopify" ? <Loader2 className="h-5 w-5 text-green-400 animate-spin" /> : <ShoppingBag className="h-5 w-5 text-green-500" />}
@@ -563,7 +563,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                                     <button
                                         onClick={() => handlePlatformImport("woocommerce")}
                                         disabled={!!isImporting}
-                                        className="flex items-center gap-4 p-4 rounded-lg border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 transition-all text-left group disabled:opacity-50"
+                                        className="flex items-center gap-4 p-4 rounded-lg border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 transition-colors text-left group disabled:opacity-50"
                                     >
                                         <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
                                             {isImporting === "woocommerce" ? <Loader2 className="h-5 w-5 text-purple-400 animate-spin" /> : <Box className="h-5 w-5 text-purple-500" />}
@@ -589,7 +589,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                         <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden border-primary/20 bg-background/95 backdrop-blur-xl">
                             <form onSubmit={handleSubmit} className="flex flex-col h-[85vh] sm:h-auto max-h-[90vh]">
                                 <div className="px-6 py-4 border-b border-primary/10">
-                                    <DialogTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent">Add New Product</DialogTitle>
+                                    <DialogTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">Add New Product</DialogTitle>
                                     <DialogDescription>
                                         Define a new item for your sales catalog. Toggle between Basic and Advanced for detail control.
                                     </DialogDescription>
@@ -1003,7 +1003,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                 <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden border-primary/20 bg-background/95 backdrop-blur-xl">
                     <form onSubmit={handleEditSubmit} className="flex flex-col max-h-[90vh]">
                         <div className="px-6 py-4 border-b border-primary/10">
-                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 Edit Product
                             </DialogTitle>
                             <DialogDescription>

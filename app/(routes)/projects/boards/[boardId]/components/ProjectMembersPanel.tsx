@@ -266,7 +266,7 @@ export default function ProjectMembersPanel({ boardId }: Props) {
                                 key={member.id}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="flex items-center justify-between p-4 rounded-xl border hover:border-primary/30 hover:bg-accent/30 transition-all group"
+                                className="flex items-center justify-between p-4 rounded-xl border hover:border-primary/30 hover:bg-accent/30 transition-colors group"
                             >
                                 <div className="flex items-center gap-3">
                                     <Avatar className="h-10 w-10">

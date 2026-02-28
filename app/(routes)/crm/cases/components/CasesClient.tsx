@@ -178,7 +178,7 @@ export default function CasesClient({
                                 <Headset className="w-5 h-5 text-violet-400" />
                             </div>
                             <div>
-                                <h1 className="text-2xl md:text-4xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tighter uppercase leading-none">
+                                <h1 className="text-2xl md:text-4xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tighter uppercase leading-none">
                                     Service Console
                                 </h1>
                                 <p className="text-muted-foreground/80 mt-2 text-[10px] md:text-xs font-medium tracking-wide italic border-l-2 border-primary/30 pl-4">
@@ -275,14 +275,14 @@ export default function CasesClient({
                                     key={c.id}
                                     onClick={() => router.push(`/crm/cases/${c.id}`)}
                                     className={cn(
-                                        "group relative flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all duration-200",
+                                        "group relative flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-colors duration-200",
                                         "bg-card/50 hover:bg-card border-border/50 hover:border-border hover:shadow-lg hover:shadow-primary/5",
                                         c.sla_breached && "border-red-500/30 bg-red-500/5"
                                     )}
                                 >
                                     {/* Priority indicator bar */}
                                     <div className={cn(
-                                        "absolute left-0 top-3 bottom-3 w-1 rounded-r-full transition-all",
+                                        "absolute left-0 top-3 bottom-3 w-1 rounded-r-full transition-colors",
                                         c.priority === "CRITICAL" ? "bg-red-500" :
                                             c.priority === "HIGH" ? "bg-orange-500" :
                                                 c.priority === "MEDIUM" ? "bg-blue-500" : "bg-slate-500"
@@ -347,7 +347,7 @@ export default function CasesClient({
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Plus className="w-5 h-5 text-violet-400" />
                             Create New Case
                         </DialogTitle>

@@ -35,7 +35,7 @@ export function BlogGrid({ posts }: BlogGridProps) {
                 {posts.map((post, i) => (
                     <article
                         key={post.id}
-                        className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-all h-full flex flex-col cursor-pointer"
+                        className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-colors h-full flex flex-col cursor-pointer"
                         onClick={() => setSelectedPost(post)}
                     >
                         <div className={`h-48 w-full ${colors[i % colors.length]} relative overflow-hidden`}>

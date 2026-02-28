@@ -48,7 +48,7 @@ export function LivePreview({ colors, radius = "0.5rem", themeName, fonts }: Liv
 
             {/* Preview Canvas */}
             <div
-                className="overflow-hidden border shadow-sm transition-all duration-300 ease-in-out"
+                className="overflow-hidden border shadow-sm transition-colors duration-300 ease-in-out"
                 style={{
                     backgroundColor: hsl(colors.background),
                     borderColor: hsla(colors.primary, 0.2),
@@ -182,7 +182,7 @@ export function LivePreview({ colors, radius = "0.5rem", themeName, fonts }: Liv
                             <input
                                 type="text"
                                 placeholder="Enter campaign name..."
-                                className="flex-1 px-3 py-2 text-sm border outline-none transition-all placeholder:opacity-50"
+                                className="flex-1 px-3 py-2 text-sm border outline-none transition-colors placeholder:opacity-50"
                                 style={{
                                     backgroundColor: hsla(colors.surface, 0.3), // Slightly transparent to show bg0 if any
                                     borderColor: hsla(colors.primary, 0.2),
@@ -191,7 +191,7 @@ export function LivePreview({ colors, radius = "0.5rem", themeName, fonts }: Liv
                                 }}
                             />
                             <button
-                                className="px-4 py-2 text-sm shadow-sm transition-all hover:opacity-90 active:scale-95 flex items-center gap-2"
+                                className="px-4 py-2 text-sm shadow-sm transition-[opacity,transform] hover:opacity-90 active:scale-95 flex items-center gap-2"
                                 style={{
                                     backgroundColor: hsl(colors.primary),
                                     color: hsl(colors.primaryForeground),

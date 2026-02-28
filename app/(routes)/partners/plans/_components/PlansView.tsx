@@ -138,7 +138,7 @@ const PlansView = ({ initialPlans }: Props) => {
         <div className="space-y-8">
             <div className="flex items-center justify-between bg-zinc-900/40 p-6 rounded-2xl border border-white/5">
                 <div>
-                    <h1 className="text-4xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase">
+                    <h1 className="text-4xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase">
                         Tier Management Studio
                     </h1>
                     <p className="text-muted-foreground mt-1">Configure global subscription plans and module bundles.</p>
@@ -151,7 +151,7 @@ const PlansView = ({ initialPlans }: Props) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {initialPlans.map((plan) => (
-                    <Card key={plan.id} className={`group relative overflow-hidden transition-all duration-300 hover:border-primary/50 ${!plan.isActive ? 'opacity-60' : ''}`}>
+                    <Card key={plan.id} className={`group relative overflow-hidden transition-colors duration-300 hover:border-primary/50 ${!plan.isActive ? 'opacity-60' : ''}`}>
                         <div className="absolute top-0 right-0 p-4">
                             {!plan.isActive && <Badge variant="destructive">Inactive</Badge>}
                         </div>
@@ -163,7 +163,7 @@ const PlansView = ({ initialPlans }: Props) => {
                                 </div>
                                 <Badge variant="outline" className="font-mono text-[10px] tracking-widest uppercase py-0">{plan.slug}</Badge>
                             </div>
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{plan.name}</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{plan.name}</CardTitle>
                             <CardDescription className="line-clamp-1">{plan.description || "Global subscription tier"}</CardDescription>
                         </CardHeader>
 
@@ -363,7 +363,7 @@ const PlansView = ({ initialPlans }: Props) => {
                                         {AVAILABLE_FEATURES.map((feature) => (
                                             <div
                                                 key={feature.id}
-                                                className={`flex items-center space-x-3 p-4 rounded-2xl border transition-all cursor-pointer group ${formData.features?.includes(feature.id)
+                                                className={`flex items-center space-x-3 p-4 rounded-2xl border transition-colors cursor-pointer group ${formData.features?.includes(feature.id)
                                                         ? "bg-primary/10 border-primary/50 text-white shadow-lg shadow-primary/5"
                                                         : "bg-black/40 border-white/5 text-muted-foreground hover:border-white/10"
                                                     }`}

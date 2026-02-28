@@ -185,7 +185,11 @@ const DynamicModuleMenu = ({
             item.id === "nav_projects" ||
             item.href === "/projects" ||
             item.id === "nav_invoices" ||
-            item.href === "/invoice"
+            item.href === "/invoice" ||
+            item.id === "nav_command" ||
+            item.href === "/crm/sales-command" ||
+            item.id === "nav_leads" ||
+            item.href === "/crm/leads"
         ) {
             item = { ...item, children: undefined };
         }
@@ -307,7 +311,7 @@ const DynamicModuleMenu = ({
                     {/* ─── Impersonation Indicator ─── */}
                     {isImpersonating && (
                         <div className={cn(
-                            "mx-2 mb-2 p-2 rounded-xl border border-amber-500/20 bg-amber-500/5 transition-all overflow-hidden shrink-0",
+                            "mx-2 mb-2 p-2 rounded-xl border border-amber-500/20 bg-amber-500/5 transition-colors overflow-hidden shrink-0",
                             !open ? "px-1" : "px-2"
                         )}>
                             <div className="flex items-center gap-2">
@@ -336,7 +340,7 @@ const DynamicModuleMenu = ({
                         className={cn(
                             "absolute -right-3 top-16 z-[100]",
                             "h-6 w-6 rounded-full flex items-center justify-center",
-                            "bg-primary text-primary-foreground shadow-md transition-all duration-200",
+                            "bg-primary text-primary-foreground shadow-md transition-colors duration-200",
                             "opacity-0 group-hover:opacity-100",
                             "hover:scale-110 focus:outline-none ring-2 ring-background"
                         )}

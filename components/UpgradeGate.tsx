@@ -51,7 +51,7 @@ export function UpgradeGate({
 
                 <Button
                     size="lg"
-                    className="relative z-10 h-14 px-8 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:shadow-[0_0_40px_rgba(6,182,212,0.5)] transition-all rounded-xl gap-2 cursor-pointer"
+                    className="relative z-10 h-14 px-8 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:shadow-[0_0_40px_rgba(6,182,212,0.5)] transition-[color,background-color,border-color,box-shadow] rounded-xl gap-2 cursor-pointer"
                     onClick={() => setIsBillingModalOpen(true)}
                 >
                     <Zap className="w-5 h-5 fill-current" />

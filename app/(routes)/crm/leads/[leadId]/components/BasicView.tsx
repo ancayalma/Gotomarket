@@ -72,7 +72,7 @@ export function BasicView({ data }: OppsViewProps) {
                 <User size={24} />
               </div>
               <div>
-                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                   {data.firstName} {data.lastName}
                 </CardTitle>
                 <CardDescription className="text-white/40 text-xs font-mono">ID: {data.id}</CardDescription>
@@ -105,7 +105,7 @@ export function BasicView({ data }: OppsViewProps) {
               </div>
 
               <div className="flex items-start gap-4 p-2 rounded-xl hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => data.email && setEmailOpen(true)}>
-                <div className="mt-1 h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                <div className="mt-1 h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-colors">
                   <Mail size={16} />
                 </div>
                 <div className="space-y-1">
@@ -200,17 +200,17 @@ export function BasicView({ data }: OppsViewProps) {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3 ml-2">Social Profiles</p>
                 <div className="flex gap-3 ml-2">
                   {data.social_linkedin && (
-                    <Link href={data.social_linkedin} target="_blank" className="h-9 w-9 rounded-xl border border-white/5 bg-white/5 flex items-center justify-center hover:bg-[#0077b5] hover:border-[#0077b5] hover:text-white transition-all">
+                    <Link href={data.social_linkedin} target="_blank" className="h-9 w-9 rounded-xl border border-white/5 bg-white/5 flex items-center justify-center hover:bg-[#0077b5] hover:border-[#0077b5] hover:text-white transition-colors">
                       <Linkedin size={18} />
                     </Link>
                   )}
                   {data.social_facebook && (
-                    <Link href={data.social_facebook} target="_blank" className="h-9 w-9 rounded-xl border border-white/5 bg-white/5 flex items-center justify-center hover:bg-[#1877f2] hover:border-[#1877f2] hover:text-white transition-all">
+                    <Link href={data.social_facebook} target="_blank" className="h-9 w-9 rounded-xl border border-white/5 bg-white/5 flex items-center justify-center hover:bg-[#1877f2] hover:border-[#1877f2] hover:text-white transition-colors">
                       <Facebook size={18} />
                     </Link>
                   )}
                   {data.social_twitter && (
-                    <Link href={data.social_twitter} target="_blank" className="h-9 w-9 rounded-xl border border-white/5 bg-white/5 flex items-center justify-center hover:bg-black hover:border-white/20 hover:text-white transition-all">
+                    <Link href={data.social_twitter} target="_blank" className="h-9 w-9 rounded-xl border border-white/5 bg-white/5 flex items-center justify-center hover:bg-black hover:border-white/20 hover:text-white transition-colors">
                       <Twitter size={18} />
                     </Link>
                   )}
@@ -246,7 +246,7 @@ export function BasicView({ data }: OppsViewProps) {
                   <Link
                     key={quote.id}
                     href={`/crm/quotes/${quote.id}`}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                    className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group"
                   >
                     <div className="flex flex-col">
                       <span className="text-sm font-bold text-white/90">{quote.title}</span>

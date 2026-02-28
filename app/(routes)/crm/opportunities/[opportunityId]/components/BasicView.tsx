@@ -53,7 +53,7 @@ export async function BasicView({ data }: OppsViewProps) {
       <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-6">
-            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
+            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-colors hover:bg-white/[0.03] border border-transparent hover:border-white/5">
               <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)] group-hover:scale-110 transition-transform">
                 <CoinsIcon className="h-5 w-5" />
               </div>
@@ -67,7 +67,7 @@ export async function BasicView({ data }: OppsViewProps) {
               </div>
             </div>
 
-            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
+            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-colors hover:bg-white/[0.03] border border-transparent hover:border-white/5">
               <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.1)] group-hover:scale-110 transition-transform">
                 <SquareStack className="h-5 w-5" />
               </div>
@@ -81,7 +81,7 @@ export async function BasicView({ data }: OppsViewProps) {
               </div>
             </div>
 
-            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
+            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-colors hover:bg-white/[0.03] border border-transparent hover:border-white/5">
               <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.1)] group-hover:scale-110 transition-transform">
                 <Combine className="h-5 w-5" />
               </div>
@@ -93,7 +93,7 @@ export async function BasicView({ data }: OppsViewProps) {
               </div>
             </div>
 
-            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
+            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-colors hover:bg-white/[0.03] border border-transparent hover:border-white/5">
               <div className="p-2.5 rounded-lg bg-orange-500/10 text-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.1)] group-hover:scale-110 transition-transform">
                 <User className="h-5 w-5" />
               </div>
@@ -105,7 +105,7 @@ export async function BasicView({ data }: OppsViewProps) {
           </div>
 
           <div className="space-y-6">
-            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
+            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-colors hover:bg-white/[0.03] border border-transparent hover:border-white/5">
               <div className="p-2.5 rounded-lg bg-cyan-500/10 text-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.1)] group-hover:scale-110 transition-transform">
                 <Landmark className="h-5 w-5" />
               </div>
@@ -115,7 +115,7 @@ export async function BasicView({ data }: OppsViewProps) {
               </div>
             </div>
 
-            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
+            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-colors hover:bg-white/[0.03] border border-transparent hover:border-white/5">
               <div className="p-2.5 rounded-lg bg-pink-500/10 text-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.1)] group-hover:scale-110 transition-transform">
                 <User className="h-5 w-5" />
               </div>
@@ -132,7 +132,7 @@ export async function BasicView({ data }: OppsViewProps) {
             </div>
 
 
-            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
+            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-colors hover:bg-white/[0.03] border border-transparent hover:border-white/5">
               <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.1)] group-hover:scale-110 transition-transform">
                 <CalendarDays className="h-5 w-5" />
               </div>
@@ -144,7 +144,7 @@ export async function BasicView({ data }: OppsViewProps) {
               </div>
             </div>
 
-            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
+            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-colors hover:bg-white/[0.03] border border-transparent hover:border-white/5">
               <div className="p-2.5 rounded-lg bg-pink-500/10 text-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.1)] group-hover:scale-110 transition-transform">
                 <List className="h-5 w-5" />
               </div>
@@ -154,7 +154,7 @@ export async function BasicView({ data }: OppsViewProps) {
               </div>
             </div>
 
-            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-all hover:bg-white/[0.03] border border-transparent hover:border-white/5">
+            <div className="group flex items-start space-x-4 p-3 rounded-xl transition-colors hover:bg-white/[0.03] border border-transparent hover:border-white/5">
               <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.1)] group-hover:scale-110 transition-transform">
                 <Clapperboard className="h-5 w-5" />
               </div>

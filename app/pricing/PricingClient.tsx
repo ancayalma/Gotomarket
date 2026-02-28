@@ -95,7 +95,7 @@ export default function PricingClient() {
                     <Sparkles className="w-3 h-3" />
                     New 2026 Pricing
                 </div>
-                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                     Simple, Transparent <span className="text-primary">Pricing</span>
                 </h1>
                 <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
@@ -167,7 +167,7 @@ export default function PricingClient() {
                             <div className="text-4xl font-bold text-white mb-2">Speak with Sales</div>
                             <p className="text-zinc-500 text-sm mb-6">Standard 24h response time</p>
                             <Link href="#contact" className="w-full inline-block">
-                                <Button className="w-full py-7 text-xl bg-white text-black hover:bg-zinc-200 font-bold transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                                <Button className="w-full py-7 text-xl bg-white text-black hover:bg-zinc-200 font-bold transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)]">
                                     Book a Demo
                                 </Button>
                             </Link>
@@ -184,7 +184,7 @@ export default function PricingClient() {
                             Power Up with Add-ons
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-                            <div className="flex items-start space-x-4 bg-white/5 p-6 rounded-2xl border border-white/10 hover:border-primary/50 transition-all group">
+                            <div className="flex items-start space-x-4 bg-white/5 p-6 rounded-2xl border border-white/10 hover:border-primary/50 transition-colors group">
                                 <div className="bg-gradient-to-br from-primary/30 to-cyan-500/30 p-3 rounded-xl group-hover:scale-110 transition-transform">
                                     <Check className="h-6 w-6 text-primary" />
                                 </div>
@@ -195,7 +195,7 @@ export default function PricingClient() {
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-start space-x-4 bg-white/5 p-6 rounded-2xl border border-white/10 hover:border-primary/50 transition-all group">
+                            <div className="flex items-start space-x-4 bg-white/5 p-6 rounded-2xl border border-white/10 hover:border-primary/50 transition-colors group">
                                 <div className="bg-gradient-to-br from-primary/30 to-cyan-500/30 p-3 rounded-xl group-hover:scale-110 transition-transform">
                                     <Check className="h-6 w-6 text-primary" />
                                 </div>
@@ -281,7 +281,7 @@ export default function PricingClient() {
                                         id="name"
                                         name="name"
                                         required
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors"
                                         placeholder="John Doe"
                                     />
                                 </div>
@@ -294,7 +294,7 @@ export default function PricingClient() {
                                         id="email"
                                         name="email"
                                         required
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors"
                                         placeholder="john@company.com"
                                     />
                                 </div>
@@ -308,7 +308,7 @@ export default function PricingClient() {
                                     type="text"
                                     id="company"
                                     name="company"
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors"
                                     placeholder="Your Company"
                                 />
                             </div>
@@ -322,7 +322,7 @@ export default function PricingClient() {
                                     name="message"
                                     required
                                     rows={4}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all resize-none"
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors resize-none"
                                     placeholder="Tell us about your needs..."
                                 />
                             </div>
@@ -330,7 +330,7 @@ export default function PricingClient() {
                             <div className="text-center pt-4">
                                 <Button
                                     type="submit"
-                                    className="bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-white px-10 py-6 text-lg rounded-[10px] shadow-[0_0_30px_rgba(6,182,212,0.4)] hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] transition-all duration-300 font-semibold"
+                                    className="bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-white px-10 py-6 text-lg rounded-[10px] shadow-[0_0_30px_rgba(6,182,212,0.4)] hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] transition-shadow duration-300 font-semibold"
                                 >
                                     Send Message
                                 </Button>
@@ -373,7 +373,7 @@ function PricingCard({
 }) {
     return (
         <div
-            className={`relative p-8 rounded-2xl border flex flex-col text-left h-full transition-all duration-300 hover:transform hover:-translate-y-1 ${popular
+            className={`relative p-8 rounded-2xl border flex flex-col text-left h-full transition-colors duration-300 hover:transform hover:-translate-y-1 ${popular
                 ? "border-primary bg-primary/5 shadow-[0_0_30px_rgba(6,182,212,0.15)]"
                 : "border-white/10 bg-white/5 hover:border-white/20"
                 }`}
@@ -404,7 +404,7 @@ function PricingCard({
 
             <Link href={`/register?plan=${title.toLowerCase().replace(/ /g, '-')}&cycle=${billingCycle}`} className="w-full mt-auto">
                 <Button
-                    className={`w-full py-6 text-lg rounded-[10px] font-semibold transition-all duration-300 ${buttonVariant === "primary"
+                    className={`w-full py-6 text-lg rounded-[10px] font-semibold transition-colors duration-300 ${buttonVariant === "primary"
                         ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)]"
                         : "bg-transparent border border-white/20 hover:bg-white/10 text-white"
                         }`}

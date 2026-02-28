@@ -67,7 +67,7 @@ export const AiUsageReportTable = ({ data, basaltTeamId, unknownTeamId }: AiUsag
                             placeholder="Search entities..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 bg-accent/5 border-border/50 text-foreground h-9 transition-all focus:ring-1 focus:ring-primary"
+                            className="pl-9 bg-accent/5 border-border/50 text-foreground h-9 transition-colors focus:ring-1 focus:ring-primary"
                         />
                     </div>
 

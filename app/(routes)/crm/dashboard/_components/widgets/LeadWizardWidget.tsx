@@ -97,7 +97,7 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                 rightAction={
                     <button
                         onClick={() => setQuickModalOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-105 transition-all duration-300"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-105 transition-[box-shadow,transform] duration-300"
                     >
                         <Rocket size={11} />
                         Quick Launch
@@ -108,7 +108,7 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                     {/* Hero Section — Clickable to open modal */}
                     <div
                         onClick={() => setQuickModalOpen(true)}
-                        className="bg-gradient-to-br from-cyan-500/20 to-blue-500/10 rounded-xl p-4 border border-cyan-500/20 group cursor-pointer hover:border-cyan-500/40 hover:from-cyan-500/25 hover:to-blue-500/15 transition-all duration-300"
+                        className="bg-gradient-to-br from-cyan-500/20 to-blue-500/10 rounded-xl p-4 border border-cyan-500/20 group cursor-pointer hover:border-cyan-500/40 hover:from-cyan-500/25 hover:to-blue-500/15 transition-colors duration-300"
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
@@ -132,7 +132,7 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                                     industry &amp; geo targeting.
                                 </p>
                             </div>
-                            <div className="p-2 bg-cyan-500 text-white rounded-lg shadow-lg shadow-cyan-500/20 group-hover:scale-110 group-hover:shadow-cyan-500/40 transition-all duration-300">
+                            <div className="p-2 bg-cyan-500 text-white rounded-lg shadow-lg shadow-cyan-500/20 group-hover:scale-110 group-hover:shadow-cyan-500/40 transition-[box-shadow,transform] duration-300">
                                 <Play size={14} fill="currentColor" />
                             </div>
                         </div>
@@ -192,7 +192,7 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                                             }
                                             className="block group/job"
                                         >
-                                            <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/5 to-cyan-500/5 border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 cursor-pointer">
+                                            <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/5 to-cyan-500/5 border border-emerald-500/10 hover:border-emerald-500/30 transition-colors duration-300 cursor-pointer">
                                                 {/* What the agent is doing */}
                                                 <div className="flex items-start justify-between gap-2 mb-2">
                                                     <div className="flex items-center gap-2 min-w-0 flex-1">

@@ -168,7 +168,7 @@ export default function DepartmentRoleManager({ teamId, departments, orgData }: 
             <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Department</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create Department</DialogTitle>
                         <DialogDescription>Create a new department to organize your team.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -202,7 +202,7 @@ export default function DepartmentRoleManager({ teamId, departments, orgData }: 
             }}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Edit Department</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Edit Department</DialogTitle>
                         <DialogDescription>Update department details or remove it.</DialogDescription>
                     </DialogHeader>
 
@@ -294,7 +294,7 @@ export default function DepartmentRoleManager({ teamId, departments, orgData }: 
                             key={dept.id}
                             onClick={() => setSelectedTabId(dept.id)}
                             className={cn(
-                                "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 border group",
+                                "px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 flex items-center gap-2 border group",
                                 selectedTabId === dept.id
                                     ? "bg-primary text-primary-foreground border-primary shadow-md"
                                     : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
@@ -335,7 +335,7 @@ export default function DepartmentRoleManager({ teamId, departments, orgData }: 
                 {/* Create Department Pill Button */}
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 border border-dashed border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary"
+                    className="px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 flex items-center gap-2 border border-dashed border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary"
                 >
                     <Plus className="w-4 h-4" />
                     New Department

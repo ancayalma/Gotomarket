@@ -24,7 +24,7 @@ export function ThemeCard({
         <button
             onClick={onClick}
             className={cn(
-                "relative flex flex-col items-start gap-3 p-4 rounded-xl border transition-all duration-200",
+                "relative flex flex-col items-start gap-3 p-4 rounded-xl border transition-colors duration-200",
                 "bg-card/50 hover:bg-card/80",
                 isActive
                     ? "border-primary ring-2 ring-primary/30"

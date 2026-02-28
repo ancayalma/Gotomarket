@@ -433,7 +433,7 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
       <Dialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Duplicate Lead Detected</DialogTitle>
+            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Duplicate Lead Detected</DialogTitle>
             <DialogDescription>
               A lead with the email <strong>{form.getValues("email")}</strong> already exists in the system.
             </DialogDescription>

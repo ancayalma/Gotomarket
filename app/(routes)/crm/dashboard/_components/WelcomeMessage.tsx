@@ -13,7 +13,7 @@ export default function WelcomeMessage() {
 
     return (
         <div className="mb-8">
-            <h1 className="text-3xl md:text-6xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4">
+            <h1 className="text-3xl md:text-6xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4">
                 {greeting}, {userName}
             </h1>
             <p className="text-muted-foreground/80 mt-2 text-base font-medium tracking-wide italic border-l-2 border-primary/30 pl-4">

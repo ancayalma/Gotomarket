@@ -203,7 +203,7 @@ export default async function LocationPage(props: Props) {
                         </div>
 
                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-all">
+                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors">
                                 <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-4">
                                     <Target className="w-6 h-6 text-blue-400" />
                                 </div>
@@ -213,7 +213,7 @@ export default async function LocationPage(props: Props) {
                                 </p>
                             </div>
 
-                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-all">
+                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors">
                                 <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-4">
                                     <TrendingUp className="w-6 h-6 text-green-400" />
                                 </div>
@@ -223,7 +223,7 @@ export default async function LocationPage(props: Props) {
                                 </p>
                             </div>
 
-                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-all">
+                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors">
                                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-4">
                                     <HeartHandshake className="w-6 h-6 text-amber-400" />
                                 </div>
@@ -233,7 +233,7 @@ export default async function LocationPage(props: Props) {
                                 </p>
                             </div>
 
-                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-all">
+                            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors">
                                 <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4">
                                     <Clock className="w-6 h-6 text-purple-400" />
                                 </div>

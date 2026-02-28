@@ -46,7 +46,7 @@ export default function BasaltNavbar({ themeColor = '#06b6d4' }: NavbarProps) {
     return (
         <>
             <nav
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${scrolled
+                className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-500 ease-in-out ${scrolled
                     ? 'bg-black/60 backdrop-blur-2xl border-b shadow-[0_4px_30px_rgba(0,0,0,0.1)] py-3'
                     : 'py-5 bg-transparent'
                     }`}
@@ -70,7 +70,7 @@ export default function BasaltNavbar({ themeColor = '#06b6d4' }: NavbarProps) {
                                 <Link
                                     key={link.label}
                                     href={link.href}
-                                    className="px-4 py-2 text-xs font-mono tracking-wider text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200"
+                                    className="px-4 py-2 text-xs font-mono tracking-wider text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors duration-200"
                                 >
                                     {link.label}
                                 </Link>
@@ -92,7 +92,7 @@ export default function BasaltNavbar({ themeColor = '#06b6d4' }: NavbarProps) {
                                     <Link
                                         key={link.label}
                                         href={link.href}
-                                        className="px-3 py-1.5 text-[10px] font-mono tracking-wider text-gray-500 hover:text-white border border-white/10 hover:border-white/30 rounded-full transition-all duration-200"
+                                        className="px-3 py-1.5 text-[10px] font-mono tracking-wider text-gray-500 hover:text-white border border-white/10 hover:border-white/30 rounded-full transition-colors duration-200"
                                         style={{ '--hover-color': themeColor } as React.CSSProperties}
                                         onMouseEnter={(e) => e.currentTarget.style.borderColor = themeColor}
                                         onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
@@ -105,7 +105,7 @@ export default function BasaltNavbar({ themeColor = '#06b6d4' }: NavbarProps) {
                                         href={link.href}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="px-3 py-1.5 text-[10px] font-mono tracking-wider text-gray-500 hover:text-white border border-white/10 hover:border-white/30 rounded-full transition-all duration-200"
+                                        className="px-3 py-1.5 text-[10px] font-mono tracking-wider text-gray-500 hover:text-white border border-white/10 hover:border-white/30 rounded-full transition-colors duration-200"
                                         style={{ '--hover-color': themeColor } as React.CSSProperties}
                                         onMouseEnter={(e) => e.currentTarget.style.borderColor = themeColor}
                                         onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
@@ -156,7 +156,7 @@ export default function BasaltNavbar({ themeColor = '#06b6d4' }: NavbarProps) {
                                     key={link.label}
                                     href={link.href}
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="px-4 py-3 text-sm font-mono tracking-wider text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                                    className="px-4 py-3 text-sm font-mono tracking-wider text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                                 >
                                     {link.label}
                                 </Link>

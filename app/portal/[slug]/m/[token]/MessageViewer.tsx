@@ -146,7 +146,7 @@ export default function MessageViewer({ portal, message, recipient, deviceType }
 
             {/* Header */}
             <header
-                className={`sticky top-0 z-50 border-b transition-all duration-300 ${enableGlass
+                className={`sticky top-0 z-50 border-b transition-colors duration-300 ${enableGlass
                     ? isDark
                         ? 'bg-slate-900/70 border-slate-700/50'
                         : 'bg-white/70 border-slate-200/50'
@@ -184,7 +184,7 @@ export default function MessageViewer({ portal, message, recipient, deviceType }
                     {portal.theme_mode === 'AUTO' && (
                         <button
                             onClick={() => setIsDark(!isDark)}
-                            className={`p-2 rounded-xl transition-all duration-300 ${isDark
+                            className={`p-2 rounded-xl transition-colors duration-300 ${isDark
                                 ? 'bg-slate-800 hover:bg-slate-700 text-amber-400'
                                 : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                                 }`}
@@ -201,7 +201,7 @@ export default function MessageViewer({ portal, message, recipient, deviceType }
                 {/* Welcome Section */}
                 {portal.welcome_message && (
                     <div
-                        className={`mb-6 p-4 rounded-2xl text-sm border transition-all duration-300 ${enableGlass
+                        className={`mb-6 p-4 rounded-2xl text-sm border transition-colors duration-300 ${enableGlass
                             ? isDark
                                 ? 'bg-slate-800/50 border-slate-700/50'
                                 : 'bg-white/50 border-slate-200/50'
@@ -230,7 +230,7 @@ export default function MessageViewer({ portal, message, recipient, deviceType }
 
                 {/* Message Card */}
                 <div
-                    className={`rounded-3xl overflow-hidden border transition-all duration-300 ${enableGlass
+                    className={`rounded-3xl overflow-hidden border transition-colors duration-300 ${enableGlass
                         ? isDark
                             ? 'bg-slate-800/60 border-slate-700/50 shadow-2xl shadow-black/20'
                             : 'bg-white/80 border-slate-200/50 shadow-2xl shadow-slate-200/50'
@@ -305,7 +305,7 @@ export default function MessageViewer({ portal, message, recipient, deviceType }
 
                 {/* Recipient Info Card */}
                 <div
-                    className={`mt-6 p-5 rounded-2xl border transition-all duration-300 ${enableGlass
+                    className={`mt-6 p-5 rounded-2xl border transition-colors duration-300 ${enableGlass
                         ? isDark
                             ? 'bg-slate-800/40 border-slate-700/50'
                             : 'bg-white/50 border-slate-200/50'

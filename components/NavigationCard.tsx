@@ -24,7 +24,7 @@ export const NavigationCard = ({ card, loading = false, isActive, onClick, class
     <div
         onClick={onClick}
         className={cn(
-            "group relative overflow-hidden rounded-2xl border-[1px] transition-all duration-300 h-[110px] w-full cursor-pointer",
+            "group relative overflow-hidden rounded-2xl border-[1px] transition-colors duration-300 h-[110px] w-full cursor-pointer",
             isActive
                 ? "border-primary/50 bg-[#18181b] ring-2 ring-primary/30"
                 : "border-[#27272a] bg-[#09090b] hover:border-white/20 hover:bg-[#121214]",
@@ -35,7 +35,7 @@ export const NavigationCard = ({ card, loading = false, isActive, onClick, class
         {/* Giant Watermark Icon - Positioned Right */}
         <card.icon
             className={cn(
-                "absolute -right-6 -bottom-6 w-36 h-36 -rotate-12 transition-all duration-500 pointer-events-none opacity-5 group-hover:opacity-15 group-hover:scale-110",
+                "absolute -right-6 -bottom-6 w-36 h-36 -rotate-12 transition-[opacity,transform] duration-500 pointer-events-none opacity-5 group-hover:opacity-15 group-hover:scale-110",
                 isActive ? cn(card.iconColor, "opacity-20 scale-105") : "text-zinc-500",
                 "group-hover:" + card.iconColor
             )}

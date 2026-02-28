@@ -136,7 +136,7 @@ export default function BasaltFooter() {
                             href="https://elevenlabs.io/startup-grants"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group relative transition-all duration-500 hover:scale-105"
+                            className="group relative transition-transform duration-500 hover:scale-105"
                         >
                             <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 blur opacity-0 group-hover:opacity-100 transition duration-500" />
                             <Image

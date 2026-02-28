@@ -2,8 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getWorkflow } from "@/actions/crm/workflows";
-import { WorkflowEditor } from "../components/WorkflowEditor";
 import { LearnLink } from "@/components/ui/LearnLink";
+import { WorkflowEditorWrapper } from "../components/WorkflowEditorWrapper";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -32,7 +32,7 @@ export default async function WorkflowEditorPage({ params }: Props) {
                 overviewWhy="By representing logic visually, you don't need to write custom code or webhooks to pass data between CRM modules. Just draw the line."
                 overviewHow="Drag a Trigger onto the blank canvas (e.g. 'Account Created'), connect it to a Condition/Filter, and drag an Action (e.g. 'Send SMS Welcome') to the end of the chain. Hit 'Save & Activate'."
             />
-            <WorkflowEditor workflow={workflow} />
+            <WorkflowEditorWrapper workflow={workflow} />
         </>
     );
 }

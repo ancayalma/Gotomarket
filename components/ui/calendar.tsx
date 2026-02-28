@@ -39,11 +39,11 @@ function Calendar({
         nav: "space-x-1 flex items-center",
         button_previous: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-full w-8 p-0 absolute left-0 top-0 flex items-center justify-center transition-all rounded-none z-10 bg-accent text-accent-foreground dark:text-white hover:bg-transparent hover:border hover:border-accent"
+          "h-full w-8 p-0 absolute left-0 top-0 flex items-center justify-center transition-colors rounded-none z-10 bg-accent text-accent-foreground dark:text-white hover:bg-transparent hover:border hover:border-accent"
         ),
         button_next: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-full w-8 p-0 absolute right-0 top-0 flex items-center justify-center transition-all rounded-none z-10 bg-accent text-accent-foreground dark:text-white hover:bg-transparent hover:border hover:border-accent"
+          "h-full w-8 p-0 absolute right-0 top-0 flex items-center justify-center transition-colors rounded-none z-10 bg-accent text-accent-foreground dark:text-white hover:bg-transparent hover:border hover:border-accent"
         ),
         month_grid: "w-full border-collapse space-y-1",
         weekdays: "flex",

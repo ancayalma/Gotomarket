@@ -193,7 +193,7 @@ export default function ProjectWorkflowGuide() {
                                             <div className={`p-2.5 rounded-lg bg-background/50 ${role.iconColor}`}>
                                                 <Icon className="w-5 h-5" />
                                             </div>
-                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{role.title}</CardTitle>
+                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{role.title}</CardTitle>
                                         </div>
                                     </CardHeader>
                                     <CardContent>
@@ -236,7 +236,7 @@ export default function ProjectWorkflowGuide() {
                                     <Badge
                                         variant="outline"
                                         className={cn(
-                                            "py-1.5 px-4 text-sm font-medium transition-all duration-300 border bg-background/50 hover:text-white cursor-default",
+                                            "py-1.5 px-4 text-sm font-medium transition-colors duration-300 border bg-background/50 hover:text-white cursor-default",
                                             step.color
                                         )}
                                     >
@@ -279,7 +279,7 @@ export default function ProjectWorkflowGuide() {
                                                 </div>
                                                 <div>
                                                     <Badge variant="outline" className="mb-1">{phase.phase}</Badge>
-                                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{phase.title}</CardTitle>
+                                                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{phase.title}</CardTitle>
                                                 </div>
                                             </div>
                                             <Badge variant="secondary">{phase.actor}</Badge>
@@ -325,7 +325,7 @@ export default function ProjectWorkflowGuide() {
                                     <CardHeader className="pb-2">
                                         <div className="flex items-center gap-2">
                                             <Icon className="w-5 h-5 text-primary" />
-                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{rule.title}</CardTitle>
+                                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{rule.title}</CardTitle>
                                         </div>
                                     </CardHeader>
                                     <CardContent>

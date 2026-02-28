@@ -98,7 +98,7 @@ export default function LeadGenJobDetailPage({
       />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Lead Generation Job</h1>
+          <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Lead Generation Job</h1>
           <p className="text-sm text-muted-foreground">
             Track progress and jump to the List to work accounts and start an email blast.
           </p>
@@ -144,7 +144,7 @@ export default function LeadGenJobDetailPage({
                   <button
                     onClick={() => handleControl("pause")}
                     disabled={controlling}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-orange-600 text-orange-600 hover:bg-orange-50 disabled:opacity-50 transition-all"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-orange-600 text-orange-600 hover:bg-orange-50 disabled:opacity-50 transition-colors"
                   >
                     <Pause className="w-4 h-4" />
                     Pause
@@ -153,7 +153,7 @@ export default function LeadGenJobDetailPage({
                   <button
                     onClick={() => handleControl("resume")}
                     disabled={controlling}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-all"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
                   >
                     <Play className="w-4 h-4" />
                     Resume
@@ -162,7 +162,7 @@ export default function LeadGenJobDetailPage({
                 <button
                   onClick={() => handleControl("stop")}
                   disabled={controlling}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-all"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
                 >
                   <Square className="w-4 h-4" />
                   Stop
@@ -187,7 +187,7 @@ export default function LeadGenJobDetailPage({
                 </div>
                 <div className="w-full bg-muted rounded-full h-2.5">
                   <div
-                    className="bg-primary h-2.5 rounded-full transition-all duration-500"
+                    className="bg-primary h-2.5 rounded-full transition-colors duration-500"
                     style={{
                       width: `${Math.min(
                         100,

@@ -49,7 +49,7 @@ export const ProjectsGrid = ({ data }: ProjectsGridProps) => {
             {data.map((board) => (
                 <Card
                     key={board.id}
-                    className="group relative overflow-hidden border-primary/10 bg-background/50 backdrop-blur-md hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 rounded-3xl cursor-pointer"
+                    className="group relative overflow-hidden border-primary/10 bg-background/50 backdrop-blur-md hover:shadow-2xl hover:shadow-primary/5 transition-shadow duration-500 rounded-3xl cursor-pointer"
                     onClick={() => router.push(`/projects/boards/${board.id}`)}
                 >
                     {/* Ambient Background Glow */}
@@ -80,7 +80,7 @@ export const ProjectsGrid = ({ data }: ProjectsGridProps) => {
                             </div>
                         </div>
                         <div className="mt-4">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                                 {board.title}
                             </CardTitle>
                             <CardDescription className="line-clamp-2 mt-2 min-h-[40px]">

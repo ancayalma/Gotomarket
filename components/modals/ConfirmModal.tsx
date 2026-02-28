@@ -47,7 +47,7 @@ export const ConfirmModal = ({
                         <div className="p-2 rounded-full bg-red-500/10">
                             <AlertTriangle className="w-5 h-5" />
                         </div>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{title}</DialogTitle>
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{title}</DialogTitle>
                     </div>
                     <DialogDescription className="text-muted-foreground pt-2">
                         {description}

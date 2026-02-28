@@ -29,7 +29,7 @@ export function MessageList({ items, selectedId, onSelect, currentUserId }: Mess
                             <button
                                 key={item.id}
                                 className={cn(
-                                    "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
+                                    "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-colors hover:bg-accent",
                                     selectedId === item.id && "bg-muted",
                                     isUnread && "border-primary/50"
                                 )}

@@ -362,7 +362,7 @@ export default function ProjectCalendarView({ userId }: Props) {
                         <button
                             type="button"
                             onClick={() => setView("month")}
-                            className={`p-1.5 rounded transition-all ${view === "month"
+                            className={`p-1.5 rounded transition-colors ${view === "month"
                                 ? "bg-background text-foreground shadow-sm"
                                 : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                                 }`}
@@ -373,7 +373,7 @@ export default function ProjectCalendarView({ userId }: Props) {
                         <button
                             type="button"
                             onClick={() => setView("week")}
-                            className={`p-1.5 rounded transition-all ${view === "week"
+                            className={`p-1.5 rounded transition-colors ${view === "week"
                                 ? "bg-background text-foreground shadow-sm"
                                 : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                                 }`}
@@ -384,7 +384,7 @@ export default function ProjectCalendarView({ userId }: Props) {
                         <button
                             type="button"
                             onClick={() => setView("agenda")}
-                            className={`p-1.5 rounded transition-all ${view === "agenda"
+                            className={`p-1.5 rounded transition-colors ${view === "agenda"
                                 ? "bg-background text-foreground shadow-sm"
                                 : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                                 }`}
@@ -422,7 +422,7 @@ export default function ProjectCalendarView({ userId }: Props) {
             <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
                 <DialogContent className="sm:max-w-[450px]">
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Plus className="h-5 w-5 text-primary" />
                             Create New Task
                         </DialogTitle>
@@ -703,7 +703,7 @@ export default function ProjectCalendarView({ userId }: Props) {
                                             <Link
                                                 key={event.id}
                                                 href={`/projects/tasks/viewtask/${event.id}`}
-                                                className={`flex items-center gap-4 p-3 rounded-xl border transition-all hover:shadow-md ${isDateToday ? "bg-primary/5 border-primary/20" : "bg-card hover:bg-muted/50"
+                                                className={`flex items-center gap-4 p-3 rounded-xl border transition-[color,background-color,border-color,box-shadow] hover:shadow-md ${isDateToday ? "bg-primary/5 border-primary/20" : "bg-card hover:bg-muted/50"
                                                     }`}
                                             >
                                                 <div className="flex-1">
@@ -815,7 +815,7 @@ export default function ProjectCalendarView({ userId }: Props) {
             <Dialog open={todayTasksOpen} onOpenChange={setTodayTasksOpen}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                             <Clock className="h-5 w-5 text-primary" />
                             Todays Agenda
                         </DialogTitle>

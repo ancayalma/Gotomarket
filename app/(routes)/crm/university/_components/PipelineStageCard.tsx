@@ -130,7 +130,7 @@ export function PipelineStageCard({
             <div
                 onClick={onClick}
                 className={cn(
-                    "flex-1 p-4 rounded-xl border transition-all cursor-pointer",
+                    "flex-1 p-4 rounded-xl border transition-colors cursor-pointer",
                     "hover:shadow-lg hover:scale-[1.02]",
                     "bg-card",
                     stage.borderColor,

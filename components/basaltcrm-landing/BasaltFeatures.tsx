@@ -31,13 +31,13 @@ export default function BasaltFeatures() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.1 }}
-                            className="group relative p-8 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 overflow-hidden"
+                            className="group relative p-8 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors duration-500 hover:-translate-y-2 overflow-hidden"
                         >
                             <div className="absolute top-0 right-0 p-4">
                                 <span className="text-[10px] font-mono text-gray-500 tracking-widest">{feat.tag}</span>
                             </div>
 
-                            <div className="absolute -bottom-12 -right-12 opacity-10 group-hover:opacity-60 transition-all duration-700 pointer-events-none group-hover:scale-125 group-hover:-rotate-12 group-hover:drop-shadow-[0_0_50px_rgba(255,255,255,0.2)]">
+                            <div className="absolute -bottom-12 -right-12 opacity-10 group-hover:opacity-60 transition-[opacity,transform,filter] duration-700 pointer-events-none group-hover:scale-125 group-hover:-rotate-12 group-hover:drop-shadow-[0_0_50px_rgba(255,255,255,0.2)]">
                                 <feat.icon className={`w-64 h-64 ${feat.color}`} />
                             </div>
 
@@ -45,7 +45,7 @@ export default function BasaltFeatures() {
                             <p className="text-gray-400 leading-relaxed text-sm relative z-10">
                                 {feat.desc}
                             </p>
-                            <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-50 transition-all duration-700 ${feat.color}`} />
+                            <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-700 ${feat.color}`} />
                         </motion.div>
                     ))}
                 </div>
@@ -68,7 +68,7 @@ export default function BasaltFeatures() {
                                     href="https://echo.basalthq.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center justify-center px-10 py-4 font-bold text-black bg-cyan-400 rounded-xl hover:bg-white shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all duration-300 uppercase tracking-widest text-sm"
+                                    className="inline-flex items-center justify-center px-10 py-4 font-bold text-black bg-cyan-400 rounded-xl hover:bg-white shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-colors duration-300 uppercase tracking-widest text-sm"
                                 >
                                     Explore Echo
                                 </a>

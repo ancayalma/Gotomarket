@@ -50,7 +50,7 @@ export function UnifiedMetricCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay }}
             className={cn(
-                "relative overflow-hidden rounded-xl border p-4 transition-all hover:shadow-md",
+                "relative overflow-hidden rounded-xl border p-4 transition-shadow hover:shadow-md",
                 styles.bg,
                 styles.border
             )}

@@ -91,7 +91,7 @@ function ButtonEditorRow({
   };
 
   return (
-    <div className="group relative grid grid-cols-1 md:grid-cols-12 gap-4 items-start p-4 rounded-xl border border-border/50 bg-background/30 hover:bg-background/50 transition-all">
+    <div className="group relative grid grid-cols-1 md:grid-cols-12 gap-4 items-start p-4 rounded-xl border border-border/50 bg-background/30 hover:bg-background/50 transition-colors">
       <div className="md:col-span-4 space-y-1">
         <Label className="text-xs text-muted-foreground">Label</Label>
         <Input

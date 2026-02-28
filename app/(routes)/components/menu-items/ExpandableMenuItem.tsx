@@ -87,7 +87,7 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
         return (
             <Link href={isLocked ? "#" : href} onClick={isLocked ? (e) => e.preventDefault() : undefined} className="flex-shrink-0">
                 <div className={cn(
-                    "relative flex items-center justify-center p-5 rounded-xl transition-all duration-200",
+                    "relative flex items-center justify-center p-5 rounded-xl transition-colors duration-200",
                     isActive ? "bg-primary/20 text-primary" : "text-muted-foreground",
                     isLocked && "opacity-60 grayscale cursor-not-allowed"
                 )}>
@@ -111,7 +111,7 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                 className={cn(isLocked ? "cursor-not-allowed" : "cursor-pointer")}
             >
                 <div className={cn(
-                    "relative w-full flex items-center rounded-xl transition-all duration-200 text-sm font-medium",
+                    "relative w-full flex items-center rounded-xl transition-colors duration-200 text-sm font-medium",
                     isOpen ? "py-1.5 px-2" : "flex-col py-2 px-1 justify-center gap-0.5",
                     isActive
                         ? "text-primary"
@@ -126,7 +126,7 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                     {/* Icon */}
                     <div className={cn(
                         "relative z-10 flex items-center justify-center min-w-[24px]",
-                        !isOpen && "w-8 h-8 rounded-md transition-all duration-200 hover:bg-white/10 hover:ring-1 hover:ring-white/70 group/icon"
+                        !isOpen && "w-8 h-8 rounded-md transition-colors duration-200 hover:bg-white/10 hover:ring-1 hover:ring-white/70 group/icon"
                     )}>
                         <Icon className={cn("w-5 h-5 transition-colors duration-200", isActive ? "text-primary" : "group-hover:text-primary")} />
                     </div>
@@ -144,7 +144,7 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                         <span
                             className={cn(
                                 "flex items-center gap-2 uppercase tracking-tight py-0 px-2 leading-normal",
-                                isActive ? "bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-all duration-300"
+                                isActive ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-colors duration-300"
                             )}
                             style={{
                                 fontFamily: 'var(--nav-item-font)',
@@ -227,7 +227,7 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                                             href={subItem.href}
                                             onClick={(e) => e.stopPropagation()}
                                             className={cn(
-                                                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all duration-200",
+                                                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors duration-200",
                                                 isSubActive
                                                     ? "bg-primary/20 text-primary font-medium"
                                                     : "text-muted-foreground hover:text-white hover:bg-white/5"

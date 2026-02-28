@@ -81,14 +81,14 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
             {/* Desktop Sidebar */}
             <div
                 className={cn(
-                    "hidden md:flex shrink-0 relative group z-20 transition-all duration-300",
+                    "hidden md:flex shrink-0 relative group z-20 transition-colors duration-300",
                     isCollapsed ? "w-11" : "w-48"
                 )}
             >
                 {/* Sidebar content */}
                 <div
                     className={cn(
-                        "relative flex flex-col bg-muted/10 border-r border-border/50 py-4 gap-1 transition-all duration-300 overflow-hidden h-full w-full",
+                        "relative flex flex-col bg-muted/10 border-r border-border/50 py-4 gap-1 transition-colors duration-300 overflow-hidden h-full w-full",
                         isCollapsed ? "items-center" : ""
                     )}
                 >
@@ -107,7 +107,7 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                                     onMouseEnter={() => setHoveredLabel(item.label)}
                                     onMouseLeave={() => setHoveredLabel(null)}
                                     className={cn(
-                                        "flex items-center transition-all duration-200 text-left w-full relative",
+                                        "flex items-center transition-colors duration-200 text-left w-full relative",
                                         isCollapsed
                                             ? "h-10 w-10 justify-center mx-auto rounded-xl hover:bg-white/5 group/btn"
                                             : "gap-3 px-4 py-2 text-sm font-medium",
@@ -120,7 +120,7 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                                     {/* Active indicator bar */}
                                     {isActive && (
                                         <div className={cn(
-                                            "absolute bg-primary transition-all duration-300",
+                                            "absolute bg-primary transition-colors duration-300",
                                             isCollapsed
                                                 ? "left-0 top-2 bottom-2 w-0.5 rounded-r-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"
                                                 : "right-0 top-0 bottom-0 w-1"
@@ -142,7 +142,7 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                         <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-4">
                             <span
                                 className={cn(
-                                    "text-[10px] uppercase tracking-[0.2em] font-bold whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-all duration-300",
+                                    "text-[10px] uppercase tracking-[0.2em] font-bold whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-colors duration-300",
                                     currentLabel ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
                                     hoveredLabel ? "text-primary scale-105" : "text-primary/70"
                                 )}
@@ -175,7 +175,7 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                                 key={item.label}
                                 onClick={() => router.push(item.href)}
                                 className={cn(
-                                    "flex flex-col items-center justify-center min-w-[70px] py-1.5 px-2 rounded-xl transition-all duration-200 gap-0.5 shrink-0",
+                                    "flex flex-col items-center justify-center min-w-[70px] py-1.5 px-2 rounded-xl transition-colors duration-200 gap-0.5 shrink-0",
                                     isActive
                                         ? "bg-primary/20 text-primary"
                                         : "text-primary/60 hover:text-primary"

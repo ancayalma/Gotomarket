@@ -188,7 +188,7 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
     <div className={embedded ? "w-full px-1 py-2 space-y-4" : "max-w-6xl mx-auto px-4 py-6 space-y-6"}>
       {!embedded && (
         <>
-          <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Prompt Generator</h1>
+          <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Prompt Generator</h1>
           <p className="text-sm text-muted-foreground">
             Build a comprehensive System Prompt using lead and project context. Choose a role preset or define your own, then generate and push to VoiceHub.
           </p>

@@ -166,7 +166,7 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
             </DialogTrigger>
             <DialogContent className="max-w-2xl bg-zinc-950 text-white border-zinc-800">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Import Accounts & Contacts</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Import Accounts & Contacts</DialogTitle>
                 </DialogHeader>
 
                 {step === "upload" && (
@@ -186,7 +186,7 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
                                 <button
                                     onClick={() => setMode("simple")}
                                     className={cn(
-                                        "px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase tracking-tighter",
+                                        "px-4 py-1.5 rounded-lg text-[10px] font-bold transition-colors uppercase tracking-tighter",
                                         mode === "simple" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "text-zinc-500 hover:text-zinc-300"
                                     )}
                                 >
@@ -195,7 +195,7 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
                                 <button
                                     onClick={() => setMode("advanced")}
                                     className={cn(
-                                        "px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase tracking-tighter",
+                                        "px-4 py-1.5 rounded-lg text-[10px] font-bold transition-colors uppercase tracking-tighter",
                                         mode === "advanced" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "text-zinc-500 hover:text-zinc-300"
                                     )}
                                 >
@@ -316,7 +316,7 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
                         <div
                             onClick={() => fileInputRef.current?.click()}
                             className={cn(
-                                "group relative aspect-[3/1] rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-8 cursor-pointer overflow-hidden mt-2 border-zinc-800/80 hover:border-indigo-500/30",
+                                "group relative aspect-[3/1] rounded-3xl border-2 border-dashed transition-colors flex flex-col items-center justify-center p-8 cursor-pointer overflow-hidden mt-2 border-zinc-800/80 hover:border-indigo-500/30",
                                 file
                                     ? "bg-emerald-500/5 border-emerald-500/30 shadow-2xl shadow-emerald-500/10"
                                     : "bg-zinc-950/40 hover:bg-zinc-900/60"
@@ -345,7 +345,7 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
                             ) : (
                                 <>
                                     <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    <FileUp className="w-8 h-8 text-zinc-700 mb-3 group-hover:text-indigo-500 group-hover:scale-110 transition-all duration-300" />
+                                    <FileUp className="w-8 h-8 text-zinc-700 mb-3 group-hover:text-indigo-500 group-hover:scale-110 transition-[color,background-color,border-color,transform] duration-300" />
                                     <p className="text-zinc-500 font-medium text-sm text-center">
                                         Drop CSV or XLSX to begin mapping
                                     </p>
@@ -367,7 +367,7 @@ export default function ImportAccountsDialog({ onImportComplete }: Props) {
                                 <Button
                                     disabled={loading || !file}
                                     onClick={startPreview}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 px-8 rounded-xl shadow-xl shadow-indigo-600/20 group transform transition-all hover:scale-[1.02]"
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 px-8 rounded-xl shadow-xl shadow-indigo-600/20 group transform transition-[color,background-color,border-color,transform] hover:scale-[1.02]"
                                 >
                                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                                         <div className="flex items-center gap-2 uppercase tracking-tighter italic font-black">

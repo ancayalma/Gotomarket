@@ -82,7 +82,7 @@ export default function NotificationCenter() {
             if (val) fetchNotifications();
         }}>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full bg-background/50 border hover:bg-background transition-all">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full bg-background/50 border hover:bg-background transition-colors">
                     <Bell className="h-4 w-4 text-muted-foreground" />
                     {unreadCount > 0 && (
                         <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white animate-in zoom-in">
@@ -154,7 +154,7 @@ export default function NotificationCenter() {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all ml-2 shrink-0"
+                                                    className="h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 hover:bg-emerald-500/10 hover:text-emerald-500 transition-[color,background-color,border-color,opacity] ml-2 shrink-0"
                                                     onClick={(e) => handleClear(e, n.id)}
                                                     title="Mark as done & clear"
                                                 >

@@ -74,7 +74,7 @@ export default function AssignOpportunityModal({ isOpen, onClose, invoiceId }: A
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px] w-[95vw]">
                 <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Assign to Opportunity</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Assign to Opportunity</DialogTitle>
                     <DialogDescription>
                         Search for an opportunity.
                     </DialogDescription>
@@ -83,7 +83,7 @@ export default function AssignOpportunityModal({ isOpen, onClose, invoiceId }: A
                 <div className="space-y-4 w-full overflow-hidden">
                     {/* Search Input */}
                     <div className="relative flex items-center w-full">
-                        <div className="flex items-center transition-all duration-300 ease-in-out border rounded-md bg-background/50 w-full px-3 py-2 shadow-sm border-gray-800 focus-within:ring-1 focus-within:ring-ring focus-within:border-primary">
+                        <div className="flex items-center transition-colors duration-300 ease-in-out border rounded-md bg-background/50 w-full px-3 py-2 shadow-sm border-gray-800 focus-within:ring-1 focus-within:ring-ring focus-within:border-primary">
                             <Search className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
                             <input
                                 className="!bg-transparent border-none outline-none text-sm w-full placeholder:text-muted-foreground/50 h-full min-w-0"

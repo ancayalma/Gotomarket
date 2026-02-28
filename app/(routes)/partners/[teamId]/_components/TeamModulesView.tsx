@@ -63,7 +63,7 @@ const TeamModulesView = ({ teamId, teamName, currentPlan, initialOverrides }: Pr
                             <ShieldAlert className="w-5 h-5" />
                         </div>
                         <div>
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Module Overrides</CardTitle>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Module Overrides</CardTitle>
                             <CardDescription>
                                 Grant specific modules to <strong>{teamName}</strong> regardless of their assigned plan.
                             </CardDescription>
@@ -103,7 +103,7 @@ const TeamModulesView = ({ teamId, teamName, currentPlan, initialOverrides }: Pr
                             return (
                                 <div
                                     key={module.id}
-                                    className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${isInherited
+                                    className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${isInherited
                                             ? "bg-zinc-900/40 border-white/5 opacity-60"
                                             : "bg-card border-border hover:border-amber-500/50"
                                         }`}

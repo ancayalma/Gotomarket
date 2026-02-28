@@ -43,7 +43,7 @@ export const EditDashboardButton = ({ availableEntities = [] }: EditDashboardBut
     return (
         <div
             onClick={() => setEditMode(true)}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-white transition-all cursor-pointer border border-transparent hover:border-white/5"
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-white transition-colors cursor-pointer border border-transparent hover:border-white/5"
             title="Edit Dashboard Layout"
         >
             <Settings className="w-4 h-4" />

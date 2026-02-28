@@ -78,7 +78,7 @@ const OpenAiCard = async () => {
   return (
     <Card className="min-w-[350px]  max-w-[450px]">
       <CardHeader className="text-lg">
-        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">OpenAi - API Key</CardTitle>
+        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">OpenAi - API Key</CardTitle>
         <div className="text-xs text-muted-foreground overflow-hidden space-y-1">
           {/*  Here will be actual settings */}
           <div>ENV API key:</div>

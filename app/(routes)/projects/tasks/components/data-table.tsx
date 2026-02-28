@@ -218,7 +218,7 @@ export function TasksDataTable<TData, TValue>({
                   return (
                     <div
                       key={row.id}
-                      className="group border rounded-lg bg-card p-3 cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-all"
+                      className="group border rounded-lg bg-card p-3 cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-colors"
                     >
                       <div className="flex flex-col gap-2">
                         <div className="font-medium text-sm truncate">{task.title || "Untitled"}</div>

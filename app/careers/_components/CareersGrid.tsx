@@ -47,7 +47,7 @@ export function CareersGrid({ jobs }: CareersGridProps) {
                                 <div
                                     key={job.id}
                                     onClick={() => setSelectedJob(job)}
-                                    className="group bg-[#0A0A0B] border border-white/10 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between hover:border-primary/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-primary/5 relative overflow-hidden"
+                                    className="group bg-[#0A0A0B] border border-white/10 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between hover:border-primary/50 transition-[color,background-color,border-color,box-shadow] cursor-pointer hover:shadow-lg hover:shadow-primary/5 relative overflow-hidden"
                                 >
                                     <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -59,7 +59,7 @@ export function CareersGrid({ jobs }: CareersGridProps) {
                                         </div>
                                     </div>
 
-                                    <Button variant="outline" className="border-white/10 hover:bg-primary hover:text-white hover:border-primary transition-all group-hover:scale-105 rounded-[10px]">
+                                    <Button variant="outline" className="border-white/10 hover:bg-primary hover:text-white hover:border-primary transition-[color,background-color,border-color,transform] group-hover:scale-105 rounded-[10px]">
                                         View Details
                                     </Button>
                                 </div>

@@ -57,8 +57,7 @@ export async function POST(req: Request) {
     }
 
     // If user already has a password, require currentPassword validation
-    // EXCEPTION: If the user is flagged to force-change their password, they can skip currentPassword check
-    if (user.password && !user.mustChangePassword) {
+    if (user.password) {
       if (!currentPassword) {
         return new NextResponse("Current password is required.", { status: 400 });
       }

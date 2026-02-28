@@ -59,7 +59,7 @@ export function SortableWidget({ id, children, disabled, className }: SortableWi
                     </div>
                 </div>
             )}
-            <div className={cn("h-full transition-all duration-300", !isVisible && isEditMode && "opacity-40 grayscale border border-dashed border-white/20 rounded-xl overflow-hidden")}>
+            <div className={cn("h-full transition-colors duration-300", !isVisible && isEditMode && "opacity-40 grayscale border border-dashed border-white/20 rounded-xl overflow-hidden")}>
                 {children}
             </div>
         </div>

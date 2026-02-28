@@ -148,7 +148,7 @@ function DemoPreviewContent() {
     if (!selectedMessage) {
         return (
             <div
-                className="min-h-screen transition-all duration-300"
+                className="min-h-screen transition-colors duration-300"
                 style={{ background: bgGradient }}
             >
                 {/* Floating animated background orbs */}
@@ -196,7 +196,7 @@ function DemoPreviewContent() {
                                 </div>
                             )}
                             <div>
-                                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2" style={{ color: textPrimary }}>
+                                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2" style={{ color: textPrimary }}>
                                     {name}
                                 </h1>
                                 <p className="text-xs" style={{ color: textSecondary }}>
@@ -264,7 +264,7 @@ function DemoPreviewContent() {
                             <button
                                 key={message.id}
                                 onClick={() => setSelectedMessage(message)}
-                                className="w-full text-left rounded-2xl p-4 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                                className="w-full text-left rounded-2xl p-4 transition-transform hover:scale-[1.01] active:scale-[0.99]"
                                 style={{
                                     backgroundColor: cardBg,
                                     backdropFilter: enableGlass ? `blur(${blur}px)` : undefined,
@@ -329,7 +329,7 @@ function DemoPreviewContent() {
     // Message detail view
     return (
         <div
-            className="min-h-screen transition-all duration-300"
+            className="min-h-screen transition-colors duration-300"
             style={{ background: bgGradient }}
         >
             {/* Floating animated background orbs */}
@@ -366,7 +366,7 @@ function DemoPreviewContent() {
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div className="flex-1">
-                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2" style={{ color: textPrimary }}>
+                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2" style={{ color: textPrimary }}>
                             {selectedMessage.subject}
                         </h1>
                         <p className="text-xs" style={{ color: textSecondary }}>

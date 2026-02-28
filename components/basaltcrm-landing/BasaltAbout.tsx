@@ -73,8 +73,8 @@ export default function BasaltAbout() {
                                 icon: <Cpu className="w-6 h-6 text-violet-500" />
                             },
                         ].map((spec) => (
-                            <div key={spec.title} className="p-8 glass-panel rounded-[32px] border border-white/10 bg-black/40 hover:bg-white/5 transition-all duration-500 group relative overflow-hidden">
-                                <div className="absolute -bottom-12 -right-12 opacity-10 group-hover:opacity-40 transition-all duration-700 pointer-events-none group-hover:scale-110 group-hover:-rotate-12">
+                            <div key={spec.title} className="p-8 glass-panel rounded-[32px] border border-white/10 bg-black/40 hover:bg-white/5 transition-colors duration-500 group relative overflow-hidden">
+                                <div className="absolute -bottom-12 -right-12 opacity-10 group-hover:opacity-40 transition-[opacity,transform] duration-700 pointer-events-none group-hover:scale-110 group-hover:-rotate-12">
                                     {/* Clone the icon with larger size and relative classes */}
                                     {typeof spec.icon === 'object' && spec.icon !== null && 'type' in spec.icon ? (
                                         <spec.icon.type {...spec.icon.props} className="w-64 h-64" />
@@ -106,7 +106,7 @@ export default function BasaltAbout() {
 
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {['OpenAI', 'Anthropic', 'ElevenLabs', 'Vercel', 'Stripe', 'Twilio'].map((tech) => (
-                            <div key={tech} className="h-32 flex items-center justify-center glass-panel rounded-2xl border border-white/5 hover:border-cyan-500/30 hover:bg-white/5 transition-all group">
+                            <div key={tech} className="h-32 flex items-center justify-center glass-panel rounded-2xl border border-white/5 hover:border-cyan-500/30 hover:bg-white/5 transition-colors group">
                                 <span className="text-gray-500 group-hover:text-white font-bold tracking-widest uppercase">{tech}</span>
                             </div>
                         ))}

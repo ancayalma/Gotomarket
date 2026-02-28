@@ -63,7 +63,7 @@ const ProjectsView = async ({ view = "overview" }: ProjectsViewProps) => {
             <div className="space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent tracking-tight uppercase leading-[1.2] py-2">
+                        <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent tracking-tight uppercase leading-[1.2] py-2">
                             {title}
                         </h2>
                         <p className="text-muted-foreground/80 mt-1 text-base font-medium tracking-wide">
@@ -86,11 +86,11 @@ const ProjectsView = async ({ view = "overview" }: ProjectsViewProps) => {
                 <Tabs defaultValue="grid" className="w-full">
                     <div className="flex items-center justify-between mb-6">
                         <TabsList className="bg-background/50 border border-primary/10 rounded-xl p-1">
-                            <TabsTrigger value="grid" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                            <TabsTrigger value="grid" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors">
                                 <LayoutGrid className="w-4 h-4" />
                                 Grid
                             </TabsTrigger>
-                            <TabsTrigger value="list" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                            <TabsTrigger value="list" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors">
                                 <ListIcon className="w-4 h-4" />
                                 List
                             </TabsTrigger>

@@ -29,7 +29,7 @@ export default function GlobalError({
                             transition={{ duration: 0.8, ease: "easeOut" }}
                             className="relative mb-8"
                         >
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
                                 500
                             </h1>
                             <div className="absolute inset-0 flex items-center justify-center flex-col">
@@ -63,14 +63,14 @@ export default function GlobalError({
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
                                 <button
                                     onClick={() => reset?.()}
-                                    className="h-14 px-10 flex items-center justify-center text-sm font-black tracking-[0.2em] rounded-xl bg-primary text-black hover:bg-primary/90 shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_0_50px_rgba(var(--primary-rgb),0.5)] transition-all duration-300 group"
+                                    className="h-14 px-10 flex items-center justify-center text-sm font-black tracking-[0.2em] rounded-xl bg-primary text-black hover:bg-primary/90 shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_0_50px_rgba(var(--primary-rgb),0.5)] transition-[color,background-color,border-color,box-shadow] duration-300 group"
                                 >
                                     <span className="mr-2">↻</span> REBOOT SYSTEM
                                 </button>
 
                                 <Link
                                     href="/"
-                                    className="h-14 px-10 flex items-center justify-center text-sm font-black tracking-[0.2em] rounded-xl border border-white/10 text-white hover:bg-white/5 hover:border-white/20 hover:text-white transition-all duration-300 backdrop-blur-md"
+                                    className="h-14 px-10 flex items-center justify-center text-sm font-black tracking-[0.2em] rounded-xl border border-white/10 text-white hover:bg-white/5 hover:border-white/20 hover:text-white transition-colors duration-300 backdrop-blur-md"
                                 >
                                     <MoveLeft className="mr-3 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
                                     RETURN HOME
@@ -81,7 +81,7 @@ export default function GlobalError({
                                 <Link
                                     href="https://discord.gg/G9Sp8CAQmV"
                                     target="_blank"
-                                    className="px-8 py-4 rounded-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-lg tracking-wide shadow-lg hover:shadow-[#5865F2]/50 transition-all duration-300 flex items-center justify-center gap-3 group mx-auto w-fit"
+                                    className="px-8 py-4 rounded-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-lg tracking-wide shadow-lg hover:shadow-[#5865F2]/50 transition-[color,background-color,border-color,box-shadow] duration-300 flex items-center justify-center gap-3 group mx-auto w-fit"
                                 >
                                     Need assistance? Contact support on Discord
                                     <span className="group-hover:translate-x-1 transition-transform">→</span>

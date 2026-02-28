@@ -23,7 +23,7 @@ export const NavigationCard = ({ card, loading = false, className, isActive, onC
     <div
         onClick={onClick}
         className={cn(
-            "group relative w-full p-3 overflow-hidden transition-all duration-300 bg-background border border-[1px] rounded-2xl h-[110px] cursor-pointer",
+            "group relative w-full p-3 overflow-hidden transition-colors duration-300 bg-background border border-[1px] rounded-2xl h-[110px] cursor-pointer",
             isActive
                 ? "border-primary/50 ring-2 ring-primary/30"
                 : "border-border hover:border-primary/50",
@@ -39,14 +39,14 @@ export const NavigationCard = ({ card, loading = false, className, isActive, onC
         {/* Giant Watermark Icon - Positioned Right */}
         <card.icon
             className={cn(
-                "absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-all duration-700 pointer-events-none group-hover:scale-125 group-hover:-rotate-0 group-hover:text-primary",
+                "absolute -right-4 -bottom-4 w-32 h-32 -rotate-12 transition-[color,background-color,border-color,transform] duration-700 pointer-events-none group-hover:scale-125 group-hover:-rotate-0 group-hover:text-primary",
                 isActive ? "opacity-30 scale-110" : "opacity-10 group-hover:opacity-50",
                 card.iconColor
             )}
         />
 
         <div className="relative z-10 w-full h-full flex flex-col items-start pl-1 justify-center">
-            <h3 className="font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent py-0.5 px-2 leading-tight mb-0.5">
+            <h3 className="font-black text-[11px] uppercase tracking-tight bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent py-0.5 px-2 leading-tight mb-0.5">
                 {card.title}
             </h3>
             <span className={cn(

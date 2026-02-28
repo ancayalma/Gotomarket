@@ -62,7 +62,7 @@ export const SurgeSubscriptionCard = () => {
                             <ShieldCheck size={32} />
                         </div>
                     </div>
-                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Active Subscription</CardTitle>
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Active Subscription</CardTitle>
                     <CardDescription>
                         Your card is securely vaulted via BasaltSURGE.
                         charges will occur on the 14th of each month.
@@ -78,7 +78,7 @@ export const SurgeSubscriptionCard = () => {
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Premium Agent Access</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Premium Agent Access</CardTitle>
                         <CardDescription>Billed Monthly via Surge Hybrid Rails</CardDescription>
                     </div>
                     <div className="bg-blue-100 p-2 rounded-lg">
@@ -121,7 +121,7 @@ export const SurgeSubscriptionCard = () => {
             </CardContent>
             <CardFooter className="flex flex-col gap-3 pt-2">
                 <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700 h-11 transition-all"
+                    className="w-full bg-blue-600 hover:bg-blue-700 h-11 transition-colors"
                     onClick={handleVaultAndSubscribe}
                     disabled={loading}
                 >
