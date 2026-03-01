@@ -29,6 +29,15 @@ export async function POST(req: Request) {
     );
   }
 
+  // SOC2 CC6.1 / A1.2: Check resource quotas before allowing invitation
+  if (teamInfo?.teamId) {
+    const { checkTeamQuota } = await import("@/lib/quota-service");
+    const quota = await checkTeamQuota(teamInfo.teamId, "USERS");
+    if (!quota.allowed) {
+      return NextResponse.json({ error: quota.message }, { status: 403 });
+    }
+  }
+
   try {
     const body = await req.json();
     const { name, email, language, assigned_modules, role = "MEMBER" } = body;

@@ -17,8 +17,16 @@ export async function POST(req: Request) {
   try {
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
-
     const body = await req.json();
+
+    // SOC2 CC6.1 / A1.2: Check account quotas before allowing creation
+    if (teamId) {
+      const { checkTeamQuota } = await import("@/lib/quota-service");
+      const quota = await checkTeamQuota(teamId, "ACCOUNTS");
+      if (!quota.allowed) {
+        return NextResponse.json({ error: quota.message }, { status: 403 });
+      }
+    }
     const {
       name,
       office_phone,

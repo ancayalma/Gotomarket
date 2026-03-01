@@ -3,7 +3,7 @@ export const SUBSCRIPTION_PLANS = {
         name: "Free",
         slug: "FREE",
         price: 0,
-        features: ["crm", "projects", "dashboard", "contacts", "leads", "tasks", "university"], // Essential CRM + Learn
+        features: ["crm", "projects", "dashboard", "contacts", "accounts", "opportunities", "leads", "tasks", "university"], // Essential CRM + Learn
         limits: {
             max_users: 1,
             max_storage: 50, // MB
@@ -17,8 +17,10 @@ export const SUBSCRIPTION_PLANS = {
         slug: "INDIVIDUAL_BASIC",
         price: 50,
         features: [
-            "crm", "projects", "documents", "invoices", "reports", "openai", "emails",
-            "personalized_signature", "custom_themes", "university"
+            "crm", "projects", "dashboard", "contacts", "accounts", "opportunities", "leads",
+            "tasks", "quotes", "products", "contracts", "university",
+            "documents", "invoice", "reports", "ai_lab", "emails",
+            "personalized_signature", "custom_themes"
         ],
         limits: {
             max_users: 2,

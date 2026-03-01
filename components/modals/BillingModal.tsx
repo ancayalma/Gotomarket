@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     Dialog,
     DialogContent,
@@ -20,7 +20,8 @@ import {
     Clock,
     CheckCircle2,
     Calendar,
-    ArrowRight
+    ArrowRight,
+    Zap
 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -31,40 +32,91 @@ interface BillingModalProps {
     onClose: () => void;
 }
 
-const PLANS = [
+import { saveSubscription } from "@/actions/billing/save-subscription";
+import { PaymentModal } from "@/app/(routes)/invoice/detail/[invoiceId]/_components/PaymentModal";
+import { SUBSCRIPTION_PLANS } from "@/config/subscriptions";
+import { getMyTeamSubscription } from "@/actions/billing/get-my-subscription";
+
+const PLANS_CONFIG = [
     {
-        name: "Testing Plan",
-        slug: "FREE",
-        monthly: 2,
-        annual: 18, // 25% off
-        features: ["Uptime Monitoring", "Test Integration", "1 User"]
+        name: SUBSCRIPTION_PLANS.INDIVIDUAL_BASIC.name,
+        slug: SUBSCRIPTION_PLANS.INDIVIDUAL_BASIC.slug,
+        monthly: SUBSCRIPTION_PLANS.INDIVIDUAL_BASIC.price,
+        annual: SUBSCRIPTION_PLANS.INDIVIDUAL_BASIC.price * 12 * 0.8,
+        features: [
+            "1,000 LeadGen Credits",
+            "15,000 Emails / mo",
+            "Standard AI Enrichment",
+            "2 User Licenses"
+        ]
     },
     {
-        name: "Individual Basic",
-        slug: "INDIVIDUAL_BASIC",
-        monthly: 50,
-        annual: 450, // 25% off (50 * 12 * 0.75)
-        features: ["500 Leads / mo", "Basic Enrichment", "2 Users"]
-    },
-    {
-        name: "Individual Pro",
-        slug: "INDIVIDUAL_PRO",
-        monthly: 150,
-        annual: 1350, // 25% off (150 * 12 * 0.75)
-        features: ["2,500 Leads / mo", "VoiceHub Access", "4 Users"],
+        name: SUBSCRIPTION_PLANS.INDIVIDUAL_PRO.name,
+        slug: SUBSCRIPTION_PLANS.INDIVIDUAL_PRO.slug,
+        monthly: SUBSCRIPTION_PLANS.INDIVIDUAL_PRO.price,
+        annual: SUBSCRIPTION_PLANS.INDIVIDUAL_PRO.price * 12 * 0.8,
+        features: [
+            "5,000 LeadGen Credits",
+            "50,000 Emails / mo",
+            "Full Agentic Research",
+            "VoiceHub AI Calling",
+            "4 User Licenses"
+        ],
         popular: true
+    },
+    {
+        name: SUBSCRIPTION_PLANS.ENTERPRISE.name,
+        slug: SUBSCRIPTION_PLANS.ENTERPRISE.slug,
+        monthly: 0,
+        annual: 0,
+        features: [
+            "Unlimited Leads",
+            "Custom Engineering",
+            "White-label Options",
+            "Dedicated Support"
+        ],
+        isContactSales: true
     }
 ];
 
-import { saveSubscription } from "@/actions/billing/save-subscription";
-import { PaymentModal } from "@/app/(routes)/invoice/detail/[invoiceId]/_components/PaymentModal";
+const HIERARCHY = ["FREE", "INDIVIDUAL_BASIC", "INDIVIDUAL_PRO", "ENTERPRISE", "EXEMPT"];
 
 export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
     const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
     const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
-    const [selectedPlan, setSelectedPlan] = useState(PLANS[2]);
     const [loading, setLoading] = useState(false);
     const [wallet, setWallet] = useState("");
+    const [currentPlanSlug, setCurrentPlanSlug] = useState<string>("FREE");
+
+    const filteredPlans = useMemo(() => {
+        return PLANS_CONFIG.filter((p: any) => {
+            const currentIdx = HIERARCHY.indexOf(currentPlanSlug);
+            const planIdx = HIERARCHY.indexOf(p.slug);
+            return planIdx > currentIdx;
+        });
+    }, [currentPlanSlug]);
+
+    const [selectedPlan, setSelectedPlan] = useState(filteredPlans[0] || PLANS_CONFIG[1]);
+
+    // Update selected plan if currentPlanSlug changes (e.g. after fetch)
+    useEffect(() => {
+        if (filteredPlans.length > 0 && !filteredPlans.find((p: any) => p.slug === selectedPlan?.slug)) {
+            setSelectedPlan(filteredPlans[0]);
+        }
+    }, [filteredPlans, selectedPlan?.slug]);
+
+    // Fetch current subscription
+    useEffect(() => {
+        if (isOpen) {
+            const fetchSub = async () => {
+                const sub = await getMyTeamSubscription();
+                if (sub) {
+                    setCurrentPlanSlug(sub.plan_name);
+                }
+            };
+            fetchSub();
+        }
+    }, [isOpen]);
 
     // Payment Modal State
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -96,7 +148,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
         }
     };
 
-    const monthlyPrice = selectedPlan.monthly;
+    const monthlyPrice = selectedPlan?.monthly || 0;
     let finalPrice = monthlyPrice;
     let discountLabel = "";
 
@@ -208,45 +260,63 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
 
                             {/* Plans List */}
                             <div className="space-y-3 flex-1 overflow-y-auto pr-2 relative z-10">
-                                {PLANS.map((plan) => (
-                                    <button
-                                        key={plan.name}
-                                        onClick={() => setSelectedPlan(plan)}
-                                        className={cn(
-                                            "w-full text-left p-4 rounded-2xl border transition-colors duration-300 relative group overflow-hidden",
-                                            selectedPlan.name === plan.name
-                                                ? "border-primary/50 bg-primary/10 shadow-[0_0_30px_rgba(6,182,212,0.1)]"
-                                                : "border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/60 hover:border-zinc-700"
-                                        )}
-                                    >
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="flex flex-col">
-                                                <span className={cn("text-sm font-bold tracking-tight mb-1", selectedPlan.name === plan.name ? "text-primary" : "text-zinc-300")}>
-                                                    {plan.name}
-                                                </span>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {plan.features.slice(0, 2).map((f, i) => (
-                                                        <span key={i} className="text-[10px] text-zinc-500 bg-zinc-800/50 px-2 py-0.5 rounded-full">{f}</span>
-                                                    ))}
+                                {filteredPlans.length === 0 ? (
+                                    <div className="text-center py-10">
+                                        <ShieldCheck className="w-12 h-12 text-primary mx-auto mb-3 opacity-20" />
+                                        <p className="text-sm font-bold text-zinc-400">Maximum Tier Reached</p>
+                                        <p className="text-xs text-zinc-600 mt-1">You are already on the highest plan.</p>
+                                    </div>
+                                ) : (
+                                    filteredPlans.map((plan: any) => (
+                                        <button
+                                            key={plan.name}
+                                            onClick={() => setSelectedPlan(plan)}
+                                            className={cn(
+                                                "w-full text-left p-4 rounded-2xl border transition-colors duration-300 relative group overflow-hidden",
+                                                selectedPlan?.name === plan.name
+                                                    ? "border-primary/50 bg-primary/10 shadow-[0_0_30px_rgba(6,182,212,0.1)]"
+                                                    : "border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/60 hover:border-zinc-700"
+                                            )}
+                                        >
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex flex-col">
+                                                    <span className={cn("text-sm font-bold tracking-tight mb-1", selectedPlan?.name === plan.name ? "text-primary" : "text-zinc-300")}>
+                                                        {plan.name}
+                                                    </span>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {plan.features.slice(0, 2).map((f: any, i: number) => (
+                                                            <span key={i} className="text-[10px] text-zinc-500 bg-zinc-800/50 px-2 py-0.5 rounded-full">{f}</span>
+                                                        ))}
+                                                    </div>
                                                 </div>
+                                                {plan.popular && (
+                                                    <span className="text-[9px] bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-2 py-0.5 rounded-full font-black tracking-wider uppercase shadow-lg">PRO</span>
+                                                )}
+                                                {plan.isContactSales && (
+                                                    <span className="text-[9px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full font-black tracking-wider uppercase">Enterprise</span>
+                                                )}
                                             </div>
-                                            {plan.popular && (
-                                                <span className="text-[9px] bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-2 py-0.5 rounded-full font-black tracking-wider uppercase shadow-lg">PRO</span>
+                                            {!plan.isContactSales && (
+                                                <div className="mt-3 flex items-baseline gap-1">
+                                                    <span className="text-2xl font-mono font-bold tracking-tighter text-white">
+                                                        ${billingCycle === "monthly" ? plan.monthly : Math.round(billingCycle === "annual" ? (paymentMethod === 'crypto' ? plan.annual / 12 : (plan.monthly * 12 * 0.8) / 12) : plan.monthly)}
+                                                    </span>
+                                                    <span className="text-xs text-zinc-500 font-medium">/mo</span>
+                                                    {billingCycle === "annual" && (
+                                                        <span className="ml-auto text-xs text-zinc-400 line-through decoration-zinc-600">
+                                                            ${plan.monthly}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             )}
-                                        </div>
-                                        <div className="mt-3 flex items-baseline gap-1">
-                                            <span className="text-2xl font-mono font-bold tracking-tighter text-white">
-                                                ${billingCycle === "monthly" ? plan.monthly : Math.round(billingCycle === "annual" ? (paymentMethod === 'crypto' ? plan.annual / 12 : (plan.monthly * 12 * 0.8) / 12) : plan.monthly)}
-                                            </span>
-                                            <span className="text-xs text-zinc-500 font-medium">/mo</span>
-                                            {billingCycle === "annual" && (
-                                                <span className="ml-auto text-xs text-zinc-400 line-through decoration-zinc-600">
-                                                    ${plan.monthly}
-                                                </span>
+                                            {plan.isContactSales && (
+                                                <div className="mt-3 text-xs text-zinc-500 font-bold uppercase tracking-tight italic">
+                                                    Contact Sales for Pricing
+                                                </div>
                                             )}
-                                        </div>
-                                    </button>
-                                ))}
+                                        </button>
+                                    ))
+                                )}
                             </div>
 
                             <div className="mt-6 relative z-10">
@@ -309,29 +379,33 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                         )}
                                     </h3>
                                     <p className="text-zinc-400 text-sm leading-relaxed max-w-md">
-                                        {paymentMethod === 'crypto'
-                                            ? "Direct wallet-to-wallet transfer. No intermediaries. No automated pull. Pure P2P settlement."
-                                            : "Secure automated billing via BasaltSURGE Hybrid Rails. Funds settled in USDC on Base."}
+                                        {selectedPlan?.isContactSales
+                                            ? "Enterprise deployments require a tailored architecture. Speak with our infrastructure team to design your dedicated instance."
+                                            : paymentMethod === 'crypto'
+                                                ? "Direct wallet-to-wallet transfer. No intermediaries. No automated pull. Pure P2P settlement."
+                                                : "Secure automated billing via BasaltSURGE Hybrid Rails. Funds settled in USDC on Base."}
                                     </p>
                                 </div>
 
-                                <Card className={cn("bg-zinc-900/50 border-zinc-800 mb-8 overflow-hidden transition-colors duration-500", paymentMethod === 'crypto' ? "border-emerald-500/30 ring-1 ring-emerald-500/20" : "")}>
+                                <Card className={cn("bg-zinc-900/50 border-zinc-800 mb-8 overflow-hidden transition-colors duration-500", selectedPlan?.isContactSales ? "border-primary/30" : paymentMethod === 'crypto' ? "border-emerald-500/30 ring-1 ring-emerald-500/20" : "")}>
                                     <div className="flex flex-row md:items-center p-6 gap-6">
-                                        <div className={cn("hidden md:flex w-12 h-12 rounded-full items-center justify-center flex-shrink-0", paymentMethod === 'crypto' ? "bg-emerald-500/10" : "bg-indigo-500/10")}>
-                                            {paymentMethod === 'crypto' ? <Sparkles className="w-6 h-6 text-emerald-400" /> : <ShieldCheck className="w-6 h-6 text-indigo-400" />}
+                                        <div className={cn("hidden md:flex w-12 h-12 rounded-full items-center justify-center flex-shrink-0", selectedPlan?.isContactSales ? "bg-primary/10" : paymentMethod === 'crypto' ? "bg-emerald-500/10" : "bg-indigo-500/10")}>
+                                            {selectedPlan?.isContactSales ? <Zap className="w-6 h-6 text-primary" /> : paymentMethod === 'crypto' ? <Sparkles className="w-6 h-6 text-emerald-400" /> : <ShieldCheck className="w-6 h-6 text-indigo-400" />}
                                         </div>
                                         <div className="space-y-1">
                                             <h4 className="text-sm font-bold text-white uppercase tracking-wider">
-                                                {paymentMethod === 'crypto' ? "PEER-TO-PEER SETTLEMENT" : "Secure Payment Portal"}
+                                                {selectedPlan?.isContactSales ? "Request Enterprise Access" : paymentMethod === 'crypto' ? "PEER-TO-PEER SETTLEMENT" : "Secure Payment Portal"}
                                             </h4>
                                             <p className="text-xs text-zinc-500 leading-relaxed max-w-sm">
-                                                {paymentMethod === 'crypto'
-                                                    ? "Direct P2P Transfer. Must be settled in USDC on Base Network to qualify for the 25% discount."
-                                                    : "Redirects to BasaltSURGE Safe Portal for PCI-compliant card vaulting."}
+                                                {selectedPlan?.isContactSales
+                                                    ? "Includes unlimited leads, custom AI modules, and specialized service level agreements (SLAs)."
+                                                    : paymentMethod === 'crypto'
+                                                        ? "Direct P2P Transfer. Must be settled in USDC on Base Network to qualify for the 25% discount."
+                                                        : "Redirects to BasaltSURGE Safe Portal for PCI-compliant card vaulting."}
                                             </p>
                                         </div>
                                     </div>
-                                    {paymentMethod !== 'crypto' && (
+                                    {!selectedPlan?.isContactSales && paymentMethod !== 'crypto' && (
                                         <div className="bg-zinc-950/50 px-6 py-2 flex items-center justify-between border-t border-zinc-800/50">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -378,29 +452,38 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                     <Button
                                         className={cn(
                                             "w-full h-16 rounded-2xl text-lg font-bold shadow-2xl transition-colors group overflow-hidden relative",
-                                            paymentMethod === 'crypto'
-                                                ? "bg-emerald-600 hover:bg-emerald-500 hover:shadow-[0_0_40px_rgba(16,185,129,0.4)]"
-                                                : "bg-indigo-600 hover:bg-indigo-500 hover:shadow-[0_0_40px_rgba(79,70,229,0.4)]"
+                                            selectedPlan?.isContactSales
+                                                ? "bg-primary hover:bg-primary/90"
+                                                : paymentMethod === 'crypto'
+                                                    ? "bg-emerald-600 hover:bg-emerald-500 hover:shadow-[0_0_40px_rgba(16,185,129,0.4)]"
+                                                    : "bg-indigo-600 hover:bg-indigo-500 hover:shadow-[0_0_40px_rgba(79,70,229,0.4)]"
                                         )}
                                         onClick={handleSave}
-                                        disabled={loading}
+                                        disabled={loading || !selectedPlan}
                                     >
                                         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
                                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
 
                                         <span className="relative z-10 flex items-center justify-center gap-2">
-                                            {loading ? "Processing..." : (
+                                            {loading ? "Processing..." : selectedPlan?.isContactSales ? (
                                                 <>
-                                                    {paymentMethod === 'crypto' ? "Confirm P2P Transfer (USDC Only)" : `Activate ${selectedPlan.name}`}
+                                                    Speak with Enterprise Sales
+                                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {paymentMethod === 'crypto' ? "Confirm P2P Transfer (USDC Only)" : `Activate ${selectedPlan?.name}`}
                                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                                 </>
                                             )}
                                         </span>
                                     </Button>
                                     <p className="text-center text-[10px] text-zinc-600 mt-6 leading-relaxed px-8">
-                                        {paymentMethod === 'crypto'
-                                            ? "P2P Transactions must be in USDC on Base Network. Volatility protection ensures your rate is locked."
-                                            : "By subscribing, you enable BasaltSURGE Hybrid Rails. Charges are processed in USDC via Base network automation."}
+                                        {selectedPlan?.isContactSales
+                                            ? "By clicking, our sales team will reach out to the organization owner within 24 hours."
+                                            : paymentMethod === 'crypto'
+                                                ? "P2P Transactions must be in USDC on Base Network. Volatility protection ensures your rate is locked."
+                                                : "By subscribing, you enable BasaltSURGE Hybrid Rails. Charges are processed in USDC via Base network automation."}
                                     </p>
                                 </div>
                             </div>

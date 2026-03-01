@@ -41,6 +41,7 @@ const SideBar = async () => {
   if (!dict) return null;
 
   const team = (user as any)?.assigned_team;
+  const planSlug = team?.assigned_plan?.slug || team?.subscription_plan || "FREE";
   let features: string[] = [];
 
   if (team?.assigned_plan) {
@@ -130,6 +131,7 @@ const SideBar = async () => {
     serviceBadge={caseStats?.openCases || 0}
     isImpersonating={currentUserInfo.isImpersonating}
     impersonatedTeamName={team?.name}
+    planSlug={planSlug}
   />;
 };
 export default SideBar;

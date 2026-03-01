@@ -20,9 +20,10 @@ export async function GET(req: Request, props: { params: Promise<{ sku: string }
         const rawSku = params.sku;
         const sku = rawSku.toLowerCase();
 
-        systemLogger.error(`[AgentAPI] Purchase request for SKU: ${sku}`);
+        systemLogger.info(`[AgentAPI] Purchase request for SKU: ${sku}`);
 
         if (sku === ":sku") {
+            systemLogger.warn(`[AgentAPI] User attempted to use literal :sku placeholder`);
             return NextResponse.json({
                 error: "Invalid SKU",
                 message: "You are using the ':sku' placeholder. Please replace it with a real SKU from the catalog.",
@@ -52,15 +53,15 @@ export async function GET(req: Request, props: { params: Promise<{ sku: string }
         if (!service) {
             if (sku.startsWith("agent-")) {
                 service = { price: "99.00", resource: `https://agents.basalthq.com/deploy/${sku.replace("agent-", "")}` };
-                systemLogger.error(`[AgentAPI] Using dynamic fallback for agent SKU: ${sku}`);
+                systemLogger.info(`[AgentAPI] Using dynamic fallback for agent SKU: ${sku}`);
             } else if (sku.startsWith("service-")) {
                 service = { price: "49.99", resource: `https://api.basalthq.com/access/${sku}` };
-                systemLogger.error(`[AgentAPI] Using dynamic fallback for service SKU: ${sku}`);
+                systemLogger.info(`[AgentAPI] Using dynamic fallback for service SKU: ${sku}`);
             }
         }
 
         if (!service) {
-            console.warn(`[AgentAPI] SKU not found: ${sku}`);
+            systemLogger.warn(`[AgentAPI] SKU not found: ${sku}`);
             return NextResponse.json({
                 error: "Service Not Found",
                 message: `The requested SKU '${sku}' does not exist in the catalog.`,

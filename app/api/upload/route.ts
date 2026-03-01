@@ -67,6 +67,15 @@ export async function POST(req: NextRequest) {
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
 
+    // SOC2 CC6.1 / A1.2: Check storage quotas before allowing upload
+    if (teamId) {
+      const { checkTeamQuota } = await import("@/lib/quota-service");
+      const quota = await checkTeamQuota(teamId, "STORAGE");
+      if (!quota.allowed) {
+        return NextResponse.json({ error: quota.message }, { status: 403 });
+      }
+    }
+
     const existingDoc = await (prismadb.documents as any).findFirst({
       where: {
         hash: hex,

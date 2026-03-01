@@ -50,6 +50,15 @@ export async function POST(req: Request) {
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
 
+    // SOC2 CC6.1 / A1.2: Check contact quotas before allowing creation
+    if (teamId) {
+      const { checkTeamQuota } = await import("@/lib/quota-service");
+      const quota = await checkTeamQuota(teamId, "CONTACTS");
+      if (!quota.allowed) {
+        return NextResponse.json({ error: quota.message }, { status: 403 });
+      }
+    }
+
     // Helper to escape regex special characters for case-insensitive search on MongoDB
     const escapeRegExp = (text: string) => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 

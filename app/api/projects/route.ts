@@ -7,19 +7,19 @@ import { logActivityInternal } from "@/actions/audit";
 import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
-  systemLogger.error('[GET /api/projects] Request started');
+  systemLogger.info('[GET /api/projects] Request started');
   const session = await getServerSession(authOptions);
   if (!session) {
-    systemLogger.error('[GET /api/projects] No session');
+    systemLogger.warn('[GET /api/projects] No session');
     return new NextResponse("Unauthenticated", { status: 401 });
   }
   try {
     const teamInfo = await getCurrentUserTeamId();
-    systemLogger.error('[GET /api/projects] Team Info:', teamInfo);
+    systemLogger.info('[GET /api/projects] Team Info:', teamInfo);
     const teamId = teamInfo?.teamId;
 
     if (!session?.user?.id) {
-      systemLogger.error('[GET /api/projects] Missing session.user.id');
+      systemLogger.warn('[GET /api/projects] Missing session.user.id');
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -35,7 +35,7 @@ export async function GET() {
       });
     }
 
-    systemLogger.error('[GET /api/projects] orConditions:', JSON.stringify(orConditions));
+    systemLogger.info('[GET /api/projects] orConditions:', JSON.stringify(orConditions));
 
     // Return projects (boards) accessible to the user
     const boards = await prismadb.boards.findMany({
@@ -189,7 +189,7 @@ export async function PUT(req: Request) {
     const teamInfo = await getCurrentUserTeamId();
     await logActivityInternal(session.user.id, "UPDATE", "Boards", `Updated project: ${title} (${id})`, teamInfo?.teamId || undefined);
     return NextResponse.json(
-      { message: "Board updated successfullsy" },
+      { message: "Board updated successfully" },
       { status: 200 }
     );
   } catch (error) {

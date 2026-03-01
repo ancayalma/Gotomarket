@@ -15,7 +15,9 @@ import {
     Wrench,
     Globe,
     Calendar,
-    Shield
+    Shield,
+    Sparkles,
+    CreditCard
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -26,6 +28,8 @@ import ExpandableMenuItem, { SubMenuItemType } from "../menu-items/ExpandableMen
 import HubLabel from "../menu-items/HubLabel";
 import { NavItem, NavItemType } from "@/lib/navigation-defaults";
 import { getIcon } from "./icon-map";
+import { BillingModal } from "@/components/modals/BillingModal";
+import { Button } from "@/components/ui/button";
 
 // ─── Types ───────────────────────────────────────────────
 type Props = {
@@ -38,6 +42,7 @@ type Props = {
     serviceBadge?: number; // Count for service cases
     isImpersonating?: boolean;
     impersonatedTeamName?: string;
+    planSlug?: string;
     titleFont?: string;
     titleFontSize?: string;
     titleFontWeight?: string;
@@ -80,6 +85,7 @@ const DynamicModuleMenu = ({
     serviceBadge = 0,
     isImpersonating = false,
     impersonatedTeamName,
+    planSlug = "FREE",
     titleFont,
     titleFontSize,
     titleFontWeight,
@@ -92,6 +98,7 @@ const DynamicModuleMenu = ({
     // ... hooks ...
     const [open, setOpen] = useState(true);
     const [isMounted, setIsMounted] = useState(false);
+    const [isBillingOpen, setIsBillingOpen] = useState(false);
     const pathname = usePathname();
 
     useEffect(() => {
@@ -358,17 +365,48 @@ const DynamicModuleMenu = ({
                     </div>
 
                     {/* ─── Footer ─── */}
-                    <motion.div
-                        animate={{ opacity: open ? 1 : 0 }}
-                        className="p-3 flex justify-center shrink-0"
-                    >
-                        <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold">
-                            v{process.env.NEXT_PUBLIC_APP_VERSION}
-                        </span>
-                    </motion.div>
+                    <div className="mt-auto px-2 pb-4 space-y-2">
+                        {(planSlug === "FREE" || planSlug === "INDIVIDUAL_BASIC") && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className={cn(
+                                    "flex flex-col gap-1",
+                                    !open ? "items-center" : ""
+                                )}
+                            >
+                                <Button
+                                    onClick={() => setIsBillingOpen(true)}
+                                    variant="ghost"
+                                    className={cn(
+                                        "w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all font-black uppercase italic tracking-tighter shadow-lg shadow-primary/5",
+                                        !open ? "p-0 h-10 w-10 rounded-xl" : "h-11 justify-start px-4 text-xs"
+                                    )}
+                                >
+                                    <Sparkles className={cn("w-4 h-4", open ? "mr-2" : "")} />
+                                    {open && "Upgrade"}
+                                </Button>
+                            </motion.div>
+                        )}
+
+                        <motion.div
+                            animate={{ opacity: open ? 1 : 0 }}
+                            className="flex justify-center shrink-0"
+                        >
+                            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold">
+                                v{process.env.NEXT_PUBLIC_APP_VERSION}
+                            </span>
+                        </motion.div>
+                    </div>
 
                 </motion.div>
             </div>
+
+            {/* ═══════════════ MODALS ═══════════════ */}
+            <BillingModal
+                isOpen={isBillingOpen}
+                onClose={() => setIsBillingOpen(false)}
+            />
 
             {/* ═══════════════ MOBILE BOTTOM NAV ═══════════════ */}
             <div className="md:hidden fixed bottom-1 left-0 right-0 z-[100] px-4">
