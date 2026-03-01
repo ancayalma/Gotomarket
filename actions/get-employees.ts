@@ -14,7 +14,7 @@ export const getEmployees = async () => {
     whereClause.team_id = teamInfo?.teamId;
   }
 
-  const data = await (prismadb.employees as any).findMany({
+  const data = await prismadb.employees.findMany({
     where: whereClause,
   });
   return data;

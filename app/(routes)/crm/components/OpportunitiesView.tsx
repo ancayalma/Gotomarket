@@ -24,6 +24,10 @@ import { NewOpportunityForm } from "../opportunities/components/NewOpportunityFo
 import { OpportunitiesDataTable } from "../opportunities/table-components/data-table";
 import LeadOpportunitiesPanel from "../dashboard/_components/ProjectOpportunitiesPanel";
 
+import { KanbanBoard } from "./KanbanBoard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LayoutGrid, List } from "lucide-react";
+
 const OpportunitiesView = ({
   data,
   crmData,
@@ -36,6 +40,7 @@ const OpportunitiesView = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [open, setOpen] = useState(false);
@@ -107,17 +112,34 @@ const OpportunitiesView = ({
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex justify-between">
-            <div>
-              <CardTitle
-                onClick={() => router.push("/crm/opportunities")}
-                className="cursor-pointer text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2"
-              >
-                {isClosedView ? "Won / Lost Deals" : "Sales Pipeline"}
-              </CardTitle>
-              <CardDescription>
-                {isClosedView ? "Review past deals that have been closed or lost" : "Manage and track your active sales deals"}
-              </CardDescription>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div>
+                <CardTitle
+                  onClick={() => router.push("/crm/opportunities")}
+                  className="cursor-pointer text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2"
+                >
+                  {isClosedView ? "Won / Lost Deals" : "Sales Pipeline"}
+                </CardTitle>
+                <CardDescription className="px-2">
+                  {isClosedView ? "Review past deals that have been closed or lost" : "Manage and track your active sales deals"}
+                </CardDescription>
+              </div>
+
+              {!isClosedView && (
+                <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-[200px]">
+                  <TabsList className="grid w-full grid-cols-2 bg-muted/50 border border-border/50">
+                    <TabsTrigger value="table" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                      <List className="w-4 h-4 mr-2" />
+                      Table
+                    </TabsTrigger>
+                    <TabsTrigger value="kanban" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                      <LayoutGrid className="w-4 h-4 mr-2" />
+                      Kanban
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
             </div>
             <div className="flex space-x-2">
               <Sheet open={open} onOpenChange={() => setOpen(false)}>
@@ -158,7 +180,13 @@ const OpportunitiesView = ({
               {isClosedView ? "No closed deals found" : "No active pipeline found"}
             </div>
           ) : (
-            <OpportunitiesDataTable data={displayData} columns={columns} />
+            <>
+              {viewMode === "table" ? (
+                <OpportunitiesDataTable data={displayData} columns={columns} />
+              ) : (
+                <KanbanBoard opportunities={displayData} stages={saleStages} />
+              )}
+            </>
           )}
         </CardContent>
       </Card>

@@ -15,6 +15,7 @@ import {
     LayoutDashboard,
     CheckSquare,
     UserCircle,
+    Package,
     Command as CommandIcon
 } from "lucide-react";
 import { globalSearch, SearchResult } from "@/actions/dashboard/global-search";
@@ -86,6 +87,7 @@ export default function GlobalSearchDialog() {
             case "project": return { icon: LayoutDashboard, color: "text-indigo-500", label: "Project" };
             case "task": return { icon: CheckSquare, color: "text-cyan-500", label: "Task" };
             case "user": return { icon: UserCircle, color: "text-rose-500", label: "User" };
+            case "product": return { icon: Package, color: "text-emerald-500", label: "Product" };
             default: return { icon: Search, color: "text-gray-400", label: "Result" };
         }
     };

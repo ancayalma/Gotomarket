@@ -6,7 +6,14 @@ import { LearnLink } from "@/components/ui/LearnLink";
 
 type Props = {};
 
-const CrmPage = (props: Props) => {
+import { getEmployees } from "@/actions/get-employees";
+import StaffDashboard from "./components/StaffDashboard";
+import { Suspense } from "react";
+import SuspenseLoading from "@/components/loadings/suspense";
+
+const CrmPage = async () => {
+  const employees = await getEmployees();
+
   return (
     <Container
       title="Employees"
@@ -19,7 +26,10 @@ const CrmPage = (props: Props) => {
         overviewWhy="Managing large organizations requires a unified view of people and their associated departments. This hub ensures that everyone on the team has the correct profile data and departmental alignment."
         overviewHow="Search through the employee list to find contact details or departmental assignments. Use the Filters to narrow down the view by team or role."
       />
-      <div>Module content here</div>
+
+      <Suspense fallback={<SuspenseLoading />}>
+        <StaffDashboard employees={employees} />
+      </Suspense>
     </Container>
   );
 };

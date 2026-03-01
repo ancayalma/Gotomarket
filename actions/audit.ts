@@ -18,7 +18,7 @@ export async function logActivityInternal(
         const ipAddress = headerList.get("x-forwarded-for") || headerList.get("x-real-ip") || "unknown";
         const userAgent = headerList.get("user-agent") || "unknown";
 
-        await (prismadb as any).systemActivity.create({
+        await prismadb.systemActivity.create({
             data: {
                 userId,
                 team_id,

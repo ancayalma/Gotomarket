@@ -54,7 +54,8 @@ export type UniversityTab =
     | "messages"
     | "emails"
     | "search"
-    | "databox";
+    | "databox"
+    | "insights";
 
 // Tab → human-readable label map
 export const TAB_LABELS: Record<UniversityTab, string> = {
@@ -105,7 +106,8 @@ export const TAB_LABELS: Record<UniversityTab, string> = {
     "messages": "Internal Messaging",
     "emails": "Email Communications",
     "search": "Global Search",
-    "databox": "Databox Integration"
+    "databox": "Databox Integration",
+    "insights": "Sales Intelligence"
 };
 
 // Tab → accent color
@@ -160,7 +162,8 @@ export const TAB_COLORS: Record<UniversityTab, string> = {
     "messages": "from-blue-500 to-indigo-500",
     "emails": "from-blue-500 to-sky-500",
     "search": "from-violet-500 to-purple-500",
-    "databox": "from-cyan-500 to-blue-500"
+    "databox": "from-cyan-500 to-blue-500",
+    "insights": "from-indigo-600 to-violet-600"
 };
 
 interface LearnLinkProps {

@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export interface SearchResult {
-    type: "task" | "lead" | "project" | "opportunity" | "account" | "contact" | "contract" | "invoice" | "document" | "user";
+    type: "task" | "lead" | "project" | "opportunity" | "account" | "contact" | "contract" | "invoice" | "document" | "user" | "product";
     id: string;
     title: string;
     subtitle?: string | null;
@@ -210,12 +210,26 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
         select: { id: true, document_name: true, description: true },
         orderBy: { updatedAt: 'desc' }
     });
+    const productsPromise = prismadb.crm_Products.findMany({
+        where: getWhereClause([
+            { name: { contains: q, mode: insensitive } },
+            { description: { contains: q, mode: insensitive } },
+            { sku: { contains: q, mode: insensitive } },
+        ]),
+        take: 10,
+        select: { id: true, name: true, sku: true },
+    });
 
+    const usersPromise = prismadb.users.findMany({
+        where: isSuperAdmin ? (teamId ? { AND: [{ name: { contains: q, mode: insensitive } }, { team_id: teamId }] } : { name: { contains: q, mode: insensitive } }) : { id: userId },
+        take: 10,
+        select: { id: true, name: true, email: true },
+    });
 
     const [
-        tasks, leads, projects, opportunities, accounts, contacts, contracts, invoices, documents
+        tasks, leads, projects, opportunities, accounts, contacts, contracts, invoices, documents, products, users
     ] = await Promise.all([
-        tasksPromise, leadsPromise, projectsPromise, opportunitiesPromise, accountsPromise, contactsPromise, contractsPromise, invoicesPromise, documentsPromise
+        tasksPromise, leadsPromise, projectsPromise, opportunitiesPromise, accountsPromise, contactsPromise, contractsPromise, invoicesPromise, documentsPromise, productsPromise, usersPromise
     ]);
 
     const results: SearchResult[] = [];
@@ -293,6 +307,22 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
         title: p.title,
         subtitle: "Project",
         url: `/projects/boards/${p.id}`,
+    }));
+
+    (products as any[]).forEach(p => results.push({
+        type: "product",
+        id: p.id,
+        title: p.name,
+        subtitle: p.sku || "Product",
+        url: `/crm/products/${p.id}`,
+    }));
+
+    (users as any[]).forEach(u => results.push({
+        type: "user",
+        id: u.id,
+        title: u.name,
+        subtitle: u.email,
+        url: `/settings/users/${u.id}`,
     }));
 
     return results;

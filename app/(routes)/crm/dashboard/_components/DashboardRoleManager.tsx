@@ -172,7 +172,12 @@ const DashboardRoleManager = async () => {
                 { id: "entity:invoices", name: "Invoices", value: counts.invoices, href: "/invoice", iconName: "FileText", color: "blue", tooltip: "Create and manage invoices. Track payment statuses, send reminders, and manage billing." },
                 { id: "entity:reports", name: "Reports", value: reportCount, href: "/reports", iconName: "BarChart3", color: "amber", tooltip: "Build and view custom reports. Analyze data across your CRM with charts, tables, and filters." },
                 { id: "entity:products", name: "Products", value: productCount, href: "/crm/products", iconName: "Package", color: "teal", tooltip: "Manage your product catalog. Add products, set pricing, and link them to quotes and opportunities." },
-                { id: "entity:quotes", name: "Quotes", value: quoteCount, href: "/crm/quotes", iconName: "FileText", color: "blue", tooltip: "Create and send quotes to prospects. Build line-item proposals and track quote approvals." }
+                { id: "entity:quotes", name: "Quotes", value: quoteCount, href: "/crm/quotes", iconName: "FileText", color: "blue", tooltip: "Create and send quotes to prospects. Build line-item proposals and track quote approvals." },
+
+                // New Intelligence & Admin Hubs
+                { id: "entity:sales_intelligence", name: "Sales Intelligence", value: 0, href: "/crm/insights", iconName: "BrainCircuit", color: "indigo", tooltip: "Advanced sales analytics including weighted forecasting, funnel velocity, and conversion trends." },
+                { id: "entity:audit_logs", name: "Audit Logs", value: 0, href: "/settings/audit-logs", iconName: "History", color: "slate", tooltip: "Complete system activity trail. Track user actions, security events, and record changes for SOC2 compliance." },
+                { id: "entity:hr_hub", name: "Human Resources", value: activeUsersCount, href: "/employees", iconName: "HeartPulse", color: "rose", tooltip: "Manage staff, track performance KPIs, and oversee organizational growth." }
             );
         }
 

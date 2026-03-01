@@ -6,7 +6,7 @@ export const runtime = 'nodejs'
 
 // In-memory idempotency store (replace with DB for production)
 const processedIds: Set<string> = (globalThis as any).__WEBHOOK_IDS ?? new Set<string>()
-;(globalThis as any).__WEBHOOK_IDS = processedIds
+  ; (globalThis as any).__WEBHOOK_IDS = processedIds
 
 function getIdempotencyStore() {
   return processedIds
@@ -34,6 +34,21 @@ function verifySignature(body: string, timestamp: string, headerSignature: strin
     systemLogger.error('[webhook] verifySignature error', e)
     return false
   }
+}
+
+import { taskQueue } from "@/lib/background/queue"
+
+// Register Task Handler for webhooks (only once)
+if (!(globalThis as any).__AZURE_WEBHOOK_HANDLER_REGISTERED) {
+  taskQueue.register('AZURE_OPENAI_WEBHOOK', async (event: any) => {
+    const type = event?.type || ''
+    // Real logic for heavy processing goes here
+    systemLogger.info(`[WEBHOOK_BACKGROUND] Processing ${type}`, { id: event?.id })
+
+    // Simulate complex logic like Vector DB indexing or heavy API calls
+    await new Promise(resolve => setTimeout(resolve, 500));
+  })
+    ; (globalThis as any).__AZURE_WEBHOOK_HANDLER_REGISTERED = true;
 }
 
 export async function POST(req: NextRequest) {
@@ -74,40 +89,10 @@ export async function POST(req: NextRequest) {
   const type: string = event?.type || ''
   systemLogger.error('[webhook] event', { type, id: event?.id })
 
-  // Route by event type (expand as needed)
-  switch (type) {
-    case 'response.completed': {
-      // Example: record completion, notify systems
-      systemLogger.error('[webhook] response.completed', event?.id)
-      break
-    }
-    case 'response.failed': {
-      console.warn('[webhook] response.failed', event?.id)
-      break
-    }
-    case 'realtime.call.incoming': {
-      const callId = event?.data?.call_id
-      const sipHeaders = event?.data?.sip_headers
-      systemLogger.error('[webhook] realtime.call.incoming', { callId, sipHeaders })
-      // TODO: Kick off VC consumer/bridge orchestration or persistence
-      break
-    }
-    default: {
-      systemLogger.error('[webhook] unhandled event type', type)
-      break
-    }
-  }
+  // Offload to background queue immediately
+  taskQueue.enqueue('AZURE_OPENAI_WEBHOOK', event);
 
-  // Offload heavy work to background (respond fast to avoid timeouts)
-  setImmediate(() => {
-    try {
-      // TODO: enqueue job or trigger async processing
-    } catch (e) {
-      systemLogger.error('[webhook] async error', e)
-    }
-  })
-
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, status: 'QUEUED' })
 }
 
 export async function GET() {

@@ -90,8 +90,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Calendar",
                 iconName: "Calendar",
                 href: "/crm/calendar",
-                permissions: { minRole: "ADMIN" },
-                hidden: true
+                permissions: { minRole: "ADMIN" }
             }
         ]
     },
@@ -150,6 +149,14 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 iconName: "FileText",
                 href: "/crm/quotes"
             },
+            {
+                id: "nav_insights",
+                type: "item",
+                label: "Insights",
+                iconName: "Zap",
+                href: "/crm/insights",
+                badge: "new"
+            }
         ]
     },
 
@@ -219,7 +226,9 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 href: "/employees",
                 permissions: { module: "employee", feature: "employee" },
                 children: [
-                    { id: "sub_staff_all", type: "item", label: "All Staff", href: "/employees", iconName: "Users" }
+                    { id: "sub_staff_all", type: "item", label: "All Staff", href: "/employees", iconName: "Users" },
+                    { id: "sub_staff_kpis", type: "item", label: "KPI Tracking", href: "/employees?tab=kpis", iconName: "FileBarChart" },
+                    { id: "sub_staff_evals", type: "item", label: "Evaluations", href: "/employees?tab=evals", iconName: "FileCheck" }
                 ]
             }
         ]
@@ -308,6 +317,14 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Learn",
                 iconName: "GraduationCap",
                 href: "/crm/university"
+            },
+            {
+                id: "nav_audit",
+                type: "item",
+                label: "Audit Logs",
+                iconName: "Shield",
+                href: "/settings/audit-logs",
+                permissions: { minRole: "ADMIN" }
             },
             {
                 id: "nav_platform",

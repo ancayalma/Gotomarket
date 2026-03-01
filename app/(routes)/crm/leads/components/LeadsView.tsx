@@ -70,11 +70,15 @@ function StatusBadge({ status }: { status?: string | null }) {
   return <span className={`px-2 py-1 rounded text-xs font-semibold ${color}`}>{s}</span>;
 }
 
-export default function LeadsView({ data }: Props) {
+import { LeadsKanbanBoard } from './LeadsKanbanBoard';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LayoutGrid, List as ListIcon } from "lucide-react";
+
+export default function LeadsView({ data, crmData }: Props) {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [selectedEmailLead, setSelectedEmailLead] = useState<Lead | null>(null);
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
@@ -233,173 +237,189 @@ export default function LeadsView({ data }: Props) {
               <option value={100}>100</option>
             </select>
           </div>
-          <ViewToggle value={viewMode} onChange={setViewMode} />
+
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-[200px]">
+            <TabsList className="grid w-full grid-cols-2 bg-muted/50 border border-white/10">
+              <TabsTrigger value="table" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                <ListIcon className="w-4 h-4 mr-2" />
+                Table
+              </TabsTrigger>
+              <TabsTrigger value="kanban" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                <LayoutGrid className="w-4 h-4 mr-2" />
+                Kanban
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
-      {viewMode === 'table' && (
-        <div className="rounded-md border bg-[#0a0a0a]/50 border-white/5 overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-white/5">
-              <tr>
-                <th className="p-3 w-[50px] text-center">
-                  <Switch checked={allSelected} onCheckedChange={toggleAll} />
-                </th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('lastName')}>
-                  <div className="flex items-center gap-1">
-                    Lead
-                    {sortConfig?.key === 'lastName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                  </div>
-                </th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('email')}>
-                  <div className="flex items-center gap-1">
-                    Email
-                    {sortConfig?.key === 'email' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                  </div>
-                </th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('company')}>
-                  <div className="flex items-center gap-1">
-                    Company
-                    {sortConfig?.key === 'company' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                  </div>
-                </th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('pipeline_stage' as any)}>
-                  <div className="flex items-center gap-1">
-                    Stage
-                    {sortConfig?.key === 'pipeline_stage' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                  </div>
-                </th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('outreach_status' as any)}>
-                  <div className="flex items-center gap-1">
-                    Status
-                    {sortConfig?.key === 'outreach_status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                  </div>
-                </th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Progress</th>
-                <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {paginatedLeads.map((lead) => {
-                const name = [lead.firstName, lead.lastName].filter(Boolean).join(' ');
-                const stageKey = (lead as any).pipeline_stage as PipelineStage | undefined;
-                return (
-                  <tr key={lead.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="p-3 text-center">
-                      <Switch
-                        checked={!!selected[lead.id]}
-                        onCheckedChange={(c) => toggleOne(lead.id, c)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </td>
-                    <td className="p-3">
-                      <div className="font-medium text-white">{name || 'Lead'}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase">{lead.jobTitle || 'No Title'}</div>
-                    </td>
-                    <td className="p-3 text-muted-foreground font-mono text-xs">{lead.email || '-'}</td>
-                    <td className="p-3 text-muted-foreground">{lead.company || '-'}</td>
-                    <td className="p-3">
-                      <span className={stageKey ? STAGE_BADGE_CLASS[stageKey] : 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400'}>
-                        {formatStageLabel(stageKey)}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <StatusBadge status={lead.outreach_status} />
-                    </td>
-                    <td className="p-3">
-                      <StageProgressBar
-                        stages={STAGES.map((s) => ({ key: s, label: s.replace('_', ' '), count: s === (stageKey || 'Identify') ? 1 : 0 }))}
-                        total={1}
-                        orientation="horizontal"
-                        nodeSize={6}
-                        showLabelsAndCounts={false}
-                        coloringMode="activated"
-                        activeStageKey={stageKey || 'Identify'}
-                        isClosed={stageKey === 'Converted' || (stageKey as any) === 'Closed'}
-                      />
-                    </td>
-                    <td className="p-3 text-right">
-                      <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-indigo-400 hover:text-indigo-300 hover:bg-white/5" onClick={() => openMeeting(lead)} title="Meeting Link">
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-white/5"
-                          onClick={() => {
-                            setSelectedEmailLead(lead);
-                            setEmailModalOpen(true);
-                          }}
-                          title="Send Email"
-                        >
-                          <Mail className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-amber-400 hover:text-amber-300 hover:bg-white/5" onClick={async () => {
-                          try {
-                            const res = await convertLeadToOpportunity(lead.id);
-                            if (res.success && res.data?.opportunityId) {
-                              toast.success("Converted!");
-                              window.location.href = `/crm/opportunities/${res.data.opportunityId}`;
-                            } else {
-                              toast.error(res.error || "Failed");
-                            }
-                          } catch { toast.error("Error"); }
-                        }} title="Convert">
-                          <ArrowRightCircle className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-white/5" onClick={() => closeLead(lead.id)} title="Close">
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {viewMode === 'table' ? (
+        <>
+          <div className="rounded-md border bg-[#0a0a0a]/50 border-white/5 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-white/5">
+                <tr>
+                  <th className="p-3 w-[50px] text-center">
+                    <Switch checked={allSelected} onCheckedChange={toggleAll} />
+                  </th>
+                  <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('lastName')}>
+                    <div className="flex items-center gap-1">
+                      Lead
+                      {sortConfig?.key === 'lastName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </div>
+                  </th>
+                  <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('email')}>
+                    <div className="flex items-center gap-1">
+                      Email
+                      {sortConfig?.key === 'email' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </div>
+                  </th>
+                  <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('company')}>
+                    <div className="flex items-center gap-1">
+                      Company
+                      {sortConfig?.key === 'company' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </div>
+                  </th>
+                  <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('pipeline_stage' as any)}>
+                    <div className="flex items-center gap-1">
+                      Stage
+                      {sortConfig?.key === 'pipeline_stage' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </div>
+                  </th>
+                  <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('outreach_status' as any)}>
+                    <div className="flex items-center gap-1">
+                      Status
+                      {sortConfig?.key === 'outreach_status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </div>
+                  </th>
+                  <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Progress</th>
+                  <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {paginatedLeads.map((lead) => {
+                  const name = [lead.firstName, lead.lastName].filter(Boolean).join(' ');
+                  const stageKey = (lead as any).pipeline_stage as PipelineStage | undefined;
+                  return (
+                    <tr key={lead.id} className="hover:bg-white/[0.02] transition-colors group">
+                      <td className="p-3 text-center">
+                        <Switch
+                          checked={!!selected[lead.id]}
+                          onCheckedChange={(c) => toggleOne(lead.id, c)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </td>
+                      <td className="p-3">
+                        <div className="font-medium text-white">{name || 'Lead'}</div>
+                        <div className="text-[10px] text-muted-foreground uppercase">{lead.jobTitle || 'No Title'}</div>
+                      </td>
+                      <td className="p-3 text-muted-foreground font-mono text-xs">{lead.email || '-'}</td>
+                      <td className="p-3 text-muted-foreground">{lead.company || '-'}</td>
+                      <td className="p-3">
+                        <span className={stageKey ? STAGE_BADGE_CLASS[stageKey] : 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400'}>
+                          {formatStageLabel(stageKey)}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <StatusBadge status={lead.outreach_status} />
+                      </td>
+                      <td className="p-3">
+                        <StageProgressBar
+                          stages={STAGES.map((s) => ({ key: s, label: s.replace('_', ' '), count: s === (stageKey || 'Identify') ? 1 : 0 }))}
+                          total={1}
+                          orientation="horizontal"
+                          nodeSize={6}
+                          showLabelsAndCounts={false}
+                          coloringMode="activated"
+                          activeStageKey={stageKey || 'Identify'}
+                          isClosed={stageKey === 'Converted' || (stageKey as any) === 'Closed'}
+                        />
+                      </td>
+                      <td className="p-3 text-right">
+                        <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-indigo-400 hover:text-indigo-300 hover:bg-white/5" onClick={() => openMeeting(lead)} title="Meeting Link">
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-white/5"
+                            onClick={() => {
+                              setSelectedEmailLead(lead);
+                              setEmailModalOpen(true);
+                            }}
+                            title="Send Email"
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-amber-400 hover:text-amber-300 hover:bg-white/5" onClick={async () => {
+                            try {
+                              const res = await convertLeadToOpportunity(lead.id);
+                              if (res.success && res.data?.opportunityId) {
+                                toast.success("Converted!");
+                                window.location.href = `/crm/opportunities/${res.data.opportunityId}`;
+                              } else {
+                                toast.error(res.error || "Failed");
+                              }
+                            } catch { toast.error("Error"); }
+                          }} title="Convert">
+                            <ArrowRightCircle className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-white/5" onClick={() => closeLead(lead.id)} title="Close">
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
-      {totalItems > 0 && (
-        <div className="flex items-center justify-between px-2 py-4 border-t border-white/5">
-          <div className="text-xs text-muted-foreground italic">
-            Showing <span className="text-white">{Math.min(itemsPerPage * (currentPage - 1) + 1, totalItems)}</span>-{Math.min(itemsPerPage * currentPage, totalItems)} of <span className="text-white">{totalItems}</span> leads
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 bg-black/20 border-white/10 text-[10px] uppercase hover:bg-white/5"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <div className="flex gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => (
+          {totalItems > 0 && (
+            <div className="flex items-center justify-between px-2 py-4 border-t border-white/5">
+              <div className="text-xs text-muted-foreground italic">
+                Showing <span className="text-white">{Math.min(itemsPerPage * (currentPage - 1) + 1, totalItems)}</span>-{Math.min(itemsPerPage * currentPage, totalItems)} of <span className="text-white">{totalItems}</span> leads
+              </div>
+              <div className="flex items-center gap-2">
                 <Button
-                  key={i}
-                  variant={currentPage === i + 1 ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
-                  className={`h-8 w-8 text-[10px] ${currentPage === i + 1 ? 'bg-indigo-600' : 'bg-black/20 border-white/10'}`}
-                  onClick={() => setCurrentPage(i + 1)}
+                  className="h-8 bg-black/20 border-white/10 text-[10px] uppercase hover:bg-white/5"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
                 >
-                  {i + 1}
+                  Previous
                 </Button>
-              ))}
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => (
+                    <Button
+                      key={i}
+                      variant={currentPage === i + 1 ? "default" : "outline"}
+                      size="sm"
+                      className={`h-8 w-8 text-[10px] ${currentPage === i + 1 ? 'bg-indigo-600' : 'bg-black/20 border-white/10'}`}
+                      onClick={() => setCurrentPage(i + 1)}
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 bg-black/20 border-white/10 text-[10px] uppercase hover:bg-white/5"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 bg-black/20 border-white/10 text-[10px] uppercase hover:bg-white/5"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage >= totalPages}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+          )}
+        </>
+      ) : (
+        <LeadsKanbanBoard leads={visibleLeads as any} />
       )}
     </div>
   );

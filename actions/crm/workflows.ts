@@ -223,6 +223,8 @@ export async function pauseWorkflow(id: string) {
 // WORKFLOW EXECUTION
 // ============================================================================
 
+import { runWorkflowEngine } from "@/lib/workflow/engine";
+
 export async function triggerWorkflow(workflowId: string, triggerData: Prisma.InputJsonValue = {}) {
     try {
         if (!workflowId || workflowId.length !== 24) return { success: false, error: "Invalid workflow ID" };
@@ -246,14 +248,11 @@ export async function triggerWorkflow(workflowId: string, triggerData: Prisma.In
             }
         });
 
-        // TODO: Start workflow engine execution
-        // For now, just mark as completed for demo purposes
-        await prismadb.crm_Workflow_Execution.update({
-            where: { id: execution.id },
-            data: {
-                status: ExecutionStatus.COMPLETED,
-                completedAt: new Date()
-            }
+        // Start workflow engine execution (Background for now)
+        // Note: For heavy execution, we'd use a queue (BullMQ/Simple Queue)
+        // For launch, we run it after the response - or as an async task 
+        runWorkflowEngine(execution.id).catch(err => {
+            console.error(`[WORKFLOW_TRIGGER_ERROR] ${execution.id}:`, err);
         });
 
         return { success: true, executionId: execution.id };
