@@ -1,6 +1,6 @@
 {
   "name": "basaltcrm-app",
-  "version": "1.2.2e",
+  "version": "1.2.2h",
   "author": "Michael Milton (BasaltHQ)",
   "private": true,
   "scripts": {
@@ -28,6 +28,7 @@
     "@aws-sdk/client-pinpoint-sms-voice-v2": "^3.962.0",
     "@aws-sdk/client-ses": "^3.986.0",
     "@aws-sdk/client-sesv2": "^3.962.0",
+    "@aws-sdk/client-sqs": "^3.1000.0",
     "@aws-sdk/s3-request-presigner": "^3.962.0",
     "@aws-sdk/signature-v4-crt": "^3.957.0",
     "@azure/storage-blob": "^12.29.1",
@@ -139,6 +140,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tesseract.js": "^7.0.0",
     "uuid": "^13.0.0",
+    "ws": "^8.18.0",
     "xmlbuilder2": "^4.0.3",
     "zod": "^4.3.5",
     "zustand": "^5.0.9"
@@ -185,7 +187,7 @@
       "semver": "^5.7.2"
     },
     "tar": "^7.5.9",
-    "fast-xml-parser": "^5.3.6",
+    "fast-xml-parser": "^5.3.8",
     "ajv": "^6.14.0",
     "minimatch": "^10.2.2",
     "systeminformation": "^5.31.1"
