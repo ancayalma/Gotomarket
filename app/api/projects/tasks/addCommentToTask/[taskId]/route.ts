@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import NewTaskCommentEmail from "@/emails/NewTaskComment";
 import sendEmail from "@/lib/sendmail";
 import { render } from "@react-email/render";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(
   req: Request,
@@ -142,7 +143,7 @@ export async function POST(
 
     /*      */
   } catch (error) {
-    console.log("[COMMENTS_POST]", error);
+    systemLogger.error("[COMMENTS_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

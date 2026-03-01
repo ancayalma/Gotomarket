@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 const TRANSPARENT_GIF = Buffer.from(
     "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
@@ -72,7 +73,7 @@ export async function GET(req: Request) {
                 }
             }
         } catch (error) {
-            console.error("[EMAIL_TRACK_OPEN_ERROR]", error);
+            systemLogger.error("[EMAIL_TRACK_OPEN_ERROR]", error);
         }
     }
 

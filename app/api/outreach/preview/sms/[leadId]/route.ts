@@ -5,6 +5,7 @@ import { prismadb } from "@/lib/prisma";
 import { getAiSdkModel } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/outreach/preview/sms/[leadId]
@@ -198,13 +199,13 @@ Project Briefing:
             smsBody = sanitizeSmsBody(object.body || smsBody);
         } catch (err: any) {
              
-            console.error("[OUTREACH_PREVIEW_SMS][AI_ERROR]", err?.message || err);
+            systemLogger.error("[OUTREACH_PREVIEW_SMS][AI_ERROR]", err?.message || err);
         }
 
         return NextResponse.json({ body: smsBody }, { status: 200 });
     } catch (error) {
          
-        console.error("[OUTREACH_PREVIEW_SMS_POST]", error);
+        systemLogger.error("[OUTREACH_PREVIEW_SMS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

@@ -8,6 +8,7 @@ import NewTaskFromCRMEmail from "@/emails/NewTaskFromCRM";
 import NewTaskFromProject from "@/emails/NewTaskFromProject";
 import sendEmail from "@/lib/sendmail";
 import { render } from "@react-email/render";
+import { systemLogger } from "@/lib/logger";
 
 //Create new task in project route
 /*
@@ -141,7 +142,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(task);
   } catch (error) {
-    console.log("[NEW_BOARD_POST]", error);
+    systemLogger.error("[NEW_BOARD_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

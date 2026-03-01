@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export const createTeam = async (name: string, slug: string, planId?: string) => {
     try {
@@ -50,7 +51,7 @@ export const createTeam = async (name: string, slug: string, planId?: string) =>
         revalidatePath("/partners");
         return { success: true, team };
     } catch (error) {
-        console.error("[CREATE_TEAM]", error);
+        systemLogger.error("[CREATE_TEAM]", error);
         return { error: "Internal Error" };
     }
 };

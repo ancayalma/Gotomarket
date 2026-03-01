@@ -31,7 +31,7 @@ export const getRevenuePacing = async () => {
         });
 
         let currentRevenue = 0;
-        invoices.forEach(inv => {
+        (invoices as any[]).forEach(inv => {
             const amount = parseFloat((inv.invoice_amount || "0").replace(/[^0-9.-]+/g, ""));
             if (!isNaN(amount)) {
                 currentRevenue += amount;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { exchangeCodeForTokens } from "@/lib/gmail";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/google/callback
@@ -49,7 +50,7 @@ export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id || session.user.id !== userId) {
-      console.error("[GOOGLE_OAUTH_CALLBACK] Session mismatch", { sessionUser: session?.user?.id, stateUser: userId });
+      systemLogger.error("[GOOGLE_OAUTH_CALLBACK] Session mismatch", { sessionUser: session?.user?.id, stateUser: userId });
       const redirectErr = `${origin}/en/crm/leads?google=error_session_mismatch`;
       return NextResponse.redirect(redirectErr, { status: 302 });
     }
@@ -61,7 +62,7 @@ export async function GET(req: Request) {
     return NextResponse.redirect(redirectOk, { status: 302 });
   } catch (e: any) {
 
-    console.error("[GOOGLE_OAUTH_CALLBACK]", e?.message || e);
+    systemLogger.error("[GOOGLE_OAUTH_CALLBACK]", e?.message || e);
     const redirectErr = `${origin}/en/crm/leads?google=error`;
     return NextResponse.redirect(redirectErr, { status: 302 });
   }

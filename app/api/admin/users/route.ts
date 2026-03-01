@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json(user);
     } catch (error) {
-        console.log("[ADMIN_USERS_POST]", error);
+        systemLogger.error("[ADMIN_USERS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

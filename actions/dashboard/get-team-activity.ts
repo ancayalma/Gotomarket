@@ -31,7 +31,7 @@ export const getTeamActivity = async () => {
             take: 20
         });
 
-        return activities.map(a => ({
+        return (activities as any[]).map(a => ({
             id: a.id,
             user: a.user?.name || "Unknown User",
             avatar: a.user?.avatar,

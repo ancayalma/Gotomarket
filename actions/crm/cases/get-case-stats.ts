@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export const getCaseStats = async () => {
     const session = await getServerSession(authOptions);
@@ -66,7 +67,7 @@ export const getCaseStats = async () => {
             newToday,
         };
     } catch (error) {
-        console.error("[GET_CASE_STATS]", error);
+        systemLogger.error("[GET_CASE_STATS]", error);
         return null;
     }
 };

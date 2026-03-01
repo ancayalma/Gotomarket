@@ -2,6 +2,7 @@
 
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export const seedInternalTeam = async () => {
     try {
@@ -75,7 +76,7 @@ export const seedInternalTeam = async () => {
         revalidatePath("/partners");
         return { success: true, count: result.count, team: internalTeam };
     } catch (error) {
-        console.error("[SEED_INTERNAL_TEAM]", error);
+        systemLogger.error("[SEED_INTERNAL_TEAM]", error);
         return { error: "Failed to seed team" };
     }
 };

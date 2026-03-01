@@ -103,14 +103,14 @@ export default async function MarketingFooter() {
     });
 
     // Ensure Documentation link exists in Support section
-    const sections = dbSections.map((section) => {
+    const sections = (dbSections as any[]).map((section: any) => {
         if (section.title === "Support") {
-            const hasDocs = section.links.some((link) => link.url === "/docs");
+            const hasDocs = (section.links as any[]).some((link: any) => link.url === "/docs");
             if (!hasDocs) {
                 return {
                     ...section,
                     links: [
-                        ...section.links,
+                        ...(section.links as any[]),
                         { id: "docs-static", text: "Documentation", url: "/docs", order: 999 },
                     ],
                 };
@@ -190,7 +190,7 @@ export default async function MarketingFooter() {
                             <div key={section.id} className="flex flex-col items-center lg:items-start space-y-3 min-w-[100px]">
                                 <h3 className="text-white font-semibold text-sm">{section.title}</h3>
                                 <ul className="flex flex-col items-center lg:items-start space-y-2 text-sm">
-                                    {section.links.map((link) => (
+                                    {(section.links as any[]).map((link: any) => (
                                         <li key={link.id}>
                                             <Link href={link.url} className="hover:text-white transition-colors">
                                                 {link.text}

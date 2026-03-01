@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(
     req: Request,
@@ -22,7 +23,7 @@ export async function GET(
 
         return NextResponse.json(layouts);
     } catch (error) {
-        console.error("[LAYOUTS_GET]", error);
+        systemLogger.error("[LAYOUTS_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -57,7 +58,7 @@ export async function POST(
 
         return NextResponse.json(newLayout);
     } catch (error) {
-        console.error("[LAYOUTS_POST]", error);
+        systemLogger.error("[LAYOUTS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

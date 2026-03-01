@@ -1,20 +1,16 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
-
 import { generateRandomPassword } from "@/lib/utils";
-
 import { hash } from "bcryptjs";
 import PasswordResetEmail from "@/emails/PasswordReset";
 import { render } from "@react-email/render";
 import sendEmail from "@/lib/sendmail";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { email } = body;
-
-    //console.log(body, "body");
-    //console.log(email, "email");
 
     if (!email) {
       return new NextResponse("Email is required!", {
@@ -26,10 +22,6 @@ export async function POST(req: Request) {
     const normalizedEmail =
       typeof email === "string" ? email.trim().toLowerCase() : email;
 
-    // Create a reset token
-    const token = crypto.randomUUID();
-    const tokenExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-
     const user = await prismadb.users.findFirst({
       where: {
         OR: [
@@ -40,17 +32,26 @@ export async function POST(req: Request) {
     });
 
     if (user) {
+      // Create a raw reset token
+      const rawToken = crypto.randomUUID();
+      const tokenUrlFriendly = Buffer.from(`${user.id}:${rawToken}`).toString('base64url');
+      const tokenExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      
+      // SOC2 CC6.1: Hash token before storing it in DB
+      const hashedToken = await hash(rawToken, 10);
+
       // Save token to database
       await prismadb.users.update({
         where: { id: user.id },
         data: {
-          resetToken: token,
+          session_version: { increment: 1 },
+          resetToken: hashedToken,
           resetTokenExpires: tokenExpires,
         },
       });
 
       try {
-        const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/${token}`;
+        const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/${tokenUrlFriendly}`;
         const emailHtml = await render(
           PasswordResetEmail({
             username: user.name || "User",
@@ -70,14 +71,14 @@ export async function POST(req: Request) {
         });
         console.log("Password reset email sent to: " + user.email);
       } catch (e) {
-        console.log("[USER_PASSWORD_CHANGE_EMAIL_ERROR]", e);
+        systemLogger.error("[USER_PASSWORD_CHANGE_EMAIL_ERROR]", e);
       }
     }
 
     // Always return success to prevent user enumeration
     return NextResponse.json({ message: "If an account exists, a password reset link has been sent.", status: true });
   } catch (error) {
-    console.log("[USER_PASSWORD_CHANGE_POST]", error);
+    systemLogger.error("[USER_PASSWORD_CHANGE_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

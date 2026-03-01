@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // GET /api/teams/[teamId]/ai-config/data - Get all AI config data for the form
 export async function GET(
@@ -30,7 +31,7 @@ export async function GET(
 
         // Determine which providers are enabled (check system config isActive flag)
         const isProviderEnabled = (providerSlug: string) => {
-            const config = systemConfigs.find(c => c.provider === providerSlug);
+            const config = (systemConfigs as any[]).find(c => c.provider === providerSlug);
             return config ? config.isActive : true;
         };
 
@@ -41,15 +42,15 @@ export async function GET(
                 where: { isActive: true },
                 select: { slug: true }
             });
-            registeredProviders = providerRegistry.map(p => p.slug);
+            registeredProviders = (providerRegistry as any[]).map(p => p.slug);
         } catch {
             // Fallback: derive unique providers from active models
-            registeredProviders = Array.from(new Set(activeModels.map(m => m.provider)));
+            registeredProviders = Array.from(new Set((activeModels as any[]).map(m => m.provider)));
         }
 
         const enabledProviders = registeredProviders.filter(isProviderEnabled);
 
-        const providersWithSystemKey = systemConfigs
+        const providersWithSystemKey = (systemConfigs as any[])
             .filter(c => c.apiKey && c.apiKey.trim().length > 0)
             .map(c => c.provider);
 
@@ -63,7 +64,7 @@ export async function GET(
             providersWithSystemKey
         });
     } catch (error) {
-        console.error("[TEAM_AI_CONFIG_DATA_GET]", error);
+        systemLogger.error("[TEAM_AI_CONFIG_DATA_GET]", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

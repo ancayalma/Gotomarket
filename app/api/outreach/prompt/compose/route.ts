@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
 import { generateText } from "ai";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/outreach/prompt/compose
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
             promptText = text.trim();
         } catch (err: any) {
              
-            console.error("[OUTREACH_PROMPT_COMPOSE][AI_ERROR]", err?.message || err);
+            systemLogger.error("[OUTREACH_PROMPT_COMPOSE][AI_ERROR]", err?.message || err);
             // Fallback: compose a deterministic prompt locally if model fails
             const roleSuffix = (projectRole || projectTitle)
                 ? ` — ${[projectRole, projectTitle ? `at ${projectTitle}` : ""].filter(Boolean).join(" ")}`
@@ -166,7 +167,7 @@ Requirements:
         return NextResponse.json({ prompt: promptText }, { status: 200 });
     } catch (error) {
          
-        console.error("[OUTREACH_PROMPT_COMPOSE_POST]", error);
+        systemLogger.error("[OUTREACH_PROMPT_COMPOSE_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

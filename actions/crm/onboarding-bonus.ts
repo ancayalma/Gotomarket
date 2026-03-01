@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { addLeadGenCredits } from "@/lib/scraper/credits";
+import { systemLogger } from "@/lib/logger";
 
 const ONBOARDING_BONUS_CREDITS = 25;
 const BONUS_KEY = "onboarding_bonus_claimed";
@@ -75,7 +76,7 @@ export async function claimOnboardingBonus(milestone: string) {
             }
         });
 
-        console.log(`[ONBOARDING_BONUS] Awarded ${ONBOARDING_BONUS_CREDITS} credits to team ${teamId} for milestone: ${milestone}`);
+        systemLogger.error(`[ONBOARDING_BONUS] Awarded ${ONBOARDING_BONUS_CREDITS} credits to team ${teamId} for milestone: ${milestone}`);
 
         return {
             success: true,
@@ -84,7 +85,7 @@ export async function claimOnboardingBonus(milestone: string) {
             message: `🎉 You earned ${ONBOARDING_BONUS_CREDITS} bonus LeadGen credits!`
         };
     } catch (error) {
-        console.error("[ONBOARDING_BONUS] Error:", error);
+        systemLogger.error("[ONBOARDING_BONUS] Error:", error);
         return { success: false, error: "Failed to claim bonus credits" };
     }
 }

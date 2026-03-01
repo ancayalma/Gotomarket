@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getGmailAuthUrl } from "@/lib/gmail";
+import { systemLogger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export async function GET() {
     return NextResponse.json({ url }, { status: 200 });
   } catch (error) {
      
-    console.error("[GMAIL_CONNECT_GET]", error);
+    systemLogger.error("[GMAIL_CONNECT_GET]", error);
     return new NextResponse("Failed to create Gmail auth URL", { status: 500 });
   }
 }

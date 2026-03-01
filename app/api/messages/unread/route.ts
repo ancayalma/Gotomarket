@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request) {
     try {
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json({ count });
     } catch (error) {
-        console.error("[MESSAGES_UNREAD_COUNT]", error);
+        systemLogger.error("[MESSAGES_UNREAD_COUNT]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

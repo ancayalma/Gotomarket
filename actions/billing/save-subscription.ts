@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { addMonths } from "date-fns";
 import { createSurgeCheckoutSession } from "@/lib/surge";
+import { systemLogger } from "@/lib/logger";
 
 export async function saveSubscription(data: {
     planName: string;
@@ -110,7 +111,7 @@ export async function saveSubscription(data: {
 
         // 2. Internal / Exempt Teams: Try to create checkout anyway for testing, fallback to auto-success
         if (isInternalTeam) {
-            console.log(`[SaveSubscription] Internal team ${team.slug} detected. Attempting to generate test checkout...`);
+            systemLogger.error(`[SaveSubscription] Internal team ${team.slug} detected. Attempting to generate test checkout...`);
             // We flow into the regular checkout logic below, but we'll return early ONLY if Surge fails.
         }
 
@@ -132,7 +133,7 @@ export async function saveSubscription(data: {
             }
         });
 
-        console.log(`[SaveSubscription] Created invoice ${invoice.id} for subscription (${data.planName}, $${data.amount})`);
+        systemLogger.error(`[SaveSubscription] Created invoice ${invoice.id} for subscription (${data.planName}, $${data.amount})`);
 
         // 3b. Also create a formal crm_BillingInvoice for the billing dashboard
         const periodStart = now;
@@ -172,7 +173,7 @@ export async function saveSubscription(data: {
             return { success: true, url: checkoutSession.url, invoiceId: invoice.id };
         }
 
-        console.error(`[SaveSubscription] createSurgeCheckoutSession returned null for invoice ${invoice.id}. Check Surge API key, inventory creation, and order creation logs above.`);
+        systemLogger.error(`[SaveSubscription] createSurgeCheckoutSession returned null for invoice ${invoice.id}. Check Surge API key, inventory creation, and order creation logs above.`);
 
         if (isInternalTeam) {
             return { success: true, message: "Subscription updated (Internal Team - Surge Link Generation Skipped/Failed)" };

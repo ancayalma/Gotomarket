@@ -6,6 +6,7 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 // @ts-ignore
 import { SubscriptionPlan } from "@prisma/client";
+import { systemLogger } from "@/lib/logger";
 
 export const updateTeam = async (teamId: string, data: { name?: string; slug?: string; owner_id?: string; subscription_plan?: SubscriptionPlan; plan_id?: string; }) => {
     try {
@@ -42,7 +43,7 @@ export const updateTeam = async (teamId: string, data: { name?: string; slug?: s
         revalidatePath("/partners");
         return { success: true, team };
     } catch (error) {
-        console.error("[UPDATE_TEAM]", error);
+        systemLogger.error("[UPDATE_TEAM]", error);
         return { error: "Failed to update team" };
     }
 };

@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getBlobServiceClient } from "@/lib/s3-storage";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // POST /api/upload
 // Generic Azure Blob upload endpoint used by Invoice FileInput and other generic uploads.
@@ -73,18 +75,18 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingDoc) {
-      console.log("[GENERIC_UPLOAD_POST] Duplicate document found:", existingDoc.id);
+      systemLogger.error("[GENERIC_UPLOAD_POST] Duplicate document found:", existingDoc.id);
 
       // FIX: If context is invoice, we MUST process it even if the doc exists
       // The user might be re-uploading because the previous attempt failed to create an invoice
       if (context === "invoice") {
         try {
-          console.log("[GENERIC_UPLOAD_POST] Processing duplicate document for Invoice...");
+          systemLogger.error("[GENERIC_UPLOAD_POST] Processing duplicate document for Invoice...");
           const { processInvoiceFromDocument } = await import("@/lib/invoice-processor");
           await processInvoiceFromDocument(existingDoc.id, session.user.id, teamId || null);
-          console.log("[GENERIC_UPLOAD_POST] Invoice Processing Complete (Duplicate Doc).");
+          systemLogger.error("[GENERIC_UPLOAD_POST] Invoice Processing Complete (Duplicate Doc).");
         } catch (err) {
-          console.error("[GENERIC_UPLOAD_POST] Duplicate processing failed:", err);
+          systemLogger.error("[GENERIC_UPLOAD_POST] Duplicate processing failed:", err);
           throw new Error("Invoice processing failed: " + (err as any).message);
         }
       }
@@ -100,18 +102,18 @@ export async function POST(req: NextRequest) {
     // Ensure container exists; do not change access level here
     try {
       const ensure = await containerClient.createIfNotExists();
-      if (ensure.succeeded) console.log("[GENERIC_UPLOAD_POST] Container created:", container);
+      if (ensure.succeeded) systemLogger.error("[GENERIC_UPLOAD_POST] Container created:", container);
     } catch (e) {
       console.warn("[GENERIC_UPLOAD_POST] createIfNotExists error:", (e as any)?.message);
     }
 
     const blobClient = containerClient.getBlockBlobClient(key);
-    console.log("[GENERIC_UPLOAD_POST] Uploading blob", { key, type: file.type, size: buffer.length });
+    systemLogger.error("[GENERIC_UPLOAD_POST] Uploading blob", { key, type: file.type, size: buffer.length });
     await blobClient.uploadData(buffer, {
       blobHTTPHeaders: { blobContentType: file.type || "application/octet-stream" },
     });
     const fileUrl = blobClient.url;
-    console.log("[GENERIC_UPLOAD_POST] Uploaded blob URL:", fileUrl);
+    systemLogger.error("[GENERIC_UPLOAD_POST] Uploaded blob URL:", fileUrl);
 
     // Create Document record (generic)
     const doc = await (prismadb.documents as any).create({
@@ -127,27 +129,28 @@ export async function POST(req: NextRequest) {
         hash: hex,
       },
     });
-    console.log("[GENERIC_UPLOAD_POST] Document created:", { id: doc.id, url: doc.document_file_url });
+    systemLogger.error("[GENERIC_UPLOAD_POST] Document created:", { id: doc.id, url: doc.document_file_url });
 
     // Handle context-specific actions
     // Handle context-specific actions
     if (context === "invoice") {
       // Run SYNCHRONOUSLY so the client waits for the invoice to be created
       try {
-        console.log("[GENERIC_UPLOAD_POST] Starting Invoice Processing...");
+        systemLogger.error("[GENERIC_UPLOAD_POST] Starting Invoice Processing...");
         const { processInvoiceFromDocument } = await import("@/lib/invoice-processor");
         await processInvoiceFromDocument(doc.id, session.user.id, teamId || null);
-        console.log("[GENERIC_UPLOAD_POST] Invoice Processing Complete.");
+        systemLogger.error("[GENERIC_UPLOAD_POST] Invoice Processing Complete.");
       } catch (err) {
-        console.error("[GENERIC_UPLOAD_POST] Invoice processing failed:", err);
+        systemLogger.error("[GENERIC_UPLOAD_POST] Invoice processing failed:", err);
         // We might want to return a warning, but for now strict error is safer to debug
         throw new Error("Invoice processing failed: " + (err as any).message);
       }
     }
 
+    await logActivityInternal(session.user.email || "SYSTEM", "CREATE", "Documents", `Uploaded generic document: ${fileNameSafe}`, teamId || "");
     return NextResponse.json({ ok: true, document: doc }, { status: 201 });
   } catch (e: any) {
-    console.error("[GENERIC_UPLOAD_POST]", e);
+    systemLogger.error("[GENERIC_UPLOAD_POST]", e);
     return NextResponse.json({ error: e?.message || "Internal Error" }, { status: 500 });
   }
 }

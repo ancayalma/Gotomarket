@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getAiClient } from "@/lib/ai-helper";
 import { streamText } from 'ai';
+import { systemLogger } from "@/lib/logger";
 
 export const maxDuration = 300;
 
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
         return result.toTextStreamResponse();
 
     } catch (error) {
-        console.log("[EMAIL_ENHANCE_AI]", error);
+        systemLogger.error("[EMAIL_ENHANCE_AI]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

@@ -56,7 +56,7 @@ export const getNewProjects = async () => {
 
     if (memberships.length === 0) return [];
 
-    const boardIds = memberships.map(m => m.project);
+    const boardIds = (memberships as any[]).map(m => m.project);
 
     // Fetch all sections for these boards to get tasks
     const sections = await prismadb.sections.findMany({
@@ -69,7 +69,7 @@ export const getNewProjects = async () => {
         }
     });
 
-    const sectionIds = sections.map(s => s.id);
+    const sectionIds = (sections as any[]).map(s => s.id);
     const tasks = await prismadb.tasks.findMany({
         where: {
             section: { in: sectionIds }
@@ -83,7 +83,7 @@ export const getNewProjects = async () => {
 
     // Map tasks back to boards
     const sectionToBoard: Record<string, string> = {};
-    sections.forEach(s => {
+    (sections as any[]).forEach(s => {
         sectionToBoard[s.id] = s.board;
     });
 
@@ -92,7 +92,7 @@ export const getNewProjects = async () => {
         boardStats[id] = { total: 0, complete: 0 };
     });
 
-    tasks.forEach(t => {
+    (tasks as any[]).forEach((t: any) => {
         const boardId = sectionToBoard[t.section || ''];
         if (boardId && boardStats[boardId]) {
             boardStats[boardId].total++;

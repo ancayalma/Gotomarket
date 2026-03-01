@@ -12,6 +12,7 @@ import { sendViaGmail } from "@/lib/gmail";
 import React from "react";
 import { ensureContactForLead } from "@/actions/crm/lead-conversions";
 import { claimOnboardingBonus } from "@/actions/crm/onboarding-bonus";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/outreach/send
@@ -331,7 +332,7 @@ export async function POST(req: Request) {
         } catch (err: any) {
           // Keep defaults on failure
 
-          console.error("[OUTREACH_SEND][AI_ERROR]", err?.message || err);
+          systemLogger.error("[OUTREACH_SEND][AI_ERROR]", err?.message || err);
         }
       }
 
@@ -422,7 +423,7 @@ export async function POST(req: Request) {
         results.push({ leadId: lead.id, status: "sent", subject, to: toEmail });
       } catch (err: any) {
 
-        console.error("[OUTREACH_SEND][SMTP_ERROR]", err?.message || err);
+        systemLogger.error("[OUTREACH_SEND][SMTP_ERROR]", err?.message || err);
         results.push({ leadId: lead.id, status: "error", reason: err?.message || "Send failed" });
       }
     }
@@ -444,7 +445,7 @@ export async function POST(req: Request) {
     return NextResponse.json(summary, { status: 200 });
   } catch (error) {
 
-    console.error("[OUTREACH_SEND_POST]", error);
+    systemLogger.error("[OUTREACH_SEND_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

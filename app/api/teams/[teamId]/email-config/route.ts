@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { verifyEmailIdentity, getIdentityVerificationStatus, deleteEmailIdentity } from "@/lib/aws/ses-verify";
+import { logActivityInternal } from "@/actions/audit";
+import { encryptSecret, decryptSecret } from "@/lib/encryption";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request, props: { params: Promise<{ teamId: string }> }) {
     const params = await props.params;
@@ -21,7 +24,7 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
     if ((config.provider === "AWS_SES" || config.provider === "PLATFORM_SES") && config.verification_status === "PENDING") {
         // PLATFORM_SES uses system env credentials (no team-level keys)
         const creds = config.provider === "AWS_SES" && config.aws_access_key_id && config.aws_secret_access_key
-            ? { accessKeyId: config.aws_access_key_id, secretAccessKey: config.aws_secret_access_key, region: config.aws_region }
+            ? { accessKeyId: config.aws_access_key_id, secretAccessKey: decryptSecret(config.aws_secret_access_key) || config.aws_secret_access_key, region: config.aws_region }
             : undefined; // undefined = fallback to system env
 
         const currentStatus = await getIdentityVerificationStatus(config.from_email, creds);
@@ -148,22 +151,22 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             from_email,
             from_name,
             aws_access_key_id: provider === "AWS_SES" ? finalAwsKey : undefined,
-            aws_secret_access_key: provider === "AWS_SES" ? finalAwsSecret : undefined,
+            aws_secret_access_key: provider === "AWS_SES" ? encryptSecret(finalAwsSecret) : undefined,
             aws_region: provider === "AWS_SES" ? (aws_region || "us-east-1") : undefined,
-            resend_api_key: provider === "RESEND" ? finalResendKey : undefined,
-            sendgrid_api_key: provider === "SENDGRID" ? finalSendgridKey : undefined,
-            mailgun_api_key: provider === "MAILGUN" ? finalMailgunKey : undefined,
+            resend_api_key: provider === "RESEND" ? encryptSecret(finalResendKey) : undefined,
+            sendgrid_api_key: provider === "SENDGRID" ? encryptSecret(finalSendgridKey) : undefined,
+            mailgun_api_key: provider === "MAILGUN" ? encryptSecret(finalMailgunKey) : undefined,
             mailgun_domain: provider === "MAILGUN" ? mailgun_domain : undefined,
             mailgun_region: provider === "MAILGUN" ? (mailgun_region || "us") : undefined,
-            postmark_api_token: provider === "POSTMARK" ? finalPostmarkToken : undefined,
+            postmark_api_token: provider === "POSTMARK" ? encryptSecret(finalPostmarkToken) : undefined,
             smtp_host: provider === "SMTP" ? smtp_host : undefined,
             smtp_port: provider === "SMTP" ? parseInt(String(smtp_port)) : undefined,
             smtp_user: provider === "SMTP" ? smtp_user : undefined,
-            smtp_password: provider === "SMTP" ? finalSmtpPassword : undefined,
+            smtp_password: provider === "SMTP" ? encryptSecret(finalSmtpPassword) : undefined,
             verification_status: verificationStatus,
         };
 
-        console.log(`[EmailConfig] Saving for team ${params.teamId}`, { provider, from_email, isNew: !existingConfig });
+        systemLogger.error(`[EmailConfig] Saving for team ${params.teamId}`, { provider, from_email, isNew: !existingConfig });
 
         if (existingConfig) {
             config = await prismadb.teamEmailConfig.update({
@@ -178,18 +181,18 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
                     from_email,
                     from_name,
                     aws_access_key_id: provider === "AWS_SES" ? finalAwsKey : null,
-                    aws_secret_access_key: provider === "AWS_SES" ? finalAwsSecret : null,
+                    aws_secret_access_key: provider === "AWS_SES" ? encryptSecret(finalAwsSecret) : null,
                     aws_region: provider === "AWS_SES" ? (aws_region || "us-east-1") : "us-east-1",
-                    resend_api_key: provider === "RESEND" ? finalResendKey : null,
-                    sendgrid_api_key: provider === "SENDGRID" ? finalSendgridKey : null,
-                    mailgun_api_key: provider === "MAILGUN" ? finalMailgunKey : null,
+                    resend_api_key: provider === "RESEND" ? encryptSecret(finalResendKey) : null,
+                    sendgrid_api_key: provider === "SENDGRID" ? encryptSecret(finalSendgridKey) : null,
+                    mailgun_api_key: provider === "MAILGUN" ? encryptSecret(finalMailgunKey) : null,
                     mailgun_domain: mailgun_domain || null,
                     mailgun_region: mailgun_region || "us",
-                    postmark_api_token: provider === "POSTMARK" ? finalPostmarkToken : null,
+                    postmark_api_token: provider === "POSTMARK" ? encryptSecret(finalPostmarkToken) : null,
                     smtp_host: smtp_host || null,
                     smtp_port: smtp_port ? parseInt(String(smtp_port)) : null,
                     smtp_user: smtp_user || null,
-                    smtp_password: provider === "SMTP" ? finalSmtpPassword : null,
+                    smtp_password: provider === "SMTP" ? encryptSecret(finalSmtpPassword) : null,
                     verification_status: verificationStatus,
                 }
             });
@@ -207,6 +210,8 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             stack: error.stack,
             teamId: params.teamId
         });
+
+        await logActivityInternal(session.user.id, "UPDATE", "TeamEmailConfig", `Updated email config for team ${params.teamId} (provider: ${provider})`, params.teamId);
         return NextResponse.json({ error: error.message || "Failed to set config" }, { status: 500 });
     }
 }
@@ -243,5 +248,6 @@ export async function DELETE(req: Request, props: { params: Promise<{ teamId: st
         where: { id: config.id }
     });
 
+    await logActivityInternal(session.user.id, "DELETE", "TeamEmailConfig", `Deleted email config for team ${params.teamId} (provider: ${config.provider})`, params.teamId);
     return new NextResponse(null, { status: 204 });
 }

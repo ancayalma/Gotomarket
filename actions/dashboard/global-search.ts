@@ -221,7 +221,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
     const results: SearchResult[] = [];
 
     // Map Results
-    tasks.forEach(t => results.push({
+    (tasks as any[]).forEach(t => results.push({
         type: "task",
         id: t.id,
         title: t.title,
@@ -231,7 +231,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
             : `/projects/tasks`,
     }));
 
-    leads.forEach(l => results.push({
+    (leads as any[]).forEach(l => results.push({
         type: "lead",
         id: l.id,
         title: `${l.firstName || ""} ${l.lastName || ""}`.trim() || l.company || "Unknown Lead",
@@ -239,7 +239,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
         url: `/crm/leads/${l.id}`,
     }));
 
-    opportunities.forEach(i => results.push({
+    (opportunities as any[]).forEach(i => results.push({
         type: "opportunity",
         id: i.id,
         title: i.name || "Untitled Opportunity",
@@ -247,7 +247,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
         url: `/crm/opportunities/${i.id}`,
     }));
 
-    accounts.forEach(i => results.push({
+    (accounts as any[]).forEach(i => results.push({
         type: "account",
         id: i.id,
         title: i.name,
@@ -255,7 +255,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
         url: `/crm/accounts/${i.id}`,
     }));
 
-    contacts.forEach(i => results.push({
+    (contacts as any[]).forEach(i => results.push({
         type: "contact",
         id: i.id,
         title: `${i.first_name || ""} ${i.last_name || ""}`.trim(),
@@ -263,7 +263,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
         url: `/crm/contacts/${i.id}`,
     }));
 
-    contracts.forEach(i => results.push({
+    (contracts as any[]).forEach(i => results.push({
         type: "contract",
         id: i.id,
         title: i.title,
@@ -271,7 +271,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
         url: `/crm/contracts/${i.id}`,
     }));
 
-    invoices.forEach(i => results.push({
+    (invoices as any[]).forEach(i => results.push({
         type: "invoice",
         id: i.id,
         title: i.invoice_number || "Draft Invoice",
@@ -279,7 +279,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
         url: `/crm/invoices/${i.id}`,
     }));
 
-    documents.forEach(i => results.push({
+    (documents as any[]).forEach(i => results.push({
         type: "document",
         id: i.id,
         title: i.document_name,
@@ -287,7 +287,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
         url: `/documents/view/${i.id}`,
     }));
 
-    projects.forEach(p => results.push({
+    (projects as any[]).forEach(p => results.push({
         type: "project",
         id: p.id,
         title: p.title,

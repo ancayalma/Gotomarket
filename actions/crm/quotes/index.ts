@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export async function getQuotes() {
     try {
@@ -31,13 +32,13 @@ export async function getQuotes() {
             },
         });
 
-        return quotes.map(q => ({
+        return (quotes as any[]).map(q => ({
             ...q,
-            taxRate: (q as any).taxRateValue || 0
+            taxRate: q.taxRateValue || 0
         }));
 
     } catch (error) {
-        console.error("[GET_QUOTES]", error);
+        systemLogger.error("[GET_QUOTES]", error);
         return [];
     }
 }
@@ -133,7 +134,7 @@ export async function createQuote(data: {
         revalidatePath("/crm/quotes");
         return { success: true, quoteId: quote.id };
     } catch (error: any) {
-        console.error("[CREATE_QUOTE]", error);
+        systemLogger.error("[CREATE_QUOTE]", error);
         return { success: false, error: error.message };
     }
 }
@@ -170,7 +171,7 @@ export async function getQuoteById(id: string) {
         };
 
     } catch (error) {
-        console.error("[GET_QUOTE_BY_ID]", error);
+        systemLogger.error("[GET_QUOTE_BY_ID]", error);
         return null;
     }
 }
@@ -213,7 +214,7 @@ export async function cancelQuote(id: string) {
         revalidatePath(`/crm/quotes/${id}`);
         return { success: true };
     } catch (error: any) {
-        console.error("[CANCEL_QUOTE]", error);
+        systemLogger.error("[CANCEL_QUOTE]", error);
         return { success: false, error: error.message };
     }
 }
@@ -240,7 +241,7 @@ export async function deleteQuote(id: string) {
         revalidatePath("/crm/quotes");
         return { success: true };
     } catch (error: any) {
-        console.error("[DELETE_QUOTE]", error);
+        systemLogger.error("[DELETE_QUOTE]", error);
         return { success: false, error: error.message };
     }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getSessionAndTeam, validateResourceOwnership, unauthorizedResponse } from "@/lib/api-utils";
 import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function PATCH(
     req: Request,
@@ -93,7 +94,7 @@ export async function PATCH(
 
         return NextResponse.json(user);
     } catch (error) {
-        console.log("[USER_ROLE_PATCH]", error);
+        systemLogger.error("[USER_ROLE_PATCH]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

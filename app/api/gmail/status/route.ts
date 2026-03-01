@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getGmailClientForUser } from "@/lib/gmail";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/gmail/status
@@ -35,7 +36,7 @@ export async function GET(_req: Request) {
     }
   } catch (e: any) {
      
-    console.error("[GMAIL_STATUS_GET]", e?.message || e);
+    systemLogger.error("[GMAIL_STATUS_GET]", e?.message || e);
     return new NextResponse("Failed to check status", { status: 500 });
   }
 }

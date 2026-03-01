@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 const endpoint = process.env.AZURE_OPENAI_ENDPOINT || "";
 const apiKey = process.env.AZURE_OPENAI_API_KEY || "";
@@ -142,7 +143,7 @@ REMEMBER: Keep all the actual values (names, companies, briefings) - only use {L
 
         return NextResponse.json({ enhanced }, { status: 200 });
     } catch (error: any) {
-        console.error("[OUTREACH_ENHANCE]", error);
+        systemLogger.error("[OUTREACH_ENHANCE]", error);
         return NextResponse.json(
             { error: error.message || "Failed to enhance text" },
             { status: 500 }

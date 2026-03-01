@@ -5,7 +5,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
@@ -71,9 +70,9 @@ model crm_Accounts {
   assigned_department_id String? @db.ObjectId
 
   // Service Cloud: Cases linked to this account
-  cases                crm_Cases[]
+  cases                 crm_Cases[]
   account_subscriptions crm_Subscriptions[]
-  additional_emails    String[]
+  additional_emails     String[]
 }
 
 model crm_Leads {
@@ -147,14 +146,12 @@ model crm_Leads {
   team_id       String? @db.ObjectId
   assigned_team Team?   @relation(fields: [team_id], references: [id])
 
-
   // Department assignment for scoped access
-  assigned_department_id String? @db.ObjectId
+  assigned_department_id String?             @db.ObjectId
   additional_emails      String[]
   quotes                 crm_Quotes[]
   opportunities          crm_Opportunities[] @relation(name: "OpportunityToLeadRelation")
 }
-
 
 enum crm_Lead_Status {
   NEW
@@ -223,13 +220,12 @@ model crm_Opportunities {
   assigned_department_id String? @db.ObjectId
 
   // Project Linkage
-  project String? @db.ObjectId
+  project          String? @db.ObjectId
   assigned_project Boards? @relation(fields: [project], references: [id])
 
   lead_source String?
-  lead_id     String?                         @db.ObjectId
+  lead_id     String? @db.ObjectId
 }
-
 
 enum crm_Opportunity_Status {
   ACTIVE
@@ -612,18 +608,18 @@ model MyAccount {
 }
 
 model Invoices {
-  id                            String          @id @default(auto()) @map("_id") @db.ObjectId
-  v                             Int?            @map("__v")
-  date_created                  DateTime        @default(now()) @db.Date
-  last_updated                  DateTime        @updatedAt
-  last_updated_by               String?         @db.ObjectId
-  date_received                 DateTime?       @default(now()) @db.Date
-  date_of_case                  DateTime?       @db.Date
-  date_tax                      DateTime?       @db.Date
-  date_due                      DateTime?       @db.Date
+  id                            String    @id @default(auto()) @map("_id") @db.ObjectId
+  v                             Int?      @map("__v")
+  date_created                  DateTime  @default(now()) @db.Date
+  last_updated                  DateTime  @updatedAt
+  last_updated_by               String?   @db.ObjectId
+  date_received                 DateTime? @default(now()) @db.Date
+  date_of_case                  DateTime? @db.Date
+  date_tax                      DateTime? @db.Date
+  date_due                      DateTime? @db.Date
   description                   String?
   document_type                 String?
-  favorite                      Boolean?        @default(false)
+  favorite                      Boolean?  @default(false)
   variable_symbol               String?
   constant_symbol               String?
   specific_symbol               String?
@@ -673,21 +669,21 @@ model Invoices {
   rossum_annotation_xml_url     String?
   money_s3_url                  String?
   status                        String?
-  
+
   // Phase 2: Financial Integrations
-  payment_status                String?         @default("UNPAID")
-  surge_payment_id              String?
-  surge_payment_link            String?
-  mercury_invoice_id            String?
-  invoice_state_id              String?         @db.ObjectId
-  assigned_user_id              String?         @db.ObjectId
-  assigned_account_id           String?         @db.ObjectId
-  visibility                    Boolean         @default(true)
-  invoice_states                invoice_States? @relation(fields: [invoice_state_id], references: [id])
-  users                         Users?          @relation(fields: [assigned_user_id], references: [id], onDelete: SetNull)
-  accounts                      crm_Accounts?   @relation(fields: [assigned_account_id], references: [id])
-  connected_documents           String[]        @db.ObjectId
-  documents                     Documents[]     @relation(fields: [connected_documents], references: [id])
+  payment_status      String?         @default("UNPAID")
+  surge_payment_id    String?
+  surge_payment_link  String?
+  mercury_invoice_id  String?
+  invoice_state_id    String?         @db.ObjectId
+  assigned_user_id    String?         @db.ObjectId
+  assigned_account_id String?         @db.ObjectId
+  visibility          Boolean         @default(true)
+  invoice_states      invoice_States? @relation(fields: [invoice_state_id], references: [id])
+  users               Users?          @relation(fields: [assigned_user_id], references: [id], onDelete: SetNull)
+  accounts            crm_Accounts?   @relation(fields: [assigned_account_id], references: [id])
+  connected_documents String[]        @db.ObjectId
+  documents           Documents[]     @relation(fields: [connected_documents], references: [id])
 
   opportunityIDs String[]            @db.ObjectId
   opportunities  crm_Opportunities[] @relation(fields: [opportunityIDs], references: [id])
@@ -999,19 +995,20 @@ model Users {
   notifications              Notification[]
   quotes                     crm_Quotes[]
 
-  dashboard_preference       DashboardPreference?
-  navigation_preferences     NavigationConfig[]
-  ai_usage_logs              crm_AiUsageLog[]    @relation(name: "AiUsageUser")
-  quickLaunchDismissed       Boolean             @default(false)
-  dismissedAIInsights        String[]
+  dashboard_preference   DashboardPreference?
+  navigation_preferences NavigationConfig[]
+  ai_usage_logs          crm_AiUsageLog[]     @relation(name: "AiUsageUser")
+  quickLaunchDismissed   Boolean              @default(false)
+  dismissedAIInsights    String[]
 
   // MFA & NIST Compliance
-  mfaEnabled                 Boolean             @default(false)
-  mfaMethod                  MfaMethod           @default(NONE)
-  mfaSecret                  String?             // For TOTP
-  mfaPhone                   String?             // For SMS
-  mfaBackupCodes             String?             // JSON string of hashed backup codes
-  authenticators             Authenticator[]     // For WebAuthn (Fingerprint/Biometrics)
+  mfaEnabled      Boolean         @default(false)
+  mfaMethod       MfaMethod       @default(NONE)
+  mfaSecret       String? // For TOTP
+  mfaPhone        String? // For SMS
+  mfaBackupCodes  String? // JSON string of hashed backup codes
+  session_version Int             @default(1)
+  authenticators  Authenticator[] // For WebAuthn (Fingerprint/Biometrics)
 }
 
 model Team {
@@ -1068,7 +1065,7 @@ model Team {
   captcha_config TeamCaptchaConfig?
   RolePermission RolePermission[]
   workflows      crm_Workflow[]     @relation(name: "WorkflowTeam")
-  
+
   // Custom Feature Overrides for this team
   module_overrides String[]
 
@@ -1108,14 +1105,14 @@ model Team {
 }
 
 model Authenticator {
-  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
-  credentialID         String   @unique
-  publicKey            String
-  counter              Int
-  transports           String[]
-  userId               String   @db.ObjectId
-  user                 Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt            DateTime @default(now()) @db.Date
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  credentialID String   @unique
+  publicKey    String
+  counter      Int
+  transports   String[]
+  userId       String   @db.ObjectId
+  user         Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now()) @db.Date
 }
 
 model CustomRole {
@@ -1135,32 +1132,32 @@ model CustomRole {
 }
 
 model crm_CustomWidget {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
-  icon        String   @default("BarChart3")
-  color       String   @default("primary")
-  
+  icon        String  @default("BarChart3")
+  color       String  @default("primary")
+
   // Data Sourcing
-  dataSource  String   // "Leads", "Opportunities", "Invoices", "Tasks"
-  aggregation String   // "COUNT", "SUM", "AVG"
-  targetField String?  // e.g., "amount", "revenue"
-  
+  dataSource  String // "Leads", "Opportunities", "Invoices", "Tasks"
+  aggregation String // "COUNT", "SUM", "AVG"
+  targetField String? // e.g., "amount", "revenue"
+
   // Configuration
-  refreshInterval Int @default(300) // in seconds
+  refreshInterval Int    @default(300) // in seconds
   chartType       String @default("METRIC") // "METRIC", "GAUGE", "SPARKLINE", "BAR"
-  
+
   // Advanced Logic
-  filters         Json?    // Array of { field: string, operator: string, value: any }
-  targetValue     Float?   // Threshold for success/alerts
+  filters          Json? // Array of { field: string, operator: string, value: any }
+  targetValue      Float? // Threshold for success/alerts
   comparisonPeriod String? // "MONTH_OVER_MONTH", "YEAR_OVER_YEAR", "NONE"
-  
+
   // Ownership
-  team_id     String   @db.ObjectId
-  team        Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
-  
-  created_at  DateTime @default(now()) @db.Date
-  updated_at  DateTime @updatedAt @db.Date
+  team_id String @db.ObjectId
+  team    Team   @relation(fields: [team_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now()) @db.Date
+  updated_at DateTime @updatedAt @db.Date
 
   @@index([team_id])
 }
@@ -1181,9 +1178,9 @@ model Plan {
   currency    String  @default("USD")
 
   // Limits
-  max_users   Int @default(1)
-  max_storage Int @default(1000) // MB
-  max_credits Int @default(0)
+  max_users               Int @default(1)
+  max_storage             Int @default(1000) // MB
+  max_credits             Int @default(0)
   leadgen_credits_monthly Int @default(0)
 
   // Subscription Settings
@@ -1315,11 +1312,11 @@ model TeamEmailConfig {
   smtp_password String?
 
   // Domain Verification (Enterprise / Individual_Pro only)
-  custom_domain              String?  // e.g. "acmecorp.com"
-  domain_verification_token  String?  // TXT record value returned by SES
-  domain_dkim_tokens         String[] // CNAME DKIM records returned by SES
-  domain_status              String?  // "PENDING_APPROVAL" | "DNS_PENDING" | "VERIFIED" | "FAILED"
-  domain_requested_at        DateTime? @db.Date
+  custom_domain             String? // e.g. "acmecorp.com"
+  domain_verification_token String? // TXT record value returned by SES
+  domain_dkim_tokens        String[] // CNAME DKIM records returned by SES
+  domain_status             String? // "PENDING_APPROVAL" | "DNS_PENDING" | "VERIFIED" | "FAILED"
+  domain_requested_at       DateTime? @db.Date
 
   verification_status String @default("PENDING") // PENDING, VERIFIED, FAILED
 
@@ -1384,8 +1381,8 @@ model AiProviderRegistry {
 }
 
 model AiModel {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
-  v           Int    @default(0) @map("__v")
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  v           Int     @default(0) @map("__v")
   name        String // Display name (e.g. "GPT-4o")
   modelId     String // API model ID (e.g. "gpt-4o")
   provider    String // Provider slug — e.g. "OPENAI", "HUGGINGFACE"
@@ -1448,8 +1445,8 @@ model CustomModelRequest {
   team_name    String? // Denormalized for display
 
   // Approval workflow
-  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  reviewed_by  String?  @db.ObjectId
+  status       String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewed_by  String?   @db.ObjectId
   reviewed_at  DateTime? @db.Date
   review_notes String?
 
@@ -1615,9 +1612,9 @@ model crm_Lead_Pools {
   assigned_members String[] @db.ObjectId
 
   // Campaign management features
-  color               String?
-  documentsIDs        String[]      @db.ObjectId
-  assigned_documents  Documents[]   @relation(fields: [documentsIDs], references: [id])
+  color              String?
+  documentsIDs       String[]    @db.ObjectId
+  assigned_documents Documents[] @relation(fields: [documentsIDs], references: [id])
 }
 
 model crm_Lead_Gen_Jobs {
@@ -1724,17 +1721,17 @@ model crm_Contact_Candidate_Leads {
 }
 
 model crm_Global_Companies {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  v           Int?      @map("__v")
-  domain      String?   @unique
-  companyName String?
-  description String?
-  homepageUrl String?
-  industry    String?
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  v              Int?      @map("__v")
+  domain         String?   @unique
+  companyName    String?
+  description    String?
+  homepageUrl    String?
+  industry       String?
   techStack      Json?
-  emails        String[]
-  phones        String[]
-  socialLinks   Json?
+  emails         String[]
+  phones         String[]
+  socialLinks    Json?
   enrichmentData Json?
   dedupeKey      String?   @unique
   firstSeen      DateTime? @default(now()) @db.Date
@@ -1995,15 +1992,15 @@ model SystemActivity {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String?  @db.ObjectId
   team_id   String?  @db.ObjectId
-  action    String   // e.g. "LOGIN_SUCCESS", "RECORD_DELETE", "ROLE_CHANGE"
-  resource  String   // e.g. "auth", "crm_Leads", "Role"
-  details   String?  // JSON string or summary
+  action    String // e.g. "LOGIN_SUCCESS", "RECORD_DELETE", "ROLE_CHANGE"
+  resource  String // e.g. "auth", "crm_Leads", "Role"
+  details   String? // JSON string or summary
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now()) @db.Date
 
   user Users? @relation(name: "UserSystemActivities", fields: [userId], references: [id], onDelete: Cascade)
-  team Team?  @relation(fields: [team_id], references: [id]) 
+  team Team?  @relation(fields: [team_id], references: [id])
 }
 
 model PageView {
@@ -2637,7 +2634,7 @@ model crm_Workflow {
   edges Json // Array of React Flow edges
 
   // Ownership
-  team_id    String @db.ObjectId
+  team_id    String  @db.ObjectId
   created_by String? @db.ObjectId
 
   createdAt DateTime @default(now()) @db.Date
@@ -3549,38 +3546,38 @@ model Notification {
 
 // CPQ Models (Phase 6)
 model crm_Products {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  sku         String  @unique
-  description String?
-  price       Float
-  costPrice   Float?
-  taxRate     Float?  @default(0)
-  category    String?
-  brand       String?
-  model       String?
-  stock       Int     @default(0)
-  weight      Float?
-  width       Float?
-  height      Float?
-  length      Float?
-  isDigital   Boolean @default(false)
-  imageUrl    String?   // Product image URL (from Surge, Shopify, WooCommerce, or manual)
-  active      Boolean @default(true)
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  sku              String   @unique
+  description      String?
+  price            Float
+  costPrice        Float?
+  taxRate          Float?   @default(0)
+  category         String?
+  brand            String?
+  model            String?
+  stock            Int      @default(0)
+  weight           Float?
+  width            Float?
+  height           Float?
+  length           Float?
+  isDigital        Boolean  @default(false)
+  imageUrl         String? // Product image URL (from Surge, Shopify, WooCommerce, or manual)
+  active           Boolean  @default(true)
   tags             String[]
   surge_id         String?
-  shopify_id       String?   // Shopify product ID for bidirectional sync
-  woo_id           String?   // WooCommerce product ID for bidirectional sync
-  taxable          Boolean @default(true)
+  shopify_id       String? // Shopify product ID for bidirectional sync
+  woo_id           String? // WooCommerce product ID for bidirectional sync
+  taxable          Boolean  @default(true)
   jurisdictionCode String?
-  industryPack     String?   // Surge industry pack (freelancer, ecommerce, etc.)
-  attributes       Json?     // Flexible key-value attributes from Surge (varies by industry pack)
-  currency         String?   @default("USD") // Currency code (USD, EUR, etc.)
-  ownerWallet      String?   // Surge owner wallet address
-  isBook           Boolean   @default(false) // Is this item a book/publication
-  allowDownload    Boolean   @default(false) // Allow digital download
-  drmEnabled       Boolean   @default(false) // DRM protection enabled
-  isSubscription   Boolean   @default(false) // Subscription item
+  industryPack     String? // Surge industry pack (freelancer, ecommerce, etc.)
+  attributes       Json? // Flexible key-value attributes from Surge (varies by industry pack)
+  currency         String?  @default("USD") // Currency code (USD, EUR, etc.)
+  ownerWallet      String? // Surge owner wallet address
+  isBook           Boolean  @default(false) // Is this item a book/publication
+  allowDownload    Boolean  @default(false) // Allow digital download
+  drmEnabled       Boolean  @default(false) // DRM protection enabled
+  isSubscription   Boolean  @default(false) // Subscription item
 
   team_id String @db.ObjectId
   team    Team   @relation(fields: [team_id], references: [id])
@@ -3651,7 +3648,6 @@ model crm_QuoteItems {
   product crm_Products? @relation(fields: [productId], references: [id])
 }
 
-
 model DashboardPreference {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @unique @db.ObjectId
@@ -3662,19 +3658,19 @@ model DashboardPreference {
 }
 
 model NavigationConfig {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  team_id   String   @db.ObjectId
-  user_id   String?  @db.ObjectId // Optional: If set, it's a specific user preference override
-  
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  team_id String  @db.ObjectId
+  user_id String? @db.ObjectId // Optional: If set, it's a specific user preference override
+
   // The structure of the sidebar
   // Format: Array of { id, type: 'item'|'group', label, icon, href, children: [], permissions: [], hidden: boolean }
-  structure Json     
+  structure Json
 
   titleFont       String?
   titleFontSize   String?
   titleFontWeight String?
   titleFontStyle  String?
-  
+
   itemFont       String?
   itemFontSize   String?
   itemFontWeight String?
@@ -3691,80 +3687,80 @@ model NavigationConfig {
 
 // Phase 2: Financial Core Integrations
 model Tenant_Integrations {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  tenant_id       String   @unique @db.ObjectId
-  team            Team     @relation(fields: [tenant_id], references: [id])
-  
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  tenant_id String @unique @db.ObjectId
+  team      Team   @relation(fields: [tenant_id], references: [id])
+
   // Surge.co Config (Crypto Payments)
-  surge_enabled   Boolean  @default(false)
-  surge_api_key   String?
+  surge_enabled     Boolean @default(false)
+  surge_api_key     String?
   surge_merchant_id String?
-  preferred_chain String   @default("BASE")
-  
+  preferred_chain   String  @default("BASE")
+
   // E-Commerce Integrations (Shopify - Custom App / Admin API)
-  shopify_enabled       Boolean  @default(false)
-  shopify_store_url     String?   // "your-store.myshopify.com"
-  shopify_access_token  String?   // Admin API Access Token (shpat_...)
+  shopify_enabled      Boolean @default(false)
+  shopify_store_url    String? // "your-store.myshopify.com"
+  shopify_access_token String? // Admin API Access Token (shpat_...)
 
   // E-Commerce Integrations (WooCommerce - REST API v3)
-  woocommerce_enabled         Boolean  @default(false)
-  woocommerce_store_url       String?   // "https://your-store.com"
-  woocommerce_consumer_key    String?   // Consumer Key (ck_...)
-  woocommerce_consumer_secret String?   // Consumer Secret (cs_...)
+  woocommerce_enabled         Boolean @default(false)
+  woocommerce_store_url       String? // "https://your-store.com"
+  woocommerce_consumer_key    String? // Consumer Key (ck_...)
+  woocommerce_consumer_secret String? // Consumer Secret (cs_...)
 
   // Mercury Config (Banking)
-  mercury_enabled Boolean  @default(false)
-  mercury_api_key String?
+  mercury_enabled    Boolean @default(false)
+  mercury_api_key    String?
   mercury_account_id String?
-  
+
   // Phase 3: Expansion
   pandadoc_enabled Boolean @default(false)
   pandadoc_token   String?
-  
-  discord_enabled  Boolean @default(false)
-  discord_webhook  String?
-  
-  updatedAt       DateTime @updatedAt
+
+  discord_enabled Boolean @default(false)
+  discord_webhook String?
+
+  updatedAt DateTime @updatedAt
 }
 
 // Phase 3: Recurring Payments & Subscriptions
 model crm_Subscriptions {
-  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
-  v                    Int      @default(0) @map("__v")
-  createdAt            DateTime @default(now()) @db.Date
-  updatedAt            DateTime @updatedAt @db.Date
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  v         Int      @default(0) @map("__v")
+  createdAt DateTime @default(now()) @db.Date
+  updatedAt DateTime @updatedAt @db.Date
 
-  tenant_id           String   @unique @db.ObjectId
-  team                Team     @relation(fields: [tenant_id], references: [id])
-  
-  account_id           String?  @db.ObjectId
-  account              crm_Accounts? @relation(fields: [account_id], references: [id])
+  tenant_id String @unique @db.ObjectId
+  team      Team   @relation(fields: [tenant_id], references: [id])
+
+  account_id String?       @db.ObjectId
+  account    crm_Accounts? @relation(fields: [account_id], references: [id])
 
   // Surge Identity
-  surge_vault_token    String?  // The token provided by Surge after card entry
-  customer_email       String?
-  customer_wallet      String?  // Optional 0x wallet for Hybrid Fallback / Direct Crypto
-  discount_applied     Boolean  @default(false) // 5% Discount for wallet usage
+  surge_vault_token String? // The token provided by Surge after card entry
+  customer_email    String?
+  customer_wallet   String? // Optional 0x wallet for Hybrid Fallback / Direct Crypto
+  discount_applied  Boolean @default(false) // 5% Discount for wallet usage
 
   // Billing Config
-  plan_name            String
-  amount                Float
-  currency              String   @default("USD")
-  interval              String   @default("monthly") // monthly, yearly
-  billing_day          Int      @default(14)        // e.g. 14th of the month
-  
-  next_billing_date    DateTime @db.Date
-  status               String   @default("ACTIVE")  // ACTIVE, PAUSED, CANCELLED, OVERDUE, SUSPENDED
+  plan_name   String
+  amount      Float
+  currency    String @default("USD")
+  interval    String @default("monthly") // monthly, yearly
+  billing_day Int    @default(14) // e.g. 14th of the month
+
+  next_billing_date DateTime @db.Date
+  status            String   @default("ACTIVE") // ACTIVE, PAUSED, CANCELLED, OVERDUE, SUSPENDED
 
   // Metadata for receipts
-  last_charge_date     DateTime? @db.Date
-  last_charge_status   String?
-  last_transaction_id  String?
-  metadata             Json?
+  last_charge_date    DateTime? @db.Date
+  last_charge_status  String?
+  last_transaction_id String?
+  metadata            Json?
 
   // Billing invoices for this subscription
   invoices crm_BillingInvoice[]
-  
+
   @@index([next_billing_date])
 }
 
@@ -3782,21 +3778,21 @@ model crm_BillingInvoice {
   subscription    crm_Subscriptions? @relation(fields: [subscription_id], references: [id])
 
   // Invoice details
-  invoice_number String  @unique
-  type           String  @default("SUBSCRIPTION") // SUBSCRIPTION, AI_USAGE, ECHO_CREDITS, ONE_TIME
+  invoice_number String   @unique
+  type           String   @default("SUBSCRIPTION") // SUBSCRIPTION, AI_USAGE, ECHO_CREDITS, ONE_TIME
   description    String?
-  period_start   DateTime  @db.Date
-  period_end     DateTime  @db.Date
+  period_start   DateTime @db.Date
+  period_end     DateTime @db.Date
 
   // Amounts
-  subtotal       Float
-  discount       Float   @default(0)
-  tax            Float   @default(0)
-  total          Float
+  subtotal Float
+  discount Float @default(0)
+  tax      Float @default(0)
+  total    Float
 
   // Payment info
   payment_method String? // "CARD", "CRYPTO", "SYSTEM_CREDIT"
-  payment_status String  @default("PENDING") // PENDING, PAID, FAILED, REFUNDED, WAIVED
+  payment_status String    @default("PENDING") // PENDING, PAID, FAILED, REFUNDED, WAIVED
   transaction_id String?
   paid_at        DateTime? @db.Date
 
@@ -3822,8 +3818,8 @@ model crm_AiUsageLog {
   tenant_id String @db.ObjectId
   team      Team   @relation(fields: [tenant_id], references: [id])
 
-  user_id   String? @db.ObjectId
-  user      Users?  @relation(name: "AiUsageUser", fields: [user_id], references: [id], onDelete: SetNull)
+  user_id String? @db.ObjectId
+  user    Users?  @relation(name: "AiUsageUser", fields: [user_id], references: [id], onDelete: SetNull)
 
   // Usage details
   service    String // "text_generation", "email_ai", "varuni", "enrichment", "lead_scoring", etc.
@@ -3841,3 +3837,17 @@ model crm_AiUsageLog {
   @@index([service])
   @@index([createdAt])
 }
+
+// -----------------------------------------------------------------------------
+// SOC2 / GDPR Data Retention Policies
+// -----------------------------------------------------------------------------
+model DataRetentionPolicy {
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  model_name     String  @unique // e.g., "SystemActivity"
+  retention_days Int
+  action         String // "DELETE" | "ANONYMIZE"
+  enabled        Boolean @default(true)
+}
+
+// SOC2: Added to enforce instant global session invalidation across all devices
+// on security events (password reset, role change, MFA addition/removal, deactivation).

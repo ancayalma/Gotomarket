@@ -4,6 +4,7 @@
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import sendEmail from "@/lib/sendmail";
+import { systemLogger } from "@/lib/logger";
 
 // ============================================================================
 // MODEL PRICING UPDATE (existing)
@@ -177,18 +178,18 @@ export const submitCustomModelRequest = async (formData: FormData) => {
 
         if (platformAdmins.length > 0) {
             await prismadb.notification.createMany({
-                data: platformAdmins.map(admin => ({
+                data: (platformAdmins as any[]).map(admin => ({
                     userId: admin.id,
                     title: "New Custom Model Request",
                     message: `${team_name || "A team"} requested model "${displayName}" (${modelId}) from ${provider}.`,
                     type: "APPROVAL",
                     link: "/partners/ai-system-config",
-                    team_id: team_id || undefined,
+                    team_id: team_id || null,
                 })),
             });
         }
     } catch (notifErr) {
-        console.error("[MODEL_REQUEST] Failed to create notifications:", notifErr);
+        systemLogger.error("[MODEL_REQUEST] Failed to create notifications:", notifErr);
     }
 
     // ─── Email to support@basalthq.com ───
@@ -243,7 +244,7 @@ export const submitCustomModelRequest = async (formData: FormData) => {
             `,
         });
     } catch (emailErr) {
-        console.error("[MODEL_REQUEST] Failed to send email:", emailErr);
+        systemLogger.error("[MODEL_REQUEST] Failed to send email:", emailErr);
     }
 
     revalidatePath("/partners/ai-system-config");

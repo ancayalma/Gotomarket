@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request, props: { params: Promise<{ boardId: string }> }) {
   const params = await props.params;
@@ -38,7 +39,7 @@ export async function POST(req: Request, props: { params: Promise<{ boardId: str
 
     return NextResponse.json({ newsecton: newSection }, { status: 200 });
   } catch (error) {
-    console.log("[NEW_SECTION_POST]", error);
+    systemLogger.error("[NEW_SECTION_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

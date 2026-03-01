@@ -3,6 +3,7 @@
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export async function moveMemberToNewTeam(
     userId: string,
@@ -76,7 +77,7 @@ export async function moveMemberToNewTeam(
             message: `Successfully moved ${targetUser.email} to new team "${teamName}" as Owner.`
         };
     } catch (error) {
-        console.error("[MOVE_MEMBER_TO_NEW_TEAM]", error);
+        systemLogger.error("[MOVE_MEMBER_TO_NEW_TEAM]", error);
         return { error: "Failed to move member to new team" };
     }
 }

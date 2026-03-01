@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/outreach/reset/[leadId]
@@ -58,7 +59,7 @@ export async function POST(_: Request, props: { params: Promise<{ leadId: string
     return NextResponse.json({ ok: true });
   } catch (error) {
      
-    console.error("[OUTREACH_RESET_POST]", error);
+    systemLogger.error("[OUTREACH_RESET_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

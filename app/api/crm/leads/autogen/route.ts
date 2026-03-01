@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { LeadGenWizardSchema, startLeadGenJob } from "@/actions/leads/start-leadgen-job";
 import { prismadb } from "@/lib/prisma";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/crm/leads/autogen
@@ -57,9 +59,10 @@ export async function POST(req: Request) {
     // e.g., await runLeadGenPipeline({ jobId, userId: session.user.id });
     // For now we return identifiers; UI can poll status route.
 
+    await logActivityInternal(session.user.email || "SYSTEM", "CREATE", "LeadGenJob", `Started lead generation job ${jobId} and pool ${poolId}`);
     return NextResponse.json({ poolId, jobId }, { status: 201 });
   } catch (error) {
-    console.error("[LEADS_AUTOGEN_POST]", error);
+    systemLogger.error("[LEADS_AUTOGEN_POST]", error);
     return new NextResponse("Failed to start lead generation job", { status: 500 });
   }
 }

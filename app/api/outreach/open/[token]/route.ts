@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // 1x1 transparent PNG
 const PIXEL_BASE64 =
@@ -59,7 +60,7 @@ export async function GET(
     });
   } catch (error) {
      
-    console.error("[OUTREACH_OPEN_GET]", error);
+    systemLogger.error("[OUTREACH_OPEN_GET]", error);
     // Always return a pixel to avoid revealing tracking status
     const body = Buffer.from(PIXEL_BASE64, "base64");
     return new NextResponse(body, {

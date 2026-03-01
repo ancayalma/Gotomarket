@@ -53,9 +53,9 @@ export default async function AdminAiSettingsPage() {
     ]);
 
     // Determine which providers have system keys configured
-    const providersWithSystemKey = systemConfigs
-        .filter((c) => c.apiKey && c.apiKey.trim().length > 0)
-        .map((c) => c.provider);
+    const providersWithSystemKey = (systemConfigs as any[])
+        .filter((c: any) => c.apiKey && c.apiKey.trim().length > 0)
+        .map((c: any) => c.provider);
 
     // Fetch available providers for the request form
     let providerOptions: { slug: string; name: string }[] = [];
@@ -69,7 +69,7 @@ export default async function AdminAiSettingsPage() {
         });
         providerOptions = registeredProviders;
     } catch {
-        providerOptions = Array.from(new Set(activeModels.map(m => m.provider))).map(p => ({ slug: p, name: p }));
+        providerOptions = Array.from(new Set((activeModels as any[]).map(m => m.provider))).map(p => ({ slug: p, name: p }));
     }
 
     return (

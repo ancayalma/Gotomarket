@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import sendEmail from "@/lib/sendmail";
 import { prismadb } from "@/lib/prisma";
 import crypto from "crypto";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -107,7 +108,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ message: "Email sent successfully", token: trackingToken });
     } catch (error) {
-        console.error("[EMAIL_SEND_ERROR]", error);
+        systemLogger.error("[EMAIL_SEND_ERROR]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

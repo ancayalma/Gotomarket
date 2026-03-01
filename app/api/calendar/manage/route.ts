@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCalendarClientForUser } from "@/lib/gmail";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/calendar/manage
@@ -101,7 +102,7 @@ export async function POST(req: Request) {
     }
   } catch (e: any) {
      
-    console.error("[CALENDAR_MANAGE_POST]", e?.message || e);
+    systemLogger.error("[CALENDAR_MANAGE_POST]", e?.message || e);
     return new NextResponse("Failed to manage calendar", { status: 500 });
   }
 }

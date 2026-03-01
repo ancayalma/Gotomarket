@@ -34,7 +34,7 @@ import {
     createValidationRule, updateValidationRule,
     deleteValidationRule, toggleValidationRule
 } from "@/actions/crm/validation-rules";
-import { testFormula } from "@/lib/validation-engine";
+import { testFormula } from "@/lib/validation/engine-core";
 
 interface ValidationRule {
     id: string;

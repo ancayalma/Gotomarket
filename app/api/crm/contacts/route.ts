@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import sendEmail from "@/lib/sendmail";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 const isValidId = (id: any) => typeof id === "string" && id.length === 24;
 
@@ -152,7 +153,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ newContact }, { status: 200 });
   } catch (error) {
-    console.log("[NEW_CONTACT_POST]", error);
+    systemLogger.error("[NEW_CONTACT_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

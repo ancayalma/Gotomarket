@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/crm/leads/eligibility
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
       select: { id: true, email: true, phone: true },
     });
 
-    const perLead = leads.map((l) => ({ id: l.id, hasEmail: !!(l.email && String(l.email).trim().length > 0), hasPhone: !!(l.phone && String(l.phone).trim().length > 0) }));
+    const perLead = (leads as any[]).map((l: any) => ({ id: l.id, hasEmail: !!(l.email && String(l.email).trim().length > 0), hasPhone: !!(l.phone && String(l.phone).trim().length > 0) }));
     const counts = {
       total: leads.length,
       emailsPresent: perLead.filter((p) => p.hasEmail).length,
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ counts, perLead }, { status: 200 });
   } catch (error) {
-    console.error("[LEADS_ELIGIBILITY_POST]", error);
+    systemLogger.error("[LEADS_ELIGIBILITY_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

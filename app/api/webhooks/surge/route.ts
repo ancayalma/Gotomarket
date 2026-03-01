@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import crypto from "crypto";
+import { systemLogger } from "@/lib/logger";
 
 const SURGE_WEBHOOK_SECRET = process.env.SURGE_WEBHOOK_SECRET;
 
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
         if (SURGE_WEBHOOK_SECRET) {
             const signature = req.headers.get("X-Surge-Signature") || req.headers.get("x-surge-signature");
             if (!verifyWebhookSignature(rawBody, signature, SURGE_WEBHOOK_SECRET)) {
-                console.error("[Surge Webhook] Invalid signature — blocked.");
+                systemLogger.error("[Surge Webhook] Invalid signature — blocked.");
                 return new NextResponse("Invalid Signature", { status: 401 });
             }
         } else {
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
             const externalId = data.external_id; // This should be our Invoice ID or custom reference
             const paymentId = data.id;
 
-            console.log(`[Surge Webhook] Payment confirmed for invoice: ${externalId}`);
+            systemLogger.error(`[Surge Webhook] Payment confirmed for invoice: ${externalId}`);
 
             if (!externalId) {
                 return new NextResponse("Missing external_id", { status: 400 });
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
                     try {
                         const { addLeadGenCredits } = await import("@/lib/scraper/credits");
                         await addLeadGenCredits(invoice.team_id, credits);
-                        console.log(`[Surge Webhook] Successfully added ${credits} credits to team ${invoice.team_id}`);
+                        systemLogger.error(`[Surge Webhook] Successfully added ${credits} credits to team ${invoice.team_id}`);
 
                         // Update formal billing invoice status if it exists
                         await (prismadb as any).crm_BillingInvoice.updateMany({
@@ -74,15 +75,13 @@ export async function POST(req: Request) {
                             }
                         });
                     } catch (e) {
-                        console.error("[Surge Webhook] LeadGen Credit fulfillment failed", e);
+                        systemLogger.error("[Surge Webhook] LeadGen Credit fulfillment failed", e);
                     }
                 }
             }
 
-            // 1.1 Sync with Mercury
-            if (invoice.mercury_invoice_id && invoice.team_id) {
-                // Import dynamically or at top. Using dynamic import to avoid circular dep if any?
-                // Better import at top. But for this tool I can't add import at top easily without context.
+                // Sync with Mercury
+                if (invoice.mercury_invoice_id && invoice.team_id) {
                 // I will assume markMercuryInvoicePaid is imported. 
                 // Wait, I can't just assume. I need to add the import.
                 // I'll update the whole file to be safe or use require? No, ESM.
@@ -92,7 +91,7 @@ export async function POST(req: Request) {
                     const { markMercuryInvoicePaid } = await import("@/lib/mercury");
                     await markMercuryInvoicePaid(invoice.team_id, invoice.mercury_invoice_id);
                 } catch (e) {
-                    console.error("[Surge Webhook] Mercury sync failed", e);
+                    systemLogger.error("[Surge Webhook] Mercury sync failed", e);
                 }
             }
 
@@ -116,14 +115,14 @@ export async function POST(req: Request) {
                         close_date: new Date()
                     }
                 });
-                console.log(`[Surge Webhook] Updated Deal ${dealId} to CLOSED/WON`);
+                systemLogger.error(`[Surge Webhook] Updated Deal ${dealId} to CLOSED/WON`);
             }
         }
 
         return new NextResponse("OK", { status: 200 });
 
     } catch (error) {
-        console.error("[Surge Webhook] Error", error);
+        systemLogger.error("[Surge Webhook] Error", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

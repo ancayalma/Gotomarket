@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import crypto from "crypto";
+import { systemLogger } from "@/lib/logger";
 
 // GET - List recipients for a portal
 export async function GET(req: NextRequest) {
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ recipients });
     } catch (err: any) {
-        console.error("[Portal Recipient API] GET Error:", err);
+        systemLogger.error("[Portal Recipient API] GET Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
@@ -157,7 +158,7 @@ export async function POST(req: NextRequest) {
             results,
         });
     } catch (err: any) {
-        console.error("[Portal Recipient API] POST Error:", err);
+        systemLogger.error("[Portal Recipient API] POST Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
@@ -188,7 +189,7 @@ export async function DELETE(req: NextRequest) {
 
         return NextResponse.json({ success: true });
     } catch (err: any) {
-        console.error("[Portal Recipient API] DELETE Error:", err);
+        systemLogger.error("[Portal Recipient API] DELETE Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

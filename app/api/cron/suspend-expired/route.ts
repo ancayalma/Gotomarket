@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { requireCronAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request) {
     // ── Cron auth guard ──
@@ -59,7 +60,7 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: true, suspended: suspendedCount });
 
     } catch (error) {
-        console.log("[CRON_SUSPEND]", error);
+        systemLogger.error("[CRON_SUSPEND]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

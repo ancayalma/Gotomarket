@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -16,7 +17,7 @@ export async function GET() {
 
         return NextResponse.json({ industries });
     } catch (error) {
-        console.log("[CRM_DATA_GET]", error);
+        systemLogger.error("[CRM_DATA_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

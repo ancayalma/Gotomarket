@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(
     req: Request,
@@ -39,7 +40,7 @@ export async function GET(
 
         return NextResponse.json(records);
     } catch (error) {
-        console.error("[DATA_GET]", error);
+        systemLogger.error("[DATA_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -102,7 +103,7 @@ export async function POST(
 
         return NextResponse.json(newRecord);
     } catch (error) {
-        console.error("[DATA_POST]", error);
+        systemLogger.error("[DATA_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

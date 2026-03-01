@@ -8,6 +8,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import crypto from "crypto";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // Reserved slugs that cannot be used
 const RESERVED_SLUGS = [
@@ -82,7 +84,7 @@ export async function GET(
 
         return NextResponse.json({ portals: portalsWithProjectInfo });
     } catch (err: any) {
-        console.error("[Team Portals API] GET Error:", err);
+        systemLogger.error("[Team Portals API] GET Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
@@ -215,6 +217,8 @@ export async function POST(
             },
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "CREATE", "crm_Message_Portal", `Created support portal ${slug}`, teamId);
+
         return NextResponse.json({
             portal: {
                 ...portal,
@@ -223,7 +227,7 @@ export async function POST(
             },
         });
     } catch (err: any) {
-        console.error("[Team Portals API] POST Error:", err);
+        systemLogger.error("[Team Portals API] POST Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

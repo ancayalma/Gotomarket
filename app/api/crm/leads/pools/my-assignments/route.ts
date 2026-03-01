@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/crm/leads/pools/my-assignments
@@ -40,7 +41,7 @@ export async function GET() {
 
         return NextResponse.json({ pools: results }, { status: 200 });
     } catch (error) {
-        console.error("[LEADS_POOLS_MY_ASSIGNMENTS_GET]", error);
+        systemLogger.error("[LEADS_POOLS_MY_ASSIGNMENTS_GET]", error);
         return new NextResponse("Failed to fetch pool assignments", { status: 500 });
     }
 }

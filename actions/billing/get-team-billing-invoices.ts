@@ -3,6 +3,7 @@
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * Get billing invoices for a specific team.
@@ -35,7 +36,7 @@ export async function getTeamBillingInvoices(teamId: string) {
 
         return invoices;
     } catch (error) {
-        console.error("[GET_TEAM_BILLING_INVOICES]", error);
+        systemLogger.error("[GET_TEAM_BILLING_INVOICES]", error);
         return [];
     }
 }
@@ -78,7 +79,7 @@ export async function getMyTeamBillingInvoices() {
 
         return invoices;
     } catch (error) {
-        console.error("[GET_MY_TEAM_BILLING_INVOICES]", error);
+        systemLogger.error("[GET_MY_TEAM_BILLING_INVOICES]", error);
         return [];
     }
 }
@@ -118,7 +119,7 @@ export async function getAllBillingInvoices() {
 
         return invoices;
     } catch (error) {
-        console.error("[GET_ALL_BILLING_INVOICES]", error);
+        systemLogger.error("[GET_ALL_BILLING_INVOICES]", error);
         return [];
     }
 }

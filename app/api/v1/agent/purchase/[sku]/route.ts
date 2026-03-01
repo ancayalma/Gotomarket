@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { create402Challenge, validate402Payment } from "@/lib/surge-x402";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 const MOCK_SERVICES: Record<string, { price: string, resource: string }> = {
     "service-consulting-1h": { price: "150.00", resource: "https://cal.com/meeting-link" },
@@ -19,7 +20,7 @@ export async function GET(req: Request, props: { params: Promise<{ sku: string }
         const rawSku = params.sku;
         const sku = rawSku.toLowerCase();
 
-        console.log(`[AgentAPI] Purchase request for SKU: ${sku}`);
+        systemLogger.error(`[AgentAPI] Purchase request for SKU: ${sku}`);
 
         if (sku === ":sku") {
             return NextResponse.json({
@@ -51,10 +52,10 @@ export async function GET(req: Request, props: { params: Promise<{ sku: string }
         if (!service) {
             if (sku.startsWith("agent-")) {
                 service = { price: "99.00", resource: `https://agents.basalthq.com/deploy/${sku.replace("agent-", "")}` };
-                console.log(`[AgentAPI] Using dynamic fallback for agent SKU: ${sku}`);
+                systemLogger.error(`[AgentAPI] Using dynamic fallback for agent SKU: ${sku}`);
             } else if (sku.startsWith("service-")) {
                 service = { price: "49.99", resource: `https://api.basalthq.com/access/${sku}` };
-                console.log(`[AgentAPI] Using dynamic fallback for service SKU: ${sku}`);
+                systemLogger.error(`[AgentAPI] Using dynamic fallback for service SKU: ${sku}`);
             }
         }
 
@@ -106,7 +107,7 @@ export async function GET(req: Request, props: { params: Promise<{ sku: string }
         });
 
     } catch (error: any) {
-        console.error("[AgentAPI] Purchase Error:", error);
+        systemLogger.error("[AgentAPI] Purchase Error:", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

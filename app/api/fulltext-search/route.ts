@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -337,7 +338,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ data }, { status: 200 });
   } catch (error) {
-    console.log("[FULLTEXT_SEARCH_POST]", error);
+    systemLogger.error("[FULLTEXT_SEARCH_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

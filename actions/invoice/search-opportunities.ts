@@ -3,6 +3,7 @@
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function searchOpportunities(query: string) {
     try {
@@ -74,7 +75,7 @@ export async function searchOpportunities(query: string) {
         const results = [];
 
         // Map CRM Opps
-        results.push(...crmOpps.map(op => ({
+        results.push(...(crmOpps as any[]).map(op => ({
             id: op.id,
             title: op.name || "Untitled Opportunity",
             subtitle: op.description || "CRM Opportunity",
@@ -82,7 +83,7 @@ export async function searchOpportunities(query: string) {
         })));
 
         // Map Project Opps (Features)
-        results.push(...projOpps.map(op => ({
+        results.push(...(projOpps as any[]).map(op => ({
             id: op.id,
             title: op.title,
             subtitle: `${op.assigned_project?.title || 'Project'} Feature` + (op.description ? ` - ${op.description}` : ""),
@@ -92,7 +93,7 @@ export async function searchOpportunities(query: string) {
         return results;
 
     } catch (error) {
-        console.error("[SEARCH_OPPORTUNITIES_ERROR]", error);
+        systemLogger.error("[SEARCH_OPPORTUNITIES_ERROR]", error);
         return [];
     }
 }

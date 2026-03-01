@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { encryptSecret } from "@/lib/encryption";
 
 export const updateSystemResendConfig = async (formData: FormData) => {
     const schema = z.object({
@@ -19,7 +20,7 @@ export const updateSystemResendConfig = async (formData: FormData) => {
             data: {
                 v: 0,
                 name: "resend_smtp",
-                serviceKey: parsed.serviceKey,
+                serviceKey: encryptSecret(parsed.serviceKey),
             },
         });
     } else {
@@ -28,7 +29,7 @@ export const updateSystemResendConfig = async (formData: FormData) => {
                 id: parsed.id,
             },
             data: {
-                serviceKey: parsed.serviceKey,
+                serviceKey: encryptSecret(parsed.serviceKey),
             },
         });
     }

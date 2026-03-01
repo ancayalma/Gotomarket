@@ -1,22 +1,49 @@
 import { PrismaClient } from "@prisma/client";
-// Force reload after schema update (v6.19.2)
 
-const globalForPrisma = globalThis as unknown as { prismadb: PrismaClient };
+const TENANT_MODELS = [
+  "crm_Accounts", "crm_Leads", "crm_Opportunities", "crm_Outreach_Campaigns", 
+  "crm_Contacts", "crm_Contracts", "Boards", "Invoices", "Documents", 
+  "Tasks", "crm_Accounts_Tasks", "CustomRole", "crm_CustomWidget", 
+  "TeamEmailConfig", "TeamAiConfig", "CustomModelRequest", "TeamSmsConfig", 
+  "TeamCaptchaConfig", "crm_Lead_Pools", "Form", "FormSubmission", 
+  "crm_Message_Portal", "RolePermission", "crm_Workflow", 
+  "CustomObjectDefinition", "CustomRecord", "PageLayout", "crm_Cases", 
+  "SLA_Policy", "RoutingConfig", "KnowledgeCategory", "KnowledgeArticle", 
+  "ValidationRule", "ApprovalProcess", "ApprovalRequest", "Notification", 
+  "crm_Products", "crm_Quotes", "NavigationConfig"
+];
 
-// Use a more standard singleton pattern for Prisma v6
-function getPrismaClient(): PrismaClient {
-  if (globalForPrisma.prismadb) {
-    return globalForPrisma.prismadb;
+const TARGET_OPS = ["findMany", "findFirst", "count", "aggregate", "updateMany", "deleteMany"];
+
+const baseClient = new PrismaClient();
+
+const client = baseClient.$extends({
+  query: {
+    $allModels: {
+      async $allOperations({ model, operation, args, query }) {
+        if (TENANT_MODELS.includes(model) && TARGET_OPS.includes(operation as string)) {
+          try {
+            const { cookies } = await import("next/headers");
+            const cookieStore = await cookies();
+            if (cookieStore) {
+              const { getCurrentUserTeamId } = await import("@/lib/team-utils");
+              const teamInfo = await getCurrentUserTeamId();
+              if (teamInfo && !teamInfo.isGlobalAdmin && teamInfo.teamId) {
+                (args as any).where = { ...(args as any).where || {}, team_id: teamInfo.teamId };
+              }
+            }
+          } catch (e) { /* Ignore */ }
+        }
+        return query(args);
+      }
+    }
   }
+});
 
-  // console.log("🚀 Initializing fresh Prisma v6 Client...");
-  const client = new PrismaClient();
+const globalForPrisma = globalThis as unknown as { prismadb: any };
 
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prismadb = client;
-  }
+export const prismadb = globalForPrisma.prismadb || client;
 
-  return client;
+if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prismadb = prismadb;
 }
-
-export const prismadb = getPrismaClient();

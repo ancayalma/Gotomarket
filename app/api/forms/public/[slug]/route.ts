@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(
     req: Request,
@@ -45,7 +46,7 @@ export async function GET(
         return NextResponse.json(publicForm);
 
     } catch (error) {
-        console.error("[PUBLIC_FORM_GET]", error);
+        systemLogger.error("[PUBLIC_FORM_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

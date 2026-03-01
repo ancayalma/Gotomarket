@@ -6,6 +6,7 @@ import { checkTeamLimit } from "@/lib/subscription";
 import bcrypt from "bcryptjs";
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export const updateMemberRole = async (userId: string, role: string) => {
     try {
@@ -34,7 +35,7 @@ export const updateMemberRole = async (userId: string, role: string) => {
         revalidatePath(`/partners`);
         return { success: true };
     } catch (error) {
-        console.error("[UPDATE_MEMBER_ROLE]", error);
+        systemLogger.error("[UPDATE_MEMBER_ROLE]", error);
         return { error: "Failed to update role" };
     }
 };
@@ -60,7 +61,7 @@ export const removeMember = async (userId: string) => {
         });
         return { success: true };
     } catch (error) {
-        console.error("[REMOVE_MEMBER]", error);
+        systemLogger.error("[REMOVE_MEMBER]", error);
         return { error: "Failed to remove member" };
     }
 };
@@ -155,7 +156,7 @@ export const changePassword = async (userId: string, newPassword: string) => {
         });
         return { success: true };
     } catch (error) {
-        console.error("[CHANGE_PASSWORD]", error);
+        systemLogger.error("[CHANGE_PASSWORD]", error);
         return { error: "Failed to update password" };
     }
 };
@@ -178,7 +179,7 @@ export const toggleUserStatus = async (userId: string, status: "ACTIVE" | "INACT
         });
         return { success: true };
     } catch (error) {
-        console.error("[TOGGLE_USER_STATUS]", error);
+        systemLogger.error("[TOGGLE_USER_STATUS]", error);
         return { error: "Failed to update status" };
     }
 };
@@ -216,7 +217,7 @@ export const getOrganizationMembers = async (orgId: string) => {
         });
         return users;
     } catch (error) {
-        console.error("[GET_ORG_MEMBERS]", error);
+        systemLogger.error("[GET_ORG_MEMBERS]", error);
         return [];
     }
 };

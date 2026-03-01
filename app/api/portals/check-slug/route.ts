@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // Reserved slugs that cannot be used
 const RESERVED_SLUGS = [
@@ -93,7 +94,7 @@ export async function GET(req: NextRequest) {
             message: "This slug is available",
         });
     } catch (err: any) {
-        console.error("[Check Slug API] Error:", err);
+        systemLogger.error("[Check Slug API] Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

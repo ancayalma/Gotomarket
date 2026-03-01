@@ -3,6 +3,7 @@ import { google } from "@ai-sdk/google";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -39,7 +40,7 @@ ${transcript}`;
 
         return result.toTextStreamResponse();
     } catch (error) {
-        console.error("[AI_SUMMARIZE_ERROR]", error);
+        systemLogger.error("[AI_SUMMARIZE_ERROR]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

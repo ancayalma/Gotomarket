@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { logActivity } from "@/actions/audit";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 // GET /api/projects/[projectId]/opportunities
 // List project-scoped opportunities
@@ -39,7 +40,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ projectId: stri
 
     return NextResponse.json({ project, opportunities }, { status: 200 });
   } catch (e) {
-    console.error("[PROJECT_OPPORTUNITIES_GET]", e);
+    systemLogger.error("[PROJECT_OPPORTUNITIES_GET]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -102,7 +103,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ projectId: str
 
     return NextResponse.json({ ok: true, opportunity: created }, { status: 200 });
   } catch (e) {
-    console.error("[PROJECT_OPPORTUNITIES_POST]", e);
+    systemLogger.error("[PROJECT_OPPORTUNITIES_POST]", e);
     return new NextResponse("Internal Error", { status: 500 });
 
   }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // POST /api/projects/[projectId]/opportunities/[opportunityId]/link-task
 // Body: { taskId: string }
@@ -39,7 +40,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ projectId: str
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (e) {
-    console.error("[OPPORTUNITY_LINK_TASK_POST]", e);
+    systemLogger.error("[OPPORTUNITY_LINK_TASK_POST]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -77,7 +78,7 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ projectId: s
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (e) {
-    console.error("[OPPORTUNITY_LINK_TASK_DELETE]", e);
+    systemLogger.error("[OPPORTUNITY_LINK_TASK_DELETE]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

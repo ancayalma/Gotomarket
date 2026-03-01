@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export const getCases = async (filters?: {
     status?: string;
@@ -80,7 +81,7 @@ export const getCases = async (filters?: {
 
         return cases;
     } catch (error) {
-        console.error("[GET_CASES]", error);
+        systemLogger.error("[GET_CASES]", error);
         return [];
     }
 };

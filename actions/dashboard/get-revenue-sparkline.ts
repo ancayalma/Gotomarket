@@ -41,7 +41,7 @@ export const getRevenueSparkline = async () => {
             dailyData[date] = 0;
         }
 
-        opportunities.forEach(opp => {
+        (opportunities as any[]).forEach(opp => {
             if (opp.createdAt) {
                 const date = format(opp.createdAt, 'yyyy-MM-dd');
                 if (dailyData[date] !== undefined) {

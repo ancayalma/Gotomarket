@@ -2,6 +2,7 @@
 
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export const updateTeamRenewal = async (
     teamId: string,
@@ -20,7 +21,7 @@ export const updateTeamRenewal = async (
         revalidatePath("/partners");
         return { success: "Renewal date updated" };
     } catch (error) {
-        console.log("[UPDATE_TEAM_RENEWAL]", error);
+        systemLogger.error("[UPDATE_TEAM_RENEWAL]", error);
         return { error: "Internal Error" };
     }
 };

@@ -5,6 +5,8 @@ import { createAzure } from "@ai-sdk/azure";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createMistral } from "@ai-sdk/mistral";
+import { decryptSecret } from "./encryption";
+
 
 // Known provider-specific base URLs (fallbacks for built-in providers)
 const BUILT_IN_BASE_URLS: Record<string, string> = {
@@ -72,11 +74,13 @@ export async function getAiClient(teamId: string) {
 
     if (teamConfig && !teamConfig.useSystemKey && teamConfig.apiKey) {
         // Use Team Key - Simple key only
-        apiKey = teamConfig.apiKey;
+        apiKey = decryptSecret(teamConfig.apiKey) || teamConfig.apiKey;
     } else {
         // Use System Key & Configs
         const envKey = ENV_KEY_MAP[modelRecord.provider];
-        apiKey = systemConfig?.apiKey || (envKey ? process.env[envKey] : null) || null;
+        let sysKeyRaw = systemConfig?.apiKey || null;
+        if (sysKeyRaw) sysKeyRaw = decryptSecret(sysKeyRaw) || sysKeyRaw;
+        apiKey = sysKeyRaw || (envKey ? process.env[envKey] : null) || null;
         baseURL = systemConfig?.baseUrl || null;
         if (baseURL && baseURL.endsWith("/")) {
             baseURL = baseURL.slice(0, -1);

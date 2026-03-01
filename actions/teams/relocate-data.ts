@@ -3,6 +3,7 @@
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export type RelocatableEntityType = "ACCOUNT" | "LEAD" | "CONTACT" | "OPPORTUNITY";
 
@@ -63,7 +64,7 @@ export async function relocateEntity(
         };
 
     } catch (error) {
-        console.error("[RELOCATE_ENTITY]", error);
+        systemLogger.error("[RELOCATE_ENTITY]", error);
         return { error: "Relocation failed. Check server logs." };
     }
 }

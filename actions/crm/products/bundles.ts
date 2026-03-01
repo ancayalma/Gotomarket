@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export async function updateProductBundles(productId: string, bundles: { childProductId: string, quantity: number, isRequired: boolean }[]) {
     try {
@@ -31,7 +32,7 @@ export async function updateProductBundles(productId: string, bundles: { childPr
         revalidatePath("/crm/products");
         return { success: true };
     } catch (error: any) {
-        console.error("[UPDATE_PRODUCT_BUNDLES]", error);
+        systemLogger.error("[UPDATE_PRODUCT_BUNDLES]", error);
         return { success: false, error: error.message };
     }
 }

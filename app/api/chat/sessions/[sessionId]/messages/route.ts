@@ -12,6 +12,7 @@ type Params = {
 };
 
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // ... existing imports ...
 
@@ -69,7 +70,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ sessionI
 
     return NextResponse.json({ messages }, { status: 200 });
   } catch (error) {
-    console.error("[CHAT_MESSAGES_GET]", error);
+    systemLogger.error("[CHAT_MESSAGES_GET]", error);
     return new NextResponse("Failed to fetch messages", { status: 500 });
   }
 }
@@ -179,7 +180,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
               });
             }
           } catch (e) {
-            console.error("[CHAT_MESSAGES_ON_COMPLETION_SAVE_ERROR]", e);
+            systemLogger.error("[CHAT_MESSAGES_ON_COMPLETION_SAVE_ERROR]", e);
           }
         },
       });
@@ -191,7 +192,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
         result = textStreamPromise;
       }
     } catch (err) {
-      console.error("[CHAT_STREAM_TEXT_ERROR]", err);
+      systemLogger.error("[CHAT_STREAM_TEXT_ERROR]", err);
       return new NextResponse("Error calling streamText", { status: 500 });
     }
 
@@ -203,12 +204,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
     } else if (result instanceof Response) {
       return result;
     } else {
-      console.error("[CHAT_STREAM_ERROR] Invalid result object:", result);
+      systemLogger.error("[CHAT_STREAM_ERROR] Invalid result object:", result);
       return new NextResponse("Stream generation failed: Invalid result", { status: 500 });
     }
 
   } catch (error) {
-    console.error("[CHAT_MESSAGES_POST]", error);
+    systemLogger.error("[CHAT_MESSAGES_POST]", error);
     return new NextResponse("Failed to process message", { status: 500 });
   }
 }

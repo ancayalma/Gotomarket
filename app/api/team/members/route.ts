@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/team/members
@@ -53,7 +54,7 @@ export async function GET() {
 
         return NextResponse.json({ members: result }, { status: 200 });
     } catch (error) {
-        console.error("[TEAM_MEMBERS_GET]", error);
+        systemLogger.error("[TEAM_MEMBERS_GET]", error);
         return new NextResponse("Failed to fetch team members", { status: 500 });
     }
 }

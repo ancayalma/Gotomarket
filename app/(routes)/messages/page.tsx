@@ -61,7 +61,7 @@ const MessagesRoute = async () => {
             take: 100,
         });
 
-        messages = rawMessages.map((m) => {
+        messages = (rawMessages as any[]).map((m: any) => {
             let toUserId = "";
             // Determine primary "to_user" for UI display
             if (m.sender_id === session.user.id) {
@@ -70,10 +70,10 @@ const MessagesRoute = async () => {
                 toUserId = session.user.id;
             }
 
-            const myRecipient = m.recipients.find((r) => r.recipient_id === session.user.id);
+            const myRecipient = (m.recipients as any[]).find((r: any) => r.recipient_id === session.user.id);
 
-            const fromUser = teamMembers.find(u => u.id === m.sender_id) || { id: m.sender_id, name: m.sender_name, email: m.sender_email };
-            const toUser = teamMembers.find(u => u.id === toUserId) || { id: toUserId, name: "Unknown", email: "" };
+            const fromUser = (teamMembers as any[]).find((u: any) => u.id === m.sender_id) || { id: m.sender_id, name: m.sender_name, email: m.sender_email };
+            const toUser = (teamMembers as any[]).find((u: any) => u.id === toUserId) || { id: toUserId, name: "Unknown", email: "" };
 
             return {
                 id: m.id,

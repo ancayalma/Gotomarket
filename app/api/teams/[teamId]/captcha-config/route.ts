@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { encryptSecret } from "@/lib/encryption";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // POST /api/teams/[teamId]/captcha-config - Update team Captcha configuration
 export async function POST(
@@ -42,17 +45,18 @@ export async function POST(
             create: {
                 team_id: teamId,
                 site_key,
-                secret_key,
+                secret_key: encryptSecret(secret_key) || "",
             },
             update: {
                 site_key,
-                secret_key,
+                secret_key: encryptSecret(secret_key) || "",
             },
         });
 
-        return NextResponse.json(config);
+        await logActivityInternal(session.user.email, "UPDATE", "TeamCaptchaConfig", `Updated CAPTCHA config for team ${teamId}`, teamId);
+        return NextResponse.json({ ...config, secret_key: config.secret_key ? "HasValue" : null });
     } catch (error) {
-        console.error("[TEAM_CAPTCHA_CONFIG_POST]", error);
+        systemLogger.error("[TEAM_CAPTCHA_CONFIG_POST]", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
@@ -77,7 +81,7 @@ export async function GET(
 
         return NextResponse.json(config);
     } catch (error) {
-        console.error("[TEAM_CAPTCHA_CONFIG_GET]", error);
+        systemLogger.error("[TEAM_CAPTCHA_CONFIG_GET]", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

@@ -2,6 +2,7 @@
 
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export type DashboardCounts = {
   leads: number;
@@ -26,7 +27,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
   // Get team context for filtering
   const teamInfo = await getCurrentUserTeamId();
   if (from || to) {
-    console.log('[getSummaryCounts] applying date filter:', { from, to });
+    systemLogger.error('[getSummaryCounts] applying date filter:', { from, to });
   }
 
   const teamId = teamInfo?.teamId;

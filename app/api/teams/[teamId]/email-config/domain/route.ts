@@ -5,6 +5,7 @@ import { prismadb } from "@/lib/prisma";
 import { verifyDomainIdentity, getIdentityVerificationStatus } from "@/lib/aws/ses-verify";
 import sendEmail from "@/lib/sendmail";
 import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // POST: Request domain verification (Enterprise / Individual_Pro only)
 export async function POST(req: Request, props: { params: Promise<{ teamId: string }> }) {
@@ -132,7 +133,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
                 `
             });
         } catch (emailError) {
-            console.error("[DomainVerification] Failed to send admin notification:", emailError);
+            systemLogger.error("[DomainVerification] Failed to send admin notification:", emailError);
         }
 
         return NextResponse.json({
@@ -144,7 +145,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
         });
 
     } catch (error: any) {
-        console.error("[DOMAIN_VERIFICATION_POST]", error);
+        systemLogger.error("[DOMAIN_VERIFICATION_POST]", error);
         return NextResponse.json({ error: error.message || "Failed to initiate domain verification" }, { status: 500 });
     }
 }

@@ -6,6 +6,7 @@ import { prismadb } from "@/lib/prisma";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { systemLogger } from "@/lib/logger";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -271,7 +272,7 @@ export async function GET(req: Request) {
       }
     } catch (e) {
        
-      console.error("[CALENDAR_AVAILABILITY_CACHE_PERSIST]", (e as any)?.message || e);
+      systemLogger.error("[CALENDAR_AVAILABILITY_CACHE_PERSIST]", (e as any)?.message || e);
     }
 
     return NextResponse.json(
@@ -287,7 +288,7 @@ export async function GET(req: Request) {
     );
   } catch (e: any) {
      
-    console.error("[CALENDAR_AVAILABILITY_GET]", e?.message || e);
+    systemLogger.error("[CALENDAR_AVAILABILITY_GET]", e?.message || e);
     return new NextResponse("Failed to fetch availability", { status: 500 });
   }
 }

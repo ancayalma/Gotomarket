@@ -5,6 +5,7 @@ import { prismadb } from "@/lib/prisma";
 import { z } from "zod";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import phoneNormalizer from "@/lib/scraper/quality/phone-normalizer";
+import { systemLogger } from "@/lib/logger";
 
 const commitSchema = z.object({
   poolName: z.string().min(1).optional(),
@@ -286,7 +287,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error("[IMPORT_COMMIT_BATCH]", error);
+    systemLogger.error("[IMPORT_COMMIT_BATCH]", error);
     return new NextResponse(error.message || "Failed to commit import", { status: 500 });
   }
 }

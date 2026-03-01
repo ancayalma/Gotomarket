@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * DELETE /api/projects/[projectId]/members/[memberId]
@@ -58,9 +60,10 @@ export async function DELETE(
             where: { id: memberId },
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "DELETE", "ProjectMember", `Removed member ${memberId} from project ${projectId}`);
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        console.error("[PROJECT_MEMBER_DELETE]", error);
+        systemLogger.error("[PROJECT_MEMBER_DELETE]", error);
         return new NextResponse("Failed to remove member", { status: 500 });
     }
 }

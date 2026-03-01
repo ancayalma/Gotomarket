@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/calendar/preferences
@@ -62,7 +63,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, selectedIds, defaultId, colors }, { status: 200 });
   } catch (e: any) {
      
-    console.error("[CALENDAR_PREFERENCES_GET]", e?.message || e);
+    systemLogger.error("[CALENDAR_PREFERENCES_GET]", e?.message || e);
     return new NextResponse("Failed to load preferences", { status: 500 });
   }
 }
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, selectedIds: outSelected, defaultId: outDefault, colors: outColors }, { status: 200 });
   } catch (e: any) {
      
-    console.error("[CALENDAR_PREFERENCES_POST]", e?.message || e);
+    systemLogger.error("[CALENDAR_PREFERENCES_POST]", e?.message || e);
     return new NextResponse("Failed to save preferences", { status: 500 });
   }
 }

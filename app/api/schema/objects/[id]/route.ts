@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(
     req: Request,
@@ -44,7 +46,7 @@ export async function GET(
 
         return NextResponse.json(objectDef);
     } catch (error) {
-        console.error("[SCHEMA_OBJECT_GET]", error);
+        systemLogger.error("[SCHEMA_OBJECT_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -87,9 +89,10 @@ export async function DELETE(
             },
         });
 
+        await logActivityInternal(session.user.id, "DELETE", "CustomObjectDefinition", `Deleted custom object: ${objectDef?.name || id} (${id})`, teamInfo.teamId);
         return new NextResponse(null, { status: 204 });
     } catch (error) {
-        console.error("[SCHEMA_OBJECT_DELETE]", error);
+        systemLogger.error("[SCHEMA_OBJECT_DELETE]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

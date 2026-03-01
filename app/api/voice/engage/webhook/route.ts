@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/voice/engage/webhook
@@ -202,7 +203,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, action: "logged" }, { status: 200 });
   } catch (e: any) {
 
-    console.error("[VOICE_ENGAGE_WEBHOOK]", e?.message || e);
+    systemLogger.error("[VOICE_ENGAGE_WEBHOOK]", e?.message || e);
     return NextResponse.json({ ok: false, error: e?.message || "failed" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request, props: { params: Promise<{ leadId: string }> }) {
   const params = await props.params;
@@ -45,7 +46,7 @@ export async function GET(req: Request, props: { params: Promise<{ leadId: strin
     // No branding found
     return NextResponse.json({ projectId: null, brand_logo_url: null, brand_primary_color: null }, { status: 200 });
   } catch (e) {
-    console.error("[LEAD_BRAND_GET]", e);
+    systemLogger.error("[LEAD_BRAND_GET]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

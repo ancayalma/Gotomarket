@@ -3,6 +3,8 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // POST: Create a Help Hub category
 export async function POST(req: Request) {
@@ -37,9 +39,10 @@ export async function POST(req: Request) {
             },
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "CREATE", "KnowledgeCategory", `Created knowledge category: ${name}`, teamInfo?.teamId || "");
         return NextResponse.json(category, { status: 201 });
     } catch (error) {
-        console.error("[KB_CATEGORY_POST]", error);
+        systemLogger.error("[KB_CATEGORY_POST]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -71,7 +74,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json(categories);
     } catch (error) {
-        console.error("[KB_CATEGORIES_GET]", error);
+        systemLogger.error("[KB_CATEGORIES_GET]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

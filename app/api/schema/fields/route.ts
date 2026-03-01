@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
@@ -89,9 +91,10 @@ export async function POST(req: Request) {
             },
         });
 
+        await logActivityInternal(session.user.id, "CREATE", "CustomFieldDefinition", `Created field: ${newField.name} (${newField.apiName}) on object ${object_id}`, teamInfo.teamId);
         return NextResponse.json(newField);
     } catch (error) {
-        console.error("[SCHEMA_FIELDS_POST]", error);
+        systemLogger.error("[SCHEMA_FIELDS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

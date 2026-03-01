@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { stopContact } from "@/lib/aws/connect";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(
   _req: Request,
@@ -37,7 +38,7 @@ export async function POST(
 
     return new NextResponse("Stopped", { status: 200 });
   } catch (error: any) {
-    console.error("[CALL_STOP]", error?.message || error);
+    systemLogger.error("[CALL_STOP]", error?.message || error);
     return new NextResponse(error?.message || "Internal Error", { status: 500 });
   }
 }

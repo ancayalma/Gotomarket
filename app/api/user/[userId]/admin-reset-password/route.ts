@@ -8,6 +8,7 @@ import TempPasswordEmail from "@/emails/TempPasswordEmail";
 import { logActivity } from "@/actions/audit";
 import { render } from "@react-email/render";
 import sendEmail from "@/lib/sendmail";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(
     req: Request,
@@ -59,6 +60,7 @@ export async function POST(
                 id: params.userId,
             },
             data: {
+                session_version: { increment: 1 },
                 password: hashedPassword,
                 mustChangePassword: true, // Force reset on next login
             },
@@ -84,7 +86,7 @@ export async function POST(
                 replyTo: "support@basalthq.com"
             });
         } catch (emailError) {
-            console.error("[ADMIN_RESET_EMAIL_ERROR]", emailError);
+            systemLogger.error("[ADMIN_RESET_EMAIL_ERROR]", emailError);
             // Continue execution, we still reset the password in DB
         }
 
@@ -96,7 +98,7 @@ export async function POST(
 
         return NextResponse.json({ message: "Password reset and email sent." });
     } catch (error) {
-        console.log("[ADMIN_RESET_PASSWORD_POST]", error);
+        systemLogger.error("[ADMIN_RESET_PASSWORD_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

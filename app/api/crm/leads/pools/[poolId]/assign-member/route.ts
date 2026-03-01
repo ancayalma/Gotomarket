@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
 import { sendAssignmentNotification } from "@/lib/notifications/assignment-notify";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/crm/leads/pools/[poolId]/assign-member
@@ -101,12 +103,13 @@ export async function POST(
                 assignmentId: poolId,
                 role: "Member",
                 description: pool.description || undefined,
-            }).catch((err) => console.error("[NOTIFY] Pool assignment notification failed:", err));
+            }).catch((err) => systemLogger.error("[NOTIFY] Pool assignment notification failed:", err));
         }
 
+        await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "crm_Lead_Pools", `Assigned member ${userId} to pool ${poolId}`);
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        console.error("[POOL_ASSIGN_MEMBER_POST]", error);
+        systemLogger.error("[POOL_ASSIGN_MEMBER_POST]", error);
         return new NextResponse("Failed to assign member", { status: 500 });
     }
 }
@@ -179,9 +182,10 @@ export async function DELETE(
             },
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "crm_Lead_Pools", `Removed member ${userId} from pool ${poolId}`);
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        console.error("[POOL_REMOVE_MEMBER_DELETE]", error);
+        systemLogger.error("[POOL_REMOVE_MEMBER_DELETE]", error);
         return new NextResponse("Failed to remove member", { status: 500 });
     }
 }
@@ -232,7 +236,7 @@ export async function GET(
 
         return NextResponse.json({ members }, { status: 200 });
     } catch (error) {
-        console.error("[POOL_MEMBERS_GET]", error);
+        systemLogger.error("[POOL_MEMBERS_GET]", error);
         return new NextResponse("Failed to fetch pool members", { status: 500 });
     }
 }

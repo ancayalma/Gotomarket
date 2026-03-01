@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getGmailClientForUser } from "@/lib/gmail";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
         });
 
     } catch (error: any) {
-        console.error("[SIGNATURE_SYNC]", error);
+        systemLogger.error("[SIGNATURE_SYNC]", error);
         return new NextResponse(error.message || "Internal Server Error", { status: 500 });
     }
 }

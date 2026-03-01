@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
                     where: { id: { in: validUserIds } },
                     select: { email: true }
                 });
-                users.forEach(u => {
+                (users as any[]).forEach(u => {
                     if (u.email) allEmails.add(u.email);
                 });
             }

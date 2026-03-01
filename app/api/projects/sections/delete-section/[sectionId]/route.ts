@@ -2,6 +2,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { systemLogger } from "@/lib/logger";
 
 export async function DELETE(req: Request, props: { params: Promise<{ sectionId: string }> }) {
   const params = await props.params;
@@ -29,7 +30,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ sectionId:
     console.log("Delete section:", sectionId);
     return NextResponse.json({ status: 200 });
   } catch (error) {
-    console.log("[DELETE_SECTION]", error);
+    systemLogger.error("[DELETE_SECTION]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

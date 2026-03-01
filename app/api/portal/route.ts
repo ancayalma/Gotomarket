@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import crypto from "crypto";
+import { systemLogger } from "@/lib/logger";
 
 // GET - List portals for user
 export async function GET(req: NextRequest) {
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ portals });
     } catch (err: any) {
-        console.error("[Portal API] GET Error:", err);
+        systemLogger.error("[Portal API] GET Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ portal });
     } catch (err: any) {
-        console.error("[Portal API] POST Error:", err);
+        systemLogger.error("[Portal API] POST Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

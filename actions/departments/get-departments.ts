@@ -213,7 +213,7 @@ export async function getMembersByDepartment(): Promise<{
         });
 
         // Group members by department
-        const unassigned = members.filter(m => !m.department_id);
+        const unassigned = (members as any[]).filter(m => !m.department_id);
         const deptMap = new Map<string, typeof members>();
 
         for (const dept of departments) {
@@ -229,7 +229,7 @@ export async function getMembersByDepartment(): Promise<{
         return {
             success: true,
             unassigned,
-            departments: departments.map(dept => ({
+            departments: (departments as any[]).map(dept => ({
                 id: dept.id,
                 name: dept.name,
                 members: deptMap.get(dept.id) || [],

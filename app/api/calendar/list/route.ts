@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCalendarClientForUser } from "@/lib/gmail";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/calendar/list
@@ -49,7 +50,7 @@ export async function GET(_req: Request) {
     return NextResponse.json({ ok: true, calendars }, { status: 200 });
   } catch (e: any) {
 
-    console.error("[CALENDAR_LIST_GET]", e?.message || e);
+    systemLogger.error("[CALENDAR_LIST_GET]", e?.message || e);
     // Fix: Return the actual error message to the frontend for debugging
     const errorMessage = e?.response?.data?.error?.message || e?.message || "Failed to list calendars";
     return new NextResponse(errorMessage, { status: 500 });

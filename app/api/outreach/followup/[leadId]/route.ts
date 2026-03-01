@@ -9,6 +9,7 @@ import { getAiSdkModel } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 import React from "react";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/outreach/followup/[leadId]
@@ -201,7 +202,7 @@ export async function POST(req: Request, { params }: Params) {
       bodyText = object.body || bodyText;
     } catch (err: any) {
 
-      console.error("[FOLLOWUP][AI_ERROR]", err?.message || err);
+      systemLogger.error("[FOLLOWUP][AI_ERROR]", err?.message || err);
     }
 
     // Render HTML
@@ -252,7 +253,7 @@ export async function POST(req: Request, { params }: Params) {
     return NextResponse.json({ status: "ok", leadId: lead.id, to: toEmail, subject }, { status: 200 });
   } catch (error) {
 
-    console.error("[OUTREACH_FOLLOWUP_POST]", error);
+    systemLogger.error("[OUTREACH_FOLLOWUP_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

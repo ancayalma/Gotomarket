@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { generateQuotePdf } from "@/lib/pdf-utils";
 import { sendTeamEmail } from "@/lib/email/team-mailer";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(
     req: Request,
@@ -80,10 +82,12 @@ export async function POST(
             data: { status: "SENT" }
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "crm_Quotes", `Sent quote ${quote.quoteNumber} via email to ${recipientEmail}`, session.user.team_id as string);
+
         return NextResponse.json({ success: true, message: "Quote sent successfully" });
 
     } catch (error: any) {
-        console.error("[QUOTE_SEND_EMAIL_ERROR]", error);
+        systemLogger.error("[QUOTE_SEND_EMAIL_ERROR]", error);
         return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
     }
 }

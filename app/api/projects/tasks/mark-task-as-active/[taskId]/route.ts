@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request, props: { params: Promise<{ taskId: string }> }) {
     const params = await props.params;
@@ -36,10 +37,10 @@ export async function POST(req: Request, props: { params: Promise<{ taskId: stri
             });
 
             // Try to find "In Progress", then "To Do", then "Incom", then default to first
-            const activeSection = sections.find(s =>
-                s.title.toLowerCase().includes("progress") ||
-                s.title.toLowerCase().includes("doing")
-            ) || sections.find(s =>
+            const activeSection = (sections as any[]).find(s =>
+                s.title.toLowerCase().includes("complete") ||
+                s.title.toLowerCase().includes("done")
+            ) || (sections as any[]).find(s =>
                 s.title.toLowerCase().includes("to do") ||
                 s.title.toLowerCase().includes("incom")
             ) || sections[0];
@@ -62,7 +63,7 @@ export async function POST(req: Request, props: { params: Promise<{ taskId: stri
 
         return NextResponse.json({ status: 200 });
     } catch (error) {
-        console.log("[UNDO_TASK_DONE_POST]", error);
+        systemLogger.error("[UNDO_TASK_DONE_POST]", error);
         return new NextResponse("Initial error", { status: 500 });
     }
 }

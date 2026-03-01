@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import { logActivityInternal } from "@/actions/audit";
 
 // GET - Get single form
 export async function GET(
@@ -138,6 +139,7 @@ export async function PATCH(
             },
         });
 
+        await logActivityInternal(userId, "UPDATE", "Form", `Updated form: ${form.name} (${formId})`, teamId);
         return NextResponse.json(form);
     } catch (error) {
         console.error("Error updating form:", error);
@@ -190,6 +192,7 @@ export async function DELETE(
             where: { id: formId },
         });
 
+        await logActivityInternal(userId, "DELETE", "Form", `Deleted form: ${existingForm.name} (${formId})`, teamId);
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Error deleting form:", error);

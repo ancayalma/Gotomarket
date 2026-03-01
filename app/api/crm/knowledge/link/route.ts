@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // POST: Link a KB article to a case (or record suggested article)
 export async function POST(req: Request) {
@@ -41,9 +43,10 @@ export async function POST(req: Request) {
             data: { view_count: { increment: 1 } },
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "CREATE", "KnowledgeArticleLink", `Linked article ${article_id} to case ${case_id}`);
         return NextResponse.json(link, { status: 201 });
     } catch (error) {
-        console.error("[KB_LINK_POST]", error);
+        systemLogger.error("[KB_LINK_POST]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -76,9 +79,10 @@ export async function PUT(req: Request) {
                 : { not_helpful_count: { increment: 1 } },
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "KnowledgeArticleLink", `Updated helpfulness feedback for article ${article_id} on case ${case_id}`);
         return NextResponse.json(link);
     } catch (error) {
-        console.error("[KB_LINK_PUT]", error);
+        systemLogger.error("[KB_LINK_PUT]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -157,7 +161,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json(enriched);
     } catch (error) {
-        console.error("[KB_SUGGESTIONS_GET]", error);
+        systemLogger.error("[KB_SUGGESTIONS_GET]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

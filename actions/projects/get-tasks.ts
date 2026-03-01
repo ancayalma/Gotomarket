@@ -38,7 +38,7 @@ export const getTasks = async () => {
   const sections = await prismadb.sections.findMany({
     where: {
       board: {
-        in: boards.map((b) => b.id)
+        in: (boards as any[]).map((b) => b.id)
       }
     },
   });
@@ -48,7 +48,7 @@ export const getTasks = async () => {
   const data = await prismadb.tasks.findMany({
     where: {
       section: {
-        in: sections.map((s) => s.id)
+        in: (sections as any[]).map((s) => s.id)
       }
     },
     include: {

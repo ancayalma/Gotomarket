@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
         if (item) {
             (async () => {
                 try {
-                    console.log(`[VaruniLink] Email Click Detected for Outreach ID: ${outreachId} -> ${destination}`);
+                    systemLogger.error(`[VaruniLink] Email Click Detected for Outreach ID: ${outreachId} -> ${destination}`);
                     // await prismadb.crm_Outreach_Events.create({ ... })
                 } catch (e) {
                     console.error("Failed to track click", e);

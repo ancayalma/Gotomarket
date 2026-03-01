@@ -40,6 +40,7 @@ export async function POST(req: Request) {
         await prismadb.users.update({
             where: { id: user.id },
             data: {
+                session_version: { increment: 1 },
                 mfaEnabled: true,
                 mfaMethod: "WEBAUTHN",
             },

@@ -12,6 +12,7 @@ import { hashPassword } from "@/lib/password-utils";
 import InviteUserEmail from "@/emails/InviteUser";
 import sendEmail from "@/lib/sendmail";
 import { render } from "@react-email/render";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
       }
     }
   } catch (error) {
-    console.log("[USERACTIVATE_POST]", error);
+    systemLogger.error("[USERACTIVATE_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { getBlobServiceClient } from "@/lib/s3-storage";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { systemLogger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -74,11 +75,11 @@ export async function DELETE(request: Request, props: { params: Promise<{ invoic
           if (blobName) {
             const blockBlobClient = containerClient.getBlockBlobClient(blobName);
             await blockBlobClient.deleteIfExists();
-            console.log("[DELETE] Deleted blob from Azure:", blobName);
+            systemLogger.error("[DELETE] Deleted blob from Azure:", blobName);
           }
         }
       } catch (fileErr) {
-        console.error("[DELETE] Failed to delete file from Azure (non-fatal):", fileErr);
+        systemLogger.error("[DELETE] Failed to delete file from Azure (non-fatal):", fileErr);
       }
     }
 
@@ -89,11 +90,11 @@ export async function DELETE(request: Request, props: { params: Promise<{ invoic
         id: invoiceId,
       },
     });
-    console.log("[DELETE] Invoice deleted from database:", invoiceId);
+    systemLogger.error("[DELETE] Invoice deleted from database:", invoiceId);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err: any) {
-    console.error("[DELETE] Error:", err);
+    systemLogger.error("[DELETE] Error:", err);
     return NextResponse.json(
       { error: err.message || "Something went wrong while deleting invoice" },
       { status: 500 }

@@ -52,7 +52,7 @@ export const getUserMessages = async () => {
 
     // 3. Normalize and Combine
     const notifications = [
-        ...internalMessages.map(m => ({
+        ...(internalMessages as any[]).map(m => ({
             id: m.message.id,
             type: 'message' as const,
             createdAt: m.createdAt,

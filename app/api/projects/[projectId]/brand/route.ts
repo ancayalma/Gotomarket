@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function PATCH(req: Request, props: { params: Promise<{ projectId: string }> }) {
   const params = await props.params;
@@ -26,7 +27,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ projectId: 
     await (prismadb as any).boards.update({ where: { id: params.projectId }, data });
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (e) {
-    console.error("[PROJECT_BRAND_PATCH]", e);
+    systemLogger.error("[PROJECT_BRAND_PATCH]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -40,7 +41,7 @@ export async function GET(req: Request, props: { params: Promise<{ projectId: st
     if (!board) return new NextResponse("Project not found", { status: 404 });
     return NextResponse.json({ brand_logo_url: board.brand_logo_url, brand_primary_color: board.brand_primary_color }, { status: 200 });
   } catch (e) {
-    console.error("[PROJECT_BRAND_GET]", e);
+    systemLogger.error("[PROJECT_BRAND_GET]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

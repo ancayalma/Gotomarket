@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/projects/my-assignments
@@ -40,7 +41,7 @@ export async function GET() {
 
         return NextResponse.json({ projects }, { status: 200 });
     } catch (error) {
-        console.error("[PROJECTS_MY_ASSIGNMENTS_GET]", error);
+        systemLogger.error("[PROJECTS_MY_ASSIGNMENTS_GET]", error);
         return new NextResponse("Failed to fetch assignments", { status: 500 });
     }
 }

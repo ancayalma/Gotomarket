@@ -29,7 +29,7 @@ export const getRecentFiles = async () => {
             take: 10
         });
 
-        return files.map(f => ({
+        return (files as any[]).map(f => ({
             id: f.id,
             name: f.document_name,
             url: f.document_file_url,

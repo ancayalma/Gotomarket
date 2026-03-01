@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // GET /api/crm/leads/:leadId/activities
 // Returns recent lead activities (latest first). Non-admins are restricted to their assigned leads.
@@ -23,7 +24,7 @@ export async function GET(_req: Request, { params }: Params) {
     });
 
     if (contact) {
-      const leadIdTag = contact.tags.find(t => t.startsWith("leadId:"));
+      const leadIdTag = (contact.tags as any[]).find(t => t.startsWith("leadId:"));
       if (leadIdTag) {
         leadId = leadIdTag.split(":")[1];
       } else if (contact.email) {
@@ -82,19 +83,19 @@ export async function GET(_req: Request, { params }: Params) {
     });
 
     // Fetch associated outreach items for email tracking details
-    const trackingTokens = activities
-      .filter(a => a.type === "EMAIL" && (a.metadata as any)?.trackingToken)
-      .map(a => (a.metadata as any).trackingToken);
+    const trackingTokens = (activities as any[])
+      .filter((a: any) => a.type === "EMAIL" && (a.metadata as any)?.trackingToken)
+      .map((a: any) => (a.metadata as any).trackingToken);
 
     const outreachItems = await prismadb.crm_Outreach_Items.findMany({
       where: { tracking_token: { in: trackingTokens } },
     });
 
     // Merge activities with outreach items
-    const mergedActivities = activities.map(activity => {
+    const mergedActivities = (activities as any[]).map(activity => {
       if (activity.type === "EMAIL") {
         const token = (activity.metadata as any)?.trackingToken;
-        const outreach = outreachItems.find(o => o.tracking_token === token);
+        const outreach = (outreachItems as any[]).find((o: any) => o.tracking_token === token);
         return {
           ...activity,
           outreach
@@ -106,7 +107,7 @@ export async function GET(_req: Request, { params }: Params) {
     return NextResponse.json({ activities: mergedActivities }, { status: 200 });
   } catch (error) {
 
-    console.error("[LEAD_ACTIVITIES_GET]", error);
+    systemLogger.error("[LEAD_ACTIVITIES_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

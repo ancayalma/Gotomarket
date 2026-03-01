@@ -3,6 +3,8 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // POST: Update agent presence (heartbeat + status change)
 export async function POST(req: Request) {
@@ -38,9 +40,10 @@ export async function POST(req: Request) {
             },
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "AgentPresence", `Updated agent presence status to ${status || "ONLINE"}`);
         return NextResponse.json(presence);
     } catch (error) {
-        console.error("[AGENT_PRESENCE_POST]", error);
+        systemLogger.error("[AGENT_PRESENCE_POST]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -68,7 +71,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json(presences);
     } catch (error) {
-        console.error("[AGENT_PRESENCE_GET]", error);
+        systemLogger.error("[AGENT_PRESENCE_GET]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

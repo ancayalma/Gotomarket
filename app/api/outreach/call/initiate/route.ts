@@ -10,6 +10,7 @@ import { prismadb } from "@/lib/prisma";
 import { startOutboundCall } from "@/lib/aws/connect";
 import { createSipMediaApplicationCall } from "@/lib/aws/chime-voice";
 import { ChimeSDKMeetingsClient, CreateMeetingCommand, CreateAttendeeCommand } from "@aws-sdk/client-chime-sdk-meetings";
+import { systemLogger } from "@/lib/logger";
 
 // Minimal global for agent bot join info across branches in this request scope
 // (kept function-local via closure variable below)
@@ -177,7 +178,7 @@ export async function POST(req: Request) {
 
     let contactId: string;
     if (process.env.CHIME_SMA_APPLICATION_ID) {
-      console.log('[CALL_INITIATE] Using SMA path', {
+      systemLogger.error('[CALL_INITIATE] Using SMA path', {
         dest,
         hasMeeting: !!(body?.meeting && body.meeting.meetingId && body.meeting.joinToken),
         meetingId: body?.meeting?.meetingId,
@@ -197,19 +198,19 @@ export async function POST(req: Request) {
           sipHeaders,
         });
         contactId = transactionId;
-        console.log('[CALL_INITIATE] SMA transactionId', contactId);
+        systemLogger.error('[CALL_INITIATE] SMA transactionId', contactId);
       } catch (e: any) {
-        console.error('[CALL_INITIATE][SMA_ERROR]', e?.message || e);
+        systemLogger.error('[CALL_INITIATE][SMA_ERROR]', e?.message || e);
         return new NextResponse(e?.message || 'SMA call failed', { status: 500 });
       }
     } else {
-      console.log('[CALL_INITIATE] Using Connect path', { dest });
+      systemLogger.error('[CALL_INITIATE] Using Connect path', { dest });
       try {
         const { contactId: cid } = await startOutboundCall({ destinationPhoneNumber: dest, attributes });
         contactId = cid;
-        console.log('[CALL_INITIATE] Connect contactId', contactId);
+        systemLogger.error('[CALL_INITIATE] Connect contactId', contactId);
       } catch (e: any) {
-        console.error('[CALL_INITIATE][CONNECT_ERROR]', e?.message || e);
+        systemLogger.error('[CALL_INITIATE][CONNECT_ERROR]', e?.message || e);
         return new NextResponse(e?.message || 'Connect call failed', { status: 500 });
       }
     }
@@ -240,7 +241,7 @@ export async function POST(req: Request) {
     }
     return NextResponse.json(payload, { status: 200 });
   } catch (error: any) {
-    console.error("[CALL_INITIATE]", error?.message || error);
+    systemLogger.error("[CALL_INITIATE]", error?.message || error);
     return new NextResponse(error?.message || "Internal Error", { status: 500 });
   }
 }

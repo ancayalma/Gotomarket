@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/crm/leads/autogen/status/[jobId]
@@ -66,7 +67,7 @@ export async function GET(
       { status: 200 }
     );
   } catch (error) {
-    console.error("[LEADS_AUTOGEN_STATUS_GET]", error);
+    systemLogger.error("[LEADS_AUTOGEN_STATUS_GET]", error);
     return new NextResponse("Failed to fetch job status", { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 // POST: Email-to-Case — Parse inbound email and create a case
 export async function POST(req: Request) {
@@ -102,7 +103,7 @@ export async function POST(req: Request) {
             { status: 201 }
         );
     } catch (error) {
-        console.error("[EMAIL_TO_CASE_POST]", error);
+        systemLogger.error("[EMAIL_TO_CASE_POST]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

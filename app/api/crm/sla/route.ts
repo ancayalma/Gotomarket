@@ -3,6 +3,8 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // POST: Create SLA Policy
 export async function POST(req: Request) {
@@ -23,9 +25,10 @@ export async function POST(req: Request) {
             },
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "CREATE", "sLA_Policy", `Created SLA Policy ${policy.id}`, teamInfo?.teamId!);
         return NextResponse.json(policy, { status: 201 });
     } catch (error) {
-        console.error("[CREATE_SLA_POLICY_POST]", error);
+        systemLogger.error("[CREATE_SLA_POLICY_POST]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -56,7 +59,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json(policies, { status: 200 });
     } catch (error) {
-        console.error("[GET_SLA_POLICIES]", error);
+        systemLogger.error("[GET_SLA_POLICIES]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -81,9 +84,11 @@ export async function PUT(req: Request) {
             data: updateData,
         });
 
+        const teamInfo = await getCurrentUserTeamId();
+        await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "sLA_Policy", `Updated SLA Policy ${id}`, teamInfo?.teamId!);
         return NextResponse.json(updatedPolicy, { status: 200 });
     } catch (error) {
-        console.error("[UPDATE_SLA_POLICY_PUT]", error);
+        systemLogger.error("[UPDATE_SLA_POLICY_PUT]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

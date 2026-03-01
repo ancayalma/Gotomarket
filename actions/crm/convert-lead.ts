@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export type ActionResponse = {
     success: boolean;
@@ -162,7 +163,7 @@ export async function convertLeadToOpportunity(leadId: string): Promise<ActionRe
         };
 
     } catch (error: any) {
-        console.error("[CONVERT_LEAD]", error);
+        systemLogger.error("[CONVERT_LEAD]", error);
         return { success: false, error: error.message || "Failed to convert lead" };
     }
 }

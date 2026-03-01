@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
     try {
@@ -37,7 +38,7 @@ export async function GET() {
             isAdmin: user.is_account_admin || user.is_admin || false,
         });
     } catch (error: any) {
-        console.error("[GET /api/teams/my-team] Error:", error);
+        systemLogger.error("[GET /api/teams/my-team] Error:", error);
         return NextResponse.json(
             { error: error.message || "Failed to get team" },
             { status: 500 }

@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "No authenticators found" }, { status: 400 });
     }
 
-    const authenticator = user.authenticators.find(
+    const authenticator = (user.authenticators as any[]).find(
         (a) => a.credentialID === body.id
     );
 

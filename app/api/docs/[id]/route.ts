@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prismadb } from "@/lib/prisma";
 import { logActivity } from "@/actions/audit";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(
     req: Request,
@@ -21,7 +22,7 @@ export async function GET(
 
         return NextResponse.json(doc);
     } catch (error) {
-        console.log("[DOC_GET]", error);
+        systemLogger.error("[DOC_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -57,7 +58,7 @@ export async function PATCH(
         revalidatePath('/docs');
         return NextResponse.json(doc);
     } catch (error) {
-        console.log("[DOC_PATCH]", error);
+        systemLogger.error("[DOC_PATCH]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -78,7 +79,7 @@ export async function DELETE(
         revalidatePath('/docs');
         return NextResponse.json(doc);
     } catch (error) {
-        console.log("[DOC_DELETE]", error);
+        systemLogger.error("[DOC_DELETE]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

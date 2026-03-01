@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function PUT(req: Request) {
   const session = await getServerSession(authOptions);
@@ -126,7 +127,7 @@ export async function PUT(req: Request) {
       );
     }
   } catch (error) {
-    console.log("[UPDATE_TASK_POSITION_POST]", error);
+    systemLogger.error("[UPDATE_TASK_POSITION_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

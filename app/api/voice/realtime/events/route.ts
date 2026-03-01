@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   // ── Auth guard ──
@@ -22,11 +23,11 @@ export async function POST(req: Request) {
 
     const time = new Date().toISOString();
     // Server-side logging to surface in terminal
-    console.log(`[VOICE_REALTIME_EVENT ${time}]`, body);
+    systemLogger.error(`[VOICE_REALTIME_EVENT ${time}]`, body);
 
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    console.error("[VOICE_REALTIME_EVENT_ERROR]", e?.message || e);
+    systemLogger.error("[VOICE_REALTIME_EVENT_ERROR]", e?.message || e);
     return NextResponse.json({ ok: false, error: e?.message || "Unknown error" }, { status: 500 });
   }
 }

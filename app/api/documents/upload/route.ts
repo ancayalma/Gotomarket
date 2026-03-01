@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getBlobServiceClient } from "@/lib/s3-storage";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // POST /api/documents/upload
 // Generic Azure Blob upload for documents (not tied to a project).
@@ -55,9 +57,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    await logActivityInternal(session.user.id, "CREATE", "Documents", `Uploaded document: ${file.name} (${doc.id}, ${buffer.length} bytes)`, teamId || undefined);
     return NextResponse.json({ ok: true, document: doc }, { status: 201 });
   } catch (e: any) {
-    console.error("[DOCUMENTS_UPLOAD_POST]", e);
+    systemLogger.error("[DOCUMENTS_UPLOAD_POST]", e);
     return NextResponse.json({ error: e?.message || "Internal Error" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true, message: "Terms accepted successfully" });
     } catch (error) {
-        console.log("[ACCEPT_TERMS_POST]", error);
+        systemLogger.error("[ACCEPT_TERMS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

@@ -140,5 +140,5 @@ if (!crmDbUrl && primaryDbUrl) {
     }
 }
 
-export const dbAdapter = new DatabaseAdapter(prismadb, primaryDbUrl);
-export const crmDbAdapter = new DatabaseAdapter(prismadbCrm, crmDbUrl || "");
+export const dbAdapter = new DatabaseAdapter(prismadb as any, primaryDbUrl);
+export const crmDbAdapter = new DatabaseAdapter(prismadbCrm as any, crmDbUrl || "");

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function PATCH(req: NextRequest) {
     try {
@@ -30,7 +31,7 @@ export async function PATCH(req: NextRequest) {
 
         return NextResponse.json(updated);
     } catch (error) {
-        console.error("[SUBMISSION_UPDATE]", error);
+        systemLogger.error("[SUBMISSION_UPDATE]", error);
         return NextResponse.json({ error: "Internal Error" }, { status: 500 });
     }
 }

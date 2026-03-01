@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prismadb } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true, jiraId });
     } catch (error) {
-        console.error("[JIRA_PUSH_ERROR]", error);
+        systemLogger.error("[JIRA_PUSH_ERROR]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

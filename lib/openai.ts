@@ -4,6 +4,8 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createMistral } from "@ai-sdk/mistral";
 import { prismadb } from "@/lib/prisma";
+import { decryptSecret } from "@/lib/encryption";
+
 
 export function isReasoningModel(modelId: string | undefined | null): boolean {
     if (!modelId) return false;
@@ -154,7 +156,9 @@ export async function getAiSdkModel(userId: string | "system") {
     // 3. Determine Final Config
     let finalProvider = systemProvider;
     let finalModelId = systemModelId;
-    let finalApiKey: string | undefined = systemConfig?.apiKey ?? undefined;
+    let rawSystemKey = systemConfig?.apiKey ?? undefined;
+    if (rawSystemKey) rawSystemKey = decryptSecret(rawSystemKey) || rawSystemKey;
+    let finalApiKey: string | undefined = rawSystemKey;
     let finalResourceName: string | undefined = undefined;
     let finalBaseURL: string | undefined = systemConfig?.baseUrl ?? undefined;
 
@@ -187,7 +191,7 @@ export async function getAiSdkModel(userId: string | "system") {
                     where: { provider: finalProvider }
                 });
                 if (specificSystemConfig?.apiKey) {
-                    finalApiKey = specificSystemConfig.apiKey;
+                    finalApiKey = decryptSecret(specificSystemConfig.apiKey) || specificSystemConfig.apiKey;
                 } else {
                     finalApiKey = undefined;
                 }
@@ -205,7 +209,7 @@ export async function getAiSdkModel(userId: string | "system") {
         } else {
             // Use custom team key
             if (teamConfig.apiKey) {
-                finalApiKey = teamConfig.apiKey;
+                finalApiKey = decryptSecret(teamConfig.apiKey) || teamConfig.apiKey;
             }
             // Note: TeamAiConfig currently doesn't support storing resourceName, 
             // so if they use a custom key for Azure, they might still rely on System resourceName or Env var.

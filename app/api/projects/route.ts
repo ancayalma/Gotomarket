@@ -3,21 +3,23 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
-  console.log('[GET /api/projects] Request started');
+  systemLogger.error('[GET /api/projects] Request started');
   const session = await getServerSession(authOptions);
   if (!session) {
-    console.log('[GET /api/projects] No session');
+    systemLogger.error('[GET /api/projects] No session');
     return new NextResponse("Unauthenticated", { status: 401 });
   }
   try {
     const teamInfo = await getCurrentUserTeamId();
-    console.log('[GET /api/projects] Team Info:', teamInfo);
+    systemLogger.error('[GET /api/projects] Team Info:', teamInfo);
     const teamId = teamInfo?.teamId;
 
     if (!session?.user?.id) {
-      console.log('[GET /api/projects] Missing session.user.id');
+      systemLogger.error('[GET /api/projects] Missing session.user.id');
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -33,7 +35,7 @@ export async function GET() {
       });
     }
 
-    console.log('[GET /api/projects] orConditions:', JSON.stringify(orConditions));
+    systemLogger.error('[GET /api/projects] orConditions:', JSON.stringify(orConditions));
 
     // Return projects (boards) accessible to the user
     const boards = await prismadb.boards.findMany({
@@ -45,7 +47,7 @@ export async function GET() {
     });
     return NextResponse.json({ projects: boards }, { status: 200 });
   } catch (e) {
-    console.error("[PROJECTS_GET] Error:", e);
+    systemLogger.error("[PROJECTS_GET] Error:", e);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
@@ -142,9 +144,10 @@ export async function POST(req: Request) {
 
     // Task creation removed as per user request to clean up flow
 
+    await logActivityInternal(session.user.id, "CREATE", "Boards", `Created project: ${newBoard.title} (${newBoard.id})`, teamId || undefined);
     return NextResponse.json({ newBoard }, { status: 200 });
   } catch (error) {
-    console.log("[NEW_BOARD_POST]", error);
+    systemLogger.error("[NEW_BOARD_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }
@@ -183,12 +186,14 @@ export async function PUT(req: Request) {
       },
     });
 
+    const teamInfo = await getCurrentUserTeamId();
+    await logActivityInternal(session.user.id, "UPDATE", "Boards", `Updated project: ${title} (${id})`, teamInfo?.teamId || undefined);
     return NextResponse.json(
       { message: "Board updated successfullsy" },
       { status: 200 }
     );
   } catch (error) {
-    console.log("[UPDATE_BOARD_POST]", error);
+    systemLogger.error("[UPDATE_BOARD_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

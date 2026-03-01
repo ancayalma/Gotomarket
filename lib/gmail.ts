@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { prismadb } from "@/lib/prisma";
+import { encryptSecret, decryptSecret } from "@/lib/encryption";
 
 // Scopes: send and modify (read/thread access for replies/bounces)
 export const GMAIL_SCOPES = [
@@ -126,8 +127,8 @@ export async function exchangeCodeForTokens(userId: string, code: string) {
     await prismadb.gmail_Tokens.upsert({
       where: { id: existing?.id || "new" },
       update: {
-        access_token: tokens.access_token || existing?.access_token || "",
-        refresh_token: tokens.refresh_token || existing?.refresh_token || "",
+        access_token: encryptSecret(tokens.access_token || existing?.access_token || ""),
+        refresh_token: encryptSecret(tokens.refresh_token || existing?.refresh_token || ""),
         scope: tokens.scope || existing?.scope || undefined,
         expiry_date: tokens.expiry_date ? new Date(tokens.expiry_date) : existing?.expiry_date || undefined,
         provider: "google",
@@ -136,8 +137,8 @@ export async function exchangeCodeForTokens(userId: string, code: string) {
       create: {
         user: userId,
         provider: "google",
-        access_token: tokens.access_token || "",
-        refresh_token: tokens.refresh_token || existing?.refresh_token || "",
+        access_token: encryptSecret(tokens.access_token || ""),
+        refresh_token: encryptSecret(tokens.refresh_token || existing?.refresh_token || ""),
         scope: tokens.scope || undefined,
         expiry_date: tokens.expiry_date ? new Date(tokens.expiry_date) : undefined,
         createdAt: new Date(),
@@ -149,8 +150,8 @@ export async function exchangeCodeForTokens(userId: string, code: string) {
       data: {
         user: userId,
         provider: "google",
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
+        access_token: encryptSecret(tokens.access_token),
+        refresh_token: encryptSecret(tokens.refresh_token),
         scope: tokens.scope || undefined,
         expiry_date: tokens.expiry_date ? new Date(tokens.expiry_date) : undefined,
         createdAt: new Date(),
@@ -171,8 +172,8 @@ export async function getGmailClientForUser(userId: string) {
   if (!token) return null;
 
   oauth2.setCredentials({
-    access_token: token.access_token || undefined,
-    refresh_token: token.refresh_token || undefined,
+    access_token: decryptSecret(token.access_token) || undefined,
+    refresh_token: decryptSecret(token.refresh_token) || undefined,
     scope: token.scope || undefined,
     expiry_date: token.expiry_date ? new Date(token.expiry_date).getTime() : undefined,
   });
@@ -183,7 +184,7 @@ export async function getGmailClientForUser(userId: string) {
     if (newTokens?.token && newTokens.token !== token.access_token) {
       await prismadb.gmail_Tokens.update({
         where: { id: token.id },
-        data: { access_token: newTokens.token, updatedAt: new Date() } as any,
+        data: { access_token: encryptSecret(newTokens.token), updatedAt: new Date() } as any,
       });
     }
   } catch {
@@ -245,8 +246,8 @@ export async function getGoogleOAuth2ForUser(userId: string) {
   if (!token) return null;
 
   oauth2.setCredentials({
-    access_token: token.access_token || undefined,
-    refresh_token: token.refresh_token || undefined,
+    access_token: decryptSecret(token.access_token) || undefined,
+    refresh_token: decryptSecret(token.refresh_token) || undefined,
     scope: token.scope || undefined,
     expiry_date: token.expiry_date ? new Date(token.expiry_date).getTime() : undefined,
   });

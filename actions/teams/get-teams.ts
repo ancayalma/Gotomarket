@@ -1,6 +1,7 @@
 "use server";
 
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // Version: 2026-02-12-v5 - Switched to Internal Prisma Client Path
 export const getTeams = async () => {
@@ -55,7 +56,7 @@ export const getTeams = async () => {
 
         return aggregatedTeams;
     } catch (error) {
-        console.error("[GET_TEAMS]", error);
+        systemLogger.error("[GET_TEAMS]", error);
         return [];
     }
 };

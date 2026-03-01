@@ -1,9 +1,8 @@
-
 import { cache } from "react";
-import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { verifyImpersonatedTeamId } from "@/lib/cookie-utils";
 
 /**
  * React.cache() ensures this only runs ONCE per server request,
@@ -40,11 +39,25 @@ export const getCurrentUserTeamId = cache(async () => {
     let isImpersonating = false;
 
     if (isGlobalAdmin) {
-        const cookieStore = await cookies();
-        const impersonatedId = cookieStore.get("impersonated_team_id")?.value;
-        if (impersonatedId) {
-            effectiveTeamId = impersonatedId;
-            isImpersonating = true;
+        try {
+            const { cookies } = await import("next/headers");
+            const cookieStore = await cookies();
+            const impersonatedToken = cookieStore.get("impersonated_team_id")?.value;
+            if (impersonatedToken) {
+                const verifiedId = await verifyImpersonatedTeamId(impersonatedToken);
+                if (verifiedId) {
+                    effectiveTeamId = verifiedId;
+                    isImpersonating = true;
+                } else {
+                    // If signature verify fails, delete the cookie silently
+                    try {
+                        cookieStore.delete("impersonated_team_id");
+                    } catch (e) { /* ignore */ }
+                }
+            }
+        } catch (e) {
+            // next/headers might not be available in non-request contexts (like instrumentation boot)
+            // or if we're theoretically in a non-server component environment.
         }
     }
 

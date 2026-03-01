@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 
 import { prismadb } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { logActivityInternal } from "@/actions/audit";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export async function DELETE(req: Request, props: { params: Promise<{ projectId: string }> }) {
   const params = await props.params;
@@ -43,9 +46,11 @@ export async function DELETE(req: Request, props: { params: Promise<{ projectId:
       },
     });
 
+    const teamInfo = await getCurrentUserTeamId();
+    await logActivityInternal(session.user.id, "DELETE", "Boards", `Deleted project: ${boardId}`, teamInfo?.teamId || undefined);
     return NextResponse.json({ message: "Board deleted" }, { status: 200 });
   } catch (error) {
-    console.log("[PROJECT_DELETE]", error);
+    systemLogger.error("[PROJECT_DELETE]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

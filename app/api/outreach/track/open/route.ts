@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
                 // Log the view
                 // requires a model like `crm_Outreach_Events` or similar
                 // For now, logging to console or updating a counter if model exists
-                console.log(`[VaruniLink] Email Open Detected for Outreach ID: ${outreachId}`);
+                systemLogger.error(`[VaruniLink] Email Open Detected for Outreach ID: ${outreachId}`);
 
                 // Assuming we might have a crm_Outreach or similar table
                 // await prismadb.crm_Campaign_Leads.update(...)

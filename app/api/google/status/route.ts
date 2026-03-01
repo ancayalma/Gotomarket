@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { GMAIL_SCOPES } from "@/lib/gmail";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/google/status
@@ -70,7 +71,7 @@ export async function GET(req: Request) {
     );
   } catch (e: any) {
      
-    console.error("[GOOGLE_STATUS_GET]", e?.message || e);
+    systemLogger.error("[GOOGLE_STATUS_GET]", e?.message || e);
     return new NextResponse("Failed to check status", { status: 500 });
   }
 }

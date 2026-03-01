@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * Azure OpenAI Realtime Voice WebRTC SDP answer proxy
@@ -99,7 +100,7 @@ export async function POST(req: Request) {
       headers: { "Content-Type": "application/sdp" },
     });
   } catch (error: any) {
-    console.error("[AZURE_REALTIME_SDP_ANSWER]", error);
+    systemLogger.error("[AZURE_REALTIME_SDP_ANSWER]", error);
     return new NextResponse(error?.message || "Server error", { status: 500 });
   }
 }

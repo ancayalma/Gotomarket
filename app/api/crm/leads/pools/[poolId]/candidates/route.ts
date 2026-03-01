@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/crm/leads/pools/[poolId]/candidates
@@ -70,7 +71,7 @@ export async function GET(
 
     return NextResponse.json({ candidates }, { status: 200 });
   } catch (error) {
-    console.error("[LEADS_POOL_CANDIDATES_GET]", error);
+    systemLogger.error("[LEADS_POOL_CANDIDATES_GET]", error);
     return new NextResponse("Failed to fetch candidates", { status: 500 });
   }
 }

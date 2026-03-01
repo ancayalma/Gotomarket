@@ -47,7 +47,7 @@ export default async function AiUsagePage() {
         select: { id: true }
     });
 
-    const teamMemberIds = teamMembers.map(u => u.id);
+    const teamMemberIds = (teamMembers as any[]).map(u => u.id);
 
     // 3. Fetch Chat Sessions for these members
     const teamSessions = await db.chat_Sessions.findMany({
@@ -57,7 +57,7 @@ export default async function AiUsagePage() {
         select: { id: true }
     });
 
-    const teamSessionIds = teamSessions.map((s: any) => s.id);
+    const teamSessionIds = (teamSessions as any[]).map((s: any) => s.id);
 
     // 4. Fetch Messages for these sessions with usage
     const messagesWithUsage = await db.chat_Messages.findMany({
@@ -112,7 +112,7 @@ export default async function AiUsagePage() {
     const modelUsage: Record<string, number> = {};
 
     // A. Add Chat Usage
-    messagesWithUsage.forEach((msg: any) => {
+    (messagesWithUsage as any[]).forEach((msg: any) => {
         const usage = msg.tokenUsage as { promptTokens?: number, completionTokens?: number, totalTokens?: number };
         const tokens = (usage.totalTokens || 0);
         totalTokens += tokens;
@@ -125,7 +125,7 @@ export default async function AiUsagePage() {
     });
 
     // B. Add Platform Feature Usage
-    aiUsageLogs.forEach((log) => {
+    (aiUsageLogs as any[]).forEach((log: any) => {
         const tokens = (log.tokens_in + log.tokens_out);
         totalTokens += tokens;
         promptTokens += log.tokens_in;

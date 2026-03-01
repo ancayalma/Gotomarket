@@ -77,7 +77,7 @@ export default async function AdminModulesPage() {
 
     // Fetch Department Permissions (for each department found)
     // We Map departments to a promise that returns their modules & counts
-    const departmentsData = await Promise.all(departments.map(async (dept) => {
+    const departmentsData = await Promise.all((departments as any[]).map(async (dept) => {
         const [adminModules, memberModules, viewerModules, adminCount, memberCount, viewerCount] = await Promise.all([
             getEffectiveRoleModules(dept.id, 'ADMIN', 'DEPARTMENT'),
             getEffectiveRoleModules(dept.id, 'MEMBER', 'DEPARTMENT'),

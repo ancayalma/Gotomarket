@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { hash, compare } from "bcryptjs";
 import { hashPassword, comparePassword } from "@/lib/password-utils";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/user/set-password
@@ -72,6 +73,7 @@ export async function POST(req: Request) {
     await prismadb.users.update({
       where: { id: user.id },
       data: {
+        session_version: { increment: 1 },
         password: hashed,
         mustChangePassword: false
       },
@@ -79,7 +81,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ status: true, message: "Password updated." }, { status: 200 });
   } catch (error) {
-    console.error("[USER_SET_PASSWORD_POST]", error);
+    systemLogger.error("[USER_SET_PASSWORD_POST]", error);
     return new NextResponse("Failed to update password.", { status: 500 });
   }
 }

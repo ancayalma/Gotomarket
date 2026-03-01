@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // GET /api/crm/leads/:leadId/notes
 // Returns recent notes (lead activities of type "note"). Non-admins only for their assigned leads.
@@ -39,7 +40,7 @@ export async function GET(_req: Request, { params }: Params) {
 
     return NextResponse.json({ notes }, { status: 200 });
   } catch (error) {
-    console.error("[LEAD_NOTES_GET]", error);
+    systemLogger.error("[LEAD_NOTES_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -94,7 +95,7 @@ export async function POST(req: Request, { params }: Params) {
 
     return NextResponse.json({ status: "ok" }, { status: 200 });
   } catch (error) {
-    console.error("[LEAD_NOTES_POST]", error);
+    systemLogger.error("[LEAD_NOTES_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

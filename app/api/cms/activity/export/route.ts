@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prismadb } from '@/lib/prisma';
 import { format } from 'date-fns';
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
     // ── Auth guard ──
@@ -33,7 +34,7 @@ export async function GET() {
 
         // Generate CSV content
         const headers = ['ID', 'Date', 'Action', 'Resource', 'User Name', 'User Email', 'Details'];
-        const rows = activities.map(activity => [
+        const rows = (activities as any[]).map(activity => [
             activity.id,
             format(activity.createdAt, 'yyyy-MM-dd HH:mm:ss'),
             activity.action,
@@ -56,7 +57,7 @@ export async function GET() {
         });
 
     } catch (error) {
-        console.error("[ACTIVITY_EXPORT_ERROR]", error);
+        systemLogger.error("[ACTIVITY_EXPORT_ERROR]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

@@ -52,7 +52,7 @@ export default async function PartnerAiConfigPage() {
         }),
     ]);
 
-    const activeProviders = providers.filter(p => p.isActive);
+    const activeProviders = (providers as any[]).filter(p => p.isActive);
     const providerOptions = activeProviders.map(p => ({ slug: p.slug, name: p.name }));
 
     return (
@@ -81,7 +81,7 @@ export default async function PartnerAiConfigPage() {
 
                     <ProviderRegistrySection
                         providers={providers as any}
-                        models={allModels.map(m => ({
+                        models={(allModels as any[]).map(m => ({
                             id: m.id,
                             name: m.name,
                             modelId: m.modelId,
@@ -113,7 +113,7 @@ export default async function PartnerAiConfigPage() {
                             <div>
                                 <h2 className="text-lg font-bold text-foreground tracking-tight">Model Registry</h2>
                                 <p className="text-xs text-muted-foreground">
-                                    {allModels.filter(m => m.isActive).length} active models across {activeProviders.length} providers
+                                    {(allModels as any[]).filter(m => m.isActive).length} active models across {activeProviders.length} providers
                                 </p>
                             </div>
                         </div>
@@ -126,7 +126,7 @@ export default async function PartnerAiConfigPage() {
                     {/* Model counts by provider — compact pills  */}
                     <div className="flex flex-wrap gap-2 mb-4">
                         {activeProviders.map(provider => {
-                            const count = allModels.filter(m => m.provider === provider.slug && m.isActive).length;
+                            const count = (allModels as any[]).filter(m => m.provider === provider.slug && m.isActive).length;
                             return (
                                 <div
                                     key={provider.slug}

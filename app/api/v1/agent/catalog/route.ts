@@ -2,10 +2,11 @@
 import { NextResponse } from "next/server";
 import { toUCPProduct } from "@/lib/surge-ucp";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request) {
     try {
-        console.log("[AgentAPI] Fetching UCP Catalog...");
+        systemLogger.error("[AgentAPI] Fetching UCP Catalog...");
 
         // In a real scenario, we might filter specific "Public" or "Agent-Ready" items.
         // For now, we'll fetch the first 5 invoices to simulate a catalog of "Services Rendered"
@@ -44,7 +45,7 @@ export async function GET(req: Request) {
         });
 
     } catch (error: any) {
-        console.error("[AgentAPI] Error fetching catalog:", error);
+        systemLogger.error("[AgentAPI] Error fetching catalog:", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

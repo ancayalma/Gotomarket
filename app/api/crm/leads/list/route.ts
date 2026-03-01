@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
     try {
@@ -53,7 +54,7 @@ export async function GET() {
 
         return NextResponse.json(data);
     } catch (error) {
-        console.error("[LEADS_LIST_GET]", error);
+        systemLogger.error("[LEADS_LIST_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

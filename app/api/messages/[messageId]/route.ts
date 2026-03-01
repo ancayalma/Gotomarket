@@ -30,7 +30,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ me
         }
 
         const isSender = message.sender_id === userId;
-        const isRecipient = message.recipients.some(r => r.recipient_id === userId);
+        const isRecipient = (message.recipients as any[]).some(r => r.recipient_id === userId);
 
         if (!isSender && !isRecipient) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -73,7 +73,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ me
                 // For sender, maybe add "archived" label?
                 // Or if Sent view uses is_archived on message?
                 // Let's assume sender just labels it archived
-                const updatedLabels = [...(message.labels || [])];
+                const updatedLabels = [...(message.labels as any[] || [])];
                 if (!updatedLabels.includes("archived")) updatedLabels.push("archived");
 
                 await prismadb.internalMessage.update({
@@ -99,7 +99,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ me
                     return NextResponse.json({ success: true, message: "Draft deleted" });
                 } else {
                     // Soft delete for sent items using labels
-                    const updatedLabels = [...(message.labels || [])];
+                    const updatedLabels = [...(message.labels as any[] || [])];
                     if (!updatedLabels.includes("trash")) updatedLabels.push("trash");
 
                     await prismadb.internalMessage.update({
@@ -119,7 +119,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ me
                 });
             }
             if (isSender) {
-                const updatedLabels = (message.labels || []).filter(l => l !== "trash" && l !== "archived");
+                const updatedLabels = (message.labels as any[] || []).filter(l => l !== "trash" && l !== "archived");
                 await prismadb.internalMessage.update({
                     where: { id: messageId },
                     data: { labels: updatedLabels },
@@ -164,7 +164,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ m
         }
 
         const isSender = message.sender_id === userId;
-        const isRecipient = message.recipients.some(r => r.recipient_id === userId);
+        const isRecipient = (message.recipients as any[]).some(r => r.recipient_id === userId);
 
         if (isSender) {
             await prismadb.internalMessage.delete({ where: { id: messageId } });

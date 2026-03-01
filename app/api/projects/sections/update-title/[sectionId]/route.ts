@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function PUT(req: Request, props: { params: Promise<{ sectionId: string }> }) {
   const params = await props.params;
@@ -34,12 +35,12 @@ export async function PUT(req: Request, props: { params: Promise<{ sectionId: st
     } catch (error: any) {
       if (error.code === 'P2034' && retryCount < MAX_RETRIES - 1) {
         retryCount++;
-        console.log(`[NEW_SECTION_TITLE_POST] Write conflict/deadlock, retrying (${retryCount}/${MAX_RETRIES})...`);
+        systemLogger.error(`[NEW_SECTION_TITLE_POST] Write conflict/deadlock, retrying (${retryCount}/${MAX_RETRIES})...`);
         // Small delay
         await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
         continue;
       }
-      console.log("[NEW_SECTION_TITLE_POST]", error);
+      systemLogger.error("[NEW_SECTION_TITLE_POST]", error);
       return new NextResponse("Initial error", { status: 500 });
     }
   }

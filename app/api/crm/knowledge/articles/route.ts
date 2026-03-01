@@ -3,6 +3,8 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // POST: Create or update a Help Hub article
 export async function POST(req: Request) {
@@ -56,9 +58,10 @@ export async function POST(req: Request) {
             },
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "CREATE", "KnowledgeArticle", `Created knowledge article: ${title}`, teamInfo?.teamId || "");
         return NextResponse.json(article, { status: 201 });
     } catch (error) {
-        console.error("[KB_ARTICLE_POST]", error);
+        systemLogger.error("[KB_ARTICLE_POST]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -114,7 +117,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json(articles);
     } catch (error) {
-        console.error("[KB_ARTICLES_GET]", error);
+        systemLogger.error("[KB_ARTICLES_GET]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -150,9 +153,11 @@ export async function PUT(req: Request) {
             },
         });
 
+        const teamInfo = await getCurrentUserTeamId();
+        await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "KnowledgeArticle", `Updated knowledge article: ${updated.title}`, teamInfo?.teamId || "");
         return NextResponse.json(updated);
     } catch (error) {
-        console.error("[KB_ARTICLE_PUT]", error);
+        systemLogger.error("[KB_ARTICLE_PUT]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

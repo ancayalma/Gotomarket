@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
+import { systemLogger } from "@/lib/logger";
 
 type EmailBlastRequest = {
   selectedContactIds: string[];
@@ -119,7 +120,7 @@ export async function POST(
       { status: 200 }
     );
   } catch (error) {
-    console.error("[LEADS_POOL_EMAIL_BLAST_POST]", error);
+    systemLogger.error("[LEADS_POOL_EMAIL_BLAST_POST]", error);
     return new NextResponse("Failed to prepare email blast", { status: 500 });
   }
 }

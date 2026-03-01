@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma"; // Use lib/prisma explicitly
 import { getAiClient } from "@/lib/ai-helper"; // We'll create this next
 import { streamText } from 'ai';
+import { systemLogger } from "@/lib/logger";
 
 export const maxDuration = 300; // 5 minutes
 
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
     return result.toTextStreamResponse();
 
   } catch (error) {
-    console.log("[CHAT_COMPLETION]", error);
+    systemLogger.error("[CHAT_COMPLETION]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

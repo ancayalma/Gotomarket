@@ -1,5 +1,6 @@
 import { prismadb } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { logActivityInternal } from "@/actions/audit";
 
 export async function POST(req: Request) {
   const apiKey = req.headers.get("BASALT_TOKEN");
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await prismadb.crm_Contacts.create({
+    const contact = await prismadb.crm_Contacts.create({
       data: {
         first_name: name,
         last_name: surname,
@@ -40,6 +41,8 @@ export async function POST(req: Request) {
         notes: ["Account: " + company, "Message: " + message],
       },
     });
+
+    await logActivityInternal("API_USER", "CREATE", "crm_Contacts", `Created contact ${contact.id} from remote submission`);
     return NextResponse.json({ message: "Contact created" });
   } catch (error) {
     console.log("Error creating contact:", error);

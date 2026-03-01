@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { sendAssignmentNotification } from "@/lib/notifications/assignment-notify";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/projects/[projectId]/members
@@ -45,7 +47,7 @@ export async function GET(
 
         return NextResponse.json({ members: result }, { status: 200 });
     } catch (error) {
-        console.error("[PROJECT_MEMBERS_GET]", error);
+        systemLogger.error("[PROJECT_MEMBERS_GET]", error);
         return new NextResponse("Failed to fetch project members", { status: 500 });
     }
 }
@@ -153,7 +155,7 @@ export async function POST(
                 assignmentId: projectId,
                 role: role || "MEMBER",
                 description: project?.description || undefined,
-            }).catch((err) => console.error("[NOTIFY] Project assignment email failed:", err));
+            }).catch((err) => systemLogger.error("[NOTIFY] Project assignment email failed:", err));
         }
 
         const result = {
@@ -164,9 +166,10 @@ export async function POST(
             member: assignedMember,
         };
 
+        await logActivityInternal(session.user.email || "SYSTEM", "CREATE", "ProjectMember", `Assigned user ${assignedMember?.email || userId} to project ${project?.title || projectId}`);
         return NextResponse.json({ member: result }, { status: 201 });
     } catch (error) {
-        console.error("[PROJECT_MEMBERS_POST]", error);
+        systemLogger.error("[PROJECT_MEMBERS_POST]", error);
         return new NextResponse("Failed to assign member", { status: 500 });
     }
 }

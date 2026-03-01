@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbChat } from "@/lib/prisma-chat";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 const db: any = prismadbChat;
 
@@ -59,7 +60,7 @@ export async function GET(_req: Request, { params }: Params) {
 
     return NextResponse.json({ session: data, messagesCount }, { status: 200 });
   } catch (error) {
-    console.error("[CHAT_SESSION_GET]", error);
+    systemLogger.error("[CHAT_SESSION_GET]", error);
     return new NextResponse("Failed to fetch session", { status: 500 });
   }
 }
@@ -101,7 +102,7 @@ export async function PATCH(req: Request, { params }: Params) {
 
     return NextResponse.json({ session: updated }, { status: 200 });
   } catch (error) {
-    console.error("[CHAT_SESSION_PATCH]", error);
+    systemLogger.error("[CHAT_SESSION_PATCH]", error);
     return new NextResponse("Failed to update session", { status: 500 });
   }
 }
@@ -148,7 +149,7 @@ export async function DELETE(_req: Request, { params }: Params) {
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("[CHAT_SESSION_DELETE]", error);
+    systemLogger.error("[CHAT_SESSION_DELETE]", error);
     return NextResponse.json({ error: `Failed to delete session: ${(error as Error).message}` }, { status: 500 });
   }
 }

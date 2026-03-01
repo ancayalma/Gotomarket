@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { startOfMonth, subMonths, format, eachDayOfInterval, startOfDay, endOfDay, subDays } from "date-fns";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(
     req: Request,
@@ -66,7 +67,7 @@ export async function GET(
         });
 
         // Count views
-        views.forEach(view => {
+        (views as any[]).forEach(view => {
             const dateKey = format(new Date(view.viewedAt), "MMM dd");
             if (dailyData.has(dateKey)) {
                 dailyData.get(dateKey)!.views++;
@@ -74,7 +75,7 @@ export async function GET(
         });
 
         // Count submissions
-        submissions.forEach(sub => {
+        (submissions as any[]).forEach(sub => {
             const dateKey = format(new Date(sub.createdAt), "MMM dd");
             if (dailyData.has(dateKey)) {
                 dailyData.get(dateKey)!.submissions++;
@@ -99,7 +100,7 @@ export async function GET(
         });
 
     } catch (error) {
-        console.error("[FORM_ANALYTICS_GET]", error);
+        systemLogger.error("[FORM_ANALYTICS_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

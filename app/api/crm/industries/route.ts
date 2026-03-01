@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hash } from "bcryptjs";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.log("[USERS_GET]", error);
+    systemLogger.error("[USERS_GET]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

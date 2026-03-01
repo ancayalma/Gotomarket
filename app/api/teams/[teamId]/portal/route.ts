@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import crypto from "crypto";
+import { systemLogger } from "@/lib/logger";
 
 // GET - Get the team's portal
 export async function GET(
@@ -46,7 +47,7 @@ export async function GET(
 
         return NextResponse.json({ portal });
     } catch (err: any) {
-        console.error("[Team Portal API] GET Error:", err);
+        systemLogger.error("[Team Portal API] GET Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
@@ -182,7 +183,7 @@ export async function POST(
 
         return NextResponse.json({ portal });
     } catch (err: any) {
-        console.error("[Team Portal API] POST Error:", err);
+        systemLogger.error("[Team Portal API] POST Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -73,7 +74,7 @@ export async function GET(req: Request) {
 
         return NextResponse.redirect(targetUrl);
     } catch (error) {
-        console.error("[EMAIL_TRACK_CLICK_ERROR]", error);
+        systemLogger.error("[EMAIL_TRACK_CLICK_ERROR]", error);
         return NextResponse.redirect(targetUrl);
     }
 }

@@ -110,7 +110,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
     });
 
     // Combine with users from logs
-    const allRelevantUserIds = new Set([...Array.from(chatUserIds), ...aiUsageLogs.map(l => l.user_id).filter(Boolean) as string[]]);
+    const allRelevantUserIds = new Set([...Array.from(chatUserIds), ...(aiUsageLogs as any[]).map(l => l.user_id).filter(Boolean) as string[]]);
 
     // Fetch Users to map to Teams and Roles
     const users = await prismadb.users.findMany({
@@ -134,7 +134,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
     const userTeamMap = new Map<string, { id: string, name: string, slug: string }>();
     const userRoleMap = new Map<string, string>();
 
-    users.forEach((u) => {
+    (users as any[]).forEach((u) => {
         if (u.assigned_team) {
             userTeamMap.set(u.id, u.assigned_team);
         }
@@ -154,7 +154,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
         }
     });
 
-    const basaltTeam = allTeams.find(t => t.slug === 'basalthq' || t.slug === 'basalt');
+    const basaltTeam = (allTeams as any[]).find(t => t.slug === 'basalthq' || t.slug === 'basalt');
     const basaltTeamId = basaltTeam?.id || 'basalt-internal';
     const INTERNAL_TEAM_NAME = basaltTeam?.name || "BasaltHQ Team";
 
@@ -171,14 +171,14 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
 
     // Map each team to its top-level organization for roll-up
     const teamToOrgMap = new Map<string, string>();
-    allTeams.forEach(t => {
+    (allTeams as any[]).forEach(t => {
         // Simple map: if it's a department, map to parent (assumes 1 level of nesting as per typical CRM structure)
         // If no parent, it's its own organization.
         teamToOrgMap.set(t.id, t.team_type === 'DEPARTMENT' && t.parent_id ? t.parent_id : t.id);
     });
 
     // Initialize with all teams (0 usage)
-    allTeams.forEach(team => {
+    (allTeams as any[]).forEach(team => {
         teamUsage[team.id] = {
             id: team.id,
             name: team.name,
@@ -215,7 +215,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
         }
 
         if (!teamUsage[targetId]) {
-            const teamInfo = allTeams.find(t => t.id === targetId);
+            const teamInfo = (allTeams as any[]).find(t => t.id === targetId);
             teamUsage[targetId] = {
                 id: targetId,
                 name: teamInfo?.name || team?.name || INTERNAL_TEAM_NAME,
@@ -246,7 +246,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
     });
 
     // B. Parse Global AI Logs
-    aiUsageLogs.forEach((log) => {
+    (aiUsageLogs as any[]).forEach((log) => {
         let targetId = log.tenant_id || UNKNOWN_TEAM_ID;
 
         if (targetId === UNKNOWN_TEAM_ID && log.user_id) {
@@ -257,7 +257,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
         }
 
         if (!teamUsage[targetId]) {
-            const teamInfo = allTeams.find(t => t.id === targetId);
+            const teamInfo = (allTeams as any[]).find(t => t.id === targetId);
             teamUsage[targetId] = {
                 id: targetId,
                 name: teamInfo?.name || INTERNAL_TEAM_NAME,
@@ -287,7 +287,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
     });
 
     // C. Initialize any teams with zero usage so they still appear if they are Top-Level Orgs
-    allTeams.forEach(team => {
+    (allTeams as any[]).forEach(team => {
         if (!teamUsage[team.id]) {
             teamUsage[team.id] = {
                 id: team.id,
@@ -303,7 +303,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
 
     // Final Dataset for Display
     const chartData = Object.values(teamUsage)
-        .filter(t => {
+        .filter((t: any) => {
             if (t.team_type === 'ORGANIZATION') return true;
             if (t.totalTokens > 0) return true;
             return false;
@@ -313,7 +313,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
     // Roll-up logic for Active Organizations KPI
     // An organization is "active" if it OR any of its departments have activity (requests)
     const orgsWithActivity = new Set<string>();
-    Object.values(teamUsage).forEach(t => {
+    (Object.values(teamUsage) as any[]).forEach((t: any) => {
         if (t.requestCount > 0) {
             const orgId = teamToOrgMap.get(t.id);
             if (orgId) orgsWithActivity.add(orgId);

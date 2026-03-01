@@ -124,7 +124,7 @@ export async function getLeadsStageCounts(userId: string): Promise<{
 
   if (pools.length === 0) return { overall, pools: [] };
 
-  const poolIds = pools.map((p) => p.id);
+  const poolIds = (pools as any[]).map((p) => p.id);
 
 
   // Fetch all pool<->lead mappings in one go

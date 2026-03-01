@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export async function getProducts() {
     try {
@@ -29,7 +30,7 @@ export async function getProducts() {
 
         return products;
     } catch (error) {
-        console.error("[GET_PRODUCTS]", error);
+        systemLogger.error("[GET_PRODUCTS]", error);
         return [];
     }
 }
@@ -68,7 +69,7 @@ export async function createProduct(data: {
         revalidatePath("/crm/products");
         return { success: true };
     } catch (error) {
-        console.error("[CREATE_PRODUCT]", error);
+        systemLogger.error("[CREATE_PRODUCT]", error);
         return { success: false };
     }
 }
@@ -121,7 +122,7 @@ async function syncProductToSurge(product: any, apiKey: string) {
 
         return result;
     } catch (error) {
-        console.error("[SYNC_TO_SURGE]", error);
+        systemLogger.error("[SYNC_TO_SURGE]", error);
         return null;
     }
 }
@@ -177,7 +178,7 @@ async function syncProductToShopify(product: any, storeUrl: string, accessToken:
 
         return result;
     } catch (error) {
-        console.error("[SYNC_TO_SHOPIFY]", error);
+        systemLogger.error("[SYNC_TO_SHOPIFY]", error);
         return null;
     }
 }
@@ -231,7 +232,7 @@ async function syncProductToWooCommerce(product: any, storeUrl: string, consumer
 
         return result;
     } catch (error) {
-        console.error("[SYNC_TO_WOOCOMMERCE]", error);
+        systemLogger.error("[SYNC_TO_WOOCOMMERCE]", error);
         return null;
     }
 }
@@ -304,7 +305,7 @@ export async function updateProduct(productId: string, data: {
         revalidatePath("/crm/products");
         return { success: true, syncedTo: syncResults };
     } catch (error) {
-        console.error("[UPDATE_PRODUCT]", error);
+        systemLogger.error("[UPDATE_PRODUCT]", error);
         return { success: false };
     }
 }
@@ -333,7 +334,7 @@ export async function getSurgeTaxCatalog() {
 
         return await response.json();
     } catch (error) {
-        console.error("[GET_SURGE_TAX]", error);
+        systemLogger.error("[GET_SURGE_TAX]", error);
         return { jurisdictions: [] };
     }
 }
@@ -436,7 +437,7 @@ export async function importFromSurge() {
         revalidatePath("/crm/products");
         return { success: true, importedCount, updatedCount };
     } catch (error) {
-        console.error("[IMPORT_FROM_SURGE]", error);
+        systemLogger.error("[IMPORT_FROM_SURGE]", error);
         return { success: false, error: "Failed to import from Surge" };
     }
 }
@@ -502,7 +503,7 @@ export async function exportToSurge(productId: string) {
         revalidatePath("/crm/products");
         return { success: true };
     } catch (error) {
-        console.error("[EXPORT_TO_SURGE]", error);
+        systemLogger.error("[EXPORT_TO_SURGE]", error);
         return { success: false, error: "Failed to export to Surge" };
     }
 }
@@ -524,7 +525,7 @@ export async function getEnabledIntegrations() {
             woocommerce: !!(integration?.woocommerce_enabled && integration?.woocommerce_consumer_key),
         };
     } catch (error) {
-        console.error("[GET_ENABLED_INTEGRATIONS]", error);
+        systemLogger.error("[GET_ENABLED_INTEGRATIONS]", error);
         return { surge: false, shopify: false, woocommerce: false };
     }
 }
@@ -620,7 +621,7 @@ export async function importFromShopify() {
         revalidatePath("/crm/products");
         return { success: true, importedCount, updatedCount };
     } catch (error) {
-        console.error("[IMPORT_FROM_SHOPIFY]", error);
+        systemLogger.error("[IMPORT_FROM_SHOPIFY]", error);
         return { success: false, error: "Failed to import from Shopify" };
     }
 }
@@ -719,7 +720,7 @@ export async function importFromWooCommerce() {
         revalidatePath("/crm/products");
         return { success: true, importedCount, updatedCount };
     } catch (error) {
-        console.error("[IMPORT_FROM_WOOCOMMERCE]", error);
+        systemLogger.error("[IMPORT_FROM_WOOCOMMERCE]", error);
         return { success: false, error: "Failed to import from WooCommerce" };
     }
 }

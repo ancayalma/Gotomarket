@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { systemLogger } from "@/lib/logger";
 
 export async function DELETE(req: Request, props: { params: Promise<{ documentId: string }> }) {
   const params = await props.params;
@@ -45,7 +46,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ documentId
 
     return NextResponse.json("deletedDocument");
   } catch (error) {
-    console.log("[Document_DELETE]", error);
+    systemLogger.error("[Document_DELETE]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

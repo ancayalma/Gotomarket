@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { describeContact } from "@/lib/aws/connect";
+import { systemLogger } from "@/lib/logger";
 
 // Ensure this dynamic route is treated as dynamic (params available at request time)
 export const dynamic = 'force-dynamic';
@@ -50,7 +51,7 @@ export async function GET(
 
     return NextResponse.json({ contactId, state, raw: desc }, { status: 200 });
   } catch (error: any) {
-    console.error("[CALL_STATUS]", error?.message || error);
+    systemLogger.error("[CALL_STATUS]", error?.message || error);
     return new NextResponse(error?.message || "Internal Error", { status: 500 });
   }
 }

@@ -5,6 +5,7 @@ import sendSystemEmail from "@/lib/sendmail";
 import nodemailer from "nodemailer";
 import * as aws from "@aws-sdk/client-ses";
 import { sendViaGmail } from "@/lib/gmail";
+import { decryptSecret } from "@/lib/encryption";
 
 interface EmailOptions {
     from?: string; // Optional override, otherwise uses config.from_email
@@ -62,7 +63,7 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions) {
             region: config.aws_region || "us-east-1",
             credentials: {
                 accessKeyId: config.aws_access_key_id,
-                secretAccessKey: config.aws_secret_access_key,
+                secretAccessKey: decryptSecret(config.aws_secret_access_key) || config.aws_secret_access_key,
             }
         });
 
@@ -95,7 +96,7 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions) {
             return sendSystemEmail(options);
         }
 
-        const resend = new Resend(config.resend_api_key);
+        const resend = new Resend(decryptSecret(config.resend_api_key) || config.resend_api_key);
 
         try {
             const { data, error } = await resend.emails.send({

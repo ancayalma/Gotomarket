@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getSessionAndTeam, validateResourceOwnership, unauthorizedResponse } from "@/lib/api-utils";
 import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function PUT(req: Request, props: { params: Promise<{ opportunityId: string }> }) {
   const params = await props.params;
@@ -97,7 +98,7 @@ export async function PUT(req: Request, props: { params: Promise<{ opportunityId
       { status: 200 }
     );
   } catch (error) {
-    console.log("[OPPORTUNITY_UPDATE]", error);
+    systemLogger.error("[OPPORTUNITY_UPDATE]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
@@ -148,7 +149,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ opportunit
       { status: 200 }
     );
   } catch (error) {
-    console.log("[OPPORTUNITY_DELETE]", error);
+    systemLogger.error("[OPPORTUNITY_DELETE]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }

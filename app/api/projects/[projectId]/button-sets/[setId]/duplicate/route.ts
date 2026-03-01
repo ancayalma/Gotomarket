@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request, ctx: { params: Promise<{ projectId: string; setId: string }> }) {
   try {
@@ -47,7 +48,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ projectId: str
 
     return NextResponse.json({ set: created }, { status: 201 });
   } catch (e) {
-    console.error("[BUTTON_SET_DUPLICATE_POST]", e);
+    systemLogger.error("[BUTTON_SET_DUPLICATE_POST]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

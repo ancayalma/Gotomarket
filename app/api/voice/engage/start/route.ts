@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ChimeSDKMeetingsClient, CreateMeetingCommand, CreateAttendeeCommand } from "@aws-sdk/client-chime-sdk-meetings";
 import { createSipMediaApplicationCall } from "@/lib/aws/chime-voice";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/voice/engage/start
@@ -156,7 +157,7 @@ const MEETING_REGION = process.env.CHIME_APP_MEETING_REGION || REGION;
       call: { destination: dest, transactionId },
     }, { status: 200 });
   } catch (e: any) {
-    console.error("[ENGAGE_START]", e?.message || e);
+    systemLogger.error("[ENGAGE_START]", e?.message || e);
     return NextResponse.json({ ok: false, error: e?.message || "error" }, { status: 500 });
   }
 }

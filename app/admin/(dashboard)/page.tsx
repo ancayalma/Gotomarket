@@ -67,9 +67,9 @@ export default async function AdminDashboardPage({
   ]);
 
   const usersCount = users.length;
-  const adminCount = rolesData.find(r => r.team_role === 'ADMIN')?._count ?? 0;
-  const memberCount = rolesData.find(r => r.team_role === 'MEMBER' || r.team_role === null)?._count ?? 0;
-  const viewerCount = rolesData.find(r => r.team_role === 'VIEWER')?._count ?? 0;
+  const adminCount = (rolesData as any[]).find(r => r.team_role === 'ADMIN')?._count ?? 0;
+  const memberCount = (rolesData as any[]).find(r => r.team_role === 'MEMBER' || r.team_role === null)?._count ?? 0;
+  const viewerCount = (rolesData as any[]).find(r => r.team_role === 'VIEWER')?._count ?? 0;
 
   const role = (teamInfo.teamRole || '').toUpperCase();
   const isSuperAdmin = teamInfo.isGlobalAdmin || ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN'].includes(role);

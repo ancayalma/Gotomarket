@@ -1,6 +1,7 @@
 import { Client } from "@microsoft/microsoft-graph-client";
 // import "isomorphic-fetch";
 import { prismadb } from "@/lib/prisma";
+import { encryptSecret, decryptSecret } from "@/lib/encryption";
 
 // Microsoft OAuth Constants
 const CLIENT_ID = process.env.AZURE_CLIENT_ID;
@@ -59,16 +60,16 @@ export async function exchangeCodeForTokens(userId: string, code: string) {
     await prismadb.microsoft_Tokens.upsert({
         where: { id: (await prismadb.microsoft_Tokens.findFirst({ where: { user: userId } }))?.id || "new" },
         update: {
-            access_token: data.access_token,
-            refresh_token: data.refresh_token,
+            access_token: encryptSecret(data.access_token) || "",
+            refresh_token: encryptSecret(data.refresh_token) || "",
             scope: data.scope,
             expiry_date: new Date(Date.now() + data.expires_in * 1000),
             updatedAt: new Date(),
         } as any, // Prisma generic type workaround
         create: {
             user: userId,
-            access_token: data.access_token,
-            refresh_token: data.refresh_token,
+            access_token: encryptSecret(data.access_token) || "",
+            refresh_token: encryptSecret(data.refresh_token) || "",
             scope: data.scope,
             expiry_date: new Date(Date.now() + data.expires_in * 1000),
         } as any,
@@ -88,14 +89,14 @@ export async function getGraphClient(userId: string) {
     if (!token) return null;
 
     // Check expiry
-    let accessToken = token.access_token;
+    let accessToken = decryptSecret(token.access_token) || token.access_token;
     if (token.expiry_date && new Date() > token.expiry_date && token.refresh_token) {
         // Refresh
         try {
             const params = new URLSearchParams({
                 client_id: CLIENT_ID!,
                 scope: SCOPES,
-                refresh_token: token.refresh_token,
+                refresh_token: decryptSecret(token.refresh_token) || token.refresh_token,
                 redirect_uri: REDIRECT_URI,
                 grant_type: "refresh_token",
                 client_secret: CLIENT_SECRET!,
@@ -114,8 +115,8 @@ export async function getGraphClient(userId: string) {
                 await prismadb.microsoft_Tokens.update({
                     where: { id: token.id },
                     data: {
-                        access_token: data.access_token,
-                        refresh_token: data.refresh_token || token.refresh_token, // RTs assume to carry over often
+                        access_token: encryptSecret(data.access_token) || "",
+                        refresh_token: encryptSecret(data.refresh_token || (decryptSecret(token.refresh_token) || token.refresh_token)) || "",
                         expiry_date: new Date(Date.now() + data.expires_in * 1000),
                         updatedAt: new Date(),
                     },

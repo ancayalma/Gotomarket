@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { prismadb } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 //Contact delete route
 export async function DELETE(req: Request, props: { params: Promise<{ contactId: string }> }) {
@@ -26,7 +27,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ contactId:
 
     return NextResponse.json({ message: "Contact deleted" }, { status: 200 });
   } catch (error) {
-    console.log("[CONTACT_DELETE]", error);
+    systemLogger.error("[CONTACT_DELETE]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

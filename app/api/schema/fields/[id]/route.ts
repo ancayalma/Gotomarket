@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { logActivityInternal } from "@/actions/audit";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export async function PUT(
     req: Request,
@@ -31,9 +34,11 @@ export async function PUT(
             },
         });
 
+        const teamInfo = await getCurrentUserTeamId();
+        await logActivityInternal(session.user.id, "UPDATE", "CustomFieldDefinition", `Updated field: ${field.name} (${id})`, teamInfo?.teamId || undefined);
         return NextResponse.json(field);
     } catch (error) {
-        console.error("[SCHEMA_FIELD_UPDATE]", error);
+        systemLogger.error("[SCHEMA_FIELD_UPDATE]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -56,9 +61,11 @@ export async function DELETE(
             },
         });
 
+        const teamInfo = await getCurrentUserTeamId();
+        await logActivityInternal(session.user.id, "DELETE", "CustomFieldDefinition", `Deleted field: ${id}`, teamInfo?.teamId || undefined);
         return new NextResponse(null, { status: 204 });
     } catch (error) {
-        console.error("[SCHEMA_FIELD_DELETE]", error);
+        systemLogger.error("[SCHEMA_FIELD_DELETE]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

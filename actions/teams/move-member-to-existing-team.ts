@@ -3,6 +3,7 @@
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * Moves a member to an existing team with a specified role.
@@ -54,7 +55,7 @@ export async function moveMemberToExistingTeam(
             message: `Successfully moved ${targetUser.name || targetUser.email} to team "${targetTeam.name}" as ${newRole}.`
         };
     } catch (error) {
-        console.error("[MOVE_MEMBER_TO_EXISTING_TEAM]", error);
+        systemLogger.error("[MOVE_MEMBER_TO_EXISTING_TEAM]", error);
         return { error: "Failed to move member to team." };
     }
 }

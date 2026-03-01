@@ -8,6 +8,7 @@ import { z } from "zod";
 import OutreachTemplate, { type ResourceLink } from "@/emails/OutreachTemplate";
 import { render } from "@react-email/render";
 import React from "react";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/outreach/preview/email/[leadId]
@@ -264,7 +265,7 @@ Project Briefing:
         } catch (err: any) {
             // leave defaults on error
 
-            console.error("[OUTREACH_PREVIEW_EMAIL][AI_ERROR]", err?.message || err);
+            systemLogger.error("[OUTREACH_PREVIEW_EMAIL][AI_ERROR]", err?.message || err);
         }
 
         // Prepare resources/signature
@@ -310,7 +311,7 @@ Project Briefing:
         );
     } catch (error) {
 
-        console.error("[OUTREACH_PREVIEW_EMAIL_POST]", error);
+        systemLogger.error("[OUTREACH_PREVIEW_EMAIL_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

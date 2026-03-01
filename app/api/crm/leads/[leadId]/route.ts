@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getSessionAndTeam, validateResourceOwnership, unauthorizedResponse } from "@/lib/api-utils";
 import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function DELETE(req: Request, props: { params: Promise<{ leadId: string }> }) {
   const params = await props.params;
@@ -47,7 +48,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ leadId: st
 
     return NextResponse.json({ message: "Lead deleted" }, { status: 200 });
   } catch (error) {
-    console.log("[LEAD_DELETE]", error);
+    systemLogger.error("[LEAD_DELETE]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }

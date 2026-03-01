@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getAiClient } from "@/lib/ai-helper";
 import { generateText } from "ai";
+import { systemLogger } from "@/lib/logger";
 
 export const maxDuration = 300;
 
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ text });
 
     } catch (error) {
-        console.error("[AI_GENERATE_TEXT_ERROR]", error);
+        systemLogger.error("[AI_GENERATE_TEXT_ERROR]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export type ActionResponse = {
     success: boolean;
@@ -107,7 +108,7 @@ export async function createInvoiceFromOpportunity(opportunityId: string): Promi
         };
 
     } catch (error: any) {
-        console.error("[CREATE_INVOICE]", error);
+        systemLogger.error("[CREATE_INVOICE]", error);
         return { success: false, error: error.message || "Failed to create invoice" };
     }
 }

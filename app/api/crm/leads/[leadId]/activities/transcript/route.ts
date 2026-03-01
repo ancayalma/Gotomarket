@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // POST /api/crm/leads/:leadId/activities/transcript
 // Body: { text: string; contactId?: string; role?: string; segmentAt?: string | number; extra?: any }
@@ -61,7 +62,7 @@ export async function POST(req: Request, { params }: Params) {
 
     return NextResponse.json({ saved: true, activity }, { status: 200 });
   } catch (error: any) {
-    console.error("[LEAD_TRANSCRIPT_POST]", error?.message || error);
+    systemLogger.error("[LEAD_TRANSCRIPT_POST]", error?.message || error);
     return new NextResponse(error?.message || "Internal Error", { status: 500 });
   }
 }

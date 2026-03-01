@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request, ctx: { params: Promise<{ projectId: string }> }) {
   try {
@@ -22,7 +23,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ projectId: stri
     });
     return NextResponse.json({ sets }, { status: 200 });
   } catch (e) {
-    console.error("[BUTTON_SETS_GET]", e);
+    systemLogger.error("[BUTTON_SETS_GET]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -58,7 +59,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ projectId: str
     });
     return NextResponse.json({ set: created }, { status: 201 });
   } catch (e) {
-    console.error("[BUTTON_SETS_POST]", e);
+    systemLogger.error("[BUTTON_SETS_POST]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

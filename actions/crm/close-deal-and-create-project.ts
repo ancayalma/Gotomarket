@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export type ActionResponse = {
     success: boolean;
@@ -99,7 +100,7 @@ export async function closeDealAndCreateProject(opportunityId: string): Promise<
         };
 
     } catch (error: any) {
-        console.error("[CLOSE_DEAL]", error);
+        systemLogger.error("[CLOSE_DEAL]", error);
         return { success: false, error: error.message || "Failed to close deal" };
     }
 }

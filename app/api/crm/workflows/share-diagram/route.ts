@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import sendEmail from "@/lib/sendmail";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.log("[SHARE_DIAGRAM_POST]", error);
+        systemLogger.error("[SHARE_DIAGRAM_POST]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

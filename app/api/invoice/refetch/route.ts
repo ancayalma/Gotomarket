@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { processInvoiceFromDocument } from "@/lib/invoice-processor";
+import { systemLogger } from "@/lib/logger";
 
 export const runtime = 'nodejs'; // Ensure Node runtime for canvas/pdf-parse
 
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - 7);
 
-        console.log(`[INVOICE_REFETCH] Querying documents for team ${teamId} since ${cutoff.toISOString()}`);
+        systemLogger.error(`[INVOICE_REFETCH] Querying documents for team ${teamId} since ${cutoff.toISOString()}`);
 
         const documents = await prismadb.documents.findMany({
             where: {
@@ -35,11 +36,11 @@ export async function POST(req: Request) {
             },
         });
 
-        console.log(`[INVOICE_REFETCH] Initial query found ${documents.length} documents. Filtering for empty invoiceIDs...`);
+        systemLogger.error(`[INVOICE_REFETCH] Initial query found ${documents.length} documents. Filtering for empty invoiceIDs...`);
 
         // Filter in memory
-        const unprocessedDocs = documents.filter(d => !d.invoiceIDs || d.invoiceIDs.length === 0);
-        console.log(`[INVOICE_REFETCH] Found ${unprocessedDocs.length} unprocessed documents after filter.`);
+        const unprocessedDocs = (documents as any[]).filter(d => !d.invoiceIDs || d.invoiceIDs.length === 0);
+        systemLogger.error(`[INVOICE_REFETCH] Found ${unprocessedDocs.length} unprocessed documents after filter.`);
 
         // Fallback: If 0 found, try finding ANY document to see if teamId is correct
         if (unprocessedDocs.length === 0) {
@@ -48,7 +49,7 @@ export async function POST(req: Request) {
                 take: 3,
                 orderBy: { createdAt: 'desc' }
             });
-            console.log("[INVOICE_REFETCH] Debug: Recent docs in team:", recentDocs.map(d => ({ id: d.id, created: d.createdAt, invs: d.invoiceIDs })));
+            systemLogger.error("[INVOICE_REFETCH] Debug: Recent docs in team:", (recentDocs as any[]).map(d => ({ id: d.id, created: d.createdAt, invs: d.invoiceIDs })));
         }
 
         let processedCount = 0;
@@ -57,13 +58,13 @@ export async function POST(req: Request) {
                 await processInvoiceFromDocument(doc.id, session.user.id, teamId);
                 processedCount++;
             } catch (error) {
-                console.error(`[INVOICE_REFETCH] Failed to process document ${doc.id}:`, error);
+                systemLogger.error(`[INVOICE_REFETCH] Failed to process document ${doc.id}:`, error);
             }
         }
 
         return NextResponse.json({ processed: processedCount, totalFound: unprocessedDocs.length });
     } catch (error) {
-        console.error("[INVOICE_REFETCH] Internal Error:", error);
+        systemLogger.error("[INVOICE_REFETCH] Internal Error:", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(
     req: Request,
@@ -44,7 +45,7 @@ export async function POST(
 
         return NextResponse.json(user);
     } catch (error) {
-        console.error("[USER_MODULES_POST]", error);
+        systemLogger.error("[USER_MODULES_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

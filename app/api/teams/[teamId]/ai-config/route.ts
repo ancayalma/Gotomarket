@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { logActivityInternal } from "@/actions/audit";
+import { encryptSecret } from "@/lib/encryption";
+import { systemLogger } from "@/lib/logger";
 
 // POST /api/teams/[teamId]/ai-config - Update team AI configuration
 export async function POST(
@@ -49,6 +52,8 @@ export async function POST(
             return NextResponse.json({ error: "Not authorized to modify this team's settings" }, { status: 403 });
         }
 
+        const encryptedKey = useSystemKey ? null : encryptSecret(apiKey || null);
+
         // Upsert team AI config
         const config = await prismadb.teamAiConfig.upsert({
             where: { team_id: teamId },
@@ -57,19 +62,20 @@ export async function POST(
                 provider,
                 modelId: modelId || null,
                 useSystemKey: useSystemKey ?? true,
-                apiKey: useSystemKey ? null : (apiKey || null),
+                apiKey: encryptedKey,
             },
             update: {
                 provider,
                 modelId: modelId || null,
                 useSystemKey: useSystemKey ?? true,
-                apiKey: useSystemKey ? null : (apiKey || null),
+                apiKey: encryptedKey,
             },
         });
 
-        return NextResponse.json(config);
+        await logActivityInternal(session.user.email, "UPDATE", "TeamAiConfig", `Updated AI config for team ${teamId} (provider: ${provider})`, teamId);
+        return NextResponse.json({ ...config, apiKey: config.apiKey ? "HasValue" : null });
     } catch (error) {
-        console.error("[TEAM_AI_CONFIG_POST]", error);
+        systemLogger.error("[TEAM_AI_CONFIG_POST]", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
@@ -94,7 +100,7 @@ export async function GET(
 
         return NextResponse.json(config);
     } catch (error) {
-        console.error("[TEAM_AI_CONFIG_GET]", error);
+        systemLogger.error("[TEAM_AI_CONFIG_GET]", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

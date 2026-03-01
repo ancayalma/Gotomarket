@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getSessionAndTeam, unauthorizedResponse, validateResourceOwnership } from "@/lib/api-utils";
 import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function DELETE(
     req: Request,
@@ -82,7 +83,7 @@ export async function DELETE(
         return NextResponse.json({ success: true, message: "Team and related data purged completely." }, { status: 200 });
 
     } catch (err) {
-        console.error("[PURGE_TEAM_DELETE]", err);
+        systemLogger.error("[PURGE_TEAM_DELETE]", err);
         return new NextResponse("Internal server error during data purge", { status: 500 });
     }
 }

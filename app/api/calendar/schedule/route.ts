@@ -6,6 +6,7 @@ import { prismadb } from "@/lib/prisma";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { systemLogger } from "@/lib/logger";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -173,7 +174,7 @@ export async function POST(req: Request) {
       });
     } catch (err) {
 
-      console.error("[CALENDAR_EVENTS_INSERT]", (err as any)?.message || err);
+      systemLogger.error("[CALENDAR_EVENTS_INSERT]", (err as any)?.message || err);
       return NextResponse.json(
         { ok: false, error: (err as any)?.message || String(err), calendarIdUsed: targetCalendarId },
         { status: 400 }
@@ -201,7 +202,7 @@ export async function POST(req: Request) {
           });
 
           if (!leadByEmail) {
-            console.error("[CALENDAR_SCHEDULE_LEAD_LOOKUP] Lead not found by email:", leadId);
+            systemLogger.error("[CALENDAR_SCHEDULE_LEAD_LOOKUP] Lead not found by email:", leadId);
             return NextResponse.json(
               {
                 ok: false,
@@ -250,7 +251,7 @@ export async function POST(req: Request) {
         });
       } catch (e) {
 
-        console.error("[CALENDAR_SCHEDULE_LEAD_UPDATE]", (e as any)?.message || e);
+        systemLogger.error("[CALENDAR_SCHEDULE_LEAD_UPDATE]", (e as any)?.message || e);
         // Return the error but still include the event details since the event was created
         return NextResponse.json(
           {
@@ -287,7 +288,7 @@ export async function POST(req: Request) {
     );
   } catch (e: any) {
 
-    console.error("[CALENDAR_SCHEDULE_POST]", e?.message || e);
+    systemLogger.error("[CALENDAR_SCHEDULE_POST]", e?.message || e);
     return new NextResponse("Failed to schedule event", { status: 500 });
   }
 }

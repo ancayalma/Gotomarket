@@ -3,6 +3,7 @@
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 interface AiUsageSummary {
     service: string;
@@ -50,7 +51,7 @@ export async function getTeamAiUsage(
 
         return logs;
     } catch (error) {
-        console.error("[GET_TEAM_AI_USAGE]", error);
+        systemLogger.error("[GET_TEAM_AI_USAGE]", error);
         return [];
     }
 }
@@ -112,7 +113,7 @@ export async function getTeamAiUsageSummary(
 
         return Array.from(summaryMap.values()).sort((a, b) => b.total_cost - a.total_cost);
     } catch (error) {
-        console.error("[GET_TEAM_AI_USAGE_SUMMARY]", error);
+        systemLogger.error("[GET_TEAM_AI_USAGE_SUMMARY]", error);
         return [];
     }
 }
@@ -139,7 +140,7 @@ export async function getMyTeamAiUsage(opts?: { limit?: number }) {
 
         return { logs, summary };
     } catch (error) {
-        console.error("[GET_MY_TEAM_AI_USAGE]", error);
+        systemLogger.error("[GET_MY_TEAM_AI_USAGE]", error);
         return { logs: [], summary: [] };
     }
 }

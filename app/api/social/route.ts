@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { logActivity } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // GET - Fetch social settings (public)
 export async function GET() {
@@ -22,7 +23,7 @@ export async function GET() {
 
         return NextResponse.json(settings);
     } catch (error) {
-        console.log("[SOCIAL_GET]", error);
+        systemLogger.error("[SOCIAL_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -60,7 +61,7 @@ export async function PUT(req: Request) {
 
         return NextResponse.json(settings);
     } catch (error) {
-        console.log("[SOCIAL_PUT]", error);
+        systemLogger.error("[SOCIAL_PUT]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

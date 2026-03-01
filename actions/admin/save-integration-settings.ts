@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export async function saveIntegrationSettings(data: FormData) {
     try {
@@ -48,7 +49,7 @@ export async function saveIntegrationSettings(data: FormData) {
             return { error: "Surge API Key and ID are required when enabled." };
         }
 
-        console.log(`[Integrations] Saving for team ${teamId}`);
+        systemLogger.error(`[Integrations] Saving for team ${teamId}`);
 
         // Update or Create
         await prismadb.tenant_Integrations.upsert({
@@ -91,7 +92,7 @@ export async function saveIntegrationSettings(data: FormData) {
         return { success: true };
 
     } catch (error) {
-        console.error("[SaveIntegrations] Error:", error);
+        systemLogger.error("[SaveIntegrations] Error:", error);
         return { error: "Failed to save settings." };
     }
 }

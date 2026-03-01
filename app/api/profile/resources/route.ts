@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET/POST /api/profile/resources
@@ -70,7 +71,7 @@ export async function GET() {
     return NextResponse.json({ resources }, { status: 200 });
   } catch (error) {
 
-    console.error("[PROFILE_RESOURCES_GET]", error);
+    systemLogger.error("[PROFILE_RESOURCES_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ status: "ok", resources: sanitized }, { status: 200 });
   } catch (error) {
 
-    console.error("[PROFILE_RESOURCES_POST]", error);
+    systemLogger.error("[PROFILE_RESOURCES_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

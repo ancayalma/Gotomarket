@@ -69,7 +69,7 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
             })
         ]);
 
-        const mapped = items.map(item => ({
+        const mapped = (items as any[]).map(item => ({
             id: item.id,
             lead: item.assigned_lead,
             subject: item.subject,

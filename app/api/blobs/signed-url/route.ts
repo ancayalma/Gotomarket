@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getBlobServiceClient } from "@/lib/s3-storage";
+import { systemLogger } from "@/lib/logger";
 
 // POST /api/blobs/signed-url
 // Returns a time-limited signed URL for an S3 object. Accepts JSON body:
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: signedUrl, key: objectKey }, { status: 200 });
   } catch (e: any) {
-    console.error("[S3_SIGNED_URL_POST]", e);
+    systemLogger.error("[S3_SIGNED_URL_POST]", e);
     return NextResponse.json({ error: e?.message || "Internal Error" }, { status: 500 });
   }
 }

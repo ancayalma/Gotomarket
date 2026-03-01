@@ -113,7 +113,7 @@ const UnifiedAiCard = async () => {
     });
 
     // Helper to get config for a provider
-    const getConfig = (provider: string) => systemConfigs.find(c => c.provider === provider);
+    const getConfig = (provider: string) => (systemConfigs as any[]).find(c => c.provider === provider);
 
     const saveConfig = async (formData: FormData) => {
         "use server";
@@ -168,11 +168,11 @@ const UnifiedAiCard = async () => {
             orderBy: { slug: 'asc' },
             select: { slug: true }
         });
-        providers = registeredProviders.map(p => p.slug);
+        providers = (registeredProviders as any[]).map((p: any) => p.slug);
     } catch {
         // Fallback: derive from active models if registry not seeded
-        const uniqueProviders = Array.from(new Set(allModels.map(m => m.provider)));
-        providers = uniqueProviders.sort();
+        const uniqueProviders = Array.from(new Set((allModels as any[]).map((m: any) => m.provider)));
+        providers = uniqueProviders.sort() as string[];
     }
     // Ensure at least the built-in providers are present
     if (providers.length === 0) {
@@ -203,7 +203,7 @@ const UnifiedAiCard = async () => {
             {providers.map(provider => {
                 const config = getConfig(provider);
                 const configJson = config?.configuration as any || {};
-                const providerModels = allModels.filter(m => m.provider === provider);
+                const providerModels = (allModels as any[]).filter((m: any) => m.provider === provider);
                 const ui = getProviderUI(provider);
                 const hasKey = config?.apiKey && config.apiKey.length > 0;
                 const isEnabled = config?.isActive ?? true;
@@ -294,7 +294,7 @@ const UnifiedAiCard = async () => {
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {providerModels.length === 0 && <SelectItem value="none" disabled>No active models</SelectItem>}
-                                                {providerModels.map(m => (
+                                                {providerModels.map((m: any) => (
                                                     <SelectItem key={m.id} value={m.modelId}>
                                                         <span className="font-medium">{m.name}</span>
                                                         <span className="text-muted-foreground ml-1 text-xs font-mono">({m.modelId})</span>

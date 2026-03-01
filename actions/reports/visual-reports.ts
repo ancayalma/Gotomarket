@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { REPORTABLE_OBJECTS } from "@/lib/reports-config";
+import { systemLogger } from "@/lib/logger";
 
 export async function runVisualReport(config: {
     objectType: string;
@@ -52,7 +53,7 @@ export async function runVisualReport(config: {
 
         return { success: true, data };
     } catch (error: any) {
-        console.error("[RUN_VISUAL_REPORT]", error);
+        systemLogger.error("[RUN_VISUAL_REPORT]", error);
         return { success: false, error: error.message };
     }
 }
@@ -87,7 +88,7 @@ export async function saveVisualReport(config: {
 
         return { success: true, reportId: report.id };
     } catch (error: any) {
-        console.error("[SAVE_VISUAL_REPORT]", error);
+        systemLogger.error("[SAVE_VISUAL_REPORT]", error);
         return { success: false, error: error.message };
     }
 }

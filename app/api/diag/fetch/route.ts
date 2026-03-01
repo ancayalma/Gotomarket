@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 // Simple fetch diagnostic endpoint to verify client->server requests and headers/cookies
 export async function POST(req: Request) {
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
     const headers = Object.fromEntries(req.headers.entries());
     // Read body (if any) to ensure the request streams correctly
     const bodyText = await req.text().catch(() => "");
-    console.log("[DIAG_FETCH]", {
+    systemLogger.error("[DIAG_FETCH]", {
       time: new Date().toISOString(),
       headers,
       bodyLength: bodyText.length,
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true, ts: Date.now() }, { status: 200 });
   } catch (e: any) {
-    console.error("[DIAG_FETCH][ERROR]", e?.message || e);
+    systemLogger.error("[DIAG_FETCH][ERROR]", e?.message || e);
     return new NextResponse("Diag fetch error", { status: 500 });
   }
 }

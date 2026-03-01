@@ -7,6 +7,7 @@ import NewTaskFromProject from "@/emails/NewTaskFromProject";
 import sendEmail from "@/lib/sendmail";
 import { render } from "@react-email/render";
 import UpdatedTaskFromProject from "@/emails/UpdatedTaskFromProject";
+import { systemLogger } from "@/lib/logger";
 
 //Create new task in project route
 /*
@@ -64,16 +65,16 @@ export async function PUT(req: Request, props: { params: Promise<{ taskId: strin
         });
 
         if (taskStatus === "COMPLETE") {
-          const completeSection = sections.find(s =>
+          const completeSection = (sections as any[]).find(s =>
             s.title.toLowerCase().includes("complete") ||
             s.title.toLowerCase().includes("done")
           );
           if (completeSection) targetSectionId = completeSection.id;
         } else if (taskStatus === "ACTIVE") {
-          const activeSection = sections.find(s =>
+          const activeSection = (sections as any[]).find(s =>
             s.title.toLowerCase().includes("progress") ||
             s.title.toLowerCase().includes("doing")
-          ) || sections.find(s =>
+          ) || (sections as any[]).find(s =>
             s.title.toLowerCase().includes("to do") ||
             s.title.toLowerCase().includes("incom")
           ) || sections[0];
@@ -152,7 +153,7 @@ export async function PUT(req: Request, props: { params: Promise<{ taskId: strin
 
     return NextResponse.json({ status: 200 });
   } catch (error) {
-    console.log("[NEW_BOARD_POST]", error);
+    systemLogger.error("[NEW_BOARD_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

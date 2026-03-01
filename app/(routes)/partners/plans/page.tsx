@@ -46,8 +46,7 @@ const PlansPage = async () => {
                     hideModelPricing={true}
                     hideManagePlans={true}
                 />
-                {/* @ts-expect-error Server Component */}
-                <PlansView initialPlans={plans} />
+                <PlansView initialPlans={plans as any} />
             </div>
         </Container>
     );

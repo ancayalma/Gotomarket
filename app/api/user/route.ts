@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { hashPassword } from "@/lib/password-utils";
 import { logActivityInternal } from "@/actions/audit";
 import sendEmail from "@/lib/sendmail";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -122,10 +123,10 @@ export async function POST(req: Request) {
             blobHTTPHeaders: { blobContentType: mimeType },
           });
           avatarUrl = blobClient.url;
-          console.log("[Register] Avatar uploaded successfully:", avatarUrl);
+          systemLogger.error("[Register] Avatar uploaded successfully:", avatarUrl);
         }
       } catch (uploadError) {
-        console.error("[Register] Avatar upload failed:", uploadError);
+        systemLogger.error("[Register] Avatar upload failed:", uploadError);
         // Fallback to null or keep original if it was a URL
       }
     }
@@ -206,10 +207,10 @@ export async function POST(req: Request) {
 
       // Trigger the SES verification email (uses platform system credentials)
       await verifyEmailIdentity(email);
-      console.log(`[Register] SES verification triggered for ${email} (Team: ${team.id})`);
+      systemLogger.error(`[Register] SES verification triggered for ${email} (Team: ${team.id})`);
     } catch (sesError) {
       // Non-blocking — registration still succeeds if SES trigger fails
-      console.error("[Register] Auto SES verification failed (non-fatal):", sesError);
+      systemLogger.error("[Register] Auto SES verification failed (non-fatal):", sesError);
     }
 
     let paymentUrl = null;
@@ -251,7 +252,7 @@ export async function POST(req: Request) {
           });
         }
       } catch (surgeError) {
-        console.error("[Register] Surge link generation failed:", surgeError);
+        systemLogger.error("[Register] Surge link generation failed:", surgeError);
       }
     }
 
@@ -270,7 +271,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
-    console.log("[USERS_POST]", error);
+    systemLogger.error("[USERS_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

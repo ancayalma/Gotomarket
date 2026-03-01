@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCalendarClientForUser } from "@/lib/gmail";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/calendar/events?start=ISO&end=ISO[&calendarIds=id1,id2,...]
@@ -162,7 +163,7 @@ export async function GET(req: Request) {
       } catch (e: any) {
         // Continue other calendars even if one fails
          
-        console.error("[CALENDAR_EVENTS_LIST]", calId, e?.message || e);
+        systemLogger.error(`[CALENDAR_EVENTS_LIST] Calendar ID: ${calId}`, e);
       }
     }
 
@@ -177,7 +178,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, events, calendars: calendarsResponse }, { status: 200 });
   } catch (e: any) {
      
-    console.error("[CALENDAR_EVENTS_GET]", e?.message || e);
+    systemLogger.error("[CALENDAR_EVENTS_GET]", e?.message || e);
     return new NextResponse("Failed to fetch events", { status: 500 });
   }
 }

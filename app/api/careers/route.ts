@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prismadb } from "@/lib/prisma";
 import { logActivity } from "@/actions/audit";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   // ── Auth guard ──
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
         });
         return NextResponse.json(jobs);
     } catch (error) {
-        console.error("[CAREERS_GET]", error);
+        systemLogger.error("[CAREERS_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
         revalidatePath('/careers');
         return NextResponse.json(job);
     } catch (error) {
-        console.error("[CAREERS_POST]", error);
+        systemLogger.error("[CAREERS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -100,7 +101,7 @@ export async function PUT(req: Request) {
         revalidatePath('/careers');
         return NextResponse.json(job);
     } catch (error) {
-        console.error("[CAREERS_PUT]", error);
+        systemLogger.error("[CAREERS_PUT]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -131,7 +132,7 @@ export async function DELETE(req: Request) {
         revalidatePath('/careers');
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error("[CAREERS_DELETE]", error);
+        systemLogger.error("[CAREERS_DELETE]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

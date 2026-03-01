@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/oauth/generate-code
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ ok: true, code }, { status: 200 });
     } catch (e: any) {
-        console.error("[oauth/generate-code] Error:", e);
+        systemLogger.error("[oauth/generate-code] Error:", e);
         return NextResponse.json(
             { ok: false, error: e?.message || "server_error" },
             { status: 500 }

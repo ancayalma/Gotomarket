@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/crm/leads/pools
@@ -65,7 +66,7 @@ export async function GET() {
       });
     } else if (isMember) {
       // Members: Use two separate queries and merge to avoid OR clause issues
-      console.log("[LEADS_POOLS_GET] Member query - fetching pools for user:", session.user.id);
+      systemLogger.error("[LEADS_POOLS_GET] Member query - fetching pools for user:", session.user.id);
 
       // Query 1: Pools created by member
       const createdPools = await (prismadb.crm_Lead_Pools as any).findMany({
@@ -73,7 +74,7 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
         select: poolSelect,
       });
-      console.log("[LEADS_POOLS_GET] Created pools count:", createdPools.length);
+      systemLogger.error("[LEADS_POOLS_GET] Created pools count:", createdPools.length);
 
       // Query 2: Pools where member is assigned
       const assignedPools = await (prismadb.crm_Lead_Pools as any).findMany({
@@ -81,7 +82,7 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
         select: poolSelect,
       });
-      console.log("[LEADS_POOLS_GET] Assigned pools count:", assignedPools.length);
+      systemLogger.error("[LEADS_POOLS_GET] Assigned pools count:", assignedPools.length);
 
       // Merge and dedupe by id
       const poolMap = new Map<string, any>();
@@ -113,7 +114,7 @@ export async function GET() {
       }
     }
 
-    console.log("[LEADS_POOLS_GET] Total pools returned:", pools.length);
+    systemLogger.error("[LEADS_POOLS_GET] Total pools returned:", pools.length);
 
     const results = pools.map((p: any) => ({
       id: p.id,
@@ -130,8 +131,8 @@ export async function GET() {
 
     return NextResponse.json({ pools: results }, { status: 200 });
   } catch (error: any) {
-    console.error("[LEADS_POOLS_GET] Error:", error?.message || error);
-    console.error("[LEADS_POOLS_GET] Stack:", error?.stack);
+    systemLogger.error("[LEADS_POOLS_GET] Error:", error?.message || error);
+    systemLogger.error("[LEADS_POOLS_GET] Stack:", error?.stack);
     return new NextResponse(JSON.stringify({ error: error?.message || "Failed to fetch lead pools" }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
@@ -220,7 +221,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error("[LEADS_POOLS_DELETE]", error);
+    systemLogger.error("[LEADS_POOLS_DELETE]", error);
     return new NextResponse("Failed to delete pool", { status: 500 });
   }
 }

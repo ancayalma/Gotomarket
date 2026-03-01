@@ -6,6 +6,7 @@ import sendEmail from "@/lib/sendmail";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { getSessionAndTeam, validateResourceOwnership, unauthorizedResponse } from "@/lib/api-utils";
 import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 const isValidId = (id: any) => typeof id === "string" && id.length === 24;
 
@@ -109,7 +110,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ newOpportunity }, { status: 200 });
   } catch (error) {
-    console.log("[NEW_OPPORTUNITY_POST]", error);
+    systemLogger.error("[NEW_OPPORTUNITY_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }
@@ -179,7 +180,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ updatedOpportunity }, { status: 200 });
   } catch (error) {
-    console.log("[UPDATED_OPPORTUNITY_PUT]", error);
+    systemLogger.error("[UPDATED_OPPORTUNITY_PUT]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
@@ -248,7 +249,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
-    console.log("[GET_OPPORTUNITIES]", error);
+    systemLogger.error("[GET_OPPORTUNITIES]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

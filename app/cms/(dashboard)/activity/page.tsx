@@ -75,7 +75,7 @@ export default async function CMSActivityPage() {
                             <p className="text-muted-foreground">No activities recorded yet.</p>
                         </div>
                     ) : (
-                        activities.map((log) => (
+                        (activities as any[]).map((log: any) => (
                             <div key={log.id} className="flex items-start justify-between p-4 bg-card border rounded-lg hover:shadow-md transition-shadow hover:border-primary/20">
                                 <div className="flex gap-4">
                                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">

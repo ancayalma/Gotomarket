@@ -6,6 +6,7 @@ import { parse } from "csv-parse/sync";
 import { z } from "zod";
 import phoneNormalizer from "@/lib/scraper/quality/phone-normalizer";
 import { normalizeRow } from "@/lib/import-utils";
+import { systemLogger } from "@/lib/logger";
 
 const candidateSchema = z.object({
     dedupeKey: z.string().min(1),
@@ -134,7 +135,7 @@ export async function POST(req: Request) {
         });
 
     } catch (error: any) {
-        console.error("[ACCOUNTS_IMPORT_PREVIEW]", error);
+        systemLogger.error("[ACCOUNTS_IMPORT_PREVIEW]", error);
         return new NextResponse(error.message || "Failed to preview import", { status: 500 });
     }
 }

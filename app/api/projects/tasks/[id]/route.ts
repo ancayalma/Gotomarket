@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -34,7 +35,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
 
         return NextResponse.json(task);
     } catch (error) {
-        console.log("[TASK_GET]", error);
+        systemLogger.error("[TASK_GET]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /oauth/token
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "invalid_grant", error_description: "PKCE verification failed" }, { status: 400 });
       }
     } catch (e: any) {
-      console.error("[oauth/token] PKCE verification error:", e);
+      systemLogger.error("[oauth/token] PKCE verification error:", e);
       return NextResponse.json({ error: "server_error", error_description: "PKCE verification failed" }, { status: 500 });
     }
 

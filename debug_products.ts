@@ -7,7 +7,7 @@ async function checkProduct() {
         }
     });
     console.log("Recent Surge Products:");
-    products.forEach(p => {
+    (products as any[]).forEach((p: any) => {
         console.log(`- ${p.name} (SKU: ${p.sku}): Pack: ${p.industryPack}, Attrs Keys: ${Object.keys(p.attributes || {}).join(", ")}`);
     });
     process.exit(0);

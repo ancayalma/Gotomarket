@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // GET /api/teams/[teamId]/roles - Get all roles for a team
 export async function GET(
@@ -25,7 +27,7 @@ export async function GET(
 
         return NextResponse.json(roles);
     } catch (error) {
-        console.error("[TEAM_ROLES_GET]", error);
+        systemLogger.error("[TEAM_ROLES_GET]", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
@@ -80,9 +82,10 @@ export async function POST(
             },
         });
 
+        await logActivityInternal(session.user.email, "CREATE", "CustomRole", `Created custom role ${role.name}`, teamId);
         return NextResponse.json(role, { status: 201 });
     } catch (error) {
-        console.error("[TEAM_ROLES_POST]", error);
+        systemLogger.error("[TEAM_ROLES_POST]", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

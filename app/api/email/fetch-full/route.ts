@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getGmailClientForUser } from "@/lib/gmail";
 import { getGraphClient } from "@/lib/microsoft";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
@@ -99,7 +100,7 @@ export async function GET(req: Request) {
 
         return new NextResponse("Invalid provider", { status: 400 });
     } catch (error: any) {
-        console.error("[FETCH_EMAIL_FULL]", error);
+        systemLogger.error("[FETCH_EMAIL_FULL]", error);
         return new NextResponse(error.message || "Failed to fetch email", { status: 500 });
     }
 }

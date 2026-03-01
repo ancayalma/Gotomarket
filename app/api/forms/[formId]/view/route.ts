@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(
     req: Request,
@@ -40,7 +41,7 @@ export async function POST(
         return NextResponse.json({ success: true });
 
     } catch (error) {
-        console.error("[FORM_VIEW_POST]", error);
+        systemLogger.error("[FORM_VIEW_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

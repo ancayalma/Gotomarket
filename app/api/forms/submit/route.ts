@@ -4,7 +4,10 @@ import { format } from "date-fns";
 import crypto from "crypto";
 import sendEmail from "@/lib/sendmail";
 import { sendTeamEmail } from "@/lib/email/team-mailer";
+import { systemLogger } from "@/lib/logger";
 import { generateSubmissionPdf } from "@/lib/pdf-utils";
+import { decryptSecret } from "@/lib/encryption";
+
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -110,7 +113,7 @@ export async function POST(req: NextRequest) {
             }
 
             // Determine which keys to use
-            let secretKey = form.captcha_secret_key;
+            let secretKey = form.captcha_secret_key ? decryptSecret(form.captcha_secret_key) || form.captcha_secret_key : null;
 
             // If no form-specific key, try to fetch team config
             if (!secretKey) {
@@ -118,7 +121,7 @@ export async function POST(req: NextRequest) {
                     where: { team_id: form.team_id }
                 });
                 if (teamConfig && teamConfig.secret_key) {
-                    secretKey = teamConfig.secret_key;
+                    secretKey = decryptSecret(teamConfig.secret_key) || teamConfig.secret_key;
                 }
             }
 
@@ -149,7 +152,7 @@ export async function POST(req: NextRequest) {
             if (field.is_required && field.is_visible) {
                 const value = submittedData[field.name];
                 if (value === undefined || value === null || value === "") {
-                    console.error(`[Form ${form.slug}] Validation Failed: Missing required field "${field.name}" (${field.label})`);
+                    systemLogger.error(`[Form ${form.slug}] Validation Failed: Missing required field "${field.name}" (${field.label})`);
                     return NextResponse.json({
                         error: `Field "${field.label}" is required`
                     }, { status: 400, headers: corsHeaders });
@@ -371,15 +374,15 @@ export async function POST(req: NextRequest) {
             try {
                 const recipients = Array.from(notificationTargets);
 
-                console.log(`[Form Notification] Lead ${createdLeadId} -> ${recipients.join(", ")}`);
+                systemLogger.error(`[Form Notification] Lead ${createdLeadId} -> ${recipients.join(", ")}`);
 
-                console.log(`[Form Submission ${newSubmission.id}] Starting PDF generation...`);
+                systemLogger.error(`[Form Submission ${newSubmission.id}] Starting PDF generation...`);
                 // Generate PDF once for all recipients
                 const pdfBuffer = await generateSubmissionPdf({
                     ...newSubmission,
                     form: form
                 });
-                console.log(`[Form Submission ${newSubmission.id}] PDF generation SUCCESS (${pdfBuffer.length} bytes)`);
+                systemLogger.error(`[Form Submission ${newSubmission.id}] PDF generation SUCCESS (${pdfBuffer.length} bytes)`);
 
                 const attachments = [{
                     filename: `submission-${newSubmission.id}.pdf`,
@@ -433,13 +436,13 @@ export async function POST(req: NextRequest) {
                             `,
                             attachments
                         });
-                        console.log(`[Email Success] ${recipient}`);
+                        systemLogger.error(`[Email Success] ${recipient}`);
                     } catch (emailErr: any) {
-                        console.error(`[Email Failure] ${recipient}:`, emailErr.message || emailErr);
+                        systemLogger.error(`[Email Failure] ${recipient}:`, emailErr.message || emailErr);
                     }
                 }
             } catch (notifyErr: any) {
-                console.error(`[Form Submission ${newSubmission.id}] Critical Notification Engine failure:`, notifyErr.message || notifyErr);
+                systemLogger.error(`[Form Submission ${newSubmission.id}] Critical Notification Engine failure:`, notifyErr.message || notifyErr);
             }
         }
 

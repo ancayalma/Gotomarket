@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { createSurgeCheckoutSession } from "@/lib/surge";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export async function generateSurgeLink(invoiceId: string) {
     try {
@@ -51,10 +52,10 @@ export async function generateSurgeLink(invoiceId: string) {
             });
             if (mercuryInvoice?.id) {
                 mercuryInvoiceId = mercuryInvoice.id;
-                console.log(`[GenerateSurgeLink] Linked Mercury Invoice: ${mercuryInvoiceId}`);
+                systemLogger.error(`[GenerateSurgeLink] Linked Mercury Invoice: ${mercuryInvoiceId}`);
             }
         } catch (mercuryError) {
-            console.error("[GenerateSurgeLink] Mercury handshake failed or skipped:", mercuryError);
+            systemLogger.error("[GenerateSurgeLink] Mercury handshake failed or skipped:", mercuryError);
         }
 
         // 4. Update Invoice
@@ -72,7 +73,7 @@ export async function generateSurgeLink(invoiceId: string) {
         return { success: true, url: checkout.url };
 
     } catch (error) {
-        console.error("[GenerateSurgeLink]", error);
+        systemLogger.error("[GenerateSurgeLink]", error);
         return { success: false, error: "Failed to generate link" };
     }
 }

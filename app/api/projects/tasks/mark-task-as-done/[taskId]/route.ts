@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request, props: { params: Promise<{ taskId: string }> }) {
   const params = await props.params;
@@ -35,7 +36,7 @@ export async function POST(req: Request, props: { params: Promise<{ taskId: stri
         orderBy: { position: "asc" }
       });
 
-      const completeSection = sections.find(s =>
+      const completeSection = (sections as any[]).find(s =>
         s.title.toLowerCase().includes("complete") ||
         s.title.toLowerCase().includes("done")
       );
@@ -58,7 +59,7 @@ export async function POST(req: Request, props: { params: Promise<{ taskId: stri
 
     return NextResponse.json({ status: 200 });
   } catch (error) {
-    console.log("[NEW_TASK_IN_PROJECT_POST]", error);
+    systemLogger.error("[NEW_TASK_IN_PROJECT_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

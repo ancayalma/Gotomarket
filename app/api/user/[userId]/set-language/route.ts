@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hash } from "bcryptjs";
+import { systemLogger } from "@/lib/logger";
 
 export async function PUT(req: Request, props: { params: Promise<{ userId: string }> }) {
   const params = await props.params;
@@ -33,7 +34,7 @@ export async function PUT(req: Request, props: { params: Promise<{ userId: strin
 
     return NextResponse.json({ language: language }, { status: 200 });
   } catch (error) {
-    console.log("[NEWUSER_LANG_PUT]", error);
+    systemLogger.error("[NEWUSER_LANG_PUT]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

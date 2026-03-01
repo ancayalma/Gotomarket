@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { systemLogger } from "@/lib/logger";
 
 export const runtime = 'nodejs'
 
@@ -27,10 +28,10 @@ function verifySignature(body: string, timestamp: string, headerSignature: strin
       .map((s) => s.toLowerCase())
 
     const match = candidates.some((sig) => sig === digestHex)
-    if (!match) console.error('[webhook] signature mismatch', { digestHex, candidates })
+    if (!match) systemLogger.error('[webhook] signature mismatch', { digestHex, candidates })
     return match
   } catch (e) {
-    console.error('[webhook] verifySignature error', e)
+    systemLogger.error('[webhook] verifySignature error', e)
     return false
   }
 }
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     process.env.OPENAI_WEBHOOK_SECRET || process.env.AZURE_OPENAI_WEBHOOK_SECRET || process.env.WEBHOOK_SIGNING_SECRET || ''
 
   if (!secret) {
-    console.error('[webhook] missing signing secret in env (OPENAI_WEBHOOK_SECRET/AZURE_OPENAI_WEBHOOK_SECRET)')
+    systemLogger.error('[webhook] missing signing secret in env (OPENAI_WEBHOOK_SECRET/AZURE_OPENAI_WEBHOOK_SECRET)')
     return new NextResponse('Server misconfigured', { status: 500 })
   }
 
@@ -71,13 +72,13 @@ export async function POST(req: NextRequest) {
   }
 
   const type: string = event?.type || ''
-  console.log('[webhook] event', { type, id: event?.id })
+  systemLogger.error('[webhook] event', { type, id: event?.id })
 
   // Route by event type (expand as needed)
   switch (type) {
     case 'response.completed': {
       // Example: record completion, notify systems
-      console.log('[webhook] response.completed', event?.id)
+      systemLogger.error('[webhook] response.completed', event?.id)
       break
     }
     case 'response.failed': {
@@ -87,12 +88,12 @@ export async function POST(req: NextRequest) {
     case 'realtime.call.incoming': {
       const callId = event?.data?.call_id
       const sipHeaders = event?.data?.sip_headers
-      console.log('[webhook] realtime.call.incoming', { callId, sipHeaders })
+      systemLogger.error('[webhook] realtime.call.incoming', { callId, sipHeaders })
       // TODO: Kick off VC consumer/bridge orchestration or persistence
       break
     }
     default: {
-      console.log('[webhook] unhandled event type', type)
+      systemLogger.error('[webhook] unhandled event type', type)
       break
     }
   }
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
     try {
       // TODO: enqueue job or trigger async processing
     } catch (e) {
-      console.error('[webhook] async error', e)
+      systemLogger.error('[webhook] async error', e)
     }
   })
 

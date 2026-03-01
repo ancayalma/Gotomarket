@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { convertLeadToOpportunity } from "@/actions/crm/convert-lead";
 import { closeDealAndCreateProject } from "@/actions/crm/close-deal-and-create-project";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/outreach/close/[leadId]
@@ -101,7 +102,7 @@ export async function POST(req: Request, { params }: Params) {
     return NextResponse.json({ status: "ok", leadId: lead.id }, { status: 200 });
   } catch (error) {
 
-    console.error("[OUTREACH_CLOSE_POST]", error);
+    systemLogger.error("[OUTREACH_CLOSE_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

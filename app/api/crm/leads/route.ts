@@ -6,6 +6,11 @@ import sendEmail from "@/lib/sendmail";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { getSessionAndTeam, validateResourceOwnership, unauthorizedResponse } from "@/lib/api-utils";
 import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
+import { withValidation } from "@/lib/hoc/withValidation";
+import { withAuditLog } from "@/lib/hoc/withAuditLog";
+import { leadSchema, LeadInput } from "@/lib/validations/crm";
+import { checkTeamQuota } from "@/lib/quota-service";
 
 const isValidId = (id: any) => typeof id === "string" && id.length === 24;
 
@@ -46,19 +51,18 @@ export async function GET(req: Request) {
 
     return NextResponse.json(leads);
   } catch (error) {
-    console.log("[LEADS_GET]", error);
+    systemLogger.error("[LEADS_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
 
-//Create a new lead route
-export async function POST(req: Request) {
+// Create a new lead route
+async function createLeadHandler(req: Request, body: LeadInput) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return new NextResponse("Unauthenticated", { status: 401 });
   }
   try {
-    const body = await req.json();
     const userId = session.user.id;
 
     if (!body) {
@@ -87,6 +91,14 @@ export async function POST(req: Request) {
 
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
+
+    // SOC2 CC6.1 / A1.2: Check resource quotas before allowing creation
+    if (teamId) {
+      const quota = await checkTeamQuota(teamId, "LEADS");
+      if (!quota.allowed) {
+        return NextResponse.json({ error: quota.message }, { status: 403 });
+      }
+    }
 
     const searchOrConditions: any[] = [];
     if (email && email.trim() !== "") {
@@ -158,7 +170,7 @@ export async function POST(req: Request) {
     if (assigned_to !== userId) {
       const notifyRecipient = await prismadb.users.findFirst({
         where: {
-          id: assigned_to,
+          id: assigned_to as any,
         },
       });
 
@@ -176,10 +188,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ newLead }, { status: 200 });
   } catch (error) {
-    console.log("[NEW_LEAD_POST]", error);
+    systemLogger.error("[NEW_LEAD_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }
+
+export const POST = withAuditLog("Lead", withValidation(leadSchema, createLeadHandler));
+
 
 //UPdate a lead route
 export async function PUT(req: Request) {
@@ -272,7 +287,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ updatedLead }, { status: 200 });
   } catch (error) {
-    console.log("[UPDATED_LEAD_PUT]", error);
+    systemLogger.error("[UPDATED_LEAD_PUT]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }

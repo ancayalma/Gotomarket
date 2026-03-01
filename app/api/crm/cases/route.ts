@@ -3,6 +3,8 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // Helper: Generate next case number
 async function generateCaseNumber(teamId?: string): Promise<string> {
@@ -155,9 +157,10 @@ export async function POST(req: Request) {
             }
         }
 
+        await logActivityInternal(session.user.id, "CREATE", "crm_Cases", `Created case: ${newCase.case_number} - ${newCase.subject} (${newCase.id})`, teamId || undefined);
         return NextResponse.json(newCase, { status: 201 });
     } catch (error) {
-        console.error("[CREATE_CASE_POST]", error);
+        systemLogger.error("[CREATE_CASE_POST]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -211,7 +214,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json(cases, { status: 200 });
     } catch (error) {
-        console.error("[CASES_GET]", error);
+        systemLogger.error("[CASES_GET]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -287,9 +290,11 @@ export async function PUT(req: Request) {
             },
         });
 
+        const teamInfo = await getCurrentUserTeamId();
+        await logActivityInternal(session.user.id, "UPDATE", "crm_Cases", `Updated case: ${updatedCase.id} (status: ${currentCase.status} → ${updateData.status || currentCase.status})`, teamInfo?.teamId || undefined);
         return NextResponse.json(updatedCase, { status: 200 });
     } catch (error) {
-        console.error("[UPDATE_CASE_PUT]", error);
+        systemLogger.error("[UPDATE_CASE_PUT]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

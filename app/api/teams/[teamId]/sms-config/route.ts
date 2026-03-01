@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { logActivityInternal } from "@/actions/audit";
+import { encryptSecret, decryptSecret } from "@/lib/encryption";
+
+const SECRET_FIELDS = [
+    'brand_ein', 'brand_street', 'brand_city', 'brand_state', 'brand_postal_code', 
+    'brand_contact_email', 'brand_contact_phone', 'brand_support_email', 'brand_support_phone'
+];
 
 export async function GET(req: Request, props: { params: Promise<{ teamId: string }> }) {
     const params = await props.params;
@@ -60,6 +67,13 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
         return NextResponse.json(null);
     }
 
+    // Decrypt PII fields on read
+    for (const field of SECRET_FIELDS) {
+        if ((config as any)[field]) {
+            (config as any)[field] = decryptSecret((config as any)[field]);
+        }
+    }
+
     return NextResponse.json(config);
 }
 
@@ -98,11 +112,17 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
 
     const body = await req.json();
 
-    // Clean body to remove id, created_at, updated_at if present to avoid prisma errors
     delete body.id;
     delete body.createdAt;
     delete body.updatedAt;
     delete body.assigned_team;
+
+    // Encrypt PII fields before write
+    for (const field of SECRET_FIELDS) {
+        if (body[field]) {
+            body[field] = encryptSecret(body[field]);
+        }
+    }
 
     try {
         const config = await prismadb.teamSmsConfig.upsert({
@@ -116,6 +136,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             }
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "TeamSmsConfig", `Updated SMS configuration for team ${params.teamId}`, params.teamId);
         return NextResponse.json(config);
     } catch (error: any) {
         console.error("Failed to save SMS config:", error);

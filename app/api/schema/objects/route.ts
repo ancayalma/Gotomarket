@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request) {
     try {
@@ -34,7 +36,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json(objects);
     } catch (error) {
-        console.error("[SCHEMA_OBJECTS_GET]", error);
+        systemLogger.error("[SCHEMA_OBJECTS_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -92,9 +94,10 @@ export async function POST(req: Request) {
             },
         });
 
+        await logActivityInternal(session.user.id, "CREATE", "CustomObjectDefinition", `Created custom object: ${newObject.name} (${newObject.apiName})`, teamInfo.teamId);
         return NextResponse.json(newObject);
     } catch (error) {
-        console.error("[SCHEMA_OBJECTS_POST]", error);
+        systemLogger.error("[SCHEMA_OBJECTS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

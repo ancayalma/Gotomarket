@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // GET /api/projects/[projectId]/documents
 // Returns documents connected to tasks within sections of the given project (board)
@@ -18,14 +19,14 @@ export async function GET(req: Request, ctx: { params: Promise<{ projectId: stri
       where: { board: projectId },
       select: { id: true },
     });
-    const sectionIds = sections.map(s => s.id);
+    const sectionIds = (sections as any[]).map(s => s.id);
 
     // Find tasks within those sections
     const tasks = await prismadb.tasks.findMany({
       where: { section: { in: sectionIds } },
       select: { id: true },
     });
-    const taskIds = tasks.map(t => t.id);
+    const taskIds = (tasks as any[]).map(t => t.id);
 
     // Fetch documents attached to those tasks
     const documents = await prismadb.documents.findMany({
@@ -36,7 +37,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ projectId: stri
 
     return NextResponse.json({ documents }, { status: 200 });
   } catch (e) {
-    console.error("[PROJECT_DOCUMENTS_GET]", e);
+    systemLogger.error("[PROJECT_DOCUMENTS_GET]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -106,7 +107,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ projectId: str
 
     return NextResponse.json({ ok: true, document: updatedDoc }, { status: 200 });
   } catch (e) {
-    console.error("[PROJECT_DOCUMENTS_POST_ASSIGN]", e);
+    systemLogger.error("[PROJECT_DOCUMENTS_POST_ASSIGN]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import crypto from "crypto";
+import { logActivityInternal } from "@/actions/audit";
 
 // GET - List forms for team
 export async function GET(req: NextRequest) {
@@ -170,6 +171,7 @@ export async function POST(req: NextRequest) {
             },
         });
 
+        await logActivityInternal(userId, "CREATE", "Form", `Created form: ${form.name} (${form.id})`, teamId);
         return NextResponse.json(form);
     } catch (error: any) {
         console.error("Error creating form:", error);

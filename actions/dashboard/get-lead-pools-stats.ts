@@ -27,10 +27,10 @@ export const getLeadPoolsStats = async () => {
             }
         });
 
-        const activePools = pools.filter(pool => pool._count.lead_maps > 0 || pool._count.candidates > 0).slice(0, 10);
+        const activePools = pools.filter((pool: any) => pool._count.lead_maps > 0 || pool._count.candidates > 0).slice(0, 10);
 
         // For each active pool, get detailed engagement stats
-        const poolsWithStats = await Promise.all(activePools.map(async (pool) => {
+        const poolsWithStats = await Promise.all((activePools as any[]).map(async (pool) => {
             // Get leads linked to this pool
             const poolLeads = await (prismadb as any).crm_Lead_Pools_Leads.findMany({
                 where: { pool: pool.id },

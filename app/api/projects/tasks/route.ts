@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logActivityInternal } from "@/actions/audit";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 // GET all tasks (used by calendar)
 export async function GET() {
@@ -34,7 +37,7 @@ export async function GET() {
     });
 
     // Transform to flatten board info for calendar
-    const transformedTasks = tasks.map(task => ({
+    const transformedTasks = (tasks as any[]).map(task => ({
       ...task,
       board: task.assigned_section ? {
         id: task.assigned_section.board,
@@ -44,7 +47,7 @@ export async function GET() {
 
     return NextResponse.json({ tasks: transformedTasks });
   } catch (error) {
-    console.log("[TASKS_GET]", error);
+    systemLogger.error("[TASKS_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
@@ -78,9 +81,12 @@ export async function PUT(req: Request) {
         section: section,
       },
     });
+
+    const teamInfo = await getCurrentUserTeamId();
+    await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "Tasks", `Updated task ${id}`, teamInfo?.teamId!);
     return NextResponse.json({ status: 200 });
   } catch (error) {
-    console.log("[NEW_BOARD_POST]", error);
+    systemLogger.error("[NEW_BOARD_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }
@@ -158,9 +164,11 @@ export async function DELETE(req: Request) {
       });
     }
 
+    const teamInfo = await getCurrentUserTeamId();
+    await logActivityInternal(session.user.email || "SYSTEM", "DELETE", "Tasks", `Deleted task ${id}`, teamInfo?.teamId!);
     return NextResponse.json({ status: 200 });
   } catch (error) {
-    console.log("[NEW_BOARD_POST]", error);
+    systemLogger.error("[NEW_BOARD_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

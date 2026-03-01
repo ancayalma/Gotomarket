@@ -23,7 +23,7 @@ const TeamAiSettings = async ({ teamId }: TeamAiSettingsProps) => {
 
     // Helper to check if provider is enabled (default to true if no config exists)
     const isProviderEnabled = (providerSlug: string) => {
-        const config = systemConfigs.find(c => c.provider === providerSlug);
+        const config = (systemConfigs as any[]).find(c => c.provider === providerSlug);
         return config ? config.isActive : true;
     };
 
@@ -34,17 +34,17 @@ const TeamAiSettings = async ({ teamId }: TeamAiSettingsProps) => {
             where: { isActive: true },
             select: { slug: true }
         });
-        registeredProviders = providerRegistry.map(p => p.slug);
+        registeredProviders = (providerRegistry as any[]).map(p => p.slug);
     } catch {
         // Fallback: derive unique providers from active models
-        registeredProviders = Array.from(new Set(activeModels.map(m => m.provider)));
+        registeredProviders = Array.from(new Set((activeModels as any[]).map(m => m.provider)));
     }
 
     const enabledProviders = registeredProviders.filter(isProviderEnabled);
 
     // Helper to check if provider has system key configured
     // Note: We check if apiKey is present AND not empty string.
-    const providersWithSystemKey = systemConfigs
+    const providersWithSystemKey = (systemConfigs as any[])
         .filter(c => c.apiKey && c.apiKey.trim().length > 0)
         .map(c => c.provider);
 

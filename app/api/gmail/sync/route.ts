@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { syncGmailForUser } from "@/actions/crm/sync-emails";
+import { systemLogger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
-    console.error("[GMAIL_SYNC_GET]", error?.message || error);
+    systemLogger.error("[GMAIL_SYNC_GET]", error?.message || error);
     return new NextResponse("Failed to sync Gmail", { status: 500 });
   }
 }

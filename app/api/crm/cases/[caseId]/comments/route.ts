@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 // POST: Add a comment to a case
 export async function POST(
@@ -62,7 +63,7 @@ export async function POST(
 
         return NextResponse.json(comment, { status: 201 });
     } catch (error) {
-        console.error("[CREATE_CASE_COMMENT_POST]", error);
+        systemLogger.error("[CREATE_CASE_COMMENT_POST]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
@@ -91,7 +92,7 @@ export async function GET(
 
         return NextResponse.json(comments, { status: 200 });
     } catch (error) {
-        console.error("[GET_CASE_COMMENTS]", error);
+        systemLogger.error("[GET_CASE_COMMENTS]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

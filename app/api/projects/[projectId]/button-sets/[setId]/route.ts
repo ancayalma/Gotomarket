@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // PATCH: update an existing button set's name/config
 export async function PATCH(req: Request, ctx: { params: Promise<{ projectId: string; setId: string }> }) {
@@ -50,7 +51,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ projectId: st
 
     return NextResponse.json({ set: updated }, { status: 200 });
   } catch (e) {
-    console.error("[BUTTON_SET_UPDATE_PATCH]", e);
+    systemLogger.error("[BUTTON_SET_UPDATE_PATCH]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

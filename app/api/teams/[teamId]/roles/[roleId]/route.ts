@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 // PATCH /api/teams/[teamId]/roles/[roleId] - Update a custom role
 export async function PATCH(
@@ -40,9 +42,10 @@ export async function PATCH(
             },
         });
 
+        await logActivityInternal(session.user.email, "UPDATE", "CustomRole", `Updated custom role ${roleId}`, resolvedParams.teamId);
         return NextResponse.json(role);
     } catch (error) {
-        console.error("[TEAM_ROLE_PATCH]", error);
+        systemLogger.error("[TEAM_ROLE_PATCH]", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
@@ -84,9 +87,10 @@ export async function DELETE(
             where: { id: roleId },
         });
 
+        await logActivityInternal(session.user.email, "DELETE", "CustomRole", `Deleted custom role ${roleId}`, teamId);
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error("[TEAM_ROLE_DELETE]", error);
+        systemLogger.error("[TEAM_ROLE_DELETE]", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

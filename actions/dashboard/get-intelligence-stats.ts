@@ -23,7 +23,7 @@ export const getIntelligenceStats = async () => {
         });
 
         const totalLeads = recentLeads.length;
-        const convertedLeads = recentLeads.filter(l => l.status === "CONVERTED" || l.status === "QUALIFIED").length;
+        const convertedLeads = (recentLeads as any[]).filter(l => String(l.status) === "CONVERTED" || String(l.status) === "QUALIFIED").length;
         const conversionRate = totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0;
 
         // 2. Average Deal Size

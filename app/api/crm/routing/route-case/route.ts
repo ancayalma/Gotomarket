@@ -3,6 +3,8 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * Smart Router — Case Router
@@ -238,6 +240,8 @@ export async function POST(req: Request) {
             data: { current_load: { increment: 1 } },
         });
 
+        await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "crm_Cases", `Routed case ${case_id} to agent ${result.userId} using strategy ${result.strategy}`, caseData.team_id || "");
+
         return NextResponse.json({
             routed: true,
             agentId: result.userId,
@@ -245,7 +249,7 @@ export async function POST(req: Request) {
             strategy: result.strategy,
         });
     } catch (error) {
-        console.error("[ROUTE_CASE_POST]", error);
+        systemLogger.error("[ROUTE_CASE_POST]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getGmailAuthUrl, getOAuth2ClientRedirectUri } from "@/lib/gmail";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/google/auth-url
@@ -19,12 +20,12 @@ export async function GET(_req: Request) {
     const redirectUri = getOAuth2ClientRedirectUri();
     
     // Log for debugging
-    console.log("[GOOGLE_AUTH_URL] Generated OAuth URL with redirect_uri:", redirectUri);
+    systemLogger.error("[GOOGLE_AUTH_URL] Generated OAuth URL with redirect_uri:", redirectUri);
     
     return NextResponse.json({ ok: true, url, redirectUri }, { status: 200 });
   } catch (e: any) {
      
-    console.error("[GOOGLE_AUTH_URL_GET]", e?.message || e);
+    systemLogger.error("[GOOGLE_AUTH_URL_GET]", e?.message || e);
     return new NextResponse("Failed to generate auth URL", { status: 500 });
   }
 }

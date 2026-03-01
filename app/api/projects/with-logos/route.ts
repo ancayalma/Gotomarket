@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
     try {
@@ -56,12 +57,12 @@ export async function GET() {
         });
 
         // Filter to only those with logos, but also include all for the dropdown
-        const projectsWithLogos = projects.filter(p => p.brand_logo_url);
-        const projectsWithoutLogos = projects.filter(p => !p.brand_logo_url);
+        const projectsWithLogos = (projects as any[]).filter(p => p.brand_logo_url);
+        const projectsWithoutLogos = (projects as any[]).filter(p => !p.brand_logo_url);
 
         return NextResponse.json({
             // Projects that have logos configured
-            withLogos: projectsWithLogos.map(p => ({
+            withLogos: (projectsWithLogos as any[]).map(p => ({
                 id: p.id,
                 name: p.title,
                 logo_url: p.brand_logo_url,
@@ -69,7 +70,7 @@ export async function GET() {
                 icon: p.icon,
             })),
             // All projects (for dropdown selector)
-            all: projects.map(p => ({
+            all: (projects as any[]).map(p => ({
                 id: p.id,
                 name: p.title,
                 logo_url: p.brand_logo_url,
@@ -79,7 +80,7 @@ export async function GET() {
             })),
         });
     } catch (error: any) {
-        console.error("[GET /api/projects/with-logos] Error:", error);
+        systemLogger.error("[GET /api/projects/with-logos] Error:", error);
         return NextResponse.json(
             { error: error.message || "Failed to fetch projects" },
             { status: 500 }

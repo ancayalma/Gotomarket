@@ -166,6 +166,13 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
+    async jwt({ token, user }: any) {
+      if (user) {
+        token.id = user.id;
+        token.session_version = (user as any).session_version;
+      }
+      return token;
+    },
     //TODO: fix this any
     async session({ token, session }: any) {
       // Guard against missing token data to avoid runtime errors and JWT session failures
@@ -226,6 +233,16 @@ export const authOptions: NextAuthOptions = {
           return session;
         }
       } else {
+        // SOC2 CC6.1 Check session version to instantly invalidate stale/compromised JWTs
+        if (
+          user.session_version && 
+          token.session_version && 
+          user.session_version !== token.session_version
+        ) {
+          session.error = "SessionInvalidated";
+          return session;
+        }
+
         // User already exists in localDB, put user data in session
         session.user.id = user.id;
         session.user.name = user.name;

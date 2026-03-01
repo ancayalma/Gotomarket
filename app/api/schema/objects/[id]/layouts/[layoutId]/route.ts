@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(
     req: Request,
@@ -25,7 +26,7 @@ export async function GET(
 
         return NextResponse.json(layout);
     } catch (error) {
-        console.error("[LAYOUT_GET]", error);
+        systemLogger.error("[LAYOUT_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -63,7 +64,7 @@ export async function PUT(
 
         return NextResponse.json(updated);
     } catch (error) {
-        console.error("[LAYOUT_UPDATE]", error);
+        systemLogger.error("[LAYOUT_UPDATE]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -86,7 +87,7 @@ export async function DELETE(
 
         return new NextResponse(null, { status: 204 });
     } catch (error) {
-        console.error("[LAYOUT_DELETE]", error);
+        systemLogger.error("[LAYOUT_DELETE]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

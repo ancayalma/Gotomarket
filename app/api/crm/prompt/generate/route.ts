@@ -83,10 +83,10 @@ export async function POST(req: Request) {
     const meetingLink = String(lead.outreach_meeting_link || "");
 
     // Curate recent signals from activities (emails, transcripts, follow-ups)
-    const lastEmail = activities.find((a) => a.type === "email_sent");
+    const lastEmail = (activities as any[]).find((a) => a.type === "email_sent");
     const lastEmailSubject = String((lastEmail as any)?.metadata?.subject || "");
     const lastEmailBody = String((lastEmail as any)?.metadata?.bodyText || (lastEmail as any)?.metadata?.body || "");
-    const transcriptSegments = activities
+    const transcriptSegments = (activities as any[])
       .filter((a) => a.type === "call_transcript_segment")
       .slice(0, 10)
       .map((s) => String((s as any)?.metadata?.text || ""))

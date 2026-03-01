@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/crm/leads/autogen/control/[jobId]
@@ -111,7 +112,7 @@ export async function POST(
       message: logMsg
     });
   } catch (error) {
-    console.error("[CONTROL_JOB]", error);
+    systemLogger.error("[CONTROL_JOB]", error);
     return new NextResponse("Failed to control job", { status: 500 });
   }
 }

@@ -6,14 +6,14 @@ export const getDocumentsByBoardId = async (boardId: string) => {
     where: { board: boardId },
     select: { id: true },
   });
-  const sectionIds = sections.map(s => s.id);
+  const sectionIds = (sections as any[]).map(s => s.id);
 
   // Find tasks in those sections
   const tasks = await prismadb.tasks.findMany({
     where: { section: { in: sectionIds } },
     select: { id: true },
   });
-  const taskIds = tasks.map(t => t.id);
+  const taskIds = (tasks as any[]).map(t => t.id);
 
   // Find documents attached to those tasks
   const documents = await prismadb.documents.findMany({

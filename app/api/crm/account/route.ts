@@ -3,6 +3,8 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 const isValidId = (id: any) => typeof id === "string" && id.length === 24;
 
@@ -117,6 +119,7 @@ export async function POST(req: Request) {
           updatedBy: session.user.id,
         },
       });
+      await logActivityInternal(session.user.id, "UPDATE", "crm_Accounts", `Merged duplicate account: ${updatedAccount.name} (${updatedAccount.id})`, teamId || undefined);
       return NextResponse.json({ newAccount: updatedAccount }, { status: 200 });
     }
 
@@ -152,9 +155,10 @@ export async function POST(req: Request) {
       },
     });
 
+    await logActivityInternal(session.user.id, "CREATE", "crm_Accounts", `Created account: ${newAccount.name} (${newAccount.id})`, teamId || undefined);
     return NextResponse.json({ newAccount }, { status: 200 });
   } catch (error) {
-    console.log("[NEW_ACCOUNT_POST]", error);
+    systemLogger.error("[NEW_ACCOUNT_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }
@@ -249,9 +253,11 @@ export async function PUT(req: Request) {
       },
     });
 
+    const teamInfo = await getCurrentUserTeamId();
+    await logActivityInternal(session.user.id, "UPDATE", "crm_Accounts", `Updated account: ${newAccount.name} (${id})`, teamInfo?.teamId || undefined);
     return NextResponse.json({ newAccount }, { status: 200 });
   } catch (error) {
-    console.log("[UPDATE_ACCOUNT_PUT]", error);
+    systemLogger.error("[UPDATE_ACCOUNT_PUT]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }
@@ -284,7 +290,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(accounts, { status: 200 });
   } catch (error) {
-    console.log("[ACCOUNTS_GET]", error);
+    systemLogger.error("[ACCOUNTS_GET]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

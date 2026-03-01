@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function PUT(req: Request) {
     const session = await getServerSession(authOptions);
@@ -26,7 +27,7 @@ export async function PUT(req: Request) {
 
         return NextResponse.json({ message: "Sections reordered successfully" });
     } catch (error) {
-        console.log("[REORDER_SECTIONS]", error);
+        systemLogger.error("[REORDER_SECTIONS]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

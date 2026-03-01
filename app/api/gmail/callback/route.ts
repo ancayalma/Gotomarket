@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { exchangeCodeForTokens } from "@/lib/gmail";
+import { systemLogger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export async function GET(req: Request) {
     return NextResponse.redirect(redirectTo, { status: 302 });
   } catch (error) {
      
-    console.error("[GMAIL_CALLBACK_GET]", error);
+    systemLogger.error("[GMAIL_CALLBACK_GET]", error);
     return new NextResponse("Failed to handle Gmail callback", { status: 500 });
   }
 }

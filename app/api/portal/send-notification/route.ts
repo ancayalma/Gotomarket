@@ -10,6 +10,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { sendPortalNotificationSms } from "@/lib/aws/eum-sms";
 import crypto from "crypto";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
     try {
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
             results,
         });
     } catch (err: any) {
-        console.error("[Portal SMS] Error:", err);
+        systemLogger.error("[Portal SMS] Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

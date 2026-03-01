@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { runLeadGenPipeline } from "@/actions/leads/run-pipeline";
 import { prismadbCrm } from "@/lib/prisma-crm";
+import { systemLogger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -45,7 +46,7 @@ export async function POST(
       jobId,
       userId: session.user.id,
     }).catch(async (error) => {
-      console.error(`[BACKGROUND_JOB_ERROR] Pipeline failed for job ${jobId}:`, error);
+      systemLogger.error(`[BACKGROUND_JOB_ERROR] Pipeline failed for job ${jobId}:`, error);
       try {
         await (prismadbCrm as any).crm_Lead_Gen_Jobs.update({
           where: { id: jobId },
@@ -67,7 +68,7 @@ export async function POST(
       { status: 200 }
     );
   } catch (error) {
-    console.error("[LEADS_AUTOGEN_RUN_POST]", error);
+    systemLogger.error("[LEADS_AUTOGEN_RUN_POST]", error);
     return new NextResponse("Failed to run pipeline", { status: 500 });
   }
 }

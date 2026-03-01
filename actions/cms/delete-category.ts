@@ -2,6 +2,7 @@
 
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export async function deleteCategory(categoryName: string) {
     if (!categoryName) throw new Error("Category name is required");
@@ -18,7 +19,7 @@ export async function deleteCategory(categoryName: string) {
 
         return { success: true, count: result.count };
     } catch (error) {
-        console.error("[DELETE_CATEGORY_ERROR]", error);
+        systemLogger.error("[DELETE_CATEGORY_ERROR]", error);
         throw new Error("Failed to delete category");
     }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRecentActivities } from "@/actions/audit";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
     try {
@@ -13,7 +14,7 @@ export async function GET() {
         const activities = await getRecentActivities(50); // Fetch last 50 activities
         return NextResponse.json(activities);
     } catch (error) {
-        console.error("[ACTIVITY_GET]", error);
+        systemLogger.error("[ACTIVITY_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

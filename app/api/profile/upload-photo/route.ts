@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { validateImageFile } from "@/lib/image-processing";
 import { getBlobServiceClient } from "@/lib/s3-storage";
+import { systemLogger } from "@/lib/logger";
 
 // Migrate profile photo upload to Azure Blob
 // POST /api/profile/upload-photo
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("[PROFILE_UPLOAD_PHOTO_ERROR]", error);
+    systemLogger.error("[PROFILE_UPLOAD_PHOTO_ERROR]", error);
     return NextResponse.json({ error: error?.message || "Failed to upload profile photo" }, { status: 500 });
   }
 }

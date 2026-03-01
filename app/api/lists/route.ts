@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -49,7 +50,7 @@ export async function GET() {
         return NextResponse.json({ lists }, { status: 200 });
 
     } catch (error) {
-        console.error("[LISTS_GET]", error);
+        systemLogger.error("[LISTS_GET]", error);
         return new NextResponse("Internal Server Error", { status: 500 });
     }
 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { logActivity } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json(mediaItem);
     } catch (error) {
-        console.error("[MEDIA_POST]", error);
+        systemLogger.error("[MEDIA_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -83,7 +84,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json({ items, total, totalPages: Math.ceil(total / limit) });
     } catch (error) {
-        console.error("[MEDIA_GET]", error);
+        systemLogger.error("[MEDIA_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -122,7 +123,7 @@ export async function PUT(req: Request) {
 
         return NextResponse.json(mediaItem);
     } catch (error) {
-        console.error("[MEDIA_PUT]", error);
+        systemLogger.error("[MEDIA_PUT]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -149,7 +150,7 @@ export async function DELETE(req: Request) {
 
         return new NextResponse("Deleted", { status: 200 });
     } catch (error) {
-        console.error("[MEDIA_DELETE]", error);
+        systemLogger.error("[MEDIA_DELETE]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

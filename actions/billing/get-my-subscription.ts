@@ -3,6 +3,7 @@
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * Get the subscription for the current user's team.
@@ -30,7 +31,7 @@ export async function getMyTeamSubscription() {
 
         return sub;
     } catch (error) {
-        console.error("[GET_MY_TEAM_SUBSCRIPTION]", error);
+        systemLogger.error("[GET_MY_TEAM_SUBSCRIPTION]", error);
         return null;
     }
 }

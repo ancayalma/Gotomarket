@@ -1,6 +1,7 @@
 "use server";
 
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export const getTeam = async (teamId: string) => {
     try {
@@ -23,7 +24,7 @@ export const getTeam = async (teamId: string) => {
 
         return team;
     } catch (error) {
-        console.error("[GET_TEAM]", error);
+        systemLogger.error("[GET_TEAM]", error);
         return null;
     }
 };

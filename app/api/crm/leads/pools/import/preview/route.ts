@@ -6,6 +6,7 @@ import ExcelJS from "exceljs";
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
 import { CandidateNorm, ContactNorm, normalizeRow } from "@/lib/import-utils";
+import { systemLogger } from "@/lib/logger";
 
 const candidateSchema = z.object({
   dedupeKey: z.string().min(1),
@@ -277,7 +278,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(response, { status: 200 });
   } catch (error: any) {
-    console.error("[LEADS_POOLS_IMPORT_PREVIEW]", error);
+    systemLogger.error("[LEADS_POOLS_IMPORT_PREVIEW]", error);
     return new NextResponse(error?.message || "Failed to preview import", { status: 500 });
   }
 }

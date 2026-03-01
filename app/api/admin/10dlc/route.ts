@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 import {
     initiate10DLCRegistration,
     listAllRegistrations,
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
                 );
         }
     } catch (err: any) {
-        console.error("[10DLC API] Error:", err);
+        systemLogger.error("[10DLC API] Error:", err);
         return NextResponse.json(
             { error: err.message || "Internal server error" },
             { status: 500 }
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
                 );
         }
     } catch (err: any) {
-        console.error("[10DLC API] Error:", err);
+        systemLogger.error("[10DLC API] Error:", err);
         return NextResponse.json(
             { error: err.message || "Internal server error" },
             { status: 500 }

@@ -3,6 +3,7 @@
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export const getCase = async (caseId: string) => {
     const session = await getServerSession(authOptions);
@@ -96,7 +97,7 @@ export const getCase = async (caseId: string) => {
 
         return caseData;
     } catch (error) {
-        console.error("[GET_CASE]", error);
+        systemLogger.error("[GET_CASE]", error);
         return null;
     }
 };

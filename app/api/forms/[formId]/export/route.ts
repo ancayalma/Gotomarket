@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { format } from "date-fns";
 import ExcelJS from "exceljs";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(
     req: Request,
@@ -95,7 +96,7 @@ export async function POST(
         });
 
     } catch (error) {
-        console.error("[FORM_EXPORT_EXCEL]", error);
+        systemLogger.error("[FORM_EXPORT_EXCEL]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

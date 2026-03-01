@@ -4,10 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import sendEmail from "@/lib/sendmail";
 import { generateSubmissionPdf } from "@/lib/pdf-utils";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
     try {
-        console.log("[Send Email API] Received request");
+        systemLogger.error("[Send Email API] Received request");
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
             console.warn("[Send Email API] Unauthorized access attempt");
@@ -18,14 +19,14 @@ export async function POST(req: NextRequest) {
         try {
             body = await req.json();
         } catch (e) {
-            console.error("[Send Email API] Failed to parse request body:", e);
+            systemLogger.error("[Send Email API] Failed to parse request body:", e);
             return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
         }
         const { submissionId, to, subject, body: emailBody, includePdf } = body;
-        console.log(`[Send Email API] To: ${to}, Subject: ${subject}, Include PDF: ${!!includePdf}`);
+        systemLogger.error(`[Send Email API] To: ${to}, Subject: ${subject}, Include PDF: ${!!includePdf}`);
 
         if (!to || !subject || !emailBody) {
-            console.error("[Send Email API] Missing required fields");
+            systemLogger.error("[Send Email API] Missing required fields");
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
@@ -36,21 +37,21 @@ export async function POST(req: NextRequest) {
                 include: { form: true }
             });
             if (!submission) {
-                console.error(`[Send Email API] Submission ${submissionId} not found`);
+                systemLogger.error(`[Send Email API] Submission ${submissionId} not found`);
                 return NextResponse.json({ error: "Submission not found" }, { status: 404 });
             }
         }
 
         const attachments = [];
         if (includePdf && submission) {
-            console.log("[Send Email API] Generating PDF...");
+            systemLogger.error("[Send Email API] Generating PDF...");
             const pdfBuffer = await generateSubmissionPdf(submission);
             attachments.push({
                 filename: `submission-${submissionId}.pdf`,
                 content: pdfBuffer,
                 contentType: "application/pdf"
             });
-            console.log("[Send Email API] PDF generated and attached");
+            systemLogger.error("[Send Email API] PDF generated and attached");
         }
 
         // Send the email
@@ -67,10 +68,10 @@ export async function POST(req: NextRequest) {
             attachments
         });
 
-        console.log("[Send Email API] Process completed successfully");
+        systemLogger.error("[Send Email API] Process completed successfully");
         return NextResponse.json({ success: true, message: "Email sent" });
     } catch (error: any) {
-        console.error("[Send Email API] Critical Error:", error);
+        systemLogger.error("[Send Email API] Critical Error:", error);
         return NextResponse.json({ error: error.message || "Failed to send email" }, { status: 500 });
     }
 }

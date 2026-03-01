@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/outreach/reset-pool/[poolId]
@@ -41,7 +42,7 @@ export async function POST(req: Request, context: { params: Promise<{ poolId: st
       return NextResponse.json({ ok: true, reset: 0, message: "No matching leads to reset" });
     }
 
-    const ids = leads.map((l) => l.id);
+    const ids = (leads as any[]).map((l: any) => l.id);
 
     await prismadb.crm_Leads.updateMany({
       where: { id: { in: ids } },
@@ -67,7 +68,7 @@ export async function POST(req: Request, context: { params: Promise<{ poolId: st
     return NextResponse.json({ ok: true, reset: ids.length });
   } catch (error) {
      
-    console.error("[OUTREACH_RESET_POOL_POST]", error);
+    systemLogger.error("[OUTREACH_RESET_POOL_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

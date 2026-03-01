@@ -5,6 +5,7 @@ import { prismadbChat } from "@/lib/prisma-chat";
 import { getAiSdkModel } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { systemLogger } from "@/lib/logger";
 
 const db: any = prismadbChat;
 
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
         return NextResponse.json(object);
 
     } catch (error) {
-        console.error("[CHAT_ANALYZE_ERROR]", error);
+        systemLogger.error("[CHAT_ANALYZE_ERROR]", error);
         return new NextResponse("Internal Server Error", { status: 500 });
     }
 }

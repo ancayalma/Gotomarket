@@ -4,6 +4,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export async function saveQuoteAsDocument(data: {
     quoteId: string;
@@ -61,7 +62,7 @@ export async function saveQuoteAsDocument(data: {
         revalidatePath("/crm/leads/" + data.leadId);
         return { success: true, documentId: doc.id };
     } catch (error: any) {
-        console.error("[SAVE_QUOTE_AS_DOCUMENT]", error);
+        systemLogger.error("[SAVE_QUOTE_AS_DOCUMENT]", error);
         return { success: false, error: error.message };
     }
 }

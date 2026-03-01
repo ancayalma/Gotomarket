@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
     try {
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(status);
     } catch (err: any) {
-        console.error("[SMS Status] Error:", err);
+        systemLogger.error("[SMS Status] Error:", err);
         return NextResponse.json({
             configured: false,
             reason: err.message

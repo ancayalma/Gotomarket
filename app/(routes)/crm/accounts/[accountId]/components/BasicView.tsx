@@ -163,7 +163,7 @@ export async function BasicView({ data }: OppsViewProps) {
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">Created by</p>
                   <p className="text-sm text-muted-foreground">
-                    {users.find((user) => user.id === data.createdBy)?.name}
+                    {(users as any[]).find((user) => user.id === data.createdBy)?.name}
                   </p>
                 </div>
               </div>
@@ -182,7 +182,7 @@ export async function BasicView({ data }: OppsViewProps) {
                     Last update by
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {users.find((user) => user.id === data.updatedBy)?.name}
+                    {(users as any[]).find((user) => user.id === data.updatedBy)?.name}
                   </p>
                 </div>
               </div>

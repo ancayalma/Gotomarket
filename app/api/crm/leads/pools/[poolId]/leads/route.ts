@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 // GET /api/crm/leads/pools/[poolId]/leads?mine=true
 // Returns leads converted from a pool; if mine=true, restrict to current user's assigned leads.
@@ -213,7 +214,7 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
 
     return NextResponse.json({ leads: allLeads }, { status: 200 });
   } catch (error) {
-    console.error("[POOL_LEADS_GET]", error);
+    systemLogger.error("[POOL_LEADS_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

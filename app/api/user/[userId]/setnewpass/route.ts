@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hash } from "bcryptjs";
+import { systemLogger } from "@/lib/logger";
 
 export async function PUT(req: Request, props: { params: Promise<{ userId: string }> }) {
   const params = await props.params;
@@ -45,6 +46,8 @@ export async function PUT(req: Request, props: { params: Promise<{ userId: strin
   try {
     const newUserPass = await prismadb.users.update({
       data: {
+                    session_version: { increment: 1 },
+
         password: await hash(password, 10),
       },
       where: {
@@ -54,7 +57,7 @@ export async function PUT(req: Request, props: { params: Promise<{ userId: strin
 
     return NextResponse.json(newUserPass);
   } catch (error) {
-    console.log("[NEW_USERPASS_PUT]", error);
+    systemLogger.error("[NEW_USERPASS_PUT]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbChat } from "@/lib/prisma-chat";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 const db: any = prismadbChat;
 
@@ -32,7 +33,7 @@ export async function GET() {
         where: { team_id: user.team_id },
         select: { id: true },
       });
-      const memberIds = teamMembers.map((m) => m.id);
+      const memberIds = (teamMembers as any[]).map((m) => m.id);
       whereClause = { user: { in: memberIds } };
     }
 
@@ -48,7 +49,7 @@ export async function GET() {
 
     return NextResponse.json({ sessions }, { status: 200 });
   } catch (error) {
-    console.error("[CHAT_SESSIONS_GET]", error);
+    systemLogger.error("[CHAT_SESSIONS_GET]", error);
     return new NextResponse("Failed to fetch sessions", { status: 500 });
   }
 }
@@ -73,7 +74,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ session: created }, { status: 201 });
   } catch (error) {
-    console.error("[CHAT_SESSIONS_POST]", error);
+    systemLogger.error("[CHAT_SESSIONS_POST]", error);
     return new NextResponse("Failed to create session", { status: 500 });
   }
 }

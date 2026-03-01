@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export async function convertTaskToAccount(taskId: string) {
     const session = await getServerSession(authOptions);
@@ -68,7 +69,7 @@ export async function convertTaskToAccount(taskId: string) {
         };
 
     } catch (error) {
-        console.log("[CONVERT_TASK_TO_ACCOUNT]", error);
+        systemLogger.error("[CONVERT_TASK_TO_ACCOUNT]", error);
         return {
             success: false,
             message: "Failed to create account",

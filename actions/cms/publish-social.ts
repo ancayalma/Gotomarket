@@ -2,6 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function publishToSocial(platform: "twitter" | "facebook" | "linkedin", content: string, url?: string) {
     const session = await getServerSession(authOptions);
@@ -10,7 +11,7 @@ export async function publishToSocial(platform: "twitter" | "facebook" | "linked
     // const account = await prismadb.account.findFirst({ where: { userId: session.user.id, provider: platform } })
 
     // For now, we simulate the API call
-    console.log(`[Social Publish] Publishing to ${platform}`, { content, url });
+    systemLogger.error(`[Social Publish] Publishing to ${platform}`, { content, url });
 
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1500));

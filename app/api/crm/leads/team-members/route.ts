@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/crm/leads/team-members
@@ -68,7 +69,7 @@ export async function GET() {
 
     return NextResponse.json({ users: usersWithColors, isAdmin }, { status: 200 });
   } catch (error) {
-    console.error("[TEAM_MEMBERS_GET]", error);
+    systemLogger.error("[TEAM_MEMBERS_GET]", error);
     return new NextResponse("Failed to fetch team members", { status: 500 });
   }
 }

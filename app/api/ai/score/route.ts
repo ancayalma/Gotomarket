@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getAiSdkModel } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { systemLogger } from "@/lib/logger";
 
 // Define schema for the generic score result
 const ScoreSchema = z.object({
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
         return NextResponse.json(object);
 
     } catch (error) {
-        console.error("[AI_SCORE_ERROR]", error);
+        systemLogger.error("[AI_SCORE_ERROR]", error);
         return new NextResponse("Internal Server Error", { status: 500 });
     }
 }

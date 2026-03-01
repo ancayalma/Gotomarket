@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prismadb } from '@/lib/prisma';
 import crypto from 'crypto';
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error("[ANALYTICS_TRACK_ERROR]", error);
+        systemLogger.error("[ANALYTICS_TRACK_ERROR]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/outreach/meeting/[leadId]
@@ -73,7 +74,7 @@ export async function GET(
     return NextResponse.redirect(meetingLink, { status: 302 });
   } catch (error) {
      
-    console.error("[OUTREACH_MEETING_GET]", error);
+    systemLogger.error("[OUTREACH_MEETING_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

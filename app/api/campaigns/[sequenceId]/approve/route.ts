@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbCrm as prisma } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/campaigns/[sequenceId]/approve
@@ -75,7 +76,7 @@ export async function POST(
             message: "Sequence approved successfully",
         });
     } catch (error: any) {
-        console.error("[CAMPAIGN_APPROVE_POST]", error);
+        systemLogger.error("[CAMPAIGN_APPROVE_POST]", error);
         return NextResponse.json(
             { message: error.message || "Failed to approve sequence" },
             { status: 500 }
@@ -154,7 +155,7 @@ export async function DELETE(
             message: "Sequence rejected and set back to draft",
         });
     } catch (error: any) {
-        console.error("[CAMPAIGN_REJECT_DELETE]", error);
+        systemLogger.error("[CAMPAIGN_REJECT_DELETE]", error);
         return NextResponse.json(
             { message: error.message || "Failed to reject sequence" },
             { status: 500 }

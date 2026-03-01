@@ -6,6 +6,7 @@ import { getGraphClient } from "@/lib/microsoft";
 import { prismadb } from "@/lib/prisma";
 import { getBlobServiceClient } from "@/lib/s3-storage";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/email/attachments/save
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, document: doc });
 
     } catch (error: any) {
-        console.error("[SAVE_EMAIL_ATTACHMENT]", error);
+        systemLogger.error("[SAVE_EMAIL_ATTACHMENT]", error);
         return new NextResponse(error.message || "Failed to save attachment", { status: 500 });
     }
 }

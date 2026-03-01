@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET() {
   // ── Auth guard ──
@@ -18,11 +19,11 @@ export async function GET() {
             },
         });
 
-        const categories = docs.map(doc => doc.category);
+        const categories = (docs as any[]).map(doc => doc.category);
 
         return NextResponse.json(categories);
     } catch (error) {
-        console.log("[DOCS_CATEGORIES_GET]", error);
+        systemLogger.error("[DOCS_CATEGORIES_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

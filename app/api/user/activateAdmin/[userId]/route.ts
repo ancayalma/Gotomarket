@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { logActivity } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request, props: { params: Promise<{ userId: string }> }) {
   const params = await props.params;
@@ -30,7 +31,7 @@ export async function POST(req: Request, props: { params: Promise<{ userId: stri
 
     return NextResponse.json(user);
   } catch (error) {
-    console.log("[USER_ADMIN_ACTIVATE_POST]", error);
+    systemLogger.error("[USER_ADMIN_ACTIVATE_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

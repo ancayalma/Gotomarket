@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { set } from "zod";
+import { encryptSecret } from "@/lib/encryption";
+import { logActivityInternal } from "@/actions/audit";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request, props: { params: Promise<{ userId: string }> }) {
   const params = await props.params;
@@ -40,11 +43,13 @@ export async function POST(req: Request, props: { params: Promise<{ userId: stri
             id: checkIfExist.id,
           },
           data: {
-            api_key: secretKey,
+            api_key: encryptSecret(secretKey) || "",
             organization_id: organizationId,
           },
         });
-        return NextResponse.json(updateNotion, {
+        const teamInfo = await getCurrentUserTeamId();
+        await logActivityInternal(session.user.id, "UPDATE", "openAi_keys", `Updated OpenAI key for user ${userId}`, teamInfo?.teamId || undefined);
+        return NextResponse.json({ ...updateNotion, api_key: "HasValue" }, {
           status: 200,
         });
       } catch (error) {
@@ -54,18 +59,20 @@ export async function POST(req: Request, props: { params: Promise<{ userId: stri
       const setOpenAiKey = await prismadb.openAi_keys.create({
         data: {
           v: 0,
-          api_key: secretKey,
+          api_key: encryptSecret(secretKey) || "",
           organization_id: organizationId,
           user: userId,
         },
       });
 
-      return NextResponse.json(setOpenAiKey, {
+      const teamInfo = await getCurrentUserTeamId();
+      await logActivityInternal(session.user.id, "CREATE", "openAi_keys", `Created OpenAI key for user ${userId}`, teamInfo?.teamId || undefined);
+      return NextResponse.json({ ...setOpenAiKey, api_key: "HasValue" }, {
         status: 200,
       });
     }
   } catch (error) {
-    console.log("[USER_UPDATE_OPENAIKEY]", error);
+    systemLogger.error("[USER_UPDATE_OPENAIKEY]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

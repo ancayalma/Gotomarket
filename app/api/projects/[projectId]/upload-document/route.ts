@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getBlobServiceClient } from "@/lib/s3-storage";
+import { systemLogger } from "@/lib/logger";
 
 // POST /api/projects/[projectId]/upload-document
 // Accepts multipart/form-data { file } and uploads to Azure Blob Storage,
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ projectId:
 
     return NextResponse.json({ ok: true, document: doc }, { status: 201 });
   } catch (e: any) {
-    console.error("[PROJECT_UPLOAD_DOCUMENT_POST]", e);
+    systemLogger.error("[PROJECT_UPLOAD_DOCUMENT_POST]", e);
     return NextResponse.json({ error: e?.message || "Internal Error" }, { status: 500 });
   }
 }

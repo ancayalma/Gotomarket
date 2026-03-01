@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { subDays } from "date-fns";
+import { systemLogger } from "@/lib/logger";
 
 export async function getNotifications(includeCleared = true) {
     try {
@@ -39,7 +40,7 @@ export async function getNotifications(includeCleared = true) {
 
         return notifications;
     } catch (error) {
-        console.error("[GET_NOTIFICATIONS]", error);
+        systemLogger.error("[GET_NOTIFICATIONS]", error);
         return [];
     }
 }
@@ -62,7 +63,7 @@ export async function markAsRead(notificationId: string) {
         revalidatePath("/");
         return { success: true };
     } catch (error) {
-        console.error("[MARK_NOTIFICATION_READ]", error);
+        systemLogger.error("[MARK_NOTIFICATION_READ]", error);
         return { success: false };
     }
 }
@@ -85,7 +86,7 @@ export async function markAllAsRead() {
         revalidatePath("/");
         return { success: true };
     } catch (error) {
-        console.error("[MARK_ALL_NOTIFICATIONS_READ]", error);
+        systemLogger.error("[MARK_ALL_NOTIFICATIONS_READ]", error);
         return { success: false };
     }
 }
@@ -109,7 +110,7 @@ export async function clearNotification(notificationId: string) {
         revalidatePath("/");
         return { success: true };
     } catch (error) {
-        console.error("[CLEAR_NOTIFICATION]", error);
+        systemLogger.error("[CLEAR_NOTIFICATION]", error);
         return { success: false };
     }
 }
@@ -133,7 +134,7 @@ export async function clearAllNotifications() {
         revalidatePath("/");
         return { success: true };
     } catch (error) {
-        console.error("[CLEAR_ALL_NOTIFICATIONS]", error);
+        systemLogger.error("[CLEAR_ALL_NOTIFICATIONS]", error);
         return { success: false };
     }
 }
@@ -153,7 +154,7 @@ export async function deleteNotification(notificationId: string) {
         revalidatePath("/");
         return { success: true };
     } catch (error) {
-        console.error("[DELETE_NOTIFICATION]", error);
+        systemLogger.error("[DELETE_NOTIFICATION]", error);
         return { success: false };
     }
 }
@@ -172,7 +173,7 @@ export async function deleteAllNotifications() {
         revalidatePath("/");
         return { success: true };
     } catch (error) {
-        console.error("[DELETE_ALL_NOTIFICATIONS]", error);
+        systemLogger.error("[DELETE_ALL_NOTIFICATIONS]", error);
         return { success: false };
     }
 }

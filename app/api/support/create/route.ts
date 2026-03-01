@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prismadb } from '@/lib/prisma';
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   // ── Auth guard ──
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json(ticket);
     } catch (error) {
-        console.error("[SUPPORT_CREATE_ERROR]", error);
+        systemLogger.error("[SUPPORT_CREATE_ERROR]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

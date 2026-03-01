@@ -6,6 +6,7 @@ import { prismadb } from "@/lib/prisma";
 const db: any = prismadbChat;
 import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
 import { streamText } from "ai";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * Build the CRM Chief Agent system prompt with current time and comprehensive ontology
@@ -412,7 +413,7 @@ export async function POST(req: Request) {
                             });
                         }
                     } catch (e) {
-                        console.error("[CHAT_MESSAGES_ON_COMPLETION_SAVE_ERROR]", e);
+                        systemLogger.error("[CHAT_MESSAGES_ON_COMPLETION_SAVE_ERROR]", e);
                     }
                 },
             });
@@ -424,7 +425,7 @@ export async function POST(req: Request) {
                 result = textStreamPromise;
             }
         } catch (err) {
-            console.error("[CHAT_STREAM_TEXT_ERROR]", err);
+            systemLogger.error("[CHAT_STREAM_TEXT_ERROR]", err);
             return new NextResponse("Error calling streamText", { status: 500 });
         }
 
@@ -436,12 +437,12 @@ export async function POST(req: Request) {
         } else if (result instanceof Response) {
             return result;
         } else {
-            console.error("[CHAT_STREAM_ERROR] Invalid result object:", result);
+            systemLogger.error("[CHAT_STREAM_ERROR] Invalid result object:", result);
             return new NextResponse("Stream generation failed: Invalid result", { status: 500 });
         }
 
     } catch (error) {
-        console.error("[CHAT_MESSAGES_POST]", error);
+        systemLogger.error("[CHAT_MESSAGES_POST]", error);
         return new NextResponse("Failed to process message", { status: 500 });
     }
 }

@@ -5,6 +5,7 @@ import { prismadb } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { getSessionAndTeam, unauthorizedResponse } from "@/lib/api-utils";
 import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request, props: { params: Promise<{ userId: string }> }) {
   const params = await props.params;
@@ -23,7 +24,7 @@ export async function GET(req: Request, props: { params: Promise<{ userId: strin
 
     return NextResponse.json(user);
   } catch (error) {
-    console.log("[USER_GET]", error);
+    systemLogger.error("[USER_GET]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }
@@ -69,7 +70,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ userId: st
 
     return NextResponse.json({ success: true, message: "User purged" });
   } catch (error) {
-    console.log("[USER_DELETE]", error);
+    systemLogger.error("[USER_DELETE]", error);
     return NextResponse.json({ error: "Failed to purge user" }, { status: 500 });
   }
 }

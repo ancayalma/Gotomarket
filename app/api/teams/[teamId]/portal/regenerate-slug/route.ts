@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import crypto from "crypto";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(
     req: NextRequest,
@@ -59,7 +60,7 @@ export async function POST(
 
         return NextResponse.json({ portal });
     } catch (err: any) {
-        console.error("[Portal Regenerate Slug] Error:", err);
+        systemLogger.error("[Portal Regenerate Slug] Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

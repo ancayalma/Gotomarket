@@ -3,6 +3,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import moduleData from "@/prisma/initial-data/system_Modules_Enabled.json";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST() {
   const session = await getServerSession(authOptions);
@@ -32,7 +33,7 @@ export async function POST() {
       modules,
     });
   } catch (error) {
-    console.error("[ADMIN_INIT_MODULES]", error);
+    systemLogger.error("[ADMIN_INIT_MODULES]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

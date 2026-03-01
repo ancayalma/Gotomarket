@@ -3,6 +3,7 @@ import { getBlobServiceClient } from "@/lib/s3-storage";
 import { prismadb } from "@/lib/prisma";
 import type { DocumentSystemType } from "@prisma/client";
 import { requireCronAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 // POST /api/upload/cron
 // Used by the email ingestion job to upload attachments to Azure Blob and create a Document record.
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, document: doc }, { status: 201 });
   } catch (e: any) {
-    console.error("[GENERIC_UPLOAD_CRON_POST]", e);
+    systemLogger.error("[GENERIC_UPLOAD_CRON_POST]", e);
     const debug = process.env.NODE_ENV !== "production";
     return NextResponse.json(
       debug ? { error: e?.message || "Internal Error", stack: e?.stack } : { error: "Internal Error" },

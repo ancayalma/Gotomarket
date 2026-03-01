@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(
     req: Request,
@@ -59,7 +60,7 @@ export async function POST(
 
         return NextResponse.json(lead);
     } catch (error) {
-        console.log("[CONTACT_CONVERT_POST]", error);
+        systemLogger.error("[CONTACT_CONVERT_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

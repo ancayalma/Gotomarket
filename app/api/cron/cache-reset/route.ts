@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { invalidateCacheVersion } from "@/lib/cache-version";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/cron/cache-reset
@@ -19,13 +20,13 @@ export async function POST(req: Request) {
         const isVercelCron = req.headers.get("x-vercel-cron") === "true";
 
         if (!isVercelCron && cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-            console.error("[CRON] Unauthorized cache reset attempt");
+            systemLogger.error("[CRON] Unauthorized cache reset attempt");
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const newVersion = invalidateCacheVersion();
 
-        console.log(`[CRON] Cache reset triggered at ${new Date().toISOString()}`);
+        systemLogger.error(`[CRON] Cache reset triggered at ${new Date().toISOString()}`);
 
         return NextResponse.json({
             success: true,
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
             message: "Cache version invalidated. Active clients will refresh on next poll."
         });
     } catch (error: any) {
-        console.error("[CRON] Cache reset failed:", error);
+        systemLogger.error("[CRON] Cache reset failed:", error);
         return NextResponse.json(
             { error: error?.message || "Failed to reset cache" },
             { status: 500 }

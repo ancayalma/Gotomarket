@@ -3,6 +3,7 @@
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function getAllSubscriptions() {
     try {
@@ -27,7 +28,7 @@ export async function getAllSubscriptions() {
 
         return subs;
     } catch (error) {
-        console.error("[GET_ALL_SUBSCRIPTIONS]", error);
+        systemLogger.error("[GET_ALL_SUBSCRIPTIONS]", error);
         return [];
     }
 }

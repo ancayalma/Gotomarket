@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 import NewTaskCommentEmail from "@/emails/NewTaskComment";
+import { systemLogger } from "@/lib/logger";
 
 
 export async function POST(req: Request, props: { params: Promise<{ taskId: string }> }) {
@@ -49,7 +50,7 @@ export async function POST(req: Request, props: { params: Promise<{ taskId: stri
 
     /*      */
   } catch (error) {
-    console.log("[COMMENTS_POST]", error);
+    systemLogger.error("[COMMENTS_POST]", error);
     return new NextResponse("Initial error", { status: 500 });
   }
 }

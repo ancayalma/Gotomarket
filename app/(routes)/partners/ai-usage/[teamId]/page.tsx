@@ -72,7 +72,7 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
         select: { id: true, name: true, email: true }
     });
 
-    const teamMemberIds = teamMembers.map(u => u.id);
+    const teamMemberIds = (teamMembers as any[]).map(u => u.id);
 
     // 4. Fetch Chat Sessions for these members
     const teamSessions = await db.chat_Sessions.findMany({
@@ -82,7 +82,7 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
         select: { id: true, user: true }
     });
 
-    const teamSessionIds = teamSessions.map((s: any) => s.id);
+    const teamSessionIds = (teamSessions as any[]).map((s: any) => s.id);
     const sessionToUserMap = new Map();
     teamSessions.forEach((s: any) => sessionToUserMap.set(s.id, s.user));
 
@@ -131,12 +131,12 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
     const userUsage: Record<string, { name: string, email: string, total: number, requests: number }> = {};
 
     // Initialize users
-    teamMembers.forEach(u => {
+    (teamMembers as any[]).forEach(u => {
         userUsage[u.id] = { name: u.name || "Unknown", email: u.email, total: 0, requests: 0 };
     });
 
     // A. Parse Chat
-    messagesWithUsage.forEach((msg: any) => {
+    (messagesWithUsage as any[]).forEach((msg: any) => {
         const usage = (msg.tokenUsage || {}) as any;
         const tokens = (usage.totalTokens || 0);
         totalTokens += tokens;
@@ -155,7 +155,7 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
     });
 
     // B. Parse Logs
-    aiUsageLogs.forEach((log) => {
+    (aiUsageLogs as any[]).forEach((log) => {
         const tokens = (log.tokens_in + log.tokens_out);
         totalTokens += tokens;
         promptTokens += log.tokens_in;

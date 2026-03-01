@@ -3,6 +3,7 @@
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export const deleteTeam = async (teamId: string) => {
     try {
@@ -35,7 +36,7 @@ export const deleteTeam = async (teamId: string) => {
 
         return { success: true };
     } catch (error) {
-        console.error("[DELETE_TEAM]", error);
+        systemLogger.error("[DELETE_TEAM]", error);
         return { error: "Failed to delete team" };
     }
 };

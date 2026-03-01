@@ -3,6 +3,7 @@ import axios from "axios";
 import https from "https";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(
     request: NextRequest,
@@ -27,7 +28,7 @@ export async function GET(
                 surgeUrl.searchParams.append(key, value);
             });
 
-            console.log(`[SurgeProxy] Trying path ${path}: ${surgeUrl.toString()}`);
+            systemLogger.error(`[SurgeProxy] Trying path ${path}: ${surgeUrl.toString()}`);
 
             const agent = new https.Agent({ rejectUnauthorized: false });
 
@@ -45,7 +46,7 @@ export async function GET(
 
                 response = res;
                 successfulPath = path;
-                console.log(`[SurgeProxy] Success with path: ${path}`);
+                systemLogger.error(`[SurgeProxy] Success with path: ${path}`);
                 break;
             } catch (err) {
                 console.warn(`[SurgeProxy] Path ${path} failed or timed out`);
@@ -54,7 +55,7 @@ export async function GET(
         }
 
         if (!response) {
-            console.error(`[SurgeProxy] All paths failed for receipt ${receiptId}`);
+            systemLogger.error(`[SurgeProxy] All paths failed for receipt ${receiptId}`);
             return new Response(`[BasaltSRM] Surge Handshake Error: All portal paths returned 404 or timed out.`, { status: 404 });
         }
 
@@ -66,7 +67,7 @@ export async function GET(
             <script>
                 // Intercept any relative clicks/fetches to keep them on Surge
                 window.__PROXIED__ = true;
-                console.log("[BasaltSRM] Payment Layer Initialized via Proxy");
+                systemLogger.error("[BasaltSRM] Payment Layer Initialized via Proxy");
             </script>
             <style>
                 /* Ensure Surge content takes up full height and isn't hidden by overflow */
@@ -92,7 +93,7 @@ export async function GET(
         });
 
     } catch (error: any) {
-        console.error("[SurgeProxy] Critical Failure:", error);
+        systemLogger.error("[SurgeProxy] Critical Failure:", error);
         return new Response(`Proxy Error: ${error.message}`, { status: 500 });
     }
 }

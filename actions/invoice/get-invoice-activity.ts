@@ -24,7 +24,7 @@ export const getInvoiceActivity = async (invoiceId: string) => {
             }
         });
 
-        return activities.map(a => ({
+        return (activities as any[]).map(a => ({
             id: a.id,
             user: a.user?.name || "System",
             action: a.action,

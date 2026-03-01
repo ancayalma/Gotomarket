@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prismadb } from "@/lib/prisma";
 import { logActivity } from "@/actions/audit";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   // ── Auth guard ──
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
         revalidatePath('/docs');
         return NextResponse.json(doc);
     } catch (error) {
-        console.log("[DOCS_POST]", error);
+        systemLogger.error("[DOCS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

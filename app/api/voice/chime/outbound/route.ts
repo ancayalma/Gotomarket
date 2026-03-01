@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 export const preferredRegion = 'auto';
 import { ChimeSDKVoiceClient, CreateSipMediaApplicationCallCommand } from "@aws-sdk/client-chime-sdk-voice";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/voice/chime/outbound
@@ -121,7 +122,7 @@ if (!fromNumber || !isE164(fromNumber)) {
     const res = await client.send(cmd);
     return NextResponse.json({ ok: true, result: res }, { status: 200 });
   } catch (e: any) {
-    console.error("[CHIME_OUTBOUND_POST]", e);
+    systemLogger.error("[CHIME_OUTBOUND_POST]", e);
     return NextResponse.json({
       ok: false,
       error: {

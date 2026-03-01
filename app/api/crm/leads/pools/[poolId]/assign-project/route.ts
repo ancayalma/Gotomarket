@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export async function PATCH(req: Request, context: { params: Promise<{ poolId: string }> }) {
   try {
@@ -57,7 +58,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ poolId: s
 
     return NextResponse.json({ ok: true, icpConfig: nextConfig }, { status: 200 });
   } catch (e) {
-    console.error("[ASSIGN_PROJECT_PATCH]", e);
+    systemLogger.error("[ASSIGN_PROJECT_PATCH]", e);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

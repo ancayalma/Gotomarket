@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request, context: { params: Promise<{ poolId: string }> }) {
     try {
@@ -55,7 +56,7 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
         return NextResponse.json(pool);
 
     } catch (error: any) {
-        console.error("[POOL_GET]", error);
+        systemLogger.error("[POOL_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 export const preferredRegion = 'auto';
 import { ChimeSDKMeetingsClient, CreateMeetingCommand, CreateAttendeeCommand } from "@aws-sdk/client-chime-sdk-meetings";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 const REGION = process.env.CHIME_REGION || process.env.AWS_REGION || "us-west-2";
 const MEETING_REGION = process.env.CHIME_APP_MEETING_REGION || REGION;
@@ -38,7 +39,7 @@ export async function POST() {
       meta: { region: REGION, meetingRegion: MEETING_REGION, meetingArn, accountId }
     });
   } catch (e: any) {
-    console.error("[CHIME_CREATE_MEETING]", e);
+    systemLogger.error("[CHIME_CREATE_MEETING]", e);
     return new NextResponse(e?.message || "error", { status: 500 });
   }
 }

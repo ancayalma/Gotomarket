@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { sendEmailSES } from "@/lib/aws/ses";
 import crypto from "crypto";
+import { systemLogger } from "@/lib/logger";
 
 export async function sendInvoice(invoiceId: string, email: string) {
     try {
@@ -202,10 +203,10 @@ export async function sendInvoice(invoiceId: string, email: string) {
                 text: emailText,
                 html: emailHtml,
             });
-            console.log(`[SendInvoice] Email sent to ${email} via SES (Tracked)`);
+            systemLogger.error(`[SendInvoice] Email sent to ${email} via SES (Tracked)`);
             return { success: true, message: "Email sent with tracking" };
         } catch (sesError: any) {
-            console.error("[SendInvoice] SES Error:", sesError.message);
+            systemLogger.error("[SendInvoice] SES Error:", sesError.message);
             return { error: "Failed to send email: " + sesError.message };
         }
 

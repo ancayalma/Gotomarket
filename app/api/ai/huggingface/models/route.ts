@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * Proxy for the Hugging Face Hub API model search.
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(simplified);
     } catch (error: any) {
-        console.error("[HF_MODEL_SEARCH]", error);
+        systemLogger.error("[HF_MODEL_SEARCH]", error);
         return NextResponse.json({ error: "Failed to search HuggingFace models" }, { status: 500 });
     }
 }

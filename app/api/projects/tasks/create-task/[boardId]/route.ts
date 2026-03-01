@@ -7,6 +7,7 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 import NewTaskFromProject from "@/emails/NewTaskFromProject";
 import sendEmail from "@/lib/sendmail";
 import { render } from "@react-email/render";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request, props: { params: Promise<{ boardId: string }> }) {
   const params = await props.params;
@@ -69,7 +70,7 @@ export async function POST(req: Request, props: { params: Promise<{ boardId: str
 
       return NextResponse.json(task);
     } catch (error) {
-      console.log("[NEW_TASK_IN_PROJECT_POST]", error);
+      systemLogger.error("[NEW_TASK_IN_PROJECT_POST]", error);
       return new NextResponse("Initial error", { status: 500 });
     }
   } else {
@@ -141,7 +142,7 @@ export async function POST(req: Request, props: { params: Promise<{ boardId: str
       }
       return NextResponse.json(task);
     } catch (error) {
-      console.log("[NEW_TASK_IN_PROJECT_POST]", error);
+      systemLogger.error("[NEW_TASK_IN_PROJECT_POST]", error);
       return new NextResponse("Initial error", { status: 500 });
     }
   }

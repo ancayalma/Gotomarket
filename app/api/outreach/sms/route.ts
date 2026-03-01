@@ -7,6 +7,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { sendSmsPinpoint } from "@/lib/aws/pinpoint";
 import { ensureContactForLead } from "@/actions/crm/lead-conversions";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/outreach/sms
@@ -154,7 +155,7 @@ export async function POST(req: Request) {
           smsBody = sanitizeSmsBody(object.body || smsBody);
         } catch (err: any) {
           // keep default
-          console.error("[SMS][AI_ERROR]", err?.message || err);
+          systemLogger.error("[SMS][AI_ERROR]", err?.message || err);
         }
       }
 
@@ -186,7 +187,7 @@ export async function POST(req: Request) {
 
         results.push({ leadId: lead.id, status: "sent", to: toNumber, body: finalBody, messageId: msgId });
       } catch (err: any) {
-        console.error("[SMS][PINPOINT_SEND_ERROR]", err?.message || err);
+        systemLogger.error("[SMS][PINPOINT_SEND_ERROR]", err?.message || err);
         results.push({ leadId: lead.id, status: "error", reason: err?.message || "Send failed" });
       }
     }
@@ -201,7 +202,7 @@ export async function POST(req: Request) {
     };
     return NextResponse.json(summary, { status: 200 });
   } catch (error) {
-    console.error("[OUTREACH_SMS_POST]", error);
+    systemLogger.error("[OUTREACH_SMS_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

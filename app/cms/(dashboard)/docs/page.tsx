@@ -6,7 +6,7 @@ import Link from "next/link";
 export default async function CMSDocsOverviewPage() {
     const docs = await prismadb.docArticle.findMany();
     const totalDocs = docs.length;
-    const categories = new Set(docs.map(d => d.category)).size;
+    const categories = new Set((docs as any[]).map(d => d.category)).size;
     const recentDocs = await prismadb.docArticle.findMany({
         orderBy: { updatedAt: 'desc' },
         take: 5
@@ -66,7 +66,7 @@ export default async function CMSDocsOverviewPage() {
                     <h2 className="text-xl font-semibold text-white">Recently Updated</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
-                    {recentDocs.map((doc) => (
+                    {(recentDocs as any[]).map((doc: any) => (
                         <Link
                             key={doc.id}
                             href={`/cms/docs/${doc.id}`}

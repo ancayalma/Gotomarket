@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { systemLogger } from "@/lib/logger";
 
 // PATCH /api/teams/[teamId]/roles/system/[roleKey] - Update system role module defaults for a team
 // Note: This updates the assigned_modules for all users with this role in the team
@@ -47,7 +48,7 @@ export async function PATCH(
 
         return NextResponse.json({ success: true, roleKey, modules });
     } catch (error) {
-        console.error("[TEAM_SYSTEM_ROLE_PATCH]", error);
+        systemLogger.error("[TEAM_SYSTEM_ROLE_PATCH]", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

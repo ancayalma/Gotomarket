@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { z } from "zod";
+import { systemLogger } from "@/lib/logger";
 
 const createRoleSchema = z.object({
     name: z.string().min(1).max(50),
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(role, { status: 201 });
     } catch (error) {
-        console.error("[ROLES_POST]", error);
+        systemLogger.error("[ROLES_POST]", error);
         if (error instanceof z.ZodError) {
             return NextResponse.json({ error: error.issues }, { status: 400 });
         }
@@ -98,7 +99,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(roles);
     } catch (error) {
-        console.error("[ROLES_GET]", error);
+        systemLogger.error("[ROLES_GET]", error);
         return NextResponse.json({ error: "Internal error" }, { status: 500 });
     }
 }

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { sendTeamEmail } from "@/lib/email/team-mailer";
+import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -78,7 +79,7 @@ ${feedback}
           team_id: teamId,
           sentAt: new Date(),
           recipients: {
-            create: admins.map(admin => ({
+            create: (admins as any[]).map(admin => ({
               recipient_id: admin.id,
               recipient_type: "TO"
             }))
@@ -118,7 +119,7 @@ ${feedback}
         });
       }
     } catch (error) {
-      console.error("[FEEDBACK_SEND_ERROR] Falling back to system relay:", error);
+      systemLogger.error("[FEEDBACK_SEND_ERROR] Falling back to system relay:", error);
       // Last resort fallback if team-mailer fails/not configured
       await sendEmail({
         from: process.env.EMAIL_FROM || "sales@basalthq.com",
@@ -133,7 +134,7 @@ ${feedback}
     return NextResponse.json({ message: "Feedback sent" }, { status: 200 });
 
   } catch (error) {
-    console.error("[FEEDBACK_POST]", error);
+    systemLogger.error("[FEEDBACK_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

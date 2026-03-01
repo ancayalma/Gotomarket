@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { systemLogger } from "@/lib/logger";
 
 export async function assignInvoiceToOpportunity(invoiceId: string, opportunityId: string, type: string = "crm_opportunity") {
     try {
@@ -56,7 +57,7 @@ export async function assignInvoiceToOpportunity(invoiceId: string, opportunityI
                 include: { invoices: true }
             });
 
-            const totalValue = updatedOpportunityInvoices?.invoices.reduce((acc, inv) => {
+            const totalValue = (updatedOpportunityInvoices?.invoices as any[] || []).reduce((acc, inv) => {
                 const val = parseFloat(inv.invoice_amount?.replace(/[^0-9.]/g, '') || "0");
                 return acc + (isNaN(val) ? 0 : val);
             }, 0) || 0;
@@ -105,7 +106,7 @@ export async function assignInvoiceToOpportunity(invoiceId: string, opportunityI
                 include: { invoices: true }
             });
 
-            const totalRevenue = updatedOpp?.invoices.reduce((acc, inv) => {
+            const totalRevenue = (updatedOpp?.invoices as any[] || []).reduce((acc, inv) => {
                 const val = parseFloat(inv.invoice_amount?.replace(/[^0-9.]/g, '') || "0");
                 return acc + (isNaN(val) ? 0 : val);
             }, 0) || 0;
@@ -126,7 +127,7 @@ export async function assignInvoiceToOpportunity(invoiceId: string, opportunityI
 
         return { success: true };
     } catch (error) {
-        console.error("[ASSIGN_OPPORTUNITY]", error);
+        systemLogger.error("[ASSIGN_OPPORTUNITY]", error);
         return { error: "Failed to assign opportunity" };
     }
 }

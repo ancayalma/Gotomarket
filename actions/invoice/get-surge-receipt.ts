@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import axios from 'axios';
 import https from 'https';
+import { systemLogger } from "@/lib/logger";
 
 const SURGE_API_BASE = 'https://surge.basalthq.com/api';
 
@@ -47,7 +48,7 @@ export async function getSurgeReceipt(invoiceId: string) {
 
         return response.data;
     } catch (error: any) {
-        console.error("[getSurgeReceipt] Error:", error.message);
+        systemLogger.error("[getSurgeReceipt] Error:", error.message);
         return null;
     }
 }

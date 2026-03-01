@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { parseICPFromNaturalLanguage } from "@/lib/scraper/ai-helpers";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/crm/leads/parse-icp
@@ -26,18 +27,18 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("[PARSE_ICP] Parsing natural language prompt...");
+    systemLogger.error("[PARSE_ICP] Parsing natural language prompt...");
     
     const parsed = await parseICPFromNaturalLanguage(
       prompt.trim(),
       session.user.id
     );
 
-    console.log("[PARSE_ICP] Parsing complete:", parsed);
+    systemLogger.error("[PARSE_ICP] Parsing complete:", parsed);
 
     return NextResponse.json(parsed, { status: 200 });
   } catch (error) {
-    console.error("[PARSE_ICP_POST]", error);
+    systemLogger.error("[PARSE_ICP_POST]", error);
     return new NextResponse("Failed to parse ICP", { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prismadb } from "@/lib/prisma";
 import { logActivity } from "@/actions/audit";
 import { requireApiAuth } from "@/lib/api-auth-guard";
+import { systemLogger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   // ── Auth guard ──
@@ -25,7 +26,7 @@ export async function GET(req: Request) {
         });
         return NextResponse.json(posts);
     } catch (error) {
-        console.error("[BLOG_GET]", error);
+        systemLogger.error("[BLOG_GET]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
         revalidatePath('/blog');
         return NextResponse.json(post);
     } catch (error) {
-        console.error("[BLOG_POST]", error);
+        systemLogger.error("[BLOG_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -98,7 +99,7 @@ export async function PUT(req: Request) {
         revalidatePath('/blog');
         return NextResponse.json(post);
     } catch (error) {
-        console.error("[BLOG_PUT]", error);
+        systemLogger.error("[BLOG_PUT]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
@@ -129,7 +130,7 @@ export async function DELETE(req: Request) {
         revalidatePath('/blog');
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error("[BLOG_DELETE]", error);
+        systemLogger.error("[BLOG_DELETE]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

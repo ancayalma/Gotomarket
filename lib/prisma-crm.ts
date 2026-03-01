@@ -1,15 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 
-/**
- * Prisma client for CRM data targeting a named database without changing .env.
- *
- * Priority of URL:
- * 1) CRM_DATABASE_URL (if provided)
- * 2) DATABASE_URL with an appended "/{PRISMA_DB_NAME}" if no db name is present
- *
- * This keeps auth/users on the default DB (used by lib/prisma.ts) while
- * CRM models (Lead Pools, Jobs, Candidates, etc.) live in a separate named DB.
- */
 function computeCrmUrl(): string {
   const explicit = process.env.CRM_DATABASE_URL;
   if (explicit) return explicit;
@@ -27,7 +17,6 @@ function computeCrmUrl(): string {
     }
     return u.toString();
   } catch (_e) {
-    // Fallback: if URL parsing fails (custom schemes), conservatively append if no '/' path
     if (base.includes("/")) return base;
     return `${base}/${dbName}`;
   }
@@ -35,23 +24,52 @@ function computeCrmUrl(): string {
 
 const crmUrl = computeCrmUrl();
 
-declare global {
+const TENANT_MODELS = [
+  "crm_Accounts", "crm_Leads", "crm_Opportunities", "crm_Outreach_Campaigns", 
+  "crm_Contacts", "crm_Contacts_Opportunities", "crm_Contracts", "Boards", "Invoices", "Documents", 
+  "Tasks", "crm_Accounts_Tasks", "CustomRole", "crm_CustomWidget", 
+  "TeamEmailConfig", "TeamAiConfig", "CustomModelRequest", "TeamSmsConfig", 
+  "TeamCaptchaConfig", "crm_Lead_Pools", "Form", "FormSubmission", 
+  "crm_Message_Portal", "RolePermission", "crm_Workflow", 
+  "CustomObjectDefinition", "CustomRecord", "PageLayout", "crm_Cases", 
+  "SLA_Policy", "RoutingConfig", "KnowledgeCategory", "KnowledgeArticle", 
+  "ValidationRule", "ApprovalProcess", "ApprovalRequest", "Notification", 
+  "crm_Products", "crm_Quotes", "NavigationConfig"
+];
 
-  var cachedPrismaCrm: PrismaClient | undefined;
-}
+const TARGET_OPS = ["findMany", "findFirst", "count", "aggregate", "updateMany", "deleteMany"];
 
-let prismaCrm: PrismaClient;
-if (process.env.NODE_ENV === "production") {
-  prismaCrm = new PrismaClient({
+const client = new PrismaClient({
     datasources: { db: { url: crmUrl } },
-  });
-} else {
-  if (!global.cachedPrismaCrm) {
-    global.cachedPrismaCrm = new PrismaClient({
-      datasources: { db: { url: crmUrl } },
-    });
-  }
-  prismaCrm = global.cachedPrismaCrm;
+}).$extends({
+    query: {
+        $allModels: {
+            async $allOperations({ model, operation, args, query }) {
+                if (TENANT_MODELS.includes(model) && TARGET_OPS.includes(operation as string)) {
+                    try {
+                        const { cookies } = await import("next/headers");
+                        const cookieStore = await cookies();
+                        if (cookieStore) {
+                            const { getCurrentUserTeamId } = await import("@/lib/team-utils");
+                            const teamInfo = await getCurrentUserTeamId();
+                            if (teamInfo && !teamInfo.isGlobalAdmin && teamInfo.teamId) {
+                                (args as any).where = { ...(args as any).where || {}, team_id: teamInfo.teamId };
+                            }
+                        }
+                    } catch (e) { /* Ignore */ }
+                }
+                return query(args);
+            }
+        }
+    }
+});
+
+declare global {
+  var cachedPrismaCrm: any | undefined;
 }
 
-export const prismadbCrm = prismaCrm;
+if (!global.cachedPrismaCrm) {
+  global.cachedPrismaCrm = client;
+}
+
+export const prismadbCrm = global.cachedPrismaCrm;

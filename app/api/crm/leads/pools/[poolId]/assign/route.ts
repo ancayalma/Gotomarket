@@ -5,6 +5,8 @@ import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
 import { safeContactDisplayName, normalizeName } from "@/lib/scraper/normalize";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
+import { logActivityInternal } from "@/actions/audit";
+import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/crm/leads/pools/[poolId]/assign
@@ -181,13 +183,15 @@ export async function POST(
       }
     }
 
+    await logActivityInternal(session.user.email || "SYSTEM", "CREATE", "crm_Leads", `Assigned ${results.length} candidates from pool ${poolId} to users`, pool.team_id || "");
+
     return NextResponse.json({
       success: true,
       assigned: results.length,
       results
     }, { status: 200 });
   } catch (error) {
-    console.error("[LEADS_POOL_ASSIGN]", error);
+    systemLogger.error("[LEADS_POOL_ASSIGN]", error);
     return new NextResponse("Failed to assign candidates", { status: 500 });
   }
 }
