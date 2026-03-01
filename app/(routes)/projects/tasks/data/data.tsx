@@ -61,9 +61,9 @@ export const priorities = [
     label: "Normal",
     value: "normal",
     icon: ArrowRightIcon,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-    dotColor: "bg-amber-500",
+    color: "text-sky-500",
+    bgColor: "bg-sky-500/10",
+    dotColor: "bg-sky-500",
   },
   {
     label: "Medium",

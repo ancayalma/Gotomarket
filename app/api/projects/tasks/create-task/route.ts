@@ -35,15 +35,46 @@ export async function POST(req: Request) {
     return new NextResponse("Unauthenticated", { status: 401 });
   }
 
-  if (!title || !user || !board || !priority || !content) {
-    return new NextResponse("Missing one of the task data ", { status: 400 });
+  if (!title || !user || !priority) {
+    return new NextResponse("Missing title, user, or priority", { status: 400 });
   }
 
+  let targetBoardId = board;
+
   try {
+    // If no board is provided, find or create a "Private Reminders" board for the user
+    if (!targetBoardId) {
+      const personalBoard = await prismadb.boards.findFirst({
+        where: {
+          user: user,
+          title: "Private Reminders",
+        },
+      });
+
+      if (personalBoard) {
+        targetBoardId = personalBoard.id;
+      } else {
+        const newBoard = await (prismadb.boards as any).create({
+          data: {
+            v: 0,
+            title: "Private Reminders",
+            description: "Personal tasks and reminders",
+            user: user,
+            visibility: "private",
+            status: "ACTIVE",
+            position: 0,
+            createdBy: user,
+            updatedBy: user,
+          },
+        });
+        targetBoardId = newBoard.id;
+      }
+    }
+
     //Get first section from board where position is smallest
     let sectionId = await prismadb.sections.findFirst({
       where: {
-        board: board,
+        board: targetBoardId,
       },
       orderBy: {
         position: "asc",
@@ -54,8 +85,8 @@ export async function POST(req: Request) {
       // Create default section if none exists
       sectionId = await prismadb.sections.create({
         data: {
-          board: board,
-          title: "To Do",
+          board: targetBoardId,
+          title: "Pinned",
           position: 0,
           v: 0,
         },
@@ -97,7 +128,7 @@ export async function POST(req: Request) {
     //Make update to Board - updatedAt field to trigger re-render and reorder
     await prismadb.boards.update({
       where: {
-        id: board,
+        id: targetBoardId,
       },
       data: {
         updatedAt: new Date(),

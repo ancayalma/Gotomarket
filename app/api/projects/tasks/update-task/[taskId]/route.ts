@@ -39,8 +39,8 @@ export async function PUT(req: Request, props: { params: Promise<{ taskId: strin
     return new NextResponse("Unauthenticated", { status: 401 });
   }
 
-  if (!title || !user || !priority || !content) {
-    return new NextResponse("Missing one of the task data ", { status: 400 });
+  if (!title) {
+    return new NextResponse("Missing title", { status: 400 });
   }
 
   try {
@@ -90,22 +90,23 @@ export async function PUT(req: Request, props: { params: Promise<{ taskId: strin
         id: taskId,
       },
       data: {
-        priority: priority,
-        title: title,
-        content: contentUpdated,
-        updatedBy: user,
-        dueDateAt: dueDateAt,
-        user: user,
-        taskStatus: taskStatus,
+        priority: priority || currentTask.priority,
+        title: title || currentTask.title,
+        content: content === undefined ? currentTask.content : content,
+        updatedBy: session.user.id,
+        dueDateAt: dueDateAt || currentTask.dueDateAt,
+        user: user || currentTask.user,
+        taskStatus: taskStatus || currentTask.taskStatus,
         section: targetSectionId,
       },
     });
 
-    //Update Board updated at field
-    if (boardId || currentTask.assigned_section?.board) {
+    // Update Board updated at field
+    const effectiveBoardId = boardId || currentTask.assigned_section?.board;
+    if (effectiveBoardId) {
       await prismadb.boards.update({
         where: {
-          id: boardId || currentTask.assigned_section?.board,
+          id: effectiveBoardId,
         },
         data: {
           updatedAt: new Date(),
@@ -113,18 +114,16 @@ export async function PUT(req: Request, props: { params: Promise<{ taskId: strin
       });
     }
 
-    //Notification to user who is not a task creator
-    if (user !== session.user.id) {
-      console.log("User property:", user);
-      console.log("Board property:", boardId);
+    // Notification to user who is not a task creator
+    if (user && user !== session.user.id) {
       try {
         const notifyRecipient = await prismadb.users.findUnique({
           where: { id: user },
         });
 
-        const boardData = await prismadb.boards.findUnique({
-          where: { id: boardId },
-        });
+        const boardData = effectiveBoardId ? await prismadb.boards.findUnique({
+          where: { id: effectiveBoardId },
+        }) : null;
 
         //console.log(notifyRecipient, "notifyRecipient");
 

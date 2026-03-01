@@ -44,6 +44,7 @@ import { LeadPoolsWidget } from "./LeadPoolsWidget";
 import { LeadWizardWidget } from "./LeadWizardWidget";
 import { AIInsightsWidget } from "./AIInsightsWidget";
 import { CustomMetricWidget } from "./CustomMetricWidget";
+import { DailyPulseWidget } from "./DailyPulseWidget";
 // Alias for reuse as a generic stats widget
 const GenericStatsWidget = RevenueWidget;
 import {
@@ -100,6 +101,7 @@ const widgetTooltips: Record<string, string> = {
     ai_insights: "Smart suggestions from AI to optimize your workflows and close more deals.",
     personal_pipeline: "Your personal deals and pipeline progress. Focus on what matters to you.",
     team_pipeline: "Full team pipeline overview. Monitor overall team sales performance.",
+    ai_daily_pulse: "Live strategic intelligence scanning your daily objectives and priorities.",
 };
 
 // Mobile info button for widgets
@@ -275,6 +277,7 @@ export const EditableWidgetGrid = () => {
             case "lead_pools":
             case "lead_wizard":
             case "ai_insights":
+            case "ai_daily_pulse":
                 return "col-span-1 md:col-span-2 xl:col-span-2";
             default:
                 return "col-span-1";
@@ -320,6 +323,8 @@ export const EditableWidgetGrid = () => {
                 return <LeadWizardWidget data={leadGenStats} />;
             case "ai_insights":
                 return <AIInsightsWidget insights={aiInsights} />;
+            case "ai_daily_pulse":
+                return <DailyPulseWidget />;
             case "actual_revenue":
                 return (
                     <div className="h-full flex flex-col justify-start">

@@ -42,30 +42,31 @@ export const getCurrentUserTeamId = cache(async () => {
         try {
             const { cookies } = await import("next/headers");
             const cookieStore = await cookies();
-            const impersonatedToken = cookieStore.get("impersonated_team_id")?.value;
-            if (impersonatedToken) {
-                const verifiedId = await verifyImpersonatedTeamId(impersonatedToken);
-                if (verifiedId) {
-                    effectiveTeamId = verifiedId;
-                    isImpersonating = true;
-                } else {
-                    // If signature verify fails, delete the cookie silently
-                    try {
-                        cookieStore.delete("impersonated_team_id");
-                    } catch (e) { /* ignore */ }
+            if (cookieStore) {
+                const impersonatedToken = cookieStore.get("impersonated_team_id")?.value;
+                if (impersonatedToken) {
+                    const verifiedId = await verifyImpersonatedTeamId(impersonatedToken);
+                    if (verifiedId) {
+                        effectiveTeamId = verifiedId;
+                        isImpersonating = true;
+                    } else {
+                        // If signature verify fails, delete the cookie silently
+                        try {
+                            cookieStore.delete("impersonated_team_id");
+                        } catch (e) { /* ignore */ }
+                    }
                 }
             }
         } catch (e) {
-            // next/headers might not be available in non-request contexts (like instrumentation boot)
-            // or if we're theoretically in a non-server component environment.
+            // next/headers might not be available in non-request contexts
         }
     }
 
     return {
         teamId: effectiveTeamId || null,
-        isGlobalAdmin: isImpersonating, // Only true if ACTIVE global mode
+        isGlobalAdmin: isPlatformAdminRole, // Sysadm: This is now TRUE because you HAVE the role
         isPlatformAdmin: isPlatformAdminRole,
-        isImpersonating: isImpersonating,
+        isImpersonating: isImpersonating, // Tracks if you are actively targeting a specific team
         teamRole: user?.team_role,
         isAdmin: user?.is_admin || user?.team_role === "ADMIN" || user?.team_role === "OWNER" || isPlatformAdminRole,
         userId: user?.id || (session.user as any).id

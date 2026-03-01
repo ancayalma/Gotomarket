@@ -14,7 +14,8 @@ import {
     ChevronRight,
     Calendar,
     GraduationCap,
-    Sparkles
+    Sparkles,
+    Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,7 @@ import DialerPanel from "@/app/(routes)/crm/dialer/DialerPanel";
 export default function UtilityBar() {
     const [isMinimized, setIsMinimized] = useState(false);
     const [notes, setNotes] = useState("");
-    const [tasks, setTasks] = useState<{ id: string, text: string, completed: boolean }[]>([]);
+    const [tasks, setTasks] = useState<{ id: string, text: string, completed: boolean, priority: 'low' | 'normal' | 'medium' | 'high' | 'critical' }[]>([]);
     const [isDialerOpen, setIsDialerOpen] = useState(false);
     const [creditsInfo, setCreditsInfo] = useState<{
         teamSlug?: string;
@@ -78,7 +79,7 @@ export default function UtilityBar() {
     };
 
     const addTask = () => {
-        const newTasks = [...tasks, { id: Math.random().toString(), text: "", completed: false }];
+        const newTasks: any[] = [...tasks, { id: Math.random().toString(), text: "", completed: false, priority: 'low' }];
         setTasks(newTasks);
         localStorage.setItem("crm-utility-tasks", JSON.stringify(newTasks));
     };
@@ -256,24 +257,77 @@ export default function UtilityBar() {
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="ghost" size="sm" className="gap-2 text-xs font-semibold hover:bg-amber-500/10 hover:text-amber-500 transition-colors px-2 sm:px-3">
-                                    <StickyNote className="h-4 w-4" />
+                                    <div className="relative">
+                                        <StickyNote className="h-4 w-4" />
+                                        {notes.length > 0 && (
+                                            <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                                        )}
+                                    </div>
                                     <span className="hidden lg:inline">Quick Notes</span>
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-80 p-4 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl" side="top" align="center">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h4 className="font-semibold text-sm">Scratchpad</h4>
-                                    <StickyNote className="h-3 w-3 text-muted-foreground" />
+                            <PopoverContent className="w-80 p-0 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="center" sideOffset={12}>
+                                <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-md bg-amber-500/10">
+                                            <StickyNote className="h-3.5 w-3.5 text-amber-500" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-xs uppercase tracking-tight">Scratchpad</h4>
+                                            <p className="text-[10px] text-muted-foreground">Session workspace</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 hover:bg-white/5 text-muted-foreground"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(notes);
+                                                // Could add a temporary toast here but UtilityBar doesn't have access to global toast easily without hooks
+                                            }}
+                                            title="Copy to Clipboard"
+                                        >
+                                            <Copy className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 hover:bg-red-500/10 hover:text-red-500"
+                                            onClick={() => saveNotes("")}
+                                            title="Clear Notes"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </div>
                                 </div>
-                                <textarea
-                                    id="utility-notes"
-                                    name="utility-notes"
-                                    className="w-full h-48 bg-muted/50 rounded-md p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary border-none"
-                                    placeholder="Type something..."
-                                    value={notes}
-                                    onChange={(e) => saveNotes(e.target.value)}
-                                />
-                                <p className="text-[10px] text-muted-foreground mt-2 text-right">Auto-saves to local storage</p>
+                                <div className="p-4">
+                                    <div className="relative group">
+                                        <textarea
+                                            id="utility-notes"
+                                            name="utility-notes"
+                                            className="w-full h-48 bg-muted/20 rounded-lg p-3 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-amber-500/30 border border-white/5 placeholder:text-muted-foreground/30 font-medium leading-relaxed"
+                                            placeholder="Jot down quick thoughts, links, or snippets..."
+                                            value={notes}
+                                            onChange={(e) => saveNotes(e.target.value)}
+                                            spellCheck={false}
+                                        />
+                                        <div className="absolute bottom-2 right-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span className="text-[9px] font-mono text-muted-foreground/40 bg-black/40 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                                {notes.length} chars
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground/50">
+                                            <div className="w-1 h-1 rounded-full bg-emerald-500" />
+                                            <span>Local Sync Active</span>
+                                        </div>
+                                        <span className="text-[9px] text-muted-foreground/40 italic">
+                                            Auto-saves instantly
+                                        </span>
+                                    </div>
+                                </div>
                             </PopoverContent>
                         </Popover>
 
@@ -283,58 +337,154 @@ export default function UtilityBar() {
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="ghost" size="sm" className="gap-2 text-xs font-semibold hover:bg-emerald-500/10 hover:text-emerald-500 transition-colors px-2 sm:px-3">
-                                    <CheckSquare className="h-4 w-4" />
+                                    <div className="relative">
+                                        <CheckSquare className="h-4 w-4" />
+                                        {tasks.filter(t => !t.completed).length > 0 && (
+                                            <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-20"></span>
+                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                            </span>
+                                        )}
+                                    </div>
                                     <span className="hidden lg:inline">Checklist</span>
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-80 p-4" side="top" align="center">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h4 className="font-semibold text-sm">Quick Checklist</h4>
-                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={addTask}>
-                                        <span className="text-lg">+</span>
-                                    </Button>
-                                </div>
-                                <div className="max-h-60 overflow-y-auto space-y-2">
-                                    {tasks.length === 0 && (
-                                        <p className="text-xs text-muted-foreground text-center py-4">No quick tasks.</p>
-                                    )}
-                                    {tasks.map((task) => (
-                                        <div key={task.id} className="flex items-center gap-2 group">
-                                            <input
-                                                id={`task-checkbox-${task.id}`}
-                                                name={`task-checkbox-${task.id}`}
-                                                type="checkbox"
-                                                checked={task.completed}
-                                                onChange={() => toggleTask(task.id)}
-                                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                            />
-                                            <input
-                                                id={`task-text-${task.id}`}
-                                                name={`task-text-${task.id}`}
-                                                type="text"
-                                                value={task.text}
-                                                onChange={(e) => updateTask(task.id, e.target.value)}
-                                                className={cn(
-                                                    "flex-1 bg-transparent border-none text-sm p-0 focus:ring-0",
-                                                    task.completed && "line-through text-muted-foreground"
-                                                )}
-                                                placeholder="What needs to be done?"
-                                            />
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                                                onClick={() => removeTask(task.id)}
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </Button>
+                            <PopoverContent className="w-80 p-0 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="center" sideOffset={12}>
+                                {/* Progress Header */}
+                                <div className="p-4 border-b border-white/5 bg-white/5">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1.5 rounded-md bg-emerald-500/10">
+                                                <CheckSquare className="h-3.5 w-3.5 text-emerald-500" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-xs uppercase tracking-tight">Quick Checklist</h4>
+                                                <p className="text-[10px] text-muted-foreground">
+                                                    {tasks.length > 0
+                                                        ? `${tasks.filter(t => t.completed).length} of ${tasks.length} completed`
+                                                        : "No active tasks"
+                                                    }
+                                                </p>
+                                            </div>
                                         </div>
-                                    ))}
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 rounded-full"
+                                            onClick={addTask}
+                                        >
+                                            <span className="text-sm font-bold">+</span>
+                                        </Button>
+                                    </div>
+
+                                    {/* Progress Bar */}
+                                    {tasks.length > 0 && (
+                                        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-emerald-500 transition-all duration-500 ease-out shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                                                style={{ width: `${(tasks.filter(t => t.completed).length / tasks.length) * 100}%` }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
+
+                                <div className="max-h-72 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                                    {tasks.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center py-8 opacity-40">
+                                            <CheckSquare className="h-8 w-8 mb-2" />
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-center">Empty List</p>
+                                            <p className="text-[9px] mt-1 italic">Click + to start tracking</p>
+                                        </div>
+                                    )}
+                                    <div className="space-y-1">
+                                        {tasks.map((task) => (
+                                            <div
+                                                key={task.id}
+                                                className={cn(
+                                                    "flex items-start gap-3 p-2 rounded-lg transition-all group border border-transparent",
+                                                    task.completed ? "opacity-50" : "hover:bg-white/[0.03] hover:border-white/5"
+                                                )}
+                                            >
+                                                <div className="pt-0.5">
+                                                    <input
+                                                        id={`task-check-${task.id}`}
+                                                        name={`task-check-${task.id}`}
+                                                        type="checkbox"
+                                                        checked={task.completed}
+                                                        onChange={() => toggleTask(task.id)}
+                                                        className="h-3.5 w-3.5 rounded border-white/20 bg-transparent text-emerald-500 focus:ring-0 focus:ring-offset-0 transition-colors cursor-pointer"
+                                                    />
+                                                </div>
+
+                                                <div className="flex-1 min-w-0">
+                                                    <input
+                                                        id={`task-input-${task.id}`}
+                                                        name={`task-input-${task.id}`}
+                                                        type="text"
+                                                        value={task.text}
+                                                        onChange={(e) => updateTask(task.id, e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                                                        className={cn(
+                                                            "w-full bg-transparent border-none p-0 text-xs focus:ring-0 placeholder:text-muted-foreground/20 font-medium",
+                                                            task.completed && "line-through text-muted-foreground decoration-emerald-500/50"
+                                                        )}
+                                                        placeholder="Task details..."
+                                                    />
+                                                    <div className="flex items-center gap-1 mt-2 p-1 bg-white/5 rounded-lg border border-white/5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                                                        {[
+                                                            { val: 'low', color: 'text-emerald-500', label: 'L' },
+                                                            { val: 'normal', color: 'text-sky-500', label: 'N' },
+                                                            { val: 'medium', color: 'text-amber-500', label: 'M' },
+                                                            { val: 'high', color: 'text-purple-500', label: 'H' },
+                                                            { val: 'critical', color: 'text-red-500', label: 'C' }
+                                                        ].map((p) => (
+                                                            <button
+                                                                key={p.val}
+                                                                className={cn(
+                                                                    "h-5 flex-1 rounded-md text-[8px] font-black uppercase transition-all flex items-center justify-center border border-transparent",
+                                                                    task.priority === p.val
+                                                                        ? `${p.color.replace("text-", "bg-").replace("-500", "-500/20")} ${p.color} border-${p.color.replace("text-", "")}/20 shadow-sm`
+                                                                        : "text-muted-foreground/30 hover:text-muted-foreground hover:bg-white/5"
+                                                                )}
+                                                                onClick={() => {
+                                                                    const newTasks = tasks.map(t => t.id === task.id ? { ...t, priority: p.val as any } : t);
+                                                                    setTasks(newTasks);
+                                                                    localStorage.setItem("crm-utility-tasks", JSON.stringify(newTasks));
+                                                                }}
+                                                            >
+                                                                {p.label}
+                                                            </button>
+                                                        ))}
+                                                        <div className="w-px h-3 bg-white/10 mx-1" />
+                                                        <button
+                                                            className="h-5 px-2 text-[8px] font-black uppercase text-rose-500/60 hover:bg-rose-500/10 rounded-md transition-colors"
+                                                            onClick={() => removeTask(task.id)}
+                                                        >
+                                                            DEL
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 {tasks.length > 0 && (
-                                    <p className="text-[10px] text-muted-foreground mt-3 text-center italic border-t pt-2">
-                                        Use this for ephemeral tasks. Sync to CRM for permanent tracking.
-                                    </p>
+                                    <div className="p-3 border-t border-white/5 bg-black/20 flex items-center justify-between">
+                                        <p className="text-[9px] text-muted-foreground/40 italic">
+                                            Ephemeral Session Tracking
+                                        </p>
+                                        <button
+                                            className="text-[9px] font-bold text-emerald-500/60 hover:text-emerald-500 transition-colors uppercase"
+                                            onClick={() => {
+                                                const newTasks = tasks.filter(t => !t.completed);
+                                                setTasks(newTasks);
+                                                localStorage.setItem("crm-utility-tasks", JSON.stringify(newTasks));
+                                            }}
+                                        >
+                                            Clear Completed
+                                        </button>
+                                    </div>
                                 )}
                             </PopoverContent>
                         </Popover>
