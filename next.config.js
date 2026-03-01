@@ -2,6 +2,7 @@
 const nextConfig = {
   // TypeScript errors will now fail the build (safety net removed)
   // typescript: { ignoreBuildErrors: true },
+  poweredByHeader: false,
   images: {
     remotePatterns: [
       {

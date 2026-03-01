@@ -2,10 +2,18 @@
 
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 export const deleteTeam = async (teamId: string) => {
     try {
+        const currentUser = await getCurrentUserTeamId();
+        if (!currentUser?.userId) return { error: "Unauthorized" };
+
+        // Only Global Admins or Team Owners (specifically looking at business rules) should delete
+        if (!currentUser.isGlobalAdmin && (currentUser.teamId !== teamId || currentUser.teamRole !== "OWNER")) {
+            return { error: "Unauthorized: You do not have permission to delete this team." };
+        }
+
         // 1. Dissociate members first (Optional if Cascade/SetNull is handled by DB, but safe to do explicit)
         await prismadb.users.updateMany({
             where: { team_id: teamId },

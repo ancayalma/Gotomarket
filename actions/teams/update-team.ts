@@ -2,12 +2,20 @@
 
 import { prismadb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 // @ts-ignore
 import { SubscriptionPlan } from "@prisma/client";
 
 export const updateTeam = async (teamId: string, data: { name?: string; slug?: string; owner_id?: string; subscription_plan?: SubscriptionPlan; plan_id?: string; }) => {
     try {
+        const currentUser = await getCurrentUserTeamId();
+        if (!currentUser?.userId) return { error: "Unauthorized" };
+
+        if (!currentUser.isGlobalAdmin && (currentUser.teamId !== teamId || !currentUser.isAdmin)) {
+            return { error: "Unauthorized: You do not have permission to modify this team." };
+        }
+
         // Check slug uniqueness if changing
         if (data.slug) {
             const existing = await (prismadb as any).team.findFirst({

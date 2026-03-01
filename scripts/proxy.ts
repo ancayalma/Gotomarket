@@ -26,7 +26,8 @@ const ALLOWED_ORIGINS = new Set([
  */
 const PUBLIC_API_PREFIXES = [
     "/api/auth",                 // NextAuth routes
-    "/api/user/passwordReset",   // Password reset (public by design)
+    "/api/user/passwordReset",   // Password reset request (public by design)
+    "/api/user/resetPasswordWithToken", // Actually resetting password with token
     "/api/docs",                 // Public docs
     "/api/forms/submit",         // Public form submission
     "/api/outreach/track",       // Email open/click tracking pixels
@@ -247,6 +248,24 @@ export default function proxy(request: NextRequest) {
 
         // Apply security headers
         applySecurityHeaders(response, requestId);
+
+        // SOC2 Block: Global Route Protection for all APIs not explicitly public
+        if (!isPublicApi(pathname)) {
+            // Check for valid NextAuth session token
+            const sessionToken = request.cookies.get("next-auth.session-token")?.value ||
+                request.cookies.get("__Secure-next-auth.session-token")?.value;
+
+            if (!sessionToken) {
+                const unauthorizedResponse = NextResponse.json(
+                    { error: "Unauthorized access detected." },
+                    { status: 401 }
+                );
+                // Maintain headers on error block
+                applyCors(request, unauthorizedResponse);
+                applySecurityHeaders(unauthorizedResponse, requestId);
+                return unauthorizedResponse;
+            }
+        }
 
         return response;
     }

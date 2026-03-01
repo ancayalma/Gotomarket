@@ -26,9 +26,10 @@ export async function POST(req: Request) {
     const normalizedEmail =
       typeof email === "string" ? email.trim().toLowerCase() : email;
 
-    const password = generateRandomPassword();
+    // Create a reset token
+    const token = crypto.randomUUID();
+    const tokenExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    // Try to find user by provided email or normalized form (covers legacy mixed-case storage)
     const user = await prismadb.users.findFirst({
       where: {
         OR: [
@@ -38,49 +39,43 @@ export async function POST(req: Request) {
       },
     });
 
-    if (!user) {
-      return new NextResponse("No user with that email exists.", {
-        status: 401,
+    if (user) {
+      // Save token to database
+      await prismadb.users.update({
+        where: { id: user.id },
+        data: {
+          resetToken: token,
+          resetTokenExpires: tokenExpires,
+        },
       });
+
+      try {
+        const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/${token}`;
+        const emailHtml = await render(
+          PasswordResetEmail({
+            username: user.name || "User",
+            avatar: user.avatar,
+            email: user.email,
+            resetLink: resetLink,
+            userLanguage: "en",
+          })
+        );
+
+        await sendEmail({
+          to: user.email,
+          subject: "BasaltCRM - Password reset",
+          text: `Click here to reset your password: ${resetLink}`,
+          html: emailHtml,
+          replyTo: "support@basalthq.com"
+        });
+        console.log("Password reset email sent to: " + user.email);
+      } catch (e) {
+        console.log("[USER_PASSWORD_CHANGE_EMAIL_ERROR]", e);
+      }
     }
 
-    const newpassword = await prismadb.users.update({
-      where: { id: user.id },
-      data: {
-        password: await hash(password, 12),
-      },
-    });
-
-    if (!newpassword) {
-      return new NextResponse("Password not updated!", {
-        status: 401,
-      });
-    }
-
-    try {
-      const emailHtml = await render(
-        PasswordResetEmail({
-          username: user?.name!,
-          avatar: user.avatar,
-          email: user.email,
-          password: password,
-          userLanguage: "en",
-        })
-      );
-
-      await sendEmail({
-        to: user.email,
-        subject: "BasaltCRM - Password reset",
-        text: `Your new password is: ${password}`,
-        html: emailHtml,
-        replyTo: "support@basalthq.com"
-      });
-      console.log("Email sent to: " + user.email);
-    } catch (e) {
-      console.log("[USER_PASSWORD_CHANGE_EMAIL_ERROR]", e);
-    }
-
-    return NextResponse.json({ message: "Password changed!", status: true });
+    // Always return success to prevent user enumeration
+    return NextResponse.json({ message: "If an account exists, a password reset link has been sent.", status: true });
   } catch (error) {
     console.log("[USER_PASSWORD_CHANGE_POST]", error);
     return new NextResponse("Initial error", { status: 500 });

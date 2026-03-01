@@ -909,6 +909,8 @@ model Users {
   lastLoginAt          DateTime?                @db.Date
   name                 String?
   password             String?
+  resetToken           String?
+  resetTokenExpires    DateTime?
   username             String?
   phone                String?
   userStatus           ActiveStatus             @default(PENDING)

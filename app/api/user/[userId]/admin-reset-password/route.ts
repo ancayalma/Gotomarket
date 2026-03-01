@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateRandomPassword } from "@/lib/utils";
 import { hash } from "bcryptjs";
-import PasswordResetEmail from "@/emails/PasswordReset";
+import TempPasswordEmail from "@/emails/TempPasswordEmail";
 import { logActivity } from "@/actions/audit";
 import { render } from "@react-email/render";
 import sendEmail from "@/lib/sendmail";
@@ -17,12 +17,22 @@ export async function POST(
     try {
         const session = await getServerSession(authOptions);
 
-        if (!session) {
+        if (!session?.user?.id) {
             return new NextResponse("Unauthenticated", { status: 401 });
         }
 
-        // Optional: Check if session user has admin privileges
-        // const requestingUser = ...
+        // Check if session user has admin privileges
+        const requestingUser = await prismadb.users.findUnique({
+            where: { id: session.user.id },
+            select: { is_admin: true, team_role: true }
+        });
+
+        const isAdmin = requestingUser?.is_admin ||
+            ["PLATFORM_ADMIN", "SUPER_ADMIN", "ADMIN", "OWNER"].includes(requestingUser?.team_role || "");
+
+        if (!isAdmin) {
+            return new NextResponse("Unauthorized: Admin privileges required", { status: 403 });
+        }
 
         const user = await prismadb.users.findUnique({
             where: {
@@ -57,7 +67,7 @@ export async function POST(
         // Send Email using Unified Relay
         try {
             const emailHtml = await render(
-                PasswordResetEmail({
+                TempPasswordEmail({
                     username: user.name || "User",
                     avatar: user.avatar,
                     email: user.email,

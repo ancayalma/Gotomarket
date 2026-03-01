@@ -18,7 +18,7 @@ interface VercelInviteUserEmailProps {
   username?: string;
   avatar?: string | null;
   email: string;
-  password: string;
+  resetLink: string;
   userLanguage: string;
 }
 
@@ -28,7 +28,7 @@ export const PasswordResetEmail = ({
   username,
   avatar,
   email,
-  password,
+  resetLink,
   userLanguage,
 }: VercelInviteUserEmailProps) => {
   const previewText = `Password reset from ${process.env.NEXT_PUBLIC_APP_NAME}`;
@@ -56,13 +56,14 @@ export const PasswordResetEmail = ({
               Hello {username},
             </Text>
             <Text className="text-black text-[14px] leading-[24px]">
-              Your password was reset,
+              A password reset was requested for your account.
             </Text>
             <Text className="text-black text-[14px] leading-[24px]">
               Your username: <strong>{email}</strong>
             </Text>
             <Text className="text-black text-[14px] leading-[24px]">
-              Your new password: <strong>{password}</strong>
+              Click the following link to securely reset your password: <br />
+              <Link href={resetLink} className="text-blue-500 underline">{resetLink}</Link>
             </Text>
             <Text className="text-black text-[14px] leading-[24px]">
               Please login to{" "}

@@ -19,6 +19,29 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
+    // SOC2 Type 1 / 2 Control: Enforce allowed MIME types to prevent XSS/RCE/Malware
+    const allowedMimeTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+      "text/csv",
+      "application/json",
+      "text/plain"
+    ];
+
+    if (file.type && !allowedMimeTypes.includes(file.type)) {
+      return NextResponse.json({ error: "Invalid file type. Only standard documents and images are allowed." }, { status: 400 });
+    }
+
+    const fileExt = file.name?.split('.').pop()?.toLowerCase() || '';
+    const dangerousExtensions = ['svg', 'html', 'htm', 'exe', 'sh', 'js', 'php', 'py', 'ts', 'jsx', 'tsx'];
+    if (dangerousExtensions.includes(fileExt)) {
+      return NextResponse.json({ error: "File extension not permitted." }, { status: 400 });
+    }
+
     const url = new URL(req.url);
     const context = url.searchParams.get("context");
 
