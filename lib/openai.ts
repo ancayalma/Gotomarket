@@ -81,9 +81,16 @@ export async function getAiSdkModel(userId: string | "system") {
             case "AZURE": {
                 const effectiveResourceName = resourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
                 const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
+
+                if (!effectiveResourceName || !effectiveApiKey) {
+                    console.error(`[AZURE_ERROR] Missing Azure configuration: Resource=${effectiveResourceName}, Key=${effectiveApiKey ? "HIDDEN" : "MISSING"}`);
+                    // Fallback or throw a clean error
+                    throw new Error("Azure OpenAI configuration incomplete.");
+                }
+
                 console.log(`[AZURE_DEBUG] Using Resource: ${effectiveResourceName} (Version: ${apiVersion})`);
                 const azure = createAzure({
-                    apiKey: effectiveApiKey!,
+                    apiKey: effectiveApiKey,
                     resourceName: effectiveResourceName,
                     apiVersion: apiVersion,
                 });

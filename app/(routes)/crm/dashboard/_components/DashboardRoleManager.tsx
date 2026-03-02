@@ -177,7 +177,8 @@ const DashboardRoleManager = async () => {
                 // New Intelligence & Admin Hubs
                 { id: "entity:sales_intelligence", name: "Sales Intelligence", value: 0, href: "/crm/insights", iconName: "BrainCircuit", color: "indigo", tooltip: "Advanced sales analytics including weighted forecasting, funnel velocity, and conversion trends." },
                 { id: "entity:audit_logs", name: "Audit Logs", value: 0, href: "/settings/audit-logs", iconName: "History", color: "slate", tooltip: "Complete system activity trail. Track user actions, security events, and record changes for SOC2 compliance." },
-                { id: "entity:hr_hub", name: "Human Resources", value: activeUsersCount, href: "/employees", iconName: "HeartPulse", color: "rose", tooltip: "Manage staff, track performance KPIs, and oversee organizational growth." }
+                { id: "entity:hr_hub", name: "Human Resources", value: activeUsersCount, href: "/employees", iconName: "HeartPulse", color: "rose", tooltip: "Manage staff, track performance KPIs, and oversee organizational growth." },
+                { id: "entity:university", name: "University", value: 0, href: "/crm/university", iconName: "GraduationCap", color: "slate", tooltip: "Master your mission protocols and CRM systems. Access training modules and documentation." }
             );
         }
 

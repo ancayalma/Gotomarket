@@ -76,21 +76,25 @@ export const WidgetWrapper = ({
                 </div>
             </CardContent>
 
-            <CardFooter className="p-3 border-t border-white/5 flex items-center justify-between bg-white/[0.02]">
+            <CardFooter className="p-2 border-t border-white/5 flex items-center justify-between bg-white/[0.01] gap-2">
                 {footerHref && (
                     <Link
                         href={footerHref}
-                        className="text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5"
+                        className="text-[10px] font-black uppercase tracking-tighter text-primary/80 hover:text-primary transition-all flex items-center gap-1.5 min-w-0"
                     >
-                        {footerLabel}
-                        <ExternalLink size={12} className="opacity-70" />
+                        <span className="truncate">{footerLabel}</span>
+                        <ExternalLink size={10} className="shrink-0 opacity-40 group-hover/widget:opacity-100 transition-opacity" />
                     </Link>
                 )}
-                <div className="flex items-center gap-3 ml-auto text-[10px] text-muted-foreground/60 font-medium">
-                    <span className="flex items-center gap-1.5" suppressHydrationWarning>
-                        <RefreshCcw size={10} className="hover:rotate-180 transition-transform duration-500 cursor-pointer" />
-                        As of Today at {new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date())}
-                    </span>
+
+                <div className="flex items-center gap-2 ml-auto shrink-0">
+                    <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white/[0.03] border border-white/5 text-[9px] text-muted-foreground/50 font-bold group/refresh cursor-pointer hover:bg-white/[0.05] transition-colors">
+                        <RefreshCcw size={10} className="group-hover/refresh:rotate-180 transition-transform duration-700 text-primary/30" />
+                        <span suppressHydrationWarning className="uppercase tracking-widest hidden sm:inline opacity-60">Synced</span>
+                        <span suppressHydrationWarning className="tabular-nums">
+                            {new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date())}
+                        </span>
+                    </div>
                 </div>
             </CardFooter>
         </Card>

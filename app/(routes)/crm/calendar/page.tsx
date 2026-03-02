@@ -30,10 +30,10 @@ export default async function CalendarPage() {
         >
             <LearnLink
                 tab="calendar"
-                overviewTitle="Enterprise Scheduling"
-                overviewWhat="A unified temporal view of all CRM-wide events, task deadlines, and project milestones."
-                overviewWhy="Centralizing your schedule ensures that project bottlenecks and overlapping commitments are visible at a glance, allowing for better resource allocation."
-                overviewHow="Synced directly with your project tasks and personal events. Click any entry to view full record details or adjust deadlines in real-time."
+                overviewTitle="Tactical Command: Temporal Intelligence"
+                overviewWhat="The core engine for strategic mission planning. It transforms raw CRM data into an actionable temporal grid, integrating project milestones, lead follow-ups, and operational tasks."
+                overviewWhy="Mission success depends on anticipating temporal conflicts. By centralizing all time-bound data, you can optimize squad deployment, prevent objective overlap, and maintain high-fidelity operational tempo."
+                overviewHow="Leverage the AI Energy Pulse for real-time load forecasting. Use 'Prep for Mission' on any objective to generate an intelligence briefing. Optimize timelines using high-speed drag-and-drop rescheduling."
             />
             <Suspense fallback={<div>Loading calendar...</div>}>
                 <ProjectCalendarView userId={session.user.id} />
