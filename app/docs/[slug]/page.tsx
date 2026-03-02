@@ -129,11 +129,10 @@ export default async function DocDetailPage(props: { params: Promise<{ slug: str
             </Link>
 
             <article>
-                <header className="mb-10">
-                    <div className="flex items-center gap-2 text-sm text-primary font-medium mb-4 uppercase tracking-wider">
+                <header className="mb-6">
+                    <div className="flex items-center gap-2 text-sm text-primary font-medium uppercase tracking-widest opacity-80 decoration-primary/30 underline underline-offset-8">
                         <span>{doc.category}</span>
                     </div>
-                    <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">{doc.title}</h1>
                 </header>
 
                 {doc.videoUrl && (

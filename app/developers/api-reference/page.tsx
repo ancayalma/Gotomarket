@@ -2,7 +2,7 @@ import BasaltNavbar from "@/components/basaltcrm-landing/BasaltNavbar";
 import BasaltFooter from "@/components/basaltcrm-landing/BasaltFooter";
 import GeometricBackground from "@/app/components/GeometricBackground";
 import Link from "next/link";
-import { ArrowLeft, Server, Database, Globe, Code, Zap, ChevronRight, Copy, Lock, Package, Users, Building, Target, FileText, Bot, PhoneCall } from "lucide-react";
+import { ArrowLeft, Server, Database, Globe, Code, Zap, ChevronRight, Copy, Lock, Package, Users, Building, Target, FileText, Bot, PhoneCall, LifeBuoy, BookOpen, Calendar as CalendarIcon, ShoppingCart } from "lucide-react";
 
 export const metadata = {
     title: "API Reference - BasaltCRM Developers",
@@ -30,6 +30,7 @@ const CORE_ENTITIES = [
             { method: "POST", path: "/api/crm/leads", desc: "Create or merge a new lead record" },
             { method: "GET", path: "/api/crm/leads/[leadId]", desc: "Retrieve detailed lead data" },
             { method: "PUT", path: "/api/crm/leads/[leadId]", desc: "Update lead status and attributes" },
+            { method: "DELETE", path: "/api/crm/leads/[leadId]", desc: "Remove a lead record (SOC2 Compliant)" },
             { method: "POST", path: "/api/crm/leads/[leadId]/activities", desc: "Log call/email activity" },
             { method: "GET", path: "/api/crm/leads/list", desc: "Paginated lead list with advanced filters" },
         ]
@@ -41,8 +42,9 @@ const CORE_ENTITIES = [
         routes: [
             { method: "GET", path: "/api/crm/account", desc: "List all company accounts" },
             { method: "POST", path: "/api/crm/account", desc: "Create a new organization profile" },
+            { method: "PUT", path: "/api/crm/account", desc: "Bulk update company attributes" },
+            { method: "DELETE", path: "/api/crm/account/[accountId]", desc: "Archive or delete a company profile" },
             { method: "GET", path: "/api/crm/account/[accountId]", desc: "Get account and linked contacts" },
-            { method: "PUT", path: "/api/crm/account/[accountId]", desc: "Update industry or domain info" },
         ]
     },
     {
@@ -53,7 +55,7 @@ const CORE_ENTITIES = [
             { method: "GET", path: "/api/crm/contacts", desc: "List all individual contacts" },
             { method: "POST", path: "/api/crm/contacts", desc: "Create contact with account linking" },
             { method: "GET", path: "/api/crm/contacts/[contactId]", desc: "Retrieve individual contact profile" },
-            { method: "POST", path: "/api/crm/contacts/create-from-remote", desc: "Import contact from external CRM" },
+            { method: "DELETE", path: "/api/crm/contacts/[contactId]", desc: "Purge contact data" },
         ]
     }
 ];
@@ -66,7 +68,8 @@ const SALES_REVENUE = [
         routes: [
             { method: "GET", path: "/api/crm/opportunity", desc: "List all deals in the pipeline" },
             { method: "POST", path: "/api/crm/opportunity", desc: "Create a new deal opportunity" },
-            { method: "GET", path: "/api/crm/opportunity/[id]", desc: "Retrieve deal stage and value" },
+            { method: "PUT", path: "/api/crm/opportunity/[opportunityId]", desc: "Update deal stage or value" },
+            { method: "DELETE", path: "/api/crm/opportunity/[opportunityId]", desc: "Discard lost or voided deals" },
         ]
     },
     {
@@ -77,7 +80,29 @@ const SALES_REVENUE = [
             { method: "GET", path: "/api/invoice", desc: "List all team invoices" },
             { method: "POST", path: "/api/invoice", desc: "Generate a new invoice" },
             { method: "GET", path: "/api/invoice/[id]", desc: "Retrieve invoice payment status" },
-            { method: "GET", path: "/api/v1/agent/purchase/[sku]", desc: "x402 Agent Commerce endpoint" },
+        ]
+    }
+];
+
+const SUPPORT_SUCCESS = [
+    {
+        name: "Cases & Tickets",
+        icon: <LifeBuoy className="w-5 h-5 text-blue-400" />,
+        desc: "Post-sale support and issue tracking.",
+        routes: [
+            { method: "GET", path: "/api/crm/cases", desc: "List team support cases" },
+            { method: "POST", path: "/api/crm/cases", desc: "Create new support ticket" },
+            { method: "PUT", path: "/api/crm/cases", desc: "Update case status or assignment" },
+            { method: "GET", path: "/api/crm/cases/[caseId]", desc: "Get full case history" },
+        ]
+    },
+    {
+        name: "Knowledge Base",
+        icon: <BookOpen className="w-5 h-5 text-orange-400" />,
+        desc: "Self-service documentation and help articles.",
+        routes: [
+            { method: "GET", path: "/api/crm/knowledge/articles", desc: "Fetch help center articles" },
+            { method: "GET", path: "/api/crm/knowledge/categories", desc: "Browse article categories" },
         ]
     }
 ];
@@ -90,7 +115,7 @@ const GROWTH_HEAVY = [
         routes: [
             { method: "GET", path: "/api/crm/leads/pools", desc: "Browse intelligence lead pools" },
             { method: "POST", path: "/api/crm/leads/autogen", desc: "Trigger LeadGen Wizard job" },
-            { method: "GET", path: "/api/crm/leads/autogen/status/[jobId]", desc: "Check AI research progress" },
+            { method: "DELETE", path: "/api/crm/leads/pools", desc: "Purge lead pool and associated data" },
         ]
     },
     {
@@ -100,6 +125,29 @@ const GROWTH_HEAVY = [
         routes: [
             { method: "POST", path: "/api/voice/engage/webhook", desc: "BasaltECHO event receiver" },
             { method: "POST", path: "/api/oauth/token", desc: "BasaltECHO connection token" },
+        ]
+    },
+    {
+        name: "Agent Commerce (UCP)",
+        icon: <ShoppingCart className="w-5 h-5 text-pink-400" />,
+        desc: "Standardized UCP-compliant commerce for agentic workflows.",
+        routes: [
+            { method: "GET", path: "/api/v1/agent/catalog", desc: "Fetch agent-discoverable services" },
+            { method: "GET", path: "/api/v1/agent/purchase/[sku]", desc: "Generate 402 Payment Challenge for SKU" },
+            { method: "POST", path: "/api/v1/agent/purchase/[sku]", desc: "Finalize purchase with payment proof" },
+        ]
+    }
+];
+
+const OPERATIONS_OPS = [
+    {
+        name: "Calendar & Events",
+        icon: <CalendarIcon className="w-5 h-5 text-red-400" />,
+        desc: "Scheduling and resource management.",
+        routes: [
+            { method: "GET", path: "/api/calendar/events", desc: "List upcoming team meetings" },
+            { method: "POST", path: "/api/calendar/schedule", desc: "Book a new meeting slot" },
+            { method: "GET", path: "/api/calendar/availability", desc: "Check user or team availability" },
         ]
     }
 ];
@@ -140,15 +188,25 @@ export default function ApiReferencePage() {
 
                         {/* Navigation Tabs (Simulated with scroll links) */}
                         <div className="flex flex-wrap gap-4 mb-12 py-2 border-b border-white/5">
-                            {["Core Dynamics", "Sales & Revenue", "Growth & AI"].map((tab) => (
-                                <button key={tab} className="text-sm font-bold text-gray-500 hover:text-cyan-400 transition-colors px-1">
-                                    {tab}
-                                </button>
+                            {[
+                                { name: "Core Dynamics", id: "core" },
+                                { name: "Sales & Revenue", id: "sales" },
+                                { name: "Support & Success", id: "support" },
+                                { name: "Growth & AI", id: "growth" },
+                                { name: "Operations", id: "ops" }
+                            ].map((tab) => (
+                                <Link
+                                    key={tab.id}
+                                    href={`#section-${tab.id}`}
+                                    className="text-sm font-bold text-gray-400 hover:text-cyan-400 transition-colors px-1"
+                                >
+                                    {tab.name}
+                                </Link>
                             ))}
                         </div>
 
                         {/* Section: Core Dynamics */}
-                        <div className="mb-20">
+                        <div id="section-core" className="mb-20 scroll-mt-32">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
                                     <Database className="w-6 h-6 text-cyan-400" />
@@ -189,7 +247,7 @@ export default function ApiReferencePage() {
                         </div>
 
                         {/* Section: Sales & Revenue */}
-                        <div className="mb-20">
+                        <div id="section-sales" className="mb-20 scroll-mt-32">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
                                     <Zap className="w-6 h-6 text-amber-400" />
@@ -228,8 +286,48 @@ export default function ApiReferencePage() {
                             </div>
                         </div>
 
+                        {/* Section: Support & Success */}
+                        <div id="section-support" className="mb-20 scroll-mt-32">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                                    <LifeBuoy className="w-6 h-6 text-blue-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-3xl font-bold">Support & Success</h2>
+                                    <p className="text-gray-500 text-sm">Case management, SLA tracking, and help center access.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid lg:grid-cols-1 gap-10">
+                                {SUPPORT_SUCCESS.map((entity) => (
+                                    <div key={entity.name} className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            {entity.icon}
+                                            <h3 className="text-xl font-bold">{entity.name}</h3>
+                                            <span className="h-px flex-grow bg-white/5" />
+                                        </div>
+                                        <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5">
+                                            {entity.routes.map((route, i) => (
+                                                <div key={i} className="flex flex-col md:flex-row md:items-center gap-4 px-6 py-4 hover:bg-white/[0.03] transition-colors group">
+                                                    <span className={`${badgeClass(METHOD_COLORS[route.method] || "bg-gray-500/15 text-gray-400")} shrink-0 w-20 justify-center`}>
+                                                        {route.method}
+                                                    </span>
+                                                    <code className="text-sm font-mono text-blue-200/80 flex-grow">
+                                                        {route.path}
+                                                    </code>
+                                                    <p className="text-sm text-gray-500 group-hover:text-gray-300 transition-colors">
+                                                        {route.desc}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Section: Growth & AI */}
-                        <div className="mb-20">
+                        <div id="section-growth" className="mb-20 scroll-mt-32">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
                                     <Bot className="w-6 h-6 text-purple-400" />
@@ -255,6 +353,46 @@ export default function ApiReferencePage() {
                                                         {route.method}
                                                     </span>
                                                     <code className="text-sm font-mono text-purple-200/80 flex-grow">
+                                                        {route.path}
+                                                    </code>
+                                                    <p className="text-sm text-gray-500 group-hover:text-gray-300 transition-colors">
+                                                        {route.desc}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Section: Operations */}
+                        <div id="section-ops" className="mb-20 scroll-mt-32">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
+                                    <CalendarIcon className="w-6 h-6 text-red-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-3xl font-bold">Operations</h2>
+                                    <p className="text-gray-500 text-sm">Calendar synchronization and scheduling.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid lg:grid-cols-1 gap-10">
+                                {OPERATIONS_OPS.map((entity) => (
+                                    <div key={entity.name} className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            {entity.icon}
+                                            <h3 className="text-xl font-bold">{entity.name}</h3>
+                                            <span className="h-px flex-grow bg-white/5" />
+                                        </div>
+                                        <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5">
+                                            {entity.routes.map((route, i) => (
+                                                <div key={i} className="flex flex-col md:flex-row md:items-center gap-4 px-6 py-4 hover:bg-white/[0.03] transition-colors group">
+                                                    <span className={`${badgeClass(METHOD_COLORS[route.method] || "bg-gray-500/15 text-gray-400")} shrink-0 w-20 justify-center`}>
+                                                        {route.method}
+                                                    </span>
+                                                    <code className="text-sm font-mono text-red-200/80 flex-grow">
                                                         {route.path}
                                                     </code>
                                                     <p className="text-sm text-gray-500 group-hover:text-gray-300 transition-colors">
