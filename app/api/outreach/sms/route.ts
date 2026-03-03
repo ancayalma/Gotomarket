@@ -102,6 +102,7 @@ export async function POST(req: Request) {
         jobTitle: true,
         email: true,
         phone: true,
+        opt_out: true,
         outreach_meeting_link: true,
       },
     });
@@ -125,7 +126,12 @@ export async function POST(req: Request) {
         : (lead.phone || "").trim();
       if (!toNumber) { results.push({ leadId: lead.id, status: "skipped", reason: "No lead phone" }); continue; }
 
-      // TODO: honor sms opt-out when schema field is added
+      // Enforce SMS opt-out
+      if (lead.opt_out === true) {
+        systemLogger.warn(`[SMS] Lead ${lead.id} requested opt-out. Skipped SMS to ${toNumber}.`);
+        results.push({ leadId: lead.id, status: "skipped", reason: "User opted out." });
+        continue;
+      }
 
       // Build SMS content via LLM
       const basePrompt = body.promptOverride?.trim() || user.outreach_prompt_default || null;

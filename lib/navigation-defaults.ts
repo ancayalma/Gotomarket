@@ -136,13 +136,6 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 permissions: { module: "projects", feature: "projects" }
             },
             {
-                id: "nav_dialer",
-                type: "item",
-                label: "Dialer",
-                iconName: "Phone",
-                href: "/crm/dialer"
-            },
-            {
                 id: "nav_quotes",
                 type: "item",
                 label: "Quotes",

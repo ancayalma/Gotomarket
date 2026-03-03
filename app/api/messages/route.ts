@@ -168,42 +168,47 @@ export async function POST(req: NextRequest) {
                     const lead = await prismadb.crm_Leads.findFirst({ where: { email } });
                     const contact = await prismadb.crm_Contacts.findFirst({ where: { email } });
 
-                    if (lead) {
-                        await prismadb.crm_Lead_Activities.create({
-                            data: {
-                                lead: lead.id,
-                                user: userId,
-                                type: "EMAIL",
-                                metadata: { subject, trackingToken, recipient: email }
-                            }
-                        });
+                    // Respect email opt-out rules
+                    if (lead?.opt_out || contact?.opt_out || contact?.email_unsubscribed) {
+                        console.log(`[EMAIL] Recipient ${email} requested opt-out. Skipped email.`);
+                        return; // Skip this email but continue processing others
+                    }
 
-                        // Create an Outreach Item for tracking
-                        let adhocCampaign = await prismadb.crm_Outreach_Campaigns.findFirst({
-                            where: { name: "Ad-hoc Emails", user: userId }
-                        });
+                    // Log activity for ALL outbound emails regardless of whether they exist as leads
+                    let adhocCampaign = await prismadb.crm_Outreach_Campaigns.findFirst({
+                        where: { name: "Ad-hoc Emails", user: userId }
+                    });
 
-                        if (!adhocCampaign) {
-                            adhocCampaign = await prismadb.crm_Outreach_Campaigns.create({
-                                data: { name: "Ad-hoc Emails", user: userId, status: "ACTIVE", v: 0 }
-                            });
-                        }
-
-                        await prismadb.crm_Outreach_Items.create({
-                            data: {
-                                campaign: adhocCampaign.id,
-                                lead: lead.id,
-                                channel: "EMAIL",
-                                status: "SENT",
-                                subject,
-                                body_text: body_text || "",
-                                body_html: processedHtml,
-                                tracking_token: trackingToken,
-                                sentAt: new Date(),
-                                v: 0
-                            }
+                    if (!adhocCampaign) {
+                        adhocCampaign = await prismadb.crm_Outreach_Campaigns.create({
+                            data: { name: "Ad-hoc Emails", user: userId, status: "ACTIVE", v: 0 }
                         });
                     }
+
+                    // Ensure paper trail creation even for ghost emails
+                    await prismadb.crm_Lead_Activities.create({
+                        data: {
+                            lead: lead?.id || undefined, // undefined will map to null/unassigned in Prisma if field is optional
+                            user: userId,
+                            type: "EMAIL",
+                            metadata: { subject, trackingToken, recipient: email }
+                        }
+                    });
+
+                    await prismadb.crm_Outreach_Items.create({
+                        data: {
+                            campaign: adhocCampaign.id,
+                            lead: lead?.id || undefined,
+                            channel: "EMAIL",
+                            status: "SENT",
+                            subject,
+                            body_text: body_text || "",
+                            body_html: processedHtml,
+                            tracking_token: trackingToken,
+                            sentAt: new Date(),
+                            v: 0
+                        }
+                    });
 
                     await sendEmail({
                         to: email,

@@ -60,14 +60,7 @@ const navItems = [
         iconColor: "text-slate-400",
     },
 
-    {
-        title: "Dialer",
-        description: "Make and track calls",
-        href: "/crm/dialer",
-        icon: Phone,
-        color: "from-orange-500/20 to-red-500/20",
-        iconColor: "text-orange-400",
-    },
+
     {
         title: "Lead Wizard",
         description: "Generate new leads",

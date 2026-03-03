@@ -6,11 +6,11 @@ import { prismadb } from "@/lib/prisma";
 import { Users, ShieldCheck, UserCheck, Eye } from "lucide-react";
 
 // Users Components
-import { InviteForm } from "@/app/cms/(dashboard)/users/components/IviteForm";
-import { AdminUserDataTable } from "@/app/cms/(dashboard)/users/table-components/data-table";
-import { columns } from "@/app/cms/(dashboard)/users/table-components/columns";
+// import { InviteForm } from "@/app/cms/(dashboard)/users/components/IviteForm";
+// import { AdminUserDataTable } from "@/app/cms/(dashboard)/users/table-components/data-table";
+// import { columns } from "@/app/cms/(dashboard)/users/table-components/columns";
 import { getUsers } from "@/actions/get-users";
-import SendMailToAll from "@/app/cms/(dashboard)/users/components/send-mail-to-all";
+// import SendMailToAll from "@/app/cms/(dashboard)/users/components/send-mail-to-all";
 import AdminDashboardLayout from "./(dashboard)/layout";
 
 export default async function AdminPage() {
@@ -49,7 +49,7 @@ export default async function AdminPage() {
         <Container
             title="Administration"
             description="Manage your BasaltCRM instance, invite new members, and configure user access."
-            action={<SendMailToAll />}
+            // action={<SendMailToAll />}
             fluid
         >
             <div className="space-y-6">
@@ -61,15 +61,16 @@ export default async function AdminPage() {
                     <StatCard label="Viewers" value={viewerCount} icon={Eye} />
                 </div>
 
-                {/* Invite Section */}
+                {/* Invite Section 
                 <div className="p-5 bg-card/50 border border-border rounded-xl">
                     <h4 className="text-lg font-semibold mb-4">
                         Invite New User
                     </h4>
                     <InviteForm />
                 </div>
+                */}
 
-                {/* Users Table */}
+                {/* Users Table 
                 <div className="bg-card/50 border border-border rounded-xl overflow-hidden">
                     <div className="p-5 border-b border-border">
                         <h4 className="text-lg font-semibold">All Users</h4>
@@ -81,6 +82,7 @@ export default async function AdminPage() {
                         <AdminUserDataTable columns={columns} data={users} departments={departments} />
                     </div>
                 </div>
+                */}
             </div>
         </Container>
     );

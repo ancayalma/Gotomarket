@@ -4,38 +4,35 @@ import { create402Challenge, validate402Payment } from "@/lib/surge-x402";
 import { prismadb } from "@/lib/prisma";
 import { systemLogger } from "@/lib/logger";
 
-const MOCK_SERVICES: Record<string, { price: string, resource: string }> = {
-    "service-consulting-1h": { price: "150.00", resource: "https://cal.com/meeting-link" },
-    "service-api-access-mo": { price: "49.99", resource: "sk_live_agent_key_xyz" },
-    "data-contact-enrichment": { price: "25.00", resource: "{ enriched_data: [] }" },
-    "agent-sdr-01": { price: "99.00", resource: "https://agents.basalthq.com/deploy/sdr-01" },
-    "agent-csm-x": { price: "79.00", resource: "https://agents.basalthq.com/deploy/csm-x" },
-    "agent-data-9": { price: "49.00", resource: "https://agents.basalthq.com/deploy/data-9" },
-    "agent-ae-prime": { price: "149.00", resource: "https://agents.basalthq.com/deploy/ae-prime" }
+const AGENT_OFFERINGS: Record<string, { price: string, resource: string }> = {
+    "agent-inbound-sdr": { price: "199.00", resource: "https://agents.basalthq.com/deploy/inbound-sdr" },
+    "agent-outbound-sdr": { price: "249.00", resource: "https://agents.basalthq.com/deploy/outbound-sdr" },
+    "agent-customer-support": { price: "149.00", resource: "https://agents.basalthq.com/deploy/customer-support" },
+    "agent-billing-specialist": { price: "179.00", resource: "https://agents.basalthq.com/deploy/billing-specialist" },
+    "agent-appointment-setter": { price: "199.00", resource: "https://agents.basalthq.com/deploy/appointment-setter" }
 };
 
 export async function GET(req: Request, props: { params: Promise<{ sku: string }> }) {
     try {
         const params = await props.params;
         const rawSku = params.sku;
+
+        if (!rawSku || rawSku === ":sku" || rawSku === "%3Asku" || rawSku === "[sku]" || rawSku === "%5Bsku%5D") {
+            systemLogger.warn("[AgentAPI] Received literal placeholder for SKU instead of actual value.");
+            return NextResponse.json({
+                error: "Bad Request",
+                message: "You must replace the ':sku' or '[sku]' placeholder with an actual SKU in your request URL.",
+            }, { status: 400 });
+        }
+
         const sku = rawSku.toLowerCase();
 
         systemLogger.info(`[AgentAPI] Purchase request for SKU: ${sku}`);
 
-        if (sku === ":sku") {
-            systemLogger.warn(`[AgentAPI] User attempted to use literal :sku placeholder`);
-            return NextResponse.json({
-                error: "Invalid SKU",
-                message: "You are using the ':sku' placeholder. Please replace it with a real SKU from the catalog.",
-                hint: "Try /api/v1/agent/purchase/agent-sdr-01",
-                available_mocks: Object.keys(MOCK_SERVICES)
-            }, { status: 400 });
-        }
+        // 1. Try AGENT_OFFERINGS first
+        let service = AGENT_OFFERINGS[sku];
 
-        // 1. Try MOCK_SERVICES first
-        let service = MOCK_SERVICES[sku];
-
-        // 2. Try Database if not found in mock
+        // 2. Try Database if not found in predefined offerings
         if (!service) {
             const dbProduct = await prismadb.crm_Products.findUnique({
                 where: { sku: sku }
@@ -49,10 +46,10 @@ export async function GET(req: Request, props: { params: Promise<{ sku: string }
             }
         }
 
-        // 3. Dynamic Fallback for known prefixes to prevent 404s in deployment flows
+        // 3. Dynamic Fallback for known prefixes
         if (!service) {
             if (sku.startsWith("agent-")) {
-                service = { price: "99.00", resource: `https://agents.basalthq.com/deploy/${sku.replace("agent-", "")}` };
+                service = { price: "199.00", resource: `https://agents.basalthq.com/deploy/${sku.replace("agent-", "")}` };
                 systemLogger.info(`[AgentAPI] Using dynamic fallback for agent SKU: ${sku}`);
             } else if (sku.startsWith("service-")) {
                 service = { price: "49.99", resource: `https://api.basalthq.com/access/${sku}` };
@@ -65,7 +62,7 @@ export async function GET(req: Request, props: { params: Promise<{ sku: string }
             return NextResponse.json({
                 error: "Service Not Found",
                 message: `The requested SKU '${sku}' does not exist in the catalog.`,
-                available_mocks: Object.keys(MOCK_SERVICES)
+                available_offerings: Object.keys(AGENT_OFFERINGS)
             }, { status: 404 });
         }
 

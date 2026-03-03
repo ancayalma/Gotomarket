@@ -8,7 +8,7 @@ import {
     Palette, RefreshCw, Search, BarChart3, ExternalLink, MoreHorizontal, Shield,
     LineChart, PenLine, Archive
 } from "lucide-react";
-import AnalyticsCharts from "@/app/cms/(dashboard)/components/AnalyticsCharts";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";

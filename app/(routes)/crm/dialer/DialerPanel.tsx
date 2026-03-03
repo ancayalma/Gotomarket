@@ -349,10 +349,10 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
 
       {/* Active Battlecards (VaruniLink) */}
       {!isCompact && activeBattlecards.length > 0 && (
-        <section className="rounded-md border-amber-500/30 bg-amber-500/5 p-4 border animate-in slide-in-from-bottom-5">
+        <section className="rounded-md border-emerald-500/30 bg-emerald-500/5 p-4 border animate-in slide-in-from-bottom-5">
           <div className="flex items-center gap-2 mb-3">
-            <Zap className="w-4 h-4 text-amber-500" />
-            <h3 className="text-sm font-semibold text-amber-600">Live Battlecards (VaruniLink)</h3>
+            <Zap className="w-4 h-4 text-emerald-500" />
+            <h3 className="text-sm font-semibold text-emerald-600">Live Battlecards (VaruniLink)</h3>
           </div>
           <div className="space-y-3">
             {activeBattlecards.map(card => (
@@ -420,11 +420,11 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
     <div className={cn("w-full flex flex-col", isCompact ? "h-[480px]" : "h-full")}>
       <Tabs defaultValue="dial" className="w-full h-full flex flex-col min-h-0">
         <div className="px-3 py-1.5 border-b bg-muted/20 flex-none">
-          <TabsList className="grid w-full grid-cols-4 h-8">
-            <TabsTrigger value="dial" className="text-[10px] py-1">Phone</TabsTrigger>
-            <TabsTrigger value="list" className="text-[10px] py-1">List</TabsTrigger>
-            <TabsTrigger value="history" className="text-[10px] py-1">History</TabsTrigger>
-            <TabsTrigger value="settings" className="text-[10px] py-1">Config</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 h-9 p-1 bg-emerald-500/5 rounded-lg border border-emerald-500/10">
+            <TabsTrigger value="dial" className="text-[10px] font-black uppercase tracking-widest py-1 data-[state=active]:bg-emerald-500 data-[state=active]:text-white transition-all duration-300">Phone</TabsTrigger>
+            <TabsTrigger value="list" className="text-[10px] font-black uppercase tracking-widest py-1 data-[state=active]:bg-emerald-500 data-[state=active]:text-white transition-all duration-300">List</TabsTrigger>
+            <TabsTrigger value="history" className="text-[10px] font-black uppercase tracking-widest py-1 data-[state=active]:bg-emerald-500 data-[state=active]:text-white transition-all duration-300">History</TabsTrigger>
+            <TabsTrigger value="settings" className="text-[10px] font-black uppercase tracking-widest py-1 data-[state=active]:bg-emerald-500 data-[state=active]:text-white transition-all duration-300">Config</TabsTrigger>
           </TabsList>
         </div>
 
@@ -436,36 +436,27 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
                 variant="outline"
                 size="sm"
                 onClick={() => setStatus('available')}
-                className={cn(
-                  "flex flex-col h-11 gap-0.5 border-amber-500/10 bg-amber-500/5 hover:bg-amber-500/10",
-                  status === 'available' && "border-amber-500 ring-0.5 ring-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.15)]"
-                )}
+                className={cn("flex flex-col h-14 gap-1 border-emerald-500/10 bg-emerald-500/[0.03] backdrop-blur-sm hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all duration-500 rounded-xl group", status === 'available' && "border-emerald-500/50 bg-emerald-500/10 shadow-[0_8px_32px_rgba(16,185,129,0.15)] text-emerald-400 font-black tracking-widest")}
               >
-                <div className="h-1 w-1 rounded-full bg-amber-500 shadow-[0_0_3px_rgba(245,158,11,1)]" />
+                <div className="h-1 w-1 rounded-full bg-emerald-500 shadow-[0_0_3px_rgba(16,185,129,1)]" />
                 <span className="text-[9px] uppercase font-bold tracking-tighter">Available</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setStatus('break')}
-                className={cn(
-                  "flex flex-col h-11 gap-0.5 border-amber-500/10 bg-amber-500/5 hover:bg-amber-500/10",
-                  status === 'break' && "border-amber-500 ring-0.5 ring-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.15)]"
-                )}
+                className={cn("flex flex-col h-12 gap-1 border-amber-500/10 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all duration-300", status === 'break' && "border-amber-500 bg-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.1)] text-amber-400 font-bold")}
               >
-                <Zap className="h-2.5 w-2.5 text-amber-500" />
+                <Zap className="h-2.5 w-2.5 text-emerald-500" />
                 <span className="text-[9px] uppercase font-bold tracking-tighter">Break</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setStatus('offline')}
-                className={cn(
-                  "flex flex-col h-11 gap-0.5 border-amber-500/10 bg-amber-500/5 hover:bg-amber-500/10",
-                  status === 'offline' && "border-amber-500 ring-0.5 ring-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.15)]"
-                )}
+                className={cn("flex flex-col h-12 gap-1 border-rose-500/10 bg-rose-500/5 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all duration-300", status === 'offline' && "border-rose-500 bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.1)] text-rose-400 font-bold")}
               >
-                <XCircle className="h-2.5 w-2.5 text-amber-500" />
+                <XCircle className="h-2.5 w-2.5 text-emerald-500" />
                 <span className="text-[9px] uppercase font-bold tracking-tighter">Offline</span>
               </Button>
             </div>
@@ -479,7 +470,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
                 <Button variant="outline" size="sm" className="bg-red-500/5 border-red-500/30 text-red-500 hover:bg-red-500/10 h-7 gap-1 px-1">
                   <XCircle className="h-2.5 w-2.5" /> <span className="text-[9px] font-bold tracking-tighter">End</span>
                 </Button>
-                <Button variant="outline" size="sm" className="bg-amber-500/5 border-amber-500/30 text-amber-500 hover:bg-amber-500/10 h-7 gap-1 px-1">
+                <Button variant="outline" size="sm" className="bg-emerald-500/5 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 h-7 gap-1 px-1">
                   <XCircle className="h-2.5 w-2.5 rotate-45" /> <span className="text-[9px] font-bold tracking-tighter">Close</span>
                 </Button>
               </div>
@@ -495,7 +486,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
                     placeholder="Enter Number..."
                     value={singlePhone}
                     onChange={(e) => setSinglePhone(e.target.value)}
-                    className="h-9 bg-black/40 border-amber-500/20 text-center text-lg font-mono tracking-widest focus-visible:ring-amber-500/30 pr-8"
+                    className="h-14 bg-emerald-950/40 border-emerald-500/30 text-center text-2xl font-mono tracking-[0.4em] text-emerald-400 focus-visible:ring-emerald-500/30 pr-10 rounded-2xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] border-t-emerald-500/40"
                   />
                   <button
                     onClick={backspaceDial}
@@ -521,7 +512,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
                     variant="ghost"
                     size="sm"
                     onClick={() => key === 'CLR' ? clearDial() : appendDial(String(key))}
-                    className="h-8 bg-white/[0.03] border border-white/[0.05] hover:bg-amber-500/10 hover:border-amber-500/30 text-base font-bold transition-colors p-0"
+                    className="h-10 bg-emerald-500/[0.03] border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-400 text-lg font-bold transition-all duration-200 p-0 rounded-lg active:scale-90"
                   >
                     {key}
                   </Button>
@@ -530,10 +521,10 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
 
               <Button
                 onClick={runSingle}
-                className="w-full h-9 bg-amber-600 hover:bg-amber-500 text-white font-bold gap-2 shadow-lg shadow-amber-900/20"
+                className="relative overflow-hidden w-full h-12 bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black uppercase tracking-[0.3em] text-[11px] gap-2 shadow-[0_8px_25px_-5px_rgba(16,185,129,0.4)] transition-all duration-500 hover:shadow-[0_12px_35px_-5px_rgba(16,185,129,0.5)] active:scale-95 border-none group"
                 disabled={!singlePhone.trim() || !gateOkSingle}
               >
-                <Phone className="h-3.5 w-3.5" /> CALL
+                <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg]" /> <Phone className="h-4 w-4 relative z-10" /> <span className="relative z-10">Voice Start</span>
               </Button>
             </div>
           </TabsContent>

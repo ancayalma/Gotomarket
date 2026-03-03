@@ -35,9 +35,7 @@ export const columns: ColumnDef<Task>[] = [
     cell: ({ row }) => (
       <div className="w-[180px]">
         {
-          //@ts-ignore
-          //TODO: fix this
-          row.getValue("assigned_user")?.name ?? "Unassigned"
+          (row.getValue("assigned_user") as { name?: string | null })?.name ?? "Unassigned"
         }
       </div>
     ),

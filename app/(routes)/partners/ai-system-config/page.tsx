@@ -2,7 +2,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Container from "@/app/(routes)/components/ui/Container";
-import UnifiedAiCard from "@/app/cms/(dashboard)/_components/UnifiedAiCard";
 import { redirect } from "next/navigation";
 import { prismadb } from "@/lib/prisma";
 import { AddProviderModal } from "./_components/AddProviderModal";
@@ -174,7 +173,10 @@ export default async function PartnerAiConfigPage() {
                             </p>
                         </div>
                     </div>
-                    <UnifiedAiCard />
+                    {/* <UnifiedAiCard /> */}
+                    <div className="p-4 text-center text-muted-foreground bg-muted/20 border border-border rounded-xl">
+                        AI Configuration interface temporarily disabled.
+                    </div>
                 </section>
             </div>
         </Container>

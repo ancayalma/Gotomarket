@@ -2,6 +2,7 @@
 
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { Row } from "@tanstack/react-table";
+import { crm_Leads } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -82,7 +83,7 @@ export function DataTableRowActions<TData>({
         open={updateOpen}
         setOpen={setUpdateOpen}
       >
-        <UpdateLeadForm initialData={row.original} setOpen={setUpdateOpen} />
+        <UpdateLeadForm initialData={row.original as Partial<crm_Leads>} setOpen={setUpdateOpen} />
       </RightViewModalNoTrigger>
       <SmartEmailModal
         open={emailOpen}

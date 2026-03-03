@@ -33,9 +33,7 @@ export const columns: ColumnDef<Account>[] = [
     cell: ({ row }) => (
       <div className="truncate">
         {
-          //@ts-ignore
-          //TODO: fix this
-          row.getValue("assigned_to_user")?.name ?? "Unassigned"
+          (row.getValue("assigned_to_user") as { name?: string | null })?.name ?? "Unassigned"
         }
       </div>
     ),
@@ -53,9 +51,7 @@ export const columns: ColumnDef<Account>[] = [
       <Link href={`/crm/accounts/${row.original?.id}`}>
         <div className="truncate font-medium">
           {
-            //@ts-ignore
-            //TODO: fix this
-            row.getValue("name")
+            row.getValue("name") as string
           }
         </div>
       </Link>

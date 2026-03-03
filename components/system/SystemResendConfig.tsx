@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Shield } from "lucide-react";
-import MaskedKeyDisplay from "@/app/cms/(dashboard)/_components/MaskedKeyDisplay";
+
 import { updateSystemResendConfig } from "@/actions/system/update-resend-config";
 import { toast } from "react-hot-toast";
 
@@ -12,6 +12,12 @@ interface SystemResendConfigProps {
     envKey: string | undefined;
     dbKey: string | undefined;
 }
+
+const maskKeyValue = (key: string) => {
+    if (!key) return "";
+    if (key.length <= 8) return "••••••••";
+    return `${key.slice(0, 4)}••••••••••${key.slice(-4)}`;
+};
 
 const SystemResendConfig = ({ resendKeyId, envKey, dbKey }: SystemResendConfigProps) => {
 
@@ -38,7 +44,9 @@ const SystemResendConfig = ({ resendKeyId, envKey, dbKey }: SystemResendConfigPr
                     </p>
                 </div>
                 {(envKey || dbKey) && (
-                    <MaskedKeyDisplay keyValue={envKey || dbKey || ""} />
+                    <div className="font-mono text-xs bg-black/5 dark:bg-white/5 py-1 px-2 rounded font-medium tracking-wider">
+                        {maskKeyValue(envKey || dbKey || "")}
+                    </div>
                 )}
             </div>
 

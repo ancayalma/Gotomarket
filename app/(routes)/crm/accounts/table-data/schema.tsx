@@ -3,11 +3,10 @@ import { z } from "zod";
 // We're keeping a simple non-relational schema here.
 // IRL, you will have a schema for your data models.
 export const accountSchema = z.object({
-  //TODO: fix all the types and nullable
   id: z.string(),
   createdAt: z.date().optional(),
   name: z.string(),
-  assigned_to_user: z.any().nullable().optional(),
+  assigned_to_user: z.object({ name: z.string().optional().nullable() }).nullable().optional(),
   contacts: z
     .array(
       z.object({

@@ -356,7 +356,20 @@ export async function processApprovalAction(data: {
                 });
 
                 // Execute final approval actions (if any)
-                // TODO: Apply field updates from final_approval_actions
+                if (request.process.final_approval_actions && typeof request.process.final_approval_actions === 'object' && !Array.isArray(request.process.final_approval_actions)) {
+                    try {
+                        const modelName = request.record_type as keyof typeof prismadb;
+                        const updateData = request.process.final_approval_actions as Record<string, any>;
+
+                        // @ts-ignore - dynamic prisma model access
+                        await prismadb[modelName].update({
+                            where: { id: request.record_id },
+                            data: updateData
+                        });
+                    } catch (err) {
+                        console.error(`Failed to execute final approval actions for ${request.record_type} ${request.record_id}`, err);
+                    }
+                }
             }
         } else if (data.action === ApprovalAction.REJECT) {
             await prismadb.approvalRequest.update({
@@ -368,7 +381,20 @@ export async function processApprovalAction(data: {
             });
 
             // Execute final rejection actions (if any)
-            // TODO: Apply field updates from final_rejection_actions
+            if (request.process.final_rejection_actions && typeof request.process.final_rejection_actions === 'object' && !Array.isArray(request.process.final_rejection_actions)) {
+                try {
+                    const modelName = request.record_type as keyof typeof prismadb;
+                    const updateData = request.process.final_rejection_actions as Record<string, any>;
+
+                    // @ts-ignore - dynamic prisma model access
+                    await prismadb[modelName].update({
+                        where: { id: request.record_id },
+                        data: updateData
+                    });
+                } catch (err) {
+                    console.error(`Failed to execute final rejection actions for ${request.record_type} ${request.record_id}`, err);
+                }
+            }
         } else if (data.action === ApprovalAction.RECALL) {
             if (!request.process.allow_recall) {
                 return { success: false, error: "Recall is not allowed for this process" };

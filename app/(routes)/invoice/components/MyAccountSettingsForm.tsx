@@ -38,7 +38,6 @@ import { init } from "next/dist/compiled/@vercel/og/satori";
 import { Switch } from "@/components/ui/switch";
 
 interface UpdateAccountFormProps {
-  //TODO: fix this any
   initialData: MyAccount | null;
 }
 
@@ -119,12 +118,9 @@ export function MyAccountSettingsForm({ initialData }: UpdateAccountFormProps) {
 
   type NewAccountFormValues = z.infer<typeof formSchema>;
 
-  //TODO: fix this any
-  const form = useForm<any>({
-    resolver: zodResolver(formSchema),
-    defaultValues: initialData
-      ? initialData
-      : {
+  const mapInitialData = (data: MyAccount | null): NewAccountFormValues => {
+    if (!data) {
+      return {
         company_name: "",
         is_person: false,
         email: "",
@@ -142,22 +138,64 @@ export function MyAccountSettingsForm({ initialData }: UpdateAccountFormProps) {
         zip: null,
         country: null,
         country_code: null,
-        billing_street: null,
-        billing_city: null,
+        billing_street: "",
+        billing_city: "",
         billing_state: null,
-        billing_zip: null,
-        billing_country: null,
-        billing_country_code: null,
-        currency: null,
-        currency_symbol: null,
+        billing_zip: "",
+        billing_country: "",
+        billing_country_code: "",
+        currency: "",
+        currency_symbol: "",
         VAT_number: "",
         TAX_number: null,
-        bank_name: null,
-        bank_account: null,
-        bank_code: null,
+        bank_name: "",
+        bank_account: "",
+        bank_code: "",
         bank_IBAN: null,
         bank_SWIFT: null,
-      },
+      };
+    }
+
+    return {
+      id: data.id,
+      company_name: data.company_name,
+      is_person: data.is_person,
+      email: data.email || "",
+      email_accountant: data.email_accountant || "",
+      phone_prefix: data.phone_prefix,
+      phone: data.phone,
+      mobile_prefix: data.mobile_prefix,
+      mobile: data.mobile,
+      fax_prefix: data.fax_prefix,
+      fax: data.fax,
+      website: data.website,
+      street: data.street,
+      city: data.city,
+      state: data.state,
+      zip: data.zip,
+      country: data.country,
+      country_code: data.country_code,
+      billing_street: data.billing_street || "",
+      billing_city: data.billing_city || "",
+      billing_state: data.billing_state,
+      billing_zip: data.billing_zip || "",
+      billing_country: data.billing_country || "",
+      billing_country_code: data.billing_country_code || "",
+      currency: data.currency || "",
+      currency_symbol: data.currency_symbol || "",
+      VAT_number: data.VAT_number || "",
+      TAX_number: data.TAX_number,
+      bank_name: data.bank_name || "",
+      bank_account: data.bank_account || "",
+      bank_code: data.bank_code || "",
+      bank_IBAN: data.bank_IBAN,
+      bank_SWIFT: data.bank_SWIFT,
+    };
+  };
+
+  const form = useForm<NewAccountFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: mapInitialData(initialData),
   });
 
   const onSubmit = async (data: NewAccountFormValues) => {
@@ -250,7 +288,7 @@ export function MyAccountSettingsForm({ initialData }: UpdateAccountFormProps) {
                 />
                 <FormField
                   control={form.control}
-                  name={"tax_number"}
+                  name={"TAX_number"}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>TAX number</FormLabel>

@@ -282,7 +282,7 @@ export default function PricingClient() {
                                         name="name"
                                         required
                                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors"
-                                        placeholder="John Doe"
+                                        placeholder="Your Full Name"
                                     />
                                 </div>
                                 <div>
@@ -295,7 +295,7 @@ export default function PricingClient() {
                                         name="email"
                                         required
                                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors"
-                                        placeholder="john@company.com"
+                                        placeholder="you@company.com"
                                     />
                                 </div>
                             </div>

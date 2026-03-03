@@ -33,9 +33,10 @@ import fetcher from "@/lib/fetcher";
 import useSWR from "swr";
 import SuspenseLoading from "@/components/loadings/suspense";
 
-//TODO: fix all the types
+import { crm_Contacts, Users, crm_Accounts } from "@prisma/client";
+
 type NewTaskFormProps = {
-  initialData: any;
+  initialData: Partial<crm_Contacts>;
   setOpen: (value: boolean) => void;
 };
 
@@ -88,10 +89,9 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
 
   type NewAccountFormValues = z.infer<typeof formSchema>;
 
-  //TODO: fix this any
-  const form = useForm<any>({
+  const form = useForm<NewAccountFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData,
+    defaultValues: initialData as unknown as NewAccountFormValues,
   });
 
   const contactType = [
@@ -174,7 +174,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                   <FormItem>
                     <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">First name</FormLabel>
                     <FormControl>
-                      <Input disabled={isLoading} placeholder="John" {...field} className="h-8" />
+                      <Input disabled={isLoading} placeholder="John" {...field} value={field.value ?? ""} className="h-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -207,6 +207,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                         disabled={isLoading}
                         placeholder="+15550000000"
                         {...field}
+                        value={field.value ?? ""}
                         className="h-8"
                         onBlur={(e) => {
                           const formatted = formatPhoneNumber(e.target.value);
@@ -230,6 +231,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                         disabled={isLoading}
                         placeholder="+15550000000"
                         {...field}
+                        value={field.value ?? ""}
                         className="h-8"
                         onBlur={(e) => {
                           const formatted = formatPhoneNumber(e.target.value);
@@ -273,6 +275,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                         disabled={isLoading}
                         placeholder="littlejohny@gmail.com"
                         {...field}
+                        value={field.value ?? ""}
                         className="h-8"
                       />
                     </FormControl>
@@ -294,6 +297,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                         disabled={isLoading}
                         placeholder="https://www.domain.com"
                         {...field}
+                        value={field.value ?? ""}
                         className="h-8"
                       />
                     </FormControl>
@@ -367,6 +371,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                       disabled={isLoading}
                       placeholder="Useful information about the contact"
                       {...field}
+                      value={field.value ?? ""}
                       className="min-h-[60px] text-xs"
                     />
                   </FormControl>
@@ -385,9 +390,9 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                       <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Assigned user</FormLabel>
                       <FormControl>
                         <Combobox
-                          options={users?.map((user: any) => ({
-                            label: user.name || user.email,
-                            value: user.id,
+                          options={users?.map((user: Partial<Users>) => ({
+                            label: user.name || user.email || "Unknown User",
+                            value: user.id || "",
                           })) || []}
                           value={field.value}
                           onChange={field.onChange}
@@ -406,9 +411,9 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                       <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Assign an Account</FormLabel>
                       <FormControl>
                         <Combobox
-                          options={accounts?.map((account: any) => ({
-                            label: account.name,
-                            value: account.id,
+                          options={accounts?.map((account: Partial<crm_Accounts>) => ({
+                            label: account.name || "Unknown Account",
+                            value: account.id || "",
                           })) || []}
                           value={field.value}
                           onChange={field.onChange}
@@ -427,7 +432,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                       <FormItem>
                         <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Position</FormLabel>
                         <FormControl>
-                          <Input disabled={isLoading} placeholder="CTO" {...field} className="h-8" />
+                          <Input disabled={isLoading} placeholder="CTO" {...field} value={field.value ?? ""} className="h-8" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -475,7 +480,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input disabled={isLoading} placeholder="Twitter URL" {...field} className="h-7 text-[10px]" />
+                          <Input disabled={isLoading} placeholder="Twitter URL" {...field} value={field.value ?? ""} className="h-7 text-[10px]" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -486,7 +491,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input disabled={isLoading} placeholder="Facebook URL" {...field} className="h-7 text-[10px]" />
+                          <Input disabled={isLoading} placeholder="Facebook URL" {...field} value={field.value ?? ""} className="h-7 text-[10px]" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -497,7 +502,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input disabled={isLoading} placeholder="Linkedin URL" {...field} className="h-7 text-[10px]" />
+                          <Input disabled={isLoading} placeholder="Linkedin URL" {...field} value={field.value ?? ""} className="h-7 text-[10px]" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -508,7 +513,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input disabled={isLoading} placeholder="Skype URL" {...field} className="h-7 text-[10px]" />
+                          <Input disabled={isLoading} placeholder="Skype URL" {...field} value={field.value ?? ""} className="h-7 text-[10px]" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -519,7 +524,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input disabled={isLoading} placeholder="YouTube URL" {...field} className="h-7 text-[10px]" />
+                          <Input disabled={isLoading} placeholder="YouTube URL" {...field} value={field.value ?? ""} className="h-7 text-[10px]" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -530,7 +535,7 @@ export function UpdateContactForm({ initialData, setOpen }: NewTaskFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input disabled={isLoading} placeholder="TikTok URL" {...field} className="h-7 text-[10px]" />
+                          <Input disabled={isLoading} placeholder="TikTok URL" {...field} value={field.value ?? ""} className="h-7 text-[10px]" />
                         </FormControl>
                       </FormItem>
                     )}

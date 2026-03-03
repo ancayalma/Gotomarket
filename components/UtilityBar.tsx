@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { useLearn } from "@/components/providers/learn-provider";
 import { TAB_LABELS, TAB_COLORS } from "@/components/ui/LearnLink";
 import { getTeamCreditsInfo } from "@/actions/crm/credits";
+import DialerPanel from "@/app/(routes)/crm/dialer/DialerPanel";
 import {
     Popover,
     PopoverContent,
@@ -39,13 +40,11 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import DialerPanel from "@/app/(routes)/crm/dialer/DialerPanel";
 
 export default function UtilityBar() {
     const [isMinimized, setIsMinimized] = useState(false);
     const [notes, setNotes] = useState("");
     const [tasks, setTasks] = useState<{ id: string, text: string, completed: boolean, priority: 'low' | 'normal' | 'medium' | 'high' | 'critical' }[]>([]);
-    const [isDialerOpen, setIsDialerOpen] = useState(false);
     const [creditsInfo, setCreditsInfo] = useState<{
         teamSlug?: string;
         used: number;
@@ -57,6 +56,7 @@ export default function UtilityBar() {
     const { activeTab, overviewTitle, overviewWhat, overviewWhy, overviewHow } = useLearn();
     const router = useRouter();
     const [isLearnOpen, setIsLearnOpen] = useState(false);
+    const [isDialerOpen, setIsDialerOpen] = useState(false);
 
     useEffect(() => {
         const fetchCredits = async () => {
@@ -236,7 +236,7 @@ export default function UtilityBar() {
                                                 <div className="relative">
                                                     <StickyNote className="h-4 w-4" />
                                                     {notes.length > 0 && (
-                                                        <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                                                        <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-amber-500 rounded-full" />
                                                     )}
                                                 </div>
                                                 <span className="hidden lg:inline">Quick Notes</span>
@@ -289,7 +289,6 @@ export default function UtilityBar() {
                                                     <CheckSquare className="h-4 w-4" />
                                                     {tasks.filter(t => !t.completed).length > 0 && (
                                                         <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center">
-                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-20"></span>
                                                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                                         </span>
                                                     )}
@@ -407,26 +406,49 @@ export default function UtilityBar() {
 
                             <div className="h-4 w-px bg-border mx-1 hidden lg:block" />
 
-                            {/* Numpad Popover */}
+                            {/* Dialer Popover */}
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Popover open={isDialerOpen} onOpenChange={setIsDialerOpen}>
                                         <PopoverTrigger asChild>
-                                            <div className={cn(
-                                                "hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full transition-all cursor-pointer group",
-                                                isDialerOpen ? "bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]" : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500"
-                                            )}>
-                                                <Phone className="h-3.5 w-3.5" />
-                                                <span className="text-xs font-semibold">Numpad</span>
-                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className={cn(
+                                                    "relative gap-2 px-4 h-8 rounded-full overflow-hidden group transition-all duration-500",
+                                                    "bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-teal-500/10",
+                                                    "border border-emerald-500/20 hover:border-emerald-500/40",
+                                                    "text-emerald-400 font-bold uppercase tracking-[0.2em] text-[10px]",
+                                                    "hover:scale-[1.02] active:scale-95 hover:shadow-[0_0_20px_rgba(16,185,129,0.15)]",
+                                                    isDialerOpen && "from-emerald-500/20 to-teal-500/20 border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.25)] text-emerald-300"
+                                                )}
+                                            >
+                                                {/* Shimmer Gleam Effect */}
+                                                <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-emerald-400/10 to-transparent skew-x-[-20deg]" />
+
+                                                {/* Subtle Radial Glow */}
+                                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                                                <div className="relative flex items-center gap-2">
+                                                    <div className="relative flex items-center justify-center w-4 h-4">
+                                                        <Phone className="h-3.5 w-3.5 group-hover:rotate-12 transition-transform duration-300" />
+                                                        {/* Notice the flashing dot is gone, replaced by a static premium indicator if needed, but per request, it's removed */}
+                                                    </div>
+                                                    <span className="hidden lg:inline">Dialer</span>
+                                                </div>
+                                            </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-[320px] p-0 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="end" sideOffset={12}>
-                                            <DialerPanel isCompact={true} />
+                                        <PopoverContent className="w-[420px] p-0 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="center" sideOffset={12}>
+                                            <div className="h-[520px] overflow-y-auto w-[420px]">
+                                                <DialerPanel isCompact={true} />
+                                            </div>
                                         </PopoverContent>
                                     </Popover>
                                 </TooltipTrigger>
-                                <TooltipContent side="top">VOIP Communications Terminal.</TooltipContent>
+                                <TooltipContent side="top">Communication Terminal.</TooltipContent>
                             </Tooltip>
+
+
                         </div>
                     </div>
                 </div>

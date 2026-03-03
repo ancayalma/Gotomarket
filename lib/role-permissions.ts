@@ -68,7 +68,6 @@ export const CRM_MODULES: CrmModule[] = [
                 children: [
                     { id: 'leads.tabs.all', name: 'All Leads View', description: 'Main list view' },
                     { id: 'leads.tabs.workspace', name: 'Workspace View', description: 'Pipeline workspace' },
-                    { id: 'leads.tabs.dialer', name: 'Dialer View', description: 'Embedded dialer' },
                 ]
             },
             {
@@ -335,27 +334,7 @@ export const CRM_MODULES: CrmModule[] = [
             }
         ]
     },
-    {
-        id: 'dialer',
-        name: 'Dialer',
-        route: '/crm/dialer',
-        description: 'Phone system',
-        children: [
-            { id: 'dialer.view', name: 'Dialer Interface', description: 'Keypad and controls' },
-            { id: 'dialer.history', name: 'Call History', description: 'Logs' },
-            { id: 'dialer.recordings', name: 'Recordings', description: 'Audio files' },
-            {
-                id: 'dialer.actions',
-                name: 'Actions',
-                description: 'Dialer operations',
-                children: [
-                    { id: 'dialer.actions.call', name: 'Make Calls', description: 'Outbound' },
-                    { id: 'dialer.actions.listen', name: 'Listen', description: 'Play recordings' },
-                    { id: 'dialer.actions.download', name: 'Download', description: 'Save recordings' },
-                ]
-            }
-        ]
-    },
+
     {
         id: 'university',
         name: 'University',
@@ -595,7 +574,7 @@ export const ROLE_CONFIGS: Record<Exclude<TeamRole, 'SUPER_ADMIN' | 'PLATFORM_AD
         defaultModules: [
             'dashboard', 'dashboard.view',
             'contacts', 'contacts.view',
-            'leads', 'leads.tabs.all', 'leads.tabs.workspace', 'leads.tabs.dialer',
+            'leads', 'leads.tabs.all', 'leads.tabs.workspace',
             'cases', 'notifications', 'products', 'quotes'
         ]
     },

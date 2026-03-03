@@ -46,11 +46,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-//TODO: fix all the types
+import { Users, crm_Accounts, Boards } from "@prisma/client";
+
 type NewTaskFormProps = {
-  users: any[];
-  accounts: any[];
-  projects?: any[];
+  users: Partial<Users>[];
+  accounts: Partial<crm_Accounts>[];
+  projects?: Partial<Boards>[];
   onFinish?: () => void;
   redirectOnSuccess?: boolean;
 };
@@ -325,9 +326,9 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
                   <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Assigned To</FormLabel>
                   <FormControl>
                     <Combobox
-                      options={users?.map((user: any) => ({
-                        label: user.name || user.email,
-                        value: user.id,
+                      options={users?.map((user: Partial<Users>) => ({
+                        label: user.name || user.email || "Unknown User",
+                        value: user.id || "",
                       })) || []}
                       value={field.value}
                       onChange={field.onChange}
@@ -345,9 +346,9 @@ export function NewLeadForm({ users, accounts, projects = [], onFinish, redirect
                   <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Account</FormLabel>
                   <FormControl>
                     <Combobox
-                      options={accounts?.map((account: any) => ({
-                        label: account.name,
-                        value: account.id,
+                      options={accounts?.map((account: Partial<crm_Accounts>) => ({
+                        label: account.name || "Unknown Account",
+                        value: account.id || "",
                       })) || []}
                       value={field.value}
                       onChange={field.onChange}

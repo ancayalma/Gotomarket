@@ -9,11 +9,11 @@ import { Users, ShieldCheck, UserCheck, Eye, Building2, LayoutDashboard } from "
 
 // UI Components
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { InviteForm } from "@/app/cms/(dashboard)/users/components/IviteForm";
-import { AdminUserDataTable } from "@/app/cms/(dashboard)/users/table-components/data-table";
-import { columns } from "@/app/cms/(dashboard)/users/table-components/columns";
+// import { InviteForm } from "@/app/cms/(dashboard)/users/components/IviteForm";
+// import { AdminUserDataTable } from "@/app/cms/(dashboard)/users/table-components/data-table";
+// import { columns } from "@/app/cms/(dashboard)/users/table-components/columns";
 import { getUsers } from "@/actions/get-users";
-import SendMailToAll from "@/app/cms/(dashboard)/users/components/send-mail-to-all";
+// import SendMailToAll from "@/app/cms/(dashboard)/users/components/send-mail-to-all";
 import DepartmentsView from "@/app/(routes)/partners/[teamId]/_components/DepartmentsView";
 
 export default async function AdminDashboardPage({
@@ -78,7 +78,7 @@ export default async function AdminDashboardPage({
     <Container
       title="Administration"
       description="Manage your Organization, invite new members, configure user access, and organize your team into departments."
-      action={<SendMailToAll />}
+      // action={<SendMailToAll />}
       fluid
     >
       <LearnLink
@@ -114,15 +114,16 @@ export default async function AdminDashboardPage({
             <StatCard label="Viewers" value={viewerCount} icon={Eye} />
           </div>
 
-          {/* Invite Section */}
+          {/* Invite Section 
           <div className="p-5 bg-card/50 border border-border rounded-xl">
             <h4 className="text-lg font-semibold mb-4">
               Invite New User
             </h4>
             <InviteForm />
           </div>
+          */}
 
-          {/* Users Table */}
+          {/* Users Table 
           <div className="bg-card/50 border border-border rounded-xl overflow-hidden">
             <div className="p-5 border-b border-border">
               <h4 className="text-lg font-semibold">All Users</h4>
@@ -134,6 +135,7 @@ export default async function AdminDashboardPage({
               <AdminUserDataTable columns={columns} data={users} departments={departments} />
             </div>
           </div>
+          */}
         </TabsContent>
 
         <TabsContent value="departments" className="outline-none">

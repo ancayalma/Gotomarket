@@ -523,17 +523,41 @@ export default function UniversityDashboard({ plan }: UniversityDashboardProps) 
 
                             <Card className="bg-white/5 border-white/10 relative overflow-hidden group">
                                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10 opacity-50" />
-                                <CardContent className="p-10 flex flex-col items-center justify-center text-center space-y-4 relative z-10 min-h-[300px]">
-                                    <div className="w-16 h-16 rounded-full bg-black/40 border border-white/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-500">
-                                        <Video className="w-8 h-8 text-blue-400" />
+                                <CardContent className="p-10 flex flex-col items-center justify-center text-center space-y-6 relative z-10 min-h-[300px]">
+                                    <div className="w-16 h-16 rounded-full bg-black/40 border border-white/10 flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                                        <Bot className="w-8 h-8 text-blue-400" />
                                     </div>
-                                    <h3 className="text-xl font-bold text-white">Interactive NotebookLM Guides</h3>
-                                    <p className="text-sm text-gray-400 max-w-md mx-auto leading-relaxed">
-                                        We are currently producing a series of deep-dive video walkthroughs and technical documentation powered by Google NotebookLM. Check back soon for comprehensive guides on mastering your workflow!
-                                    </p>
-                                    <Badge variant="outline" className="text-blue-400 border-blue-400/30 bg-blue-400/10 mt-4 uppercase tracking-widest text-[10px] font-black">
-                                        Coming Soon
-                                    </Badge>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">Interactive NotebookLM Guides</h3>
+                                        <p className="text-sm text-gray-400 max-w-md mx-auto leading-relaxed mt-2">
+                                            Listen to AI-generated deep dives into your CRM data and standard operating procedures.
+                                        </p>
+                                    </div>
+
+                                    <div className="w-full max-w-md bg-black/30 border border-white/10 rounded-xl p-4 mt-6">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-blue-500/20 rounded-lg">
+                                                    <PlayCircle className="w-5 h-5 text-blue-400" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="text-sm font-semibold text-white">BasaltCRM Architecture Deep Dive</p>
+                                                    <p className="text-xs text-gray-400">NotebookLM Audio Overview</p>
+                                                </div>
+                                            </div>
+                                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-400 border-blue-500/20">
+                                                12:45
+                                            </Badge>
+                                        </div>
+                                        <audio
+                                            controls
+                                            className="w-full h-10 mt-2 filter invert opacity-90 grayscale contrast-125"
+                                            src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+                                            preload="metadata"
+                                        >
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>

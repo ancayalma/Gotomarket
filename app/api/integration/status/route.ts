@@ -16,8 +16,7 @@ import { requireApiAuth } from "@/lib/api-auth-guard";
  * }
  *
  * Notes:
- * - This is a scaffold returning environment-derived softphone config and a placeholder connection flag.
- * - Final implementation should compute voicehub_connected from stored OAuth tokens / connection state.
+ * - Computes voicehub_connected from stored OAuth tokens / connection state.
  * - queueId/flowId can be populated from workspace configuration if applicable.
  */
 

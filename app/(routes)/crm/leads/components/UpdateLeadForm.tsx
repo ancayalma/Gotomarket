@@ -36,9 +36,10 @@ import fetcher from "@/lib/fetcher";
 import useSWR from "swr";
 import SuspenseLoading from "@/components/loadings/suspense";
 
-//TODO: fix all the types
+import { crm_Leads, Users, crm_Accounts, Boards } from "@prisma/client";
+
 type NewTaskFormProps = {
-  initialData: any;
+  initialData: Partial<crm_Leads>;
   setOpen: (value: boolean) => void;
 };
 
@@ -91,10 +92,9 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
 
   type NewLeadFormValues = z.infer<typeof formSchema>;
 
-  //TODO: fix this any
-  const form = useForm<any>({
+  const form = useForm<NewLeadFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData,
+    defaultValues: initialData as unknown as NewLeadFormValues,
   });
 
   const onSubmit = async (data: NewLeadFormValues) => {
@@ -322,9 +322,9 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                       <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Assigned to</FormLabel>
                       <FormControl>
                         <Combobox
-                          options={users.map((user: any) => ({
-                            label: user.name || user.email,
-                            value: user.id,
+                          options={users.map((user: Partial<Users>) => ({
+                            label: user.name || user.email || "Unknown User",
+                            value: user.id || "",
                           }))}
                           value={field.value}
                           onChange={field.onChange}
@@ -343,9 +343,9 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                       <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Project</FormLabel>
                       <FormControl>
                         <Combobox
-                          options={projects.map((project: any) => ({
-                            label: project.title,
-                            value: project.id,
+                          options={projects.map((project: Partial<Boards>) => ({
+                            label: project.title || "Untitled Project",
+                            value: project.id || "",
                           }))}
                           value={field.value}
                           onChange={field.onChange}
@@ -374,7 +374,7 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {leadStatus.map((status: any) => (
+                          {leadStatus.map((status: { id: string, name: string }) => (
                             <SelectItem key={status.id} value={status.id}>
                               {status.name}
                             </SelectItem>
@@ -392,9 +392,9 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                       <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">Account</FormLabel>
                       <FormControl>
                         <Combobox
-                          options={Array.isArray(accounts) ? accounts.map((account: any) => ({
-                            label: account.name,
-                            value: account.id,
+                          options={Array.isArray(accounts) ? accounts.map((account: Partial<crm_Accounts>) => ({
+                            label: account.name || "Unknown Account",
+                            value: account.id || "",
                           })) : []}
                           value={field.value}
                           onChange={field.onChange}
@@ -418,7 +418,7 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                       <FormControl>
                         <div className="flex items-center gap-2 border border-white/10 rounded-md px-2 bg-background/50 h-8">
                           <Linkedin className="h-3 w-3 text-muted-foreground" />
-                          <Input placeholder="LinkedIn" {...field} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
+                          <Input placeholder="LinkedIn" {...field} value={field.value ?? ""} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
                         </div>
                       </FormControl>
                     </FormItem>
@@ -432,7 +432,7 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                       <FormControl>
                         <div className="flex items-center gap-2 border border-white/10 rounded-md px-2 bg-background/50 h-8">
                           <Facebook className="h-3 w-3 text-muted-foreground" />
-                          <Input placeholder="Facebook" {...field} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
+                          <Input placeholder="Facebook" {...field} value={field.value ?? ""} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
                         </div>
                       </FormControl>
                     </FormItem>
@@ -446,7 +446,7 @@ export function UpdateLeadForm({ initialData, setOpen }: NewTaskFormProps) {
                       <FormControl>
                         <div className="flex items-center gap-2 border border-white/10 rounded-md px-2 bg-background/50 h-8">
                           <Twitter className="h-3 w-3 text-muted-foreground" />
-                          <Input placeholder="Twitter" {...field} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
+                          <Input placeholder="Twitter" {...field} value={field.value ?? ""} className="border-0 bg-transparent h-full px-0 text-[10px] focus-visible:ring-0" />
                         </div>
                       </FormControl>
                     </FormItem>

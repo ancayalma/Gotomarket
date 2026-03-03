@@ -44,7 +44,36 @@ export async function POST(req: Request, props: { params: Promise<{ taskId: stri
       },
     });
 
-    //TODO: add email notification
+    if (task.user && task.user !== session.user.id) {
+      const assignedUser = await prismadb.users.findUnique({
+        where: { id: task.user },
+        select: { email: true, name: true }
+      });
+
+      if (assignedUser?.email) {
+        // Send email notification dynamically via lib/sendmail
+        try {
+          const { default: sendEmail } = await import("@/lib/sendmail");
+          await sendEmail({
+            to: assignedUser.email,
+            subject: `New Comment on Your Task: ${task.title}`,
+            text: `You have a new comment on your task "${task.title}".\n\nComment: ${comment}\n\nLogin to BasaltCRM to view more details.`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+                <h2 style="color: #0f766e;">New Task Comment</h2>
+                <p>You have a new comment on your task: <strong>${task.title}</strong></p>
+                <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #10b981;">
+                  <p style="margin: 0; white-space: pre-wrap;">${comment}</p>
+                </div>
+                <p style="font-size: 14px; color: #666;">Login to BasaltCRM to view more details and reply.</p>
+              </div>
+            `
+          });
+        } catch (emailError) {
+          systemLogger.error("[task_comment_email]", emailError);
+        }
+      }
+    }
 
     return NextResponse.json(newComment, { status: 200 });
 

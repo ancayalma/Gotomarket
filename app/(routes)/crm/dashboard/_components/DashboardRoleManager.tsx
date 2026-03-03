@@ -143,7 +143,7 @@ const DashboardRoleManager = async () => {
                 { id: "entity:accounts", name: "Accounts", value: counts.accounts, href: "/crm/accounts", iconName: "LandmarkIcon", color: "cyan", tooltip: "Manage your client and company accounts. View details, track interactions, and maintain relationships." },
                 { id: "entity:contacts", name: "Contacts", value: counts.contacts, href: "/crm/contacts", iconName: "Contact", color: "violet", tooltip: "View and manage all your contacts. Add, edit, and organize people linked to your accounts." },
                 { id: "entity:contracts", name: "Contracts", value: counts.contracts, href: "/crm/contracts", iconName: "FilePenLine", color: "rose", tooltip: "Track and manage contracts with clients. Monitor terms, renewal dates, and contract statuses." },
-                { id: "entity:dialer", name: "Dialer", value: 0, href: "/crm/dialer", iconName: "Phone", color: "blue", tooltip: "Make calls directly from the CRM. Log call outcomes and track your call activity." },
+
                 { id: "entity:leads_manager", name: "Leads Manager", value: counts.leads, href: "/crm/leads", iconName: "Users2", color: "emerald", tooltip: "View and manage all leads in one place. Filter, sort, and take action on your pipeline." }
             );
 

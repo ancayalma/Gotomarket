@@ -125,6 +125,7 @@ model crm_Leads {
   call_recording_url        String?
   call_transcript_url       String?
   azure_realtime_session_id String?
+  opt_out                   Boolean?  @default(false)
 
   lead_pool_maps         crm_Lead_Pools_Leads[]
   contact_candidate_maps crm_Contact_Candidate_Leads[]
@@ -329,7 +330,7 @@ model crm_Outreach_Items {
   id       String              @id @default(auto()) @map("_id") @db.ObjectId
   v        Int?                @map("__v")
   campaign String              @db.ObjectId
-  lead     String              @db.ObjectId
+  lead     String?             @db.ObjectId
   channel  OutreachChannelType
   status   OutreachItemStatus  @default(PENDING)
 
@@ -401,6 +402,7 @@ model crm_Contacts {
   last_name              String
   office_phone           String?
   mobile_phone           String?
+  opt_out                Boolean?  @default(false)
   website                String?
   position               String?
   status                 Boolean             @default(true)
@@ -1790,7 +1792,7 @@ enum PipelineStage {
 model crm_Lead_Activities {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   v         Int      @default(0) @map("__v")
-  lead      String   @db.ObjectId
+  lead      String?  @db.ObjectId
   user      String?  @db.ObjectId
   type      String
   metadata  Json?

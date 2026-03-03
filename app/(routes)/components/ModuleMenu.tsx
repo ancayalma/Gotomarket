@@ -92,7 +92,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
   const isCrmLeads = isPath(/^\/([a-z]{2}\/)?crm\/leads/) || isPath(/^\/([a-z]{2}\/)?lists/);
   const isCrmOpps = isPath(/^\/([a-z]{2}\/)?crm\/opportunities/);
   const isCrmCommand = isPath(/^\/([a-z]{2}\/)?crm\/sales-command/);
-  const isCrmDialer = isPath(/^\/([a-z]{2}\/)?crm\/dialer/);
+
   const isCrmQuotes = isPath(/^\/([a-z]{2}\/)?crm\/quotes/);
   const isCrmProducts = isPath(/^\/([a-z]{2}\/)?crm\/products/);
   const isCrmCases = isPath(/^\/([a-z]{2}\/)?crm\/cases/);
@@ -245,13 +245,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
                 isActive={isCrmOpps}
                 items={oppsSubItems}
               />
-              <MenuItem
-                href="/crm/dialer"
-                icon={Phone}
-                title="Dialer"
-                isOpen={open}
-                isActive={isCrmDialer}
-              />
+
               <MenuItem
                 href="/crm/quotes"
                 icon={FileText}

@@ -6,7 +6,7 @@ import fetcher from "@/lib/fetcher";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import LeadsView from "./LeadsView";
 import ProcessPanel from "./ProcessPanel";
-import DialerPanel from "../../dialer/DialerPanel";
+
 import RightViewModal from "@/components/modals/right-view-modal";
 import { NewLeadForm } from "./NewLeadForm";
 import { LayoutList, Briefcase, Phone, Plus } from "lucide-react";
@@ -16,7 +16,7 @@ import DashboardCard from "../../dashboard/_components/DashboardCard";
 type Props = {
   leads: any[];
   crmData: any;
-  defaultTab?: "all" | "workspace" | "dialer";
+  defaultTab?: "all" | "workspace";
   isMember?: boolean;
 };
 
@@ -62,15 +62,7 @@ export default function LeadsManagerTabs({ leads: initialLeads, crmData, default
       iconColor: "text-purple-400",
       permission: "leads.tabs.workspace"
     },
-    {
-      id: "dialer",
-      title: "Dialer",
-      description: "Make and track calls",
-      icon: Phone,
-      color: "from-orange-500/20 to-red-500/20",
-      iconColor: "text-orange-400",
-      permission: "leads.tabs.dialer"
-    },
+
   ];
 
   const addLeadCard = {
@@ -103,7 +95,7 @@ export default function LeadsManagerTabs({ leads: initialLeads, crmData, default
           let variant: "info" | "violet" | "warning" | "default" = "default";
           if (card.id === "all") variant = "info";
           if (card.id === "workspace") variant = "violet";
-          if (card.id === "dialer") variant = "warning";
+
 
           return (
             <DashboardCard
@@ -156,11 +148,7 @@ export default function LeadsManagerTabs({ leads: initialLeads, crmData, default
             <ProcessPanel leads={leads as any} crmData={crmData} />
           </TabsContent>
         )}
-        {hasAccess('leads.tabs.dialer') && (
-          <TabsContent value="dialer" className="flex-1 mt-0">
-            <DialerPanel />
-          </TabsContent>
-        )}
+
       </Tabs>
     </div>
   );

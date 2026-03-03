@@ -71,17 +71,12 @@ const CRMKanban = ({
   }, []);
 
   const onDragEnd = async (result: any) => {
-    //TODO: Add optimistic ui
-    setIsLoading(true);
-    //Implement drag end logic
     const { destination, source, draggableId } = result;
 
-    // If there is no destination, we just return
     if (!destination) {
       return;
     }
 
-    // If the source and destination is the same, we return
     if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
@@ -89,11 +84,22 @@ const CRMKanban = ({
       return;
     }
 
+    // Optimistic UI update
+    const previousOpportunities = [...opportunities];
+    const newOpportunities = opportunities.map((opp: any) => {
+      if (opp.id === draggableId) {
+        return { ...opp, sales_stage: destination.droppableId };
+      }
+      return opp;
+    });
+    setOpportunities(newOpportunities);
+
     try {
       const response = await axios.put(`/api/crm/opportunity/${draggableId}`, {
         source: source.droppableId,
         destination: destination.droppableId,
       });
+      // Sync with server data (optional, but good for consistency)
       setOpportunities(response.data.data);
       toast({
         title: "Success",
@@ -101,15 +107,15 @@ const CRMKanban = ({
       });
     } catch (error) {
       console.log(error);
+      // Rollback optimistic update
+      setOpportunities(previousOpportunities);
       toast({
         title: "Error",
-        description: "Something went wrong",
+        description: "Failed to update stage. Reverting changes.",
       });
     } finally {
       router.refresh();
-      setIsLoading(false);
     }
-    // If start is the same as end, we're in the same column
   };
 
   const onThumbsUp = async (opportunity: crm_Opportunities) => {

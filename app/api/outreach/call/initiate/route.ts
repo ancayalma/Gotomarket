@@ -20,7 +20,7 @@ import { systemLogger } from "@/lib/logger";
  * Body: { leadId: string; phone?: string; attributes?: Record<string,string> }
  */
 
-type Body = { leadId: string; phone?: string; attributes?: Record<string,string>; meeting?: { meetingId: string; attendeeId: string; joinToken: string } };
+type Body = { leadId: string; phone?: string; attributes?: Record<string, string>; meeting?: { meetingId: string; attendeeId: string; joinToken: string } };
 
 export async function POST(req: Request) {
   try {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         const MEETING_REGION = process.env.CHIME_APP_MEETING_REGION || REGION;
         const meetingsClient = new ChimeSDKMeetingsClient({ region: REGION });
         const meetingRes = await meetingsClient.send(new CreateMeetingCommand({
-          ClientRequestToken: `${Date.now()}_${Math.floor(Math.random()*1e9)}`,
+          ClientRequestToken: `${Date.now()}_${Math.floor(Math.random() * 1e9)}`,
           MediaRegion: MEETING_REGION,
           ExternalMeetingId: `web-${Date.now()}`,
         }));
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ join: agentJoin }),
-        }).catch(() => {});
+        }).catch(() => { });
       }
     } catch (e) {
       console.warn('[CALL_INITIATE][START_BOT_WARN]', (e as any)?.message || e);
@@ -103,36 +103,21 @@ export async function POST(req: Request) {
     // Resolve lead either by provided leadId or by phone when present
     let lead = body?.leadId
       ? await prismadb.crm_Leads.findUnique({
-          where: { id: body.leadId },
+        where: { id: body.leadId },
+        select: { id: true, phone: true, firstName: true, lastName: true, company: true },
+      })
+      : (phoneInput
+        ? await prismadb.crm_Leads.findFirst({
+          where: { phone: phoneInput },
           select: { id: true, phone: true, firstName: true, lastName: true, company: true },
         })
-      : (phoneInput
-          ? await prismadb.crm_Leads.findFirst({
-              where: { phone: phoneInput },
-              select: { id: true, phone: true, firstName: true, lastName: true, company: true },
-            })
-          : null);
+        : null);
 
     if (!lead) {
-      // If neither a valid leadId nor a matching phone was provided, require one of them
       if (!body?.leadId && !phoneInput) {
         return new NextResponse("leadId or phone required", { status: 400 });
       }
-      // No lead matched; if phone provided, create a placeholder lead so we can proceed
-      if (phoneInput) {
-        lead = await prismadb.crm_Leads.create({
-          data: {
-            phone: phoneInput,
-            firstName: (body?.attributes as any)?.firstName || "Unknown",
-            lastName: (body?.attributes as any)?.lastName || "",
-            company: (body?.attributes as any)?.leadCompany || "",
-          },
-          select: { id: true, phone: true, firstName: true, lastName: true, company: true },
-        });
-      } else {
-        // leadId provided but no record found
-        return new NextResponse("Lead not found", { status: 404 });
-      }
+      return new NextResponse("Lead not found", { status: 404 });
     }
 
     const dest = (body.phone || lead.phone || "").trim();
@@ -144,37 +129,37 @@ export async function POST(req: Request) {
       leadCompany: lead.company || "",
       agentUserId: session.user.id,
     }, body.attributes || {},
-    // Include meeting join info in Attributes as multiple key variants so SMA can read them regardless of casing/source
-    body?.meeting && body.meeting.meetingId && body.meeting.attendeeId && body.meeting.joinToken ? {
-      "X-Meeting-Id": body.meeting.meetingId,
-      "X-Attendee-Id": body.meeting.attendeeId,
-      "X-Join-Token": body.meeting.joinToken,
-      // Plain keys
-      "MeetingId": body.meeting.meetingId,
-      "AttendeeId": body.meeting.attendeeId,
-      "JoinToken": body.meeting.joinToken,
-      // Uppercase variants
-      "MEETING_ID": body.meeting.meetingId,
-      "ATTENDEE_ID": body.meeting.attendeeId,
-      "JOIN_TOKEN": body.meeting.joinToken,
-    } : {},
-    // Include meeting meta and env for diagnostics
-    (body as any)?.meta?.meetingArn ? {
-      "MeetingArn": (body as any).meta.meetingArn,
-      "MEETING_ARN": (body as any).meta.meetingArn,
-      "MeetingAccountId": (body as any).meta.accountId || null,
-    } : {},
-    {
-      "MeetingRegionEnv": process.env.CHIME_APP_MEETING_REGION || process.env.CHIME_REGION || process.env.AWS_REGION || "us-west-2",
-      "SMARegionEnv": process.env.CHIME_REGION || process.env.AWS_REGION || "us-west-2",
-    });
+      // Include meeting join info in Attributes as multiple key variants so SMA can read them regardless of casing/source
+      body?.meeting && body.meeting.meetingId && body.meeting.attendeeId && body.meeting.joinToken ? {
+        "X-Meeting-Id": body.meeting.meetingId,
+        "X-Attendee-Id": body.meeting.attendeeId,
+        "X-Join-Token": body.meeting.joinToken,
+        // Plain keys
+        "MeetingId": body.meeting.meetingId,
+        "AttendeeId": body.meeting.attendeeId,
+        "JoinToken": body.meeting.joinToken,
+        // Uppercase variants
+        "MEETING_ID": body.meeting.meetingId,
+        "ATTENDEE_ID": body.meeting.attendeeId,
+        "JOIN_TOKEN": body.meeting.joinToken,
+      } : {},
+      // Include meeting meta and env for diagnostics
+      (body as any)?.meta?.meetingArn ? {
+        "MeetingArn": (body as any).meta.meetingArn,
+        "MEETING_ARN": (body as any).meta.meetingArn,
+        "MeetingAccountId": (body as any).meta.accountId || null,
+      } : {},
+      {
+        "MeetingRegionEnv": process.env.CHIME_APP_MEETING_REGION || process.env.CHIME_REGION || process.env.AWS_REGION || "us-west-2",
+        "SMARegionEnv": process.env.CHIME_REGION || process.env.AWS_REGION || "us-west-2",
+      });
 
     // Ensure only string values in ArgumentsMap for SMA
     const attributes = Object.fromEntries(
       Object.entries(attributesRaw)
         .filter(([_, v]) => v !== null && v !== undefined)
         .map(([k, v]) => [k, typeof v === 'string' ? v : String(v)])
-    ) as Record<string,string>;
+    ) as Record<string, string>;
 
     let contactId: string;
     if (process.env.CHIME_SMA_APPLICATION_ID) {
@@ -186,10 +171,10 @@ export async function POST(req: Request) {
       });
       const sipHeaders = body?.meeting && body.meeting.meetingId && body.meeting.attendeeId && body.meeting.joinToken
         ? {
-            "x-meeting-id": body.meeting.meetingId,
-            "x-attendee-id": body.meeting.attendeeId,
-            "x-join-token": body.meeting.joinToken,
-          }
+          "x-meeting-id": body.meeting.meetingId,
+          "x-attendee-id": body.meeting.attendeeId,
+          "x-join-token": body.meeting.joinToken,
+        }
         : undefined;
       try {
         const { transactionId } = await createSipMediaApplicationCall({
@@ -237,7 +222,7 @@ export async function POST(req: Request) {
     if (agentJoin?.meeting && agentJoin?.attendee) {
       payload.meeting = agentJoin.meeting;
       payload.attendee = agentJoin.attendee;
-      try { payload.meta = (body as any)?.meta || null; } catch {}
+      try { payload.meta = (body as any)?.meta || null; } catch { }
     }
     return NextResponse.json(payload, { status: 200 });
   } catch (error: any) {

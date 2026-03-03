@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { format } from "date-fns";
 import { Sun, Moon, MessageSquare, Clock, Smartphone, User, Shield, ArrowLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 
 // Sample demo messages with rich HTML content
@@ -113,6 +114,20 @@ function DemoPreviewContent() {
     // Theme state
     const [isDark, setIsDark] = useState(false);
     const [selectedMessage, setSelectedMessage] = useState<typeof DEMO_MESSAGES[0] | null>(null);
+
+    const { toast } = useToast();
+
+    // Simulated action handler for demo buttons
+    const handleHtmlClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'A' && target.getAttribute('href') === '#') {
+            e.preventDefault();
+            toast({
+                title: "Action Complete",
+                description: "Simulation: Virtual operation succeeded.",
+            });
+        }
+    };
 
     // Initialize theme based on mode
     useEffect(() => {
@@ -431,6 +446,7 @@ function DemoPreviewContent() {
                         {/* Rich HTML content */}
                         <div
                             className="prose max-w-none"
+                            onClick={handleHtmlClick}
                             style={{
                                 color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.8)",
                                 fontSize: "16px",
