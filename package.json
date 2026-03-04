@@ -1,6 +1,6 @@
 {
   "name": "basaltcrm-app",
-  "version": "1.2.2s",
+  "version": "1.2.2t",
   "author": "Michael Milton (BasaltHQ)",
   "private": true,
   "scripts": {
@@ -12,7 +12,8 @@
     "permissions:check": "ts-node scripts/check-permissions.ts",
     "doc:agent": "npx ts-node scripts/generate-agent-docs.ts",
     "doc:crm": "npx ts-node scripts/generate-module-docs.ts",
-    "doc:sync": "npm run doc:agent && npm run doc:crm && npm run permissions:check"
+    "doc:quests": "npx ts-node scripts/seed-quests-doc.ts",
+    "doc:sync": "npm run doc:agent && npm run doc:crm && npm run doc:quests && npm run permissions:check"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.57",

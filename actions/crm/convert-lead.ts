@@ -154,6 +154,15 @@ export async function convertLeadToOpportunity(leadId: string): Promise<ActionRe
         revalidatePath("/crm/opportunities");
         revalidatePath(`/crm/leads/${leadId}`);
 
+        // Quest progress — fire-and-forget
+        if (lead.team_id) {
+            import("@/actions/quests/increment-progress").then(({ incrementQuestProgress }) => {
+                incrementQuestProgress({ userId: session.user.id, teamId: lead.team_id!, questType: "close_leads" }).catch(() => { });
+                incrementQuestProgress({ userId: session.user.id, teamId: lead.team_id!, questType: "convert_accounts" }).catch(() => { });
+                incrementQuestProgress({ userId: session.user.id, teamId: lead.team_id!, questType: "create_opportunities" }).catch(() => { });
+            }).catch(() => { });
+        }
+
         return {
             success: true,
             data: {

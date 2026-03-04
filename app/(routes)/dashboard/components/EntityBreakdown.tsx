@@ -38,6 +38,7 @@ import {
   List,
   Medal,
   Lock,
+  Sword,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DashboardCard from "../../crm/dashboard/_components/DashboardCard";
@@ -86,7 +87,8 @@ const iconMap: Record<string, LucideIcon> = {
   History,
   HeartPulse,
   GraduationCap,
-  List
+  List,
+  Sword
 };
 
 interface EntityItem {
@@ -561,7 +563,7 @@ export function EntityBreakdown({
                           />
                         </div>
                       ) : entity.modal === "none" ? (
-                        <div className={cn("block group h-full cursor-default", isEditMode && "pointer-events-none")}>
+                        <Link href={entity.href} className={cn("block group h-full", isEditMode && "pointer-events-none")}>
                           <DashboardCard
                             icon={Icon}
                             label={entity.name}
@@ -571,7 +573,7 @@ export function EntityBreakdown({
                             className={cn("transition-colors duration-300", colors.bg, colors.border, isEditMode && "opacity-50 grayscale-[0.5]")}
                             iconClassName={colors.icon}
                           />
-                        </div>
+                        </Link>
                       ) : (
                         <Link href={entity.href} className={cn("block group h-full", isEditMode && "pointer-events-none")}>
                           <DashboardCard

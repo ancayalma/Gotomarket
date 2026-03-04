@@ -3,6 +3,7 @@
 import React from "react";
 import { useSalesCommand } from "./SalesCommandProvider";
 import TeamAnalytics from "../../dashboard/_components/TeamAnalytics";
+import QuestLeaderboardWidget from "./QuestLeaderboardWidget";
 import { motion } from "framer-motion";
 
 export default function TeamCommandView() {
@@ -31,6 +32,9 @@ export default function TeamCommandView() {
                 onUserSelect={handleUserSelect}
                 isMember={isMember}
             />
+
+            {/* Quest Leaderboard — Own Category */}
+            <QuestLeaderboardWidget />
         </motion.div>
     );
 }

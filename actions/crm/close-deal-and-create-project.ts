@@ -94,6 +94,13 @@ export async function closeDealAndCreateProject(opportunityId: string): Promise<
         revalidatePath(`/crm/opportunities/${opportunityId}`);
         revalidatePath("/projects");
 
+        // Quest progress — fire-and-forget
+        if (opportunity.team_id) {
+            import("@/actions/quests/increment-progress").then(({ incrementQuestProgress }) => {
+                incrementQuestProgress({ userId: session.user.id, teamId: opportunity.team_id!, questType: "close_deals" }).catch(() => { });
+            }).catch(() => { });
+        }
+
         return {
             success: true,
             data: { projectId }

@@ -552,6 +552,38 @@ export const CRM_MODULES: CrmModule[] = [
             { id: 'guard-rules.view', name: 'View Rules', description: 'Access validation rules list' },
             { id: 'guard-rules.manage', name: 'Manage Rules', description: 'Create and edit rules' }
         ]
+    },
+    {
+        id: 'quests',
+        name: 'Quests',
+        route: '/crm/quests',
+        description: 'Team quest challenges and gamification',
+        children: [
+            { id: 'quests.view', name: 'View Quests', description: 'Access active quests' },
+            { id: 'quests.create', name: 'Create Quests', description: 'Create new team quests' },
+            { id: 'quests.manage', name: 'Manage Quests', description: 'Edit, activate, archive quests' },
+            { id: 'quests.leaderboard', name: 'Leaderboard', description: 'View quest rankings' }
+        ]
+    },
+    {
+        id: 'dialer',
+        name: 'Dialer',
+        route: '/crm/dialer',
+        description: 'Cloud phone system and call management',
+        children: [
+            { id: 'dialer.view', name: 'Dialer Panel', description: 'Access the dialer interface' },
+            { id: 'dialer.make_call', name: 'Make Calls', description: 'Place outbound calls' },
+        ]
+    },
+    {
+        id: 'insights',
+        name: 'Sales Intelligence',
+        route: '/crm/insights',
+        description: 'Advanced sales analytics and forecasting',
+        children: [
+            { id: 'insights.view', name: 'View Insights', description: 'Access analytics dashboards' },
+            { id: 'insights.forecasting', name: 'Forecasting', description: 'Weighted pipeline forecasting' },
+        ]
     }
 ];
 

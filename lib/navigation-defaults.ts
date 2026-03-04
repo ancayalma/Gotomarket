@@ -149,6 +149,14 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 iconName: "Zap",
                 href: "/crm/insights",
                 badge: "new"
+            },
+            {
+                id: "nav_quests",
+                type: "item",
+                label: "Quests",
+                iconName: "Sword",
+                href: "/crm/quests",
+                isPremium: true
             }
         ]
     },

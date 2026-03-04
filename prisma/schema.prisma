@@ -16,6 +16,24 @@ enum TeamType {
   DEPARTMENT // Sub-team/department (e.g., "Sales", "Marketing")
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// QUESTS — Team-scoped gamification challenges
+// ═══════════════════════════════════════════════════════════════════
+
+enum QuestStatus {
+  DRAFT      // Created but not yet visible to team
+  ACTIVE     // Live and trackable
+  COMPLETED  // Deadline passed or manually closed
+  ARCHIVED   // Retired / hidden
+}
+
+enum QuestDifficulty {
+  EASY
+  MEDIUM
+  HARD
+  LEGENDARY
+}
+
 model crm_Accounts {
   id                   String                @id @default(auto()) @map("_id") @db.ObjectId
   v                    Int                   @map("__v")
@@ -1000,6 +1018,14 @@ model Users {
   notifications              Notification[]
   quotes                     crm_Quotes[]
 
+  // Quest System
+  created_quests         Quest[]         @relation(name: "QuestCreator")
+  quest_progress         QuestProgress[] @relation(name: "UserQuestProgress")
+  quest_points_total     Int             @default(0)
+  quest_points_season    Int             @default(0)
+  quest_streak           Int             @default(0)
+  quest_badges           String[]
+
   dashboard_preference   DashboardPreference?
   navigation_preferences NavigationConfig[]
   ai_usage_logs          crm_AiUsageLog[]     @relation(name: "AiUsageUser")
@@ -1109,8 +1135,88 @@ model Team {
   system_activities  SystemActivity[]
   // Widget Configuration
   revenue_target     Int @default(10000)
+
+  // Quest System
+  quests             Quest[]         @relation(name: "TeamQuests")
 }
 
+
+model Quest {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  icon        String          @default("Sword")
+  color       String          @default("amber")
+
+  // Quest Configuration
+  quest_type      String      // e.g. "close_deals", "send_outreach", "custom_manual"
+  target_count    Int         @default(1)
+  target_field    String?
+  difficulty      QuestDifficulty @default(MEDIUM)
+
+  // Rewards
+  qp_reward       Int         @default(100)
+  xp_reward       Int         @default(10)
+  badge_name      String?
+  badge_icon      String?
+
+  // Sprint Duration
+  duration_preset  String?     // WEEKEND_SPRINT, WEEKLY_SPRINT, BIWEEKLY, MONTHLY, QUARTERLY, STRONG_START, STRONG_FINISH, CUSTOM, OPEN_ENDED
+  status           QuestStatus @default(DRAFT)
+  starts_at        DateTime?   @db.Date
+  ends_at          DateTime?   @db.Date
+  is_recurring     Boolean     @default(false)
+  recurrence_preset String?
+
+  // Ownership
+  created_by       String      @db.ObjectId
+  creator          Users       @relation(name: "QuestCreator", fields: [created_by], references: [id])
+  team_id          String      @db.ObjectId
+  assigned_team    Team        @relation(name: "TeamQuests", fields: [team_id], references: [id], onDelete: Cascade)
+
+  // Participation
+  is_team_wide     Boolean     @default(true)
+  assigned_users   String[]    @db.ObjectId
+
+  // Metadata
+  created_at       DateTime    @default(now()) @db.Date
+  updated_at       DateTime    @updatedAt @db.Date
+
+  // Relations
+  progress         QuestProgress[]
+
+  @@index([team_id])
+  @@index([status])
+  @@index([team_id, status])
+}
+
+model QuestProgress {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+
+  quest_id        String    @db.ObjectId
+  quest           Quest     @relation(fields: [quest_id], references: [id], onDelete: Cascade)
+
+  user_id         String    @db.ObjectId
+  user            Users     @relation(name: "UserQuestProgress", fields: [user_id], references: [id], onDelete: Cascade)
+
+  // Tracking
+  current_count   Int       @default(0)
+  is_completed    Boolean   @default(false)
+  completed_at    DateTime? @db.Date
+
+  // Rewards
+  qp_awarded      Int       @default(0)
+  xp_awarded      Boolean   @default(false)
+  bonuses_applied Json?
+
+  // Metadata
+  started_at      DateTime  @default(now()) @db.Date
+  updated_at      DateTime  @updatedAt @db.Date
+
+  @@unique([quest_id, user_id])
+  @@index([user_id])
+  @@index([quest_id])
+}
 
 model Authenticator {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId

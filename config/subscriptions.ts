@@ -10,6 +10,7 @@ export const SUBSCRIPTION_PLANS = {
             credits: 500, // Monthly AI Credits (Text Gen)
             leadgen_credits: 100, // Aligned with LEADGEN_WIZARD.md
             emails_per_month: 1000, // Bumped up for FREE
+            max_active_quests: 0, // Quests locked on FREE
         }
     },
     INDIVIDUAL_BASIC: {
@@ -20,7 +21,7 @@ export const SUBSCRIPTION_PLANS = {
             "crm", "projects", "dashboard", "contacts", "accounts", "opportunities", "leads",
             "tasks", "quotes", "products", "contracts", "university",
             "documents", "invoice", "reports", "ai_lab", "emails",
-            "personalized_signature", "custom_themes"
+            "personalized_signature", "custom_themes", "quests"
         ],
         limits: {
             max_users: 2,
@@ -28,6 +29,7 @@ export const SUBSCRIPTION_PLANS = {
             credits: 2000,
             leadgen_credits: 1000, // Aligned with LEADGEN_WIZARD.md
             emails_per_month: 5000,
+            max_active_quests: 5,
         }
     },
     INDIVIDUAL_PRO: {
@@ -41,6 +43,7 @@ export const SUBSCRIPTION_PLANS = {
             credits: 10000,
             leadgen_credits: 5000, // Aligned with LEADGEN_WIZARD.md
             emails_per_month: 25000,
+            max_active_quests: 25,
         }
     },
     ENTERPRISE: {
@@ -54,6 +57,7 @@ export const SUBSCRIPTION_PLANS = {
             credits: -1,
             leadgen_credits: -1,
             emails_per_month: -1,
+            max_active_quests: -1,
         }
     },
     EXEMPT: {
@@ -67,6 +71,7 @@ export const SUBSCRIPTION_PLANS = {
             credits: -1,
             leadgen_credits: -1,
             emails_per_month: -1,
+            max_active_quests: -1,
         }
     }
 };

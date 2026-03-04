@@ -22,6 +22,7 @@ import { getLeadPoolsStats } from "@/actions/dashboard/get-lead-pools-stats";
 import { getLeadGenStats } from "@/actions/dashboard/get-lead-gen-stats";
 import { getIntelligenceStats } from "@/actions/dashboard/get-intelligence-stats";
 import { getAIInsights } from "@/actions/dashboard/get-ai-insights";
+import { getActiveQuestCount } from "@/actions/quests/get-active-quest-count";
 
 import AdminDashboard from "./views/AdminDashboard";
 import MemberDashboard from "./views/MemberDashboard";
@@ -106,6 +107,7 @@ const DashboardRoleManager = async () => {
             intelligenceStats,
             aiInsights,
             customWidgets,
+            activeQuestCount,
         ] = await Promise.all([
             getUnifiedSalesData(),
             prismadb.users.count({ where: { team_id: teamId || "no-team" } }),
@@ -143,6 +145,7 @@ const DashboardRoleManager = async () => {
                     return [];
                 }
             })(),
+            getActiveQuestCount(),
         ]);
 
         const crmModule = modules.find((module: any) => module.name === "crm" || module.name === "CRM"); // Case handling
@@ -210,7 +213,7 @@ const DashboardRoleManager = async () => {
                 { id: "entity:audit_logs", name: "Audit Logs", value: 0, href: "/settings/audit-logs", iconName: "History", color: "slate", tooltip: "Complete system activity trail. Track user actions, security events, and record changes for SOC2 compliance." },
                 { id: "entity:hr_hub", name: "Human Resources", value: activeUsersCount, href: "/employees", iconName: "HeartPulse", color: "rose", tooltip: "Manage staff, track performance KPIs, and oversee organizational growth." },
                 { id: "entity:university", name: "University", value: masteryLevel, href: "/crm/university", iconName: "GraduationCap", color: "indigo", modal: "university_rank", tooltip: `Mastery Level ${masteryLevel} / 25 | Prestige Grade ${prestigeGrade}. Mission Clearance Rank: ${userLevel}. Click to view your Mission Profile.` },
-                { id: "entity:widgets", name: "Widgets", value: (defaultWidgets?.filter(w => !w.id.includes("divider")).length || 0) + (customWidgets?.length || 0), href: "/crm/dashboard", iconName: "LayoutGrid", color: "emerald", modal: "none", tooltip: `Manage your arsenal of ${(defaultWidgets?.filter(w => !w.id.includes("divider")).length || 0) + (customWidgets?.length || 0)} available widgets.` }
+                { id: "entity:quests", name: "Quests", value: activeQuestCount, href: "/crm/quests", iconName: "Sword", color: "amber", modal: "none", tooltip: activeQuestCount > 0 ? `${activeQuestCount} active quests available. Complete them to earn Quest Points.` : `No active quests right now. Check back soon!` }
             );
         }
 

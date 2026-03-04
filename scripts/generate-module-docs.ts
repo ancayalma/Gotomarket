@@ -28,8 +28,7 @@ function scanModules() {
 
     content += "\n## System Requirements\n- Every module listed here is gated via `lib/role-permissions.ts`.\n";
     content += "- New modules must be added to the permission matrix to be visible to users.\n";
-
-    content += "\n## System Requirements\n- Every module listed here should have a corresponding policy in `lib/role-permissions.ts`.\n";
+    content += "- Every module listed here should have a corresponding policy in `lib/role-permissions.ts`.\n";
 
     fs.writeFileSync(FEATURES_FILE, content);
     console.log('📝 Updated CRM_FEATURES_OVERVIEW.md');
