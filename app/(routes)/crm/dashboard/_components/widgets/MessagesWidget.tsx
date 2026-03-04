@@ -88,7 +88,7 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
                 <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 px-2 text-[10px] font-bold border-white/10 bg-white/5 hover:bg-white/10 text-primary"
+                    className="h-7 px-2 text-[10px] font-bold border-border bg-muted/50 hover:bg-muted text-primary"
                 >
                     <SendHorizontal size={12} className="mr-1" />
                     INTEL
@@ -119,14 +119,14 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
                     filteredMessages.map((item) => (
                         <div
                             key={item.id}
-                            className="group flex items-start justify-between gap-3 p-3 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.04] transition-colors duration-300 relative overflow-hidden"
+                            className="group flex items-start justify-between gap-3 p-3 rounded-xl border border-border/50 bg-muted/10 hover:border-border hover:bg-muted/20 transition-colors duration-300 relative overflow-hidden"
                         >
                             <div className="space-y-1.5 overflow-hidden flex-1 relative z-10">
                                 <div className="flex items-center gap-2">
                                     <div className="relative">
-                                        <Avatar className="h-7 w-7 border border-white/10 group-hover:border-primary/50 transition-colors duration-300">
+                                        <Avatar className="h-7 w-7 border border-border group-hover:border-primary/50 transition-colors duration-300">
                                             <AvatarImage src={item.sender.avatar || undefined} className="object-cover" />
-                                            <AvatarFallback className="text-[9px] bg-white/5 text-muted-foreground uppercase font-bold">
+                                            <AvatarFallback className="text-[9px] bg-muted/50 text-muted-foreground uppercase font-bold">
                                                 {item.sender.name.substring(0, 2)}
                                             </AvatarFallback>
                                         </Avatar>
@@ -136,7 +136,7 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
                                     </div>
 
                                     <div className="flex flex-col min-w-0">
-                                        <span className="text-sm font-bold text-white/90 truncate group-hover:text-primary transition-colors">
+                                        <span className="text-sm font-bold text-foreground/90 truncate group-hover:text-primary transition-colors">
                                             {item.sender.name}
                                         </span>
                                         <span className="text-[9px] text-muted-foreground font-medium opacity-50">
@@ -146,13 +146,13 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
 
                                     <div className="ml-auto">
                                         {item.type === 'form' && (
-                                            <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-white/10 bg-white/5 text-muted-foreground font-black uppercase tracking-tighter">Form Entry</Badge>
+                                            <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-border bg-muted/50 text-muted-foreground font-black uppercase tracking-tighter">Form Entry</Badge>
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="space-y-0.5 px-0.5" onClick={() => handleMarkRead(item.id, item.type)}>
-                                    <div className="font-bold text-[11px] truncate flex items-center gap-1.5 text-white/80 group-hover:text-white transition-colors cursor-pointer">
+                                    <div className="font-bold text-[11px] truncate flex items-center gap-1.5 text-foreground/80 group-hover:text-foreground transition-colors cursor-pointer">
                                         {item.title}
                                     </div>
                                     {item.body && (
@@ -171,7 +171,7 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
                                         e.stopPropagation();
                                         handleMarkRead(item.id, item.type);
                                     }}
-                                    className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-emerald-500/20 hover:text-emerald-400 transition-[color,background-color,border-color,opacity] duration-300"
+                                    className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-muted/50 hover:bg-emerald-500/20 hover:text-emerald-400 transition-[color,background-color,border-color,opacity] duration-300"
                                 >
                                     <Check className="h-4 w-4" />
                                 </Button>
@@ -179,7 +179,7 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
                                     <Button
                                         size="icon"
                                         variant="ghost"
-                                        className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-white/10 transition-[color,background-color,border-color,opacity] duration-300"
+                                        className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-muted/50 hover:bg-muted transition-[color,background-color,border-color,opacity] duration-300"
                                     >
                                         <ArrowRight className="h-4 w-4" />
                                     </Button>

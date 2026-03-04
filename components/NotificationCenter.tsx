@@ -103,7 +103,7 @@ export default function NotificationCenter() {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 text-[10px] font-bold hover:bg-white/5"
+                                    className="h-7 text-[10px] font-bold hover:bg-muted"
                                     onClick={handleMarkAllRead}
                                 >
                                     Mark all read
@@ -112,7 +112,7 @@ export default function NotificationCenter() {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 text-[10px] font-bold text-red-400 hover:text-red-300 hover:bg-white/5"
+                                className="h-7 text-[10px] font-bold text-red-400 hover:text-red-400/80 hover:bg-muted"
                                 onClick={async () => {
                                     if (confirm("Clear all notifications?")) {
                                         await clearAllNotifications();

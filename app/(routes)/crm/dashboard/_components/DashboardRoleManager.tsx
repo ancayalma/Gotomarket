@@ -22,6 +22,7 @@ import { getLeadPoolsStats } from "@/actions/dashboard/get-lead-pools-stats";
 import { getLeadGenStats } from "@/actions/dashboard/get-lead-gen-stats";
 import { getIntelligenceStats } from "@/actions/dashboard/get-intelligence-stats";
 import { getAIInsights } from "@/actions/dashboard/get-ai-insights";
+import { getEngagementPulse } from "@/actions/dashboard/get-engagement-pulse";
 import { getActiveQuestCount } from "@/actions/quests/get-active-quest-count";
 
 import AdminDashboard from "./views/AdminDashboard";
@@ -108,6 +109,7 @@ const DashboardRoleManager = async () => {
             aiInsights,
             customWidgets,
             activeQuestCount,
+            engagementPulse,
         ] = await Promise.all([
             getUnifiedSalesData(),
             prismadb.users.count({ where: { team_id: teamId || "no-team" } }),
@@ -146,6 +148,7 @@ const DashboardRoleManager = async () => {
                 }
             })(),
             getActiveQuestCount(),
+            getEngagementPulse(168),
         ]);
 
         const crmModule = modules.find((module: any) => module.name === "crm" || module.name === "CRM"); // Case handling
@@ -251,6 +254,7 @@ const DashboardRoleManager = async () => {
             leadGenStats,
             intelligenceStats,
             aiInsights: aiInsights as any[],
+            engagementPulse: engagementPulse as any[],
             myPipeline: (
                 <Suspense key="personal-pipeline-suspense" fallback={<LoadingBox />}>
                     <MyPipelineSection userId={userId} />

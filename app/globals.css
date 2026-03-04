@@ -672,7 +672,7 @@
     --microtext-font: "Geist Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 
-  /* Supernova Whiteout - Studio Light / High-Viz Pink */
+  /* Pink Flamingo - Studio Light / High-Viz Pink */
   [data-theme='super-nova'] {
     --background: 220 20% 98%;
     --foreground: 220 40% 10%;
@@ -924,7 +924,7 @@
   filter: brightness(0) saturate(100%) invert(50%) sepia(100%) saturate(2000%) hue-rotate(5deg) brightness(110%);
 }
 
-/* Supernova Whiteout - Deep Pink / Dark Logo on Light */
+/* Pink Flamingo - Deep Pink / Dark Logo on Light */
 [data-theme='super-nova'] .themed-logo {
   filter: brightness(0) saturate(100%) invert(30%) sepia(100%) saturate(2000%) hue-rotate(300deg) brightness(90%);
 }

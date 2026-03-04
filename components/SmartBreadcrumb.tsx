@@ -113,7 +113,7 @@ export function SmartBreadcrumb({ className }: { className?: string }) {
                         <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
 
                         {crumb.isLast ? (
-                            <span className="font-semibold text-foreground px-2 py-0.5 rounded-md bg-muted/40 text-xs uppercase tracking-wide">
+                            <span className="font-semibold text-foreground px-2 py-0.5 rounded-md bg-muted/80 text-xs uppercase tracking-wide">
                                 {crumb.label}
                             </span>
                         ) : (

@@ -13,28 +13,28 @@ import QuestProgressBar from "./QuestProgressBar";
 const DIFFICULTY_CONFIG: Record<string, { label: string; color: string; gradient: string; ring: string; icon: any }> = {
     EASY: {
         label: "Easy",
-        color: "text-emerald-400",
+        color: "text-emerald-600 dark:text-emerald-400",
         gradient: "from-emerald-500/15 to-green-500/10",
         ring: "ring-emerald-500/20",
         icon: Target,
     },
     MEDIUM: {
         label: "Medium",
-        color: "text-amber-400",
+        color: "text-amber-600 dark:text-amber-400",
         gradient: "from-amber-500/15 to-yellow-500/10",
         ring: "ring-amber-500/20",
         icon: Sword,
     },
     HARD: {
         label: "Hard",
-        color: "text-rose-400",
+        color: "text-rose-600 dark:text-rose-400",
         gradient: "from-rose-500/15 to-red-500/10",
         ring: "ring-rose-500/20",
         icon: Flame,
     },
     LEGENDARY: {
         label: "Legendary",
-        color: "text-violet-300",
+        color: "text-violet-600 dark:text-violet-300",
         gradient: "from-violet-500/20 to-purple-500/15",
         ring: "ring-violet-500/30",
         icon: Crown,
@@ -101,8 +101,8 @@ export default function QuestCard({ quest, isAdmin, onStatusChange }: QuestCardP
     return (
         <div
             className={cn(
-                "group relative rounded-2xl border border-white/[0.05] bg-white/[0.02] backdrop-blur-sm p-5 transition-all duration-500",
-                "hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] hover:scale-[1.02] hover:bg-white/[0.05] hover:border-white/10",
+                "group relative rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm p-5 transition-all duration-500",
+                "hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:scale-[1.02] hover:bg-card hover:border-border",
                 isCompleted && "opacity-60 grayscale-[0.2]",
                 quest.difficulty === "LEGENDARY" && "ring-1 ring-violet-500/30"
             )}
@@ -112,10 +112,10 @@ export default function QuestCard({ quest, isAdmin, onStatusChange }: QuestCardP
                 <span className={cn(
                     "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] border backdrop-blur-md",
                     config.color,
-                    quest.difficulty === "EASY" && "border-emerald-500/20 bg-emerald-500/5",
-                    quest.difficulty === "MEDIUM" && "border-amber-500/20 bg-amber-500/5",
-                    quest.difficulty === "HARD" && "border-rose-500/20 bg-rose-500/5",
-                    quest.difficulty === "LEGENDARY" && "border-violet-500/20 bg-violet-500/5"
+                    quest.difficulty === "EASY" && "border-emerald-500/20 bg-emerald-500/10 dark:bg-emerald-500/5",
+                    quest.difficulty === "MEDIUM" && "border-amber-500/20 bg-amber-500/10 dark:bg-amber-500/5",
+                    quest.difficulty === "HARD" && "border-rose-500/20 bg-rose-500/10 dark:bg-rose-500/5",
+                    quest.difficulty === "LEGENDARY" && "border-violet-500/20 bg-violet-500/10 dark:bg-violet-500/5"
                 )}>
                     <DifficultyIcon className="w-3 h-3 stroke-[3px]" />
                     {config.label}
@@ -129,9 +129,9 @@ export default function QuestCard({ quest, isAdmin, onStatusChange }: QuestCardP
                         className={cn(
                             "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border transition-all duration-300",
                             quest.status === "ACTIVE" && "border-emerald-500/20 text-emerald-400/70 bg-emerald-500/5 hover:bg-emerald-500/10 hover:text-emerald-400",
-                            quest.status === "DRAFT" && "border-white/10 text-white/40 bg-white/5 hover:bg-white/10",
+                            quest.status === "DRAFT" && "border-border text-foreground/40 bg-muted/20 hover:bg-muted/40",
                             quest.status === "COMPLETED" && "border-blue-500/20 text-blue-400/70 bg-blue-500/5",
-                            quest.status === "ARCHIVED" && "border-white/10 text-white/20 bg-white/5",
+                            quest.status === "ARCHIVED" && "border-border text-foreground/20 bg-muted/10",
                             isToggling && "opacity-50 cursor-wait"
                         )}
                     >
@@ -165,7 +165,7 @@ export default function QuestCard({ quest, isAdmin, onStatusChange }: QuestCardP
             </div>
 
             {/* Footer — QP + Duration + Team Progress */}
-            <div className="grid grid-cols-2 gap-2 pt-4 border-t border-white/[0.03]">
+            <div className="grid grid-cols-2 gap-2 pt-4 border-t border-border">
                 <div className="flex flex-col gap-0.5">
                     <span className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground/30">Reward Pool</span>
                     <div className={cn("flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest", config.color)}>

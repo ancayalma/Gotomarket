@@ -37,7 +37,7 @@ export const RevenuePacingWidget = ({
                 rightAction={
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="p-1.5 rounded-md hover:bg-white/10 text-muted-foreground hover:text-white transition-colors"
+                        className="p-1.5 rounded-md hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-colors"
                         title="Adjust Target"
                     >
                         <Settings2 size={14} />
@@ -48,7 +48,7 @@ export const RevenuePacingWidget = ({
                     <div className="flex items-end justify-between">
                         <div>
                             <p className="text-sm font-medium text-muted-foreground pb-1">Current Period</p>
-                            <div className="flex items-center gap-1 text-2xl font-bold text-white tracking-tight">
+                            <div className="flex items-center gap-1 text-2xl font-bold text-foreground tracking-tight">
                                 <span className="text-muted-foreground font-normal text-lg">$</span>
                                 {(currentRevenue).toLocaleString()}
                             </div>
@@ -60,17 +60,17 @@ export const RevenuePacingWidget = ({
                             <span>Pacing vs Target</span>
                             <span>{Math.round(progress)}% of ${targetRevenue.toLocaleString()}</span>
                         </div>
-                        <Progress value={progress} className="h-2 bg-white/5" indicatorClassName="bg-gradient-to-r from-emerald-500 to-teal-400" />
+                        <Progress value={progress} className="h-2 bg-muted/40" indicatorClassName="bg-gradient-to-r from-emerald-500 to-teal-400" />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4 mt-2">
+                    <div className="grid grid-cols-2 gap-4 border-t border-border/50 pt-4 mt-2">
                         <div>
                             <p className="text-xs text-muted-foreground mb-1">Projected EOM</p>
-                            <p className="text-sm font-medium text-white">${Math.round(projectedEOM).toLocaleString()}</p>
+                            <p className="text-sm font-medium text-foreground">${Math.round(projectedEOM).toLocaleString()}</p>
                         </div>
                         <div className="text-right">
                             <p className="text-xs text-muted-foreground mb-1">Days Remaining</p>
-                            <p className="text-sm font-medium text-white">{daysLeft} Days</p>
+                            <p className="text-sm font-medium text-foreground">{daysLeft} Days</p>
                         </div>
                     </div>
                 </div>

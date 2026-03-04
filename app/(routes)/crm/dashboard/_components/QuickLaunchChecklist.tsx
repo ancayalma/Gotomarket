@@ -203,7 +203,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16, scale: 0.97 }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
-                className="relative w-full rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-800/40 backdrop-blur-xl shadow-2xl shadow-black/30 overflow-hidden"
+                className="relative w-full rounded-2xl border border-border bg-card/80 backdrop-blur-xl shadow-2xl shadow-foreground/5 overflow-hidden"
             >
                 {/* Decorative top gradient line */}
                 <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-cyan-500 via-violet-500 to-pink-500" />
@@ -223,7 +223,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                     fill="none"
                                     stroke="currentColor"
                                     strokeWidth="3"
-                                    className="text-white/10"
+                                    className="text-muted-foreground/10"
                                 />
                                 <circle
                                     cx="24" cy="24" r="20"
@@ -242,7 +242,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                     </linearGradient>
                                 </defs>
                             </svg>
-                            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
+                            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-foreground">
                                 {completedCount}/{steps.length}
                             </span>
                         </div>
@@ -254,7 +254,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                     {allDone ? "You're all set! 🎉" : "Quick Launch — Get Started"}
                                 </h2>
                             </div>
-                            <p className="text-xs text-white/40 mt-0.5 truncate">
+                            <p className="text-xs text-muted-foreground/60 mt-0.5 truncate">
                                 {allDone
                                     ? "Your CRM is ready. This checklist will close shortly."
                                     : `${steps.length - completedCount} step${steps.length - completedCount !== 1 ? "s" : ""} remaining to activate your first outreach campaign.`}
@@ -265,7 +265,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                     <div className="flex items-center gap-1 flex-shrink-0">
                         <button
                             onClick={() => setCollapsed((c) => !c)}
-                            className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors"
+                            className="p-1.5 rounded-lg text-muted-foreground/40 hover:text-foreground hover:bg-muted transition-colors"
                             title={collapsed ? "Expand" : "Collapse"}
                         >
                             {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
@@ -273,7 +273,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                         <button
                             onClick={handleSessionDismiss}
                             disabled={isDismissing}
-                            className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors disabled:opacity-50"
+                            className="p-1.5 rounded-lg text-muted-foreground/40 hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
                             title="Hide for now"
                         >
                             <X className="w-4 h-4" />
@@ -283,7 +283,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
 
                 {/* Progress bar */}
                 <div className="px-6 pb-2">
-                    <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
                         <motion.div
                             className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-violet-500"
                             initial={{ width: 0 }}
@@ -309,11 +309,11 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                 {/* Bonus Credits Reward Banner */}
                                 <div className="flex items-center gap-3 p-4 rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-transparent to-cyan-500/8 animate-in fade-in slide-in-from-bottom-3 duration-500">
                                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/25">
-                                        <Sparkles className="w-5 h-5 text-white" />
+                                        <Sparkles className="w-5 h-5 text-primary-foreground" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-bold text-emerald-400">+25 Bonus Credits Earned!</p>
-                                        <p className="text-[10px] text-white/45 leading-relaxed">
+                                        <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
                                             Completing Quick Launch unlocked bonus LeadGen credits for your team.
                                         </p>
                                     </div>
@@ -322,17 +322,17 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                 {/* Mastery Paths CTA */}
                                 <div className="flex items-center gap-4 p-5 rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 via-transparent to-pink-500/8">
                                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-500/25">
-                                        <Medal className="w-6 h-6 text-white" />
+                                        <Medal className="w-6 h-6 text-primary-foreground" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-white/90">Ready to level up?</p>
-                                        <p className="text-xs text-white/45 mt-0.5 leading-relaxed">
+                                        <p className="text-sm font-bold text-foreground">Ready to level up?</p>
+                                        <p className="text-xs text-muted-foreground/70 mt-0.5 leading-relaxed">
                                             You've completed the Quick Launch. Advance your skills with Mastery Paths in CRM University.
                                         </p>
                                     </div>
                                     <button
                                         onClick={() => { router.push("/crm/university"); handleForeverDismiss(); }}
-                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold hover:opacity-90 transition-opacity flex-shrink-0 shadow-lg shadow-violet-500/20"
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-pink-500 text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity flex-shrink-0 shadow-lg shadow-violet-500/20"
                                     >
                                         <GraduationCap className="w-3.5 h-3.5" />
                                         Mastery Paths
@@ -380,8 +380,8 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                                         step.done
                                                             ? "bg-emerald-500/20 text-emerald-400"
                                                             : isNext
-                                                                ? "bg-violet-500/20 text-violet-400"
-                                                                : "bg-white/8 text-white/40"
+                                                                ? "bg-violet-500/20 text-violet-500"
+                                                                : "bg-muted text-muted-foreground/40"
                                                     ].join(" ")}>
                                                         {index + 1}
                                                     </div>
@@ -393,7 +393,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                                 ) : isNext ? (
                                                     <ChevronRight className="w-4 h-4 text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                                                 ) : (
-                                                    <Circle className="w-4 h-4 text-white/15 flex-shrink-0" />
+                                                    <Circle className="w-4 h-4 text-muted-foreground/20 flex-shrink-0" />
                                                 )}
                                             </div>
 
@@ -401,11 +401,11 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
                                             <div className="space-y-0.5">
                                                 <p className={[
                                                     "text-xs font-semibold leading-tight",
-                                                    step.done ? "text-emerald-400/80 line-through" : "text-white/80",
+                                                    step.done ? "text-emerald-500/60 dark:text-emerald-400/80 line-through" : "text-foreground",
                                                 ].join(" ")}>
                                                     {step.label}
                                                 </p>
-                                                <p className="text-[10px] text-white/35 leading-snug">
+                                                <p className="text-[10px] text-muted-foreground/60 leading-snug">
                                                     {step.description}
                                                 </p>
                                             </div>
@@ -423,13 +423,13 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
 
                             {/* Footer hint */}
                             <div className="px-6 pb-4 flex items-center justify-between">
-                                <p className="text-[10px] text-white/25">
+                                <p className="text-[10px] text-muted-foreground/40">
                                     Click any step to navigate there. The checklist disappears once everything is set up.
                                 </p>
                                 <button
                                     onClick={handleForeverDismiss}
                                     disabled={isDismissing}
-                                    className="text-[10px] text-white/25 hover:text-white/50 transition-colors capitalize underline underline-offset-2 disabled:opacity-50 flex items-center gap-1"
+                                    className="text-[10px] text-muted-foreground/40 hover:text-foreground transition-colors capitalize underline underline-offset-2 disabled:opacity-50 flex items-center gap-1"
                                 >
                                     {isDismissing && <Loader2 className="w-2.5 h-2.5 animate-spin" />}
                                     DISMISS FOREVER

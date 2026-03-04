@@ -80,8 +80,8 @@ export default function JumpBackIn({ align = "left", className, userId }: JumpBa
         <div className={cn("animate-in fade-in slide-in-from-top-2 duration-500 mb-0", className)}>
             {/* "Sexy" Breadcrumb Header - Compact */}
             <div className={cn("flex items-center gap-1.5 mb-1.5 px-1", alignmentClass)}>
-                <Clock className="w-3 h-3 text-white/40" />
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-white/40">Jump Back In</h3>
+                <Clock className="w-3 h-3 text-muted-foreground/60" />
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Jump Back In</h3>
             </div>
 
             <div className={cn("flex flex-wrap items-center gap-2", alignmentClass)}>
@@ -89,17 +89,17 @@ export default function JumpBackIn({ align = "left", className, userId }: JumpBa
                     const color = getBreadcrumbColor(item.label);
 
                     // Tailwind dynamic classes based on color
-                    let colorClasses = "bg-emerald-500/10 text-emerald-100 border-emerald-500/20 group-hover:border-emerald-500/50 group-hover:bg-emerald-500/20";
-                    if (color === 'cyan') colorClasses = "bg-cyan-500/10 text-cyan-100 border-cyan-500/20 group-hover:border-cyan-500/50 group-hover:bg-cyan-500/20";
-                    if (color === 'orange') colorClasses = "bg-orange-500/10 text-orange-100 border-orange-500/20 group-hover:border-orange-500/50 group-hover:bg-orange-500/20";
-                    if (color === 'violet') colorClasses = "bg-violet-500/10 text-violet-100 border-violet-500/20 group-hover:border-violet-500/50 group-hover:bg-violet-500/20";
-                    if (color === 'amber') colorClasses = "bg-amber-500/10 text-amber-100 border-amber-500/20 group-hover:border-amber-500/50 group-hover:bg-amber-500/20";
-                    if (color === 'indigo') colorClasses = "bg-indigo-500/10 text-indigo-100 border-indigo-500/20 group-hover:border-indigo-500/50 group-hover:bg-indigo-500/20";
+                    let colorClasses = "bg-emerald-500/10 text-foreground/80 border-emerald-500/20 group-hover:border-emerald-500/50 group-hover:bg-emerald-500/20";
+                    if (color === 'cyan') colorClasses = "bg-cyan-500/10 text-foreground/80 border-cyan-500/20 group-hover:border-cyan-500/50 group-hover:bg-cyan-500/20";
+                    if (color === 'orange') colorClasses = "bg-orange-500/10 text-foreground/80 border-orange-500/20 group-hover:border-orange-500/50 group-hover:bg-orange-500/20";
+                    if (color === 'violet') colorClasses = "bg-violet-500/10 text-foreground/80 border-violet-500/20 group-hover:border-violet-500/50 group-hover:bg-violet-500/20";
+                    if (color === 'amber') colorClasses = "bg-amber-500/10 text-foreground/80 border-amber-500/20 group-hover:border-amber-500/50 group-hover:bg-amber-500/20";
+                    if (color === 'indigo') colorClasses = "bg-indigo-500/10 text-foreground/80 border-indigo-500/20 group-hover:border-indigo-500/50 group-hover:bg-indigo-500/20";
 
                     return (
                         <React.Fragment key={`${item.href}-${index}`}>
                             {index > 0 && (
-                                <span className="text-white/10 rotate-12 select-none">/</span>
+                                <span className="text-muted-foreground/20 rotate-12 select-none">/</span>
                             )}
                             <Link
                                 href={item.href}

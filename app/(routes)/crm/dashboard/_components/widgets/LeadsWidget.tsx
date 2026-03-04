@@ -50,7 +50,7 @@ const LeadInterestIndicator = ({ createdAt }: { createdAt: Date | null }) => {
     }
 
     return (
-        <div className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded-full ${bg} border border-white/5`}>
+        <div className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded-full ${bg} border border-border`}>
             <div className={`h-1 w-1 rounded-full ${color.replace('text-', 'bg-')} ${glow} ${label === 'Hot' ? 'animate-pulse' : ''}`} />
             <span className={`text-[8px] font-black uppercase tracking-tighter ${color}`}>
                 {label}
@@ -83,7 +83,7 @@ export const LeadsWidget = ({ leads: initialLeads }: LeadsWidgetProps) => {
                 <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 px-2 text-[10px] font-bold border-white/10 bg-white/5 hover:bg-white/10 text-primary"
+                    className="h-7 px-2 text-[10px] font-bold border-border bg-muted/50 hover:bg-muted text-primary"
                     onClick={() => setIsModalOpen(true)}
                 >
                     <Plus size={12} className="mr-1" />
@@ -131,11 +131,11 @@ export const LeadsWidget = ({ leads: initialLeads }: LeadsWidgetProps) => {
                     filteredLeads.map((lead) => (
                         <div
                             key={lead.id}
-                            className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.04] transition-colors duration-300 relative overflow-hidden"
+                            className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-border/50 bg-muted/10 hover:border-border hover:bg-muted/20 transition-colors duration-300 relative overflow-hidden"
                         >
                             <div className="space-y-1 overflow-hidden flex-1 relative z-10">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold text-white/90 truncate group-hover:text-primary transition-colors">
+                                    <span className="text-sm font-bold text-foreground/90 truncate group-hover:text-primary transition-colors">
                                         {lead.firstName || lead.lastName
                                             ? `${lead.firstName || ""} ${lead.lastName || ""}`
                                             : lead.company || "Unnamed Lead"}
@@ -164,7 +164,7 @@ export const LeadsWidget = ({ leads: initialLeads }: LeadsWidgetProps) => {
                                     <Button
                                         size="icon"
                                         variant="ghost"
-                                        className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-emerald-500/20 hover:text-emerald-400 transition-[color,background-color,border-color,opacity] duration-300"
+                                        className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-muted/50 hover:bg-emerald-500/20 hover:text-emerald-400 transition-[color,background-color,border-color,opacity] duration-300"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setSelectedLead(lead);
@@ -179,7 +179,7 @@ export const LeadsWidget = ({ leads: initialLeads }: LeadsWidgetProps) => {
                                         <Button
                                             size="icon"
                                             variant="ghost"
-                                            className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-blue-500/20 hover:text-blue-400 transition-[color,background-color,border-color,opacity] duration-300"
+                                            className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-muted/50 hover:bg-blue-500/20 hover:text-blue-400 transition-[color,background-color,border-color,opacity] duration-300"
                                         >
                                             <Phone className="h-4 w-4" />
                                         </Button>
@@ -189,7 +189,7 @@ export const LeadsWidget = ({ leads: initialLeads }: LeadsWidgetProps) => {
                                     <Button
                                         size="icon"
                                         variant="ghost"
-                                        className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-white/10 transition-[color,background-color,border-color,opacity] duration-300"
+                                        className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-muted/50 hover:bg-muted transition-[color,background-color,border-color,opacity] duration-300"
                                     >
                                         <ArrowRight className="h-4 w-4" />
                                     </Button>

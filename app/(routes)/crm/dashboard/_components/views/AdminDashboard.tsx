@@ -26,7 +26,7 @@ const EditableWidgetGrid = dynamic(
         loading: () => (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-pulse">
                 {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-[400px] rounded-xl bg-white/5 border border-white/10" />
+                    <div key={i} className="h-[400px] rounded-xl bg-muted/40 border border-border/50" />
                 ))}
             </div>
         ),
@@ -109,7 +109,7 @@ const AdminDashboard = ({
             <DashboardLayoutProvider initialLayout={enhancedLayout}>
                 <div className="flex flex-col p-6 min-h-screen">
                     {/* 1. Header & Intelligence Section */}
-                    <div className="max-w-[1600px] mx-auto w-full space-y-8 pb-10">
+                    <div className="max-w-[1600px] mx-auto w-full space-y-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
                                 <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent tracking-tight uppercase leading-relaxed py-4 px-4">

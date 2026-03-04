@@ -45,6 +45,8 @@ import { LeadWizardWidget } from "./LeadWizardWidget";
 import { AIInsightsWidget } from "./AIInsightsWidget";
 import { CustomMetricWidget } from "./CustomMetricWidget";
 import { DailyPulseWidget } from "./DailyPulseWidget";
+import { NeuralEngagementPulse } from "./NeuralEngagementPulse";
+import { widgetTooltips } from "../../_config/widget-tooltips";
 // Alias for reuse as a generic stats widget
 const GenericStatsWidget = RevenueWidget;
 import {
@@ -70,39 +72,7 @@ import {
 } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 
-// Widget tooltip descriptions
-const widgetTooltips: Record<string, string> = {
-    actual_revenue: "Revenue from paid invoices. Real money in the bank.",
-    unrealized_revenue: "Revenue from unpaid or pending invoices. Contracted but not yet received.",
-    projected_revenue: "Total expected revenue, including paid invoices, unpaid invoices, and opportunity potential.",
-    active_pipeline: "Number of active deals currently in your sales pipeline. Shows leads and opportunities at a glance.",
-    active_users: "Total team members currently active in the system. Click to manage your team settings.",
-    system_health: "Real-time system operational status. Monitors uptime and platform performance.",
-    conversion_rate: "Percentage of leads converting to deals over the last 30 days. Track how effectively you close.",
-    avg_deal_size: "Average value of your active deals. Helps gauge deal quality and pipeline health.",
-    response_time: "Average time to respond to leads and inquiries. Faster responses improve close rates.",
-    system_uptime: "Platform availability percentage. Green means all systems are running smoothly.",
-    my_schedule: "Your upcoming meetings and scheduled events. Click to open your calendar.",
-    opportunity_forecast: "Revenue forecast based on pipeline probability and deal stages.",
-    customer_pulse: "Overall customer satisfaction based on recent interactions and feedback.",
-    campaign_performance: "Return on investment for your active campaigns and marketing spend.",
-    upcoming_meetings: "Today's scheduled meetings and upcoming appointments.",
-    collaboration_feed: "Recent mentions and activity in campaign threads you're part of.",
-    leads: "Newest leads added to your pipeline. Review and assign them quickly.",
-    tasks: "Your daily task list. Stay productive and on track with your priorities.",
-    projects: "Recently created or updated campaigns. Jump straight into campaign work.",
-    messages: "Your latest messages and notifications. Stay in the loop with your team.",
-    team_activity: "Recent actions taken by team members across the CRM.",
-    recent_files: "Files recently uploaded or modified. Quick access to your documents.",
-    revenue_pacing: "Track how your revenue is trending against monthly targets.",
-    outreach_roi: "Return on investment from your outreach campaigns and sequences.",
-    lead_pools: "Overview of your targeted lists and their current outreach status.",
-    lead_wizard: "AI-powered account discovery stats. See how many companies and contacts have been found.",
-    ai_insights: "Neural radar scanning for immediate tactical actions and account red flags.",
-    personal_pipeline: "Your personal deals and pipeline progress. Focus on what matters to you.",
-    team_pipeline: "Full team pipeline overview. Monitor overall team sales performance.",
-    ai_daily_pulse: "Comprehensive strategic overview of your day's momentum and key focus areas.",
-};
+// Widget tooltip descriptions removed; now imported from config/widget-tooltips.ts
 
 // Mobile info button for widgets
 function WidgetInfoButton({ tooltip, widgetName }: { tooltip: string; widgetName: string }) {
@@ -279,6 +249,7 @@ export const EditableWidgetGrid = () => {
             case "lead_wizard":
             case "ai_insights":
             case "ai_daily_pulse":
+            case "neural_engagement_pulse":
                 return "col-span-1 md:col-span-2 xl:col-span-2";
             default:
                 return "col-span-1";
@@ -326,6 +297,8 @@ export const EditableWidgetGrid = () => {
                 return <AIInsightsWidget insights={aiInsights} />;
             case "ai_daily_pulse":
                 return <DailyPulseWidget />;
+            case "neural_engagement_pulse":
+                return <NeuralEngagementPulse />;
             case "actual_revenue":
                 return (
                     <div className="h-full flex flex-col justify-start">
@@ -506,7 +479,7 @@ export const EditableWidgetGrid = () => {
                     onDragEnd={handleDragEnd}
                 >
                     {/* UNIFIED DASHBOARD GRID */}
-                    <div className="mb-8">
+                    <div className="relative">
                         {isEditMode && (
                             <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-6 flex items-center gap-2">
                                 <Activity size={16} /> Dashboard Layout (Drag to Reorder)

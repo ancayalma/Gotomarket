@@ -80,7 +80,7 @@ const THEME_METADATA: Record<
         colors: ["bg-orange-950", "bg-orange-500", "bg-yellow-400"],
     },
     "super-nova": {
-        name: "Supernova Whiteout",
+        name: "Pink Flamingo",
         description: "Studio Light / High-Viz Pink",
         colors: ["bg-slate-50", "bg-pink-500", "bg-black"],
     },

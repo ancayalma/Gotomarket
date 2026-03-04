@@ -136,7 +136,7 @@ function MobileInfoButton({ tooltip, entityName }: { tooltip: string; entityName
           e.stopPropagation();
           setIsOpen(true);
         }}
-        className="md:hidden absolute top-2 right-2 z-30 w-5 h-5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 hover:border-white/40 transition-colors duration-200"
+        className="md:hidden absolute top-2 right-2 z-30 w-5 h-5 rounded-full border border-border bg-muted/20 backdrop-blur-sm flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 hover:border-border transition-colors duration-200"
         aria-label={`Info about ${entityName}`}
       >
         <Info className="w-3 h-3" />
@@ -153,7 +153,7 @@ function MobileInfoButton({ tooltip, entityName }: { tooltip: string; entityName
           }}
         >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
 
           {/* Popover card */}
           <motion.div
@@ -161,23 +161,23 @@ function MobileInfoButton({ tooltip, entityName }: { tooltip: string; entityName
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="relative z-10 w-full max-w-sm mx-4 mb-8 rounded-2xl border border-white/15 bg-[#18181b]/95 backdrop-blur-xl p-5 shadow-2xl"
+            className="relative z-10 w-full max-w-sm mx-4 mb-8 rounded-2xl border border-border bg-popover/95 backdrop-blur-xl p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
                 <Info className="w-4 h-4 text-primary" />
               </div>
-              <h4 className="text-sm font-bold text-white tracking-wide uppercase">{entityName}</h4>
+              <h4 className="text-sm font-bold text-foreground tracking-wide uppercase">{entityName}</h4>
             </div>
-            <p className="text-[13px] leading-relaxed text-white/75">{tooltip}</p>
+            <p className="text-[13px] leading-relaxed text-muted-foreground/80">{tooltip}</p>
             <button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setIsOpen(false);
               }}
-              className="mt-4 w-full py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white/80 text-xs font-medium transition-colors"
+              className="mt-4 w-full py-2 rounded-lg bg-muted/50 hover:bg-muted text-muted-foreground text-xs font-medium transition-colors"
             >
               Got it
             </button>
@@ -204,26 +204,26 @@ function LeadWizardSelectionModal({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-full max-w-2xl bg-[#0f1115] border border-white/10 rounded-3xl overflow-hidden shadow-2xl"
+        className="relative w-full max-w-2xl bg-background border border-border rounded-3xl overflow-hidden shadow-2xl"
       >
-        <div className="p-8 border-b border-white/5 bg-gradient-to-br from-cyan-500/10 to-transparent">
+        <div className="p-8 border-b border-border/50 bg-gradient-to-br from-cyan-500/10 to-transparent">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.2)]">
                 <Wand2 className="w-6 h-6 text-cyan-400" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight italic">Active Scrapes</h3>
+                <h3 className="text-xl font-black text-foreground uppercase tracking-tight italic">Active Scrapes</h3>
                 <p className="text-xs text-cyan-400 font-bold uppercase tracking-widest mt-1">Select a pool to oversee progress</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+              className="p-2 rounded-xl hover:bg-muted text-muted-foreground/40 hover:text-foreground transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -244,22 +244,22 @@ function LeadWizardSelectionModal({
                     if (id) router.push(`/lists/${id}`);
                     onClose();
                   }}
-                  className="w-full text-left p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-cyan-500/40 hover:bg-white/[0.06] transition-all group relative overflow-hidden"
+                  className="w-full text-left p-6 rounded-2xl bg-muted/20 border border-border/50 hover:border-cyan-500/40 hover:bg-muted/40 transition-all group relative overflow-hidden"
                 >
                   <div className="relative z-10 flex items-center justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-white uppercase tracking-tight">{name}</span>
+                        <span className="text-sm font-black text-foreground uppercase tracking-tight">{name}</span>
                         <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[8px] font-black uppercase tracking-widest px-1.5 h-4">Active</Badge>
                       </div>
-                      <p className="text-[10px] text-gray-500 font-medium">Started {new Date(job.startedAt).toLocaleTimeString()}</p>
+                      <p className="text-[10px] text-muted-foreground/60 font-medium">Started {new Date(job.startedAt).toLocaleTimeString()}</p>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">Managing List</p>
-                        <p className="text-xs font-bold text-white/60">View Details</p>
+                        <p className="text-xs font-bold text-foreground/60">View Details</p>
                       </div>
-                      <ArrowUpRight className="w-4 h-4 text-white/20 group-hover:text-cyan-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                      <ArrowUpRight className="w-4 h-4 text-muted-foreground/20 group-hover:text-cyan-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                     </div>
                   </div>
                   {/* Progress Line */}
@@ -268,20 +268,20 @@ function LeadWizardSelectionModal({
               );
             })
           ) : (
-            <div className="py-12 text-center space-y-4 bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
-              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto">
-                <LayoutGrid className="w-6 h-6 text-white/20" />
+            <div className="py-12 text-center space-y-4 bg-muted/10 rounded-2xl border border-dashed border-border/50">
+              <div className="w-12 h-12 rounded-full bg-muted/40 flex items-center justify-center mx-auto">
+                <LayoutGrid className="w-6 h-6 text-muted-foreground/20" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white/60 uppercase tracking-widest">No Active Scrapes</p>
-                <p className="text-xs text-gray-600 mt-1 uppercase tracking-tight">Run the Lead Generation Wizard from the Accounts page to start discovery.</p>
+                <p className="text-sm font-bold text-muted-foreground/60 uppercase tracking-widest">No Active Scrapes</p>
+                <p className="text-xs text-muted-foreground/40 mt-1 uppercase tracking-tight">Run the Lead Generation Wizard from the Accounts page to start discovery.</p>
               </div>
               <button
                 onClick={() => {
                   router.push("/crm/accounts");
                   onClose();
                 }}
-                className="mt-4 px-6 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-[10px] font-black text-white uppercase tracking-widest"
+                className="mt-4 px-6 py-2 rounded-xl bg-muted/50 border border-border hover:bg-muted transition-colors text-[10px] font-black text-foreground uppercase tracking-widest"
               >
                 Go to Accounts
               </button>
@@ -289,10 +289,10 @@ function LeadWizardSelectionModal({
           )}
         </div>
 
-        <div className="p-6 bg-black/40 border-t border-white/5 flex justify-end">
+        <div className="p-6 bg-muted/10 border-t border-border/50 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-black text-white uppercase tracking-widest transition-colors"
+            className="px-6 py-2 rounded-xl bg-muted/50 hover:bg-muted text-xs font-black text-foreground uppercase tracking-widest transition-colors"
           >
             Close
           </button>
@@ -330,26 +330,26 @@ function UniversityRankModal({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-full max-w-xl bg-[#0f1115] border border-white/10 rounded-3xl overflow-hidden shadow-2xl"
+        className="relative w-full max-w-xl bg-background border border-border rounded-3xl overflow-hidden shadow-2xl"
       >
-        <div className="p-8 border-b border-white/5 bg-gradient-to-br from-indigo-500/10 to-transparent">
+        <div className="p-8 border-b border-border/50 bg-gradient-to-br from-indigo-500/10 to-transparent">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.2)]">
                 <GraduationCap className="w-6 h-6 text-indigo-400" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight italic">Mission Profile</h3>
+                <h3 className="text-xl font-black text-foreground uppercase tracking-tight italic">Mission Profile</h3>
                 <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest mt-1">Personnel Ranking System</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+              className="p-2 rounded-xl hover:bg-muted text-muted-foreground/40 hover:text-foreground transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -358,21 +358,21 @@ function UniversityRankModal({
 
         <div className="p-8 space-y-8">
           {/* User Hero */}
-          <div className="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5">
+          <div className="flex items-center justify-between p-6 rounded-2xl bg-muted/20 border border-border/50">
             <div className="space-y-1">
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Employee Name</p>
-              <p className="text-lg font-bold text-white tracking-tight">{userName}</p>
+              <p className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-widest">Employee Name</p>
+              <p className="text-lg font-bold text-foreground tracking-tight">{userName}</p>
             </div>
             <div className="text-right">
               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-1">Clearance Level</p>
-              <p className="text-3xl font-black text-white italic">{userLevel}</p>
+              <p className="text-3xl font-black text-foreground italic">{userLevel}</p>
             </div>
           </div>
 
           {/* Mastery Grid */}
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Platform Mastery Path</p>
+              <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">Platform Mastery Path</p>
               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Level {masteryLevel} / 25</p>
             </div>
             <div className="flex gap-1.5 h-3">
@@ -381,7 +381,7 @@ function UniversityRankModal({
                   key={i}
                   className={cn(
                     "flex-1 rounded-sm transition-all duration-500",
-                    i < masteryLevel ? "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.4)]" : "bg-white/5"
+                    i < masteryLevel ? "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.4)]" : "bg-muted"
                   )}
                 />
               ))}
@@ -395,18 +395,18 @@ function UniversityRankModal({
                 <div className={cn(
                   "w-full aspect-square rounded-xl border flex items-center justify-center transition-all duration-500",
                   prestigeGrade >= phase.grade
-                    ? `${phase.bg} border-white/20 shadow-lg`
-                    : "bg-transparent border-white/5 opacity-20"
+                    ? `${phase.bg} border-border shadow-lg`
+                    : "bg-transparent border-border/50 opacity-20"
                 )}>
                   {prestigeGrade >= phase.grade ? (
                     <Medal className={cn("w-5 h-5", phase.color)} />
                   ) : (
-                    <Lock className="w-4 h-4 text-gray-600" />
+                    <Lock className="w-4 h-4 text-muted-foreground/60" />
                   )}
                 </div>
                 <p className={cn(
                   "text-[8px] font-black uppercase tracking-tighter text-center leading-none",
-                  prestigeGrade >= phase.grade ? "text-white" : "text-gray-600"
+                  prestigeGrade >= phase.grade ? "text-foreground" : "text-muted-foreground/40"
                 )}>
                   {phase.title.split(' ')[0]}
                 </p>
@@ -414,20 +414,20 @@ function UniversityRankModal({
             ))}
           </div>
 
-          <p className="text-xs text-gray-500 leading-relaxed text-center italic">
+          <p className="text-xs text-muted-foreground/80 leading-relaxed text-center italic">
             Your rank is determined by platform authority and technical mastery of the CRM ecosystem. Reach Level 25 to achieve Ultimate Prestige status.
           </p>
         </div>
 
-        <div className="p-6 bg-black/40 border-t border-white/5 flex gap-3">
+        <div className="p-6 bg-muted/10 border-t border-border/50 flex gap-3">
           <Link href="/crm/university" className="flex-1" onClick={onClose}>
-            <button className="w-full py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-black font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-indigo-500/20">
+            <button className="w-full py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-primary-foreground font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-indigo-500/20">
               Open Training Center
             </button>
           </Link>
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-black text-white uppercase tracking-widest transition-colors"
+            className="px-6 py-3 rounded-xl bg-muted/50 hover:bg-muted text-[10px] font-black text-foreground uppercase tracking-widest transition-colors"
           >
             Close
           </button>
@@ -465,7 +465,7 @@ export function EntityBreakdown({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className={cn(
-          !hideHeader && "rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6",
+          !hideHeader && "rounded-2xl border border-border bg-card/40 backdrop-blur-xl p-6",
           className
         )}
       >
@@ -475,7 +475,7 @@ export function EntityBreakdown({
             <div className="flex items-center gap-4">
               {headerAction ? headerAction : (
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-white">{total}</span>
+                  <span className="text-2xl font-bold text-foreground">{total}</span>
                   <span className="text-xs text-muted-foreground uppercase">
                     Total Records
                   </span>
@@ -522,7 +522,7 @@ export function EntityBreakdown({
                       e.stopPropagation();
                       toggleWidgetVisibility(entity.id, false);
                     }}
-                    className="absolute -top-2 -right-2 z-50 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors border-2 border-white/20"
+                    className="absolute -top-2 -right-2 z-50 bg-destructive text-destructive-foreground rounded-full p-1 shadow-lg hover:bg-destructive/90 transition-colors border-2 border-border"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -590,9 +590,9 @@ export function EntityBreakdown({
                     </TooltipTrigger>
                     <TooltipContent
                       side="top"
-                      className="hidden md:block max-w-[260px] rounded-xl border border-white/15 bg-[#18181b]/95 backdrop-blur-xl px-4 py-3 shadow-2xl"
+                      className="hidden md:block max-w-[260px] rounded-xl border border-border bg-popover/95 backdrop-blur-xl px-4 py-3 shadow-2xl"
                     >
-                      <p className="text-[12px] leading-relaxed text-white/80 font-medium">{entity.tooltip}</p>
+                      <p className="text-[12px] leading-relaxed text-muted-foreground/80 font-medium">{entity.tooltip}</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : (

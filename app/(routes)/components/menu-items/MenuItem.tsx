@@ -77,7 +77,7 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                         isOpen ? "py-1.5 px-2" : "flex-col py-2 px-1 justify-center gap-0.5",
                         isActive
                             ? "text-primary"
-                            : cn("text-muted-foreground", isOpen && !isLocked && "hover:text-foreground hover:bg-white/5"),
+                            : cn("text-muted-foreground", isOpen && !isLocked && "hover:text-foreground hover:bg-muted/30"),
                         isLocked && "opacity-70"
                     )}
                 >
@@ -89,7 +89,7 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                     {/* Icon */}
                     <div className={cn(
                         "relative z-10 flex items-center justify-center min-w-[24px]",
-                        !isOpen && "w-8 h-8 rounded-md transition-colors duration-200 hover:bg-white/10 hover:ring-1 hover:ring-white/70 group/icon"
+                        !isOpen && "w-8 h-8 rounded-md transition-colors duration-200 hover:bg-muted/50 hover:ring-1 hover:ring-border group/icon"
                     )}>
                         <Icon
                             className={cn(
@@ -124,7 +124,7 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                     >
                         {title}
                         {isLocked && (
-                            <span className="text-[10px] bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded ml-auto flex items-center gap-1.5 border border-white/5 not-italic font-bold">
+                            <span className="text-[10px] bg-muted/50 text-muted-foreground px-1.5 py-0.5 rounded ml-auto flex items-center gap-1.5 border border-border/50 not-italic font-bold">
                                 <Lock className="w-2.5 h-2.5" />
                                 <span className="hidden xl:inline">Upgrade</span>
                             </span>

@@ -43,7 +43,7 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                         <span>Engagement Depth</span>
                         <span className="text-violet-400">{openRate}% Open Rate</span>
                     </div>
-                    <div className="flex h-2 w-full rounded-full overflow-hidden bg-white/5 relative shadow-inner">
+                    <div className="flex h-2 w-full rounded-full overflow-hidden bg-muted/30 relative shadow-inner">
                         {/* Shimmering background for progress */}
                         <div
                             className="h-full bg-violet-600 shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-colors duration-1000 ease-out"
@@ -62,20 +62,20 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                         <div
                             key={pool.id}
                             onClick={() => router.push(`/crm/accounts/lists/${pool.id}`)}
-                            className="bg-white/5 border border-white/5 rounded-xl p-3 hover:bg-white/10 hover:border-violet-500/30 transition-colors cursor-pointer group relative overflow-hidden"
+                            className="bg-muted/10 border border-border/50 rounded-xl p-3 hover:bg-muted/20 hover:border-violet-500/30 transition-colors cursor-pointer group relative overflow-hidden"
                         >
                             <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <TrendingUp size={10} className="text-violet-400" />
                             </div>
                             <div className="flex items-start justify-between gap-2 overflow-hidden">
-                                <p className="text-[11px] font-bold text-white/90 truncate group-hover:text-violet-400 transition-colors uppercase tracking-tight">
+                                <p className="text-[11px] font-bold text-foreground/90 truncate group-hover:text-violet-400 transition-colors uppercase tracking-tight">
                                     {pool.name}
                                 </p>
                             </div>
                             <div className="mt-2 space-y-1">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Targets</span>
-                                    <span className="text-[11px] font-bold text-white">{pool.candidateCount || 0}</span>
+                                    <span className="text-[11px] font-bold text-foreground">{pool.candidateCount || 0}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Contacted</span>
@@ -100,7 +100,7 @@ export const LeadPoolsWidget = ({ pools = [] }: LeadPoolsWidgetProps) => {
                     </div>
                     <div className="min-w-0">
                         <p className="text-[10px] font-bold text-violet-300 uppercase leading-normal tracking-widest py-1 px-1">FLOW STATE Tracking</p>
-                        <p className="text-[11px] text-white/70 font-medium mt-1 truncate">
+                        <p className="text-[11px] text-foreground/70 font-medium mt-1 truncate">
                             {totalOpened} real-time engagement signals captured
                         </p>
                     </div>

@@ -83,7 +83,7 @@ export const DailyPulseWidget = () => {
                                 </div>
                                 <div className="space-y-1.5">
                                     {data.highValueAlerts.map((alert, idx) => (
-                                        <div key={idx} className="flex gap-3 p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] transition-colors group/item">
+                                        <div key={idx} className="flex gap-3 p-2.5 rounded-lg bg-muted/20 border border-border/50 hover:bg-muted/30 transition-colors group/item">
                                             <div className="h-4 w-1 rounded-full bg-amber-500/40 group-hover/item:bg-amber-500 transition-colors shrink-0 mt-0.5" />
                                             <span className="text-[11px] font-bold text-muted-foreground/90 group-hover:text-foreground transition-colors leading-relaxed">
                                                 {alert}

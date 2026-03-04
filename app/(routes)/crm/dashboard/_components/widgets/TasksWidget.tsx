@@ -41,8 +41,8 @@ const TaskUrgencyIndicator = ({ dueDate, priority }: { dueDate: Date | null; pri
     const isOverdue = dueDate && new Date(dueDate) < new Date();
     const isHighPriority = priority.toLowerCase() === "high";
 
-    let glowColor = "bg-white/10";
-    let pulseColor = "bg-white/5";
+    let glowColor = "bg-muted-foreground/20";
+    let pulseColor = "bg-muted/20";
 
     if (isOverdue) {
         glowColor = "bg-rose-500";
@@ -133,7 +133,7 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
                 <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 px-2 text-[10px] font-bold border-white/10 bg-white/5 hover:bg-white/10 text-primary"
+                    className="h-7 px-2 text-[10px] font-bold border-border bg-muted/50 hover:bg-muted text-primary"
                 >
                     <Plus size={12} className="mr-1" />
                     QUICK TASK
@@ -145,7 +145,7 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
     return (
         <>
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-4 border-white/10 bg-slate-950/90 backdrop-blur-xl">
+                <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-4 border-border bg-background/95 backdrop-blur-xl">
                     <DialogHeader>
                         <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Refine Task</DialogTitle>
                     </DialogHeader>
@@ -197,13 +197,13 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
                             return (
                                 <div
                                     key={task.id}
-                                    className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.04] transition-colors duration-300"
+                                    className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-border/50 bg-muted/10 hover:border-border hover:bg-muted/20 transition-colors duration-300"
                                 >
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                         <div className="shrink-0">
                                             <div
                                                 onClick={() => handleTaskComplete(task.id)}
-                                                className="h-5 w-5 rounded-md border-2 border-white/10 bg-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 cursor-pointer flex items-center justify-center transition-colors duration-200 group/check"
+                                                className="h-5 w-5 rounded-md border-2 border-border bg-muted/50 hover:border-emerald-500/50 hover:bg-emerald-500/10 cursor-pointer flex items-center justify-center transition-colors duration-200 group/check"
                                             >
                                                 <div className="h-2 w-2 rounded-sm bg-emerald-500 opacity-0 scale-50 group-hover/check:opacity-50 group-hover/check:scale-100 transition-colors duration-200" />
                                             </div>
@@ -213,12 +213,12 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
                                             <div className="flex items-center gap-2">
                                                 <TaskUrgencyIndicator dueDate={task.dueDateAt} priority={task.priority} />
                                                 <span
-                                                    className="text-sm font-bold text-white/90 truncate group-hover:text-primary transition-colors cursor-pointer"
+                                                    className="text-sm font-bold text-foreground/90 truncate group-hover:text-primary transition-colors cursor-pointer"
                                                     onClick={() => handleTaskClick(task.id)}
                                                 >
                                                     {task.title}
                                                 </span>
-                                                <Badge variant="outline" className={cn("text-[8px] font-black uppercase tracking-tighter h-4 px-1.5 border-0 shadow-none bg-white/5", pData?.color)}>
+                                                <Badge variant="outline" className={cn("text-[8px] font-black uppercase tracking-tighter h-4 px-1.5 border-0 shadow-none bg-muted/50", pData?.color)}>
                                                     {task.priority}
                                                 </Badge>
                                             </div>
@@ -235,7 +235,7 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
                                                 )}
                                                 {task.assigned_section?.title && (
                                                     <span className="text-muted-foreground opacity-60 truncate flex items-center gap-1.5">
-                                                        <div className="w-1 h-1 rounded-full bg-white/20" />
+                                                        <div className="w-1 h-1 rounded-full bg-muted-foreground/40" />
                                                         {task.assigned_section.title}
                                                     </span>
                                                 )}
@@ -249,7 +249,7 @@ export const TasksWidget = ({ tasks: initialTasks, userId }: TasksWidgetProps) =
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-white/5 hover:bg-white/10 transition-[color,background-color,border-color,opacity] duration-300"
+                                                    className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 bg-muted/50 hover:bg-muted transition-[color,background-color,border-color,opacity] duration-300"
                                                 >
                                                     <ArrowRight className="h-4 w-4" />
                                                 </Button>

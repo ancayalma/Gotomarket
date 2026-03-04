@@ -39,7 +39,7 @@ const PulseIndicator = ({ value, status }: { value: number; status: any }) => {
             <div className={`absolute inset-1 rounded-full ${status.bg} blur-[2px] animate-pulse`} />
             <svg className="transform -rotate-90 relative z-10" width={size} height={size}>
                 <circle
-                    className="text-white/5"
+                    className="text-muted"
                     strokeWidth="2.5"
                     stroke="currentColor"
                     fill="transparent"
@@ -89,7 +89,7 @@ export const ProjectsWidget = ({ projects: initialProjects }: ProjectsWidgetProp
                 <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 px-2 text-[10px] font-bold border-white/10 bg-white/5 hover:bg-white/10 text-primary"
+                    className="h-7 px-2 text-[10px] font-bold border-border bg-muted/50 hover:bg-muted text-primary"
                 >
                     <Plus size={12} className="mr-1" />
                     PULSE
@@ -124,7 +124,7 @@ export const ProjectsWidget = ({ projects: initialProjects }: ProjectsWidgetProp
                         return (
                             <div
                                 key={item.id}
-                                className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.04] transition-colors duration-300 relative overflow-hidden"
+                                className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-border/50 bg-muted/10 hover:border-border hover:bg-muted/20 transition-colors duration-300 relative overflow-hidden"
                             >
                                 <div className="shrink-0 relative z-10">
                                     <PulseIndicator value={item.progression || 0} status={status} />
@@ -132,7 +132,7 @@ export const ProjectsWidget = ({ projects: initialProjects }: ProjectsWidgetProp
 
                                 <div className="space-y-1 overflow-hidden flex-1 relative z-10">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm font-bold text-white/90 truncate group-hover:text-primary transition-colors">
+                                        <span className="text-sm font-bold text-foreground/90 truncate group-hover:text-primary transition-colors">
                                             {item.board.title}
                                         </span>
                                         <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full ${status.bg} border border-current opacity-70`}>
@@ -160,7 +160,7 @@ export const ProjectsWidget = ({ projects: initialProjects }: ProjectsWidgetProp
                                         <Button
                                             size="icon"
                                             variant="ghost"
-                                            className={`h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 ${status.bg} ${status.color} hover:bg-white/10 transition-[color,background-color,border-color,opacity] duration-300`}
+                                            className={`h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 ${status.bg} ${status.color} hover:bg-muted transition-[color,background-color,border-color,opacity] duration-300`}
                                         >
                                             <ArrowRight className="h-4 w-4" />
                                         </Button>

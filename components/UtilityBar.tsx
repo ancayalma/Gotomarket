@@ -160,7 +160,7 @@ export default function UtilityBar() {
                                                         L-GEN: <span className="text-foreground">{creditsInfo ? creditsInfo.displayString : "Loading..."}</span>
                                                     </span>
                                                     {creditsInfo && !creditsInfo.isUnlimited && creditsInfo.monthlyLimit > 0 && (
-                                                        <div className="w-full h-[3px] rounded-full bg-white/10 overflow-hidden min-w-[60px]">
+                                                        <div className="w-full h-[3px] rounded-full bg-muted/30 overflow-hidden min-w-[60px]">
                                                             <div
                                                                 className={cn(
                                                                     "h-full rounded-full transition-colors duration-700 ease-out",
@@ -177,7 +177,7 @@ export default function UtilityBar() {
                                                 </div>
                                             </div>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-72 p-0 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl" side="top" align="center" sideOffset={12}>
+                                        <PopoverContent className="w-72 p-0 border-border shadow-2xl bg-popover/95 backdrop-blur-xl" side="top" align="center" sideOffset={12}>
                                             <div className="p-4 space-y-3">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2">
@@ -194,7 +194,7 @@ export default function UtilityBar() {
                                                 </div>
                                                 {creditsInfo && !creditsInfo.isUnlimited && (
                                                     <div className="space-y-1">
-                                                        <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                        <div className="w-full h-1.5 bg-muted/30 rounded-full overflow-hidden">
                                                             <div className="h-full bg-blue-500" style={{ width: `${(creditsInfo.used / creditsInfo.monthlyLimit) * 100}%` }} />
                                                         </div>
                                                         <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-black">
@@ -242,8 +242,8 @@ export default function UtilityBar() {
                                                 <span className="hidden lg:inline">Quick Notes</span>
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-80 p-0 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="center" sideOffset={12}>
-                                            <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                                        <PopoverContent className="w-80 p-0 border-border bg-popover/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="center" sideOffset={12}>
+                                            <div className="p-4 border-b border-border/50 bg-muted/10 flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <div className="p-1.5 rounded-md bg-amber-500/10">
                                                         <StickyNote className="h-3.5 w-3.5 text-amber-500" />
@@ -254,7 +254,7 @@ export default function UtilityBar() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-1">
-                                                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/5 text-muted-foreground" onClick={() => navigator.clipboard.writeText(notes)}>
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-muted text-muted-foreground" onClick={() => navigator.clipboard.writeText(notes)}>
                                                         <Copy className="h-3 w-3" />
                                                     </Button>
                                                     <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-red-500/10 hover:text-red-500" onClick={() => saveNotes("")}>
@@ -264,7 +264,7 @@ export default function UtilityBar() {
                                             </div>
                                             <div className="p-4">
                                                 <textarea
-                                                    className="w-full h-48 bg-muted/20 rounded-lg p-3 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-amber-500/30 border border-white/5 placeholder:text-muted-foreground/30 font-medium leading-relaxed"
+                                                    className="w-full h-48 bg-muted/40 rounded-lg p-3 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-amber-500/30 border border-border/50 placeholder:text-muted-foreground/30 font-medium leading-relaxed"
                                                     placeholder="Jot down quick thoughts..."
                                                     value={notes}
                                                     onChange={(e) => saveNotes(e.target.value)}
@@ -296,8 +296,8 @@ export default function UtilityBar() {
                                                 <span className="hidden lg:inline">Checklist</span>
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-80 p-0 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="center" sideOffset={12}>
-                                            <div className="p-4 border-b border-white/5 bg-white/5">
+                                        <PopoverContent className="w-80 p-0 border-border bg-popover/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="center" sideOffset={12}>
+                                            <div className="p-4 border-b border-border/50 bg-muted/10">
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center gap-2">
                                                         <div className="p-1.5 rounded-md bg-emerald-500/10">
@@ -317,9 +317,9 @@ export default function UtilityBar() {
                                             </div>
                                             <div className="max-h-72 overflow-y-auto p-4 space-y-2">
                                                 {tasks.map((task) => (
-                                                    <div key={task.id} className="group space-y-2 p-2 rounded-lg hover:bg-white/5">
+                                                    <div key={task.id} className="group space-y-2 p-2 rounded-lg hover:bg-muted/30">
                                                         <div className="flex items-start gap-2">
-                                                            <input type="checkbox" checked={task.completed} onChange={() => toggleTask(task.id)} className="mt-1 h-3.5 w-3.5 rounded border-white/20 bg-transparent text-emerald-500" />
+                                                            <input type="checkbox" checked={task.completed} onChange={() => toggleTask(task.id)} className="mt-1 h-3.5 w-3.5 rounded border-border bg-transparent text-emerald-500" />
                                                             <input type="text" value={task.text} onChange={(e) => updateTask(task.id, e.target.value)} className={cn("flex-1 bg-transparent border-none p-0 text-xs focus:ring-0", task.completed && "line-through text-muted-foreground")} placeholder="Task..." />
                                                             <button onClick={() => removeTask(task.id)} className="opacity-0 group-hover:opacity-100 text-rose-500/50 hover:text-rose-500">
                                                                 <X className="h-3.5 w-3.5" />
@@ -331,7 +331,7 @@ export default function UtilityBar() {
                                                                     key={p}
                                                                     className={cn(
                                                                         "h-4 px-1.5 rounded text-[8px] font-black uppercase transition-all",
-                                                                        task.priority === p ? "bg-emerald-500 text-white shadow-sm" : "bg-white/5 text-muted-foreground/30 hover:text-muted-foreground"
+                                                                        task.priority === p ? "bg-emerald-500 text-emerald-50 shadow-sm" : "bg-muted text-muted-foreground/30 hover:text-muted-foreground"
                                                                     )}
                                                                     onClick={() => {
                                                                         const newTasks = tasks.map(t => t.id === task.id ? { ...t, priority: p as any } : t);
@@ -365,32 +365,32 @@ export default function UtilityBar() {
                                                     <span className="text-xs font-semibold hidden sm:inline">Learn About Page</span>
                                                 </div>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-80 p-4 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl" side="top" align="end" sideOffset={12}>
+                                            <PopoverContent className="w-80 p-4 border-border bg-popover/95 backdrop-blur-xl shadow-2xl" side="top" align="end" sideOffset={12}>
                                                 <div className="flex items-start justify-between mb-4">
                                                     <div className="flex items-center gap-2">
                                                         <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${TAB_COLORS[activeTab]} flex items-center justify-center`}>
-                                                            <GraduationCap className="w-4 h-4 text-white" />
+                                                            <GraduationCap className="w-4 h-4 text-primary-foreground" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs font-bold text-white uppercase tracking-tight">{overviewTitle || TAB_LABELS[activeTab]}</p>
-                                                            <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">Tactical Brief</p>
+                                                            <p className="text-xs font-bold text-foreground uppercase tracking-tight">{overviewTitle || TAB_LABELS[activeTab]}</p>
+                                                            <p className="text-[10px] text-muted-foreground/40 uppercase font-black tracking-widest">Tactical Brief</p>
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => setIsLearnOpen(false)} className="text-white/20 hover:text-white/60">
+                                                    <button onClick={() => setIsLearnOpen(false)} className="text-muted-foreground/20 hover:text-muted-foreground/60">
                                                         <X className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                                 <div className="space-y-4 mb-4">
                                                     {overviewWhat && (
                                                         <div className="space-y-1">
-                                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-white/30">Objective</h4>
-                                                            <p className="text-[11px] text-white/80 leading-relaxed font-medium">{overviewWhat}</p>
+                                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/30">Objective</h4>
+                                                            <p className="text-[11px] text-foreground/80 leading-relaxed font-medium">{overviewWhat}</p>
                                                         </div>
                                                     )}
                                                     {overviewWhy && (
                                                         <div className="space-y-1">
-                                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-white/30">Strategic Value</h4>
-                                                            <p className="text-[11px] text-white/80 leading-relaxed font-medium">{overviewWhy}</p>
+                                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/30">Strategic Value</h4>
+                                                            <p className="text-[11px] text-foreground/80 leading-relaxed font-medium">{overviewWhy}</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -438,7 +438,7 @@ export default function UtilityBar() {
                                                 </div>
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-[420px] p-0 border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="center" sideOffset={12}>
+                                        <PopoverContent className="w-[420px] p-0 border-border bg-popover/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="center" sideOffset={12}>
                                             <div className="h-[520px] overflow-y-auto w-[420px]">
                                                 <DialerPanel isCompact={true} />
                                             </div>

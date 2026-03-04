@@ -51,6 +51,7 @@ export interface DashboardData {
     leadGenStats: any;
     intelligenceStats: any;
     aiInsights: any[];
+    engagementPulse: any[];
 
     // Pipelines (React nodes)
     myPipeline?: React.ReactNode;

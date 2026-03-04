@@ -226,7 +226,7 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 8 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed z-[10000] rounded-2xl border border-white/12 bg-[#141418]/95 backdrop-blur-2xl shadow-2xl shadow-black/60 overflow-hidden"
+            className="fixed z-[10000] rounded-2xl border border-border bg-popover/95 backdrop-blur-2xl shadow-2xl shadow-foreground/20 overflow-hidden"
             style={{ top: cardTop, left: cardLeft, width: CARD_W }}
         >
             {/* Gradient top line */}
@@ -237,18 +237,18 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${step.iconGradient} flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                            <Icon className="w-5 h-5 text-white" />
+                            <Icon className="w-5 h-5 text-primary-foreground" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-0.5">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-0.5">
                                 Step {stepIndex + 1} of {totalSteps}
                             </p>
-                            <h3 className="text-sm font-bold text-white/90 leading-tight">{step.title}</h3>
+                            <h3 className="text-sm font-bold text-foreground leading-tight">{step.title}</h3>
                         </div>
                     </div>
                     <button
                         onClick={onSkip}
-                        className="text-white/20 hover:text-white/60 transition-colors flex-shrink-0 p-0.5"
+                        className="text-muted-foreground/40 hover:text-foreground transition-colors flex-shrink-0 p-0.5"
                         title="Skip tour"
                     >
                         <X className="w-4 h-4" />
@@ -256,7 +256,7 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
                 </div>
 
                 {/* Body */}
-                <p className="text-xs text-white/55 leading-relaxed">{step.body}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{step.body}</p>
 
                 {/* Progress dots */}
                 <div className="flex items-center gap-1.5">
@@ -268,8 +268,8 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
                                 i === stepIndex
                                     ? `flex-1 bg-gradient-to-r ${step.iconGradient}`
                                     : i < stepIndex
-                                        ? "w-3 bg-white/30"
-                                        : "w-3 bg-white/10",
+                                        ? "w-3 bg-muted"
+                                        : "w-3 bg-muted/40",
                             ].join(" ")}
                         />
                     ))}
@@ -279,13 +279,13 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
                 <div className="flex items-center gap-2">
                     <button
                         onClick={onSkip}
-                        className="flex-1 py-2 rounded-xl text-xs font-semibold text-white/35 hover:text-white/60 border border-white/8 hover:border-white/15 transition-colors"
+                        className="flex-1 py-2 rounded-xl text-xs font-semibold text-muted-foreground/60 hover:text-foreground border border-border hover:bg-muted transition-colors"
                     >
                         Skip tour
                     </button>
                     <button
                         onClick={onNext}
-                        className={`flex-[2] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r ${step.iconGradient} hover:opacity-90 transition-opacity shadow-lg`}
+                        className={`flex-[2] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold text-primary-foreground bg-gradient-to-r ${step.iconGradient} hover:opacity-90 transition-opacity shadow-lg`}
                     >
                         {isLast ? (
                             <>

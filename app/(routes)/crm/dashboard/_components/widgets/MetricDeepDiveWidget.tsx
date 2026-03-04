@@ -22,8 +22,8 @@ interface DeepDiveModalProps {
 const DeepDiveModal = ({ isOpen, onClose, title, data, columns }: DeepDiveModalProps) => {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col bg-[#09090b] border-[#27272a] text-white">
-                <DialogHeader className="px-6 py-4 border-b border-white/5">
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col bg-card border-border text-foreground">
+                <DialogHeader className="px-6 py-4 border-b border-border">
                     <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                         <ListFilter className="text-primary" size={20} />
                         {title}
@@ -32,22 +32,22 @@ const DeepDiveModal = ({ isOpen, onClose, title, data, columns }: DeepDiveModalP
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-white/10">
+                            <tr className="border-b border-border">
                                 {columns.map((col, i) => (
                                     <th key={i} className="pb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{col.header}</th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-border/50">
                             {data.length === 0 ? (
                                 <tr>
                                     <td colSpan={columns.length} className="py-10 text-center text-muted-foreground italic text-sm">No records found</td>
                                 </tr>
                             ) : (
                                 data.map((row, i) => (
-                                    <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
+                                    <tr key={i} className="hover:bg-muted/20 transition-colors group">
                                         {columns.map((col, j) => (
-                                            <td key={j} className="py-4 text-sm font-medium text-white/80 group-hover:text-white transition-colors">
+                                            <td key={j} className="py-4 text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
                                                 {col.render ? col.render(row[col.key]) : row[col.key]}
                                             </td>
                                         ))}
@@ -101,7 +101,7 @@ export const MetricDeepDiveWidget = ({
                 onClick={() => setIsModalOpen(true)}
                 className={cn(
                     "relative group w-full p-4 overflow-hidden transition-colors duration-300 cursor-pointer",
-                    "bg-[#09090b] border border-[#27272a] hover:border-primary/50 rounded-2xl h-[110px] flex flex-col justify-center",
+                    "bg-card border border-border hover:border-primary/50 rounded-2xl h-[110px] flex flex-col justify-center",
                 )}
             >
                 <Icon
@@ -117,7 +117,7 @@ export const MetricDeepDiveWidget = ({
                     </h3>
 
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold tracking-tight text-white group-hover:text-primary transition-colors">
+                        <span className="text-3xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
                             {value}
                         </span>
                         {trend && (
@@ -139,7 +139,7 @@ export const MetricDeepDiveWidget = ({
                 </div>
 
                 {/* Subtle Glow on Hover */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             </div>
 
             <DeepDiveModal

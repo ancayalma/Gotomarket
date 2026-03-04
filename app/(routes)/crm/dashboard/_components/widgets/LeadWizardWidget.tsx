@@ -120,14 +120,14 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                     >
                         <div className="flex items-start justify-between">
                             <div className="space-y-1">
-                                <h3 className="text-[13px] font-bold text-white flex items-center gap-2">
+                                <h3 className="text-[13px] font-bold text-foreground flex items-center gap-2">
                                     New Discovery Session
                                     <Zap
                                         size={12}
-                                        className="text-cyan-400 animate-pulse"
+                                        className="text-cyan-500 animate-pulse"
                                     />
                                 </h3>
-                                <p className="text-[11px] text-cyan-100/60 leading-relaxed max-w-[180px]">
+                                <p className="text-[11px] text-foreground/60 leading-relaxed max-w-[180px]">
                                     Find high-intent leads using AI-driven
                                     industry &amp; geo targeting.
                                 </p>
@@ -144,10 +144,10 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <div
-                                    className={`relative flex items-center justify-center w-5 h-5 rounded-full ${isAgentActive ? "bg-emerald-500/20" : "bg-white/5"}`}
+                                    className={`relative flex items-center justify-center w-5 h-5 rounded-full ${isAgentActive ? "bg-emerald-500/20" : "bg-muted"}`}
                                 >
                                     <div
-                                        className={`w-2 h-2 rounded-full ${isAgentActive ? "bg-emerald-400" : "bg-white/20"}`}
+                                        className={`w-2 h-2 rounded-full ${isAgentActive ? "bg-emerald-400" : "bg-muted-foreground/30"}`}
                                     />
                                     {isAgentActive && (
                                         <div className="absolute inset-0 rounded-full bg-emerald-400/30 animate-ping" />
@@ -158,7 +158,7 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                                 </span>
                             </div>
                             <span
-                                className={`text-[10px] font-bold uppercase tracking-wider ${isAgentActive ? "text-emerald-400" : "text-white/25"}`}
+                                className={`text-[10px] font-bold uppercase tracking-wider ${isAgentActive ? "text-emerald-400" : "text-muted-foreground/40"}`}
                             >
                                 {isAgentActive ? (
                                     <span className="flex items-center gap-1">
@@ -202,20 +202,20 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                                                                 className="animate-[spin_8s_linear_infinite]"
                                                             />
                                                         </div>
-                                                        <p className="text-[11px] font-medium text-white/80 truncate">
+                                                        <p className="text-[11px] font-medium text-foreground/80 truncate">
                                                             {summary}
                                                         </p>
                                                     </div>
                                                     <ExternalLink
                                                         size={10}
-                                                        className="text-white/20 group-hover/job:text-cyan-400 transition-colors shrink-0 mt-0.5"
+                                                        className="text-muted-foreground/40 group-hover/job:text-cyan-500 transition-colors shrink-0 mt-0.5"
                                                     />
                                                 </div>
 
                                                 {/* Progress bar */}
                                                 <Progress
                                                     value={45}
-                                                    className="h-1 bg-white/5 mb-2"
+                                                    className="h-1 bg-muted mb-2"
                                                     indicatorClassName="bg-gradient-to-r from-emerald-500 to-cyan-500"
                                                 />
 
@@ -239,11 +239,11 @@ export const LeadWizardWidget = ({ data }: LeadWizardWidgetProps) => {
                             </div>
                         ) : (
                             /* Offline state */
-                            <div className="p-3 rounded-xl border border-dashed border-white/5 bg-white/[0.02] text-center">
-                                <p className="text-[11px] text-white/25 font-medium">
+                            <div className="p-3 rounded-xl border border-dashed border-border/50 bg-muted/20 text-center">
+                                <p className="text-[11px] text-muted-foreground/60 font-medium">
                                     No agents running
                                 </p>
-                                <p className="text-[10px] text-white/15 mt-0.5">
+                                <p className="text-[10px] text-muted-foreground/40 mt-0.5">
                                     Start a discovery session to activate the AI
                                     agent.
                                 </p>

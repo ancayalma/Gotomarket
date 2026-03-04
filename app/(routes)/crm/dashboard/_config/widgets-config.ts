@@ -59,4 +59,5 @@ export const defaultWidgets: WidgetItem[] = [
     { id: "lead_wizard", isVisible: false },
     { id: "ai_insights", isVisible: false },
     { id: "ai_daily_pulse", isVisible: true },
+    { id: "neural_engagement_pulse", isVisible: true },
 ];

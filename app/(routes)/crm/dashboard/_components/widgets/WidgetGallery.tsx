@@ -10,7 +10,13 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Plus, Layout, Grid3X3, Check, Sparkles } from "lucide-react";
+import { Plus, Layout, Grid3X3, Check, Sparkles, Info } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useDashboardLayout } from "../../_context/DashboardLayoutContext";
 import { WidgetItem } from "../../_config/widgets-config";
 import { cn } from "@/lib/utils";
@@ -20,6 +26,7 @@ import { createCustomWidget } from "../../_actions/create-custom-widget";
 import { toast } from "sonner";
 
 import { useDashboardData } from "../../_context/DashboardDataContext";
+import { widgetTooltips } from "../../_config/widget-tooltips";
 
 interface WidgetGalleryProps {
     availableEntities: any[];
@@ -96,6 +103,7 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
             high_priority_tasks: "Critical Task Feed",
             pending_approvals: "Decision Required",
             unread_messages: "Unread Notifications",
+            neural_engagement_pulse: "Neural Engagement Pulse",
         };
         return labels[id] || id.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
     };
@@ -148,36 +156,47 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
                                     {customForcedWidgets.map((widget) => {
                                         const isAlreadyAdded = widget.isVisible;
                                         return (
-                                            <div
-                                                key={widget.id}
-                                                className={cn(
-                                                    "flex items-center justify-between p-4 rounded-xl border transition-colors group relative overflow-hidden",
-                                                    isAlreadyAdded
-                                                        ? "bg-white/[0.02] border-white/5 opacity-40 grayscale pointer-events-none"
-                                                        : "bg-gradient-to-r from-amber-500/10 to-transparent border-amber-500/20 hover:border-amber-500/50 hover:bg-amber-500/20"
-                                                )}
-                                            >
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-bold text-white text-sm tracking-tight">{getWidgetLabel(widget.id)}</p>
-                                                        <span className="text-[9px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Custom</span>
-                                                    </div>
-                                                    <p className="text-[10px] text-white/40 font-medium tracking-wide uppercase">Proprietary Metric</p>
-                                                </div>
-                                                <Button
-                                                    size="sm"
-                                                    variant={isAlreadyAdded ? "ghost" : "default"}
-                                                    onClick={() => !isAlreadyAdded && toggleWidgetVisibility(widget.id, true)}
-                                                    className={cn(
-                                                        "h-8 w-8 p-0 rounded-lg",
-                                                        isAlreadyAdded
-                                                            ? "bg-transparent text-white/20"
-                                                            : "bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-white"
-                                                    )}
-                                                >
-                                                    {isAlreadyAdded ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                                                </Button>
-                                            </div>
+                                            <TooltipProvider key={widget.id} delayDuration={0}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div
+                                                            className={cn(
+                                                                "flex items-center justify-between p-4 rounded-xl border transition-colors group relative overflow-hidden",
+                                                                isAlreadyAdded
+                                                                    ? "bg-white/[0.02] border-white/5 opacity-40 grayscale pointer-events-none"
+                                                                    : "bg-gradient-to-r from-amber-500/10 to-transparent border-amber-500/20 hover:border-amber-500/50 hover:bg-amber-500/20"
+                                                            )}
+                                                        >
+                                                            <div className="flex flex-col gap-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="font-bold text-white text-sm tracking-tight">{getWidgetLabel(widget.id)}</p>
+                                                                    <span className="text-[9px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Custom</span>
+                                                                </div>
+                                                                <p className="text-[10px] text-white/40 font-medium tracking-wide uppercase">Proprietary Metric</p>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <Info className="w-3.5 h-3.5 text-white/20 group-hover:text-amber-500/50 transition-colors" />
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant={isAlreadyAdded ? "ghost" : "default"}
+                                                                    onClick={() => !isAlreadyAdded && toggleWidgetVisibility(widget.id, true)}
+                                                                    className={cn(
+                                                                        "h-8 w-8 p-0 rounded-lg",
+                                                                        isAlreadyAdded
+                                                                            ? "bg-transparent text-white/20"
+                                                                            : "bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-white"
+                                                                    )}
+                                                                >
+                                                                    {isAlreadyAdded ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="left" className="bg-[#18181b] border-white/10 text-white p-3 rounded-xl max-w-[240px] shadow-2xl">
+                                                        <p className="text-[11px] leading-relaxed font-medium italic">"{widgetTooltips[widget.id] || "Proprietary metric forged for your organization."}"</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
                                         );
                                     })}
                                 </div>
@@ -198,38 +217,49 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
                                 {intelligenceWidgets.map((widget) => {
                                     const isAlreadyAdded = widget.isVisible;
                                     return (
-                                        <div
-                                            key={widget.id}
-                                            className={cn(
-                                                "flex items-center justify-between p-4 rounded-xl border transition-colors group relative overflow-hidden",
-                                                isAlreadyAdded
-                                                    ? "bg-white/[0.02] border-white/5 opacity-40 grayscale pointer-events-none"
-                                                    : "bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/[0.08]"
-                                            )}
-                                        >
-                                            <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="font-bold text-white text-sm tracking-tight">{getWidgetLabel(widget.id)}</p>
-                                                    {isAlreadyAdded && (
-                                                        <span className="text-[9px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Live</span>
-                                                    )}
-                                                </div>
-                                                <p className="text-[10px] text-white/40 font-medium tracking-wide uppercase">{widget.id.replace("_", " ")}</p>
-                                            </div>
-                                            <Button
-                                                size="sm"
-                                                variant={isAlreadyAdded ? "ghost" : "default"}
-                                                onClick={() => !isAlreadyAdded && toggleWidgetVisibility(widget.id, true)}
-                                                className={cn(
-                                                    "h-8 w-8 p-0 rounded-lg",
-                                                    isAlreadyAdded
-                                                        ? "bg-transparent text-white/20"
-                                                        : "bg-primary/20 hover:bg-primary text-primary hover:text-white"
-                                                )}
-                                            >
-                                                {isAlreadyAdded ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                                            </Button>
-                                        </div>
+                                        <TooltipProvider key={widget.id} delayDuration={0}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div
+                                                        className={cn(
+                                                            "flex items-center justify-between p-4 rounded-xl border transition-colors group relative overflow-hidden",
+                                                            isAlreadyAdded
+                                                                ? "bg-white/[0.02] border-white/5 opacity-40 grayscale pointer-events-none"
+                                                                : "bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/[0.08]"
+                                                        )}
+                                                    >
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="font-bold text-white text-sm tracking-tight">{getWidgetLabel(widget.id)}</p>
+                                                                {isAlreadyAdded && (
+                                                                    <span className="text-[9px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Live</span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-[10px] text-white/40 font-medium tracking-wide uppercase">{widget.id.replace("_", " ")}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <Info className="w-3.5 h-3.5 text-white/20 group-hover:text-primary/50 transition-colors" />
+                                                            <Button
+                                                                size="sm"
+                                                                variant={isAlreadyAdded ? "ghost" : "default"}
+                                                                onClick={() => !isAlreadyAdded && toggleWidgetVisibility(widget.id, true)}
+                                                                className={cn(
+                                                                    "h-8 w-8 p-0 rounded-lg",
+                                                                    isAlreadyAdded
+                                                                        ? "bg-transparent text-white/20"
+                                                                        : "bg-primary/20 hover:bg-primary text-primary hover:text-white"
+                                                                )}
+                                                            >
+                                                                {isAlreadyAdded ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="left" className="bg-[#18181b] border-white/10 text-white p-3 rounded-xl max-w-[240px] shadow-2xl">
+                                                    <p className="text-[11px] leading-relaxed font-medium italic">"{widgetTooltips[widget.id] || "Advanced analytical widget for your dashboard."}"</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     );
                                 })}
                             </div>
@@ -244,30 +274,40 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
                             <div className="grid grid-cols-2 gap-3">
                                 {widgets.filter(w => w.id.startsWith("entity:")).map((widget) => {
                                     const isAlreadyAdded = widget.isVisible;
+                                    const entity = availableEntities.find(e => e.id === widget.id);
+
                                     return (
-                                        <div
-                                            key={widget.id}
-                                            className={cn(
-                                                "flex items-center justify-between p-3 rounded-xl border transition-colors group",
-                                                isAlreadyAdded
-                                                    ? "bg-white/[0.02] border-white/5 opacity-40 grayscale pointer-events-none"
-                                                    : "bg-white/5 border-white/10 hover:border-emerald-500/50"
-                                            )}
-                                        >
-                                            <span className="text-xs font-bold text-white/80">{getWidgetLabel(widget.id)}</span>
-                                            <button
-                                                disabled={isAlreadyAdded}
-                                                onClick={() => toggleWidgetVisibility(widget.id, true)}
-                                                className={cn(
-                                                    "p-1.5 rounded-lg transition-colors",
-                                                    isAlreadyAdded
-                                                        ? "bg-transparent text-white/20"
-                                                        : "bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white"
-                                                )}
-                                            >
-                                                {isAlreadyAdded ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                                            </button>
-                                        </div>
+                                        <TooltipProvider key={widget.id} delayDuration={0}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div
+                                                        className={cn(
+                                                            "flex items-center justify-between p-3 rounded-xl border transition-colors group",
+                                                            isAlreadyAdded
+                                                                ? "bg-white/[0.02] border-white/5 opacity-40 grayscale pointer-events-none"
+                                                                : "bg-white/5 border-white/10 hover:border-emerald-500/50"
+                                                        )}
+                                                    >
+                                                        <span className="text-xs font-bold text-white/80">{getWidgetLabel(widget.id)}</span>
+                                                        <button
+                                                            disabled={isAlreadyAdded}
+                                                            onClick={() => toggleWidgetVisibility(widget.id, true)}
+                                                            className={cn(
+                                                                "p-1.5 rounded-lg transition-colors",
+                                                                isAlreadyAdded
+                                                                    ? "bg-transparent text-white/20"
+                                                                    : "bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white"
+                                                            )}
+                                                        >
+                                                            {isAlreadyAdded ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                                                        </button>
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="left" className="bg-[#18181b] border-white/10 text-white p-3 rounded-xl max-w-[200px] shadow-2xl">
+                                                    <p className="text-[11px] leading-relaxed font-medium italic">"{entity?.tooltip || "Quick access shortcut."}"</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     );
                                 })}
                             </div>

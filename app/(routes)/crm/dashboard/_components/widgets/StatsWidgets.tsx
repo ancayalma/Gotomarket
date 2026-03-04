@@ -47,7 +47,7 @@ export const RevenueWidget = ({ revenue, teamData }: { revenue: number, teamData
                     header: "Progress",
                     key: "points",
                     render: (val) => (
-                        <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
                             <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, (val / 1000) * 100)}%` }} />
                         </div>
                     )

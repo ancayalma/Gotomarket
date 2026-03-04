@@ -35,16 +35,16 @@ export const WidgetWrapper = ({
     rightAction,
 }: WidgetWrapperProps) => {
     return (
-        <Card className={cn("flex flex-col h-[400px] bg-black/40 border-white/10 backdrop-blur-xl group/widget", className)}>
+        <Card className={cn("flex flex-col h-[400px] bg-card/40 border-border backdrop-blur-xl group/widget", className)}>
             <CardHeader className="p-3 pb-1 space-y-0">
                 <div className="flex items-center justify-between h-10 mb-1">
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         {count !== undefined ? (
-                            <div className={cn("min-w-[28px] h-7 px-1.5 rounded-lg bg-white/5 shadow-sm group-hover/widget:scale-110 transition-transform duration-300 shrink-0 flex items-center justify-center", iconColor)}>
+                            <div className={cn("min-w-[28px] h-7 px-1.5 rounded-lg bg-muted/50 shadow-sm group-hover/widget:scale-110 transition-transform duration-300 shrink-0 flex items-center justify-center", iconColor)}>
                                 <span className="text-sm font-bold">{count}</span>
                             </div>
                         ) : (
-                            <div className={cn("p-1.5 rounded-lg bg-white/5 shadow-sm group-hover/widget:scale-110 transition-transform duration-300 shrink-0", iconColor)}>
+                            <div className={cn("p-1.5 rounded-lg bg-muted/50 shadow-sm group-hover/widget:scale-110 transition-transform duration-300 shrink-0", iconColor)}>
                                 <Icon size={16} />
                             </div>
                         )}
@@ -62,7 +62,7 @@ export const WidgetWrapper = ({
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" size={12} />
                         <Input
                             placeholder={`Search ${title.toLowerCase()}...`}
-                            className="pl-8 h-8 bg-white/5 border-white/10 focus:bg-white/10 focus:border-primary/50 transition-colors text-[11px] rounded-lg"
+                            className="pl-8 h-8 bg-background/50 border-border focus:bg-background focus:border-primary/50 transition-colors text-[11px] rounded-lg"
                             onChange={(e) => onSearch(e.target.value)}
                             value={searchValue}
                         />
@@ -76,7 +76,7 @@ export const WidgetWrapper = ({
                 </div>
             </CardContent>
 
-            <CardFooter className="p-2 border-t border-white/5 flex items-center justify-between bg-white/[0.01] gap-2">
+            <CardFooter className="p-2 border-t border-border flex items-center justify-between bg-muted/[0.01] gap-2">
                 {footerHref && (
                     <Link
                         href={footerHref}
@@ -88,7 +88,7 @@ export const WidgetWrapper = ({
                 )}
 
                 <div className="flex items-center gap-2 ml-auto shrink-0">
-                    <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white/[0.03] border border-white/5 text-[9px] text-muted-foreground/50 font-bold group/refresh cursor-pointer hover:bg-white/[0.05] transition-colors">
+                    <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-muted/50 border border-border text-[9px] text-muted-foreground/50 font-bold group/refresh cursor-pointer hover:bg-muted transition-colors">
                         <RefreshCcw size={10} className="group-hover/refresh:rotate-180 transition-transform duration-700 text-primary/30" />
                         <span suppressHydrationWarning className="uppercase tracking-widest hidden sm:inline opacity-60">Synced</span>
                         <span suppressHydrationWarning className="tabular-nums">
