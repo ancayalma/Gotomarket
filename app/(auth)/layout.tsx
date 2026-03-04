@@ -14,7 +14,7 @@ export const metadata = {
 const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen w-full pt-6 md:pt-0">
+    <div className="flex flex-col items-center min-h-screen w-full">
       <div className="flex justify-between items-center w-full p-5">
         <Link
           href="/"
@@ -36,7 +36,7 @@ const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       </div>
-      <div className="flex items-center grow h-full overflow-hidden">
+      <div className="flex items-center grow w-full overflow-hidden">
         {children}
       </div>
       <AuthFooterWrapper />
