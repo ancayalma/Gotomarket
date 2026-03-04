@@ -98,10 +98,10 @@ const widgetTooltips: Record<string, string> = {
     outreach_roi: "Return on investment from your outreach campaigns and sequences.",
     lead_pools: "Overview of your targeted lists and their current outreach status.",
     lead_wizard: "AI-powered account discovery stats. See how many companies and contacts have been found.",
-    ai_insights: "Smart suggestions from AI to optimize your workflows and close more deals.",
+    ai_insights: "Neural radar scanning for immediate tactical actions and account red flags.",
     personal_pipeline: "Your personal deals and pipeline progress. Focus on what matters to you.",
     team_pipeline: "Full team pipeline overview. Monitor overall team sales performance.",
-    ai_daily_pulse: "Live strategic intelligence scanning your daily objectives and priorities.",
+    ai_daily_pulse: "Comprehensive strategic overview of your day's momentum and key focus areas.",
 };
 
 // Mobile info button for widgets

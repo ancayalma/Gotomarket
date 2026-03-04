@@ -39,7 +39,7 @@ export const AIInsightsWidget = ({ insights = [] }: AIInsightsWidgetProps) => {
 
     return (
         <WidgetWrapper
-            title="AI Command"
+            title="AI Action Radar"
             icon={Zap}
             iconColor="text-violet-400"
             className="overflow-hidden group/command"

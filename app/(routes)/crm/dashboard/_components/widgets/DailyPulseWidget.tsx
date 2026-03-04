@@ -37,7 +37,7 @@ export const DailyPulseWidget = () => {
     if (error) {
         return (
             <WidgetWrapper
-                title="AI Strategic Pulse"
+                title="AI Daily Briefing"
                 icon={Zap}
                 iconColor="text-amber-400"
             >
@@ -51,7 +51,7 @@ export const DailyPulseWidget = () => {
 
     return (
         <WidgetWrapper
-            title="AI Strategic Pulse"
+            title="AI Daily Briefing"
             icon={Zap}
             iconColor="text-amber-500"
             className="overflow-hidden group/pulse border-amber-500/20"
