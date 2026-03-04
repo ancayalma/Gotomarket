@@ -38,8 +38,23 @@ export const getRevenuePacing = async () => {
             }
         });
 
-        // Set a realistic target based on typical monthly performance (~$10k default or based on current vol)
-        const targetRevenue = 10000;
+        // Fetch team settings for the target - Native driver approach to bypass stale Prisma client
+        let targetRevenue = 10000;
+        try {
+            const { dbAdapter } = await import("@/lib/database/db-adapter");
+            const collection = await dbAdapter.getNativeCollection("Team");
+            const { ObjectId } = await import("mongodb");
+
+            const team = await collection.findOne({ _id: new ObjectId(teamInfo.teamId) as any });
+            if (team && typeof team.revenue_target === "number") {
+                targetRevenue = team.revenue_target;
+            } else if (team && team.revenue_target) {
+                // Handle string if it somehow got saved as such
+                targetRevenue = parseInt(team.revenue_target.toString()) || 10000;
+            }
+        } catch (e) {
+            console.warn("Native target fetch failed, using fallback:", e);
+        }
 
         // Projection logic: Linear extrapolation
         const projectedEOM = currentDay > 0 ? (currentRevenue / currentDay) * daysInMonth : 0;

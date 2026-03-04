@@ -15,8 +15,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { getCustomWidgetData } from "@/actions/dashboard/get-custom-widget-data";
+import { Loader2 } from "lucide-react";
+
 interface CustomMetricWidgetProps {
-    data: {
+    widgetId?: string;
+    data?: {
         name: string;
         icon: string;
         color: string;
@@ -24,6 +28,7 @@ interface CustomMetricWidgetProps {
         targetValue?: number;
         value: number;
         trend?: number;
+        dataSource?: string;
     };
 }
 
@@ -37,9 +42,45 @@ const ICON_MAP: Record<string, any> = {
     Target
 };
 
-export const CustomMetricWidget = ({ data }: CustomMetricWidgetProps) => {
+export const CustomMetricWidget = ({ data: initialData, widgetId }: CustomMetricWidgetProps) => {
+    const [data, setData] = React.useState(initialData);
+    const [loading, setLoading] = React.useState(!initialData && !!widgetId);
+
+    React.useEffect(() => {
+        if (widgetId && !initialData) {
+            const fetchData = async () => {
+                const result = await getCustomWidgetData(widgetId);
+                if (result) setData(result as any);
+                setLoading(false);
+            };
+            fetchData();
+        }
+    }, [widgetId, initialData]);
+
+    if (loading) {
+        return (
+            <div className="p-6 rounded-[32px] border border-white/10 bg-[#0a0a0a] flex items-center justify-center h-full min-h-[160px]">
+                <Loader2 className="h-6 w-6 animate-spin text-primary/40" />
+            </div>
+        );
+    }
+
+    if (!data) return null;
+
+    const handleDrillDown = () => {
+        const map: Record<string, string> = {
+            "Leads": "/crm/leads",
+            "Opportunities": "/crm/opportunities",
+            "Invoices": "/invoice",
+            "Tasks": "/projects/tasks",
+            "Accounts": "/crm/accounts",
+            "Contacts": "/crm/contacts",
+            "Tickets": "/crm/cases"
+        };
+        window.location.href = map[data.dataSource || ""] || "/crm/dashboard";
+    };
+
     const Icon = ICON_MAP[data.icon] || BarChart3;
-    const isOverTarget = data.targetValue ? data.value >= data.targetValue : false;
 
     // Formatting the value
     const formattedValue = typeof data.value === 'number'
@@ -51,7 +92,10 @@ export const CustomMetricWidget = ({ data }: CustomMetricWidgetProps) => {
     if (data.chartType === "GAUGE") {
         const percentage = data.targetValue ? Math.min((data.value / data.targetValue) * 100, 100) : 0;
         return (
-            <div className="p-6 rounded-[32px] border border-white/10 bg-[#0a0a0a] relative group overflow-hidden h-full shadow-xl">
+            <div
+                onClick={handleDrillDown}
+                className="p-6 rounded-[32px] border border-white/10 bg-[#0a0a0a] relative group overflow-hidden h-full shadow-xl cursor-pointer hover:border-primary/40 transition-all duration-300 active:scale-95"
+            >
                 <div className="flex flex-col h-full bg-gradient-to-br from-white/[0.03] to-transparent p-1 rounded-[24px]">
                     <div className="flex items-center justify-between mb-4">
                         <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/40">{data.name}</span>
@@ -70,7 +114,7 @@ export const CustomMetricWidget = ({ data }: CustomMetricWidgetProps) => {
 
                         <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                             <div
-                                className={cn("h-full transition-colors duration-1000", `bg-${data.color}-500`)}
+                                className={cn("h-full transition-colors duration-500", `bg-${data.color}-500`)}
                                 style={{ width: `${percentage}%` }}
                             />
                         </div>
@@ -82,7 +126,10 @@ export const CustomMetricWidget = ({ data }: CustomMetricWidgetProps) => {
 
     if (data.chartType === "SPARKLINE") {
         return (
-            <div className="p-6 rounded-[32px] border border-white/10 bg-[#0a0a0a] relative group overflow-hidden h-full shadow-xl">
+            <div
+                onClick={handleDrillDown}
+                className="p-6 rounded-[32px] border border-white/10 bg-[#0a0a0a] relative group overflow-hidden h-full shadow-xl cursor-pointer hover:border-primary/40 transition-all duration-300 active:scale-95"
+            >
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/40">{data.name}</span>
@@ -111,12 +158,14 @@ export const CustomMetricWidget = ({ data }: CustomMetricWidgetProps) => {
     }
 
     return (
-        <DashboardCard
-            icon={Icon}
-            label={data.name}
-            count={formattedValue}
-            description={data.targetValue ? `Target: ${data.targetValue}` : "Real-time metric"}
-            variant={data.color as any}
-        />
+        <div onClick={handleDrillDown} className="cursor-pointer h-full transition-transform active:scale-95 duration-200">
+            <DashboardCard
+                icon={Icon}
+                label={data.name}
+                count={formattedValue}
+                description={data.targetValue ? `Target: ${data.targetValue}` : "Real-time metric"}
+                variant={data.color as any}
+            />
+        </div>
     );
 };

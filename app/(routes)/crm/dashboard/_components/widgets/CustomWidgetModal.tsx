@@ -29,7 +29,7 @@ import {
     ArrowLeft,
     Trash2,
     Plus,
-    Infinity,
+    Infinity as InfinityIcon,
     Zap,
     Scale,
     ShieldAlert
@@ -78,12 +78,13 @@ const CHART_TYPES = [
 ];
 
 const DATA_DOMAINS = [
-    { id: "Leads", label: "CRM: Leads", icon: Users },
-    { id: "Opportunities", label: "CRM: Pipeline", icon: Target },
+    { id: "Accounts", label: "CRM: Accounts", icon: Layout },
+    { id: "Contacts", label: "CRM: Contacts", icon: Users },
+    { id: "Leads", label: "Pipeline: Leads", icon: Zap },
+    { id: "Opportunities", label: "Pipeline: Deals", icon: Target },
     { id: "Invoices", label: "Finance: Invoices", icon: DollarSign },
-    { id: "Tasks", label: "Ops: Execution", icon: Layout },
+    { id: "Tasks", label: "Ops: Execution", icon: Activity },
     { id: "Tickets", label: "Support: Tickets", icon: ShieldAlert },
-    { id: "Campaigns", label: "Growth: Campaigns", icon: Zap },
 ];
 
 const OPERATORS = [
@@ -91,6 +92,9 @@ const OPERATORS = [
     { id: "gt", label: "Greater Than" },
     { id: "lt", label: "Less Than" },
     { id: "contains", label: "Contains" },
+    { id: "last_7_days", label: "Last 7 Days" },
+    { id: "this_month", label: "This Month" },
+    { id: "overdue", label: "Overdue (Date < Now)" },
 ];
 
 export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetModalProps) => {
@@ -180,18 +184,39 @@ export const CustomWidgetModal = ({ isOpen, onClose, onCreate }: CustomWidgetMod
                             ))}
                         </div>
 
-                        <div className="mt-auto space-y-4">
-                            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                                <p className="text-[10px] font-bold text-white/40 leading-relaxed uppercase tracking-widest text-center">
-                                    Operational Integrity 100%
-                                </p>
-                            </div>
-                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="mt-auto space-y-6">
+                            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 relative overflow-hidden group">
                                 <motion.div
-                                    className="h-full bg-primary"
-                                    initial={{ width: "25%" }}
-                                    animate={{ width: `${(step / 4) * 100}%` }}
+                                    className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    animate={{ opacity: [0, 0.1, 0] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
                                 />
+                                <div className="flex flex-col gap-1 relative z-10">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">
+                                            Operational Integrity
+                                        </p>
+                                        <span className={cn(
+                                            "text-[10px] font-black tabular-nums transition-colors",
+                                            step === 4 ? "text-emerald-400" : "text-primary"
+                                        )}>
+                                            {Math.round((step / 4) * 100)}%
+                                        </span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <motion.div
+                                            className={cn(
+                                                "h-full transition-colors duration-500",
+                                                step === 4 ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" : "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]"
+                                            )}
+                                            initial={{ width: "25%" }}
+                                            animate={{ width: `${(step / 4) * 100}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-2">
+                                        {step === 4 ? "Ready for Deployment" : "Analysis in progress..."}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>

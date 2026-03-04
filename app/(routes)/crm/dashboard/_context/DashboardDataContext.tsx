@@ -30,6 +30,9 @@ export interface DashboardData {
     totalLeads: number;
     totalOpportunities: number;
     activeUsersCount: number;
+    userLevel: number;
+    prestigeGrade: number;
+    masteryLevel: number;
 
     // Entities
     crmEntities: any[];
@@ -60,7 +63,8 @@ export interface DashboardData {
     newLeadsCount: number;
     newProjectsCount: number;
     allTasksCount: number;
-    messagesCount: number;
+    // Custom Metrics
+    customWidgets: any[];
 }
 
 const DashboardDataContext = createContext<DashboardData | undefined>(undefined);

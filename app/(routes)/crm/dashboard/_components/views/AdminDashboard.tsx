@@ -61,7 +61,20 @@ const AdminDashboard = ({
         activeUsersCount,
         outreachStats,
         crmEntities,
+        customWidgets = []
     } = useDashboardData();
+
+    // Ensure all custom forged widgets are at least "known" to the layout provider
+    const enhancedLayout = React.useMemo(() => {
+        const layout = [...(initialLayout || [])];
+        customWidgets.forEach((cw: any) => {
+            const customId = `custom_${cw.id || cw._id}`;
+            if (!layout.find(w => w.id === customId)) {
+                layout.push({ id: customId, isVisible: false });
+            }
+        });
+        return layout;
+    }, [initialLayout, customWidgets]);
 
     // ─── Quick Launch Checklist logic ───────────────────────────────────
     const [isLocallyDismissed, setIsLocallyDismissed] = React.useState(false);
@@ -93,7 +106,7 @@ const AdminDashboard = ({
 
     return (
         <>
-            <DashboardLayoutProvider initialLayout={initialLayout}>
+            <DashboardLayoutProvider initialLayout={enhancedLayout}>
                 <div className="flex flex-col p-6 min-h-screen">
                     {/* 1. Header & Intelligence Section */}
                     <div className="max-w-[1600px] mx-auto w-full space-y-8 pb-10">

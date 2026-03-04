@@ -24,6 +24,7 @@ import {
     Calendar,
     Lock,
     Rocket,
+    LayoutGrid,
 } from "lucide-react";
 
 interface CrmSidebarProps {
@@ -83,6 +84,8 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
         { id: 'guard-rules', label: "Guard Rules", href: "/crm/validation-rules", icon: Shield },
         { id: 'approvals', label: "Approval Chains", href: "/crm/approvals", icon: CheckCircle2 },
         { id: 'workflows', label: "FlowState Builder", href: "/crm/workflows", icon: Zap },
+        { id: 'university', label: "University", href: "/crm/university", icon: GraduationCap },
+        { id: 'widgets', label: "Widgets (90+)", href: "/crm/dashboard", icon: LayoutGrid },
     ] as { id: string; label: string; href: string; icon: any; isPremium?: boolean }[];
 
     // Filter items

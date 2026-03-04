@@ -30,6 +30,7 @@ import LoadingBox from "@/app/(routes)/dashboard/components/loading-box";
 import MyPipelineSection from "@/app/(routes)/dashboard/components/MyPipelineSection";
 import TeamPipelineSection from "@/app/(routes)/dashboard/components/TeamPipelineSection";
 import { DashboardDataProvider } from "../_context/DashboardDataContext";
+import { defaultWidgets } from "../_config/widgets-config";
 
 const DashboardRoleManager = async () => {
     const teamInfo = await getCurrentUserTeamId();
@@ -104,6 +105,7 @@ const DashboardRoleManager = async () => {
             leadGenStats,
             intelligenceStats,
             aiInsights,
+            customWidgets,
         ] = await Promise.all([
             getUnifiedSalesData(),
             prismadb.users.count({ where: { team_id: teamId || "no-team" } }),
@@ -130,10 +132,39 @@ const DashboardRoleManager = async () => {
             getLeadGenStats(),
             getIntelligenceStats(),
             getAIInsights(),
+            (async () => {
+                try {
+                    if (!teamId) return [];
+                    const { ObjectId } = require("mongodb");
+                    const collection = await dbAdapter.getNativeCollection("crm_CustomWidget");
+                    return await collection.find({ team_id: new ObjectId(teamId) as any }).toArray();
+                } catch (e) {
+                    console.error("Failed to fetch custom widgets:", e);
+                    return [];
+                }
+            })(),
         ]);
 
         const crmModule = modules.find((module: any) => module.name === "crm" || module.name === "CRM"); // Case handling
         const projectsModule = modules.find((module: any) => module.name === "projects" || module.name === "Projects");
+
+        // Calculate user level for University
+        const roleLevelMap: Record<string, number> = {
+            "PLATFORM_ADMIN": 99,
+            "PLATFORM ADMIN": 99,
+            "SYSADM": 99,
+            "SUPER_ADMIN": 90,
+            "OWNER": 90,
+            "ADMIN": 50,
+            "MEMBER": 10,
+            "VIEWER": 1
+        };
+        const userLevel = roleLevelMap[role] || 1;
+
+        // Use the actual tracked gamification level for the user
+        // Defaults to 1 for new users
+        const masteryLevel = user?.university_level || 1;
+        const prestigeGrade = Math.ceil(masteryLevel / 5);
 
         // Build CRM entities - Comprehensive list matching CrmSidebar order/labels
         const crmEntities: any[] = [];
@@ -163,7 +194,7 @@ const DashboardRoleManager = async () => {
                 { id: "entity:flowstate_builder", name: "FlowState Builder", value: workflowCount, href: "/crm/workflows", iconName: "Zap", color: "indigo", tooltip: "Build and automate workflows visually. Create triggers, conditions, and actions to streamline processes." },
 
                 // Outreach & Optimization (Phase 4)
-                { id: "entity:lead_wizard", name: "Lead Wizard", value: 0, href: "/crm/accounts", iconName: "Wand2", color: "cyan", tooltip: "Run the LeadGen Wizard to discover companies and build targeted account lists. Found on the Accounts page." },
+                { id: "entity:lead_wizard", name: "Lead Wizard", value: leadGenStats?.activeJobs?.length || 0, href: "/crm/accounts", iconName: "Wand2", color: "cyan", modal: "lead_wizard", tooltip: `Tracking ${leadGenStats?.activeJobs?.length || 0} active lead generation scrapes. Click to manage active pools and campaign progress.` },
                 { id: "entity:lead_pools", name: "Lists", value: counts.leadPools || 0, href: "/lists", iconName: "List", color: "violet", tooltip: "View and manage your targeted lists of accounts. Assign lists to team members to start outreach." },
                 { id: "entity:outreach", name: "Outreach", value: 0, href: "/campaigns", iconName: "Megaphone", color: "orange", tooltip: "Launch and manage outreach campaigns. Reach prospects through automated sequences and track engagement." },
 
@@ -178,7 +209,8 @@ const DashboardRoleManager = async () => {
                 { id: "entity:sales_intelligence", name: "Sales Intelligence", value: 0, href: "/crm/insights", iconName: "BrainCircuit", color: "indigo", tooltip: "Advanced sales analytics including weighted forecasting, funnel velocity, and conversion trends." },
                 { id: "entity:audit_logs", name: "Audit Logs", value: 0, href: "/settings/audit-logs", iconName: "History", color: "slate", tooltip: "Complete system activity trail. Track user actions, security events, and record changes for SOC2 compliance." },
                 { id: "entity:hr_hub", name: "Human Resources", value: activeUsersCount, href: "/employees", iconName: "HeartPulse", color: "rose", tooltip: "Manage staff, track performance KPIs, and oversee organizational growth." },
-                { id: "entity:university", name: "University", value: 0, href: "/crm/university", iconName: "GraduationCap", color: "slate", tooltip: "Master your mission protocols and CRM systems. Access training modules and documentation." }
+                { id: "entity:university", name: "University", value: masteryLevel, href: "/crm/university", iconName: "GraduationCap", color: "indigo", modal: "university_rank", tooltip: `Mastery Level ${masteryLevel} / 25 | Prestige Grade ${prestigeGrade}. Mission Clearance Rank: ${userLevel}. Click to view your Mission Profile.` },
+                { id: "entity:widgets", name: "Widgets", value: (defaultWidgets?.filter(w => !w.id.includes("divider")).length || 0) + (customWidgets?.length || 0), href: "/crm/dashboard", iconName: "LayoutGrid", color: "emerald", modal: "none", tooltip: `Manage your arsenal of ${(defaultWidgets?.filter(w => !w.id.includes("divider")).length || 0) + (customWidgets?.length || 0)} available widgets.` }
             );
         }
 
@@ -199,6 +231,9 @@ const DashboardRoleManager = async () => {
             totalLeads: unifiedData?.summary?.leadsCount || 0,
             totalOpportunities: unifiedData?.summary?.opportunitiesCount || 0,
             activeUsersCount,
+            userLevel,
+            masteryLevel,
+            prestigeGrade,
             crmEntities,
             projectEntities,
             newLeads: newLeads as any[],
@@ -228,6 +263,7 @@ const DashboardRoleManager = async () => {
             newProjectsCount: Array.isArray(newProjects) ? newProjects.length : 0,
             allTasksCount: counts.tasks,
             messagesCount: Array.isArray(messages) ? messages.length : 0,
+            customWidgets: customWidgets || [],
         };
 
         return (

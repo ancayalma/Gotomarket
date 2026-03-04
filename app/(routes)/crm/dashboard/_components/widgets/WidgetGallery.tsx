@@ -11,10 +11,15 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Plus, Layout, Grid3X3, Check, Sparkles } from "lucide-react";
-import { useDashboardLayout, WidgetItem } from "../../_context/DashboardLayoutContext";
+import { useDashboardLayout } from "../../_context/DashboardLayoutContext";
+import { WidgetItem } from "../../_config/widgets-config";
 import { cn } from "@/lib/utils";
 import { CustomWidgetModal } from "./CustomWidgetModal";
 import { motion } from "framer-motion";
+import { createCustomWidget } from "../../_actions/create-custom-widget";
+import { toast } from "sonner";
+
+import { useDashboardData } from "../../_context/DashboardDataContext";
 
 interface WidgetGalleryProps {
     availableEntities: any[];
@@ -22,13 +27,22 @@ interface WidgetGalleryProps {
 
 export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
     const { widgets, toggleWidgetVisibility } = useDashboardLayout();
+    const { customWidgets } = useDashboardData();
     const [open, setOpen] = useState(false);
     const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
 
-    const handleCreateCustom = (data: any) => {
-        // Here we would normally call a server action to save to DB
-        // For now, we'll simulate adding it to the local available set
-        console.log("Creating custom widget:", data);
+    const handleCreateCustom = async (data: any) => {
+        try {
+            const result = await createCustomWidget(data);
+            if (result.success) {
+                toast.success("Intelligence successfully forged");
+                setOpen(false);
+            } else {
+                toast.error(result.error || "Forge failed");
+            }
+        } catch (error) {
+            toast.error("An error occurred during forging");
+        }
     };
 
     const hiddenWidgets = widgets.filter((w) => !w.isVisible);
@@ -42,6 +56,11 @@ export const WidgetGallery = ({ availableEntities }: WidgetGalleryProps) => {
         if (id.startsWith("entity:")) {
             const entity = availableEntities.find(e => e.id === id);
             return entity?.name || id.replace("entity:", "").replace("_", " ");
+        }
+        if (id.startsWith("custom_")) {
+            const dbId = id.replace("custom_", "");
+            const custom = customWidgets.find((w: any) => w._id.toString() === dbId || w.id === dbId);
+            return custom?.name || "Custom Metric";
         }
         const labels: Record<string, string> = {
             crm_entities_grid: "CRM Quick Access Grid",

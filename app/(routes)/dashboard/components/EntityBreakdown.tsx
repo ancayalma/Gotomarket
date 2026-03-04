@@ -30,11 +30,22 @@ import {
   BarChart3,
   Package,
   Info,
+  Rocket,
+  BrainCircuit,
+  History,
+  HeartPulse,
+  GraduationCap,
+  List,
+  Medal,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DashboardCard from "../../crm/dashboard/_components/DashboardCard";
 import { useDashboardLayout } from "../../crm/dashboard/_context/DashboardLayoutContext";
-import { X } from "lucide-react";
+import { useDashboardData } from "../../crm/dashboard/_context/DashboardDataContext";
+import { X, ArrowUpRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 import {
   Tooltip,
   TooltipContent,
@@ -69,7 +80,13 @@ const iconMap: Record<string, LucideIcon> = {
   Radio,
   Headset,
   BarChart3,
-  Package
+  Package,
+  Rocket,
+  BrainCircuit,
+  History,
+  HeartPulse,
+  GraduationCap,
+  List
 };
 
 interface EntityItem {
@@ -80,6 +97,7 @@ interface EntityItem {
   iconName: string;
   color: string;
   tooltip?: string;
+  modal?: "lead_wizard" | "university_rank" | "none"; // Updated: support non-clickable cards
 }
 
 interface EntityBreakdownProps {
@@ -168,6 +186,255 @@ function MobileInfoButton({ tooltip, entityName }: { tooltip: string; entityName
   );
 }
 
+// Selection Modal for Lead Wizard
+function LeadWizardSelectionModal({
+  isOpen,
+  onClose,
+  activeJobs
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  activeJobs: any[]
+}) {
+  const router = useRouter();
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative w-full max-w-2xl bg-[#0f1115] border border-white/10 rounded-3xl overflow-hidden shadow-2xl"
+      >
+        <div className="p-8 border-b border-white/5 bg-gradient-to-br from-cyan-500/10 to-transparent">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.2)]">
+                <Wand2 className="w-6 h-6 text-cyan-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-white uppercase tracking-tight italic">Active Scrapes</h3>
+                <p className="text-xs text-cyan-400 font-bold uppercase tracking-widest mt-1">Select a pool to oversee progress</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+          {activeJobs.length > 0 ? (
+            activeJobs.map((job) => {
+              const pool = job.assigned_pool;
+              const name = pool?.name || "Unnamed Pool";
+              const id = pool?.id;
+
+              return (
+                <button
+                  key={job.id}
+                  onClick={() => {
+                    if (id) router.push(`/lists/${id}`);
+                    onClose();
+                  }}
+                  className="w-full text-left p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-cyan-500/40 hover:bg-white/[0.06] transition-all group relative overflow-hidden"
+                >
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-white uppercase tracking-tight">{name}</span>
+                        <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[8px] font-black uppercase tracking-widest px-1.5 h-4">Active</Badge>
+                      </div>
+                      <p className="text-[10px] text-gray-500 font-medium">Started {new Date(job.startedAt).toLocaleTimeString()}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">Managing List</p>
+                        <p className="text-xs font-bold text-white/60">View Details</p>
+                      </div>
+                      <ArrowUpRight className="w-4 h-4 text-white/20 group-hover:text-cyan-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                    </div>
+                  </div>
+                  {/* Progress Line */}
+                  <div className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 w-1/3 group-hover:w-full transition-all duration-700" />
+                </button>
+              );
+            })
+          ) : (
+            <div className="py-12 text-center space-y-4 bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
+              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto">
+                <LayoutGrid className="w-6 h-6 text-white/20" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white/60 uppercase tracking-widest">No Active Scrapes</p>
+                <p className="text-xs text-gray-600 mt-1 uppercase tracking-tight">Run the Lead Generation Wizard from the Accounts page to start discovery.</p>
+              </div>
+              <button
+                onClick={() => {
+                  router.push("/crm/accounts");
+                  onClose();
+                }}
+                className="mt-4 px-6 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-[10px] font-black text-white uppercase tracking-widest"
+              >
+                Go to Accounts
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 bg-black/40 border-t border-white/5 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-black text-white uppercase tracking-widest transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// Rank Modal for University
+function UniversityRankModal({
+  isOpen,
+  onClose,
+  masteryLevel,
+  userLevel,
+  userName
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  masteryLevel: number;
+  userLevel: number;
+  userName: string;
+}) {
+  const prestigeGrade = Math.ceil(masteryLevel / 5);
+
+  const phases = [
+    { title: "Foundation", range: "1-5", grade: 1, color: "text-blue-400", bg: "bg-blue-400/20" },
+    { title: "Data Pioneer", range: "6-10", grade: 2, color: "text-cyan-400", bg: "bg-cyan-400/20" },
+    { title: "Outreach Architect", range: "11-15", grade: 3, color: "text-emerald-400", bg: "bg-emerald-400/20" },
+    { title: "Automation Specialist", range: "16-20", grade: 4, color: "text-violet-400", bg: "bg-violet-400/20" },
+    { title: "Strategic Master", range: "21-25", grade: 5, color: "text-amber-400", bg: "bg-amber-400/20" },
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative w-full max-w-xl bg-[#0f1115] border border-white/10 rounded-3xl overflow-hidden shadow-2xl"
+      >
+        <div className="p-8 border-b border-white/5 bg-gradient-to-br from-indigo-500/10 to-transparent">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.2)]">
+                <GraduationCap className="w-6 h-6 text-indigo-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-white uppercase tracking-tight italic">Mission Profile</h3>
+                <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest mt-1">Personnel Ranking System</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-8 space-y-8">
+          {/* User Hero */}
+          <div className="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Employee Name</p>
+              <p className="text-lg font-bold text-white tracking-tight">{userName}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-1">Clearance Level</p>
+              <p className="text-3xl font-black text-white italic">{userLevel}</p>
+            </div>
+          </div>
+
+          {/* Mastery Grid */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Platform Mastery Path</p>
+              <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Level {masteryLevel} / 25</p>
+            </div>
+            <div className="flex gap-1.5 h-3">
+              {Array.from({ length: 25 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex-1 rounded-sm transition-all duration-500",
+                    i < masteryLevel ? "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.4)]" : "bg-white/5"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Prestige Phase indicator */}
+          <div className="grid grid-cols-5 gap-3">
+            {phases.map((phase) => (
+              <div key={phase.grade} className="flex flex-col items-center gap-2">
+                <div className={cn(
+                  "w-full aspect-square rounded-xl border flex items-center justify-center transition-all duration-500",
+                  prestigeGrade >= phase.grade
+                    ? `${phase.bg} border-white/20 shadow-lg`
+                    : "bg-transparent border-white/5 opacity-20"
+                )}>
+                  {prestigeGrade >= phase.grade ? (
+                    <Medal className={cn("w-5 h-5", phase.color)} />
+                  ) : (
+                    <Lock className="w-4 h-4 text-gray-600" />
+                  )}
+                </div>
+                <p className={cn(
+                  "text-[8px] font-black uppercase tracking-tighter text-center leading-none",
+                  prestigeGrade >= phase.grade ? "text-white" : "text-gray-600"
+                )}>
+                  {phase.title.split(' ')[0]}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-gray-500 leading-relaxed text-center italic">
+            Your rank is determined by platform authority and technical mastery of the CRM ecosystem. Reach Level 25 to achieve Ultimate Prestige status.
+          </p>
+        </div>
+
+        <div className="p-6 bg-black/40 border-t border-white/5 flex gap-3">
+          <Link href="/crm/university" className="flex-1" onClick={onClose}>
+            <button className="w-full py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-black font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-indigo-500/20">
+              Open Training Center
+            </button>
+          </Link>
+          <button
+            onClick={onClose}
+            className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-black text-white uppercase tracking-widest transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 export function EntityBreakdown({
   title,
   entities,
@@ -176,6 +443,8 @@ export function EntityBreakdown({
   headerAction,
 }: EntityBreakdownProps) {
   const { widgets, isEditMode, toggleWidgetVisibility } = useDashboardLayout();
+  const { leadGenStats, masteryLevel, userLevel, userName } = useDashboardData();
+  const [activeModal, setActiveModal] = useState<"lead_wizard" | "university_rank" | null>(null);
 
   // Filter entities based on visibility in DashboardLayoutContext
   const visibleEntities = entities.filter(entity => {
@@ -261,17 +530,61 @@ export function EntityBreakdown({
                 {entity.tooltip ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Link href={entity.href} className={cn("block group h-full", isEditMode && "pointer-events-none")}>
-                        <DashboardCard
-                          icon={Icon}
-                          label={entity.name}
-                          count={entity.value}
-                          description={`${percentage}% of records`}
-                          variant={variant}
-                          className={cn("transition-colors duration-300", colors.bg, colors.border, isEditMode && "opacity-50 grayscale-[0.5]")}
-                          iconClassName={colors.icon}
-                        />
-                      </Link>
+                      {entity.modal === "lead_wizard" ? (
+                        <div
+                          onClick={() => setActiveModal("lead_wizard")}
+                          className={cn("block group h-full cursor-pointer", isEditMode && "pointer-events-none")}
+                        >
+                          <DashboardCard
+                            icon={Icon}
+                            label={entity.name}
+                            count={entity.value}
+                            description={`${percentage}% of records`}
+                            variant={variant}
+                            className={cn("transition-colors duration-300", colors.bg, colors.border, isEditMode && "opacity-50 grayscale-[0.5]")}
+                            iconClassName={colors.icon}
+                          />
+                        </div>
+                      ) : entity.modal === "university_rank" ? (
+                        <div
+                          onClick={() => setActiveModal("university_rank")}
+                          className={cn("block group h-full cursor-pointer", isEditMode && "pointer-events-none")}
+                        >
+                          <DashboardCard
+                            icon={Icon}
+                            label={entity.name}
+                            count={entity.value}
+                            description={`${percentage}% of records`}
+                            variant={variant}
+                            className={cn("transition-colors duration-300", colors.bg, colors.border, isEditMode && "opacity-50 grayscale-[0.5]")}
+                            iconClassName={colors.icon}
+                          />
+                        </div>
+                      ) : entity.modal === "none" ? (
+                        <div className={cn("block group h-full cursor-default", isEditMode && "pointer-events-none")}>
+                          <DashboardCard
+                            icon={Icon}
+                            label={entity.name}
+                            count={entity.value}
+                            description={`${percentage}% of records`}
+                            variant={variant}
+                            className={cn("transition-colors duration-300", colors.bg, colors.border, isEditMode && "opacity-50 grayscale-[0.5]")}
+                            iconClassName={colors.icon}
+                          />
+                        </div>
+                      ) : (
+                        <Link href={entity.href} className={cn("block group h-full", isEditMode && "pointer-events-none")}>
+                          <DashboardCard
+                            icon={Icon}
+                            label={entity.name}
+                            count={entity.value}
+                            description={`${percentage}% of records`}
+                            variant={variant}
+                            className={cn("transition-colors duration-300", colors.bg, colors.border, isEditMode && "opacity-50 grayscale-[0.5]")}
+                            iconClassName={colors.icon}
+                          />
+                        </Link>
+                      )}
                     </TooltipTrigger>
                     <TooltipContent
                       side="top"
@@ -302,6 +615,20 @@ export function EntityBreakdown({
             );
           })}
         </div>
+
+        {/* Modals */}
+        <LeadWizardSelectionModal
+          isOpen={activeModal === "lead_wizard"}
+          onClose={() => setActiveModal(null)}
+          activeJobs={leadGenStats?.activeJobs || []}
+        />
+        <UniversityRankModal
+          isOpen={activeModal === "university_rank"}
+          onClose={() => setActiveModal(null)}
+          masteryLevel={masteryLevel || 1}
+          userLevel={userLevel || 1}
+          userName={userName || "Personnel"}
+        />
       </motion.div>
     </TooltipProvider>
   );

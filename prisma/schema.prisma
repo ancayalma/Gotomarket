@@ -993,6 +993,9 @@ model Users {
   created_approval_processes ApprovalProcess[]       @relation(name: "ApprovalProcessCreator")
   approval_step_approvals    ApprovalStep[]          @relation(name: "ApprovalStepApprover")
   approval_submissions       ApprovalRequest[]       @relation(name: "ApprovalSubmitter")
+
+  // Gamification & University
+  university_level           Int                     @default(1)
   approval_actions           ApprovalRequestAction[] @relation(name: "ApprovalActor")
   notifications              Notification[]
   quotes                     crm_Quotes[]
@@ -1104,7 +1107,10 @@ model Team {
   navigation_configs NavigationConfig[]
   integrations       Tenant_Integrations?
   system_activities  SystemActivity[]
+  // Widget Configuration
+  revenue_target     Int @default(10000)
 }
+
 
 model Authenticator {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId

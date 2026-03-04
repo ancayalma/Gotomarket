@@ -65,9 +65,11 @@ export const DailyPulseWidget = () => {
                 ) : (
                     <>
                         {/* Summary Section */}
-                        <div className="relative p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/10 group-hover/pulse:border-amber-500/30 transition-all duration-500">
-                            <Quote className="absolute -top-2 -left-1 h-6 w-6 text-amber-500/20" />
-                            <p className="text-sm font-medium leading-relaxed italic text-foreground/90 leading-tight">
+                        <div className="relative p-5 rounded-2xl bg-gradient-to-br from-amber-500/[0.08] via-amber-500/[0.03] to-transparent border border-amber-500/10 group-hover/pulse:border-amber-500/20 transition-all duration-700 shadow-inner group/summary">
+                            <div className="absolute top-3 left-3 opacity-20 group-hover/summary:opacity-40 transition-opacity duration-700">
+                                <Quote className="h-4 w-4 text-amber-500 fill-amber-500/20" />
+                            </div>
+                            <p className="text-[13px] font-medium leading-relaxed italic text-foreground/90 pl-6 relative z-10">
                                 {data?.summary || "No priorities detected for today. A perfect time to plan ahead or focus on deep work."}
                             </p>
                         </div>

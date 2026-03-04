@@ -35,7 +35,10 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Sparkles, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image"; // Added Image import as it was in the provided diff, assuming it's needed later
+
 import { cn } from "@/lib/utils";
 
 const PHASES = [
@@ -47,213 +50,213 @@ const PHASES = [
 ];
 
 const MILESTONES = [
-    // Foundation
     {
-        id: 1, phase: "foundation", title: "Workspace Founder", subtitle: "Establishing the core", icon: Users, xp: 50,
+        id: 1, phase: "foundation", title: "System Onboarding", subtitle: "Getting settled in", icon: Users, xp: 50,
         requirements: [
-            { text: "Complete user profile (Avatar/Social)", done: true },
-            { text: "Configure org timezone & locale", done: true },
-            { text: "Define fiscal year start date", done: true }
+            { text: "Upload a personal avatar/profile picture", done: true, href: "/profile" },
+            { text: "Configure your personal time zone", done: true, href: "/profile" },
+            { text: "Navigate to the main CRM Dashboard", done: true, href: "/crm/dashboard" }
         ]
     },
     {
-        id: 2, phase: "foundation", title: "Brand Guardian", subtitle: "Visual identity", icon: Layout, xp: 50,
+        id: 2, phase: "foundation", title: "The Communicator", subtitle: "Digital presence", icon: Layout, xp: 50,
         requirements: [
-            { text: "Upload primary and secondary logos", done: true },
-            { text: "Set custom hex brand colors", done: false },
-            { text: "Customize system-wide help URL", done: false }
+            { text: "Configure your personal email signature", done: false, href: "/profile?tab=signature" },
+            { text: "Send a direct internal message to a peer", done: false, href: "/messages" },
+            { text: "Review your personal notification settings", done: false, href: "/profile" }
         ]
     },
     {
-        id: 3, phase: "foundation", title: "Team Captain", subtitle: "Building the army", icon: Users, xp: 100,
+        id: 3, phase: "foundation", title: "Data Entry Novice", subtitle: "Core records", icon: Users, xp: 100,
         requirements: [
-            { text: "Invite first 3 team members", done: false },
-            { text: "Define department hierarchies", done: false },
-            { text: "Set global invite permissions", done: false }
+            { text: "Create a new Lead or Contact manually", done: false, href: "/crm/leads" },
+            { text: "Add a comprehensive note to a profile", done: false, href: "/crm/leads" },
+            { text: "Update an existing contact's details", done: false, href: "/crm/contacts" }
         ]
     },
     {
-        id: 4, phase: "foundation", title: "Module Explorer", subtitle: "Customizing tools", icon: Layout, xp: 100,
+        id: 4, phase: "foundation", title: "Task Manager", subtitle: "Daily operations", icon: Layout, xp: 100,
         requirements: [
-            { text: "Enable/Disable 5+ core modules", done: false },
-            { text: "Set module-specific sidebar order", done: false },
-            { text: "Review module audit logs", done: false }
+            { text: "Create a new Task with a specific due date", done: false, href: "/crm/tasks" },
+            { text: "Mark a scheduled activity as completed", done: false, href: "/crm/tasks" },
+            { text: "Link a follow-up task to an Opportunity", done: false, href: "/crm/opportunities" }
         ]
     },
     {
-        id: 5, phase: "foundation", title: "Security Officer", subtitle: "Hardening access", icon: ShieldCheck, xp: 150,
+        id: 5, phase: "foundation", title: "Insight Seeker", subtitle: "Navigating data", icon: ShieldCheck, xp: 150,
         requirements: [
-            { text: "Enable Multi-factor Auth (MFA)", done: false },
-            { text: "Restrict IPs for Admin access", done: false },
-            { text: "Rotate API access tokens", done: false }
+            { text: "Use global search to locate a record", done: false, href: "/crm/dashboard" },
+            { text: "Apply a custom filter to a Contact list view", done: false, href: "/crm/contacts" },
+            { text: "Pin or bookmark a frequently visited page", done: false, href: "/crm/dashboard" }
         ]
     },
     // Data Pioneer
     {
-        id: 6, phase: "data-pioneer", title: "Data Specialist", subtitle: "Volume processing", icon: Search, xp: 200,
+        id: 6, phase: "data-pioneer", title: "Opportunity Hunter", subtitle: "Pipeline basics", icon: Search, xp: 200,
         requirements: [
-            { text: "Import 500+ leads via CSV", done: false },
-            { text: "Setup auto-verify for new leads", done: false },
-            { text: "Map 20+ custom data fields", done: false }
+            { text: "Create your first Deal/Opportunity", done: false, href: "/crm/opportunities" },
+            { text: "Assign an estimated revenue value", done: false, href: "/crm/opportunities" },
+            { text: "Move an Opportunity to a new pipeline stage", done: false, href: "/crm/opportunities" }
         ]
     },
     {
-        id: 7, phase: "data-pioneer", title: "Pool Master", subtitle: "Segmentation", icon: Database, xp: 250,
+        id: 7, phase: "data-pioneer", title: "Pipeline Organizer", subtitle: "Visual control", icon: Database, xp: 250,
         requirements: [
-            { text: "Create 5 targeted Lists", done: false },
-            { text: "Set automated pool rotation rules", done: false },
-            { text: "Define pool ownership weighted logic", done: false }
+            { text: "View and filter the Kanban opportunity board", done: false, href: "/crm/opportunities" },
+            { text: "Add a specific tag or label to a deal", done: false, href: "/crm/opportunities" },
+            { text: "Log a 'Next Step' description for a prospect", done: false, href: "/crm/opportunities" }
         ]
     },
     {
-        id: 8, phase: "data-pioneer", title: "The Big Picture", subtitle: "Data architecture", icon: Star, xp: 150,
+        id: 8, phase: "data-pioneer", title: "Engagement Specialist", subtitle: "Direct outreach", icon: Star, xp: 150,
         requirements: [
-            { text: "Complete ER diagram walk-thru", done: false },
-            { text: "Define 3 custom entity relationships", done: false },
-            { text: "Audit cross-object data integrity", done: false }
+            { text: "Connect your email account for outbound", done: false, href: "/profile?tab=integration" },
+            { text: "Send a tracked email directly from the CRM", done: false, href: "/crm/leads" },
+            { text: "Create a basic email template for quick use", done: false, href: "/emails" }
         ]
     },
     {
-        id: 9, phase: "data-pioneer", title: "Smart Enroller", subtitle: "AI Enrichment", icon: Zap, xp: 300,
+        id: 9, phase: "data-pioneer", title: "Meeting Coordinator", subtitle: "Time management", icon: Zap, xp: 300,
         requirements: [
-            { text: "Enrich 200+ leads with AI agent", done: false },
-            { text: "Score leads by 'Intent' level", done: false },
-            { text: "Setup enrichment triggers for 10DLC", done: false }
+            { text: "Connect your external calendar to the CRM", done: false, href: "/profile?tab=integration" },
+            { text: "Generate and send a meeting booking link", done: false, href: "/crm/calendar" },
+            { text: "Log the outcome notes of a completed meeting", done: false, href: "/crm/calendar" }
         ]
     },
     {
-        id: 10, phase: "data-pioneer", title: "Hygiene Specialist", subtitle: "Data health", icon: ShieldCheck, xp: 200,
+        id: 10, phase: "data-pioneer", title: "Collaboration Pro", subtitle: "Team synergy", icon: ShieldCheck, xp: 200,
         requirements: [
-            { text: "Run full deduplication sweep (Global)", done: false },
-            { text: "Standardize phone formatting", done: false },
-            { text: "Bounce-check entire email database", done: false }
+            { text: "Mention (@tag) a team member in a record", done: false, href: "/crm/leads" },
+            { text: "Reassign a lead or task to another user", done: false, href: "/crm/leads" },
+            { text: "Share a specific CRM record link internally", done: false, href: "/crm/opportunities" }
         ]
     },
     // Outreach Architect
     {
-        id: 11, phase: "outreach-architect", title: "Script Writer", subtitle: "Template mastery", icon: Mail, xp: 200,
+        id: 11, phase: "outreach-architect", title: "Campaign Contributor", subtitle: "Scaled action", icon: Mail, xp: 200,
         requirements: [
-            { text: "Draft 10 A/B sequence templates", done: false },
-            { text: "Setup 3 liquid-logic dynamic variables", done: false },
-            { text: "Translate templates for 2+ locales", done: false }
+            { text: "Add a targeted contact to an active campaign", done: false, href: "/campaigns" },
+            { text: "Review the performance metrics of a sequence", done: false, href: "/campaigns" },
+            { text: "Pause or modify a specific prospect's state", done: false, href: "/crm/leads" }
         ]
     },
     {
-        id: 12, phase: "outreach-architect", title: "The Launch", subtitle: "Campaign execution", icon: TrendingUp, xp: 500,
+        id: 12, phase: "outreach-architect", title: "Data Hygiene Champion", subtitle: "Clean records", icon: TrendingUp, xp: 500,
         requirements: [
-            { text: "Execute 1,000+ outreach sends", done: false },
-            { text: "Maintain <2% bounce rate", done: false },
-            { text: "Schedule sequences for 3 time-zones", done: false }
+            { text: "Identify and successfully merge a duplicate", done: false, href: "/crm/leads" },
+            { text: "Fill out missing information on 10 records", done: false, href: "/crm/contacts" },
+            { text: "Disqualify or archive stale, unresponsive leads", done: false, href: "/crm/leads" }
         ]
     },
     {
-        id: 13, phase: "outreach-architect", title: "Digital Signature", subtitle: "Professionalism", icon: PenTool, xp: 150,
+        id: 13, phase: "outreach-architect", title: "Lead Wizard Apprentice", subtitle: "Sourcing intel", icon: PenTool, xp: 150,
         requirements: [
-            { text: "Deploy vCards for entire team", done: false },
-            { text: "Verify SPF/DKIM/DMARC status", done: false },
-            { text: "Setup 10DLC brand trust certificate", done: false }
+            { text: "Review output from an AI-generated lead pool", done: false, href: "/crm/lead-pools" },
+            { text: "Save an Ideal Customer Profile (ICP) filter", done: false, href: "/crm/lead-pools" },
+            { text: "Read an auto-enriched company profile view", done: false, href: "/crm/accounts" }
         ]
     },
     {
-        id: 14, phase: "outreach-architect", title: "Human Factor", subtitle: "Task optimization", icon: CheckCircle2, xp: 300,
+        id: 14, phase: "outreach-architect", title: "Command Operator", subtitle: "Queue execution", icon: CheckCircle2, xp: 300,
         requirements: [
-            { text: "Complete 50 manual outreach tasks", done: false },
-            { text: "SLA response time < 4 hours", done: false },
-            { text: "Record 20+ call notes in CRM", done: false }
+            { text: "Access Sales Command / Power Dialer mode", done: false, href: "/crm/dialer" },
+            { text: "Process 5 consecutive outreach items in queue", done: false, href: "/crm/dialer" },
+            { text: "Drop a pre-recorded voicemail using Dialer", done: false, href: "/crm/dialer" }
         ]
     },
     {
-        id: 15, phase: "outreach-architect", title: "High Conversationalist", subtitle: "AI Detection", icon: Target, xp: 400,
+        id: 15, phase: "outreach-architect", title: "Contract Initiator", subtitle: "Closing tools", icon: Target, xp: 400,
         requirements: [
-            { text: "Achieve 30% positive reply rate", done: false },
-            { text: "Train AI for sentiment detection", done: false },
-            { text: "Automate 'OOO' reply handling", done: false }
+            { text: "Generate a drafted proposal or quote", done: false, href: "/crm/quotes" },
+            { text: "Send a digital document out for signature", done: false, href: "/crm/contracts" },
+            { text: "Review the status of a pending agreement", done: false, href: "/crm/contracts" }
         ]
     },
     // Automation Specialist
     {
-        id: 16, phase: "automation-specialist", title: "Flow General", subtitle: "Visual logic", icon: Workflow, xp: 600,
+        id: 16, phase: "automation-specialist", title: "FlowState Explorer", subtitle: "Understanding logic", icon: Workflow, xp: 600,
         requirements: [
-            { text: "Build 5 production FlowState maps", done: false },
-            { text: "Integrate multi-node error handling", done: false },
-            { text: "Sync flow data to Google Sheets", done: false }
+            { text: "Navigate to the Automations & Rules builder", done: false, href: "/crm/workflows" },
+            { text: "Review the nodes of an active automated flow", done: false, href: "/crm/workflows" },
+            { text: "Trigger a workflow via a manual CRM action", done: false, href: "/crm/leads" }
         ]
     },
     {
-        id: 17, phase: "automation-specialist", title: "Reactive Master", subtitle: "Trigger logic", icon: Zap, xp: 450,
+        id: 17, phase: "automation-specialist", title: "Routine Optimizer", subtitle: "Saving time", icon: Zap, xp: 450,
         requirements: [
-            { text: "Deploy 10+ real-time event triggers", done: false },
-            { text: "Setup cross-module webhooks", done: false },
-            { text: "Monitor trigger latency (<200ms)", done: false }
+            { text: "Process 20+ leads simultaneously via bulk edit", done: false, href: "/crm/leads" },
+            { text: "Create a macro or quick-action shortcut", done: false, href: "/profile?tab=signatures" },
+            { text: "Customize a widget dashboard for your metrics", done: false, href: "/crm/dashboard" }
         ]
     },
     {
-        id: 18, phase: "automation-specialist", title: "Decisionist", subtitle: "Conditional flows", icon: Workflow, xp: 500,
+        id: 18, phase: "automation-specialist", title: "Pipeline Forecaster", subtitle: "Predictive insight", icon: Workflow, xp: 500,
         requirements: [
-            { text: "Implement 3-level If/Else nesting", done: false },
-            { text: "Route leads by revenue and locale", done: false },
-            { text: "Autofill fields based on AI scoring", done: false }
+            { text: "Review your projected revenue forecast report", done: false, href: "/reports" },
+            { text: "Ensure active deals have accurate probability", done: false, href: "/crm/opportunities" },
+            { text: "Successfully win a deal worth over $1,000", done: false, href: "/crm/opportunities" }
         ]
     },
     {
-        id: 19, phase: "automation-specialist", title: "The Voice", subtitle: "Telephony mastery", icon: Phone, xp: 400,
+        id: 19, phase: "automation-specialist", title: "AI Assistant User", subtitle: "AI acceleration", icon: Phone, xp: 400,
         requirements: [
-            { text: "Setup AI Voice greeting agent", done: false },
-            { text: "Configure 10+ SIP trunk endpoints", done: false },
-            { text: "Automate SMS-to-Voice handoff", done: false }
+            { text: "Use AI to draft a contextual email response", done: false, href: "/messages" },
+            { text: "Request an AI summary of a lengthy thread", done: false, href: "/messages" },
+            { text: "Use the Prompts Lab to generate outreach copy", done: false, href: "/profile?tab=signatures" }
         ]
     },
     {
-        id: 20, phase: "automation-specialist", title: "Ecosystem Builder", subtitle: "Integrations", icon: Webhook, xp: 550,
+        id: 20, phase: "automation-specialist", title: "Success Advocate", subtitle: "Post-sale care", icon: Webhook, xp: 550,
         requirements: [
-            { text: "Setup Zapier/Make bi-directional sync", done: false },
-            { text: "Deploy custom Webhook secret keys", done: false },
-            { text: "Pass Basalt events to external BI", done: false }
+            { text: "Transition a won deal into an active Customer", done: false, href: "/crm/opportunities" },
+            { text: "Create or respond to an internal Support Case", done: false, href: "/crm/cases" },
+            { text: "Log a detailed check-in call with a client", done: false, href: "/crm/contacts" }
         ]
     },
     // Strategic Master
     {
-        id: 21, phase: "strategic-master", title: "Compliance Officer", subtitle: "Governance", icon: ShieldCheck, xp: 750,
+        id: 21, phase: "strategic-master", title: "Elite Closer", subtitle: "Top performance", icon: ShieldCheck, xp: 750,
         requirements: [
-            { text: "Pass 10DLC Brand/Camp registration", done: false },
-            { text: "Audit TCPA consent for entire database", done: false },
-            { text: "Implement automated DNC handling", done: false }
+            { text: "Close won 5 or more deals in a single quarter", done: false, href: "/crm/opportunities" },
+            { text: "Maintain a win-rate above the standard average", done: false, href: "/reports" },
+            { text: "Successfully reactivate a previously lost deal", done: false, href: "/crm/opportunities" }
         ]
     },
     {
-        id: 22, phase: "strategic-master", title: "Sovereign Admin", subtitle: "Roles & Permissions", icon: Users, xp: 600,
+        id: 22, phase: "strategic-master", title: "Platform Mentor", subtitle: "Guiding others", icon: Users, xp: 600,
         requirements: [
-            { text: "Create 20+ granular custom roles", done: false },
-            { text: "Define cross-department visibility", done: false },
-            { text: "Manage multi-org child workspaces", done: false }
+            { text: "Complete an advanced CRM training module", done: false, href: "/crm/university" },
+            { text: "Document a best practice in a team channel", done: false, href: "/messages" },
+            { text: "Have a personal template adopted by a peer", done: false, href: "/emails" }
         ]
     },
     {
-        id: 23, phase: "strategic-master", title: "Revenue Architect", subtitle: "ROI realization", icon: Trophy, xp: 1000,
+        id: 23, phase: "strategic-master", title: "Data Detective", subtitle: "Deep analysis", icon: Trophy, xp: 1000,
         requirements: [
-            { text: "Manage $1M+ in Deal Room pipeline", done: false },
-            { text: "Close 5 enterprise deals in CRM", done: false },
-            { text: "Track multi-touch attribution", done: false }
+            { text: "Build a custom analytics report query", done: false, href: "/reports" },
+            { text: "Export a cross-object segmented data list", done: false, href: "/databox" },
+            { text: "Identify a drop-off point in the sales funnel", done: false, href: "/reports" }
         ]
     },
     {
-        id: 24, phase: "strategic-master", title: "ROI Legend", subtitle: "Strategic reporting", icon: TrendingUp, xp: 1200,
+        id: 24, phase: "strategic-master", title: "Revenue Driver", subtitle: "Consistent value", icon: TrendingUp, xp: 1200,
         requirements: [
-            { text: "Achieve 3.0x ROI on Basalt spend", done: false },
-            { text: "Reduce CAC by 40% via automation", done: false },
-            { text: "Present quarterly growth board", done: false }
+            { text: "Hit active sales activity targets for two months", done: false, href: "/reports" },
+            { text: "Uncover an upsell opportunity from an account", done: false, href: "/crm/accounts" },
+            { text: "Achieve an average deal closure time under 14 days", done: false, href: "/reports" }
         ]
     },
     {
-        id: 25, phase: "strategic-master", title: "Operations Master", subtitle: "Ultimate mastery", icon: GraduationCap, xp: 2500,
+        id: 25, phase: "strategic-master", title: "CRM Grandmaster", subtitle: "Ultimate mastery", icon: GraduationCap, xp: 2500,
         requirements: [
-            { text: "6 months of active platform usage", done: false },
-            { text: "Zero critical data gaps (Full Health)", done: false },
-            { text: "Publish a custom template pack", done: false },
-            { text: "Mentor 5+ other platform users", done: false }
+            { text: "Log 500+ total logged communications", done: false, href: "/reports" },
+            { text: "Demonstrate high customer satisfaction metrics", done: false, href: "/reports" },
+            { text: "Maintain perfect CRM data hygiene for 30 days", done: false, href: "/crm/dashboard" }
         ]
     },
 ];
+
+
 
 const STAGE_WEIGHTS: Record<string, number> = {
     "Step 7: Qualify": 0,
@@ -269,7 +272,7 @@ function clamp(min: number, val: number, max: number) {
     return Math.max(min, Math.min(max, val));
 }
 
-export default function CertificationPaths() {
+export default function CertificationPaths({ userLevel = 1, user }: { userLevel?: number, user?: any }) {
     const [stage, setStage] = React.useState<string>("Step 10: Close Won");
     const [touches, setTouches] = React.useState<string>("3");
     const [daysToBooking, setDaysToBooking] = React.useState<string>("7");
@@ -317,10 +320,31 @@ export default function CertificationPaths() {
 
                         <div className="space-y-6">
                             {MILESTONES.filter(m => m.phase === phase.id).map((milestone) => {
-                                const locked = isLocked(milestone);
-                                const allDone = milestone.requirements.every(r => r.done);
-                                const doneCount = milestone.requirements.filter(r => r.done).length;
-                                const totalCount = milestone.requirements.length;
+                                const locked = isLocked(milestone, userLevel, user);
+
+                                // If the milestone is below userLevel, it's done.
+                                // If the milestone is the userLevel, calculate dynamically 
+                                const requirements = milestone.requirements.map(req => {
+                                    if (milestone.id < userLevel) return { ...req, done: true };
+                                    if (milestone.id === userLevel) {
+                                        let isReqDone = req.done;
+
+                                        // Level 1 logic: evaluate in real-time
+                                        if (milestone.id === 1) {
+                                            if (req.text.includes("avatar")) isReqDone = !!user?.avatar;
+                                            if (req.text.includes("time zone")) isReqDone = true; // Assume configured if they are here
+                                            if (req.text.includes("Dashboard")) isReqDone = true; // Assume navigated
+                                        }
+
+                                        return { ...req, done: isReqDone };
+                                    }
+                                    return { ...req, done: false };
+                                });
+
+                                const allReqsDone = requirements.every(r => r.done);
+                                const allDone = milestone.id < userLevel || (milestone.id === userLevel && allReqsDone);
+                                const doneCount = requirements.filter(r => r.done).length;
+                                const totalCount = requirements.length;
 
                                 return (
                                     <motion.div
@@ -336,7 +360,7 @@ export default function CertificationPaths() {
                                             allDone
                                                 ? "border-emerald-500/40 bg-emerald-500/[0.03] shadow-[0_0_25px_rgba(16,185,129,0.05)]"
                                                 : locked
-                                                    ? "border-white/5 opacity-30 grayscale pointer-events-none"
+                                                    ? "border-white/5 opacity-30 grayscale"
                                                     : "border-white/10 hover:border-white/30 hover:bg-white/[0.04] shadow-xl"
                                         )}>
                                             <CardHeader className="p-4 pb-2">
@@ -381,27 +405,60 @@ export default function CertificationPaths() {
                                                 </div>
                                             </CardHeader>
 
-                                            <CardContent className="p-4 pt-4 space-y-4">
+                                            <CardContent className="p-4 pt-4 space-y-4 relative z-10">
                                                 {/* Checklist */}
                                                 <div className="space-y-2">
-                                                    {milestone.requirements.map((req, ridx) => (
-                                                        <div key={ridx} className="flex items-center gap-3 group/item">
-                                                            <div className={cn(
-                                                                "w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-colors",
-                                                                req.done
-                                                                    ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
-                                                                    : "border-white/10 bg-white/5"
-                                                            )}>
-                                                                {req.done && <Check className="w-2.5 h-2.5" />}
+                                                    {requirements.map((req, ridx) => {
+                                                        const isClickable = !!req.href;
+                                                        const innerContent = (
+                                                            <>
+                                                                <div className={cn(
+                                                                    "w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-colors",
+                                                                    req.done
+                                                                        ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+                                                                        : isClickable
+                                                                            ? "border-white/20 bg-white/5 group-hover/item:border-white/40 group-hover/item:bg-white/10"
+                                                                            : "border-white/10 bg-white/5"
+                                                                )}>
+                                                                    {req.done && <Check className="w-2.5 h-2.5" />}
+                                                                </div>
+                                                                <span className={cn(
+                                                                    "text-[10px] leading-snug font-bold transition-all duration-300 flex-1 flex flex-row items-center",
+                                                                    req.done
+                                                                        ? "text-emerald-500/60 line-through cursor-pointer hover:text-emerald-400 hover:line-through"
+                                                                        : isClickable
+                                                                            ? "text-primary cursor-pointer underline decoration-primary/30 hover:decoration-primary hover:text-emerald-400"
+                                                                            : "text-gray-400"
+                                                                )}>
+                                                                    {req.text}
+                                                                    {isClickable && (
+                                                                        <ExternalLink className="w-3 h-3 ml-1.5 opacity-60 group-hover/item:opacity-100 group-hover/item:translate-x-0.5 transition-all" />
+                                                                    )}
+                                                                </span>
+                                                            </>
+                                                        );
+
+                                                        if (isClickable) {
+                                                            return (
+                                                                <Link
+                                                                    key={ridx}
+                                                                    href={(req as any).href}
+                                                                    className="flex items-center gap-3 p-1.5 -ml-1.5 rounded-md transition-colors hover:bg-white/5 cursor-pointer group/item"
+                                                                >
+                                                                    {innerContent}
+                                                                </Link>
+                                                            );
+                                                        }
+
+                                                        return (
+                                                            <div
+                                                                key={ridx}
+                                                                className="flex items-center gap-3 p-1.5 -ml-1.5 rounded-md transition-colors group/item"
+                                                            >
+                                                                {innerContent}
                                                             </div>
-                                                            <span className={cn(
-                                                                "text-[10px] leading-snug font-medium transition-colors",
-                                                                req.done ? "text-gray-500 line-through" : "text-gray-400 group-hover/item:text-gray-200"
-                                                            )}>
-                                                                {req.text}
-                                                            </span>
-                                                        </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
 
                                                 {/* Local Progress Bar */}
@@ -427,7 +484,7 @@ export default function CertificationPaths() {
 
                                             {/* Rank-Up Shadow Decor */}
                                             <div className={cn(
-                                                "absolute inset-0 bg-gradient-to-t from-emerald-500/5 to-transparent transition-opacity duration-700",
+                                                "absolute inset-0 bg-gradient-to-t from-emerald-500/5 to-transparent transition-opacity duration-700 pointer-events-none",
                                                 allDone ? "opacity-100" : "opacity-0"
                                             )} />
                                         </Card>
@@ -556,49 +613,107 @@ export default function CertificationPaths() {
                 </div>
             </div>
 
-            {/* Prestige Summary */}
+            {/* Current Rank & Certificate */}
             <div className="pt-8">
-                <Card className="bg-gradient-to-br from-amber-600/10 via-black to-blue-600/5 border-amber-500/20 p-12 overflow-hidden relative shadow-2xl">
+                <Card className={cn(
+                    "border overflow-hidden relative shadow-2xl transition-all duration-700 p-12",
+                    userLevel >= 25
+                        ? "bg-gradient-to-br from-amber-600/10 via-black to-blue-600/5 border-amber-500/20"
+                        : "bg-gradient-to-br from-indigo-600/10 via-black to-slate-900 border-indigo-500/20"
+                )}>
                     <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
                         <div className="relative">
-                            <div className="w-28 h-28 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shadow-[0_0_50px_rgba(245,158,11,0.2)] animate-pulse">
-                                <Crown className="w-14 h-14 text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
+                            <div className={cn(
+                                "w-28 h-28 rounded-3xl border flex items-center justify-center animate-pulse",
+                                userLevel >= 25
+                                    ? "bg-amber-500/10 border-amber-500/20 shadow-[0_0_50px_rgba(245,158,11,0.2)]"
+                                    : "bg-indigo-500/10 border-indigo-500/20 shadow-[0_0_50px_rgba(99,102,241,0.2)]"
+                            )}>
+                                {userLevel >= 25 ? (
+                                    <Crown className="w-14 h-14 text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
+                                ) : (
+                                    <Medal className="w-14 h-14 text-indigo-400 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
+                                )}
                             </div>
-                            <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-blue-500 border-4 border-black flex items-center justify-center text-white font-black text-xs">
-                                EX
+                            <div className={cn(
+                                "absolute -top-3 -right-3 w-10 h-10 rounded-full border-4 border-black flex items-center justify-center text-white font-black text-xs",
+                                userLevel >= 25 ? "bg-amber-500" : "bg-indigo-500"
+                            )}>
+                                L{userLevel}
                             </div>
                         </div>
                         <div className="flex-1 space-y-4 text-center md:text-left">
-                            <h3 className="text-4xl md:text-6xl font-black bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-4">
-                                Ultimate Prestige: <span className="text-white">Master of Basalt</span>
+                            <h3 className="text-3xl md:text-5xl font-black italic tracking-tight uppercase leading-none py-2 px-2">
+                                {userLevel >= 25 ? (
+                                    <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">Ultimate Prestige: Master</span>
+                                ) : (
+                                    <span className="bg-gradient-to-r from-indigo-400 to-indigo-600 bg-clip-text text-transparent">
+                                        Current Rank: {MILESTONES.find(m => m.id === userLevel)?.title || "Level " + userLevel}
+                                    </span>
+                                )}
                             </h3>
                             <p className="text-gray-400 text-lg max-w-2xl leading-relaxed">
-                                This certification is the culmination of technical excellence and massive output. Reaching Level 25 proves you have mastered every aspect of modern RevOps automation.
+                                {userLevel >= 25
+                                    ? "This certification is the culmination of technical excellence. Reaching Level 25 proves you have mastered every aspect of modern RevOps automation."
+                                    : `You have successfully unlocked Clearance Level ${userLevel}. Wear this badge proudly on your profile as you progress toward Level 25. Complete next stage requirements to rank up.`}
                             </p>
                             <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-6">
-                                {["Lvl 25 Badge", "Global Admin Status", "Prestige UI Skin", "Beta Tester Access"].map(tag => (
-                                    <Badge key={tag} className="bg-amber-500/5 text-amber-500 border-amber-500/10 px-4 py-1.5 font-bold text-[11px] uppercase tracking-widest">{tag}</Badge>
-                                ))}
+                                {userLevel >= 25 ? (
+                                    ["Lvl 25 Badge", "Global Admin Status", "Prestige UI Skin", "Beta Tester Access"].map(tag => (
+                                        <Badge key={tag} className="bg-amber-500/5 text-amber-500 border-amber-500/10 px-4 py-1.5 font-bold text-[11px] uppercase tracking-widest">{tag}</Badge>
+                                    ))
+                                ) : (
+                                    [
+                                        `Level ${userLevel} Badge Unlocked`,
+                                        "Digital Certificate Ready",
+                                        `Phase: ${MILESTONES.find(m => m.id === userLevel)?.phase || "Active"}`
+                                    ].map(tag => (
+                                        <Badge key={tag} className="bg-indigo-500/5 text-indigo-400 border-indigo-500/10 px-4 py-1.5 font-bold text-[11px] uppercase tracking-widest">{tag}</Badge>
+                                    ))
+                                )}
                             </div>
                         </div>
-                        <button className="px-12 py-6 bg-amber-500 text-black font-black uppercase text-xs tracking-[0.3em] rounded-2xl hover:bg-amber-400 hover:scale-105 active:scale-95 transition-[color,background-color,border-color,transform] shadow-[0_10px_40px_rgba(245,158,11,0.3)]">
-                            Claim Status
-                        </button>
+                        <div className="flex flex-col gap-3">
+                            <button className={cn(
+                                "px-10 py-5 text-black font-black uppercase text-xs tracking-[0.2em] rounded-2xl transition-[color,background-color,border-color,transform]",
+                                userLevel >= 25
+                                    ? "bg-amber-500 hover:bg-amber-400 shadow-[0_10px_40px_rgba(245,158,11,0.3)] hover:scale-105 active:scale-95"
+                                    : "bg-indigo-500 hover:bg-indigo-400 shadow-[0_10px_40px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95"
+                            )}>
+                                View Certificate
+                            </button>
+                            {userLevel < 25 && (
+                                <button className="px-10 py-5 bg-white/5 text-white font-black uppercase text-xs tracking-[0.2em] border border-white/10 rounded-2xl transition-all hover:bg-white/10 hover:border-white/30 hidden md:block">
+                                    Share Badge
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Background Decor */}
-                    <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-amber-500/5 blur-[120px]" />
+                    <div className={cn(
+                        "absolute -bottom-20 -right-20 w-80 h-80 blur-[120px]",
+                        userLevel >= 25 ? "bg-amber-500/5" : "bg-indigo-500/10"
+                    )} />
                 </Card>
             </div>
         </div>
     );
 }
 
-const isLocked = (item: typeof MILESTONES[0]) => {
-    if (item.id === 1) return false;
-    const previousItem = MILESTONES.find(m => m.id === item.id - 1);
-    if (!previousItem) return true;
-    return !previousItem.requirements.every(r => r.done);
+const isLocked = (item: typeof MILESTONES[0], currentLevel: number = 1, user: any = null) => {
+    // Current level and below are always unlocked
+    if (item.id <= currentLevel) return false;
+
+    // Level N is unlocked if Level N-1 is completely "done"
+    // Since currentLevel is strictly tracked via userLevel in DB, if userLevel = 1, but they finished Level 1 tasks:
+    if (currentLevel === 1 && item.id === 2) {
+        // Quick dynamic check for Level 1 being done
+        const lvl1Done = !!user?.avatar && true; // Assuming time zone and dashboard are inherently true
+        if (lvl1Done) return false;
+    }
+
+    return item.id > currentLevel;
 };
 
 function Text({ children, className }: { children: React.ReactNode, className?: string }) {

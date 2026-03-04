@@ -158,9 +158,11 @@ const UNIVERSITY_TABS = [
 
 interface UniversityDashboardProps {
     plan?: string;
+    userLevel?: number;
+    user?: any;
 }
 
-export default function UniversityDashboard({ plan }: UniversityDashboardProps) {
+export default function UniversityDashboard({ plan, userLevel, user }: UniversityDashboardProps) {
     const [activeTab, setActiveTab] = useState<TabId>("getting-started");
     const [activeStage, setActiveStage] = useState<string | undefined>(undefined);
 
@@ -215,7 +217,6 @@ export default function UniversityDashboard({ plan }: UniversityDashboardProps) 
                 ))}
             </motion.div>
 
-            {/* Tab Content with AnimatePresence */}
             <AnimatePresence mode="wait">
 
                 {/* Getting Started Tab */}
@@ -369,7 +370,7 @@ export default function UniversityDashboard({ plan }: UniversityDashboardProps) 
                             overviewWhy="Certifications standardized the team's skillset. Earning these badges demonstrates to leadership that you are capable of managing complex automation and high-value accounts."
                             overviewHow="Enroll in a Mastery Path. Complete the interactive assessments and pass the final simulation to earn your digital certificate and platform profile badge."
                         />
-                        <CertificationPaths />
+                        <CertificationPaths userLevel={userLevel} user={user} />
                     </motion.div>
                 )}
 

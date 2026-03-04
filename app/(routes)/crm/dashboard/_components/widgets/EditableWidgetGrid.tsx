@@ -229,6 +229,7 @@ export const EditableWidgetGrid = () => {
         teamPipeline,
         crmEntities,
         teamData,
+        customWidgets,
     } = useDashboardData();
 
     const { widgets, updateLayout, isEditMode, toggleWidgetVisibility } = useDashboardLayout();
@@ -458,16 +459,20 @@ export const EditableWidgetGrid = () => {
                 );
             default:
                 if (id.startsWith("custom_")) {
-                    // Fallback mock data for newly created widgets
+                    const dbId = id.replace("custom_", "");
+                    const widgetConfig = customWidgets.find(w => (w.id === dbId) || (w._id?.toString() === dbId));
+
                     return (
                         <CustomMetricWidget
-                            data={{
-                                name: id.replace("custom_", "").replace("_", " "),
-                                icon: "BarChart3",
-                                color: "primary",
-                                chartType: "METRIC",
-                                value: 124500,
-                            }}
+                            widgetId={dbId}
+                            data={widgetConfig ? {
+                                name: widgetConfig.name,
+                                icon: widgetConfig.icon,
+                                color: widgetConfig.color,
+                                chartType: widgetConfig.chartType,
+                                value: 0, // Loading state will handle real value
+                                targetValue: widgetConfig.targetValue
+                            } : undefined}
                         />
                     );
                 }
