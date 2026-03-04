@@ -147,7 +147,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
     }
 
     // Call Azure OpenAI (or fallback OpenAI) with streaming
-    const model = await getAiSdkModel(auth.user.id);
+    const { model } = await getAiSdkModel(auth.user.id);
     if (!model) {
       return new NextResponse("No openai key found", { status: 500 });
     }

@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { addMonths } from "date-fns";
 import { createSurgeCheckoutSession } from "@/lib/surge";
 import { systemLogger } from "@/lib/logger";
+import { sendSmsSetupInstructions } from "@/lib/email/sms-setup-instructions";
 
 export async function saveSubscription(data: {
     planName: string;
@@ -113,6 +114,15 @@ export async function saveSubscription(data: {
         if (isInternalTeam) {
             systemLogger.error(`[SaveSubscription] Internal team ${team.slug} detected. Attempting to generate test checkout...`);
             // We flow into the regular checkout logic below, but we'll return early ONLY if Surge fails.
+        }
+
+        // 2.5 Send SMS/Email Setup Notification for Basic / Pro
+        if (["Basic", "Pro", "BASIC", "PRO"].includes(data.planName.toUpperCase())) {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://basalthq.com";
+            // Fire & forget
+            sendSmsSetupInstructions(user.email!, user.name!, data.planName, appUrl).catch(e => {
+                systemLogger.error(`[SaveSubscription] Failed to send SMS Setup Instructions to ${user.email}`, e);
+            });
         }
 
         // 3. Regular Flow: Create Invoice & Checkout

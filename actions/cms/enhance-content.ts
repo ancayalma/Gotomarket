@@ -22,7 +22,7 @@ export async function enhanceContent(
     context: EnhanceContext,
     instruction: string
 ): Promise<EnhanceResult> {
-    const model = await getAiSdkModel("system");
+    const { model } = await getAiSdkModel("system");
     if (!model) {
         throw new Error("AI model not configured");
     }

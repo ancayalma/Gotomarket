@@ -52,7 +52,7 @@ export async function getEnergyPulse(userId: string) {
             Format: { "forecast": "...", "suggestion": "...", "loadPercent": ${loadPercent}, "status": "${status}" }
         `;
 
-        const model = await getAiSdkModel(userId);
+        const { model } = await getAiSdkModel(userId);
         const { text } = await generateText({
             model,
             prompt,

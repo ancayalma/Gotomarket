@@ -48,7 +48,7 @@ export default function FirstContactWizard({ leadId }: Props) {
     // Test send targets
     const [testEmail, setTestEmail] = useState<string>("");
     const [testPhone, setTestPhone] = useState<string>("");
-    const [senderId, setSenderId] = useState<string>(""); // for SMS (Amazon Pinpoint regions)
+    const [senderId, setSenderId] = useState<string>(""); // for SMS (AWS EUM regions)
 
     const [loadingEmailPreview, setLoadingEmailPreview] = useState<boolean>(false);
     const [loadingSmsPreview, setLoadingSmsPreview] = useState<boolean>(false);

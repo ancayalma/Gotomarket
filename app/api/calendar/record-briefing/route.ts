@@ -67,7 +67,7 @@ export async function POST(req: Request) {
             Respond in JSON format: { "summary": "...", "advice": ["...", "...", "..."], "alert": "..." }
         `;
 
-        const model = await getAiSdkModel(session.user.id);
+        const { model } = await getAiSdkModel(session.user.id);
         const { text } = await generateText({
             model,
             prompt,

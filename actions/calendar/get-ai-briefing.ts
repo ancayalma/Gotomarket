@@ -59,7 +59,7 @@ export async function getAIDailyBriefing(userId: string) {
             Respond in JSON format: { "summary": "...", "highValueAlerts": ["...", "..."] }
         `;
 
-        const model = await getAiSdkModel(userId);
+        const { model } = await getAiSdkModel(userId);
         const { text } = await generateText({
             model,
             prompt,

@@ -111,7 +111,7 @@ export async function rankLinks(userId: string | undefined, domain: string, urls
   // Try LLM-guided ranking for an extra boost
   try {
     if (!userId) return heuristicSorted;
-    const model = await getAiSdkModel(userId);
+    const { model } = await getAiSdkModel(userId);
     if (!model) return heuristicSorted;
 
     const prompt = buildPrompt(domain, heuristicSorted.slice(0, 25), signals, ctx);

@@ -4,7 +4,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { sendPortalNotificationSms } from "@/lib/aws/eum-sms";
+import { sendSmsEum } from "@/lib/aws/eum-sms";
 import { systemLogger } from "@/lib/logger";
 
 export async function sendInvoiceSMS(invoiceId: string, phone: string) {
@@ -24,7 +24,7 @@ export async function sendInvoiceSMS(invoiceId: string, phone: string) {
         // Send SMS via AWS EUM
         try {
             const message = `Payment Link for Invoice #${invoice.invoice_number}: ${paymentLink}`;
-            await sendPortalNotificationSms(phone, message);
+            await sendSmsEum({ to: phone, body: message });
 
             systemLogger.error(`[SendInvoiceSMS] SMS sent to ${phone}`);
             return { success: true, message: "SMS sent" };

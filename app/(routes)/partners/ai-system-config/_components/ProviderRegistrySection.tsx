@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { updateAiProvider } from "@/actions/ai/manage-models";
+import { updateAiProvider, toggleAiModelStatus } from "@/actions/ai/manage-models";
+import { AddModelModal } from "./AddModelModal";
 import { toast } from "sonner";
 import {
     Globe,
@@ -53,6 +54,7 @@ const SDK_TYPE_LABELS: Record<string, { label: string; badge: string }> = {
     GOOGLE: { label: "Google SDK", badge: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
     AZURE: { label: "Azure SDK", badge: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" },
     MISTRAL: { label: "Mistral SDK", badge: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+    BEDROCK: { label: "AWS Bedrock", badge: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
     CUSTOM: { label: "Custom", badge: "bg-gray-500/10 text-gray-400 border-gray-500/20" },
 };
 
@@ -78,6 +80,17 @@ export const ProviderRegistrySection = ({ providers, models }: ProviderRegistryP
                 toast.success(`${provider.name} ${provider.isActive ? "disabled" : "enabled"}`);
             } catch {
                 toast.error("Failed to update provider");
+            }
+        });
+    };
+
+    const handleToggleModelActive = (model: Model) => {
+        startTransition(async () => {
+            try {
+                await toggleAiModelStatus(model.id, !model.isActive);
+                toast.success(`${model.name} ${model.isActive ? "disabled" : "enabled"}`);
+            } catch {
+                toast.error("Failed to update model status");
             }
         });
     };
@@ -194,35 +207,45 @@ export const ProviderRegistrySection = ({ providers, models }: ProviderRegistryP
                                 </div>
 
                                 {/* Models List */}
-                                {providerModels.length > 0 && (
-                                    <div>
-                                        <p className="text-xs text-muted-foreground mb-2 font-medium">Registered Models</p>
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-xs text-muted-foreground font-medium">Registered Models</p>
+                                        <AddModelModal providers={[{ slug: provider.slug, name: provider.name }]} />
+                                    </div>
+                                    {providerModels.length > 0 ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             {providerModels.map(model => (
                                                 <div
                                                     key={model.id}
                                                     className={cn(
-                                                        "flex items-center gap-2 py-1.5 px-3 rounded-md text-xs",
+                                                        "flex items-center gap-2 py-1.5 px-3 rounded-md text-xs transition-colors",
                                                         model.isActive
                                                             ? "bg-muted/30 text-foreground"
-                                                            : "bg-muted/10 text-muted-foreground line-through"
+                                                            : "bg-muted/10 text-muted-foreground"
                                                     )}
                                                 >
-                                                    <Check className={cn("w-3 h-3 shrink-0", model.isActive ? "text-emerald-400" : "text-muted-foreground/30")} />
-                                                    <span className="font-medium">{model.name}</span>
-                                                    <span className="font-mono text-muted-foreground ml-auto">{model.modelId}</span>
+                                                    <div onClick={(e) => e.stopPropagation()} className="shrink-0 flex items-center">
+                                                        <Switch
+                                                            checked={model.isActive}
+                                                            onCheckedChange={() => handleToggleModelActive(model)}
+                                                            disabled={isPending}
+                                                            className="scale-75 origin-left"
+                                                        />
+                                                    </div>
+                                                    <span className={cn("font-medium", !model.isActive && "line-through opacity-50")}>{model.name}</span>
+                                                    <span className="font-mono text-muted-foreground ml-auto text-[10px] sm:text-xs truncate">{model.modelId}</span>
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div className="text-center py-4 text-xs text-muted-foreground bg-muted/10 rounded-lg">
+                                            <Wrench className="w-4 h-4 mx-auto mb-1 opacity-50" />
+                                            No models registered. Add one using the button above.
+                                        </div>
+                                    )}
+                                </div>
 
-                                {providerModels.length === 0 && (
-                                    <div className="text-center py-4 text-xs text-muted-foreground bg-muted/10 rounded-lg">
-                                        <Wrench className="w-4 h-4 mx-auto mb-1" />
-                                        No models registered. Add one from the Model Registry below.
-                                    </div>
-                                )}
+                                {/* Removed duplicative zero-model state since we handle it inside the block above */}
 
                                 {provider.description && (
                                     <p className="text-xs text-muted-foreground italic">{provider.description}</p>

@@ -1484,7 +1484,7 @@ model AiProviderRegistry {
   // Connection template
   baseUrl String? // Default base URL for this provider
   sdkType String  @default("OPENAI_COMPATIBLE")
-  // Possible: "OPENAI_COMPATIBLE", "ANTHROPIC", "GOOGLE", "AZURE", "MISTRAL", "CUSTOM"
+  // Possible: "OPENAI_COMPATIBLE", "ANTHROPIC", "GOOGLE", "AZURE", "MISTRAL", "BEDROCK", "CUSTOM"
 
   // Lifecycle
   isBuiltIn Boolean  @default(false) // true for original 8 providers
@@ -1538,6 +1538,7 @@ model TeamAiConfig {
   // Lead Generation Credits (Monthly Use-it-or-lose-it)
   leadgen_credits_balance    Int       @default(0)
   leadgen_credits_last_reset DateTime? @db.Date
+  configuration              Json? // For service-specific model overrides
 }
 
 // =============================================================================

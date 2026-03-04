@@ -13,7 +13,7 @@ import {
     verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
 import { prismadb } from "./prisma";
-import { sendSmsEUM } from "./aws/eum-sms";
+import { sendSmsEum } from "./aws/eum-sms";
 
 /**
  * MFA & NIST 800-63B Compliance Utilities
@@ -57,7 +57,7 @@ export const verifyTotpToken = async (token: string, secret: string) => {
 
 export const sendMfaSms = async (phone: string, code: string) => {
     const body = `Your ${process.env.NEXT_PUBLIC_APP_NAME || "Basalt CRM"} verification code is: ${code}. Valid for 5 minutes.`;
-    return await sendSmsEUM({
+    return await sendSmsEum({
         to: phone,
         body,
         messageType: "TRANSACTIONAL",

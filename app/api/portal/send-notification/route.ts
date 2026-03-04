@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { sendPortalNotificationSms } from "@/lib/aws/eum-sms";
+import { sendSmsEum } from "@/lib/aws/eum-sms";
 import crypto from "crypto";
 import { systemLogger } from "@/lib/logger";
 
@@ -99,7 +99,8 @@ export async function POST(req: NextRequest) {
 
             // Send the SMS
             try {
-                const smsResult = await sendPortalNotificationSms(recipient.phone, smsText);
+                const smsRes = await sendSmsEum({ to: recipient.phone, body: smsText });
+                const smsResult = Object.values(smsRes.results)[0];
 
                 // Update the message-recipient link with SMS status
                 await prismadb.crm_Portal_Message_Recipient.update({

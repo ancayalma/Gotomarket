@@ -5,7 +5,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 
 export async function generateBlogPost(topic: string) {
-    const model = await getAiSdkModel("system");
+    const { model } = await getAiSdkModel("system");
     if (!model) {
         throw new Error("AI model not configured");
     }

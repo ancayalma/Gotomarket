@@ -15,7 +15,7 @@ async function main() {
     console.log(`Using user: ${user.email} (${user.id})`);
 
     // 2. Get Model
-    const model = await getAiSdkModel(user.id);
+    const { model } = await getAiSdkModel(user.id);
     if (!model) {
         console.error("No model returned by getAiSdkModel");
         return;

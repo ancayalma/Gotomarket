@@ -243,7 +243,7 @@ Project Briefing:
         const userPromptWithProject = [userPrompt, projectBlock].filter(Boolean).join("\\n\\n");
 
         // OpenAI client
-        const model = await getAiSdkModel(session.user.id);
+        const { model } = await getAiSdkModel(session.user.id);
         if (!model) return new NextResponse("AI model not configured", { status: 500 });
 
         let subject = "Exploring Partnership Opportunities";

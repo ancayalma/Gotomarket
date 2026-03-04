@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         const { formConfig, prompt } = body;
 
         // Get the AI model configured for this user/team
-        const model = await getAiSdkModel(session.user.id);
+        const { model } = await getAiSdkModel(session.user.id);
 
         // Build the system prompt
         const systemPrompt = `You are a form design expert specializing in lead capture forms for CRM systems.

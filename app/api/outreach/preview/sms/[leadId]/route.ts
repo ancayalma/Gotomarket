@@ -181,12 +181,12 @@ Project Briefing:
             : "";
         const userPromptWithProject = [userPrompt, projectBlock].filter(Boolean).join("\n\n");
 
-        const model = await getAiSdkModel(session.user.id);
+        const { model, provider, modelId, teamId } = await getAiSdkModel(session.user.id, "sms");
         if (!model) return new NextResponse("AI model not configured", { status: 500 });
 
         let smsBody = "Hi there — quick intro to PortalPay: crypto checkout, instant settlement, lower fees. Can I send a link for details?";
         try {
-            const { object } = await generateObject({
+            const { object, usage } = await generateObject({
                 model,
                 schema: z.object({
                     body: z.string(),
@@ -197,14 +197,28 @@ Project Briefing:
                 ],
             });
             smsBody = sanitizeSmsBody(object.body || smsBody);
+
+            // Import logAiUsage from lib/openai
+            const { logAiUsage } = await import("@/lib/openai");
+            await logAiUsage({
+                teamId,
+                userId: session.user.id,
+                service: "sms",
+                model: `${provider}:${modelId}`,
+                usage: {
+                    promptTokens: (usage as any)?.promptTokens || 0,
+                    completionTokens: (usage as any)?.completionTokens || 0,
+                },
+                description: `SMS preview for lead: ${lead.id}`
+            });
         } catch (err: any) {
-             
+
             systemLogger.error("[OUTREACH_PREVIEW_SMS][AI_ERROR]", err?.message || err);
         }
 
         return NextResponse.json({ body: smsBody }, { status: 200 });
     } catch (error) {
-         
+
         systemLogger.error("[OUTREACH_PREVIEW_SMS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }

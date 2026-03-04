@@ -28,7 +28,7 @@ export async function POST(req: Request) {
             return new NextResponse("Missing type or data", { status: 400 });
         }
 
-        const model = await getAiSdkModel(auth.user.id);
+        const { model } = await getAiSdkModel(auth.user.id);
         if (!model) {
             return new NextResponse("AI Model not configured", { status: 500 });
         }

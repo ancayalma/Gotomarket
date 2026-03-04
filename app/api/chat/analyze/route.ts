@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
         // Format messages for the prompt
         // We'll summarize the conversation for the "Regress-LM" simulation
-        const model = await getAiSdkModel(auth.user.id);
+        const { model } = await getAiSdkModel(auth.user.id);
         if (!model) {
             return new NextResponse("AI Model configuration missing", { status: 500 });
         }

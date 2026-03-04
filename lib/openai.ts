@@ -3,6 +3,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createMistral } from "@ai-sdk/mistral";
+import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
 import { prismadb } from "@/lib/prisma";
 import { decryptSecret } from "@/lib/encryption";
 
@@ -19,213 +20,288 @@ if (process.env.NODE_ENV === "development") {
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
-export async function getAiSdkModel(userId: string | "system") {
-    const DEBUG_PREFIX = "[getAiSdkModel]";
+/**
+ * Low-level factory to create an AI model instance from any provider.
+ */
+async function createProviderModel(
+    providerSlug: string,
+    modelId: string,
+    apiKey?: string,
+    resourceName?: string,
+    baseURL?: string
+) {
+    // Look up provider registry for sdkType and default baseUrl
+    let sdkType = "OPENAI_COMPATIBLE";
+    let registryBaseUrl: string | undefined;
+    try {
+        const registry = await prismadb.aiProviderRegistry.findUnique({ where: { slug: providerSlug } });
+        if (registry) {
+            sdkType = registry.sdkType;
+            registryBaseUrl = registry.baseUrl || undefined;
+        }
+    } catch { /* Registry may not be seeded yet */ }
 
-    // Helper to clean URL (remove trailing slash)
+    // Fallback: infer sdkType from known built-in provider slugs
+    if (!sdkType || sdkType === "OPENAI_COMPATIBLE") {
+        const slugOverrides: Record<string, string> = {
+            ANTHROPIC: "ANTHROPIC",
+            GOOGLE: "GOOGLE",
+            AZURE: "AZURE",
+            MISTRAL: "MISTRAL",
+            BEDROCK: "BEDROCK",
+        };
+        sdkType = slugOverrides[providerSlug] || "OPENAI_COMPATIBLE";
+    }
+
     const cleanUrl = (url: string | undefined): string | undefined => {
         if (!url) return undefined;
         return url.endsWith('/') ? url.slice(0, -1) : url;
     };
 
-    // --- Dynamic Provider Factory ---
-    // Uses sdkType from AiProviderRegistry to determine which SDK to use.
-    // Most modern LLM providers are OpenAI-compatible.
-    const createProviderModel = async (providerSlug: string, modelId: string, apiKey?: string, resourceName?: string, baseURL?: string) => {
-        // Look up provider registry for sdkType and default baseUrl
-        let sdkType = "OPENAI_COMPATIBLE";
-        let registryBaseUrl: string | undefined;
-        try {
-            const registry = await prismadb.aiProviderRegistry.findUnique({ where: { slug: providerSlug } });
-            if (registry) {
-                sdkType = registry.sdkType;
-                registryBaseUrl = registry.baseUrl || undefined;
-            }
-        } catch { /* Registry may not be seeded yet, fall back to slug-based matching */ }
+    const effectiveBaseURL = baseURL || registryBaseUrl;
 
-        // Fallback: infer sdkType from known built-in provider slugs
-        if (!sdkType || sdkType === "OPENAI_COMPATIBLE") {
-            const slugOverrides: Record<string, string> = {
-                ANTHROPIC: "ANTHROPIC",
-                GOOGLE: "GOOGLE",
-                AZURE: "AZURE",
-                MISTRAL: "MISTRAL",
-            };
-            sdkType = slugOverrides[providerSlug] || "OPENAI_COMPATIBLE";
-        }
-
-        const effectiveBaseURL = baseURL || registryBaseUrl;
-
-        // Known provider-specific base URLs (fallbacks for built-in providers)
-        const builtInBaseUrls: Record<string, string> = {
-            GROK: "https://api.x.ai/v1",
-            DEEPSEEK: "https://api.deepseek.com",
-            PERPLEXITY: "https://api.perplexity.ai",
-        };
-
-        // Known env var keys per provider slug
-        const envKeyMap: Record<string, string> = {
-            OPENAI: "OPENAI_API_KEY",
-            AZURE: "AZURE_OPENAI_API_KEY",
-            ANTHROPIC: "ANTHROPIC_API_KEY",
-            GOOGLE: "GOOGLE_GENERATIVE_AI_API_KEY",
-            GROK: "XAI_API_KEY",
-            DEEPSEEK: "DEEPSEEK_API_KEY",
-            PERPLEXITY: "PERPLEXITY_API_KEY",
-            MISTRAL: "MISTRAL_API_KEY",
-        };
-        const envKey = envKeyMap[providerSlug];
-        const effectiveApiKey = apiKey || (envKey ? process.env[envKey] : undefined);
-
-        switch (sdkType) {
-            case "AZURE": {
-                const effectiveResourceName = resourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
-                const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
-
-                if (!effectiveResourceName || !effectiveApiKey) {
-                    console.error(`[AZURE_ERROR] Missing Azure configuration: Resource=${effectiveResourceName}, Key=${effectiveApiKey ? "HIDDEN" : "MISSING"}`);
-                    // Fallback or throw a clean error
-                    throw new Error("Azure OpenAI configuration incomplete.");
-                }
-
-                console.log(`[AZURE_DEBUG] Using Resource: ${effectiveResourceName} (Version: ${apiVersion})`);
-                const azure = createAzure({
-                    apiKey: effectiveApiKey,
-                    resourceName: effectiveResourceName,
-                    apiVersion: apiVersion,
-                });
-                return azure(modelId);
-            }
-            case "ANTHROPIC": {
-                const anthropic = createAnthropic({
-                    apiKey: effectiveApiKey || process.env.ANTHROPIC_API_KEY,
-                    baseURL: effectiveBaseURL,
-                });
-                return anthropic(modelId);
-            }
-            case "GOOGLE": {
-                const google = createGoogleGenerativeAI({
-                    apiKey: effectiveApiKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-                    baseURL: effectiveBaseURL,
-                });
-                return google(modelId);
-            }
-            case "MISTRAL": {
-                const mistral = createMistral({
-                    apiKey: effectiveApiKey || process.env.MISTRAL_API_KEY,
-                    baseURL: effectiveBaseURL,
-                });
-                return mistral(modelId);
-            }
-            case "OPENAI_COMPATIBLE":
-            case "CUSTOM":
-            default: {
-                // Covers: OpenAI, Grok, DeepSeek, Perplexity, Groq, Together,
-                // Fireworks, HuggingFace, Ollama, LM Studio, vLLM, and any
-                // OpenAI-compatible endpoint.
-                const openai = createOpenAI({
-                    name: providerSlug.toLowerCase(),
-                    apiKey: effectiveApiKey || process.env.OPENAI_API_KEY,
-                    baseURL: effectiveBaseURL || builtInBaseUrls[providerSlug] || cleanUrl(process.env.OPENAI_BASE_URL),
-                });
-                return openai(modelId);
-            }
-        }
+    const builtInBaseUrls: Record<string, string> = {
+        GROK: "https://api.x.ai/v1",
+        DEEPSEEK: "https://api.deepseek.com",
+        PERPLEXITY: "https://api.perplexity.ai",
     };
 
-    // 1. Get System Config (Default Fallback)
-    const getSystemConfig = async () => {
-        try {
-            return await prismadb.systemAiConfig.findFirst({ where: { isActive: true } });
-        } catch (error) {
-            console.warn("Failed to fetch system config", error);
-            return null;
-        }
+    const envKeyMap: Record<string, string> = {
+        OPENAI: "OPENAI_API_KEY",
+        AZURE: "AZURE_OPENAI_API_KEY",
+        ANTHROPIC: "ANTHROPIC_API_KEY",
+        GOOGLE: "GOOGLE_GENERATIVE_AI_API_KEY",
+        GROK: "XAI_API_KEY",
+        DEEPSEEK: "DEEPSEEK_API_KEY",
+        PERPLEXITY: "PERPLEXITY_API_KEY",
+        MISTRAL: "MISTRAL_API_KEY",
     };
-    const systemConfig = await getSystemConfig();
-    const systemModelId = systemConfig?.defaultModelId || "gpt-4o";
-    const systemProvider = systemConfig?.provider || "OPENAI";
+    const envKey = envKeyMap[providerSlug];
+    const effectiveApiKey = apiKey || (envKey ? process.env[envKey] : undefined);
 
-    // 2. Resolve User's Team Config
-    let teamConfig = null;
-    if (userId !== "system") {
+    switch (sdkType) {
+        case "AZURE": {
+            const effectiveResourceName = resourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
+            const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
+
+            if (!effectiveResourceName || !effectiveApiKey) {
+                throw new Error("Azure OpenAI configuration incomplete.");
+            }
+
+            const azure = createAzure({
+                apiKey: effectiveApiKey,
+                resourceName: effectiveResourceName,
+                apiVersion: apiVersion,
+            });
+            return azure(modelId);
+        }
+        case "ANTHROPIC": {
+            const anthropic = createAnthropic({
+                apiKey: effectiveApiKey || process.env.ANTHROPIC_API_KEY,
+                baseURL: effectiveBaseURL,
+            });
+            return anthropic(modelId);
+        }
+        case "GOOGLE": {
+            const google = createGoogleGenerativeAI({
+                apiKey: effectiveApiKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+                baseURL: effectiveBaseURL,
+            });
+            return google(modelId);
+        }
+        case "MISTRAL": {
+            const mistral = createMistral({
+                apiKey: effectiveApiKey || process.env.MISTRAL_API_KEY,
+                baseURL: effectiveBaseURL,
+            });
+            return mistral(modelId);
+        }
+        case "BEDROCK": {
+            const bedrock = createAmazonBedrock({
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                region: process.env.AWS_REGION || "us-west-2",
+            });
+            return bedrock(modelId);
+        }
+        case "OPENAI_COMPATIBLE":
+        case "CUSTOM":
+        default: {
+            const openai = createOpenAI({
+                name: providerSlug.toLowerCase(),
+                apiKey: effectiveApiKey || process.env.OPENAI_API_KEY,
+                baseURL: effectiveBaseURL || builtInBaseUrls[providerSlug] || cleanUrl(process.env.OPENAI_BASE_URL),
+            });
+            return openai(modelId);
+        }
+    }
+}
+
+
+export interface AiModelResponse {
+    model: any;
+    provider: string;
+    modelId: string;
+    teamId: string | null;
+}
+
+export type AiService = "sms" | "email" | "chat" | "leadgen" | "voice" | "general" | "analysis";
+
+export async function getAiSdkModel(
+    target: { userId?: string; teamId?: string } | string | "system",
+    service: AiService = "general"
+): Promise<AiModelResponse> {
+    const DEBUG_PREFIX = `[getAiSdkModel][${service}]`;
+
+    // 1. Resolve teamId and userId
+    let teamId: string | null = null;
+    let userId: string | null = null;
+
+    if (target === "system") {
+        // System context
+    } else if (typeof target === "string") {
+        userId = target;
+    } else {
+        userId = target.userId || null;
+        teamId = target.teamId || null;
+    }
+
+    if (userId && !teamId) {
         const user = await prismadb.users.findUnique({
             where: { id: userId },
             select: { team_id: true }
         });
-        if (user?.team_id) {
-            teamConfig = await prismadb.teamAiConfig.findUnique({
-                where: { team_id: user.team_id },
-            });
+        teamId = user?.team_id || null;
+    }
+
+    // 2. Load Hierarchy of Configs
+    // Priority: Team Service Override > Team Default > System Service Override > System Default
+
+    let finalProvider: string | null = null;
+    let finalModelId: string | null = null;
+    let configSource: "team" | "system" = "system";
+
+    // A. Check Team Config
+    let teamConfig = null;
+    if (teamId) {
+        teamConfig = await prismadb.teamAiConfig.findUnique({
+            where: { team_id: teamId },
+        });
+
+        if (teamConfig) {
+            // Check for service override in team configuration (JSON)
+            const teamOverrides = (teamConfig.configuration as any)?.services || {};
+            if (teamOverrides[service]) {
+                finalProvider = teamOverrides[service].provider;
+                finalModelId = teamOverrides[service].modelId;
+                configSource = "team";
+            } else if (teamConfig.provider && teamConfig.modelId) {
+                // Use team default if no service override
+                finalProvider = teamConfig.provider;
+                finalModelId = teamConfig.modelId;
+                configSource = "team";
+            }
         }
     }
 
-    // 3. Determine Final Config
-    let finalProvider = systemProvider;
-    let finalModelId = systemModelId;
-    let rawSystemKey = systemConfig?.apiKey ?? undefined;
-    if (rawSystemKey) rawSystemKey = decryptSecret(rawSystemKey) || rawSystemKey;
-    let finalApiKey: string | undefined = rawSystemKey;
-    let finalResourceName: string | undefined = undefined;
-    let finalBaseURL: string | undefined = systemConfig?.baseUrl ?? undefined;
+    // B. Check System Config (Fallback)
+    const systemConfigs = await prismadb.systemAiConfig.findMany({ where: { isActive: true } });
+    const defaultSystemConfig = systemConfigs.find((c: any) => c.isDefault) || systemConfigs[0];
+
+    if (!finalProvider || !finalModelId) {
+        // Check for service override in system configuration (JSON)
+        // Check ALL active configs for one that might have this service? 
+        // For simplicity, we check the default one first.
+        const systemOverrides = (defaultSystemConfig?.configuration as any)?.services || {};
+
+        if (systemOverrides[service]) {
+            finalProvider = systemOverrides[service].provider;
+            finalModelId = systemOverrides[service].modelId;
+        } else {
+            finalProvider = defaultSystemConfig?.provider || "OPENAI";
+            finalModelId = defaultSystemConfig?.defaultModelId || "gpt-4o";
+        }
+        configSource = "system";
+    }
+
+    // 3. Resolve API Keys and Connection Info
+    let finalApiKey: string | undefined;
+    let finalBaseURL: string | undefined;
+    let finalResourceName: string | undefined;
 
     // Helper to extract resourceName from config JSON
-    const extractResourceName = (config: any): string | undefined => {
-        if (config && typeof config === 'object' && config.resourceName) {
-            return config.resourceName as string;
-        }
-        return undefined;
-    };
+    const extractResName = (c: unknown) => (c && typeof c === 'object' && 'resourceName' in c) ? (c as any).resourceName as string : undefined;
 
-    // Initialize from default system config
-    if (systemConfig?.configuration) {
-        finalResourceName = extractResourceName(systemConfig.configuration);
-    }
+    // If we have a provider and model, find the system config for that provider to get keys/urls
+    const providerSystemConfig = systemConfigs.find((c: any) => c.provider === finalProvider);
 
-    if (teamConfig) {
-        // Override with team pref if set
-        finalProvider = teamConfig.provider;
-        finalModelId = teamConfig.modelId || systemModelId;
-
-        // Key Logic: 
-        // If useSystemKey is TRUE -> Ensure we use the system key for the TEAM'S chosen provider if available.
-        // If useSystemKey is FALSE -> Use the team's apiKey.
-
-        if (teamConfig.useSystemKey) {
-            // Find system config for the TEAM'S provider? 
-            if (finalProvider !== systemProvider) {
-                const specificSystemConfig = await prismadb.systemAiConfig.findUnique({
-                    where: { provider: finalProvider }
-                });
-                if (specificSystemConfig?.apiKey) {
-                    finalApiKey = decryptSecret(specificSystemConfig.apiKey) || specificSystemConfig.apiKey;
-                } else {
-                    finalApiKey = undefined;
-                }
-
-                // Also update resourceName/baseUrl from the specific system config
-                if (specificSystemConfig?.baseUrl) {
-                    finalBaseURL = specificSystemConfig.baseUrl;
-                }
-                if (specificSystemConfig?.configuration) {
-                    finalResourceName = extractResourceName(specificSystemConfig.configuration);
-                }
-            } else {
-                // Using default system provider, key and resourceName already set above
+    if (teamConfig && configSource === "team" && !teamConfig.useSystemKey && teamConfig.apiKey) {
+        // Team provided their own key
+        finalApiKey = decryptSecret(teamConfig.apiKey) || teamConfig.apiKey;
+        // Team currently doesn't store baseUrl/resourceName in schema, so fallback to system
+        finalBaseURL = providerSystemConfig?.baseUrl || undefined;
+        finalResourceName = extractResName(providerSystemConfig?.configuration);
+    } else {
+        // Use system key for this provider
+        if (providerSystemConfig) {
+            if (providerSystemConfig.apiKey) {
+                finalApiKey = decryptSecret(providerSystemConfig.apiKey) || providerSystemConfig.apiKey;
             }
-        } else {
-            // Use custom team key
-            if (teamConfig.apiKey) {
-                finalApiKey = decryptSecret(teamConfig.apiKey) || teamConfig.apiKey;
-            }
-            // Note: TeamAiConfig currently doesn't support storing resourceName, 
-            // so if they use a custom key for Azure, they might still rely on System resourceName or Env var.
+            finalBaseURL = providerSystemConfig.baseUrl || undefined;
+            finalResourceName = extractResName(providerSystemConfig.configuration);
         }
     }
 
-    // Sanitize baseURL
+    // Sanitize 
+    const cleanUrl = (url: string | undefined) => url?.endsWith('/') ? url.slice(0, -1) : url;
     finalBaseURL = cleanUrl(finalBaseURL);
 
-    console.debug(`${DEBUG_PREFIX} Selected: Provider=${finalProvider} | Model=${finalModelId} | User=${userId}`);
-    return createProviderModel(finalProvider, finalModelId, finalApiKey, finalResourceName, finalBaseURL);
+    console.debug(`${DEBUG_PREFIX} Routing to: ${finalProvider}:${finalModelId} (Source: ${configSource}, Team: ${teamId || "SYSTEM"})`);
+
+    const model = await createProviderModel(finalProvider!, finalModelId!, finalApiKey, finalResourceName, finalBaseURL);
+
+    return {
+        model,
+        provider: finalProvider!,
+        modelId: finalModelId!,
+        teamId
+    };
+}
+
+/**
+ * Logs AI usage to crm_AiUsageLog for billing and quota management.
+ */
+export async function logAiUsage({
+    teamId,
+    userId,
+    service,
+    model,
+    usage,
+    description
+}: {
+    teamId: string | null;
+    userId: string | null;
+    service: AiService;
+    model: string;
+    usage: { promptTokens: number; completionTokens: number };
+    description?: string;
+}) {
+    if (!teamId) return;
+
+    try {
+        await prismadb.crm_AiUsageLog.create({
+            data: {
+                tenant_id: teamId,
+                user_id: userId || undefined,
+                service,
+                model_used: model,
+                tokens_in: usage.promptTokens,
+                tokens_out: usage.completionTokens,
+                cost: 0, // Automated cost calculation can be added here
+                description: description || `AI ${service} interaction`
+            }
+        });
+    } catch (error) {
+        console.error("[LOG_AI_USAGE_ERROR]", error);
+    }
 }

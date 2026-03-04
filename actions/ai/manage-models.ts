@@ -138,6 +138,16 @@ export const createAiModel = async (formData: FormData) => {
     revalidatePath("/admin/ai-settings");
 };
 
+export const toggleAiModelStatus = async (id: string, isActive: boolean) => {
+    await prismadb.aiModel.update({
+        where: { id },
+        data: { isActive }
+    });
+    revalidatePath("/partners/ai-pricing");
+    revalidatePath("/partners/ai-system-config");
+    revalidatePath("/admin/ai-settings");
+};
+
 export const deleteAiModel = async (id: string) => {
     await prismadb.aiModel.update({
         where: { id },

@@ -8,6 +8,7 @@ import TeamAiSettings from "./_components/TeamAiSettings";
 import { TeamEmailSettings } from "@/components/email/TeamEmailSettings";
 import { EmailDeliveryStats } from "@/components/email/EmailDeliveryStats";
 import { TeamSubscriptionSettings } from "./_components/TeamSubscriptionSettings";
+import { TeamSmsSettings } from "@/components/sms/TeamSmsSettings";
 
 export default async function TeamSettingsPage() {
     const session = await getServerSession(authOptions);
@@ -50,6 +51,10 @@ export default async function TeamSettingsPage() {
                     />
                     <EmailDeliveryStats teamId={user.assigned_team.id} />
                 </div>
+                <TeamSmsSettings
+                    teamId={user.assigned_team.id}
+                    planSlug={user.assigned_team.assigned_plan?.slug || user.assigned_team.subscription_plan || "FREE"}
+                />
             </div>
         </Container>
     );

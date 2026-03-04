@@ -98,7 +98,7 @@ export async function POST(req: Request) {
     const roleDesc = roleKey === "custom" ? roleNotes : rolePreset.description;
 
     // Compose prompt request for Azure/OpenAI
-    const model = await getAiSdkModel("system");
+    const { model } = await getAiSdkModel("system");
     if (!model) {
       return new NextResponse("AI model not configured", { status: 500 });
     }

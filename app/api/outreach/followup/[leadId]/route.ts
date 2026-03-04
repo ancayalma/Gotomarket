@@ -171,7 +171,7 @@ export async function POST(req: Request, { params }: Params) {
     const trackingPixelUrl = baseUrl ? `${baseUrl}/api/outreach/open/${encodeURIComponent(token)}.png` : undefined;
 
     // OpenAI client
-    const model = await getAiSdkModel(session.user.id);
+    const { model } = await getAiSdkModel(session.user.id);
     if (!model) return new NextResponse("AI model not configured", { status: 500 });
 
     const contactName = [lead.firstName, lead.lastName].filter(Boolean).join(" ").trim();

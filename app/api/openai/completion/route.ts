@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const model = await getAiSdkModel(session.user.id);
+  const { model } = await getAiSdkModel(session.user.id);
 
   if (!model) {
     return new Response("No openai key found", { status: 500 });

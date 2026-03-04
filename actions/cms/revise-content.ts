@@ -8,7 +8,7 @@ export async function reviseContent(
     instruction: string,
     type: "blog" | "docs" | "career"
 ) {
-    const model = await getAiSdkModel("system");
+    const { model } = await getAiSdkModel("system");
     if (!model) {
         throw new Error("AI model not configured");
     }

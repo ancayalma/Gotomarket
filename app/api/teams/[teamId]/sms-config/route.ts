@@ -6,7 +6,7 @@ import { logActivityInternal } from "@/actions/audit";
 import { encryptSecret, decryptSecret } from "@/lib/encryption";
 
 const SECRET_FIELDS = [
-    'brand_ein', 'brand_street', 'brand_city', 'brand_state', 'brand_postal_code', 
+    'brand_ein', 'brand_street', 'brand_city', 'brand_state', 'brand_postal_code',
     'brand_contact_email', 'brand_contact_phone', 'brand_support_email', 'brand_support_phone'
 ];
 
@@ -125,6 +125,10 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
     }
 
     try {
+        const existingConfig = await prismadb.teamSmsConfig.findUnique({
+            where: { team_id: params.teamId }
+        });
+
         const config = await prismadb.teamSmsConfig.upsert({
             where: { team_id: params.teamId },
             create: {
@@ -135,6 +139,47 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
                 ...body
             }
         });
+
+        const isNewSubmission = body.brand_status === "PENDING" && existingConfig?.brand_status !== "PENDING";
+
+        if (isNewSubmission) {
+            try {
+                const team = await prismadb.team.findUnique({ where: { id: params.teamId } });
+                const admins = await prismadb.users.findMany({ where: { is_admin: true } });
+
+                if (admins.length > 0) {
+                    const subject = `ACTION REQUIRED: 10DLC SMS Registration for ${team?.name || "A Team"}`;
+                    const rawBody = `Team ${team?.name} has submitted their 10DLC SMS registration via the self-serve wizard. \n\nBrand: ${body.brand_name || "N/A"}\nEIN: ${body.brand_ein ? decryptSecret(body.brand_ein) : "N/A"}\nUse Case: ${body.campaign_use_case}\n\nPlease review in the Partner Dashboard and process via AWS EUM.`;
+
+                    // Generate Internal Message
+                    await prismadb.internalMessage.create({
+                        data: {
+                            tenant_id: params.teamId,
+                            subject: subject,
+                            body: rawBody,
+                            sender_id: session.user.id,
+                            recipients: {
+                                create: admins.map((admin: any) => ({ user_id: admin.id }))
+                            }
+                        }
+                    });
+
+                    // Send SES Email
+                    const { sendEmailSES } = await import("@/lib/aws/ses");
+                    for (const admin of admins) {
+                        if (admin.email) {
+                            await sendEmailSES({
+                                to: admin.email,
+                                subject: subject,
+                                text: rawBody,
+                            }).catch(e => console.error("Failed to send 10DLC admin alert email", e));
+                        }
+                    }
+                }
+            } catch (alertErr) {
+                console.error("Failed to generate 10DLC alerts:", alertErr);
+            }
+        }
 
         await logActivityInternal(session.user.email || "SYSTEM", "UPDATE", "TeamSmsConfig", `Updated SMS configuration for team ${params.teamId}`, params.teamId);
         return NextResponse.json(config);
