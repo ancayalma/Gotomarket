@@ -56,7 +56,6 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
 
     const navItems = [
         { label: "Overview", href: "/admin", icon: LayoutDashboard, exact: true },
-        { label: "Departments", href: "/admin?tab=departments", icon: Building2 },
         { label: "Object Manager", href: "/admin/objects", icon: Database },
         { label: "Email Settings", href: "/admin/settings", icon: Mail },
         { label: "SMS Configuration", href: "/admin/sms-config", icon: MessageSquare },

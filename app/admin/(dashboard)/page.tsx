@@ -19,11 +19,12 @@ import DepartmentsView from "@/app/(routes)/partners/[teamId]/_components/Depart
 export default async function AdminDashboardPage({
   searchParams
 }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const resolvedSearchParams = await searchParams;
   const session = await getServerSession(authOptions);
   const teamInfo = await getCurrentUserTeamId();
-  const activeTab = searchParams?.tab === 'departments' ? 'departments' : 'overview';
+  const activeTab = resolvedSearchParams?.tab === 'departments' ? 'departments' : 'overview';
 
   if (!teamInfo?.teamId) {
     return (
