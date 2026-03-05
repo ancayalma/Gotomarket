@@ -7,6 +7,7 @@ import { getProjectStats } from "@/actions/projects/get-project-stats";
 import { Button } from "@/components/ui/button";
 
 import { authOptions } from "@/lib/auth";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 import NewTaskDialog from "../dialogs/NewTask";
 import NewProjectDialog from "../dialogs/NewProject";
@@ -29,13 +30,20 @@ const ProjectsView = async ({ view = "overview" }: ProjectsViewProps) => {
 
     if (!session) return null;
 
+    const teamInfo = await getCurrentUserTeamId();
     const users = await getActiveUsers();
+    const isGlobalAdmin = teamInfo?.isGlobalAdmin;
+
     // Fetch ALL boards for now to ensure no data loss
-    const boards: any = await getBoards(session.user.id!);
+    const allBoards: any = await getBoards(session.user.id!);
+
+    // Filter out internal "Private Reminders" boards from the main views
+    const boards = allBoards.filter((b: any) => b.title !== "Private Reminders");
+
     const stats = await getProjectStats();
 
     const isCampaignsView = view === "campaigns";
-    const displayData = boards; // Show everything to prevent "losing" data
+    const displayData = boards; // Show filtered data
     const title = isCampaignsView ? "Strategic Campaigns" : "Delivery Boards";
     const description = isCampaignsView
         ? "Manage your strategic outreach, branding, and go-to-market initiatives."

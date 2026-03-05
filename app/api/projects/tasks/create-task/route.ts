@@ -4,16 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 
-import NewTaskFromCRMEmail from "@/emails/NewTaskFromCRM";
 import NewTaskFromProject from "@/emails/NewTaskFromProject";
 import sendEmail from "@/lib/sendmail";
 import { render } from "@react-email/render";
 import { systemLogger } from "@/lib/logger";
 
 //Create new task in project route
-/*
-TODO: there is second route for creating task in board, but it is the same as this one. Consider merging them (/api/projects/tasks/create-task/[boardId]). 
-*/
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   const body = await req.json();
@@ -42,12 +38,16 @@ export async function POST(req: Request) {
   let targetBoardId = board;
 
   try {
-    // If no board is provided, find or create a "Private Reminders" board for the user
+    const teamInfo = await getCurrentUserTeamId();
+    const teamId = teamInfo?.teamId;
+
+    // If no board is provided, find or create a "Private Reminders" board for the user/team
     if (!targetBoardId) {
       const personalBoard = await prismadb.boards.findFirst({
         where: {
           user: user,
           title: "Private Reminders",
+          team_id: teamId,
         },
       });
 
@@ -60,6 +60,7 @@ export async function POST(req: Request) {
             title: "Private Reminders",
             description: "Personal tasks and reminders",
             user: user,
+            team_id: teamId,
             visibility: "private",
             status: "ACTIVE",
             position: 0,
@@ -99,25 +100,20 @@ export async function POST(req: Request) {
       },
     });
 
-    let contentUpdated = content;
-
-    const teamInfo = await getCurrentUserTeamId();
-    const teamId = teamInfo?.teamId;
-
     const task = await (prismadb.tasks as any).create({
       data: {
         v: 0,
-        team_id: teamId, // Assign team
+        team_id: teamId,
         priority: priority,
         title: title,
-        content: contentUpdated,
+        content: content,
         dueDateAt: dueDateAt,
         section: sectionId.id,
         createdBy: session.user.id,
         updatedBy: session.user.id,
         position: tasksCount > 0 ? tasksCount : 0,
         user: user,
-        taskStatus: taskStatus || "ACTIVE", // Use provided status or default
+        taskStatus: taskStatus || "ACTIVE",
         accountId: accountId || null,
         opportunityId: opportunityId || null,
         contactId: contactId || null,
@@ -125,17 +121,13 @@ export async function POST(req: Request) {
       },
     });
 
-    //Make update to Board - updatedAt field to trigger re-render and reorder
+    //Update Board updatedAt
     await prismadb.boards.update({
-      where: {
-        id: targetBoardId,
-      },
-      data: {
-        updatedAt: new Date(),
-      },
+      where: { id: targetBoardId },
+      data: { updatedAt: new Date() },
     });
 
-    //Notification to user who is not a task creator
+    //Notification
     if (user !== session.user.id) {
       try {
         const notifyRecipient = await prismadb.users.findUnique({
@@ -143,10 +135,8 @@ export async function POST(req: Request) {
         });
 
         const boardData = await prismadb.boards.findUnique({
-          where: { id: board },
+          where: { id: targetBoardId },
         });
-
-        //console.log(notifyRecipient, "notifyRecipient");
 
         const emailHtml = await render(
           NewTaskFromProject({
@@ -165,15 +155,14 @@ export async function POST(req: Request) {
           text: `New task assigned from ${session.user.name}: ${title}`,
           html: emailHtml,
         });
-        console.log("Email sent to user: ", notifyRecipient?.email!);
       } catch (error) {
-        console.log(error);
+        console.error("Email notification failed:", error);
       }
     }
 
     return NextResponse.json(task);
   } catch (error) {
-    systemLogger.error("[NEW_BOARD_POST]", error);
-    return new NextResponse("Initial error", { status: 500 });
+    systemLogger.error("[CREATE_TASK_POST]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
