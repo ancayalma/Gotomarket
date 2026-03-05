@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // import { AdminUserDataTable } from "@/app/cms/(dashboard)/users/table-components/data-table";
 // import { columns } from "@/app/cms/(dashboard)/users/table-components/columns";
 import { getUsers } from "@/actions/get-users";
-// import SendMailToAll from "@/app/cms/(dashboard)/users/components/send-mail-to-all";
+import TeamMembersTable from "@/app/(routes)/partners/[teamId]/_components/TeamMembersTable";
 import DepartmentsView from "@/app/(routes)/partners/[teamId]/_components/DepartmentsView";
 
 export default async function AdminDashboardPage({
@@ -35,8 +35,8 @@ export default async function AdminDashboardPage({
 
   const teamId = teamInfo.teamId;
 
-  // Fetch team-specific stats and departments
-  const [rolesData, users, departments] = await Promise.all([
+  // Fetch team-specific stats, departments, and team details
+  const [rolesData, users, departments, team] = await Promise.all([
     prismadb.users.groupBy({
       by: ['team_role'],
       where: { team_id: teamId },
@@ -63,6 +63,10 @@ export default async function AdminDashboardPage({
         },
       },
       orderBy: { name: "asc" },
+    }),
+    prismadb.team.findUnique({
+      where: { id: teamId },
+      select: { slug: true, owner_id: true }
     })
   ]);
 
@@ -114,28 +118,18 @@ export default async function AdminDashboardPage({
             <StatCard label="Viewers" value={viewerCount} icon={Eye} />
           </div>
 
-          {/* Invite Section 
-          <div className="p-5 bg-card/50 border border-border rounded-xl">
-            <h4 className="text-lg font-semibold mb-4">
-              Invite New User
-            </h4>
-            <InviteForm />
+          {/* Users Table */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-bold uppercase tracking-tight text-primary/80 ml-1">Team Directory</h4>
+            <TeamMembersTable
+              teamId={teamId}
+              teamSlug={team?.slug || ""}
+              members={users as any}
+              isSuperAdmin={isSuperAdmin}
+              isGlobalAdmin={teamInfo.isGlobalAdmin}
+              ownerId={team?.owner_id}
+            />
           </div>
-          */}
-
-          {/* Users Table 
-          <div className="bg-card/50 border border-border rounded-xl overflow-hidden">
-            <div className="p-5 border-b border-border">
-              <h4 className="text-lg font-semibold">All Users</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                Click the settings icon on any user row to configure their module access.
-              </p>
-            </div>
-            <div className="p-4">
-              <AdminUserDataTable columns={columns} data={users} departments={departments} />
-            </div>
-          </div>
-          */}
         </TabsContent>
 
         <TabsContent value="departments" className="outline-none">
