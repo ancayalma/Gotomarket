@@ -41,10 +41,12 @@ import AssignMembersModal from "../dialogs/AssignMembersModal";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
+  baseUrl?: string;
 }
 
 export function DataTableRowActions<TData>({
   row,
+  baseUrl = "/projects/boards",
 }: DataTableRowActionsProps<TData>) {
   const router = useRouter();
   const project = taskSchema.parse(row.original);
@@ -145,7 +147,7 @@ export function DataTableRowActions<TData>({
         variant="ghost"
         size="icon"
         className="h-8 w-8 text-muted-foreground hover:text-primary"
-        onClick={() => router.push(`/projects/boards/${project.id}`)}
+        onClick={() => router.push(`${baseUrl}/${project.id}`)}
         title="View Board"
       >
         <Glasses className="h-4 w-4" />

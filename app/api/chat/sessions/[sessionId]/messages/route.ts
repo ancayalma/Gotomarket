@@ -194,7 +194,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
         result = textStreamPromise;
       }
     } catch (err: any) {
-      systemLogger.error("[CHAT_STREAM_TEXT_ERROR]", err?.message || err, err?.cause || "");
+      systemLogger.error("[CHAT_STREAM_TEXT_ERROR]", err);
       return new NextResponse(`Error calling streamText: ${err?.message || "Unknown error"}`, { status: 500 });
     }
 

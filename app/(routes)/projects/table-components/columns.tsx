@@ -97,7 +97,7 @@ export const getColumns = (baseUrl: string = "/projects/boards"): ColumnDef<Task
 
   {
     id: "actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row }) => <DataTableRowActions row={row} baseUrl={baseUrl} />,
   },
 ];
 
