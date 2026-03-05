@@ -41,16 +41,39 @@ export async function POST(req: Request) {
         // Resolve project briefing (Title/Summary) via projectId or lead.assigned_project
         let projectTitle = "";
         let projectDescription = "";
+        const projectContext: any = {};
 
         if (projectId) {
             try {
                 const board = await (prismadb as any).Boards.findUnique({
                     where: { id: projectId },
-                    select: { title: true, description: true },
+                    select: {
+                        title: true,
+                        description: true,
+                        target_industries: true,
+                        target_geos: true,
+                        target_titles: true,
+                        campaign_brief: true,
+                        messaging_tone: true,
+                        key_value_props: true,
+                        meeting_link: true,
+                        signature_template: true
+                    },
                 });
                 if (board) {
                     projectTitle = String(board.title || "");
                     projectDescription = String(board.description || "");
+                    // Add other context fields to seedContext if board found
+                    Object.assign(projectContext, {
+                        target_industries: board.target_industries,
+                        target_geos: board.target_geos,
+                        target_titles: board.target_titles,
+                        campaign_brief: board.campaign_brief,
+                        messaging_tone: board.messaging_tone,
+                        key_value_props: board.key_value_props,
+                        meeting_link: board.meeting_link,
+                        signature_template: board.signature_template
+                    });
                 }
             } catch { /* noop */ }
         } else if (leadId) {
@@ -63,6 +86,16 @@ export async function POST(req: Request) {
                 if (assigned) {
                     projectTitle = String(assigned?.title || "");
                     projectDescription = String(assigned?.description || "");
+                    Object.assign(projectContext, {
+                        target_industries: assigned?.target_industries,
+                        target_geos: assigned?.target_geos,
+                        target_titles: assigned?.target_titles,
+                        campaign_brief: assigned?.campaign_brief,
+                        messaging_tone: assigned?.messaging_tone,
+                        key_value_props: assigned?.key_value_props,
+                        meeting_link: assigned?.meeting_link,
+                        signature_template: assigned?.signature_template
+                    });
                 }
             } catch { /* noop */ }
         }
@@ -75,6 +108,7 @@ export async function POST(req: Request) {
             projectBriefing: {
                 title: projectTitle,
                 summary: projectDescription,
+                ...projectContext
             },
         };
 
@@ -121,7 +155,7 @@ export async function POST(req: Request) {
             });
             promptText = text.trim();
         } catch (err: any) {
-             
+
             systemLogger.error("[OUTREACH_PROMPT_COMPOSE][AI_ERROR]", err?.message || err);
             // Fallback: compose a deterministic prompt locally if model fails
             const roleSuffix = (projectRole || projectTitle)
@@ -166,7 +200,7 @@ Requirements:
 
         return NextResponse.json({ prompt: promptText }, { status: 200 });
     } catch (error) {
-         
+
         systemLogger.error("[OUTREACH_PROMPT_COMPOSE_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }

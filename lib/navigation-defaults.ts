@@ -254,6 +254,14 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Products",
                 iconName: "Package",
                 href: "/crm/products"
+            },
+            {
+                id: "nav_varuni",
+                type: "item",
+                label: "Varuni AI",
+                iconName: "Sparkles",
+                href: "/openAi",
+                permissions: { module: "openai" }
             }
         ]
     },

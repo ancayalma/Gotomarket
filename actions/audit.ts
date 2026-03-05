@@ -14,13 +14,29 @@ export async function logActivityInternal(
     team_id?: string
 ) {
     try {
+        // If userId looks like an email (not a valid ObjectId), resolve it
+        let resolvedUserId = userId;
+        if (userId && userId.includes("@")) {
+            const user = await prismadb.users.findUnique({
+                where: { email: userId },
+                select: { id: true }
+            });
+            if (user) {
+                resolvedUserId = user.id;
+            } else {
+                // Can't resolve — skip logging rather than crash
+                console.warn(`[logActivityInternal] Could not resolve userId from email: ${userId}`);
+                return;
+            }
+        }
+
         const headerList = await headers();
         const ipAddress = headerList.get("x-forwarded-for") || headerList.get("x-real-ip") || "unknown";
         const userAgent = headerList.get("user-agent") || "unknown";
 
         await prismadb.systemActivity.create({
             data: {
-                userId,
+                userId: resolvedUserId,
                 team_id,
                 action,
                 resource,

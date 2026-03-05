@@ -19,9 +19,10 @@ const CampaignsTableWrapper: React.FC<CampaignsTableWrapperProps> = ({ data, sta
             data={data}
             stats={stats}
             entityName="Campaigns"
+            baseUrl="/campaigns/c"
             statsLinks={{
                 total: "/campaigns",
-                tasks: "/projects/tasks", // Keeping this for now, or change if there's a specific campaign tasks route
+                tasks: "/projects/tasks",
                 documents: "/documents"
             }}
         />
@@ -29,3 +30,4 @@ const CampaignsTableWrapper: React.FC<CampaignsTableWrapperProps> = ({ data, sta
 };
 
 export default CampaignsTableWrapper;
+

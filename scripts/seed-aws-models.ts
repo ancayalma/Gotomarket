@@ -26,16 +26,12 @@ async function main() {
 
     console.log("AWS Provider created/updated");
 
-    // 2. Add requested models to AWS Provider (Including the 4.5/4.6 ones from image)
+    // 2. Add requested models to AWS Provider with CORRECT Bedrock identifiers
     const models = [
-        { name: "Claude Sonnet 4.6", modelId: "anthropic.claude-4-6-sonnet" },
-        { name: "Claude Opus 4.6", modelId: "anthropic.claude-4-6-opus" },
-        { name: "Claude Opus 4.5", modelId: "anthropic.claude-4-5-opus" },
-        { name: "Claude Haiku 4.5", modelId: "anthropic.claude-4-5-haiku" },
-        { name: "Claude Sonnet 4.5", modelId: "anthropic.claude-4-5-sonnet" },
-        { name: "Claude Sonnet 3.5", modelId: "anthropic.claude-3-5-sonnet-20240620-v1:0" },
-        { name: "Claude Opus 3.5", modelId: "anthropic.claude-3-5-opus-20240620-v1:0" },
-        { name: "Claude Haiku 3.5", modelId: "anthropic.claude-3-5-haiku-20240620-v1:0" }
+        { name: "Claude Sonnet 3.5 (v2)", modelId: "anthropic.claude-3-5-sonnet-20241022-v2:0" },
+        { name: "Claude Sonnet 3.5 (v1)", modelId: "anthropic.claude-3-5-sonnet-20240620-v1:0" },
+        { name: "Claude Haiku 3.5", modelId: "anthropic.claude-3-5-haiku-20241022-v1:0" },
+        { name: "Claude Opus 3.0", modelId: "anthropic.claude-3-opus-20240229-v1:0" },
     ];
 
     for (const modelData of models) {

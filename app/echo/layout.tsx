@@ -16,10 +16,8 @@ export default function VoiceHubLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" suppressHydrationWarning>
-            <body className={inter.className}>
-                {children}
-            </body>
-        </html>
+        <div className={inter.className}>
+            {children}
+        </div>
     );
 }

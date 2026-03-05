@@ -31,9 +31,8 @@ const AccountsView = ({ data, crmData }: any) => {
     return null;
   }
 
-  const { users, industries } = crmData;
-
-
+  const users = crmData?.users || [];
+  const industries = crmData?.industries || [];
 
   return (
     <div className="space-y-4">

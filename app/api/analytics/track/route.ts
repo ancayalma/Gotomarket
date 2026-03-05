@@ -5,7 +5,11 @@ import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
+        const text = await req.text();
+        if (!text) {
+            return NextResponse.json({ success: false, message: "Empty body" }, { status: 400 });
+        }
+        const body = JSON.parse(text);
         const { path, userAgent, visitorId } = body;
 
         if (!path) {

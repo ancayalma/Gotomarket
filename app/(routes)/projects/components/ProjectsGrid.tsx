@@ -23,13 +23,15 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface ProjectsGridProps {
     data: any[];
+    baseUrl?: string;
 }
 
-export const ProjectsGrid = ({ data }: ProjectsGridProps) => {
+export const ProjectsGrid = ({ data, baseUrl = "/projects/boards" }: ProjectsGridProps) => {
     const router = useRouter();
 
     if (!data || data.length === 0) {
@@ -50,7 +52,10 @@ export const ProjectsGrid = ({ data }: ProjectsGridProps) => {
                 <Card
                     key={board.id}
                     className="group relative overflow-hidden border-primary/10 bg-background/50 backdrop-blur-md hover:shadow-2xl hover:shadow-primary/5 transition-shadow duration-500 rounded-3xl cursor-pointer"
-                    onClick={() => router.push(`/projects/boards/${board.id}`)}
+                    onClick={() => {
+                        console.log("NAVIGATING TO:", `${baseUrl}/${board.id}`);
+                        router.push(`${baseUrl}/${board.id}`);
+                    }}
                 >
                     {/* Ambient Background Glow */}
                     <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -80,9 +85,11 @@ export const ProjectsGrid = ({ data }: ProjectsGridProps) => {
                             </div>
                         </div>
                         <div className="mt-4">
-                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
-                                {board.title}
-                            </CardTitle>
+                            <Link href={`${baseUrl}/${board.id}`}>
+                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2 hover:opacity-80 transition-opacity">
+                                    {board.title}
+                                </CardTitle>
+                            </Link>
                             <CardDescription className="line-clamp-2 mt-2 min-h-[40px]">
                                 {board.description || "No description provided."}
                             </CardDescription>
@@ -139,10 +146,12 @@ export const ProjectsGrid = ({ data }: ProjectsGridProps) => {
                                     <span className="text-xs font-semibold">{board.assigned_user?.name || "Unassigned"}</span>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="sm" className="group/btn gap-2 text-primary hover:bg-primary/10 rounded-xl">
-                                Open Board
-                                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                            </Button>
+                            <Link href={`${baseUrl}/${board.id}`}>
+                                <Button variant="ghost" size="sm" className="group/btn gap-2 text-primary hover:bg-primary/10 rounded-xl">
+                                    Open Board
+                                    <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                </Button>
+                            </Link>
                         </div>
                     </CardFooter>
                 </Card>

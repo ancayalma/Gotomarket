@@ -39,7 +39,8 @@ const ContractsView = ({ data, crmData, accountId }: any) => {
 
   const isRoomView = view === "deal_rooms" || view === "rooms";
 
-  const { users, accounts } = crmData;
+  const users = crmData?.users || [];
+  const accounts = crmData?.accounts || [];
 
   const card = {
     title: "Create Contract",

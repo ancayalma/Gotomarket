@@ -118,8 +118,8 @@ const NewProjectDialog = ({ customTrigger, entityName = "Project", apiEndpoint =
             axios.get("/api/crm/leads/team-members"), // Reusing team members endpoint if exists
           ]);
           setAccounts(accountsRes.data || []);
-          setOpportunities(oppsRes.data.opportunities || []);
-          setUsers(usersRes.data || []);
+          setOpportunities(oppsRes.data?.opportunities || []);
+          setUsers(usersRes.data?.users || (Array.isArray(usersRes.data) ? usersRes.data : []));
         } catch (error) {
           console.error("Error fetching data:", error);
         }

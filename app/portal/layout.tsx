@@ -8,8 +8,8 @@ export const metadata = {
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="en">
-            <body className="antialiased">{children}</body>
-        </html>
+        <div className="antialiased relative min-h-[100dvh]">
+            {children}
+        </div>
     );
 }

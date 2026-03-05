@@ -49,6 +49,7 @@ async function createProviderModel(
             AZURE: "AZURE",
             MISTRAL: "MISTRAL",
             BEDROCK: "BEDROCK",
+            AWS: "BEDROCK",
         };
         sdkType = slugOverrides[providerSlug] || "OPENAI_COMPATIBLE";
     }
@@ -82,10 +83,10 @@ async function createProviderModel(
     switch (sdkType) {
         case "AZURE": {
             const effectiveResourceName = resourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
-            const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
+            const apiVersion = process.env.AZURE_OPENAI_API_VERSION || "2024-02-15-preview";
 
             if (!effectiveResourceName || !effectiveApiKey) {
-                throw new Error("Azure OpenAI configuration incomplete.");
+                throw new Error(`Azure OpenAI configuration incomplete (resourceName: ${!!effectiveResourceName}, apiKey: ${!!effectiveApiKey}). Update your team AI config to use a configured provider.`);
             }
 
             const azure = createAzure({
@@ -208,6 +209,28 @@ export async function getAiSdkModel(
     const systemConfigs = await prismadb.systemAiConfig.findMany({ where: { isActive: true } });
     const defaultSystemConfig = systemConfigs.find((c: any) => c.isDefault) || systemConfigs[0];
 
+    // B.1 Validate team provider actually has credentials configured at system level
+    // If team points to a provider with no system config (e.g. stale AZURE reference), discard it
+    if (finalProvider && configSource === "team") {
+        const providerSysConfig = systemConfigs.find((c: any) => c.provider === finalProvider);
+        const hasProviderConfigWithKey = providerSysConfig && providerSysConfig.apiKey && providerSysConfig.apiKey.trim().length > 0;
+        const providerEnvKeys: Record<string, string[]> = {
+            AZURE: ["AZURE_OPENAI_API_KEY", "AZURE_OPENAI_RESOURCE_NAME"],
+            OPENAI: ["OPENAI_API_KEY"],
+            BEDROCK: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
+        };
+        const requiredEnvs = providerEnvKeys[finalProvider] || [];
+        const hasEnvCreds = requiredEnvs.length === 0 || requiredEnvs.every(k => !!process.env[k]);
+        const teamHasOwnKey = teamConfig && !teamConfig.useSystemKey && !!teamConfig.apiKey;
+
+        if (!hasProviderConfigWithKey && !hasEnvCreds && !teamHasOwnKey) {
+            console.warn(`${DEBUG_PREFIX} Team config points to ${finalProvider} but no usable credentials found. Falling through to system default.`);
+            finalProvider = null;
+            finalModelId = null;
+            configSource = "system";
+        }
+    }
+
     if (!finalProvider || !finalModelId) {
         // Check for service override in system configuration (JSON)
         // Check ALL active configs for one that might have this service? 
@@ -218,8 +241,8 @@ export async function getAiSdkModel(
             finalProvider = systemOverrides[service].provider;
             finalModelId = systemOverrides[service].modelId;
         } else {
-            finalProvider = defaultSystemConfig?.provider || "OPENAI";
-            finalModelId = defaultSystemConfig?.defaultModelId || "gpt-4o";
+            finalProvider = defaultSystemConfig?.provider || "BEDROCK";
+            finalModelId = defaultSystemConfig?.defaultModelId || "anthropic.claude-3-5-haiku-20241022-v1:0";
         }
         configSource = "system";
     }
@@ -256,7 +279,7 @@ export async function getAiSdkModel(
     const cleanUrl = (url: string | undefined) => url?.endsWith('/') ? url.slice(0, -1) : url;
     finalBaseURL = cleanUrl(finalBaseURL);
 
-    console.debug(`${DEBUG_PREFIX} Routing to: ${finalProvider}:${finalModelId} (Source: ${configSource}, Team: ${teamId || "SYSTEM"})`);
+    console.debug(`${DEBUG_PREFIX} Routing to: ${finalProvider}:${finalModelId} (Source: ${configSource}, Team: ${teamId || "SYSTEM"}, hasApiKey: ${!!finalApiKey}, hasBaseURL: ${!!finalBaseURL}, hasResourceName: ${!!finalResourceName})`);
 
     const model = await createProviderModel(finalProvider!, finalModelId!, finalApiKey, finalResourceName, finalBaseURL);
 

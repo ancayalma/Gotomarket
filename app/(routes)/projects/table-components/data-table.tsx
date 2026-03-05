@@ -33,6 +33,7 @@ import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
 import { PanelTopClose, PanelTopOpen, FolderOpen, FileText, ListTodo } from "lucide-react";
 import { ProjectCard } from "./project-card";
+import { getColumns } from "./columns";
 import { Task } from "../data/schema";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useTableSettings } from "@/hooks/use-table-settings";
@@ -50,10 +51,11 @@ interface DataTableProps<TData, TValue> {
     tasks: string;
     documents: string;
   };
+  baseUrl?: string;
 }
 
 export function ProjectsDataTable<TData, TValue>({
-  columns,
+  columns: columnsProp,
   data,
   stats,
   entityName = "Project",
@@ -62,7 +64,16 @@ export function ProjectsDataTable<TData, TValue>({
     tasks: "/projects/tasks",
     documents: "/documents",
   },
+  baseUrl = "/projects/boards"
 }: DataTableProps<TData, TValue>) {
+  // If baseUrl differs from default, regenerate columns with correct links
+  const columns = React.useMemo(() => {
+    if (baseUrl !== "/projects/boards") {
+      return getColumns(baseUrl) as ColumnDef<TData, TValue>[];
+    }
+    return columnsProp;
+  }, [baseUrl, columnsProp]);
+
   // Mobile detection using shared hook
   const isMobile = useIsMobile();
 
@@ -268,7 +279,7 @@ export function ProjectsDataTable<TData, TValue>({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <ProjectCard key={row.id} row={row as unknown as Row<Task>} />
+                  <ProjectCard key={row.id} row={row as unknown as Row<Task>} baseUrl={baseUrl} />
                 ))
               ) : (
                 <div className="col-span-full text-center py-8 text-muted-foreground">
@@ -285,7 +296,7 @@ export function ProjectsDataTable<TData, TValue>({
                   return (
                     <a
                       key={row.id}
-                      href={`/projects/boards/${orig?.id}`}
+                      href={`${baseUrl}/${orig?.id}`}
                       className="group border rounded-lg p-3 bg-card hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-[color,background-color,border-color,box-shadow] duration-200 cursor-pointer"
                     >
                       {orig?.brand_logo_url && (

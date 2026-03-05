@@ -11,7 +11,7 @@ import { DataTableRowActions } from "./data-table-row-actions";
 import moment from "moment";
 import Link from "next/link";
 
-export const columns: ColumnDef<Task>[] = [
+export const getColumns = (baseUrl: string = "/projects/boards"): ColumnDef<Task>[] => [
   {
     accessorKey: "createdAt",
     header: ({ column }) => (
@@ -48,7 +48,7 @@ export const columns: ColumnDef<Task>[] = [
       <DataTableColumnHeader column={column} title="Name" />
     ),
     cell: ({ row }) => (
-      <Link href={`/projects/boards/${row.original.id}`} prefetch={false}>
+      <Link href={`${baseUrl}/${row.original.id}`} prefetch={false}>
         <div className="flex items-center gap-2 min-w-[200px]">
           {row.original.brand_logo_url && (
             <img src={row.original.brand_logo_url} alt="Logo" className="h-10 w-10 object-contain rounded hover:opacity-90 transition-opacity" />
@@ -100,3 +100,6 @@ export const columns: ColumnDef<Task>[] = [
     cell: ({ row }) => <DataTableRowActions row={row} />,
   },
 ];
+
+// Backward-compatible export for consumers that haven't switched to getColumns()
+export const columns: ColumnDef<Task>[] = getColumns("/projects/boards");

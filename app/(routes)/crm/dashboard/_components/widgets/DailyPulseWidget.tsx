@@ -24,7 +24,7 @@ export const DailyPulseWidget = () => {
                 setData(response.data);
                 setError(null);
             } catch (err: any) {
-                console.error("Briefing widget error:", err);
+                // /api/calendar/briefing not implemented yet — suppress noise
                 setError("Pulse unavailable");
             } finally {
                 setLoading(false);

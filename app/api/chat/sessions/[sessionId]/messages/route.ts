@@ -146,16 +146,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
       });
     }
 
-    // Call Azure OpenAI (or fallback OpenAI) with streaming
-    const { model } = await getAiSdkModel(auth.user.id);
+    // Resolve AI model via centralized config
+    const aiResult = await getAiSdkModel(auth.user.id);
+    const { model } = aiResult;
+    console.log("[CHAT_DEBUG] Resolved AI model:", { provider: aiResult.provider, modelId: aiResult.modelId, teamId: aiResult.teamId, hasModel: !!model });
     if (!model) {
-      return new NextResponse("No openai key found", { status: 500 });
+      return new NextResponse("No AI model configured", { status: 500 });
     }
 
     let result: any;
     try {
       // Omit temperature for reasoning models (o1, etc.)
-      const temperature = isReasoningModel(model.modelId) ? undefined : 1;
+      const temperature = isReasoningModel(aiResult.modelId) ? undefined : 1;
 
       const textStreamPromise = streamText({
         model,
@@ -191,9 +193,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
       } else {
         result = textStreamPromise;
       }
-    } catch (err) {
-      systemLogger.error("[CHAT_STREAM_TEXT_ERROR]", err);
-      return new NextResponse("Error calling streamText", { status: 500 });
+    } catch (err: any) {
+      systemLogger.error("[CHAT_STREAM_TEXT_ERROR]", err?.message || err, err?.cause || "");
+      return new NextResponse(`Error calling streamText: ${err?.message || "Unknown error"}`, { status: 500 });
     }
 
     // Attempt to use known response methods

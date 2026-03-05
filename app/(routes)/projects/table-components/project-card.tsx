@@ -26,9 +26,10 @@ import { SafeImage } from "@/components/SafeImage";
 
 interface ProjectCardProps {
     row: Row<Task>;
+    baseUrl?: string;
 }
 
-export function ProjectCard({ row }: ProjectCardProps) {
+export function ProjectCard({ row, baseUrl = "/projects/boards" }: ProjectCardProps) {
     const project = row.original;
     const parsedProject = taskSchema.parse(project);
     const router = useRouter();
@@ -78,7 +79,7 @@ export function ProjectCard({ row }: ProjectCardProps) {
             <Card className="hover:shadow-md transition-shadow flex flex-col h-full">
                 <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between space-y-0">
                     <div className="space-y-1 flex-1 min-w-0">
-                        <Link href={`/projects/boards/${project.id}`} prefetch={false}>
+                        <Link href={`${baseUrl}/${project.id}`} prefetch={false}>
                             <div className="font-semibold flex items-center gap-2 hover:text-primary transition-colors">
                                 {project.brand_logo_url ? (
                                     <SafeImage src={project.brand_logo_url} alt="Logo" className="h-8 w-8 object-contain rounded" />
@@ -115,15 +116,16 @@ export function ProjectCard({ row }: ProjectCardProps) {
                         <span>{moment((project as any).date_created || (project as any).createdAt).fromNow()}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => router.push(`/projects/boards/${project.id}`)}
-                            title="View Board"
-                        >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                        </Button>
+                        <Link href={`${baseUrl}/${project.id}`}>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                title="View Board"
+                            >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                            </Button>
+                        </Link>
                         <Button
                             variant="ghost"
                             size="icon"

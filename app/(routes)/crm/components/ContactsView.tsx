@@ -39,7 +39,8 @@ const ContactsView = ({ data, crmData }: any) => {
     return null;
   }
 
-  const { users, accounts } = crmData;
+  const users = crmData?.users || [];
+  const accounts = crmData?.accounts || [];
 
   const card = {
     title: "Create Contact",

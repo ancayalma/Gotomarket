@@ -59,7 +59,7 @@ type ChatMessage = {
   createdAt: string;
 };
 
-export default function ChatApp() {
+export default function ChatApp({ isCompact = false }: { isCompact?: boolean }) {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [creatingTitle, setCreatingTitle] = useState<string>("");
@@ -221,163 +221,165 @@ export default function ChatApp() {
       )}
 
       {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed z-50 inset-y-0 left-0 w-80 bg-card border-r border-border flex flex-col transition-transform duration-300 ease-in-out sm:static sm:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <MessageSquare className="w-5 h-5 text-primary" />
+      {!isCompact && (
+        <aside
+          className={cn(
+            "fixed z-50 inset-y-0 left-0 w-80 bg-card border-r border-border flex flex-col transition-transform duration-300 ease-in-out sm:static sm:translate-x-0",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          )}
+        >
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <MessageSquare className="w-5 h-5 text-primary" />
+              </div>
+              <h2 className="font-semibold text-lg">Chats</h2>
             </div>
-            <h2 className="font-semibold text-lg">Chats</h2>
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => loadSessions()} disabled={loadingSessions}>
-            <RefreshCw className={cn("w-4 h-4", loadingSessions && "animate-spin")} />
-          </Button>
-        </div>
-
-        {/* New Chat Form */}
-        <div className="p-4 space-y-3 border-b border-border bg-muted/30">
-          <div className="flex gap-2">
-            <Input
-              value={creatingTitle}
-              onChange={(e) => setCreatingTitle(e.target.value)}
-              placeholder="New chat title..."
-              className="bg-background"
-            />
-            <Button onClick={createSession} disabled={loadingSessions} size="icon">
-              <Plus className="w-4 h-4" />
+            <Button variant="ghost" size="icon" onClick={() => loadSessions()} disabled={loadingSessions}>
+              <RefreshCw className={cn("w-4 h-4", loadingSessions && "animate-spin")} />
             </Button>
           </div>
-          <div className="flex items-center justify-between px-1">
-            <label className="text-xs text-muted-foreground flex items-center gap-2 cursor-pointer select-none">
-              <Switch.Root
-                className="w-9 h-5 bg-muted-foreground/30 rounded-full relative data-[state=checked]:bg-primary transition-colors flex items-center px-0.5"
-                checked={useHistory}
-                onCheckedChange={setUseHistory}
-              >
-                <Switch.Thumb className="block w-4 h-4 bg-background rounded-full shadow-sm transition-transform translate-x-0 data-[state=checked]:translate-x-4" />
-              </Switch.Root>
-              Chat History
-            </label>
-          </div>
-        </div>
 
-        {/* Search */}
-        <div className="px-4 pt-2">
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search chats..."
-              className="pl-8 bg-muted/50"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Session List */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-          {sessions.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              No chats yet. Start a new one!
+          {/* New Chat Form */}
+          <div className="p-4 space-y-3 border-b border-border bg-muted/30">
+            <div className="flex gap-2">
+              <Input
+                value={creatingTitle}
+                onChange={(e) => setCreatingTitle(e.target.value)}
+                placeholder="New chat title..."
+                className="bg-background"
+              />
+              <Button onClick={createSession} disabled={loadingSessions} size="icon">
+                <Plus className="w-4 h-4" />
+              </Button>
             </div>
-          )}
-          {sessions
-            .filter((s) => !s.isTemporary) // Filter out temporary sessions
-            .filter((s) => (s.title || "Untitled Chat").toLowerCase().includes(searchQuery.toLowerCase()))
-            .map((s) => (
-              <div
-                key={s.id}
-                className={cn(
-                  "group flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
-                  activeSessionId === s.id && "bg-muted shadow-sm border border-border/50"
-                )}
-                onClick={() => {
-                  setActiveSessionId(s.id);
-                  if (window.innerWidth < 640) setSidebarOpen(false);
-                }}
-              >
-                <MessageSquare className={cn(
-                  "w-4 h-4 shrink-0",
-                  activeSessionId === s.id ? "text-primary" : "text-muted-foreground"
-                )} />
+            <div className="flex items-center justify-between px-1">
+              <label className="text-xs text-muted-foreground flex items-center gap-2 cursor-pointer select-none">
+                <Switch.Root
+                  className="w-9 h-5 bg-muted-foreground/30 rounded-full relative data-[state=checked]:bg-primary transition-colors flex items-center px-0.5"
+                  checked={useHistory}
+                  onCheckedChange={setUseHistory}
+                >
+                  <Switch.Thumb className="block w-4 h-4 bg-background rounded-full shadow-sm transition-transform translate-x-0 data-[state=checked]:translate-x-4" />
+                </Switch.Root>
+                Chat History
+              </label>
+            </div>
+          </div>
 
-                <div className="flex-1 min-w-0">
-                  {renamingSessionId === s.id ? (
-                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                      <Input
-                        value={renameTitle}
-                        onChange={(e) => setRenameTitle(e.target.value)}
-                        className="h-7 text-sm"
-                        autoFocus
-                      />
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-green-500" onClick={() => renameSession(s.id)}>
-                        <Check className="w-3 h-3" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRenamingSessionId(null)}>
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col">
-                      <span className="truncate text-sm font-medium">{s.title || "Untitled Chat"}</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {new Date(s.createdAt).toLocaleDateString()} • {s.isTemporary ? "Temp" : "Saved"}
-                        {s.assigned_user && (
-                          <span className="block text-[10px] text-primary/70 truncate">
-                            by {s.assigned_user.name || s.assigned_user.email}
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  )}
-                </div>
+          {/* Search */}
+          <div className="px-4 pt-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search chats..."
+                className="pl-8 bg-muted/50"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreVertical className="w-3 h-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation();
-                      setRenamingSessionId(s.id);
-                      setRenameTitle(s.title || "");
-                    }}>
-                      <Pencil className="w-3 h-3 mr-2" /> Rename
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation();
-                      toggleTemporary(s.id, !s.isTemporary);
-                    }}>
-                      {s.isTemporary ? <Check className="w-3 h-3 mr-2" /> : <X className="w-3 h-3 mr-2" />}
-                      {s.isTemporary ? "Turn History On" : "Turn History Off"}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSessionToDelete(s.id);
-                      }}
-                    >
-                      <Trash2 className="w-3 h-3 mr-2" /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+          {/* Session List */}
+          <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+            {sessions.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No chats yet. Start a new one!
               </div>
-            ))}
-        </div>
-      </aside>
+            )}
+            {sessions
+              .filter((s) => !s.isTemporary) // Filter out temporary sessions
+              .filter((s) => (s.title || "Untitled Chat").toLowerCase().includes(searchQuery.toLowerCase()))
+              .map((s) => (
+                <div
+                  key={s.id}
+                  className={cn(
+                    "group flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
+                    activeSessionId === s.id && "bg-muted shadow-sm border border-border/50"
+                  )}
+                  onClick={() => {
+                    setActiveSessionId(s.id);
+                    if (window.innerWidth < 640) setSidebarOpen(false);
+                  }}
+                >
+                  <MessageSquare className={cn(
+                    "w-4 h-4 shrink-0",
+                    activeSessionId === s.id ? "text-primary" : "text-muted-foreground"
+                  )} />
+
+                  <div className="flex-1 min-w-0">
+                    {renamingSessionId === s.id ? (
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          value={renameTitle}
+                          onChange={(e) => setRenameTitle(e.target.value)}
+                          className="h-7 text-sm"
+                          autoFocus
+                        />
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-green-500" onClick={() => renameSession(s.id)}>
+                          <Check className="w-3 h-3" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setRenamingSessionId(null)}>
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col">
+                        <span className="truncate text-sm font-medium">{s.title || "Untitled Chat"}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(s.createdAt).toLocaleDateString()} • {s.isTemporary ? "Temp" : "Saved"}
+                          {s.assigned_user && (
+                            <span className="block text-[10px] text-primary/70 truncate">
+                              by {s.assigned_user.name || s.assigned_user.email}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        setRenamingSessionId(s.id);
+                        setRenameTitle(s.title || "");
+                      }}>
+                        <Pencil className="w-3 h-3 mr-2" /> Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTemporary(s.id, !s.isTemporary);
+                      }}>
+                        {s.isTemporary ? <Check className="w-3 h-3 mr-2" /> : <X className="w-3 h-3 mr-2" />}
+                        {s.isTemporary ? "Turn History On" : "Turn History Off"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSessionToDelete(s.id);
+                        }}
+                      >
+                        <Trash2 className="w-3 h-3 mr-2" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))}
+          </div>
+        </aside>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 bg-background/50">
@@ -391,6 +393,7 @@ export default function ChatApp() {
               onRefresh={() => loadMessages(activeSessionId)}
               onToggleSidebar={() => setSidebarOpen(true)}
               sessionTitle={activeSession?.title}
+              isCompact={isCompact}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
@@ -403,10 +406,14 @@ export default function ChatApp() {
                   Select an existing chat from the sidebar or create a new one to start chatting with Varuni.
                 </p>
                 <Button onClick={() => {
-                  if (window.innerWidth < 640) setSidebarOpen(true);
+                  if (isCompact) {
+                    createSession();
+                  } else if (window.innerWidth < 640) {
+                    setSidebarOpen(true);
+                  }
                   // Focus input logic could go here
                 }}>
-                  Open Chats
+                  {isCompact ? "New Chat" : "Open Chats"}
                 </Button>
               </div>
             </div>

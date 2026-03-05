@@ -29,6 +29,8 @@ import { useLearn } from "@/components/providers/learn-provider";
 import { TAB_LABELS, TAB_COLORS } from "@/components/ui/LearnLink";
 import { getTeamCreditsInfo } from "@/actions/crm/credits";
 import DialerPanel from "@/app/(routes)/crm/dialer/DialerPanel";
+import dynamic from "next/dynamic";
+const ChatApp = dynamic(() => import("@/app/(routes)/openAi/components/Chat"), { ssr: false });
 import {
     Popover,
     PopoverContent,
@@ -57,6 +59,7 @@ export default function UtilityBar() {
     const router = useRouter();
     const [isLearnOpen, setIsLearnOpen] = useState(false);
     const [isDialerOpen, setIsDialerOpen] = useState(false);
+    const [isVaruniOpen, setIsVaruniOpen] = useState(false);
 
     useEffect(() => {
         const fetchCredits = async () => {
@@ -446,6 +449,47 @@ export default function UtilityBar() {
                                     </Popover>
                                 </TooltipTrigger>
                                 <TooltipContent side="top">Communication Terminal.</TooltipContent>
+                            </Tooltip>
+
+                            {/* Varuni Popover */}
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Popover open={isVaruniOpen} onOpenChange={setIsVaruniOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className={cn(
+                                                    "relative gap-2 px-4 h-8 rounded-full overflow-hidden group transition-all duration-500",
+                                                    "bg-gradient-to-br from-fuchsia-500/10 via-fuchsia-500/5 to-pink-500/10",
+                                                    "border border-fuchsia-500/20 hover:border-fuchsia-500/40",
+                                                    "text-fuchsia-400 font-bold uppercase tracking-[0.2em] text-[10px]",
+                                                    "hover:scale-[1.02] active:scale-95 hover:shadow-[0_0_20px_rgba(217,70,239,0.15)]",
+                                                    isVaruniOpen && "from-fuchsia-500/20 to-pink-500/20 border-fuchsia-500/50 shadow-[0_0_30px_rgba(217,70,239,0.25)] text-fuchsia-300"
+                                                )}
+                                            >
+                                                {/* Shimmer Gleam Effect */}
+                                                <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-fuchsia-400/10 to-transparent skew-x-[-20deg]" />
+
+                                                {/* Subtle Radial Glow */}
+                                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                                                <div className="relative flex items-center gap-2">
+                                                    <div className="relative flex items-center justify-center w-4 h-4">
+                                                        <Sparkles className="h-3.5 w-3.5 group-hover:rotate-12 transition-transform duration-300" />
+                                                    </div>
+                                                    <span className="hidden lg:inline">Varuni</span>
+                                                </div>
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[420px] p-0 border-border bg-popover/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="center" sideOffset={12}>
+                                            <div className="h-[520px] overflow-hidden w-[420px] flex flex-col">
+                                                <ChatApp isCompact={true} />
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">Varuni AI Assistant.</TooltipContent>
                             </Tooltip>
 
 

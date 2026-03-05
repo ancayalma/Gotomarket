@@ -10,6 +10,7 @@ import { authOptions } from "@/lib/auth";
 
 import NewTaskDialog from "../dialogs/NewTask";
 import NewProjectDialog from "../dialogs/NewProject";
+import NewCampaignDialog from "../dialogs/NewCampaign";
 
 import { ProjectsDataTable } from "../table-components/data-table";
 import { columns } from "../table-components/columns";
@@ -71,7 +72,7 @@ const ProjectsView = async ({ view = "overview" }: ProjectsViewProps) => {
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <NewProjectDialog
+                        <NewCampaignDialog
                             entityName={entityLabel}
                             customTrigger={
                                 <Button className="gap-2 bg-primary shadow-lg shadow-primary/20">
@@ -97,11 +98,11 @@ const ProjectsView = async ({ view = "overview" }: ProjectsViewProps) => {
                         </TabsList>
                     </div>
                     <TabsContent value="grid" className="mt-0 outline-none">
-                        <ProjectsGrid data={displayData} />
+                        <ProjectsGrid data={displayData} baseUrl="/campaigns/c" />
                     </TabsContent>
                     <TabsContent value="list" className="mt-0 outline-none">
                         <div className="rounded-3xl border border-primary/10 bg-background/50 backdrop-blur-sm overflow-hidden">
-                            <ProjectsDataTable data={displayData} columns={columns} stats={stats} entityName="Campaigns" />
+                            <ProjectsDataTable data={displayData} columns={columns} stats={stats} entityName="Campaigns" baseUrl="/campaigns/c" />
                         </div>
                     </TabsContent>
                 </Tabs>

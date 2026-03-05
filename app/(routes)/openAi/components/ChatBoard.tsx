@@ -14,6 +14,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 type ChatMessage = {
     id: string;
@@ -39,9 +40,10 @@ interface ChatBoardProps {
     onRefresh: () => void;
     onToggleSidebar?: () => void;
     sessionTitle?: string | null;
+    isCompact?: boolean;
 }
 
-export default function ChatBoard({ sessionId, initialMessages, isTemporary, onRefresh, onToggleSidebar, sessionTitle }: ChatBoardProps) {
+export default function ChatBoard({ sessionId, initialMessages, isTemporary, onRefresh, onToggleSidebar, sessionTitle, isCompact }: ChatBoardProps) {
     const [localInput, setLocalInput] = useState("");
     const [showScrollButton, setShowScrollButton] = useState(false);
 
@@ -180,21 +182,31 @@ export default function ChatBoard({ sessionId, initialMessages, isTemporary, onR
     return (
         <div className="flex-1 flex flex-col min-h-0 relative bg-background/50">
             {/* Header (Context & Refresh) */}
-            <div className="flex items-center justify-between px-4 py-2 border-b bg-background/95 backdrop-blur z-20 sticky top-0 h-14">
-                <div className="flex items-center gap-3">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="sm:hidden"
-                        onClick={onToggleSidebar}
-                    >
-                        <Menu className="w-5 h-5" />
-                    </Button>
-                    <div className="flex flex-col">
-                        <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">
-                            {sessionTitle || "Varuni AI Assistant"}
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        </h1>
+            <div className={cn(
+                "flex items-center justify-between px-4 border-b bg-background/95 backdrop-blur z-20 sticky top-0 shrink-0",
+                isCompact ? "h-14 py-2" : "h-auto min-h-14 py-2"
+            )}>
+                <div className="flex items-center gap-3 overflow-hidden">
+                    {!isCompact && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="sm:hidden shrink-0"
+                            onClick={onToggleSidebar}
+                        >
+                            <Menu className="w-5 h-5" />
+                        </Button>
+                    )}
+                    <div className="flex flex-col min-w-0">
+                        <div className="flex items-center gap-2">
+                            <h1 className={cn(
+                                "font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase truncate max-w-[200px] md:max-w-none",
+                                isCompact ? "text-lg md:text-xl py-1 px-1" : "text-3xl md:text-5xl py-4 px-4 mb-2"
+                            )}>
+                                {sessionTitle || "Varuni AI Assistant"}
+                            </h1>
+                            <span className="w-2 h-2 shrink-0 rounded-full bg-green-500 animate-pulse" />
+                        </div>
                         {isTemporary && (
                             <span className="text-[10px] text-amber-500 font-medium flex items-center gap-1">
                                 History Off
@@ -243,7 +255,7 @@ export default function ChatBoard({ sessionId, initialMessages, isTemporary, onR
             >
                 <div className="max-w-3xl mx-auto space-y-6 pb-4">
                     {messages.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
+                        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4 pt-10">
                             <div className="p-4 bg-primary/10 rounded-full">
                                 <RefreshCw className="w-8 h-8 text-primary animate-pulse" />
                             </div>

@@ -72,7 +72,10 @@ export async function POST(
             },
         });
 
-        await logActivityInternal(session.user.email, "UPDATE", "TeamAiConfig", `Updated AI config for team ${teamId} (provider: ${provider})`, teamId);
+        const actorId = (session.user as any)?.id;
+        if (actorId) {
+            await logActivityInternal(actorId, "UPDATE", "TeamAiConfig", `Updated AI config for team ${teamId} (provider: ${provider})`, teamId);
+        }
         return NextResponse.json({ ...config, apiKey: config.apiKey ? "HasValue" : null });
     } catch (error) {
         systemLogger.error("[TEAM_AI_CONFIG_POST]", error);
