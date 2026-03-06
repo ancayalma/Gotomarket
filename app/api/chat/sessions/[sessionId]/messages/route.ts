@@ -5,7 +5,9 @@ import { authOptions } from "@/lib/auth";
 import { prismadbChat } from "@/lib/prisma-chat";
 const db: any = prismadbChat;
 import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
-import { streamText } from "ai";
+import { streamText, tool } from "ai";
+import { z } from "zod";
+import { retrieveRelevantFacts } from "@/lib/vector-search";
 
 type Params = {
   params: { sessionId: string };
@@ -163,6 +165,70 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
         model,
         messages: modelMessages,
         temperature,
+        tools: {
+          searchCRMKnowledge: tool({
+            description: "Search the deep Synthesis Layer memory for insights, facts, and context regarding a specific Account or Lead based on their historical actions, tasks, emails, sms, invoices, or subscriptions.",
+            parameters: z.object({
+              entityName: z.string().describe("The exact or partial name of the Account (e.g., 'Acme Corp') or Lead (e.g., 'John Doe')"),
+              query: z.string().describe("The specific question or topic to extract from memory (e.g., 'recent SMS replies', 'billing issues')"),
+            }),
+            execute: async ({ entityName, query }) => {
+              try {
+                  const targetEntity = entityName.split(' ')[0]; // Basic tokenization
+                  // 1. Resolve Entity Context Node
+                  const contextNode = await prismadb.contextNode.findFirst({
+                    where: {
+                       OR: [
+                         { account: { name: { contains: targetEntity, mode: 'insensitive' } } },
+                         { lead: { lastName: { contains: targetEntity, mode: 'insensitive' } } },
+                         { lead: { firstName: { contains: targetEntity, mode: 'insensitive' } } },
+                         { lead: { company: { contains: targetEntity, mode: 'insensitive' } } }
+                       ]
+                    },
+                    include: { account: true, lead: true }
+                  });
+
+                  if (!contextNode) return { success: false, reason: `No memory node found for '${entityName}'` };
+
+                  // 2. Compute Embedding targeting 'text-embedding-3-small'
+                  let embedding: number[] = [];
+                  if (process.env.OPENAI_API_KEY) {
+                      const embedRes = await fetch("https://api.openai.com/v1/embeddings", {
+                          method: "POST",
+                          headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+                          body: JSON.stringify({ input: query, model: "text-embedding-3-small" })
+                      });
+                      const embedData = await embedRes.json();
+                      if (embedData?.data?.[0]?.embedding) {
+                          embedding = embedData.data[0].embedding;
+                      }
+                  }
+
+                  if (!embedding.length) return { success: false, reason: "Math matrix generation failed (API Key missing)." };
+
+                  // 3. Retrieve scored facts mathematically in Node.js
+                  const facts = await retrieveRelevantFacts({
+                      contextNodeId: contextNode.id,
+                      queryEmbedding: embedding,
+                      topK: 10,
+                      minScore: 0.30
+                  });
+
+                  return {
+                      entity: contextNode.account?.name || `${contextNode.lead?.firstName} ${contextNode.lead?.lastName}`,
+                      lifecycleStatus: contextNode.lifecycleStatus,
+                      intentLevel: contextNode.intentLevel,
+                      sentimentScore: contextNode.sentimentScore,
+                      relevantFacts: facts
+                  };
+              } catch (e) {
+                  systemLogger.error("[KnowledgeToolError]", e);
+                  return { success: false, reason: "Internal error retrieving memory." };
+              }
+            }
+          })
+        },
+        maxSteps: 3,
         onFinish: async ({ text: completion }) => {
           try {
             if (!chatSession.isTemporary) {

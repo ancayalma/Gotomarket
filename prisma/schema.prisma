@@ -91,6 +91,10 @@ model crm_Accounts {
   cases                 crm_Cases[]
   account_subscriptions crm_Subscriptions[]
   additional_emails     String[]
+
+  // Synthesis Layer (AI Memory)
+  contextNodes     ContextNode[]
+  knowledgeSignals KnowledgeSignal[]
 }
 
 model crm_Leads {
@@ -142,7 +146,7 @@ model crm_Leads {
   connect_contact_id        String?
   call_recording_url        String?
   call_transcript_url       String?
-  azure_realtime_session_id String?
+  aws_eum_session_id        String?
   opt_out                   Boolean?  @default(false)
 
   lead_pool_maps         crm_Lead_Pools_Leads[]
@@ -170,6 +174,10 @@ model crm_Leads {
   additional_emails      String[]
   quotes                 crm_Quotes[]
   opportunities          crm_Opportunities[] @relation(name: "OpportunityToLeadRelation")
+
+  // Synthesis Layer (AI Memory)
+  contextNodes     ContextNode[]
+  knowledgeSignals KnowledgeSignal[]
 }
 
 enum crm_Lead_Status {
@@ -379,6 +387,9 @@ model crm_Outreach_Items {
   // Relations
   assigned_campaign crm_Outreach_Campaigns? @relation(fields: [campaign], references: [id])
   assigned_lead     crm_Leads?              @relation(name: "OutreachItemsLead", fields: [lead], references: [id])
+
+  // Synthesis Layer (AI Memory)
+  knowledgeSignals KnowledgeSignal[]
 }
 
 model crm_Opportunities_Sales_Stages {
@@ -713,6 +724,9 @@ model Invoices {
 
   team_id       String? @db.ObjectId
   assigned_team Team?   @relation(fields: [team_id], references: [id])
+
+  // Synthesis Layer (AI Memory)
+  knowledgeSignals KnowledgeSignal[]
 }
 
 model invoice_States {
@@ -839,6 +853,9 @@ model Tasks {
 
   team_id       String? @db.ObjectId
   assigned_team Team?   @relation(fields: [team_id], references: [id])
+
+  // Synthesis Layer (AI Memory)
+  knowledgeSignals KnowledgeSignal[]
 }
 
 model crm_Accounts_Tasks {
@@ -925,6 +942,8 @@ model Users {
   lastLoginAt          DateTime?                @db.Date
   name                 String?
   password             String?
+  lastKnownRegion      String?                  // E.g., 'CA', 'NY', etc. for MAU tracking (AB 853)
+  lastActiveAt         DateTime?                @db.Date
   resetToken           String?
   resetTokenExpires    DateTime?
   username             String?
@@ -3877,6 +3896,9 @@ model crm_Subscriptions {
   invoices crm_BillingInvoice[]
 
   @@index([next_billing_date])
+
+  // Synthesis Layer (AI Memory)
+  knowledgeSignals KnowledgeSignal[]
 }
 
 // Per-cycle billing invoices (subscription receipts)
@@ -3966,3 +3988,83 @@ model DataRetentionPolicy {
 
 // SOC2: Added to enforce instant global session invalidation across all devices
 // on security events (password reset, role change, MFA addition/removal, deactivation).
+
+// -----------------------------------------------------------------------------
+// Synthesis Layer (AI Memory)
+// -----------------------------------------------------------------------------
+
+model ContextNode {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now()) @db.Date
+  updatedAt DateTime @updatedAt @db.Date
+
+  accountId String?  @db.ObjectId
+  leadId    String?  @db.ObjectId
+
+  summary         String?
+  lifecycleStatus String?
+  sentimentScore  Float?
+  intentLevel     String?
+
+  account         crm_Accounts? @relation(fields: [accountId], references: [id])
+  lead            crm_Leads?    @relation(fields: [leadId], references: [id])
+
+  knowledgeSignals KnowledgeSignal[]
+  embeddings       VectorEmbedding[]
+
+  @@index([accountId])
+  @@index([leadId])
+}
+
+model KnowledgeSignal {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now()) @db.Date
+
+  contextNodeId String? @db.ObjectId
+  contextNode   ContextNode? @relation(fields: [contextNodeId], references: [id])
+
+  type       String
+  content    String
+  confidence Float?
+
+  sourceType  String
+  sourceUrl   String?
+
+  accountId       String? @db.ObjectId
+  leadId          String? @db.ObjectId
+  outreachItemId  String? @db.ObjectId
+  taskId          String? @db.ObjectId
+  invoiceId       String? @db.ObjectId
+  subscriptionId  String? @db.ObjectId
+
+  account         crm_Accounts?         @relation(fields: [accountId], references: [id])
+  lead            crm_Leads?            @relation(fields: [leadId], references: [id])
+  outreachItem    crm_Outreach_Items?   @relation(fields: [outreachItemId], references: [id])
+  task            Tasks?                @relation(fields: [taskId], references: [id])
+  invoice         Invoices?             @relation(fields: [invoiceId], references: [id])
+  subscription    crm_Subscriptions?    @relation(fields: [subscriptionId], references: [id])
+
+  embeddings      VectorEmbedding[]
+
+  @@index([contextNodeId])
+  @@index([accountId])
+  @@index([leadId])
+}
+
+model VectorEmbedding {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now()) @db.Date
+
+  embedding Float[]
+
+  text      String
+
+  contextNodeId     String? @db.ObjectId
+  knowledgeSignalId String? @db.ObjectId
+
+  contextNode       ContextNode?      @relation(fields: [contextNodeId], references: [id])
+  knowledgeSignal   KnowledgeSignal?  @relation(fields: [knowledgeSignalId], references: [id])
+
+  @@index([contextNodeId])
+  @@index([knowledgeSignalId])
+}

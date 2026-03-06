@@ -76,7 +76,20 @@ export default function TermsPage() {
                             </section>
 
                             <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">5. Acceptable Use</h2>
+                                <h2 className="text-2xl font-bold text-white mb-4">5. AI and Data Usage</h2>
+                                <p>
+                                    BasaltCRM utilizes artificial intelligence ("AI") models to provide certain features of the Service. By using the Service, you acknowledge that we may process your data through these AI models.
+                                </p>
+                                <p className="mt-4">
+                                    <strong>Data Training:</strong> We may use aggregated, anonymized, or opt-in tenant data to fine-tune and improve our AI models. You have the right to opt-out of having your workspace data used for this purpose through your Account Settings. For more information on the datasets we use, please review our <a href="/training-data" className="text-primary hover:underline">Training Data Transparency</a> page.
+                                </p>
+                                <p className="mt-4">
+                                    <strong>Data Scraping and Watermarking:</strong> You agree not to use the Service or its API to scrape data for the purpose of training third-party AI models without explicit permission. Furthermore, attempting to strip or alter any latent metadata or watermarks injected by our AI systems is strictly prohibited and can result in immediate termination of the Service.
+                                </p>
+                            </section>
+
+                            <section>
+                                <h2 className="text-2xl font-bold text-white mb-4">6. Acceptable Use</h2>
                                 <p>You agree not to use the Service:</p>
                                 <ul className="list-disc pl-6 space-y-2">
                                     <li>In any way that violates any applicable national or international law or regulation.</li>
@@ -87,35 +100,35 @@ export default function TermsPage() {
                             </section>
 
                             <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">6. Limitation of Liability</h2>
+                                <h2 className="text-2xl font-bold text-white mb-4">7. Limitation of Liability</h2>
                                 <p>
                                     In no event shall BasaltCRM, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from (i) your access to or use of or inability to access or use the Service; (ii) any conduct or content of any third party on the Service; (iii) any content obtained from the Service; and (iv) unauthorized access, use or alteration of your transmissions or content, whether based on warranty, contract, tort (including negligence) or any other legal theory, whether or not we have been informed of the possibility of such damage.
                                 </p>
                             </section>
 
                             <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">7. Termination</h2>
+                                <h2 className="text-2xl font-bold text-white mb-4">8. Termination</h2>
                                 <p>
                                     We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms. Upon termination, your right to use the Service will immediately cease.
                                 </p>
                             </section>
 
                             <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">8. Governing Law</h2>
+                                <h2 className="text-2xl font-bold text-white mb-4">9. Governing Law</h2>
                                 <p>
                                     These Terms shall be governed and construed in accordance with the laws of California, United States, without regard to its conflict of law provisions.
                                 </p>
                             </section>
 
                             <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">9. Changes</h2>
+                                <h2 className="text-2xl font-bold text-white mb-4">10. Changes</h2>
                                 <p>
                                     We reserve the right, at our sole discretion, to modify or replace these Terms at any time. If a revision is material we will try to provide at least 30 days notice prior to any new terms taking effect. What constitutes a material change will be determined at our sole discretion.
                                 </p>
                             </section>
 
                             <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">10. Contact Us</h2>
+                                <h2 className="text-2xl font-bold text-white mb-4">11. Contact Us</h2>
                                 <p>
                                     If you have any questions about these Terms, please contact us at <a href="mailto:legal@basalthq.com" className="text-primary hover:underline">legal@basalthq.com</a>.
                                 </p>

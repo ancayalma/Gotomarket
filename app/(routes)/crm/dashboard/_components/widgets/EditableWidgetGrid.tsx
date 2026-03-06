@@ -46,6 +46,7 @@ import { AIInsightsWidget } from "./AIInsightsWidget";
 import { CustomMetricWidget } from "./CustomMetricWidget";
 import { DailyPulseWidget } from "./DailyPulseWidget";
 import { NeuralEngagementPulse } from "./NeuralEngagementPulse";
+import { SynthesisAnalyticsWidget } from "./SynthesisAnalyticsWidget";
 import { widgetTooltips } from "../../_config/widget-tooltips";
 // Alias for reuse as a generic stats widget
 const GenericStatsWidget = RevenueWidget;
@@ -250,6 +251,7 @@ export const EditableWidgetGrid = () => {
             case "ai_insights":
             case "ai_daily_pulse":
             case "neural_engagement_pulse":
+            case "synthesis_analytics":
                 return "col-span-1 md:col-span-2 xl:col-span-2";
             default:
                 return "col-span-1";
@@ -299,6 +301,8 @@ export const EditableWidgetGrid = () => {
                 return <DailyPulseWidget />;
             case "neural_engagement_pulse":
                 return <NeuralEngagementPulse />;
+            case "synthesis_analytics":
+                return <SynthesisAnalyticsWidget />;
             case "actual_revenue":
                 return (
                     <div className="h-full flex flex-col justify-start">

@@ -45,5 +45,6 @@ export const widgetTooltips: Record<string, string> = {
     pending_approvals: "Decision queue for your authorization on active workflows.",
     unread_messages: "Unopened communications requiring your immediate review.",
     crm_entities_grid: "Global navigation matrix for every core object in your CRM.",
-    neural_engagement_pulse: "High-density neural heatmap visualizing your team's operational momentum over 90 days."
+    neural_engagement_pulse: "High-density neural heatmap visualizing your team's operational momentum over 90 days.",
+    synthesis_analytics: "Real-time visualization of entity sentiment and intent signals synthesized from enterprise interactions."
 };

@@ -155,6 +155,12 @@ export default function BasaltFooter() {
                         <Link href="/terms" className="text-gray-500 text-xs hover:text-white transition-colors">
                             Terms of Service
                         </Link>
+                        <Link href="/training-data" className="text-gray-500 text-xs hover:text-white transition-colors">
+                            Training Data
+                        </Link>
+                        <Link href="/verify-ai" className="text-cyan-500 text-xs hover:text-white transition-colors font-mono tracking-wider">
+                            Verify AI
+                        </Link>
                     </div>
                 </div>
             </div>

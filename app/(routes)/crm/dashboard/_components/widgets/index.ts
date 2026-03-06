@@ -17,3 +17,4 @@ export * from "./MetricDeepDiveWidget";
 export * from "./CustomMetricWidget";
 export * from "./CustomWidgetModal";
 export * from "./DailyPulseWidget";
+export * from "./SynthesisAnalyticsWidget";

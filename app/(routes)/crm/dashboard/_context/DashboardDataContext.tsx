@@ -52,6 +52,7 @@ export interface DashboardData {
     intelligenceStats: any;
     aiInsights: any[];
     engagementPulse: any[];
+    synthesisAnalytics: any;
 
     // Pipelines (React nodes)
     myPipeline?: React.ReactNode;

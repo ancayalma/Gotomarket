@@ -50,6 +50,11 @@ export default function PrivacyPage() {
                                     <li><strong>Device Data:</strong> IP address, browser type, operating system, and device identifiers.</li>
                                     <li><strong>Cookies:</strong> We use cookies to maintain your session and analyze usage patterns (see our Cookie Policy).</li>
                                 </ul>
+
+                                <h3 className="text-xl font-semibold text-white mt-6 mb-2">1.3 AI Model Training Data</h3>
+                                <p className="mt-2 text-gray-300">
+                                    In certain circumstances, we may use anonymized, aggregated, or explicitly opted-in data to train our artificial intelligence models. For a complete inventory of training data sources and our compliance with California AB 2013, please visit our <a href="/training-data" className="text-primary hover:underline">Training Data Transparency</a> page.
+                                </p>
                             </section>
 
                             <section>
@@ -60,6 +65,7 @@ export default function PrivacyPage() {
                                     <li>To process transactions and manage your account.</li>
                                     <li>To improve, personalize, and expand our services.</li>
                                     <li>To communicate with you, including for customer service, updates, and marketing (you can opt-out of marketing).</li>
+                                    <li>To fine-tune and improve our AI models (subject to your opt-out preferences and strict anonymization of Personal Information).</li>
                                     <li>To detect and prevent fraud and abuse.</li>
                                     <li>To comply with legal obligations.</li>
                                 </ul>
@@ -90,7 +96,8 @@ export default function PrivacyPage() {
                                 <ul className="list-disc pl-6 space-y-2">
                                     <li><strong>Access:</strong> Request a copy of the personal data we hold about you.</li>
                                     <li><strong>Correction:</strong> Request correction of inaccurate data.</li>
-                                    <li><strong>Deletion:</strong> Request deletion of your personal data (&quot;Right to be Forgotten&quot;).</li>
+                                    <li><strong>Deletion & Right to Forget:</strong> Request deletion of your personal data. We ensure this data is additionally purged from any active AI training caches to the extent technically feasible.</li>
+                                    <li><strong>AI Training Opt-Out:</strong> Request that your data strictly not be used for AI model or system training. You can enforce this preference directly in your Workspace Settings.</li>
                                     <li><strong>Portability:</strong> Request transfer of your data to another service.</li>
                                 </ul>
                                 <p className="mt-4">To exercise these rights, please contact us at <a href="mailto:legal@basalthq.com" className="text-primary hover:underline">legal@basalthq.com</a>.</p>

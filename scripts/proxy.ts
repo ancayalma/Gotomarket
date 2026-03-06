@@ -8,7 +8,7 @@
  *   3. Basic IP-based rate limiting on public (unauthenticated) API endpoints
  *   4. CSRF protection stub for mutating API requests
  */
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, type NextFetchEvent } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
@@ -242,10 +242,44 @@ function applyCors(request: NextRequest, response: NextResponse): NextResponse {
 
 // ─── Main Middleware (Proxy) ─────────────────────────────────────────────────
 
-export default async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest, event: NextFetchEvent) {
     const { pathname } = request.nextUrl;
     const method = request.method;
     const isApiRoute = pathname.startsWith("/api/");
+
+    // ── AI Synthesis Webhook Trigger (Non-blocking) ──
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(method) && 
+        (pathname.startsWith("/api/crm/") || pathname.startsWith("/api/outreach/") || pathname.startsWith("/api/finance/"))) {
+        
+        let payload = null;
+        try {
+            // Clone the request so NextRoute doesn't consume the body stream
+            payload = await request.clone().json();
+        } catch (e) {
+            // It might not be JSON, skip parsing payload
+        }
+
+        const synthesisTriggerUrl = `${request.nextUrl.origin}/api/synthesis/trigger`;
+        // Fire and forget
+        const synthesisRequest = fetch(synthesisTriggerUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-synthesis-secret": process.env.SYNTHESIS_SECRET || "internal-secret"
+            },
+            body: JSON.stringify({
+                path: pathname,
+                method,
+                payload,
+                timestamp: new Date().toISOString()
+            })
+        }).catch(err => {
+            console.error("[Proxy] Synthesis Trigger Error:", err);
+        });
+
+        // Ensure edge runtime keeps alive until the fetch completes
+        event.waitUntil(synthesisRequest);
+    }
 
     // Generate a unique Request ID for SOC2 traceability
     const requestId = crypto.randomUUID();
