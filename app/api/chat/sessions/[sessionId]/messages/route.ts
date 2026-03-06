@@ -172,7 +172,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
               entityName: z.string().describe("The exact or partial name of the Account (e.g., 'Acme Corp') or Lead (e.g., 'John Doe')"),
               query: z.string().describe("The specific question or topic to extract from memory (e.g., 'recent SMS replies', 'billing issues')"),
             }),
-            execute: async ({ entityName, query }) => {
+            execute: async ({ entityName, query }: any): Promise<any> => {
               try {
                   const targetEntity = entityName.split(' ')[0]; // Basic tokenization
                   // 1. Resolve Entity Context Node
@@ -226,10 +226,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
                   return { success: false, reason: "Internal error retrieving memory." };
               }
             }
-          })
+          } as any)
         },
         maxSteps: 3,
-        onFinish: async ({ text: completion }) => {
+        onFinish: async ({ text: completion }: any) => {
           try {
             if (!chatSession.isTemporary) {
               await db.chat_Messages.create({
@@ -251,7 +251,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
             systemLogger.error("[CHAT_MESSAGES_ON_COMPLETION_SAVE_ERROR]", e);
           }
         },
-      });
+      } as any);
 
       // Handle both promise and sync return (SDK robust handling)
       if (textStreamPromise instanceof Promise) {

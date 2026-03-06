@@ -53,7 +53,7 @@ export async function retrieveRelevantFacts({
     if (!vectorRecords.length) return [];
 
     // 2. Score them using purely Node.js Math
-    const scoredRecords = vectorRecords.map(record => {
+    const scoredRecords = vectorRecords.map((record: any) => {
         const score = cosineSimilarity(queryEmbedding, record.embedding);
         return {
             ...record,
@@ -63,11 +63,11 @@ export async function retrieveRelevantFacts({
 
     // 3. Filter by threshold, sort by highest similarity, and take top K
     const bestMatches = scoredRecords
-        .filter(record => record.score >= minScore)
-        .sort((a, b) => b.score - a.score)
+        .filter((record: any) => record.score >= minScore)
+        .sort((a: any, b: any) => b.score - a.score)
         .slice(0, topK);
 
-    return bestMatches.map(match => ({
+    return bestMatches.map((match: any) => ({
         id: match.knowledgeSignalId,
         text: match.text,
         type: match.knowledgeSignal?.type,

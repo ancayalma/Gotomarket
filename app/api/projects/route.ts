@@ -89,6 +89,40 @@ export async function POST(req: Request) {
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
 
+    let finalIndustries = Array.isArray(target_industries) && target_industries.length > 0 ? target_industries : [];
+    let finalGeos = Array.isArray(target_geos) && target_geos.length > 0 ? target_geos : [];
+    let finalBrief = typeof campaign_brief === "string" && campaign_brief ? campaign_brief : undefined;
+    let finalTone = typeof messaging_tone === "string" && messaging_tone ? messaging_tone : undefined;
+    let finalProps = Array.isArray(key_value_props) && key_value_props.length > 0 ? key_value_props : [];
+
+    // INHERITANCE: If fields are empty, pull from team brand identity
+    if (teamId) {
+        const teamBrand = await (prismadb as any).teamBrandIdentity.findUnique({
+            where: { team_id: teamId }
+        });
+        if (teamBrand) {
+            if (finalIndustries.length === 0 && teamBrand.industry) {
+                finalIndustries = teamBrand.industry.split(',').map((s: string) => s.trim());
+            }
+            if (finalGeos.length === 0 && teamBrand.location) {
+                finalGeos = [teamBrand.location];
+            }
+            if (!finalBrief && teamBrand.mission_statement) {
+                finalBrief = teamBrand.mission_statement;
+            }
+            if (finalProps.length === 0 && teamBrand.competitive_advantages?.length > 0) {
+                finalProps = teamBrand.competitive_advantages;
+            }
+            if (!finalTone && teamBrand.persona_preset) {
+                // rough mapping from persona preset to existing valid tones
+                const p = teamBrand.persona_preset.toLowerCase();
+                if (p.includes('professional')) finalTone = 'formal';
+                else if (p.includes('casual')) finalTone = 'casual';
+                else if (p.includes('expert')) finalTone = 'technical';
+            }
+        }
+    }
+
     const boardsCount = await (prismadb as any).boards.count();
 
     const newBoard = await (prismadb as any).boards.create({
@@ -108,12 +142,12 @@ export async function POST(req: Request) {
         brand_logo_url: typeof brand_logo_url === "string" ? brand_logo_url : undefined,
         brand_primary_color: typeof brand_primary_color === "string" ? brand_primary_color : undefined,
         // Context fields
-        target_industries: Array.isArray(target_industries) ? target_industries : [],
-        target_geos: Array.isArray(target_geos) ? target_geos : [],
+        target_industries: finalIndustries,
+        target_geos: finalGeos,
         target_titles: Array.isArray(target_titles) ? target_titles : [],
-        campaign_brief: typeof campaign_brief === "string" ? campaign_brief : undefined,
-        messaging_tone: typeof messaging_tone === "string" ? messaging_tone : undefined,
-        key_value_props: Array.isArray(key_value_props) ? key_value_props : [],
+        campaign_brief: finalBrief,
+        messaging_tone: finalTone,
+        key_value_props: finalProps,
         meeting_link: typeof meeting_link === "string" ? meeting_link : undefined,
         signature_template: typeof signature_template === "string" ? signature_template : undefined,
         // Workflow settings

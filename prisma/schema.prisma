@@ -310,6 +310,7 @@ model crm_Outreach_Campaigns {
   signature_meta  Json?
   resource_links  Json?
   meeting_link    String?
+  campaign_branding Json? // Snapshot/Override of TeamBrandIdentity for this specific campaign
 
   // Channels enabled
   channels OutreachChannelType[] @default([EMAIL])
@@ -1079,6 +1080,8 @@ model Team {
   // Organization-wide settings (only set on ORGANIZATION type)
   signature_theme Json? // { html: string, primaryColor: string, logoUrl: string }
 
+  brand_identity TeamBrandIdentity?
+
   // Relations
   members           Users[]          @relation(name: "TeamMembers")
   subscription_plan SubscriptionPlan @default(FREE) // Deprecated, keep for migration
@@ -1159,6 +1162,47 @@ model Team {
   quests             Quest[]         @relation(name: "TeamQuests")
 }
 
+model TeamBrandIdentity {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  team_id   String   @unique @db.ObjectId
+  team      Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  
+  // Core Information
+  company_name String?
+  industry     String?
+  location     String?
+  twitter_handle String?
+
+  // Strategic Vision
+  mission_statement String?
+  core_philosophy   String?
+
+  // Brand Pillars
+  core_values             String[]
+  strategic_focus_areas   String[]
+  competitive_advantages  String[]
+
+  // Target Audience
+  audience_description  String?
+  business_model_summary String?
+
+  // Persona
+  persona_preset      String? // PROFESSIONAL, HUMOROUS, SNARKY
+  brand_voice         String? // e.g. Visionary, Authoritative, Cyber-Industrial, Revolutionary
+  agent_tone          String? // e.g. Efficient, Precise, Autonomous, Direct
+  communication_style String? // e.g. Mission-Oriented, Technical but Accessible, Futuristic
+
+  // Content Strategy
+  engagement_style String?
+  hashtag_strategy String?
+  content_themes   String[]
+
+  // Setup completion tracking
+  setup_completed Boolean @default(false)
+
+  createdAt DateTime @default(now()) @db.Date
+  updatedAt DateTime @updatedAt @db.Date
+}
 
 model Quest {
   id          String          @id @default(auto()) @map("_id") @db.ObjectId

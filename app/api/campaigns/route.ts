@@ -174,6 +174,17 @@ export async function POST(req: Request) {
             select: { team_id: true },
         });
 
+        let defaultBranding: any = null;
+        if (user?.team_id) {
+            const teamBrand = await prisma.teamBrandIdentity.findUnique({
+                where: { team_id: user.team_id }
+            });
+            if (teamBrand) {
+                const { id, team_id, setup_completed, createdAt, updatedAt, ...brandProps } = teamBrand;
+                defaultBranding = brandProps;
+            }
+        }
+
         // Use provided status or default to DRAFT
         const campaignStatus = status || "DRAFT";
 
@@ -192,6 +203,7 @@ export async function POST(req: Request) {
                 signature_meta: null,
                 resource_links: resourceLinks || null,
                 meeting_link: meetingLink || null,
+                campaign_branding: defaultBranding || null,
                 channels: channels || ["EMAIL"],
                 total_leads: leadIds.length,
                 emails_sent: 0,

@@ -58,6 +58,7 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
         { label: "Overview", href: "/admin", icon: LayoutDashboard, exact: true },
         { label: "Object Manager", href: "/admin/objects", icon: Database },
         { label: "Email Settings", href: "/admin/settings", icon: Mail },
+        { label: "Brand Identity", href: "/admin/brand", icon: Building2 },
         { label: "SMS Configuration", href: "/admin/sms-config", icon: MessageSquare },
         { label: "AI Settings", href: "/admin/ai-settings", icon: Bot },
         { label: "AI Usage", href: "/admin/ai-usage", icon: BarChart },

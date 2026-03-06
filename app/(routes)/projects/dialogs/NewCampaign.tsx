@@ -57,7 +57,7 @@ type Props = {
   apiEndpoint?: string; // Override POST target (e.g. "/api/campaigns")
 }
 
-const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint = "/api/campaigns" }: Props) => {
+const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint = "/api/projects" }: Props) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("basics");
@@ -69,21 +69,18 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
   const [propsInput, setPropsInput] = useState("");
 
   const [isMounted, setIsMounted] = useState(false);
+  const [hasPrefetched, setHasPrefetched] = useState(false);
 
   const router = useRouter();
   const { toast } = useToast();
 
   const formSchema = z.object({
-    // Basic fields
+    // ...
     title: z.string().min(3).max(255),
     description: z.string().min(3).max(500),
     visibility: z.string().min(3).max(255),
-
-    // Branding
     brand_logo_url: z.string().optional(),
     brand_primary_color: z.string().optional(),
-
-    // Context fields - optional arrays
     target_industries: z.array(z.string()).optional(),
     target_geos: z.array(z.string()).optional(),
     target_titles: z.array(z.string()).optional(),
@@ -92,8 +89,6 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
     key_value_props: z.array(z.string()).optional(),
     meeting_link: z.string().optional(),
     signature_template: z.string().optional(),
-
-    // Workflow settings
     require_approval: z.boolean().optional(),
   });
 
@@ -122,6 +117,50 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (open && isMounted && !hasPrefetched) {
+      setHasPrefetched(true);
+      (async () => {
+        try {
+          const res = await axios.get("/api/admin/brand");
+          const brand = res.data;
+          if (brand && Object.keys(brand).length > 0) {
+            const currentVals = form.getValues();
+            
+            // Map industry -> target_industries
+            if ((!currentVals.target_industries || currentVals.target_industries.length === 0) && brand.industry) {
+              const parsed = brand.industry.split(",").map((s: string) => s.trim()).filter(Boolean);
+              if (parsed.length > 0) form.setValue("target_industries", parsed);
+            }
+            // Map location -> target_geos
+            if ((!currentVals.target_geos || currentVals.target_geos.length === 0) && brand.location) {
+              form.setValue("target_geos", [brand.location]);
+            }
+            // Map mission -> campaign_brief
+            if (!currentVals.campaign_brief && brand.mission_statement) {
+              form.setValue("campaign_brief", brand.mission_statement);
+            }
+            // Map persona -> tone
+            if (!currentVals.messaging_tone && brand.persona_preset) {
+              const p = brand.persona_preset.toLowerCase();
+              if (p.includes("professional")) form.setValue("messaging_tone", "formal");
+              else if (p.includes("casual")) form.setValue("messaging_tone", "casual");
+              else if (p.includes("expert")) form.setValue("messaging_tone", "technical");
+            }
+            // Map comp_adv -> key_value_props
+            if ((!currentVals.key_value_props || currentVals.key_value_props.length === 0) && Array.isArray(brand.competitive_advantages)) {
+              if (brand.competitive_advantages.length > 0) {
+                form.setValue("key_value_props", brand.competitive_advantages);
+              }
+            }
+          }
+        } catch (error) {
+          // ignore prefetch errors
+        }
+      })();
+    }
+  }, [open, isMounted, hasPrefetched, form]);
 
   if (!isMounted) {
     return null;

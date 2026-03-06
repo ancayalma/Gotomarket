@@ -1522,7 +1522,7 @@ div.headlessui-portal>div {
 [role="option"],
 .SelectItem,
 .DropdownMenuItem {
-  color: #ffffff !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 [cmdk-item][aria-selected="true"],
@@ -1531,23 +1531,23 @@ div.headlessui-portal>div {
 [role="option"][data-highlighted],
 .SelectItem[data-highlighted],
 .DropdownMenuItem[data-highlighted] {
-  background-color: hsla(200, 100%, 50%, 0.4) !important;
-  color: #ffffff !important;
+  background-color: hsla(191, 65%, 58%, 0.15) !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 [cmdk-group-heading],
 [role="group"]>[role="presentation"],
 .SelectLabel,
 .DropdownMenuLabel {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: hsl(var(--muted-foreground)) !important;
   font-weight: 600 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
   font-size: 10px !important;
 }
 
-/* Force Select and Dropdown triggers to have white text when open or focused */
+/* Force Select and Dropdown triggers to have foreground text when open or focused */
 [data-state="open"]>.SelectValue,
 [data-state="open"]>.DropdownMenuValue {
-  color: #ffffff !important;
+  color: hsl(var(--foreground)) !important;
 }

@@ -14,6 +14,8 @@ import ForcePasswordChangeCheck from "@/components/auth/ForcePasswordChangeCheck
 import TermsConsentCheck from "@/components/auth/TermsConsentCheck";
 import IdleSessionTimeout from "@/components/auth/IdleSessionTimeout";
 import ThemeGuard from "@/components/ThemeGuard";
+import { prismadb } from "@/lib/prisma";
+import { BrandSetupInterceptor } from "@/components/modals/BrandSetupInterceptor";
 
 
 function getSafeMetadataBase(): URL {
@@ -88,9 +90,38 @@ export default async function AppLayout({
     return redirect("/inactive");
   }
 
+  let needsBrandSetup = false;
+  let userTeamId = "";
+  
+  if (session?.user?.id) {
+      const fullUser = await prismadb.users.findUnique({
+          where: { id: session.user.id },
+          select: { team_id: true, team_role: true, is_admin: true, assigned_role: { select: { name: true } } }
+      });
+      if (fullUser?.team_id) {
+          userTeamId = fullUser.team_id;
+          const role = (fullUser.team_role || '').trim().toUpperCase();
+          const pRole = (fullUser.assigned_role?.name || '').trim().toUpperCase();
+          const isSuperAdmin = fullUser.is_admin === true || ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN', 'ADMIN'].includes(role) || pRole === 'SUPERADMIN';
+          if (isSuperAdmin) {
+              const brandIdentity = await prismadb.teamBrandIdentity.findUnique({
+                  where: { team_id: userTeamId }
+              });
+              if (!brandIdentity || !brandIdentity.setup_completed) {
+                  needsBrandSetup = true;
+              }
+          }
+      }
+  }
+
+  if (user?.userStatus === "INACTIVE") {
+    return redirect("/inactive");
+  }
+
   return (
     <LearnProvider>
       <ThemeGuard>
+        <BrandSetupInterceptor isOpen={needsBrandSetup} teamId={userTeamId} />
         <IdleSessionTimeout />
         <TermsConsentCheck />
         <ForcePasswordChangeCheck />

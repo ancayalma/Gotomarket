@@ -57,7 +57,7 @@ export async function POST(req: Request) {
             userId: null, 
             service: "analysis",
             model: "system_model",
-            usage,
+            usage: usage as any,
             description: "Synthesis Layer Webhook Fact Extraction"
         });
 
