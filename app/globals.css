@@ -774,6 +774,7 @@
    without requiring the manual .reduced-motion class.
    ======================================== */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -792,7 +793,8 @@
   html {
     min-height: 100%;
     overflow-x: hidden;
-    color-scheme: dark; /* Fixes native scrollbars, inputs, and form controls in dark mode */
+    color-scheme: dark;
+    /* Fixes native scrollbars, inputs, and form controls in dark mode */
     @apply bg-background;
     /* Ensure overscroll area is dark */
     background-color: hsl(var(--background));

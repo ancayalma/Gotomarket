@@ -13,12 +13,33 @@ export async function POST(req: Request) {
     const {
       name, username, email, language, password, confirmPassword,
       companyName, planId, avatar, billingCycle = "monthly",
-      paymentMethod = "card", wallet, termsAccepted
+      paymentMethod = "card", wallet, termsAccepted, turnstile_token
     } = body;
 
     // Validate required fields
     if (!name || !email || !language || !password || !confirmPassword || !companyName || !planId) {
       return new NextResponse("Missing required fields", { status: 400 });
+    }
+
+    // Verify Captcha
+    if (process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY) {
+      if (!turnstile_token) {
+        return new NextResponse("Captcha missing", { status: 400 });
+      }
+      
+      const formData = new URLSearchParams();
+      formData.append('secret', process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY);
+      formData.append('response', turnstile_token);
+
+      const captchaRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const outcome = await captchaRes.json();
+      if (!outcome.success) {
+        return new NextResponse("Captcha validation failed", { status: 400 });
+      }
     }
 
     // SOC2 Consent Requirement
@@ -90,7 +111,23 @@ export async function POST(req: Request) {
     }
 
     const isFree = selectedPlan.price === 0 || selectedPlan.slug === "FREE";
-    const initialStatus = isFree ? "ACTIVE" : "PENDING";
+
+    // Block non-free plans & Enterprise since payment flow is not ready
+    if (planId === "enterprise-contact" || !isFree) {
+      try {
+        await sendEmail({
+          to: "sysadm@basalthq.com, sales@basalthq.com",
+          subject: `Interest in ${selectedPlan.name} Plan`,
+          text: `User ${name} (${email}) from company ${companyName} tried to register for the ${selectedPlan.name} plan.`,
+          html: `<p>User <strong>${name}</strong> (${email}) from company <strong>${companyName}</strong> tried to register for the <strong>${selectedPlan.name}</strong> plan.</p><p>As payment flows are disabled, their account was not created.</p>`
+        });
+      } catch (err) {
+        systemLogger.error("[Register] Failed to send plan interest email", err);
+      }
+      return new NextResponse("We are currently limiting new paid signups. Our team has been notified of your interest and will contact you shortly.", { status: 400 });
+    }
+
+    let initialStatus: string = "ACTIVE"; // If we only allow free, it's always ACTIVE
 
     let finalPrice = selectedPlan.price;
     if (!isFree && billingCycle === "annual") {
@@ -258,6 +295,24 @@ export async function POST(req: Request) {
 
     // Send Emails
     const sendFrom = process.env.EMAIL_FROM || "sales@basalthq.com";
+
+    // Notify sysadm and sales that a new team was spawned
+    try {
+      await sendEmail({
+        to: "sysadm@basalthq.com, sales@basalthq.com",
+        subject: `New Team Created: ${team.name} (${selectedPlan.name})`,
+        text: `A new team has been spawned.\n\nTeam Name: ${team.name}\nTeam ID: ${team.id}\nPlan: ${selectedPlan.name}\nOwner: ${user.name} (${user.email})`,
+        html: `<p>A new team has been spawned.</p>
+               <ul>
+                 <li><strong>Team Name:</strong> ${team.name}</li>
+                 <li><strong>Team ID:</strong> ${team.id}</li>
+                 <li><strong>Plan:</strong> ${selectedPlan.name}</li>
+                 <li><strong>Owner:</strong> ${user.name} (${user.email})</li>
+               </ul>`
+      });
+    } catch (emailErr) {
+      systemLogger.error("[Register] Failed to send new team notification email", emailErr);
+    }
 
     // ... (Email logic remains same)
 

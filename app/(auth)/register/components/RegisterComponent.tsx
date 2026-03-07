@@ -12,6 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Turnstile } from '@marsidev/react-turnstile';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 import {
   Card,
@@ -61,27 +63,51 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
   const [activeInvoiceId, setActiveInvoiceId] = useState<string | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<string>("");
 
-  // New Billing States
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">((initialCycle as any) || "monthly");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
   const [wallet, setWallet] = useState("");
 
+  // Legal Agreements
+  const [termsRead, setTermsRead] = useState(process.env.NODE_ENV === "development" ? false : false);
+  const [privacyRead, setPrivacyRead] = useState(false);
+  const [dataPolicyRead, setDataPolicyRead] = useState(false);
+  const [openTerms, setOpenTerms] = useState(false);
+  const [openPrivacy, setOpenPrivacy] = useState(false);
+  const [openDataPolicy, setOpenDataPolicy] = useState(false);
+
+  const handleScrollToBottom = (e: React.UIEvent<HTMLDivElement>, setter: (val: boolean) => void) => {
+    // Add 10px tolerance for scaling issues
+    const isAtBottom = e.currentTarget.scrollHeight - e.currentTarget.scrollTop <= e.currentTarget.clientHeight + 10;
+    if (isAtBottom) {
+      setter(true);
+    }
+  };
+
   const formSchema = z.object({
     companyName: z.string().min(2, "Company name is required").max(50),
     planId: z.string().min(1, "Please select a plan"),
-    name: z.string().min(3).max(50),
+    firstName: z.string().min(2, "First name is required").max(50),
+    lastName: z.string().min(2, "Last name is required").max(50),
+    phone: z.string().min(10, "Valid phone number required for KYC").max(20),
     username: z.string().min(3).max(50),
-    email: z.string().email(),
+    email: z.string().email().refine((email) => {
+      const personalDomains = ["gmail.com", "icloud.com", "yahoo.com", "hotmail.com", "outlook.com", "me.com"];
+      const domain = email.split("@")[1]?.toLowerCase();
+      return !personalDomains.includes(domain);
+    }, {
+      message: "Personal email addresses are restricted. Please use your official workspace email."
+    }),
     language: z.string().min(2).max(50),
     password: z
       .string()
-      .min(8, "Minimum length is 8 characters. 15+ recommended for security.")
+      .min(15, "SOC2 Compliance: Minimum length is 15 characters.")
       .max(128), // Support long passphrases per NIST
     confirmPassword: z.string(),
-    avatar: z.string().optional(),
+    avatar: z.string().min(1, "Profile photo is required"),
     termsAccepted: z.boolean().refine((val) => val === true, {
       message: "You must accept the Terms of Service and Privacy Policy.",
     }),
+    turnstile_token: z.string().optional(),
   });
 
   type BillboardFormValues = z.infer<typeof formSchema>;
@@ -91,14 +117,17 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
     defaultValues: {
       companyName: "",
       planId: "",
-      name: "",
+      firstName: "",
+      lastName: "",
+      phone: "",
       username: "",
       email: "",
-      language: "",
+      language: "en",
       password: "",
       confirmPassword: "",
       avatar: "",
       termsAccepted: false,
+      turnstile_token: "",
     },
   });
 
@@ -107,8 +136,6 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
       const plan = availablePlans.find(p => p.slug.toLowerCase() === initialPlanSlug.toLowerCase());
       if (plan) {
         form.setValue("planId", plan.id);
-      } else if (initialPlanSlug.toLowerCase() === "enterprise") {
-        form.setValue("planId", "enterprise-contact");
       }
     }
   }, [initialPlanSlug, availablePlans, form]);
@@ -121,12 +148,15 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
 
     setIsLoading(true);
     try {
-      const response = await axios.post("/api/user", {
+      const submissionData = {
         ...data,
+        name: `${data.firstName} ${data.lastName}`,
         billingCycle,
         paymentMethod,
         wallet: wallet.startsWith("0x") ? wallet : undefined
-      });
+      };
+
+      const response = await axios.post("/api/user", submissionData);
 
       if (response.data.requiresPayment && response.data.paymentUrl) {
         setPaymentUrl(response.data.paymentUrl);
@@ -155,11 +185,17 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
       setIsLoading(false);
     }
   };
-
-  //Localizations
-  const languageLabels: Record<string, string> = {
-    en: "English"
+  const formatPhoneNumber = (value: string) => {
+    if (!value) return value;
+    const phoneNumber = value.replace(/[^\d]/g, "");
+    const phoneNumberLength = phoneNumber.length;
+    if (phoneNumberLength < 4) return phoneNumber;
+    if (phoneNumberLength < 7) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+    }
+    return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
   };
+
 
   return (
     <Card className="shadow-lg my-5 w-full max-w-lg sm:max-w-xl mx-auto">
@@ -177,7 +213,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                 name="avatar"
                 render={({ field }) => (
                   <FormItem className="flex flex-col items-center">
-                    <FormLabel className="mb-2">Profile Photo</FormLabel>
+                    <FormLabel className="mb-2">Profile Photo <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <div className="flex flex-col items-center space-y-4">
                         <div
@@ -231,9 +267,9 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                 name="companyName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Company / Team Name <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>Official Entity / Team Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input disabled={isLoading} autoComplete="organization" placeholder="Acme Inc." {...field} />
+                      <Input disabled={isLoading} autoComplete="organization" placeholder="e.g. Acme Corporation LLC" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -289,23 +325,28 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                           </FormControl>
                           <SelectContent className="bg-zinc-950 border-zinc-800">
                             {availablePlans
-                              .filter(plan => !["TESTING", "EXEMPT"].includes(plan.slug))
-                              .map((plan) => (
-                                <SelectItem key={plan.id} value={plan.id}>
+                              .filter(plan => !["TESTING", "EXEMPT", "ENTERPRISE"].includes(plan.slug))
+                              .map((plan) => {
+                                const isFreePlan = plan.price === 0 || plan.slug === "FREE";
+                                return (
+                                <SelectItem 
+                                  key={plan.id} 
+                                  value={plan.id}
+                                  disabled={!isFreePlan}
+                                  className={!isFreePlan ? "opacity-50 cursor-not-allowed" : ""}
+                                >
                                   <div className="flex flex-col py-1">
-                                    <span className="font-bold">{plan.name}</span>
-                                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                                      {plan.price === 0 ? "FREE FOREVER" : `${plan.currency || "$"} ${plan.price} / MONTH`}
+                                    <span className="font-bold">{plan.name} {!isFreePlan && "(Coming Soon)"}</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest text-primary/80">
+                                      {plan.price === 0 
+                                        ? "FREE FOREVER" 
+                                        : billingCycle === "monthly"
+                                          ? `${plan.currency || "$"} ${plan.price} / MONTH`
+                                          : `${plan.currency || "$"} ${Math.round((paymentMethod === 'crypto' && wallet.length === 42) ? (plan.price * 12 * 0.75) : (plan.price * 12 * 0.8))} / YEAR`}
                                     </span>
                                   </div>
                                 </SelectItem>
-                              ))}
-                            <SelectItem value="enterprise-contact">
-                              <div className="flex flex-col py-1">
-                                <span className="font-bold">Enterprise</span>
-                                <span className="text-[10px] text-amber-500 uppercase tracking-widest font-black">Contact Sales</span>
-                              </div>
-                            </SelectItem>
+                              )})}
                           </SelectContent>
                         </Select>
 
@@ -391,12 +432,50 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="name"
+                    name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>Legal First Name <span className="text-red-500">*</span></FormLabel>
                         <FormControl>
-                          <Input disabled={isLoading} autoComplete="name" placeholder="John Doe" {...field} />
+                          <Input disabled={isLoading} autoComplete="given-name" placeholder="e.g. John" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Legal Last Name <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input disabled={isLoading} autoComplete="family-name" placeholder="e.g. Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Primary Contact Number <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input 
+                            disabled={isLoading} 
+                            autoComplete="tel" 
+                            placeholder="(555) 000-0000" 
+                            {...field} 
+                            onChange={(e) => {
+                              const formatted = formatPhoneNumber(e.target.value);
+                              field.onChange(formatted);
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -409,7 +488,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                       <FormItem>
                         <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
                         <FormControl>
-                          <Input disabled={isLoading} autoComplete="username" placeholder="jdoe" {...field} />
+                          <Input disabled={isLoading} autoComplete="username" placeholder="e.g. jdoe_global" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -422,39 +501,17 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>E-mail <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>Work E-mail <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input type="email" autoComplete="email" inputMode="email" disabled={isLoading} placeholder="name@domain.com" {...field} />
+                        <Input type="email" autoComplete="email" inputMode="email" disabled={isLoading} placeholder="legal@your-workspace.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="language"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Choose your language <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a language" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="h-56">
-                          {["en"].map((lng, index) => (
-                            <SelectItem key={index} value={lng}>{languageLabels[lng] || lng}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-4">
                   <div className="relative">
                     <FormField
                       control={form.control}
@@ -463,13 +520,13 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                         <FormItem>
                           <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
-                            <Input disabled={isLoading} autoComplete="new-password" placeholder="Create a password…" type={show ? "text" : "password"} {...field} />
+                            <Input disabled={isLoading} autoComplete="new-password" placeholder="Min 15 characters recommended (SOC2)" type={show ? "text" : "password"} {...field} className="pr-10" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <button type="button" aria-label={show ? "Hide password" : "Show password"} className="absolute right-3 top-[38px] text-gray-400 hover:text-primary transition-colors" onClick={() => setShow(!show)}>
+                    <button type="button" aria-label={show ? "Hide password" : "Show password"} className="absolute right-3 top-10 text-gray-400 hover:text-primary transition-colors" onClick={() => setShow(!show)}>
                       {show ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
@@ -481,13 +538,13 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                         <FormItem>
                           <FormLabel>Confirm Password <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
-                            <Input disabled={isLoading} autoComplete="new-password" placeholder="Confirm your password…" type={show ? "text" : "password"} {...field} />
+                            <Input disabled={isLoading} autoComplete="new-password" placeholder="Confirm your long password…" type={show ? "text" : "password"} {...field} className="pr-10" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <button type="button" aria-label={show ? "Hide password" : "Show password"} className="absolute right-3 top-[38px] text-gray-400 hover:text-primary transition-colors" onClick={() => setShow(!show)}>
+                    <button type="button" aria-label={show ? "Hide password" : "Show password"} className="absolute right-3 top-10 text-gray-400 hover:text-primary transition-colors" onClick={() => setShow(!show)}>
                       {show ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
@@ -496,29 +553,228 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                 <FormField
                   control={form.control}
                   name="termsAccepted"
-                  render={({ field }) => (
+                  render={({ field }) => {
+                    const allRead = termsRead && privacyRead && dataPolicyRead;
+
+                    return (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/10 bg-zinc-900/50 p-4 relative mb-2">
-                      <div className="flex items-start space-x-3">
+                      <div className="flex items-start space-x-3 w-full">
                         <FormControl>
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            disabled={isLoading}
-                            className="mt-0.5"
+                            disabled={isLoading || !allRead}
+                            className={cn("mt-0.5", !allRead && "opacity-50 cursor-not-allowed")}
                           />
                         </FormControl>
-                        <div className="space-y-1">
-                          <label className="text-xs font-medium leading-none text-zinc-300">
-                            I accept the <Link href="/terms" className="text-primary hover:underline italic font-bold">Terms of Service</Link> and <Link href="/privacy" className="text-primary hover:underline italic font-bold">Privacy Policy</Link>
+                        <div className="space-y-2 w-full">
+                          <label className="text-xs font-medium leading-relaxed text-zinc-300 block">
+                            I accept the 
+                            <button type="button" onClick={() => setOpenTerms(true)} className={cn("mx-1 hover:underline italic font-bold", termsRead ? "text-emerald-400" : "text-primary")}>Terms of Service {termsRead && "✓"}</button>, 
+                            <button type="button" onClick={() => setOpenPrivacy(true)} className={cn("mx-1 hover:underline italic font-bold", privacyRead ? "text-emerald-400" : "text-primary")}>Privacy Policy {privacyRead && "✓"}</button>, and 
+                            <button type="button" onClick={() => setOpenDataPolicy(true)} className={cn("mx-1 hover:underline italic font-bold", dataPolicyRead ? "text-emerald-400" : "text-primary")}>AI Data Processing Agreement {dataPolicyRead && "✓"}</button>
                           </label>
                           <FormDescription className="text-[10px] text-zinc-500 max-w-[90%] block">
-                            By enabling this, you agree to our terms and conditions and privacy policy for data processing and platform usage.
+                            By enabling this, you agree to our terms, privacy policies, and crucial rules for AI processing on your CRM data.
+                            <br/>
+                            <span className={cn("font-bold mt-1 inline-block text-[10px]", allRead ? "text-emerald-500/80" : "text-amber-500/80")}>
+                                {allRead ? "All documents reviewed. You may proceed." : "⚠️ You must read and scroll to the bottom of all 3 documents before accepting."}
+                            </span>
                           </FormDescription>
                         </div>
                       </div>
                     </FormItem>
-                  )}
+                  )}}
                 />
+
+                {/* Terms of Service Modal */}
+                <Dialog open={openTerms} onOpenChange={setOpenTerms}>
+                   <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl shadow-primary/10">
+                      <div className="p-6 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center">
+                          <DialogTitle className="text-2xl font-black italic tracking-tighter text-white uppercase italic">Terms of Service</DialogTitle>
+                          <span className={cn("text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest", termsRead ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/10 text-amber-500 border border-amber-500/20")}>
+                            {termsRead ? "Read & Acknowledged" : "Scrolling Required"}
+                          </span>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-8 text-sm text-zinc-400 space-y-8 scrollbar-thin scrollbar-thumb-zinc-800" onScroll={(e) => handleScrollToBottom(e, setTermsRead)}>
+                         <section>
+                            <p className="text-zinc-200 leading-relaxed font-medium">
+                                Last updated: December 1, 2025. Please read these Terms of Service carefully before using BasaltCRM.
+                            </p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">1. Accounts</h3>
+                            <p>When you create an account, you must provide information that is accurate, complete, and current. You are responsible for safeguarding your password and for any activities under your account.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">2. Subscriptions and Payments</h3>
+                            <p>Service is billed on a subscription basis in advance (monthly or annually). Payments are processed through our secure payment providers. Cancellations take effect at the end of the current billing cycle.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">3. Intellectual Property</h3>
+                            <p>BasaltCRM and its original content, features, and functionality remain the exclusive property of BasaltCRM. Our AI models, proprietary agents, and synthesis layers are protected by international law.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">4. AI and Data Usage</h3>
+                            <p>BasaltCRM utilizes AI models to provide our service. data is processed through these models to synthesize insights. We may use anonymized data to improve global performance unless opted out via Enterprise settings.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">5. Termination</h3>
+                            <p>We reserve the right to suspend or terminate accounts for breaches of these Terms, including unauthorized scraping of platform intelligence or bypassing security metadata.</p>
+                         </section>
+
+                         <div className="pt-12 pb-8 flex flex-col items-center gap-4">
+                            <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
+                            {termsRead ? (
+                               <Button 
+                                  onClick={() => setOpenTerms(false)} 
+                                  className="text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 h-auto rounded-full transition-all duration-300 transform hover:scale-105"
+                               >
+                                  Review Complete & Close ✓
+                               </Button>
+                            ) : (
+                               <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
+                                  Keep scrolling to finish...
+                               </span>
+                            )}
+                         </div>
+                      </div>
+                   </DialogContent>
+                </Dialog>
+
+                {/* Privacy Policy Modal */}
+                <Dialog open={openPrivacy} onOpenChange={setOpenPrivacy}>
+                   <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl shadow-primary/10">
+                      <div className="p-6 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center">
+                          <DialogTitle className="text-2xl font-black italic tracking-tighter text-white uppercase">Privacy Policy</DialogTitle>
+                          <span className={cn("text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest", privacyRead ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/10 text-amber-500 border border-amber-500/20")}>
+                            {privacyRead ? "Read & Acknowledged" : "Scrolling Required"}
+                          </span>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-8 text-sm text-zinc-400 space-y-8 scrollbar-thin scrollbar-thumb-zinc-800" onScroll={(e) => handleScrollToBottom(e, setPrivacyRead)}>
+                         <section>
+                            <p className="text-zinc-200 leading-relaxed font-medium">
+                                Your privacy is our priority. This policy outlines how we handle your information on BasaltCRM.
+                            </p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">1. Information Collection</h3>
+                            <p>We collect account info (email, company name), usage metadata (IP, browser type), and customer data you input into the CRM. You retain full ownership of lead and contact data.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">2. How We Use Data</h3>
+                            <p>Data is used purely to provide service functionality, maintain security, and improve platform synthesis features. We do NOT sell your personal data to third parties.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">3. AI Training Transparency</h3>
+                            <p>Anonymized, non-PII data may be used to calibrate global AI models. PII (Personal Identifiable Information) is strictly filtered before processing. Enterprise tenants can request dedicated isolation.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">4. Security Measures</h3>
+                            <p>We utilize AES-256 at-rest and TLS 1.3 in-transit encryption. Regular SOC2-compliant auditing is performed on our infrastructure.</p>
+                         </section>
+
+                         <div className="pt-12 pb-8 flex flex-col items-center gap-4">
+                            <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
+                            {privacyRead ? (
+                               <Button 
+                                  onClick={() => setOpenPrivacy(false)} 
+                                  className="text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 h-auto rounded-full transition-all duration-300 transform hover:scale-105"
+                               >
+                                  Review Complete & Close ✓
+                               </Button>
+                            ) : (
+                               <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
+                                  Keep scrolling to finish...
+                               </span>
+                            )}
+                         </div>
+                      </div>
+                   </DialogContent>
+                </Dialog>
+
+                {/* AI Data Processing Policy Modal */}
+                <Dialog open={openDataPolicy} onOpenChange={setOpenDataPolicy}>
+                   <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl shadow-primary/10">
+                      <div className="p-6 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center">
+                          <DialogTitle className="text-2xl font-black italic tracking-tighter text-white uppercase">AI Data Agreement</DialogTitle>
+                          <span className={cn("text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest", dataPolicyRead ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/10 text-amber-500 border border-amber-500/20")}>
+                            {dataPolicyRead ? "Read & Acknowledged" : "Scrolling Required"}
+                          </span>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-8 text-sm text-zinc-400 space-y-8 scrollbar-thin scrollbar-thumb-zinc-800" onScroll={(e) => handleScrollToBottom(e, setDataPolicyRead)}>
+                         <section>
+                            <p className="text-zinc-200 leading-relaxed font-black uppercase text-amber-500">
+                                This agreement is required for all active intelligence and synthesis features.
+                            </p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">1. Synthesis Rights</h3>
+                            <p>By using Basalt Surge and Quests, you grant us permission to analyze CRM unstructured text to build context and synthesize leads. This processing occurs in secure, ephemeral memory.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">2. Training & Feedback Loops</h3>
+                            <p>Metrics (click-through rates, conversation successes) are metadata analyzed to fine-tune our base models. Any content used for model alignment is strictly anonymized and stripped of PII via automated regex and NLP sanitization.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">3. Retrieval-Augmented Generation (RAG)</h3>
+                            <p>Your team's private knowledge context is strictly siloed at the tenant level. RAG vector databases are indexed per-team and never shared across tenant boundaries during live generation or query phases.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">4. Human Oversight</h3>
+                            <p>AI-generated content is non-deterministic. Users are responsible for final review before sending outreach or taking actions based on AI synthesis recommendations.</p>
+                         </section>
+
+                         <div className="pt-12 pb-8 flex flex-col items-center gap-4">
+                            <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
+                            {dataPolicyRead ? (
+                               <Button 
+                                  onClick={() => setOpenDataPolicy(false)} 
+                                  className="text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 h-auto rounded-full transition-all duration-300 transform hover:scale-105"
+                               >
+                                  Review Complete & Close ✓
+                               </Button>
+                            ) : (
+                               <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
+                                  Keep scrolling to finish...
+                               </span>
+                            )}
+                         </div>
+                      </div>
+                   </DialogContent>
+                </Dialog>
+
+                {process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && (
+                  <FormField
+                    control={form.control}
+                    name="turnstile_token"
+                    render={({ field }) => (
+                      <FormItem className="flex justify-center">
+                        <FormControl>
+                          <Turnstile
+                            siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
+                            onSuccess={(token) => field.onChange(token)}
+                            options={{ theme: 'dark' }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
             </div>
 

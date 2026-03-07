@@ -1,6 +1,6 @@
 {
   "name": "basaltcrm-app",
-  "version": "1.2.3d",
+  "version": "1.2.3f",
   "author": "Michael Milton (BasaltHQ)",
   "private": true,
   "scripts": {
@@ -38,6 +38,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^5.2.2",
+    "@marsidev/react-turnstile": "^1.4.2",
     "@mendable/firecrawl-js": "^4.13.0",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@napi-rs/canvas": "^0.1.88",

@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { Turnstile } from '@marsidev/react-turnstile';
+import { EnterpriseContactModal } from "./components/EnterpriseContactModal";
 
 export default function PricingClient() {
     const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+    const [turnstileToken, setTurnstileToken] = useState("");
 
 
     const plans = {
@@ -166,11 +169,13 @@ export default function PricingClient() {
                         <div className="w-full md:w-auto text-center bg-zinc-900/50 p-8 rounded-2xl border border-zinc-800 backdrop-blur-sm">
                             <div className="text-4xl font-bold text-white mb-2">Speak with Sales</div>
                             <p className="text-zinc-500 text-sm mb-6">Standard 24h response time</p>
-                            <Link href="#contact" className="w-full inline-block">
-                                <Button className="w-full py-7 text-xl bg-white text-black hover:bg-zinc-200 font-bold transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                                    Book a Demo
-                                </Button>
-                            </Link>
+                            <EnterpriseContactModal 
+                                trigger={
+                                    <Button className="w-full py-7 text-xl bg-white text-black hover:bg-zinc-200 font-bold transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                                        Book a Demo
+                                    </Button>
+                                } 
+                            />
                         </div>
                     </div>
                 </div>
@@ -245,6 +250,12 @@ export default function PricingClient() {
                         <form
                             onSubmit={async (e) => {
                                 e.preventDefault();
+                                
+                                if (process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && !turnstileToken) {
+                                    alert("Please complete the captcha verification first.");
+                                    return;
+                                }
+
                                 const form = e.target as HTMLFormElement;
                                 const formData = new FormData(form);
 
@@ -257,7 +268,8 @@ export default function PricingClient() {
                                             message: formData.get('message'),
                                             company: formData.get('company'),
                                             subject: "Pricing Inquiry",
-                                            source: "PRICING"
+                                            source: "PRICING",
+                                            turnstile_token: turnstileToken
                                         })
                                     });
 
@@ -326,6 +338,16 @@ export default function PricingClient() {
                                     placeholder="Tell us about your needs..."
                                 />
                             </div>
+
+                            {process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && (
+                                <div className="flex justify-center pt-2">
+                                    <Turnstile
+                                        siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
+                                        onSuccess={(token) => setTurnstileToken(token)}
+                                        options={{ theme: 'dark' }}
+                                    />
+                                </div>
+                            )}
 
                             <div className="text-center pt-4">
                                 <Button

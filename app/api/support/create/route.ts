@@ -1,16 +1,32 @@
 import { NextResponse } from 'next/server';
 import { prismadb } from '@/lib/prisma';
-import { requireApiAuth } from "@/lib/api-auth-guard";
 import { systemLogger } from "@/lib/logger";
 
 export async function POST(req: Request) {
-  // ── Auth guard ──
-  const session = await requireApiAuth();
-  if (session instanceof Response) return session;
-
     try {
         const body = await req.json();
-        const { name, email, subject, message, source } = body;
+        const { name, email, subject, message, source, turnstile_token } = body;
+
+        // Verify Captcha
+        if (process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY) {
+            if (!turnstile_token) {
+                return new NextResponse("Captcha missing", { status: 400 });
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('secret', process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY);
+            formData.append('response', turnstile_token);
+
+            const captchaRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const outcome = await captchaRes.json();
+            if (!outcome.success) {
+                return new NextResponse("Captcha validation failed", { status: 400 });
+            }
+        }
 
         if (!name || !email || !message) {
             return new NextResponse("Missing required fields", { status: 400 });
