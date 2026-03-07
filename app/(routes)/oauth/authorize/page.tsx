@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 
 /**
  * BasaltCRM OAuth Consent
- * Branded authorize screen for VoiceHub ↔ BasaltCRM OAuth (Authorization Code + PKCE).
+ * Branded authorize screen for BasaltECHO ↔ BasaltCRM OAuth (Authorization Code + PKCE).
  *
  * Query Params expected (passed through from /api/oauth/authorize):
  * - response_type=code
- * - client_id=VOICEHUB_CLIENT_ID
- * - redirect_uri=https://voicehub.example.com/api/crm/connect/callback (or a console page)
+ * - client_id=BASALTECHO_CLIENT_ID
+ * - redirect_uri=https://basaltecho.example.com/api/crm/connect/callback (or a console page)
  * - scope=softphone:control outreach:write leads:read
  * - state=random-string
  * - code_challenge=BASE64URL(SHA256(code_verifier))
@@ -132,7 +132,7 @@ export default function BasaltAuthorizePage() {
     }
   }
 
-  // If popup + authenticated + opener exists, auto-approve to complete VoiceHub connect
+  // If popup + authenticated + opener exists, auto-approve to complete BasaltECHO connect
   useEffect(() => {
     if (!isPopup) return;
     // Guard for SSR
@@ -140,7 +140,7 @@ export default function BasaltAuthorizePage() {
     if (!window.opener) return;
     if (!userDisplay) return;
 
-    setAutoMsg("Connecting to VoiceHub...");
+    setAutoMsg("Connecting to BasaltECHO...");
     const t = setTimeout(() => {
       try {
         // Reuse approve flow to post code/state to opener and close
@@ -172,7 +172,7 @@ export default function BasaltAuthorizePage() {
           <img src="/BasaltCRMWide.png" alt="BasaltCRM" className="h-8 w-auto rounded-md" />
           <div className="flex flex-col">
             <div className="text-sm font-semibold">BasaltCRM Authorization</div>
-            <div className="text-[11px] opacity-70">Grant access to VoiceHub</div>
+            <div className="text-[11px] opacity-70">Grant access to BasaltECHO</div>
           </div>
 
           {userDisplay ? (
@@ -230,7 +230,7 @@ export default function BasaltAuthorizePage() {
             Cancel
           </Button>
           <span className="microtext opacity-60">
-            By approving, you allow VoiceHub to access the scopes listed above for your account.
+            By approving, you allow BasaltECHO to access the scopes listed above for your account.
           </span>
         </div>
       </div>

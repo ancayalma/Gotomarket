@@ -148,11 +148,11 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
     }
   }
 
-  async function handlePushToVoiceHub() {
+  async function handlePushToBasaltECHO() {
     try {
       const w = (wallet || '').trim().toLowerCase();
       if (!w) {
-        toast.error('Enter wallet address to push to VoiceHub');
+        toast.error('Enter wallet address to push to BasaltECHO');
         return;
       }
       const body = { prompt: prompt || generated, meta: { projectName, leadCompany, roleKey, language } };
@@ -163,9 +163,9 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
       });
       if (!res.ok) {
         const t = await res.text().catch(() => '');
-        throw new Error(t || `VoiceHub push failed (${res.status})`);
+        throw new Error(t || `BasaltECHO push failed (${res.status})`);
       }
-      toast.success('Prompt pushed to VoiceHub');
+      toast.success('Prompt pushed to BasaltECHO');
     } catch (e: any) {
       toast.error(e?.message || 'Failed to push prompt');
     }
@@ -190,7 +190,7 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
         <>
           <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Prompt Generator</h1>
           <p className="text-sm text-muted-foreground">
-            Build a comprehensive System Prompt using lead and project context. Choose a role preset or define your own, then generate and push to VoiceHub.
+            Build a comprehensive System Prompt using lead and project context. Choose a role preset or define your own, then generate and push to BasaltECHO.
           </p>
         </>
       )}
@@ -301,9 +301,9 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
             />
           </div>
 
-          {hasAccess('ai_lab.actions.push_voicehub') && (
-            <Button variant="outline" onClick={handlePushToVoiceHub} className="w-full sm:w-auto">
-              Push to VoiceHub
+          {hasAccess('ai_lab.actions.push_basaltecho') && (
+            <Button variant="outline" onClick={handlePushToBasaltECHO} className="w-full sm:w-auto">
+              Push to BasaltECHO
             </Button>
           )}
         </div>

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     description: 'Professional-grade, ultra-low latency voice AI powered by Azure OpenAI. Pay per second with ETH.',
 };
 
-export default function VoiceHubLayout({
+export default function BasaltECHOLayout({
     children,
 }: {
     children: React.ReactNode;

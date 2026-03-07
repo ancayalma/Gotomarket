@@ -38,7 +38,7 @@ export default function CustomCCP({
   className,
   leadId,
   contactId,
-  autoStartVoiceHub,
+  autoStartBasaltECHO,
 }: {
   instanceUrl?: string;
   theme?: "dark" | "light";
@@ -49,7 +49,7 @@ export default function CustomCCP({
   className?: string;
   leadId?: string;
   contactId?: string;
-  autoStartVoiceHub?: boolean;
+  autoStartBasaltECHO?: boolean;
 }) {
   // Hidden CCP container for Streams provider
   const ccpContainerRef = useRef<HTMLDivElement | null>(null);
@@ -531,16 +531,16 @@ export default function CustomCCP({
       if (!/^\+[1-9]\d{1,14}$/.test(n)) throw new Error("Invalid E.164");
       phoneNumberRef.current = n;
 
-      // Auto-start VoiceHub session for Engage AI panel if enabled
+      // Auto-start BasaltECHO session for Engage AI panel if enabled
       try {
-        if (autoStartVoiceHub) {
-          const walletOverride = String(localStorage.getItem("voicehub:wallet") || "").trim().toLowerCase();
+        if (autoStartBasaltECHO) {
+          const walletOverride = String(localStorage.getItem("basaltecho:wallet") || "").trim().toLowerCase();
           const payload: any = { leadId, contactId, source: "CustomCCP" };
 
           // Silent credit check + robust start with retries and correlationId
           let unlimited = false;
           try {
-            const credRes = await fetch("/api/voicehub/credits", {
+            const credRes = await fetch("/api/basaltecho/credits", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ walletOverride: walletOverride || undefined }),
@@ -549,7 +549,7 @@ export default function CustomCCP({
             if (credRes.ok) {
               const bal = Number((cred as any)?.balance?.balanceSeconds ?? 0);
               unlimited = !!(cred as any)?.balance?.unlimited;
-              logInfoMsg(`VoiceHub credits: balanceSeconds=${bal}${unlimited ? " (unlimited)" : ""}`);
+              logInfoMsg(`BasaltECHO credits: balanceSeconds=${bal}${unlimited ? " (unlimited)" : ""}`);
             } else {
               logInfoMsg(`Credit check failed: ${(cred as any)?.error || credRes.status}`);
             }
@@ -569,40 +569,40 @@ export default function CustomCCP({
             // Open Console on first attempt only if credits not unlimited and not SuperAdmin
             if (attempt === 1 && !unlimited && !isOwner) {
               try {
-                const vhBase = String(process.env.NEXT_PUBLIC_VOICEHUB_BASE_URL || "").trim();
+                const vhBase = String(process.env.NEXT_PUBLIC_BASALTECHO_BASE_URL || "").trim();
                 if (vhBase) {
                   const win = window.open(`${vhBase}/console`, "_blank", "noopener,noreferrer");
                   if (!win) {
-                    logInfoMsg("Popup blocked for VoiceHub Console; enable popups to approve credits");
+                    logInfoMsg("Popup blocked for BasaltECHO Console; enable popups to approve credits");
                   }
                 } else {
-                  logInfoMsg("NEXT_PUBLIC_VOICEHUB_BASE_URL not set; cannot open Console for credit approval");
+                  logInfoMsg("NEXT_PUBLIC_BASALTECHO_BASE_URL not set; cannot open Console for credit approval");
                 }
               } catch (openErr: any) {
-                logInfoMsg(`Failed to open VoiceHub Console: ${openErr?.message || String(openErr)}`);
+                logInfoMsg(`Failed to open BasaltECHO Console: ${openErr?.message || String(openErr)}`);
               }
             }
 
-            const res = await fetch("/api/voicehub/control", {
+            const res = await fetch("/api/basaltecho/control", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ command: "start", payload, walletOverride: walletOverride || undefined, correlationId }),
             });
             if (res.ok) {
               started = true;
-              logInfoMsg(`Requested VoiceHub auto-start (attempt ${attempt})`);
+              logInfoMsg(`Requested BasaltECHO auto-start (attempt ${attempt})`);
             } else {
-              logInfoMsg(`VoiceHub start request failed (attempt ${attempt}): ${res.status}`);
+              logInfoMsg(`BasaltECHO start request failed (attempt ${attempt}): ${res.status}`);
               await sleep(400 * attempt); // exponential backoff
             }
           }
 
           if (!started) {
-            logInfoMsg("VoiceHub start failed after retries");
+            logInfoMsg("BasaltECHO start failed after retries");
           }
         }
       } catch (e: any) {
-        logInfoMsg(`VoiceHub auto-start failed: ${e?.message || String(e)}`);
+        logInfoMsg(`BasaltECHO auto-start failed: ${e?.message || String(e)}`);
       }
 
       // Use Streams Agent.connect with Endpoint.byPhoneNumber for outbound
@@ -640,17 +640,17 @@ export default function CustomCCP({
 
   function hangupActive() {
     try {
-      // Request VoiceHub stop listening when Hang Up is pressed
+      // Request BasaltECHO stop listening when Hang Up is pressed
       try {
-        const walletOverride = String(localStorage.getItem("voicehub:wallet") || "").trim().toLowerCase();
+        const walletOverride = String(localStorage.getItem("basaltecho:wallet") || "").trim().toLowerCase();
         const payload: any = { leadId, contactId, source: "CustomCCP" };
-        void fetch("/api/voicehub/control", {
+        void fetch("/api/basaltecho/control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ command: "stop", payload, walletOverride: walletOverride || undefined }),
         })
-          .then(() => logInfoMsg("Requested VoiceHub stop listening"))
-          .catch((e) => logInfoMsg(`VoiceHub stop failed: ${e?.message || String(e)}`));
+          .then(() => logInfoMsg("Requested BasaltECHO stop listening"))
+          .catch((e) => logInfoMsg(`BasaltECHO stop failed: ${e?.message || String(e)}`));
       } catch { }
       const c = contactRef.current;
       if (!c) throw new Error("No active contact");

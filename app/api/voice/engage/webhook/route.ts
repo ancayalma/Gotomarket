@@ -4,10 +4,10 @@ import { systemLogger } from "@/lib/logger";
 
 /**
  * POST /api/voice/engage/webhook
- * VoiceHub → BasaltCRM webhook for agent/call events with optional HMAC verification and best-effort idempotency.
+ * BasaltECHO → BasaltCRM webhook for agent/call events with optional HMAC verification and best-effort idempotency.
  *
  * Security:
- * - Set VOICEHUB_WEBHOOK_SECRET to enable HMAC verification (Header: x-voicehub-signature = hex(HMAC_SHA256(rawBody, secret)))
+ * - Set BASALTECHO_WEBHOOK_SECRET to enable HMAC verification (Header: x-basaltecho-signature = hex(HMAC_SHA256(rawBody, secret)))
  *
  * Event payload examples:
  * {
@@ -45,7 +45,7 @@ function timingSafeEqual(a: Uint8Array, b: Uint8Array) {
 }
 
 async function verifySignature(raw: string, signatureHex: string | null): Promise<boolean> {
-  const secret = process.env.VOICEHUB_WEBHOOK_SECRET;
+  const secret = process.env.BASALTECHO_WEBHOOK_SECRET;
   if (!secret) return true; // allow if no secret configured
   if (!signatureHex) return false;
   // Compute HMAC-SHA256 of raw body
@@ -87,7 +87,7 @@ async function isDuplicateEvent(leadId: string, eventId?: string | null): Promis
 export async function POST(req: NextRequest) {
   try {
     const raw = await req.text();
-    const signature = req.headers.get("x-voicehub-signature");
+    const signature = req.headers.get("x-basaltecho-signature");
     const ok = await verifySignature(raw, signature);
     if (!ok) {
       return new NextResponse("Invalid signature", { status: 401 });
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ""}/api/outreach/meeting/${encodeURIComponent(leadId)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ datetime: args?.datetime, timezone: args?.timezone, source: "voicehub_tool" }),
+          body: JSON.stringify({ datetime: args?.datetime, timezone: args?.timezone, source: "basaltecho_tool" }),
         });
         if (res.ok) {
           const j = await res.json().catch(() => ({}));
@@ -199,7 +199,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Unknown type: log and return
-    await logActivity("voicehub_event", { body });
+    await logActivity("basaltecho_event", { body });
     return NextResponse.json({ ok: true, action: "logged" }, { status: 200 });
   } catch (e: any) {
 

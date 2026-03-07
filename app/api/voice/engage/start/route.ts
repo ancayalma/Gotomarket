@@ -71,12 +71,12 @@ const MEETING_REGION = process.env.CHIME_APP_MEETING_REGION || REGION;
     const hostAttendee = hostAttendeeRes.Attendee;
 
 
-    // Sync latest system prompt from VoiceHub for this wallet (idempotent)
-    const voicehubBase = (process.env.VOICEHUB_BASE_URL || process.env.NEXT_PUBLIC_VOICEHUB_BASE_URL || "").replace(/\/+$/, "");
+    // Sync latest system prompt from BasaltECHO for this wallet (idempotent)
+    const basaltechoBase = (process.env.BASALTECHO_BASE_URL || process.env.NEXT_PUBLIC_BASALTECHO_BASE_URL || "").replace(/\/+$/, "");
     try {
-      if (voicehubBase && wallet) {
+      if (basaltechoBase && wallet) {
         let promptConfig: { prompt?: string; meta?: any } | null = null;
-        const pr = await fetch(`${voicehubBase}/api/crm/prompt/pull`, {
+        const pr = await fetch(`${basaltechoBase}/api/crm/prompt/pull`, {
           method: "GET",
           headers: { "x-wallet": wallet }
         });
@@ -86,7 +86,7 @@ const MEETING_REGION = process.env.CHIME_APP_MEETING_REGION || REGION;
           promptConfig = { prompt: stored?.prompt, meta: stored?.meta };
         }
         if (promptConfig?.prompt) {
-          await fetch(`${voicehubBase}/api/crm/prompt/push`, {
+          await fetch(`${basaltechoBase}/api/crm/prompt/push`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-wallet": wallet },
             body: JSON.stringify({

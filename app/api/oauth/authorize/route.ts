@@ -6,15 +6,15 @@ import { NextRequest, NextResponse } from "next/server";
  *
  * Query params:
  * - response_type=code
- * - client_id=VOICEHUB_CLIENT_ID
- * - redirect_uri=https://voicehub.example.com/api/crm/connect/callback (or similar)
+ * - client_id=BASALTECHO_CLIENT_ID
+ * - redirect_uri=https://basaltecho.example.com/api/crm/connect/callback (or similar)
  * - scope=softphone:control outreach:write leads:read
  * - state=random-string
  * - code_challenge=BASE64URL(SHA256(code_verifier))
  * - code_challenge_method=S256
  *
  * Behavior (scaffold):
- * - Validates required parameters and returns a simulated "authorize_url" that VoiceHub would open.
+ * - Validates required parameters and returns a simulated "authorize_url" that BasaltECHO would open.
  * - In a full implementation, this would render a consent screen and on approval redirect to redirect_uri?code=...&state=...
  */
 

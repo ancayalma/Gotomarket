@@ -59,7 +59,7 @@ const PLANS_CONFIG = [
             "5,000 LeadGen Credits",
             "50,000 Emails / mo",
             "Full Agentic Research",
-            "VoiceHub AI Calling",
+            "BasaltECHO AI Calling",
             "4 User Licenses"
         ],
         popular: true

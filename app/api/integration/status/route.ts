@@ -4,11 +4,11 @@ import { requireApiAuth } from "@/lib/api-auth-guard";
 
 /**
  * GET /api/integration/status
- * BasaltCRM integration status endpoint for VoiceHub connection and softphone config.
+ * BasaltCRM integration status endpoint for BasaltECHO connection and softphone config.
  *
  * Response:
  * {
- *   voicehub_connected: boolean,
+ *   basaltecho_connected: boolean,
  *   iframeSrc: string,     // e.g., https://basaltcrm.my.connect.aws/ccp-v2/
  *   iframeOrigin: string,  // e.g., https://basaltcrm.my.connect.aws
  *   queueId?: string,
@@ -16,7 +16,7 @@ import { requireApiAuth } from "@/lib/api-auth-guard";
  * }
  *
  * Notes:
- * - Computes voicehub_connected from stored OAuth tokens / connection state.
+ * - Computes basaltecho_connected from stored OAuth tokens / connection state.
  * - queueId/flowId can be populated from workspace configuration if applicable.
  */
 
@@ -34,14 +34,14 @@ export async function GET(_req: NextRequest) {
       );
     }
 
-    // Resolve VoiceHub connection and wallet from CRM persistence (systemServices) and env
-    let voicehubConnected = false;
-    let voicehubWallet: string | null = null;
+    // Resolve BasaltECHO connection and wallet from CRM persistence (systemServices) and env
+    let basaltechoConnected = false;
+    let basaltechoWallet: string | null = null;
     try {
-      const svc = await prismadb.systemServices.findFirst({ where: { name: "voicehub" } });
-      const configuredBase = String(process.env.VOICEHUB_BASE_URL || process.env.NEXT_PUBLIC_VOICEHUB_BASE_URL || "").trim();
-      voicehubConnected = !!(configuredBase || (svc?.serviceUrl && String(svc.serviceUrl).trim()));
-      voicehubWallet = svc?.serviceId ? String(svc.serviceId).trim().toLowerCase() : null;
+      const svc = await prismadb.systemServices.findFirst({ where: { name: "basaltecho" } });
+      const configuredBase = String(process.env.BASALTECHO_BASE_URL || process.env.NEXT_PUBLIC_BASALTECHO_BASE_URL || "").trim();
+      basaltechoConnected = !!(configuredBase || (svc?.serviceUrl && String(svc.serviceUrl).trim()));
+      basaltechoWallet = svc?.serviceId ? String(svc.serviceId).trim().toLowerCase() : null;
     } catch { }
 
     const iframeSrc = `${base.replace(/\/+$/, "")}/ccp-v2/`;
@@ -53,8 +53,8 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json(
       {
-        voicehub_connected: voicehubConnected,
-        voicehub_wallet: voicehubWallet,
+        basaltecho_connected: basaltechoConnected,
+        basaltecho_wallet: basaltechoWallet,
         iframeSrc,
         iframeOrigin,
         ...(queueId ? { queueId } : {}),

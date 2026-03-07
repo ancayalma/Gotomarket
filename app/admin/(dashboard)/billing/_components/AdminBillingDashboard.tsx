@@ -78,7 +78,7 @@ export function AdminBillingDashboard({
     useEffect(() => {
         const fetchEchoBalance = async () => {
             try {
-                const res = await fetch("/api/voicehub/credits");
+                const res = await fetch("/api/basaltecho/credits");
                 const data = await res.json();
                 if (data.ok) {
                     setEchoBalance(data.balance);

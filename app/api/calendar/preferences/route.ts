@@ -19,12 +19,12 @@ export async function GET(req: Request) {
     const session = await getServerSession(authOptions as any);
     let userId = (session as any)?.user?.id as string | undefined;
 
-    // Fallback auth bridge: allow VoiceHub to identify CRM user via x-wallet mapping
+    // Fallback auth bridge: allow BasaltECHO to identify CRM user via x-wallet mapping
     if (!userId) {
       try {
         const wallet = (req.headers.get("x-wallet") || "").trim().toLowerCase();
         if (wallet) {
-          const svc = await prismadb.systemServices.findFirst({ where: { name: "voicehub", serviceId: wallet } });
+          const svc = await prismadb.systemServices.findFirst({ where: { name: "basaltecho", serviceId: wallet } });
           const mappedUser = (svc?.servicePassword as string | undefined);
           if (mappedUser) {
             userId = mappedUser;
@@ -73,12 +73,12 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions as any);
     let userId = (session as any)?.user?.id as string | undefined;
 
-    // Fallback auth bridge: allow VoiceHub to identify CRM user via x-wallet mapping
+    // Fallback auth bridge: allow BasaltECHO to identify CRM user via x-wallet mapping
     if (!userId) {
       try {
         const wallet = (req.headers.get("x-wallet") || "").trim().toLowerCase();
         if (wallet) {
-          const svc = await prismadb.systemServices.findFirst({ where: { name: "voicehub", serviceId: wallet } });
+          const svc = await prismadb.systemServices.findFirst({ where: { name: "basaltecho", serviceId: wallet } });
           const mappedUser = (svc?.servicePassword as string | undefined);
           if (mappedUser) {
             userId = mappedUser;

@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     },
 };
 
-export default async function VoiceHubPage() {
+export default async function BasaltECHOPage() {
     return (
         <div className="min-h-screen text-white selection:bg-cyan-500/30 font-sans">
             <div className="fixed inset-0 z-0">

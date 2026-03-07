@@ -9,14 +9,14 @@ type PushBody = {
 };
 
 /**
- * CRM endpoint to push a generated System Prompt to VoiceHub.
+ * CRM endpoint to push a generated System Prompt to BasaltECHO.
  * Expects:
  *  - Header: x-wallet (string, required)
  *  - Body: { prompt: string, meta?: any }
  *
- * If VOICEHUB_BASE_URL (or NEXT_PUBLIC_VOICEHUB_BASE_URL) is configured, this will forward
- * the payload to VoiceHub at /api/crm/prompt/push. Otherwise, it will succeed without forwarding
- * (echo payload) so the CRM UI can continue, while VoiceHub integration is pending.
+ * If BASALTECHO_BASE_URL (or NEXT_PUBLIC_BASALTECHO_BASE_URL) is configured, this will forward
+ * the payload to BasaltECHO at /api/crm/prompt/push. Otherwise, it will succeed without forwarding
+ * (echo payload) so the CRM UI can continue, while BasaltECHO integration is pending.
  */
 export async function POST(req: Request) {
   try {
@@ -51,20 +51,20 @@ export async function POST(req: Request) {
       source: 'basaltcrm',
     };
 
-    // Persist last used wallet for VoiceHub status indicator
+    // Persist last used wallet for BasaltECHO status indicator
     try {
-      const existing = await prismadb.systemServices.findFirst({ where: { name: 'voicehub' } });
+      const existing = await prismadb.systemServices.findFirst({ where: { name: 'basaltecho' } });
       if (existing?.id) {
         await prismadb.systemServices.update({ where: { id: existing.id }, data: { serviceId: wallet } });
       } else {
-        await prismadb.systemServices.create({ data: { name: 'voicehub', serviceId: wallet, v: 0 } });
+        await prismadb.systemServices.create({ data: { name: 'basaltecho', serviceId: wallet, v: 0 } });
       }
     } catch { }
 
-    let base = String(process.env.VOICEHUB_BASE_URL || process.env.NEXT_PUBLIC_VOICEHUB_BASE_URL || '').trim().replace(/\/+$/, '');
+    let base = String(process.env.BASALTECHO_BASE_URL || process.env.NEXT_PUBLIC_BASALTECHO_BASE_URL || '').trim().replace(/\/+$/, '');
     if (!base) {
       try {
-        const svc = await prismadb.systemServices.findFirst({ where: { name: 'voicehub' } });
+        const svc = await prismadb.systemServices.findFirst({ where: { name: 'basaltecho' } });
         base = String(svc?.serviceUrl || '').trim().replace(/\/+$/, '');
       } catch { }
     }
@@ -86,24 +86,24 @@ export async function POST(req: Request) {
             {
               ok: false,
               forwarded: false,
-              error: text || `VoiceHub responded with status ${resp.status}`,
+              error: text || `BasaltECHO responded with status ${resp.status}`,
             },
             { status: resp.status },
           );
         }
 
-        let voicehub: any = null;
+        let basaltecho: any = null;
         try {
-          voicehub = JSON.parse(text);
+          basaltecho = JSON.parse(text);
         } catch {
-          voicehub = text;
+          basaltecho = text;
         }
 
         return NextResponse.json(
           {
             ok: true,
             forwarded: true,
-            voicehub,
+            basaltecho,
           },
           { status: 200 },
         );
@@ -112,14 +112,14 @@ export async function POST(req: Request) {
           {
             ok: false,
             forwarded: false,
-            error: e?.message || 'Failed to forward to VoiceHub',
+            error: e?.message || 'Failed to forward to BasaltECHO',
           },
           { status: 502 },
         );
       }
     }
 
-    // No VoiceHub configured: succeed without forwarding, echo payload for debugging.
+    // No BasaltECHO configured: succeed without forwarding, echo payload for debugging.
     return NextResponse.json(
       {
         ok: true,
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
         stored: false,
         payload,
         hint:
-          'Set VOICEHUB_BASE_URL or NEXT_PUBLIC_VOICEHUB_BASE_URL in environment to enable forwarding to VoiceHub.',
+          'Set BASALTECHO_BASE_URL or NEXT_PUBLIC_BASALTECHO_BASE_URL in environment to enable forwarding to BasaltECHO.',
       },
       { status: 200 },
     );

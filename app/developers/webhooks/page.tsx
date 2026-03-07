@@ -49,8 +49,8 @@ const WEBHOOK_ENDPOINTS = [
         endpoint: "POST /api/voice/engage/webhook",
         icon: <Bell className="w-5 h-5 text-cyan-400" />,
         color: "border-cyan-500/30 bg-cyan-500/5",
-        security: "HMAC-SHA256 via x-voicehub-signature header (optional)",
-        secretEnv: "VOICEHUB_WEBHOOK_SECRET",
+        security: "HMAC-SHA256 via x-basaltecho-signature header (optional)",
+        secretEnv: "BASALTECHO_WEBHOOK_SECRET",
         events: [
             { type: "tool_call (schedule_meeting)", desc: "AI agent requested to schedule a meeting. Creates a calendar event and advances lead pipeline to Engage_Human." },
             { type: "call_connected", desc: "Outbound or inbound call has been connected. Updates lead call_status to CONNECTED." },

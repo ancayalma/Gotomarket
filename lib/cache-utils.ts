@@ -9,7 +9,7 @@ const PRESERVED_KEYS = [
     'custom-themes',            // User-created themes from Theme Studio
     'reduced-motion',           // Accessibility preference
     'high-contrast',            // Accessibility preference
-    'voicehub:wallet',          // Voice dialer preference
+    'basaltecho:wallet',          // Voice dialer preference
 ];
 
 /**

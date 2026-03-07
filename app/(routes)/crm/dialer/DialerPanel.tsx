@@ -108,33 +108,33 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
         throw new Error('Call gated: outreach email has not been sent for this lead yet.');
       }
 
-      // Ensure agent starts listening BEFORE dial by invoking VoiceHub Engage Start
+      // Ensure agent starts listening BEFORE dial by invoking BasaltECHO Engage Start
       // includeAgent=true will launch the agent into the meeting; route also handles PSTN via SMA when configured.
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       let walletOverride = '';
       try {
         // Optional wallet forwarding to include prompt in agent config if available (stored by Prompt push)
-        walletOverride = (localStorage.getItem('voicehub:wallet') || '').toLowerCase();
+        walletOverride = (localStorage.getItem('basaltecho:wallet') || '').toLowerCase();
         if (walletOverride) headers['x-wallet'] = walletOverride;
       } catch { }
       // Silent credit check prior to start
       try {
-        await fetch('/api/voicehub/credits', {
+        await fetch('/api/basaltecho/credits', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ walletOverride: walletOverride || undefined }),
         });
       } catch { }
-      // Auto-start VoiceHub session when dialing
+      // Auto-start BasaltECHO session when dialing
       try {
-        await fetch('/api/voicehub/control', {
+        await fetch('/api/basaltecho/control', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ command: 'start', payload: { leadId }, walletOverride: walletOverride || undefined }),
         });
-        // Open VoiceHub Console to surface credit approval modal on user gesture (Dial Now)
+        // Open BasaltECHO Console to surface credit approval modal on user gesture (Dial Now)
         try {
-          const vhBase = String(process.env.NEXT_PUBLIC_VOICEHUB_BASE_URL || '').trim();
+          const vhBase = String(process.env.NEXT_PUBLIC_BASALTECHO_BASE_URL || '').trim();
           if (vhBase) {
             const win = window.open(`${vhBase}/console`, '_blank', 'noopener,noreferrer');
             if (!win) {
@@ -199,27 +199,27 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         let walletOverride = '';
         try {
-          walletOverride = (localStorage.getItem('voicehub:wallet') || '').toLowerCase();
+          walletOverride = (localStorage.getItem('basaltecho:wallet') || '').toLowerCase();
           if (walletOverride) headers['x-wallet'] = walletOverride;
         } catch { }
         // Silent credit check prior to start
         try {
-          await fetch('/api/voicehub/credits', {
+          await fetch('/api/basaltecho/credits', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ walletOverride: walletOverride || undefined }),
           });
         } catch { }
-        // Auto-start VoiceHub session when dialing list entries
+        // Auto-start BasaltECHO session when dialing list entries
         try {
-          await fetch('/api/voicehub/control', {
+          await fetch('/api/basaltecho/control', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ command: 'start', payload: { leadId }, walletOverride: walletOverride || undefined }),
           });
-          // Open VoiceHub Console to surface credit approval modal on user gesture (Run list)
+          // Open BasaltECHO Console to surface credit approval modal on user gesture (Run list)
           try {
-            const vhBase = String(process.env.NEXT_PUBLIC_VOICEHUB_BASE_URL || '').trim();
+            const vhBase = String(process.env.NEXT_PUBLIC_BASALTECHO_BASE_URL || '').trim();
             if (vhBase) {
               const win = window.open(`${vhBase}/console`, '_blank', 'noopener,noreferrer');
               if (!win) {

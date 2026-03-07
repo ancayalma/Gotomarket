@@ -35,7 +35,7 @@ export default function PricingClient() {
             },
             {
                 title: "Individual Basic",
-                price: billingCycle === "monthly" ? "$50" : "$450",
+                price: billingCycle === "monthly" ? "$50" : "$480",
                 period: billingCycle === "monthly" ? "/ month" : "/ year",
                 description: "Standard CRM with enhanced lead enrichment.",
                 features: [
@@ -52,7 +52,7 @@ export default function PricingClient() {
             },
             {
                 title: "Individual Pro",
-                price: billingCycle === "monthly" ? "$150" : "$1,350",
+                price: billingCycle === "monthly" ? "$150" : "$1,440",
                 period: billingCycle === "monthly" ? "/ month" : "/ year",
                 description: "Power user features for maximum growth.",
                 features: [
@@ -60,7 +60,7 @@ export default function PricingClient() {
                     "Email Campaigns: 50,000 / month",
                     "Full Agentic & Deep Research",
                     "Max 3,000 Accounts Staging Capacity",
-                    "VoiceHub AI Calling (per-minute)",
+                    "BasaltECHO AI Calling (per-minute)",
                     "Dedicated Support & Custom Reports",
                     "4 User Licenses",
                 ],
@@ -122,7 +122,7 @@ export default function PricingClient() {
                         />
                     </button>
                     <span className={`text-sm ${billingCycle === "annual" ? "text-white" : "text-gray-400"}`}>
-                        Annual <span className="text-primary text-xs ml-1">(Save 25%)</span>
+                        Annual <span className="text-primary text-xs ml-1">(Save 20%)</span>
                     </span>
                 </div>
             </section>
@@ -194,9 +194,9 @@ export default function PricingClient() {
                                     <Check className="h-6 w-6 text-primary" />
                                 </div>
                                 <div>
-                                    <h4 className="text-lg font-semibold mb-2 text-white group-hover:text-primary transition-colors">VoiceHub AI Calling</h4>
+                                    <h4 className="text-lg font-semibold mb-2 text-white group-hover:text-primary transition-colors">BasaltECHO AI Calling</h4>
                                     <p className="text-gray-400 text-sm leading-relaxed">
-                                        Billed per minute. Scale your outreach with unlimited AI agents available 24/7.
+                                        Billed per minute. Scale your outreach with unlimited BasaltECHO AI agents available 24/7.
                                     </p>
                                 </div>
                             </div>
@@ -453,7 +453,7 @@ function IndividualComparisonTable() {
             values: ["Basic Discovery", "Standard Enrichment", "Advanced Agentic", "Full Bespoke"]
         },
         {
-            category: "VoiceHub AI Calling",
+            category: "BasaltECHO AI Calling",
             values: ["—", "—", "✓ (per-minute)", "Included/Custom"]
         },
         {
