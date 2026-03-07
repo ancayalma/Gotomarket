@@ -38,6 +38,47 @@ import {
 import { Badge } from "@/components/ui/badge";
 import SuspenseLoading from "@/components/loadings/suspense";
 
+const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f97316", "#eab308"];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        const data = payload[0];
+        const color = data.color || data.payload?.fill || data.fill || "#8b5cf6";
+        
+        return (
+            <div className="relative overflow-hidden bg-black/80 border border-white/10 p-4 rounded-xl shadow-2xl backdrop-blur-md min-w-[150px]">
+                {/* Glowing side accent */}
+                <div 
+                    className="absolute inset-y-0 left-0 w-1 rounded-l-xl"
+                    style={{ backgroundColor: color, boxShadow: `0 0 15px ${color}` }}
+                />
+                <div className="pl-3">
+                    <p className="text-[10px] uppercase font-black tracking-widest text-zinc-400 mb-1">
+                        {label || data.name || data.payload?.name || "Metric"}
+                    </p>
+                    <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-black italic tracking-tighter text-white">
+                            {data.name === "value" && typeof data.value === "number" ? "$" : ""}
+                            {data.value.toLocaleString()}
+                        </span>
+                    </div>
+                    {data.payload && data.payload.count !== undefined && (
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase mt-1">
+                            {data.payload.count} Deal{data.payload.count !== 1 ? 's' : ''} Included
+                        </p>
+                    )}
+                    {data.payload && data.payload.name && data.payload.count === undefined && (
+                            <p className="text-[10px] font-bold text-zinc-500 uppercase mt-1">
+                            Total Deal Count
+                        </p>
+                    )}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 export default function SalesInsights() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -53,8 +94,6 @@ export default function SalesInsights() {
 
     if (loading) return <SuspenseLoading />;
     if (!data) return <div className="p-10 text-center">No sales data available. Begin by adding opportunities.</div>;
-
-    const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f97316", "#eab308"];
 
     return (
         <div className="space-y-8 p-1 animate-in fade-in duration-500">
@@ -151,8 +190,8 @@ export default function SalesInsights() {
                                     style={{ fontSize: "10px", fontWeight: "bold" }}
                                 />
                                 <Tooltip
-                                    cursor={{ fill: "#6366f110" }}
-                                    contentStyle={{ borderRadius: "12px", border: "1px solid #88888830" }}
+                                    cursor={{ fill: "#ffffff10" }}
+                                    content={<CustomTooltip />}
                                 />
                                 <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                                     {data.stageBreakdown.map((entry: any, index: number) => (
@@ -175,7 +214,7 @@ export default function SalesInsights() {
                             <Percent className="w-5 h-5 text-emerald-500" />
                         </div>
                     </CardHeader>
-                    <CardContent className="h-[350px] flex items-center justify-center">
+                    <CardContent className="relative h-[350px] flex items-center justify-center">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -193,7 +232,7 @@ export default function SalesInsights() {
                                     <Cell fill="#f43f5e" />
                                     <Cell fill="#6366f1" />
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip content={<CustomTooltip />} />
                             </PieChart>
                         </ResponsiveContainer>
                         <div className="absolute flex flex-col items-center">

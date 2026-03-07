@@ -13,7 +13,7 @@ export async function getSalesAnalytics() {
     const opportunities = await prismadb.crm_Opportunities.findMany({
         where: { team_id: session.user.id }, // Note: Adjust team_id logic based on how team scope works
         include: {
-            sales_stage_rel: true,
+            assigned_sales_stage: true,
             assigned_to_user: true
         }
     });
@@ -29,7 +29,7 @@ export async function getSalesAnalytics() {
     const allTeamOpps = await prismadb.crm_Opportunities.findMany({
         where: { team_id: teamId },
         include: {
-            sales_stage_rel: true,
+            assigned_sales_stage: true,
             assigned_to_user: true
         }
     });
@@ -64,7 +64,7 @@ export async function getSalesAnalytics() {
 
     // 4. Grouping by Stage for Funnel
     const stageBreakdown = allTeamOpps.reduce((acc: any, o: any) => {
-        const stageName = o.sales_stage_rel?.name || "Unknown";
+        const stageName = o.assigned_sales_stage?.name || "Unknown";
         if (!acc[stageName]) acc[stageName] = { count: 0, value: 0 };
         acc[stageName].count++;
         acc[stageName].value += (o.expected_revenue || 0);
