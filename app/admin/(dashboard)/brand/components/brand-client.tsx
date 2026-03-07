@@ -105,24 +105,24 @@ export default function BrandClient({ initialData }: { initialData: any }) {
 
     return (
       <div className="flex flex-col gap-2 mb-6">
-        <label className="text-sm text-cyan-500 font-medium tracking-wide">{label}</label>
+        <label className="text-sm text-primary font-medium tracking-wide">{label}</label>
         <div className="flex gap-2">
           <Input 
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addItem())}
             placeholder="Add new item..." 
-            className="flex-1 bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500"
+            className="flex-1 bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary"
           />
-          <Button type="button" onClick={addItem} size="icon" className="bg-[#0f2129] border border-cyan-800 text-cyan-400 hover:bg-cyan-950 rounded-sm">
+          <Button type="button" onClick={addItem} size="icon" className="bg-muted border border-border text-primary hover:bg-muted/80 rounded-md">
             <Plus className="w-4 h-4" />
           </Button>
         </div>
         <div className="flex flex-wrap gap-2 mt-2">
           {items.map((item) => (
-            <div key={item} className="flex items-center gap-1 bg-[#1a2d39] border border-[#2a4d5e] text-[#b0d5dd] px-3 py-1 text-sm rounded-sm">
+            <div key={item} className="flex items-center gap-1 bg-secondary border border-border text-secondary-foreground px-3 py-1 text-sm rounded-md">
               <span>{item}</span>
-              <button type="button" onClick={() => removeItem(item)} className="text-cyan-600 hover:text-cyan-400">
+              <button type="button" onClick={() => removeItem(item)} className="text-muted-foreground hover:text-foreground">
                 <X className="w-3 h-3 ml-1" />
               </button>
             </div>
@@ -133,37 +133,37 @@ export default function BrandClient({ initialData }: { initialData: any }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#030a10] text-[#a0c5cd] rounded-xl border border-cyan-900/30 overflow-hidden shadow-2xl relative cyber-grid">
+    <div className="flex flex-col h-full bg-background text-foreground rounded-xl border border-border overflow-hidden shadow-2xl relative">
       
       {/* Header Container */}
       <Tabs defaultValue="identity" className="flex flex-col h-full w-full relative z-10">
-        <div className="flex items-center justify-between border-b border-cyan-900/30 p-4 bg-[#051016]/90 backdrop-blur-md">
+        <div className="flex items-center justify-between border-b border-border p-4 bg-background/90 backdrop-blur-md">
           <div className="flex items-center gap-6">
-            <button onClick={() => router.back()} className="text-cyan-600 hover:text-cyan-400 transition-colors">
+            <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </button>
             <TabsList className="bg-transparent gap-2 h-auto p-0">
               <TabsTrigger 
                 value="identity" 
-                className="data-[state=active]:bg-transparent data-[state=active]:border-cyan-500 data-[state=active]:text-cyan-400 border-b-2 border-transparent rounded-none px-4 py-2 uppercase tracking-wide text-xs font-semibold text-cyan-700 hover:text-cyan-500"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-primary data-[state=active]:text-primary border-b-2 border-transparent rounded-none px-4 py-2 uppercase tracking-wide text-xs font-semibold text-muted-foreground hover:text-foreground"
               >
                 Identity
               </TabsTrigger>
               <TabsTrigger 
                 value="brand_pillars" 
-                className="data-[state=active]:bg-transparent data-[state=active]:border-cyan-500 data-[state=active]:text-cyan-400 border-b-2 border-transparent rounded-none px-4 py-2 uppercase tracking-wide text-xs font-semibold text-cyan-700 hover:text-cyan-500"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-primary data-[state=active]:text-primary border-b-2 border-transparent rounded-none px-4 py-2 uppercase tracking-wide text-xs font-semibold text-muted-foreground hover:text-foreground"
               >
                 Brand Pillars
               </TabsTrigger>
               <TabsTrigger 
                 value="persona" 
-                className="data-[state=active]:bg-transparent data-[state=active]:border-cyan-500 data-[state=active]:text-cyan-400 border-b-2 border-transparent rounded-none px-4 py-2 uppercase tracking-wide text-xs font-semibold text-cyan-700 hover:text-cyan-500"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-primary data-[state=active]:text-primary border-b-2 border-transparent rounded-none px-4 py-2 uppercase tracking-wide text-xs font-semibold text-muted-foreground hover:text-foreground"
               >
                 Persona
               </TabsTrigger>
               <TabsTrigger 
                 value="ecosystem" 
-                className="data-[state=active]:bg-transparent data-[state=active]:border-cyan-500 data-[state=active]:text-cyan-400 border-b-2 border-transparent rounded-none px-4 py-2 uppercase tracking-wide text-xs font-semibold text-cyan-700 hover:text-cyan-500 uppercase"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-primary data-[state=active]:text-primary border-b-2 border-transparent rounded-none px-4 py-2 uppercase tracking-wide text-xs font-semibold text-muted-foreground hover:text-foreground uppercase"
               >
                 Ecosystem
               </TabsTrigger>
@@ -173,7 +173,7 @@ export default function BrandClient({ initialData }: { initialData: any }) {
           <Button 
             onClick={handleSave} 
             disabled={loading}
-            className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold uppercase tracking-wider text-xs px-6 rounded-sm shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-wider text-xs px-6 rounded-md shadow-lg"
           >
             <Save className="w-4 h-4 mr-2" />
             {loading ? "Saving..." : "Save Config"}
@@ -187,38 +187,38 @@ export default function BrandClient({ initialData }: { initialData: any }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
               {/* Left Col */}
               <div className="space-y-6">
-                <h3 className="text-cyan-400 font-semibold tracking-wider text-sm mb-4">Core Information</h3>
+                <h3 className="text-primary font-semibold tracking-wider text-sm mb-4">Core Information</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Company Name</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Company Name</label>
                     <Input 
                       value={formData.company_name} 
                       onChange={(e) => setFormData({...formData, company_name: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary" 
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Industry</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Industry</label>
                     <Input 
                       value={formData.industry} 
                       onChange={(e) => setFormData({...formData, industry: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary" 
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Location</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Location</label>
                     <Input 
                       value={formData.location} 
                       onChange={(e) => setFormData({...formData, location: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary" 
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Twitter Handle</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Twitter Handle</label>
                     <Input 
                       value={formData.twitter_handle} 
                       onChange={(e) => setFormData({...formData, twitter_handle: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary" 
                     />
                   </div>
                 </div>
@@ -226,24 +226,24 @@ export default function BrandClient({ initialData }: { initialData: any }) {
               
               {/* Right Col */}
               <div className="space-y-6">
-                <h3 className="text-cyan-400 font-semibold tracking-wider text-sm mb-4">Strategic Vision</h3>
+                <h3 className="text-primary font-semibold tracking-wider text-sm mb-4">Strategic Vision</h3>
                 <div className="space-y-8">
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Mission Statement</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Mission Statement</label>
                     <Textarea 
                       rows={4}
                       value={formData.mission_statement} 
                       onChange={(e) => setFormData({...formData, mission_statement: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500 resize-none leading-relaxed" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary resize-none leading-relaxed" 
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Core Philosophy</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Core Philosophy</label>
                     <Textarea 
                       rows={6}
                       value={formData.core_philosophy} 
                       onChange={(e) => setFormData({...formData, core_philosophy: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500 resize-none leading-relaxed" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary resize-none leading-relaxed" 
                     />
                   </div>
                 </div>
@@ -254,30 +254,30 @@ export default function BrandClient({ initialData }: { initialData: any }) {
           <TabsContent value="brand_pillars" className="h-full m-0 data-[state=inactive]:hidden outline-none">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
               <div className="space-y-2">
-                <h3 className="text-cyan-400 font-semibold tracking-wider text-sm mb-6">Strategic Pillars</h3>
+                <h3 className="text-primary font-semibold tracking-wider text-sm mb-6">Strategic Pillars</h3>
                 <TagGroup label="Core Values" fieldName="core_values" />
                 <TagGroup label="Strategic Focus Areas" fieldName="strategic_focus_areas" />
                 <TagGroup label="Competitive Advantages" fieldName="competitive_advantages" />
               </div>
 
               <div className="space-y-6">
-                <h3 className="text-cyan-400 font-semibold tracking-wider text-sm mb-6">Target Audience</h3>
+                <h3 className="text-primary font-semibold tracking-wider text-sm mb-6">Target Audience</h3>
                 <div>
-                  <label className="text-xs text-cyan-600 font-medium mb-1 block">Audience Description</label>
+                  <label className="text-xs text-muted-foreground font-medium mb-1 block">Audience Description</label>
                   <Textarea 
                     rows={4}
                     value={formData.audience_description} 
                     onChange={(e) => setFormData({...formData, audience_description: e.target.value})}
-                    className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500 resize-none leading-relaxed" 
+                    className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary resize-none leading-relaxed" 
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-cyan-600 font-medium mb-1 block">Business Model Summary</label>
+                  <label className="text-xs text-muted-foreground font-medium mb-1 block">Business Model Summary</label>
                   <Textarea 
                     rows={4}
                     value={formData.business_model_summary} 
                     onChange={(e) => setFormData({...formData, business_model_summary: e.target.value})}
-                    className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500 resize-none leading-relaxed" 
+                    className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary resize-none leading-relaxed" 
                   />
                 </div>
               </div>
@@ -287,10 +287,10 @@ export default function BrandClient({ initialData }: { initialData: any }) {
           <TabsContent value="persona" className="h-full m-0 data-[state=inactive]:hidden outline-none">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
               <div className="space-y-6">
-                <h3 className="text-cyan-400 font-semibold tracking-wider text-sm mb-4">Voice & Tone</h3>
+                <h3 className="text-primary font-semibold tracking-wider text-sm mb-4">Voice & Tone</h3>
                 
-                <div className="bg-[#091118]/40 border border-cyan-900/30 p-4 rounded-sm">
-                  <label className="text-xs text-cyan-500 font-medium mb-3 block tracking-wide">Choose a Persona Preset</label>
+                <div className="bg-card/40 border border-border p-4 rounded-md">
+                  <label className="text-xs text-primary font-medium mb-3 block tracking-wide">Choose a Persona Preset</label>
                   <div className="flex gap-2">
                     {["PROFESSIONAL", "HUMOROUS", "SNARKY"].map((preset) => (
                       <button
@@ -298,64 +298,64 @@ export default function BrandClient({ initialData }: { initialData: any }) {
                         onClick={() => setFormData({...formData, persona_preset: preset})}
                         className={`text-xs px-4 py-2 uppercase tracking-wide rounded-sm transition-colors border ${
                           formData.persona_preset === preset 
-                          ? "bg-[#1a2d39] border-cyan-500 text-cyan-300"
-                          : "bg-[#091118]/80 border-cyan-900/40 hover:bg-[#0f2129] text-cyan-700" 
+                          ? "bg-primary border-primary text-primary-foreground"
+                          : "bg-muted border-border hover:bg-accent text-muted-foreground" 
                         }`}
                       >
                         {preset}
                       </button>
                     ))}
                   </div>
-                  <p className="text-[10px] text-cyan-800 mt-2">Selecting a preset adjusts background AI extraction contexts.</p>
+                  <p className="text-[10px] text-muted-foreground mt-2">Selecting a preset adjusts background AI extraction contexts.</p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Brand Voice (Company)</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Brand Voice (Company)</label>
                     <Input 
                       value={formData.brand_voice} 
                       onChange={(e) => setFormData({...formData, brand_voice: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary" 
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Agent Tone</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Agent Tone</label>
                     <Input 
                       value={formData.agent_tone} 
                       onChange={(e) => setFormData({...formData, agent_tone: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary" 
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Communication Style</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Communication Style</label>
                     <Input 
                       value={formData.communication_style} 
                       onChange={(e) => setFormData({...formData, communication_style: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary" 
                     />
                   </div>
                 </div>
 
               </div>
               <div className="space-y-6">
-                <h3 className="text-cyan-400 font-semibold tracking-wider text-sm mb-4">Content Strategy</h3>
+                <h3 className="text-primary font-semibold tracking-wider text-sm mb-4">Content Strategy</h3>
                 <div className="space-y-6">
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Engagement Style</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Engagement Style</label>
                     <Textarea 
                       rows={3}
                       value={formData.engagement_style} 
                       onChange={(e) => setFormData({...formData, engagement_style: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500 resize-none leading-relaxed" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary resize-none leading-relaxed" 
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-cyan-600 font-medium mb-1 block">Hashtag Strategy</label>
+                    <label className="text-xs text-muted-foreground font-medium mb-1 block">Hashtag Strategy</label>
                     <Textarea 
                       rows={3}
                       value={formData.hashtag_strategy} 
                       onChange={(e) => setFormData({...formData, hashtag_strategy: e.target.value})}
-                      className="bg-[#091118]/80 text-[#a0c5cd] border border-cyan-900/40 rounded-sm focus-visible:ring-cyan-500 resize-none leading-relaxed" 
+                      className="bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary resize-none leading-relaxed" 
                     />
                   </div>
                   <TagGroup label="Content Themes" fieldName="content_themes" />
@@ -366,8 +366,8 @@ export default function BrandClient({ initialData }: { initialData: any }) {
 
           <TabsContent value="ecosystem" className="h-full flex items-center justify-center p-20 m-0 data-[state=inactive]:hidden outline-none">
             <div className="flex flex-col items-center justify-center text-center max-w-md">
-                <h2 className="text-xl text-cyan-400 font-bold tracking-widest uppercase mb-2">Ecosystem Config</h2>
-                <p className="text-sm text-cyan-700">Future updates will allow you to sync your configured brand variables directly into partner ecosystems like Web3 networks and automated social syndicates.</p>
+                <h2 className="text-xl text-primary font-bold tracking-widest uppercase mb-2">Ecosystem Config</h2>
+                <p className="text-sm text-muted-foreground">Future updates will allow you to sync your configured brand variables directly into partner ecosystems like Web3 networks and automated social syndicates.</p>
             </div>
           </TabsContent>
 

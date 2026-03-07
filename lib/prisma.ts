@@ -46,10 +46,10 @@ const client = baseClient.$extends({
   }
 });
 
-const globalForPrisma = globalThis as unknown as { prismadb: any };
+const globalForPrisma = globalThis as unknown as { prismadb_v2: any };
 
-export const prismadb = globalForPrisma.prismadb || client;
+export const prismadb = globalForPrisma.prismadb_v2 || client;
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prismadb = prismadb;
+  globalForPrisma.prismadb_v2 = prismadb;
 }
