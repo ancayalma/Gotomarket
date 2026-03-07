@@ -8,16 +8,15 @@ export const getRevenueSparkline = async () => {
     try {
         const teamInfo = await getCurrentUserTeamId();
         const teamId = teamInfo?.teamId;
-        const isGlobalAdmin = teamInfo?.isGlobalAdmin;
-
-        if (!teamId && !isGlobalAdmin) return [];
+        
+        if (!teamId) return [];
 
         const thirtyDaysAgo = subDays(new Date(), 30);
 
         // Fetch opportunities created in the last 30 days
         const opportunities = await prismadb.crm_Opportunities.findMany({
             where: {
-                ...(isGlobalAdmin ? {} : { team_id: teamId }),
+                team_id: teamId,
                 createdAt: {
                     gte: thirtyDaysAgo
                 },

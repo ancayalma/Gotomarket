@@ -11,7 +11,7 @@ export const deleteTeam = async (teamId: string) => {
         if (!currentUser?.userId) return { error: "Unauthorized" };
 
         // Only Global Admins or Team Owners (specifically looking at business rules) should delete
-        if (!currentUser.isGlobalAdmin && (currentUser.teamId !== teamId || currentUser.teamRole !== "OWNER")) {
+        if ((currentUser.teamId !== teamId || currentUser.teamRole !== "OWNER")) {
             return { error: "Unauthorized: You do not have permission to delete this team." };
         }
 

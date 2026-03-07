@@ -82,7 +82,7 @@ export async function GET(req: Request) {
 
         const where: any = {};
 
-        if (!teamInfo?.isGlobalAdmin && teamInfo?.teamId) {
+        if (teamInfo?.teamId) {
             where.team_id = teamInfo.teamId;
         }
 

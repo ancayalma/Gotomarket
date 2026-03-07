@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   }
 
   const teamInfo = await getCurrentUserTeamId();
-  if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) {
+  if (!teamInfo?.teamId) {
     return NextResponse.json(
       { error: "No active team found to invite user to." },
       { status: 400 }

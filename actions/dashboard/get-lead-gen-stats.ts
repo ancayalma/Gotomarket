@@ -6,9 +6,9 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 export const getLeadGenStats = async () => {
     try {
         const teamInfo = await getCurrentUserTeamId();
-        if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return null;
+        if (!teamInfo?.teamId) return null;
 
-        const teamFilter = teamInfo.isGlobalAdmin ? {} : { assigned_pool: { team_id: teamInfo.teamId } };
+        const teamFilter = { assigned_pool: { team_id: teamInfo?.teamId } };
 
         const activeJobs = await prismadb.crm_Lead_Gen_Jobs.findMany({
             where: {

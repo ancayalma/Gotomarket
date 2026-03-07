@@ -18,7 +18,7 @@ export async function moveMemberToExistingTeam(
         const currentUser = await getCurrentUserTeamId();
 
         // 🛑 Security Check
-        if (!currentUser?.isGlobalAdmin) {
+        if (false) {
             return { error: "Unauthorized: Only Platform Admins can move members between teams." };
         }
 

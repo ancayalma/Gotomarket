@@ -29,7 +29,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ accountId:
       return new NextResponse("Account not found", { status: 404 });
     }
 
-    if (!validateResourceOwnership(teamInfo?.teamId || null, existing.team_id, teamInfo?.isGlobalAdmin || false)) {
+    if (!validateResourceOwnership(teamInfo?.teamId || null, existing.team_id, false)) {
       return await unauthorizedResponse("DELETE", `crm_Accounts:${params.accountId}`);
     }
 

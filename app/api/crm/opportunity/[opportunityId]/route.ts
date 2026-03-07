@@ -30,7 +30,7 @@ export async function PUT(req: Request, props: { params: Promise<{ opportunityId
     }
 
     // 2. SOC2 Ownership Check
-    if (!validateResourceOwnership(teamInfo!.teamId, opportunity.team_id, teamInfo!.isGlobalAdmin)) {
+    if (!validateResourceOwnership(teamInfo!.teamId, opportunity.team_id, false)) {
       return await unauthorizedResponse("UPDATE", `crm_Opportunities:${opportunityId}`);
     }
 
@@ -126,7 +126,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ opportunit
     }
 
     // 2. SOC2 Ownership Check
-    if (!validateResourceOwnership(teamInfo!.teamId, opportunity.team_id, teamInfo!.isGlobalAdmin)) {
+    if (!validateResourceOwnership(teamInfo!.teamId, opportunity.team_id, false)) {
       return await unauthorizedResponse("DELETE", `crm_Opportunities:${opportunityId}`);
     }
 

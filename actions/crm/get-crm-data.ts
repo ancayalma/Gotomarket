@@ -10,19 +10,19 @@ export const getAllCrmData = async () => {
   const session = await getServerSession(authOptions);
   const teamInfo = await getCurrentUserTeamId();
 
-  if (!session || (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin)) return { users: [], accounts: [], opportunities: [], leads: [], contacts: [], contracts: [], saleTypes: [], saleStages: [], campaigns: [], industries: [], boards: [] };
+  if (!session || !teamInfo?.teamId) return { users: [], accounts: [], opportunities: [], leads: [], contacts: [], contracts: [], saleTypes: [], saleStages: [], campaigns: [], industries: [], boards: [] };
 
   const whereClause: any = {};
-  if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
-  }
+  if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
 
   // Users are special, maybe filter by team_id too?
   // Previous logic for users was just Active. Now we should filter by Team?
   // Prismadb.users has team_id.
   const usersWhere = {
     userStatus: "ACTIVE" as any,
-    ...(teamInfo?.isGlobalAdmin ? {} : { team_id: teamInfo?.teamId })
+    team_id: teamInfo?.teamId,
   };
 
   const users = await prismadb.users.findMany({

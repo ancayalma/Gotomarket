@@ -110,7 +110,7 @@ export async function getTeamAnalytics(): Promise<TeamAnalytics> {
   // Get team context for filtering
   const teamInfo = await getCurrentUserTeamId();
   const teamId = teamInfo?.teamId;
-  const isGlobalAdmin = teamInfo?.isGlobalAdmin;
+  
   const isMember = teamInfo?.teamRole === "MEMBER" || teamInfo?.teamRole === "VIEWER";
   const userId = teamInfo?.userId;
 

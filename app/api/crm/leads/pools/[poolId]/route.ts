@@ -26,8 +26,7 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
         });
 
         const teamInfo = await getCurrentUserTeamId();
-        const isGlobalAdmin = teamInfo?.isGlobalAdmin;
-        const isTeamAdmin = user?.team_role === "ADMIN" || user?.team_role === "OWNER";
+        const isTeamAdmin = teamInfo?.isAdmin;
         const teamId = teamInfo?.teamId;
 
         const pool = await (prismadbCrm as any).crm_Lead_Pools.findUnique({
@@ -49,7 +48,7 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
         const assignedMembers = pool.assigned_members || [];
         const isAssigned = assignedMembers.includes(session.user.id);
 
-        if (!isGlobalAdmin && !isOwner && !(isTeamAdmin && isTeamMatch) && !isAssigned) {
+        if (!isOwner && !(isTeamAdmin && isTeamMatch) && !isAssigned) {
             return new NextResponse("Forbidden", { status: 403 });
         }
 

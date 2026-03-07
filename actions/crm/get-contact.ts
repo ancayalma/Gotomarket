@@ -8,14 +8,14 @@ export const getContact = async (contactId: string) => {
   const session = await getServerSession(authOptions);
   const teamInfo = await getCurrentUserTeamId();
 
-  if (!session || (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin)) return null;
+  if (!session || !teamInfo?.teamId) return null;
 
   if (!isValidObjectId(contactId)) return null;
 
   const whereClause: any = { id: contactId };
-  if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
-  }
+  if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
   if (teamInfo?.teamRole === "MEMBER" || teamInfo?.teamRole === "VIEWER") {
     whereClause.assigned_to = teamInfo?.userId;
   }

@@ -8,12 +8,12 @@ export const getProjectStats = async () => {
     if (!session?.user?.id) return { activeTasks: 0, documents: 0 };
 
     const teamInfo = await getCurrentUserTeamId();
-    if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return { activeTasks: 0, documents: 0 };
+    if (!teamInfo?.teamId) return { activeTasks: 0, documents: 0 };
 
     const whereClause: any = {};
-    if (!teamInfo?.isGlobalAdmin) {
-        whereClause.team_id = teamInfo?.teamId;
-    }
+    if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
 
     // Count active tasks (not COMPLETE)
     const activeTasks = await prismadb.tasks.count({

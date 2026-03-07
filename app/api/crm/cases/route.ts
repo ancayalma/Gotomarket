@@ -176,10 +176,8 @@ export async function GET(req: Request) {
         const teamInfo = await getCurrentUserTeamId();
         const where: any = {};
 
-        if (!teamInfo?.isGlobalAdmin) {
-            if (!teamInfo?.teamId) return NextResponse.json([], { status: 200 });
-            where.team_id = teamInfo.teamId;
-        }
+        if (!teamInfo?.teamId) return NextResponse.json([], { status: 200 });
+        where.team_id = teamInfo.teamId;
 
         // Parse query params for filtering
         const { searchParams } = new URL(req.url);

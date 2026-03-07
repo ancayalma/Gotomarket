@@ -11,10 +11,10 @@ export const getCaseStats = async () => {
     if (!session?.user?.id) return null;
 
     const teamInfo = await getCurrentUserTeamId();
-    if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return null;
+    if (!teamInfo?.teamId) return null;
 
     const where: any = {};
-    if (!teamInfo.isGlobalAdmin && teamInfo.teamId) {
+    if (teamInfo?.teamId) {
         where.team_id = teamInfo.teamId;
     }
 

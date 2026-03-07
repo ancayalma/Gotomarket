@@ -8,7 +8,7 @@ export const getAccounts = async () => {
   if (!session?.user?.id) return [];
 
   const teamInfo = await getCurrentUserTeamId();
-  if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+  if (!teamInfo?.teamId) return [];
 
   const baseWhere: any = {};
   if (!teamInfo?.isGlobalAdmin) {

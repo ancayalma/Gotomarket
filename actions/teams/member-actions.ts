@@ -16,13 +16,13 @@ export const updateMemberRole = async (userId: string, role: string) => {
         const targetUser = await prismadb.users.findUnique({ where: { id: userId } });
         if (!targetUser) return { error: "User not found" };
 
-        if (!currentUser.isGlobalAdmin && (currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
+        if ((currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
             return { error: "Unauthorized: You do not have permission to modify this user." };
         }
 
         // Security Check for PLATFORM_ADMIN
         if (role === "PLATFORM_ADMIN") {
-            const isAuthorized = currentUser?.isGlobalAdmin; // strictly defined in team-utils as Internal + PLATFORM_ADMIN
+            const isAuthorized = false;
             if (!isAuthorized) {
                 return { error: "Unauthorized: Only Platform Admins can assign this role." };
             }
@@ -48,7 +48,7 @@ export const removeMember = async (userId: string) => {
         const targetUser = await prismadb.users.findUnique({ where: { id: userId } });
         if (!targetUser) return { error: "User not found" };
 
-        if (!currentUser.isGlobalAdmin && (currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
+        if ((currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
             return { error: "Unauthorized: You do not have permission to modify this user." };
         }
 
@@ -101,7 +101,7 @@ export const addMember = async (teamId: string, userId: string, role: string = "
         const currentUser = await getCurrentUserTeamId();
         if (!currentUser?.userId) return { error: "Unauthorized" };
 
-        if (!currentUser.isGlobalAdmin && (currentUser.teamId !== teamId || !currentUser.isAdmin)) {
+        if ((currentUser.teamId !== teamId || !currentUser.isAdmin)) {
             return { error: "Unauthorized: Admin privileges required for this team." };
         }
 
@@ -169,7 +169,7 @@ export const toggleUserStatus = async (userId: string, status: "ACTIVE" | "INACT
         const targetUser = await prismadb.users.findUnique({ where: { id: userId } });
         if (!targetUser) return { error: "User not found" };
 
-        if (!currentUser.isGlobalAdmin && (currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
+        if ((currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
             return { error: "Unauthorized: You do not have permission to modify this user." };
         }
 
@@ -188,7 +188,7 @@ export const getOrganizationMembers = async (orgId: string) => {
     try {
         const currentUser = await getCurrentUserTeamId();
         if (!currentUser?.userId) return [];
-        if (!currentUser.isGlobalAdmin && currentUser.teamId !== orgId) {
+        if (currentUser.teamId !== orgId) {
             return []; // Prevent enumerating other org members
         }
 

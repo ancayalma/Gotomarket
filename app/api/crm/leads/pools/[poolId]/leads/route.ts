@@ -31,8 +31,7 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
     // 3. Team Admin (if pool is in team)
 
     const teamInfo = await getCurrentUserTeamId();
-    const isGlobalAdmin = teamInfo?.isGlobalAdmin || teamInfo?.isPlatformAdmin;
-    const isTeamAdmin = user?.team_role === "ADMIN" || user?.team_role === "OWNER";
+    const isTeamAdmin = teamInfo?.isAdmin;
 
     // Fetch pool with team_id and assigned_members
     const pool = await (prismadbCrm as any).crm_Lead_Pools.findUnique({
@@ -52,7 +51,7 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
     // 3. Team Admin/Owner (isTeamAdmin && isTeamMatch) -> Allow team management
     // 4. Member (isAssigned) -> Allow access if list is assigned to them
 
-    if (isGlobalAdmin || isOwner || (isTeamAdmin && isTeamMatch) || isAssigned) {
+    if (isOwner || (isTeamAdmin && isTeamMatch) || isAssigned) {
       // Access granted
     } else {
       return new NextResponse("Forbidden", { status: 403 });

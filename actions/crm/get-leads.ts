@@ -28,9 +28,9 @@ export const getLeads = async () => {
 
   const whereClause: any = {};
 
-  if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
-  }
+  if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
 
   // If not admin/account_admin, restrict to assigned_to within the team
   if (!user?.is_admin && !user?.is_account_admin) {
@@ -68,12 +68,12 @@ export const getLeads = async () => {
 //Get leads by month for chart
 export const getLeadsByMonth = async (startDate?: Date, endDate?: Date, departmentId?: string) => {
   const teamInfo = await getCurrentUserTeamId();
-  if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+  if (!teamInfo?.teamId) return [];
 
   const whereClause: any = {};
-  if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
-  }
+  if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
 
   // Filter by Department (if applicable based on user assignment)
   if (departmentId && departmentId !== "all") {

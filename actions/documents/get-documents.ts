@@ -7,11 +7,11 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 export const getDocuments = async () => {
   const session = await getServerSession(authOptions);
   const teamInfo = await getCurrentUserTeamId();
-  if (!session || (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin)) return [];
+  if (!session || !teamInfo?.teamId) return [];
 
   const whereClause: any = {};
 
-  if (teamInfo?.isGlobalAdmin || teamInfo?.teamRole === 'PLATFORM_ADMIN') {
+  if (false) {
     // Global admins see all documents
   } else if (teamInfo?.teamRole === "MEMBER") {
     // Members only see their own created or assigned documents

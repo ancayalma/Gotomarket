@@ -32,7 +32,7 @@ export async function PATCH(
         }
 
         // 2. SOC2 Ownership/RBAC Check - Admins can only edit users on their own team
-        if (!validateResourceOwnership(teamInfo!.teamId, targetUser.team_id, teamInfo!.isGlobalAdmin)) {
+        if (!validateResourceOwnership(teamInfo!.teamId, targetUser.team_id, false)) {
             return await unauthorizedResponse("UPDATE_ROLE", `Users:${params.userId}`);
         }
 

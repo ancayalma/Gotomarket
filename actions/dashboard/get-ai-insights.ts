@@ -6,7 +6,7 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 export const getAIInsights = async () => {
     try {
         const teamInfo = await getCurrentUserTeamId();
-        if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+        if (!teamInfo?.teamId) return [];
 
         const insights = [];
         const now = new Date();
@@ -15,7 +15,7 @@ export const getAIInsights = async () => {
         // ─── 1. Revenue Risk: Overdue High-Value Invoices ───
         const unpaidInvoices = await prismadb.invoices.findMany({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                team_id: teamInfo?.teamId,
                 payment_status: "UNPAID",
                 date_due: { lt: now }
             },
@@ -38,7 +38,7 @@ export const getAIInsights = async () => {
         // ─── 2. Pipeline Risk: Stale Leads ───
         const staleLeads = await prismadb.crm_Leads.findMany({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                team_id: teamInfo?.teamId,
                 status: "NEW",
                 createdAt: { lt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) }
             },
@@ -61,7 +61,7 @@ export const getAIInsights = async () => {
         // ─── 3. Contract Velocity: Pending Signatures ───
         const pendingContracts = await prismadb.crm_Contracts.findMany({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                team_id: teamInfo?.teamId,
                 status: "INPROGRESS"
             },
             take: 1
@@ -82,7 +82,7 @@ export const getAIInsights = async () => {
         // ─── 4. Campaign Success: High Engagement Streak ───
         const topCampaigns = await prismadb.crm_Outreach_Campaigns.findMany({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                team_id: teamInfo?.teamId,
                 status: "ACTIVE",
                 emails_opened: { gte: 10 }
             },
@@ -109,7 +109,7 @@ export const getAIInsights = async () => {
         // ─── 5. Account Health: High Value / Low Activity ───
         const highValueAccounts = await prismadb.crm_Accounts.findMany({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                team_id: teamInfo?.teamId,
                 status: "Active",
                 updatedAt: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
             },
@@ -152,7 +152,7 @@ export const getAIInsights = async () => {
         // ─── 7. Discovery Opportunity: Target Gap ───
         const activePools = await prismadb.crm_Lead_Pools.count({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                team_id: teamInfo?.teamId,
                 status: "ACTIVE"
             }
         });

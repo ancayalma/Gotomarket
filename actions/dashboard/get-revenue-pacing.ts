@@ -7,7 +7,7 @@ import { startOfMonth, endOfMonth, differenceInDays } from "date-fns";
 export const getRevenuePacing = async () => {
     try {
         const teamInfo = await getCurrentUserTeamId();
-        if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return null;
+        if (!teamInfo?.teamId) return null;
 
         const now = new Date();
         const start = startOfMonth(now);
@@ -19,7 +19,7 @@ export const getRevenuePacing = async () => {
         // Fetch current month's revenue from INVOICES
         const invoices = await prismadb.invoices.findMany({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                team_id: teamInfo?.teamId,
                 date_created: {
                     gte: start,
                     lte: end

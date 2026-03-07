@@ -16,19 +16,10 @@ export const getUnassignedDocuments = async () => {
     tasksIDs: { isEmpty: true },
   };
 
-  if (teamInfo?.isGlobalAdmin) {
-    // Global admins see all unassigned documents
-  } else if (teamInfo?.teamRole === "MEMBER") {
-    // Members only see their own created or assigned unassigned documents
-    whereClause.team_id = teamId;
-    whereClause.OR = [
-      { created_by_user: teamInfo?.userId },
-      { assigned_user: teamInfo?.userId }
-    ];
-  } else {
+  
     // Other roles (ADMIN, OWNER) see all team unassigned documents
     whereClause.team_id = teamId;
-  }
+  
 
   const data = await (prismadb.documents as any).findMany({
     where: whereClause,

@@ -26,7 +26,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ leadId: st
     }
 
     // 2. Critical SOC2 Check: Does the user's team own this lead?
-    if (!validateResourceOwnership(teamInfo!.teamId, lead.team_id, teamInfo!.isGlobalAdmin)) {
+    if (!validateResourceOwnership(teamInfo!.teamId, lead.team_id, false)) {
       return await unauthorizedResponse("DELETE", `crm_Leads:${params.leadId}`);
     }
 

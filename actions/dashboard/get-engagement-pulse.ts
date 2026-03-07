@@ -19,7 +19,7 @@ export const getEngagementPulse = async (days = 168): Promise<EngagementDay[]> =
         if (!teamInfo?.userId) return [];
 
         const teamId = teamInfo.teamId;
-        const isGlobalAdmin = teamInfo.isGlobalAdmin;
+        
 
         // Fetch activities from the last X days
         const startDate = startOfDay(subDays(new Date(), days));
@@ -29,7 +29,7 @@ export const getEngagementPulse = async (days = 168): Promise<EngagementDay[]> =
                 createdAt: {
                     gte: startDate,
                 },
-                ...(isGlobalAdmin ? {} : { team_id: teamId || "no-team" }),
+                team_id: teamId,
             },
             select: {
                 createdAt: true,

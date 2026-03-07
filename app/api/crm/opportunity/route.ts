@@ -150,7 +150,7 @@ export async function PUT(req: Request) {
     }
 
     // 2. SOC2 Ownership Check
-    if (!validateResourceOwnership(teamInfo!.teamId, existingOpportunity.team_id, teamInfo!.isGlobalAdmin)) {
+    if (!validateResourceOwnership(teamInfo!.teamId, existingOpportunity.team_id, false)) {
       return await unauthorizedResponse("UPDATE", `crm_Opportunities:${id}`);
     }
 

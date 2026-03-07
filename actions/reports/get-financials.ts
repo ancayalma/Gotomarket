@@ -5,13 +5,13 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 export const getFinancialsByMonth = async (startDate?: Date, endDate?: Date, departmentId?: string) => {
     const teamInfo = await getCurrentUserTeamId();
-    if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+    if (!teamInfo?.teamId) return [];
 
     const whereClause: any = {};
 
-    if (!teamInfo?.isGlobalAdmin) {
-        whereClause.team_id = teamInfo?.teamId;
-    }
+    if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
 
     if (departmentId && departmentId !== "all") {
         whereClause.assigned_department_id = departmentId;
@@ -60,12 +60,12 @@ export const getFinancialsByMonth = async (startDate?: Date, endDate?: Date, dep
 
 export const getContractsStats = async (startDate?: Date, endDate?: Date) => {
     const teamInfo = await getCurrentUserTeamId();
-    if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return { totalValue: 0, activeCount: 0 };
+    if (!teamInfo?.teamId) return { totalValue: 0, activeCount: 0 };
 
     const whereClause: any = {};
-    if (!teamInfo?.isGlobalAdmin) {
-        whereClause.team_id = teamInfo?.teamId;
-    }
+    if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
 
     if (startDate && endDate) {
         whereClause.startDate = {

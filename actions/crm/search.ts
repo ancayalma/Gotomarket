@@ -5,12 +5,12 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 export async function searchCrmEntities(query: string, type: "account" | "contact" | "lead", accountId?: string) {
     const teamInfo = await getCurrentUserTeamId();
-    if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+    if (!teamInfo?.teamId) return [];
 
     const where: any = {};
-    if (!teamInfo?.isGlobalAdmin) {
-        where.team_id = teamInfo?.teamId;
-    }
+    if (teamInfo?.teamId) {
+            where.team_id = teamInfo.teamId;
+        }
 
     if (type === "account") {
         return await prismadb.crm_Accounts.findMany({

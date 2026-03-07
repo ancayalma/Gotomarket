@@ -31,8 +31,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
   }
 
   const teamId = teamInfo?.teamId;
-  const isGlobalAdmin = teamInfo?.isGlobalAdmin;
-  const isActuallyGlobal = teamInfo?.isPlatformAdmin || teamInfo?.isGlobalAdmin;
+  
 
   const dateFilter: any = {};
   if (from) dateFilter.gte = from;
@@ -46,9 +45,9 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
   const getFilter = (modelField: "assigned_to" | "user" | "none" = "none", dateFieldName: string = "createdAt") => {
     // If Global Admin or impersonating, allow empty filter (all records) if teamId is null
     const normalizedRole = (teamRole || "").trim().toUpperCase();
-    const isAdmin = normalizedRole === "ADMIN" || normalizedRole === "OWNER" || isActuallyGlobal;
+    const isAdmin = normalizedRole === "ADMIN" || normalizedRole === "OWNER";
 
-    let base: any = teamId ? { team_id: teamId } : isActuallyGlobal ? {} : { team_id: "no-team-fallback" };
+    let base: any = teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
 
     if (normalizedRole === "MEMBER") {
       if (modelField === "assigned_to") {
@@ -66,7 +65,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
 
   // For documents: members see only their assigned or created docs
   const getDocumentFilter = () => {
-    const base = teamId ? { team_id: teamId } : isActuallyGlobal ? {} : { team_id: "no-team-fallback" };
+    const base = teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
     const dateQuery = getCreatedAtFilter();
 
     if (teamRole === "MEMBER") {
@@ -85,7 +84,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
   // For project opportunities: members see only their created/assigned ones
   const getProjectOpportunityFilter = () => {
     // Project_Opportunities does not have team_id directly, it inherits from assigned_project (Boards)
-    const base = teamId ? { assigned_project: { team_id: teamId } } : isActuallyGlobal ? {} : { assigned_project: { team_id: "no-team-fallback" } };
+    const base = teamId ? { assigned_project: { team_id: teamId } } : { assigned_project: { team_id: "no-team-fallback" } };
     const dateQuery = Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
     const normalizedRole = (teamRole || "").trim().toUpperCase();
 
@@ -119,13 +118,13 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
 
   const getInvoiceFilter = () => {
     // SysAdms see everything by default if not strictly filtered
-    const base = teamId ? { team_id: teamId } : (isActuallyGlobal ? {} : { team_id: "no-team-fallback" });
+    const base = teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
     const dateQuery = Object.keys(dateFilter).length > 0 ? { date_created: dateFilter } : {};
     return { ...base, ...dateQuery };
   };
 
   const getLeadPoolFilter = () => {
-    const base = teamId ? { team_id: teamId } : isActuallyGlobal ? {} : { team_id: "no-team-fallback" };
+    const base = teamId ? { team_id: teamId } : { team_id: "no-team-fallback" };
     // For members, maybe restrict? For now, team-wide.
     return {
       ...base,
@@ -180,7 +179,7 @@ export const getSummaryCounts = async (from?: Date, to?: Date): Promise<Dashboar
     prismadb.users.count({
       where: teamRole === "MEMBER"
         ? { id: teamInfo?.userId }
-        : { ...(teamId ? { team_id: teamId } : isActuallyGlobal ? {} : { team_id: "no-team-fallback" }), userStatus: "ACTIVE" as any }
+        : { ...(teamId ? { team_id: teamId } : { team_id: "no-team-fallback" }), userStatus: "ACTIVE" as any }
     }),
     prismadb.documents.aggregate({ where: getDocumentFilter(), _sum: { size: true } }),
     prismadb.crm_Lead_Pools.count({ where: getLeadPoolFilter() }),

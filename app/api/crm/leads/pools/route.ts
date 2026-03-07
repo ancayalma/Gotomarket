@@ -27,7 +27,6 @@ export async function GET() {
 
     const isMember = user?.team_role === "MEMBER";
     const teamInfo = await getCurrentUserTeamId();
-    const isGlobalAdmin = teamInfo?.isGlobalAdmin || teamInfo?.isPlatformAdmin;
     const teamId = teamInfo?.teamId;
 
     const poolSelect = {
@@ -58,13 +57,7 @@ export async function GET() {
 
     let pools: any[] = [];
 
-    if (isGlobalAdmin) {
-      // All pools
-      pools = await (prismadb.crm_Lead_Pools as any).findMany({
-        orderBy: { createdAt: "desc" },
-        select: poolSelect,
-      });
-    } else if (isMember) {
+    if (isMember) {
       // Members: Use two separate queries and merge to avoid OR clause issues
       systemLogger.error("[LEADS_POOLS_GET] Member query - fetching pools for user:", session.user.id);
 
@@ -169,7 +162,6 @@ export async function DELETE(req: Request) {
     }
 
     const teamInfo = await getCurrentUserTeamId();
-    const isGlobalAdmin = teamInfo?.isGlobalAdmin || teamInfo?.isPlatformAdmin;
     const isTeamAdmin = teamInfo?.isAdmin; // Team Admin/Owner
     const myTeamId = teamInfo?.teamId;
 
@@ -180,7 +172,7 @@ export async function DELETE(req: Request) {
     const isCreator = pool.user === session.user.id;
     const isTeamPool = pool.team_id === myTeamId;
 
-    if (!isGlobalAdmin && !isCreator && (!isTeamAdmin || !isTeamPool)) {
+    if (!isCreator && (!isTeamAdmin || !isTeamPool)) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 

@@ -10,12 +10,12 @@ export const getOpportunities = async () => {
   const session = await getServerSession(authOptions);
   const teamInfo = await getCurrentUserTeamId();
 
-  if (!session || (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin)) return [];
+  if (!session || !teamInfo?.teamId) return [];
 
   const whereClause: any = {};
-  if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
-  }
+  if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
 
   const data = await prismadb.crm_Opportunities.findMany({
     where: whereClause,
@@ -42,12 +42,12 @@ export const getOpportunities = async () => {
 //Get opportunities by month for chart
 export const getOpportunitiesByMonth = async (startDate?: Date, endDate?: Date, departmentId?: string) => {
   const teamInfo = await getCurrentUserTeamId();
-  if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+  if (!teamInfo?.teamId) return [];
 
   const whereClause: any = {};
-  if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
-  }
+  if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
   if (teamInfo?.teamRole === "MEMBER" || teamInfo?.teamRole === "VIEWER") {
     whereClause.assigned_to = teamInfo?.userId;
   }
@@ -100,12 +100,12 @@ export const getOpportunitiesByMonth = async (startDate?: Date, endDate?: Date, 
 //Get opportunities by sales_stage name for chart
 export const getOpportunitiesByStage = async () => {
   const teamInfo = await getCurrentUserTeamId();
-  if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return {};
+  if (!teamInfo?.teamId) return {};
 
   const whereClause: any = {};
-  if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
-  }
+  if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
   if (teamInfo?.teamRole === "MEMBER" || teamInfo?.teamRole === "VIEWER") {
     whereClause.assigned_to = teamInfo?.userId;
   }

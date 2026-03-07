@@ -29,7 +29,7 @@ export async function GET(req: Request) {
       team_id: teamId,
     };
 
-    if (teamInfo && !teamInfo.isAdmin && !teamInfo.isGlobalAdmin) {
+    if (teamInfo && !teamInfo.isAdmin) {
       whereClause.assigned_to = teamInfo.userId;
     }
 
@@ -227,7 +227,7 @@ export async function PUT(req: Request) {
     }
 
     // 2. SOC2 Ownership Check
-    if (!validateResourceOwnership(teamInfo!.teamId, existingLead.team_id, teamInfo!.isGlobalAdmin)) {
+    if (!validateResourceOwnership(teamInfo!.teamId, existingLead.team_id, false)) {
       return await unauthorizedResponse("UPDATE", `crm_Leads:${id}`);
     }
 

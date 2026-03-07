@@ -162,15 +162,15 @@ export async function PUT(req: Request) {
   } = body;
 
   const teamInfo = await getCurrentUserTeamId();
-  if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) {
+  if (!teamInfo?.teamId) {
     return NextResponse.json({ message: "No active team found" }, { status: 400 });
   }
 
   // Ensure the user has the right to update this account by adding team_id check (or skip if global admin)
   const whereClause: any = { id: id };
-  if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
-  }
+  if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
 
   try {
     const existingAccount = await prismadb.myAccount.findFirst({

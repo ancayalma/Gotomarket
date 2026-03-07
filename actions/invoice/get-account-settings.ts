@@ -3,12 +3,12 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 export async function getAccountSettings() {
   const teamInfo = await getCurrentUserTeamId();
-  if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return null;
+  if (!teamInfo?.teamId) return null;
 
   const whereClause: any = {};
-  if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
-  }
+  if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
 
   const myAccount = await prismadb.myAccount.findFirst({
     where: whereClause,

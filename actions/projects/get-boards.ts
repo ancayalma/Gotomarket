@@ -8,12 +8,12 @@ export const getBoards = async (userId: string) => {
   if (!session?.user?.id) return [];
 
   const teamInfo = await getCurrentUserTeamId();
-  if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+  if (!teamInfo?.teamId) return [];
 
   const whereClause: any = {};
-  if (!teamInfo?.isGlobalAdmin) {
-    whereClause.team_id = teamInfo?.teamId;
-  }
+  if (teamInfo?.teamId) {
+            whereClause.team_id = teamInfo.teamId;
+        }
 
   const data = await (prismadb.boards as any).findMany({
     where: whereClause,

@@ -19,11 +19,14 @@ export async function GET() {
         const teamInfo = await getCurrentUserTeamId();
         const teamId = teamInfo?.teamId;
 
-        // Build query - if team, get team members; otherwise get all users (for super admin)
+        // Build query - strictly enforce team isolation (even for global admins unless impersonating)
         const whereClause: any = {};
 
-        if (teamId && !teamInfo?.isGlobalAdmin) {
+        if (teamId) {
             whereClause.team_id = teamId;
+        } else {
+            // If there's no team ID context, do not return any members
+            return NextResponse.json({ members: [] }, { status: 200 });
         }
 
         const members = await prismadb.users.findMany({

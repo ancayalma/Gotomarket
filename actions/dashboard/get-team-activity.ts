@@ -7,14 +7,14 @@ import { formatDistanceToNow } from "date-fns";
 export const getTeamActivity = async () => {
     try {
         const teamInfo = await getCurrentUserTeamId();
-        if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+        if (!teamInfo?.teamId) return [];
 
         // For now, SystemActivity might not be team-filtered in schema, 
         // but we can join with User to ensure it's team activity.
         const activities = await prismadb.systemActivity.findMany({
             where: {
                 user: {
-                    ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId })
+                    team_id: teamInfo?.teamId,
                 }
             },
             include: {

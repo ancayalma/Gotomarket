@@ -22,15 +22,10 @@ export const getDailyTasks = async () => {
         ]
     };
 
-    if (teamInfo.isGlobalAdmin) {
-        // No filter for global admin (or filter by nothing)
-    } else if (teamInfo.isAdmin) {
-        // Admins see all tasks in their team
-        whereClause.team_id = teamInfo.teamId;
-    } else {
+    
         // Members see their own tasks
         whereClause.user = teamInfo.userId;
-    }
+    
 
     const tasks = await prismadb.tasks.findMany({
         where: whereClause,

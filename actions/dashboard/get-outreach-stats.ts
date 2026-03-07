@@ -6,11 +6,11 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 export const getOutreachStats = async () => {
     try {
         const teamInfo = await getCurrentUserTeamId();
-        if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return null;
+        if (!teamInfo?.teamId) return null;
 
         const campaigns = await prismadb.crm_Outreach_Campaigns.findMany({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                team_id: teamInfo?.teamId,
                 status: "ACTIVE"
             },
             select: {

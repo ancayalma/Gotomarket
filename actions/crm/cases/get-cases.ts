@@ -15,12 +15,12 @@ export const getCases = async (filters?: {
     if (!session?.user?.id) return [];
 
     const teamInfo = await getCurrentUserTeamId();
-    if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+    if (!teamInfo?.teamId) return [];
 
     const where: any = {};
 
     // Team scoping
-    if (!teamInfo.isGlobalAdmin && teamInfo.teamId) {
+    if (teamInfo?.teamId) {
         where.team_id = teamInfo.teamId;
     }
 

@@ -7,11 +7,11 @@ import { formatDistanceToNow } from "date-fns";
 export const getRecentFiles = async () => {
     try {
         const teamInfo = await getCurrentUserTeamId();
-        if (!teamInfo?.teamId && !teamInfo?.isGlobalAdmin) return [];
+        if (!teamInfo?.teamId) return [];
 
         const files = await prismadb.documents.findMany({
             where: {
-                ...(teamInfo.isGlobalAdmin ? {} : { team_id: teamInfo.teamId }),
+                team_id: teamInfo?.teamId,
                 visibility: {
                     not: "HIDDEN"
                 }
