@@ -112,7 +112,7 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                 <div
                     className={cn(
                         "flex flex-col bg-muted/10 border-r border-border/50 py-4 gap-1 transition-colors duration-300 overflow-y-auto h-full w-full",
-                        isCollapsed ? "items-center" : ""
+                        isCollapsed ? "items-center" : "px-2"
                     )}
                 >
                     {navItems.map((item) => {
@@ -126,26 +126,47 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                                 key={item.label}
                                 onClick={() => router.push(item.href)}
                                 className={cn(
-                                    "flex items-center gap-3 text-sm font-medium transition-colors text-left relative rounded-lg",
+                                    "relative w-full flex items-center rounded-xl transition-colors duration-200 group text-sm font-medium",
+                                    isCollapsed ? "justify-center w-8 h-8 mx-auto" : "py-1.5 px-2",
                                     isActive
-                                        ? "bg-primary/10 text-primary border-r-2 border-primary"
-                                        : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
-                                    isCollapsed
-                                        ? "w-9 h-9 justify-center hover:ring-1 hover:ring-primary/50 mx-auto"
-                                        : "px-4 py-2 w-full"
+                                        ? "text-primary"
+                                        : cn("text-muted-foreground", !isCollapsed && "hover:text-foreground hover:bg-muted/30")
                                 )}
                                 title={isCollapsed ? item.label : undefined}
                             >
-                                <item.icon className="w-4 h-4 shrink-0" />
+                                {/* Active glow */}
+                                {isActive && (
+                                    <div className="absolute inset-0 rounded-xl bg-primary/10 border border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)] content-[''] z-0" />
+                                )}
+
+                                {/* Icon */}
+                                <div className={cn(
+                                    "relative z-10 flex items-center justify-center min-w-[24px]",
+                                    isCollapsed && "w-8 h-8 rounded-md transition-colors duration-200 hover:bg-muted/50 hover:ring-1 hover:ring-border group/icon"
+                                )}>
+                                    <item.icon className={cn(
+                                        "w-[18px] h-[18px] transition-colors duration-200",
+                                        isActive ? "text-primary" : (isCollapsed ? "group-hover/icon:text-primary text-muted-foreground" : "group-hover:text-primary")
+                                    )} />
+                                </div>
+
+                                {/* Text (Expanded) */}
                                 {!isCollapsed && (
-                                    <div className="flex items-center gap-2 truncate">
+                                    <div className="flex items-center gap-2 flex-1 z-10 ml-2.5">
                                         <span className={cn(
-                                            "truncate font-black uppercase tracking-tighter text-base",
+                                            "whitespace-nowrap uppercase tracking-normal leading-normal flex-1 text-left px-1",
                                             isActive ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-colors duration-300"
-                                        )}>
+                                        )}
+                                        style={{
+                                            fontFamily: 'var(--nav-item-font)',
+                                            fontSize: 'var(--nav-item-size)',
+                                            fontWeight: 'var(--nav-item-weight)',
+                                            fontStyle: 'var(--nav-item-style)', overflow: 'visible',
+                                            paddingRight: '1.2em'
+                                        }}>
                                             {item.label}
                                         </span>
-                                        {item.isPremium && <Lock className="w-3 h-3 text-amber-500/70" />}
+                                        {item.isPremium && <Lock className="w-3 h-3 text-amber-500/70 shrink-0" />}
                                     </div>
                                 )}
                             </button>
@@ -196,9 +217,16 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                             <item.icon className="w-4 h-4" />
 
                             <span className={cn(
-                                "text-[9px] uppercase tracking-wider font-semibold truncate max-w-full px-1 transition-colors duration-200",
+                                "uppercase tracking-wider truncate max-w-full px-1 transition-colors duration-200",
                                 isMobileExpanded ? "opacity-100 h-auto" : "opacity-0 h-0 overflow-hidden"
-                            )}>
+                            )}
+                            style={{
+                                fontFamily: 'var(--nav-item-font)',
+                                fontSize: 'calc(var(--nav-item-size) * 0.65)',
+                                fontWeight: 'var(--nav-item-weight)',
+                                fontStyle: 'var(--nav-item-style)', overflow: 'visible',
+                                paddingRight: '0.4em'
+                            }}>
                                 {item.label.split(' ')[0]}
                             </span>
 

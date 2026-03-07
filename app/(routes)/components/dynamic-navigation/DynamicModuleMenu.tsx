@@ -282,17 +282,7 @@ const DynamicModuleMenu = ({
                     initial={open ? "expanded" : "collapsed"}
                     animate={open ? "expanded" : "collapsed"}
                     variants={sidebarVariants}
-                    style={{
-                        // @ts-ignore
-                        "--nav-title-font": titleFont ? `'${titleFont}', sans-serif` : "inherit",
-                        "--nav-title-size": titleFontSize || "10px",
-                        "--nav-title-weight": titleFontWeight || "900",
-                        "--nav-title-style": titleFontStyle || "normal",
-                        "--nav-item-font": itemFont ? `'${itemFont}', sans-serif` : "inherit",
-                        "--nav-item-size": itemFontSize || "18px",
-                        "--nav-item-weight": itemFontWeight || "900",
-                        "--nav-item-style": itemFontStyle || "normal",
-                    }}
+                    // Kept for Framer Motion typings, removed inline CSS vars because they are now injected via global root logic in SideBar
                     className={cn(
                         "relative h-full flex flex-col border-r border-primary/20 shadow-xl group",
                         "bg-gradient-to-b from-background/95 via-background/90 to-background/95",

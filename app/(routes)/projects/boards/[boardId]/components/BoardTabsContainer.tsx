@@ -84,40 +84,61 @@ export default function BoardTabsContainer({ title, description, visibility, kan
                 {/* Sidebar content */}
                 <div
                     className={cn(
-                        "flex flex-col bg-muted/30 border-r border-border/50 py-6 gap-2 transition-colors duration-300 overflow-y-auto h-full w-full",
-                        isCollapsed ? "items-center" : ""
+                        "flex flex-col bg-muted/10 border-r border-border/50 py-4 gap-1 transition-colors duration-300 overflow-y-auto h-full w-full",
+                        isCollapsed ? "items-center" : "px-2"
                     )}
                 >
                     {navItems.map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => setView(item.id)}
-                            onMouseEnter={() => setHoveredLabel(item.label)}
-                            onMouseLeave={() => setHoveredLabel(null)}
-                            className={cn(
-                                "group flex items-center relative transition-colors duration-200 rounded-lg",
-                                isCollapsed
-                                    ? "w-8 h-8 justify-center mx-auto hover:bg-white/10 hover:ring-1 hover:ring-primary/50"
-                                    : "justify-start px-4 py-2 gap-3 w-full",
-                                selected === item.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                            )}
-                            title={isCollapsed ? undefined : item.label}
-                        >
-                            {/* Active Indicator */}
-                            {selected === item.id && (
+                            <button
+                                key={item.id}
+                                onClick={() => setView(item.id)}
+                                onMouseEnter={() => setHoveredLabel(item.label)}
+                                onMouseLeave={() => setHoveredLabel(null)}
+                                className={cn(
+                                    "relative w-full flex items-center rounded-xl transition-colors duration-200 group text-sm font-medium",
+                                    isCollapsed ? "justify-center w-8 h-8 mx-auto" : "py-1.5 px-2",
+                                    selected === item.id
+                                        ? "text-primary"
+                                        : cn("text-muted-foreground", !isCollapsed && "hover:text-foreground hover:bg-muted/30")
+                                )}
+                                title={isCollapsed ? item.label : undefined}
+                            >
+                                {/* Active glow */}
+                                {selected === item.id && (
+                                    <div className="absolute inset-0 rounded-xl bg-primary/10 border border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)] content-[''] z-0" />
+                                )}
+
+                                {/* Icon */}
                                 <div className={cn(
-                                    "absolute bg-primary rounded-r-full",
-                                    isCollapsed ? "left-0 top-1/2 -translate-y-1/2 w-0.5 h-8" : "left-0 top-0 bottom-0 w-1"
-                                )} />
-                            )}
+                                    "relative z-10 flex items-center justify-center min-w-[24px]",
+                                    isCollapsed && "w-8 h-8 rounded-md transition-colors duration-200 hover:bg-muted/50 hover:ring-1 hover:ring-border group/icon"
+                                )}>
+                                    <item.icon className={cn(
+                                        "w-[18px] h-[18px] transition-colors duration-200",
+                                        selected === item.id ? "text-primary" : (isCollapsed ? "group-hover/icon:text-primary text-muted-foreground" : "group-hover:text-primary")
+                                    )} />
+                                </div>
 
-                            <item.icon className="w-4 h-4 shrink-0 z-10" />
-
-                            {/* Text (Expanded) */}
-                            {!isCollapsed && (
-                                <span className="text-sm font-medium truncate">{item.label}</span>
-                            )}
-                        </button>
+                                {/* Text (Expanded) */}
+                                {!isCollapsed && (
+                                    <div className="flex items-center flex-1 z-10 ml-2.5">
+                                        <span className={cn(
+                                            "whitespace-nowrap uppercase tracking-normal leading-normal flex-1 text-left px-1",
+                                            selected === item.id ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-colors duration-300"
+                                        )}
+                                        style={{
+                                            fontFamily: 'var(--nav-item-font)',
+                                            fontSize: 'var(--nav-item-size)',
+                                            fontWeight: 'var(--nav-item-weight)',
+                                            fontStyle: 'var(--nav-item-style)',
+                                            paddingRight: '1.2em',
+                                            overflow: 'visible'
+                                        }}>
+                                            {item.label}
+                                        </span>
+                                    </div>
+                                )}
+                            </button>
                     ))}
 
                     {/* Dynamic Bottom Label (Collapsed Mode) */}
@@ -125,9 +146,15 @@ export default function BoardTabsContainer({ title, description, visibility, kan
                         <div className="absolute bottom-12 left-0 right-0 flex justify-center pointer-events-none">
                             <span
                                 className={cn(
-                                    "text-[10px] uppercase tracking-widest font-semibold whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-opacity duration-200 text-primary",
-                                    hoveredLabel ? "opacity-100" : "opacity-0"
+                                    "uppercase tracking-widest whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-opacity duration-200",
+                                    hoveredLabel ? "opacity-100 text-primary" : "opacity-0 text-primary/70"
                                 )}
+                                style={{
+                                    fontFamily: 'var(--nav-item-font)',
+                                    fontSize: 'calc(var(--nav-item-size) * 0.75)',
+                                    fontWeight: 'var(--nav-item-weight)',
+                                    fontStyle: 'var(--nav-item-style)', overflow: 'visible'
+                                }}
                             >
                                 {hoveredLabel}
                             </span>
@@ -176,9 +203,16 @@ export default function BoardTabsContainer({ title, description, visibility, kan
 
                             {/* Label */}
                             <span className={cn(
-                                "text-[9px] uppercase tracking-wider font-semibold truncate max-w-full px-1 transition-colors duration-200",
+                                "uppercase tracking-wider truncate max-w-full px-1 transition-colors duration-200",
                                 isMobileExpanded ? "opacity-100 h-auto" : "opacity-0 h-0 overflow-hidden"
-                            )}>
+                            )}
+                            style={{
+                                fontFamily: 'var(--nav-item-font)',
+                                fontSize: 'calc(var(--nav-item-size) * 0.65)',
+                                fontWeight: 'var(--nav-item-weight)',
+                                fontStyle: 'var(--nav-item-style)', overflow: 'visible',
+                                paddingRight: '0.4em'
+                            }}>
                                 {item.label}
                             </span>
 

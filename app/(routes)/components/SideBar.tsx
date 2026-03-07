@@ -113,25 +113,43 @@ const SideBar = async () => {
   };
   ensurePlatformMenu(activeNavStructure);
 
-  return <DynamicModuleMenu
-    navStructure={activeNavStructure}
-    titleFont={config?.titleFont}
-    titleFontSize={config?.titleFontSize}
-    titleFontWeight={config?.titleFontWeight}
-    titleFontStyle={config?.titleFontStyle}
-    itemFont={config?.itemFont}
-    itemFontSize={config?.itemFontSize}
-    itemFontWeight={config?.itemFontWeight}
-    itemFontStyle={config?.itemFontStyle}
-    modules={modules}
-    dict={dict}
-    features={features}
-    isPartnerAdmin={isPartnerAdmin}
-    teamRole={teamRole}
-    serviceBadge={caseStats?.openCases || 0}
-    isImpersonating={currentUserInfo.isImpersonating}
-    impersonatedTeamName={team?.name}
-    planSlug={planSlug}
-  />;
+  const styleTag = `
+    :root {
+      --nav-title-font: ${config?.titleFont ? `'${config?.titleFont}', sans-serif` : 'inherit'};
+      --nav-title-size: ${config?.titleFontSize || '10px'};
+      --nav-title-weight: ${config?.titleFontWeight || '900'};
+      --nav-title-style: ${config?.titleFontStyle || 'normal'};
+      --nav-item-font: ${config?.itemFont ? `'${config?.itemFont}', sans-serif` : 'inherit'};
+      --nav-item-size: ${config?.itemFontSize || '18px'};
+      --nav-item-weight: ${config?.itemFontWeight || '900'};
+      --nav-item-style: ${config?.itemFontStyle || 'normal'};
+    }
+  `;
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: styleTag }} />
+      <DynamicModuleMenu
+        navStructure={activeNavStructure}
+        titleFont={config?.titleFont}
+        titleFontSize={config?.titleFontSize}
+        titleFontWeight={config?.titleFontWeight}
+        titleFontStyle={config?.titleFontStyle}
+        itemFont={config?.itemFont}
+        itemFontSize={config?.itemFontSize}
+        itemFontWeight={config?.itemFontWeight}
+        itemFontStyle={config?.itemFontStyle}
+        modules={modules}
+        dict={dict}
+        features={features}
+        isPartnerAdmin={isPartnerAdmin}
+        teamRole={teamRole}
+        serviceBadge={caseStats?.openCases || 0}
+        isImpersonating={currentUserInfo.isImpersonating}
+        impersonatedTeamName={team?.name}
+        planSlug={planSlug}
+      />
+    </>
+  );
 };
 export default SideBar;

@@ -91,7 +91,7 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                 <div
                     className={cn(
                         "relative flex flex-col bg-muted/10 border-r border-border/50 py-4 gap-1 transition-colors duration-300 overflow-hidden h-full w-full",
-                        isCollapsed ? "items-center" : ""
+                        isCollapsed ? "items-center" : "px-2"
                     )}
                 >
                     <div className="flex-1 w-full flex flex-col gap-1 overflow-y-auto no-scrollbar">
@@ -132,7 +132,14 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                                     <item.icon className={cn("shrink-0 transition-transform duration-200", isCollapsed ? "w-5 h-5" : "w-4 h-4", isCollapsed && "group-hover/btn:scale-110")} />
 
                                     {!isCollapsed && (
-                                        <span className="truncate">{item.label}</span>
+                                        <span className="whitespace-nowrap uppercase tracking-normal leading-normal"
+                                            style={{
+                                                fontFamily: 'var(--nav-item-font)',
+                                                fontSize: 'var(--nav-item-size)',
+                                                fontWeight: 'var(--nav-item-weight)',
+                                                fontStyle: 'var(--nav-item-style)', overflow: 'visible'
+                                            }}
+                                        >{item.label}</span>
                                     )}
                                 </button>
                             );
@@ -144,10 +151,16 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                         <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none pb-4">
                             <span
                                 className={cn(
-                                    "text-[10px] uppercase tracking-[0.2em] font-bold whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-colors duration-300",
+                                    "uppercase tracking-normal whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-colors duration-300",
                                     currentLabel ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
                                     hoveredLabel ? "text-primary scale-105" : "text-primary/70"
                                 )}
+                                style={{
+                                    fontFamily: 'var(--nav-item-font)',
+                                    fontSize: 'calc(var(--nav-item-size) * 0.75)',
+                                    fontWeight: 'var(--nav-item-weight)',
+                                    fontStyle: 'var(--nav-item-style)', overflow: 'visible'
+                                }}
                             >
                                 {currentLabel === "Overview" ? "Admin Panel" : currentLabel}
                             </span>
@@ -185,9 +198,16 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                             >
                                 <item.icon className={cn("w-4 h-4", isActive ? "text-primary" : "text-primary/60")} />
                                 <span className={cn(
-                                    "text-[8px] uppercase tracking-wider font-bold truncate max-w-[64px]",
+                                    "uppercase tracking-wider truncate max-w-[64px]",
                                     isActive ? "text-primary" : "text-primary/50"
-                                )}>
+                                )}
+                                style={{
+                                    fontFamily: 'var(--nav-item-font)',
+                                    fontSize: 'calc(var(--nav-item-size) * 0.65)',
+                                    fontWeight: 'var(--nav-item-weight)',
+                                    fontStyle: 'var(--nav-item-style)', overflow: 'visible',
+                                    paddingRight: '0.4em'
+                                }}>
                                     {item.label.split(' ')[0]}
                                 </span>
                             </button>

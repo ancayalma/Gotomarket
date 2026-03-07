@@ -85,40 +85,61 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
           {/* Sidebar content */}
           <div
             className={cn(
-              "flex flex-col bg-muted/30 border-r border-border/50 py-6 gap-2 transition-colors duration-300 overflow-y-auto h-full w-full",
-              isCollapsed ? "items-center" : ""
+              "flex flex-col bg-muted/10 border-r border-border/50 py-4 gap-1 transition-colors duration-300 overflow-y-auto h-full w-full",
+              isCollapsed ? "items-center" : "px-2"
             )}
           >
             {leadsNavItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setTab(item.id)}
-                onMouseEnter={() => setHoveredLabel(item.label)}
-                onMouseLeave={() => setHoveredLabel(null)}
-                className={cn(
-                  "group flex items-center relative transition-colors duration-200 rounded-lg",
-                  isCollapsed
-                    ? "w-8 h-8 justify-center mx-auto hover:bg-primary/10 hover:ring-1 hover:ring-primary/50"
-                    : "justify-start px-4 py-2 gap-3 w-full",
-                  selected === item.id ? "text-primary" : "text-primary/70 hover:text-primary"
-                )}
-                title={isCollapsed ? undefined : item.label}
-              >
-                {/* Active Indicator */}
-                {selected === item.id && (
-                  <div className={cn(
-                    "absolute bg-primary rounded-r-full",
-                    isCollapsed ? "left-0 top-1/2 -translate-y-1/2 w-0.5 h-8" : "left-0 top-0 bottom-0 w-1"
-                  )} />
-                )}
+                            <button
+                                key={item.id}
+                                onClick={() => setTab(item.id)}
+                                onMouseEnter={() => setHoveredLabel(item.label)}
+                                onMouseLeave={() => setHoveredLabel(null)}
+                                className={cn(
+                                    "relative w-full flex items-center rounded-xl transition-colors duration-200 group text-sm font-medium",
+                                    isCollapsed ? "justify-center w-8 h-8 mx-auto" : "py-1.5 px-2",
+                                    selected === item.id
+                                        ? "text-primary"
+                                        : cn("text-muted-foreground", !isCollapsed && "hover:text-foreground hover:bg-muted/30")
+                                )}
+                                title={isCollapsed ? item.label : undefined}
+                            >
+                                {/* Active glow */}
+                                {selected === item.id && (
+                                    <div className="absolute inset-0 rounded-xl bg-primary/10 border border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)] content-[''] z-0" />
+                                )}
 
-                <item.icon className="w-4 h-4 shrink-0 z-10" />
+                                {/* Icon */}
+                                <div className={cn(
+                                    "relative z-10 flex items-center justify-center min-w-[24px]",
+                                    isCollapsed && "w-8 h-8 rounded-md transition-colors duration-200 hover:bg-muted/50 hover:ring-1 hover:ring-border group/icon"
+                                )}>
+                                    <item.icon className={cn(
+                                        "w-[18px] h-[18px] transition-colors duration-200",
+                                        selected === item.id ? "text-primary" : (isCollapsed ? "group-hover/icon:text-primary text-muted-foreground" : "group-hover:text-primary")
+                                    )} />
+                                </div>
 
-                {/* Text (Expanded) */}
-                {!isCollapsed && (
-                  <span className="text-sm font-medium truncate">{item.label}</span>
-                )}
-              </button>
+                                {/* Text (Expanded) */}
+                                {!isCollapsed && (
+                                    <div className="flex items-center flex-1 z-10 ml-2.5">
+                                        <span className={cn(
+                                            "whitespace-nowrap uppercase tracking-normal leading-normal flex-1 text-left px-1",
+                                            selected === item.id ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-colors duration-300"
+                                        )}
+                                        style={{
+                                            fontFamily: 'var(--nav-item-font)',
+                                            fontSize: 'var(--nav-item-size)',
+                                            fontWeight: 'var(--nav-item-weight)',
+                                            fontStyle: 'var(--nav-item-style)',
+                                            paddingRight: '1.2em',
+                                            overflow: 'visible'
+                                        }}>
+                                            {item.label}
+                                        </span>
+                                    </div>
+                                )}
+                            </button>
             ))}
 
             {/* Dynamic Bottom Label (Collapsed Mode) */}
@@ -126,7 +147,7 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
               <div className="absolute bottom-12 left-0 right-0 flex justify-center pointer-events-none pb-4">
                 <span
                   className={cn(
-                    "text-[10px] uppercase tracking-widest font-semibold whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-colors duration-300",
+                    "text-[10px] uppercase tracking-normal font-semibold whitespace-nowrap [writing-mode:vertical-rl] rotate-180 transition-colors duration-300",
                     hoveredLabel || leadsNavItems.find(i => i.id === selected)?.label ? "opacity-100" : "opacity-0",
                     hoveredLabel ? "text-primary scale-105" : "text-primary/70"
                   )}

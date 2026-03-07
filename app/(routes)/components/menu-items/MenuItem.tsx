@@ -55,9 +55,9 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                             fontFamily: 'var(--nav-item-font)',
                             fontSize: 'calc(var(--nav-item-size) * 0.5)',
                             fontWeight: 'var(--nav-item-weight)',
-                            fontStyle: 'var(--nav-item-style)',
+                            fontStyle: 'var(--nav-item-style)', overflow: 'visible',
                             lineHeight: '1.2',
-                            paddingRight: '0.2em'
+                            paddingRight: '0.4em'
                         }}
                     >
                         {microLabel}
@@ -111,15 +111,15 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                         }}
                         transition={{ duration: 0.2 }}
                         className={cn(
-                            "ml-2.5 whitespace-nowrap z-10 flex items-center gap-2 uppercase tracking-tight py-0 px-2 leading-normal",
+                            "ml-2.5 whitespace-nowrap z-10 flex items-center gap-2 uppercase tracking-normal py-0 px-2 leading-normal",
                             isActive ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-colors duration-300"
                         )}
                         style={{
                             fontFamily: 'var(--nav-item-font)',
                             fontSize: 'var(--nav-item-size)',
                             fontWeight: 'var(--nav-item-weight)',
-                            fontStyle: 'var(--nav-item-style)',
-                            paddingRight: '0.5em'
+                            fontStyle: 'var(--nav-item-style)', overflow: 'visible',
+                            paddingRight: '1.2em'
                         }}
                     >
                         {title}
@@ -142,8 +142,8 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
                                 fontFamily: 'var(--nav-item-font)',
                                 fontSize: 'calc(var(--nav-item-size) * 0.5)',
                                 fontWeight: 'var(--nav-item-weight)',
-                                fontStyle: 'var(--nav-item-style)',
-                                paddingRight: '0.2em'
+                                fontStyle: 'var(--nav-item-style)', overflow: 'visible',
+                                paddingRight: '0.4em'
                             }}
                         >
                             {isLocked ? <Lock className="w-2.5 h-2.5" /> : microLabel}
