@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Bot, FileText, Settings, Sparkles, Wand2, Zap, Globe, Code, Loader2, Sliders, FolderKanban } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -39,8 +39,18 @@ export default function LeadGenWizardPage() {
   const [aiWriterOpen, setAiWriterOpen] = useState(false);
   const [currentAiField, setCurrentAiField] = useState<keyof WizardState | null>(null);
 
-  // Fetch campaigns (projects) for selector
-  const { data: projectsData } = useSWR<{ projects: { id: string; title: string }[] }>("/api/projects", fetcher);
+  // Fetch campaigns for selector
+  const { data: campaignsData } = useSWR<{ id: string; name: string; status: string }[]>("/api/campaigns", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+  });
+  const activeCampaigns = (campaignsData || []).filter(c => c.status !== "ARCHIVED" && c.status !== "COMPLETED");
+
+  // Fetch brand identity for ICP pre-fill
+  const { data: brandData } = useSWR("/api/admin/brand", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
 
   // Common State (Top Level)
   const [state, setState] = useState<WizardState>({
@@ -69,6 +79,27 @@ export default function LeadGenWizardPage() {
       setState((prev) => ({ ...prev, [name]: value }));
     }
   };
+
+  // Pre-fill ICP fields from brand identity (AI-first: minimize typing)
+  useEffect(() => {
+    if (!brandData) return;
+    setState((prev) => {
+      const updates: Partial<WizardState> = {};
+      // Pre-fill industries from brand's industry or ICP
+      if (!prev.industries && brandData.industry) {
+        updates.industries = brandData.industry;
+      }
+      // Pre-fill geos from brand's location
+      if (!prev.geos && brandData.location) {
+        updates.geos = brandData.location;
+      }
+      // Pre-fill AI prompt with brand context for AI-only mode
+      if (!prev.aiPrompt && brandData.ideal_customer_profile) {
+        updates.aiPrompt = brandData.ideal_customer_profile;
+      }
+      return Object.keys(updates).length > 0 ? { ...prev, ...updates } : prev;
+    });
+  }, [brandData]);
 
   const handleWriteAi = (field: keyof WizardState) => {
     setCurrentAiField(field);
@@ -213,7 +244,7 @@ export default function LeadGenWizardPage() {
                 maxCompanies: state.maxCompanies,
                 maxContactsPerCompany: state.maxContactsPerCompany,
               },
-              projectId: state.campaignId || undefined,
+              campaignId: state.campaignId || undefined,
             };
 
             const res = await fetch("/api/crm/leads/autogen", {
@@ -262,7 +293,7 @@ export default function LeadGenWizardPage() {
           maxContactsPerCompany: state.maxContactsPerCompany,
         },
 
-        projectId: state.campaignId || undefined,
+        campaignId: state.campaignId || undefined,
         existingPoolId: undefined, // Explicitly undefined as we creates new lists per run
       };
 
@@ -323,7 +354,7 @@ export default function LeadGenWizardPage() {
           <FolderKanban className="w-3 h-3" /> Assign to Campaign
         </label>
         <Combobox
-          options={(projectsData?.projects || []).map(p => ({ label: p.title, value: p.id }))}
+          options={activeCampaigns.map(c => ({ label: c.name, value: c.id }))}
           value={state.campaignId}
           onChange={(value) => setState(prev => ({ ...prev, campaignId: value }))}
           placeholder="Search campaigns..."

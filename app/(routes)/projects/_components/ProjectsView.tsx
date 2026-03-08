@@ -22,7 +22,7 @@ import { ProjectsGrid } from "../components/ProjectsGrid";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ProjectsViewProps {
-    view?: "overview" | "campaigns";
+    view?: "overview";
 }
 
 const ProjectsView = async ({ view = "overview" }: ProjectsViewProps) => {
@@ -42,14 +42,6 @@ const ProjectsView = async ({ view = "overview" }: ProjectsViewProps) => {
 
     const stats = await getProjectStats();
 
-    const isCampaignsView = view === "campaigns";
-    const displayData = boards; // Show filtered data
-    const title = isCampaignsView ? "Strategic Campaigns" : "Delivery Boards";
-    const description = isCampaignsView
-        ? "Manage your strategic outreach, branding, and go-to-market initiatives."
-        : "Manage your internal initiatives and service delivery projects.";
-    const entityLabel = isCampaignsView ? "Campaign" : "Project";
-
     const cards: ProjectCardData[] = [
         {
             title: "New Project",
@@ -66,57 +58,6 @@ const ProjectsView = async ({ view = "overview" }: ProjectsViewProps) => {
             iconColor: "text-orange-400"
         }
     ];
-
-    if (isCampaignsView) {
-        return (
-            <div className="space-y-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent tracking-tight uppercase leading-[1.2] py-2">
-                            {title}
-                        </h2>
-                        <p className="text-muted-foreground/80 mt-1 text-base font-medium tracking-wide">
-                            {description}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <NewCampaignDialog
-                            entityName={entityLabel}
-                            customTrigger={
-                                <Button className="gap-2 bg-primary shadow-lg shadow-primary/20">
-                                    <FolderPlus className="w-4 h-4" />
-                                    New {entityLabel}
-                                </Button>
-                            }
-                        />
-                    </div>
-                </div>
-
-                <Tabs defaultValue="grid" className="w-full">
-                    <div className="flex items-center justify-between mb-6">
-                        <TabsList className="bg-background/50 border border-primary/10 rounded-xl p-1">
-                            <TabsTrigger value="grid" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors">
-                                <LayoutGrid className="w-4 h-4" />
-                                Grid
-                            </TabsTrigger>
-                            <TabsTrigger value="list" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors">
-                                <ListIcon className="w-4 h-4" />
-                                List
-                            </TabsTrigger>
-                        </TabsList>
-                    </div>
-                    <TabsContent value="grid" className="mt-0 outline-none">
-                        <ProjectsGrid data={displayData} baseUrl="/campaigns/c" />
-                    </TabsContent>
-                    <TabsContent value="list" className="mt-0 outline-none">
-                        <div className="rounded-3xl border border-primary/10 bg-background/50 backdrop-blur-sm overflow-hidden">
-                            <ProjectsDataTable data={displayData} columns={columns} stats={stats} entityName="Campaigns" baseUrl="/campaigns/c" />
-                        </div>
-                    </TabsContent>
-                </Tabs>
-            </div>
-        );
-    }
 
     return (
         <>

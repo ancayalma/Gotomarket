@@ -46,21 +46,7 @@ function systemInstructionSms() {
     ].join(" ");
 }
 
-function buildSmsPrompt(params: {
-    basePrompt: string | null | undefined;
-    contact: { name?: string | null; company?: string | null; jobTitle?: string | null; email?: string | null; phone?: string | null };
-    meetingLink?: string | null;
-    research?: string | null;
-}) {
-    const { basePrompt, contact, meetingLink, research } = params;
-    const fallbackBase = `You are contacting a potential investor/customer about PortalPay. Compose a short SMS (160-320 chars) with a crisp value prop (crypto checkout, lower fees, instant settlement), personalize with their name/company if available, and end with a CTA (reply or link).`;
-    const promptBase = (basePrompt && basePrompt.trim().length ? basePrompt : fallbackBase).trim();
-
-    const contactBlock = `\nContact:\n- Name: ${contact?.name || ""}\n- Company: ${contact?.company || ""}\n- Title: ${contact?.jobTitle || ""}\n- Email: ${contact?.email || ""}\n- Phone: ${contact?.phone || ""}`;
-    const meetingBlock = `\nMeeting/CTA link (optional): ${meetingLink || "N/A"}`;
-    const researchBlock = `\nCompany Research (optional): ${research && research.trim().length ? research : "N/A"}`;
-    return [promptBase, contactBlock, researchBlock, meetingBlock].join("\n\n");
-}
+import { buildOutreachPrompt } from "@/lib/outreach/prompt-builder";
 
 function sanitizeSmsBody(body: string): string {
     const plain = body.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
@@ -135,9 +121,17 @@ export async function POST(
                 id: true,
                 meeting_link: true,
                 outreach_prompt_default: true,
+                team_id: true,
             } as const,
         });
         if (!user) return new NextResponse("User not found", { status: 404 });
+
+        let brandIdentity = null;
+        if (user.team_id) {
+            brandIdentity = await prismadb.teamBrandIdentity.findUnique({
+                where: { team_id: user.team_id }
+            });
+        }
 
         // Fetch lead with assigned project info (referenced in prompt via meeting link and context)
         const lead = await prismadb.crm_Leads.findFirst({
@@ -157,7 +151,7 @@ export async function POST(
         const contactName = [lead.firstName, lead.lastName].filter(Boolean).join(" ").trim();
         const basePrompt = body.promptOverride?.trim() || user.outreach_prompt_default || null;
 
-        const userPrompt = buildSmsPrompt({
+        const userPrompt = buildOutreachPrompt({
             basePrompt,
             contact: {
                 name: contactName || undefined,
@@ -167,7 +161,9 @@ export async function POST(
                 phone: lead.phone || undefined,
             },
             meetingLink,
-            research: researchSummary,
+            companyResearch: researchSummary,
+            channel: "SMS",
+            brandIdentity
         });
 
         // Append assigned project briefing if present to strengthen personalization
@@ -184,7 +180,7 @@ Project Briefing:
         const { model, provider, modelId, teamId } = await getAiSdkModel(session.user.id, "sms");
         if (!model) return new NextResponse("AI model not configured", { status: 500 });
 
-        let smsBody = "Hi there — quick intro to PortalPay: crypto checkout, instant settlement, lower fees. Can I send a link for details?";
+        let smsBody = "Hi there — quick intro to our company. Can I send a link for details?";
         try {
             const { object, usage } = await generateObject({
                 model,

@@ -28,13 +28,6 @@ export default function LeadsManagerTabs({ leads: initialLeads, crmData, default
 
   const { hasAccess, isSuperAdmin, permissions } = usePermission();
 
-  console.log('[DEBUG LEADS TABS]', {
-    isSuperAdmin,
-    permissionsLength: permissions?.length,
-    hasLeadsAccess: hasAccess('leads'),
-    allPermissions: permissions
-  });
-
   const { data: projectResponse } = useSWR("/api/projects", fetcher);
 
   const leads = leadsData || [];

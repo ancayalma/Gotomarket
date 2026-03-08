@@ -137,6 +137,14 @@ export async function POST(req: Request) {
             meetingLink,
             includeResearch,
             status,
+            // Campaign-specific fields
+            product_focus,       // Which product line this campaign targets (e.g. "BasaltSURGE")
+            campaign_brief,      // Strategic brief / mission for this campaign
+            messaging_tone,      // formal, casual, technical, executive
+            target_industries,   // ICP industries
+            target_geos,         // ICP geographies
+            target_titles,       // ICP job titles
+            key_value_props,     // Value propositions for this campaign
         } = body;
 
         // Resolve name from either field
@@ -149,31 +157,13 @@ export async function POST(req: Request) {
             );
         }
 
-        // ── Simple campaign creation (no leads — creates a crm_campaigns record) ──
-        if (!leadIds || leadIds.length === 0) {
-            const campaign = await prisma.crm_campaigns.create({
-                data: {
-                    v: 0,
-                    name: campaignName,
-                    description: description || null,
-                    status: status || "Active",
-                },
-            });
-
-            return NextResponse.json({
-                id: campaign.id,
-                name: campaign.name,
-                status: campaign.status,
-                message: "Campaign created successfully",
-            });
-        }
-
-        // Get user's team
+        // Get user's team — always needed for tenant scoping
         const user = await prisma.users.findUnique({
             where: { id: session.user.id },
-            select: { team_id: true },
+            select: { team_id: true, name: true },
         });
 
+        // Always fetch brand identity for the team
         let defaultBranding: any = null;
         if (user?.team_id) {
             const teamBrand = await prisma.teamBrandIdentity.findUnique({
@@ -181,17 +171,28 @@ export async function POST(req: Request) {
             });
             if (teamBrand) {
                 const { id, team_id, setup_completed, createdAt, updatedAt, ...brandProps } = teamBrand;
-                defaultBranding = brandProps;
+                defaultBranding = {
+                    ...brandProps,
+                    // If a specific product is selected, include it in the branding snapshot
+                    ...(product_focus ? { product_focus } : {}),
+                    // Campaign-specific ICP overrides (if provided, override brand defaults)
+                    ...(campaign_brief ? { campaign_brief } : {}),
+                    ...(messaging_tone ? { messaging_tone } : {}),
+                    ...(target_industries?.length ? { target_industries } : {}),
+                    ...(target_geos?.length ? { target_geos } : {}),
+                    ...(target_titles?.length ? { target_titles } : {}),
+                    ...(key_value_props?.length ? { key_value_props } : {}),
+                };
             }
         }
 
         // Use provided status or default to DRAFT
         const campaignStatus = status || "DRAFT";
 
-        // Create the campaign
+        // Always create crm_Outreach_Campaigns — the proper campaign model
         const campaign = await prisma.crm_Outreach_Campaigns.create({
             data: {
-                name,
+                name: campaignName,
                 description: description || null,
                 status: campaignStatus,
                 user: session.user.id,
@@ -205,7 +206,7 @@ export async function POST(req: Request) {
                 meeting_link: meetingLink || null,
                 campaign_branding: defaultBranding || null,
                 channels: channels || ["EMAIL"],
-                total_leads: leadIds.length,
+                total_leads: leadIds?.length || 0,
                 emails_sent: 0,
                 emails_opened: 0,
                 sms_sent: 0,
@@ -215,49 +216,51 @@ export async function POST(req: Request) {
             },
         });
 
-        // Create outreach items for each lead and channel
-        const outreachItems = [];
-        for (const leadId of leadIds) {
-            for (const channel of (channels || ["EMAIL"])) {
-                outreachItems.push({
-                    campaign: campaign.id,
-                    lead: leadId,
-                    channel,
-                    status: OutreachItemStatus.PENDING,
-                    retry_count: 0,
-                });
+        // If leads were provided, create outreach items
+        if (leadIds && leadIds.length > 0) {
+            const outreachItems = [];
+            for (const leadId of leadIds) {
+                for (const channel of (channels || ["EMAIL"])) {
+                    outreachItems.push({
+                        campaign: campaign.id,
+                        lead: leadId,
+                        channel,
+                        status: OutreachItemStatus.PENDING,
+                        retry_count: 0,
+                    });
+                }
             }
+
+            // Batch create outreach items
+            await prisma.crm_Outreach_Items.createMany({
+                data: outreachItems,
+            });
+
+            // Log activity
+            await prisma.crm_Lead_Activities.createMany({
+                data: leadIds.map((leadId: string) => ({
+                    lead: leadId,
+                    user: session.user.id,
+                    type: "CAMPAIGN_CREATED",
+                    metadata: {
+                        campaignId: campaign.id,
+                        campaignName,
+                    },
+                })),
+            });
         }
-
-        // Batch create outreach items
-        await prisma.crm_Outreach_Items.createMany({
-            data: outreachItems,
-        });
-
-        // Log activity
-        await prisma.crm_Lead_Activities.createMany({
-            data: leadIds.map((leadId: string) => ({
-                lead: leadId,
-                user: session.user.id,
-                type: "CAMPAIGN_CREATED",
-                metadata: {
-                    campaignId: campaign.id,
-                    campaignName: name,
-                },
-            })),
-        });
 
         return NextResponse.json({
             id: campaign.id,
             name: campaign.name,
             status: campaign.status,
             totalLeads: campaign.total_leads,
-            message: "Sequence created successfully",
+            message: "Campaign created successfully",
         });
     } catch (error: any) {
         console.error("Error creating campaign:", error);
         return NextResponse.json(
-            { message: error.message || "Failed to create sequence" },
+            { message: error.message || "Failed to create campaign" },
             { status: 500 }
         );
     }

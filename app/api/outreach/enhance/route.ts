@@ -67,7 +67,7 @@ Return ONLY the improved briefing text, no explanations.`;
 
             case "prompt":
                 // Generate a unique, powerful prompt based on the current populated template
-                // IMPORTANT: Keep populated values like "Krishna Patel" - only use placeholders for LEAD data
+                // IMPORTANT: Keep populated user values - only use placeholders for LEAD data
                 systemPrompt = `You are an expert prompt engineer specializing in email outreach automation. Your task is to IMPROVE and ENHANCE the current prompt template.
 
 CRITICAL RULES:
@@ -81,12 +81,12 @@ CRITICAL RULES:
 6. Add creative personalization requirements
 
 Example of what TO DO:
-- If the template says "You are Krishna Patel", keep it as "You are Krishna Patel"
+- If the template says "You are John Smith", keep it as "You are John Smith"
 - If it has product briefing text, keep that actual text
 
 Example of what NOT TO DO:
-- DO NOT replace "Krishna Patel" with "{USER_NAME}"
-- DO NOT replace "The Utility Company" with "{COMPANY_NAME}"
+- DO NOT replace the user's actual name with "{USER_NAME}"
+- DO NOT replace the user's actual company with "{COMPANY_NAME}"
 - DO NOT replace the actual briefing content with "{PROJECT_BRIEFING}"
 
 Return ONLY the improved prompt template text, ready to use.`;

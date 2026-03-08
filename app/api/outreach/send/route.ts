@@ -43,38 +43,12 @@ type RequestBody = {
   preGeneratedHtml?: string;
 };
 
-const DEFAULT_TEST_EMAIL = "founders@theutilitycompany.co";
 
-// Default PortalPay resource configuration if user has none
+// Default generic resource configuration if user has none
 const DEFAULT_RESOURCES: ResourceLink[] = [
-  {
-    id: "surge",
-    label: "Explore Surge",
-    href: "https://surge.basalthq.com",
-    type: "primary",
-    enabled: true,
-  },
-  {
-    id: "calendar",
-    label: "Schedule a Call",
-    href: "https://calendar.app.google/EJ4WsqeS2JSXt6ZcA",
-    type: "primary",
-    enabled: true,
-  },
-  {
-    id: "investor_portal",
-    label: "View Investor Portal",
-    href: "https://stack.angellist.com/s/lp1srl5cnf",
-    type: "secondary",
-    enabled: true,
-  },
-  {
-    id: "data_room",
-    label: "Access Data Room",
-    href: "https://stack.angellist.com/s/x8g9yjgpbw",
-    type: "secondary",
-    enabled: true,
-  },
+  { id: "website", label: "Visit Website", href: "#", type: "primary", enabled: true },
+  { id: "calendar", label: "Schedule a Call", href: "#", type: "primary", enabled: true },
+  { id: "linkedin", label: "Follow on LinkedIn", href: "#", type: "secondary", enabled: true }
 ];
 
 // Lightweight HTML stripper for plaintext fallback
@@ -92,72 +66,7 @@ function systemInstruction() {
   ].join(" ");
 }
 
-// Build the per-lead prompt from a per-user default (if present) or fallback
-function buildUserPrompt(params: {
-  basePrompt: string | null | undefined;
-  contact: {
-    name?: string | null;
-    company?: string | null;
-    jobTitle?: string | null;
-    email?: string | null;
-  };
-  companyResearch?: string | null;
-  meetingLink?: string | null;
-}) {
-  const { basePrompt, contact, companyResearch, meetingLink } = params;
-
-  // Base prompt fallback (shortened/curated from provided Python script)
-  const fallbackBase = `
-You are writing a personalized VC outreach email about Surge. Use any available company research to tailor the message.
-
-Surge Briefing:
-- Crypto-native payment gateway enabling physical merchants to accept stablecoins and crypto tokens at checkout (QR scan) with on-chain settlement.
-- Innovations:
-  • Multi-Token: USDC, USDT, cbBTC, cbXRP, ETH on Base
-  • Cost: 2–3% savings vs card rails
-  • Instant Settlement
-  • White-Label Platform
-  • Smart Treasury (token mix/rotation)
-  • Programmable Revenue (on-chain splits)
-  • Real-Time Intelligence (USD volume/analytics)
-  • Global by Default (borderless stablecoin settlement)
-- Opportunity: Horizontal platform play; $100B+ POS market.
-- Tech stack: Thirdweb SDK, Base network, Next.js, Azure Cosmos DB.
-- Traction: Live merchants, white-label ready, multi-chain roadmap.
-- Founder/meetings: Available for remote investor meetings; prefer in-person in Albuquerque/Santa Fe only.
-
-Requirements:
-- Output JSON ONLY with keys "subject" and "body".
-- "body" MUST be plain text (no HTML), 250–300 words.
-- Style: sophisticated, narrative, insight-driven; open with a hook referencing their thesis/portfolio if possible (use company research if present).
-- Personalization: use research when available; connect Surge to their focus.
-- Use first-person voice ("I"), no third person references to the founder.
-- Avoid headings like "Founder note:" or similar.
-- End with a confident CTA referencing remote availability.
-`.trim();
-
-  const promptBase = (basePrompt && basePrompt.trim().length > 0 ? basePrompt : fallbackBase).trim();
-
-  const contactBlock = `
-Contact:
-- Name: ${contact?.name || ""}
-- Company/Firm: ${contact?.company || ""}
-- Title: ${contact?.jobTitle || ""}
-- Email: ${contact?.email || ""}
-`.trim();
-
-  const companyBlock = `
-Company Research (optional):
-${companyResearch && companyResearch.trim().length > 0 ? companyResearch : "N/A"}
-`.trim();
-
-  const meetingBlock = `
-Meeting preference/link (for CTA): ${meetingLink || "N/A"}
-`.trim();
-
-  // The final USER message content
-  return [promptBase, contactBlock, companyBlock, meetingBlock].join("\n\n");
-}
+import { buildOutreachPrompt } from "@/lib/outreach/prompt-builder";
 
 export async function POST(req: Request) {
   try {
@@ -191,6 +100,14 @@ export async function POST(req: Request) {
     }
 
     const isAdmin = !!(user.is_admin || user.is_account_admin);
+
+    // Fetch Team Brand Identity
+    let brandIdentity = null;
+    if (user.team_id) {
+        brandIdentity = await prismadb.teamBrandIdentity.findUnique({
+             where: { team_id: user.team_id }
+        });
+    }
 
     // Fetch leads, scoped by user if not admin
     const leads = await prismadb.crm_Leads.findMany({
@@ -270,7 +187,7 @@ export async function POST(req: Request) {
     for (const lead of leads) {
       // Basic validation
       const toEmail = testMode
-        ? (testEmailOverride || process.env.TEST_EMAIL || DEFAULT_TEST_EMAIL)
+        ? (testEmailOverride || process.env.TEST_EMAIL || session.user.email || "")
         : (lead.email || "");
       if (!toEmail) {
         results.push({ leadId: lead.id, status: "skipped", reason: "No lead email" });
@@ -294,7 +211,7 @@ export async function POST(req: Request) {
       const contactName = [lead.firstName, lead.lastName].filter(Boolean).join(" ").trim();
       const basePrompt = promptOverride || user.outreach_prompt_default || null;
 
-      const userPrompt = buildUserPrompt({
+      const userPrompt = buildOutreachPrompt({
         basePrompt,
         contact: {
           name: contactName || undefined,
@@ -305,11 +222,13 @@ export async function POST(req: Request) {
         // For now, no enrichment; a later pass can add real company research
         companyResearch: null,
         meetingLink,
+        channel: "EMAIL",
+        brandIdentity
       });
 
       // Use pre-generated content if provided (skips AI call - faster for test sends)
       let subject = preGeneratedSubject || "Exploring Partnership Opportunities";
-      let bodyText = preGeneratedBody || "Hello,\n\nI'd like to explore how Surge could align with your investment thesis.\n\nThanks.";
+      let bodyText = preGeneratedBody || "Hello,\n\nI'd like to explore how we could align with your investment thesis.\n\nThanks.";
 
       // Only call AI if no pre-generated content provided
       if (!preGeneratedSubject || !preGeneratedBody) {

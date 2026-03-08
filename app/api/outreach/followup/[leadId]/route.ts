@@ -27,13 +27,11 @@ type RequestBody = {
   test?: boolean;
 };
 
-const DEFAULT_TEST_EMAIL = "founders@theutilitycompany.co";
 
 const DEFAULT_RESOURCES: ResourceLink[] = [
-  { id: "portalpay", label: "Explore PortalPay", href: "https://surge.basalthq.com", type: "primary", enabled: true },
-  { id: "calendar", label: "Schedule a Call", href: "https://calendar.app.google/EJ4WsqeS2JSXt6ZcA", type: "primary", enabled: true },
-  { id: "investor_portal", label: "View Investor Portal", href: "https://stack.angellist.com/s/lp1srl5cnf", type: "secondary", enabled: true },
-  { id: "data_room", label: "Access Data Room", href: "https://stack.angellist.com/s/x8g9yjgpbw", type: "secondary", enabled: true },
+  { id: "website", label: "Visit Website", href: "#", type: "primary", enabled: true },
+  { id: "calendar", label: "Schedule a Call", href: "#", type: "primary", enabled: true },
+  { id: "linkedin", label: "Follow on LinkedIn", href: "#", type: "secondary", enabled: true }
 ];
 
 function stripHtml(html: string) {
@@ -50,35 +48,7 @@ function systemInstructionFollowup() {
   ].join(" ");
 }
 
-function buildFollowupPrompt(params: {
-  basePrompt: string | null | undefined;
-  contact: { name?: string | null; company?: string | null; jobTitle?: string | null; email?: string | null };
-  lastSentAt?: Date | null;
-  meetingLink?: string | null;
-}) {
-  const { basePrompt, contact, lastSentAt, meetingLink } = params;
-
-  const fallbackBase = `
-Write a concise follow-up email about PortalPay. Assume we sent an initial note recently.
-Keep tone respectful and value-focused. Offer a meeting with a clear CTA.
-Avoid headings; ensure plain text JSON output with keys "subject" and "body".
-`.trim();
-
-  const promptBase = (basePrompt && basePrompt.trim().length > 0 ? basePrompt : fallbackBase).trim();
-
-  const lastSent = lastSentAt ? new Date(lastSentAt).toLocaleDateString() : "recently";
-
-  return [
-    promptBase,
-    `Contact:
-- Name: ${contact?.name || ""}
-- Company/Firm: ${contact?.company || ""}
-- Title: ${contact?.jobTitle || ""}
-- Email: ${contact?.email || ""}`,
-    `We previously reached out: ${lastSent}`,
-    `Meeting preference/link (for CTA): ${meetingLink || "N/A"}`,
-  ].join("\n\n");
-}
+import { buildOutreachPrompt } from "@/lib/outreach/prompt-builder";
 
 type Params = { params: Promise<{ leadId: string }> };
 export async function POST(req: Request, { params }: Params) {
@@ -106,9 +76,17 @@ export async function POST(req: Request, { params }: Params) {
         signature_html: true,
         resource_links: true,
         outreach_prompt_default: true,
+        team_id: true,
       } as const,
     });
     if (!user) return new NextResponse("User not found", { status: 404 });
+
+    let brandIdentity = null;
+    if (user.team_id) {
+        brandIdentity = await prismadb.teamBrandIdentity.findUnique({
+            where: { team_id: user.team_id }
+        });
+    }
 
     // Load lead and check eligibility
     const lead = await prismadb.crm_Leads.findUnique({
@@ -135,7 +113,7 @@ export async function POST(req: Request, { params }: Params) {
       return new NextResponse("Lead not eligible for follow-up", { status: 400 });
     }
 
-    const toEmail = body.test ? (process.env.TEST_EMAIL || DEFAULT_TEST_EMAIL) : (lead.email || "");
+    const toEmail = body.test ? (process.env.TEST_EMAIL || session.user.email || "") : (lead.email || "");
     if (!toEmail) return new NextResponse("Lead has no email", { status: 400 });
 
     // Unsubscribe check (best effort)
@@ -176,16 +154,21 @@ export async function POST(req: Request, { params }: Params) {
 
     const contactName = [lead.firstName, lead.lastName].filter(Boolean).join(" ").trim();
     const promptOverride = body.promptOverride?.trim();
-    const userPrompt = buildFollowupPrompt({
+    const basePrompt = buildOutreachPrompt({
       basePrompt: promptOverride || user.outreach_prompt_default || null,
       contact: { name: contactName || undefined, company: lead.company || undefined, jobTitle: lead.jobTitle || undefined, email: lead.email || undefined },
-      lastSentAt: lead.outreach_sent_at || null,
       meetingLink,
+      companyResearch: null,
+      channel: "FOLLOWUP",
+      brandIdentity
     });
 
+    const lastSent = lead.outreach_sent_at ? new Date(lead.outreach_sent_at).toLocaleDateString() : "recently";
+    const userPrompt = basePrompt + `\n\nWe previously reached out: ${lastSent}`;
+
     // Generate follow-up content
-    let subject = "Quick follow-up on PortalPay";
-    let bodyText = "Hello,\n\nJust following up on my previous note about PortalPay...\n\nThanks.";
+    let subject = "Quick follow-up";
+    let bodyText = "Hello,\n\nJust following up on my previous note...\n\nThanks.";
     try {
       const { object } = await generateObject({
         model,

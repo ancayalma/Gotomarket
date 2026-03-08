@@ -27,6 +27,26 @@ export async function GET(req: Request, props: { params: Promise<{ leadId: strin
         where: { id: m.pool },
         select: { icpConfig: true },
       });
+
+      // Check campaign branding first (preferred path)
+      const campaignId = (pool?.icpConfig as any)?.assignedCampaignId as string | undefined;
+      if (campaignId) {
+        const campaign = await (prismadbCrm as any).crm_Outreach_Campaigns.findUnique({
+          where: { id: campaignId },
+          select: { id: true, campaign_branding: true },
+        });
+        if (campaign?.campaign_branding) {
+          const branding = campaign.campaign_branding as any;
+          return NextResponse.json({
+            campaignId: campaign.id,
+            projectId: null,
+            brand_logo_url: branding.logo_url || null,
+            brand_primary_color: branding.primary_brand_color || null,
+          }, { status: 200 });
+        }
+      }
+
+      // Fall back to project board branding (legacy path)
       const projectId = (pool?.icpConfig as any)?.assignedProjectId as string | undefined;
       if (projectId) {
         const board = await (prismadb as any).boards.findUnique({
@@ -35,6 +55,7 @@ export async function GET(req: Request, props: { params: Promise<{ leadId: strin
         });
         if (board) {
           return NextResponse.json({
+            campaignId: null,
             projectId: board.id,
             brand_logo_url: board.brand_logo_url || null,
             brand_primary_color: board.brand_primary_color || null,
@@ -44,7 +65,7 @@ export async function GET(req: Request, props: { params: Promise<{ leadId: strin
     }
 
     // No branding found
-    return NextResponse.json({ projectId: null, brand_logo_url: null, brand_primary_color: null }, { status: 200 });
+    return NextResponse.json({ campaignId: null, projectId: null, brand_logo_url: null, brand_primary_color: null }, { status: 200 });
   } catch (e) {
     systemLogger.error("[LEAD_BRAND_GET]", e);
     return new NextResponse("Internal Error", { status: 500 });

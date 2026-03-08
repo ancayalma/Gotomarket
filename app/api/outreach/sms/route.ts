@@ -49,27 +49,7 @@ function systemInstructionSms() {
   ].join(" ");
 }
 
-function buildSmsPrompt(params: {
-  basePrompt: string | null | undefined;
-  contact: {
-    name?: string | null;
-    company?: string | null;
-    jobTitle?: string | null;
-    email?: string | null;
-    phone?: string | null;
-  };
-  meetingLink?: string | null;
-}) {
-  const { basePrompt, contact, meetingLink } = params;
-  const fallbackBase = `You are contacting a potential investor/customer about PortalPay. Compose a short SMS (160-320 chars) with a crisp value prop (crypto checkout, lower fees, instant settlement), personalize with their name/company if available, and end with a CTA (reply or link).`;
-  const promptBase = (
-    basePrompt && basePrompt.trim().length ? basePrompt : fallbackBase
-  ).trim();
-
-  const contactBlock = `\nContact:\n- Name: ${contact?.name || ""}\n- Company: ${contact?.company || ""}\n- Title: ${contact?.jobTitle || ""}\n- Email: ${contact?.email || ""}\n- Phone: ${contact?.phone || ""}`;
-  const meetingBlock = `\nMeeting/CTA link (optional): ${meetingLink || "N/A"}`;
-  return [promptBase, contactBlock, meetingBlock].join("\n\n");
-}
+import { buildOutreachPrompt } from "@/lib/outreach/prompt-builder";
 
 function sanitizeSmsBody(body: string): string {
   const plain = body
@@ -99,6 +79,7 @@ export async function POST(req: Request) {
         is_account_admin: true,
         meeting_link: true,
         outreach_prompt_default: true,
+        team_id: true,
         assigned_team: {
           select: { id: true },
         },
@@ -106,6 +87,13 @@ export async function POST(req: Request) {
     });
     if (!user) return new NextResponse("User not found", { status: 404 });
     const isAdmin = !!(user.is_admin || user.is_account_admin);
+
+    let brandIdentity = null;
+    if (user.team_id) {
+        brandIdentity = await prismadb.teamBrandIdentity.findUnique({
+            where: { team_id: user.team_id }
+        });
+    }
 
     const leads = await prismadb.crm_Leads.findMany({
       where: {
@@ -199,7 +187,7 @@ export async function POST(req: Request) {
         .filter(Boolean)
         .join(" ")
         .trim();
-      const userPrompt = buildSmsPrompt({
+      const userPrompt = buildOutreachPrompt({
         basePrompt,
         contact: {
           name: contactName || undefined,
@@ -209,12 +197,15 @@ export async function POST(req: Request) {
           phone: lead.phone || undefined,
         },
         meetingLink: lead.outreach_meeting_link || user.meeting_link || null,
+        companyResearch: null,
+        channel: "SMS",
+        brandIdentity
       });
 
       // Use pre-generated body if provided (skip AI call)
       let smsBody =
         preGeneratedBody ||
-        "Hi there — quick intro to PortalPay: crypto checkout, instant settlement, lower fees. Can I send a link for details?";
+        "Hi there — quick intro to our company. Can I send a link for details?";
 
       // Only call AI if no pre-generated body provided
       if (!preGeneratedBody) {
@@ -250,7 +241,7 @@ export async function POST(req: Request) {
       }
 
       // Compliance footer (basic)
-      const footer = " Reply STOP to opt out.";
+      const footer = " " + (brandIdentity?.sms_opt_out_message || "Reply STOP to opt out.").trim();
       let finalBody = smsBody;
       if (finalBody.length + footer.length <= 320) finalBody += footer;
 

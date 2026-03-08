@@ -25,10 +25,9 @@ type ResourceLink = {
 };
 
 const DEFAULT_RESOURCES: ResourceLink[] = [
-  { id: 'portalpay', label: 'Explore PortalPay', href: 'https://surge.basalthq.com', type: 'primary', enabled: true },
-  { id: 'calendar', label: 'Schedule a Call', href: 'https://calendar.app.google/EJ4WsqeS2JSXt6ZcA', type: 'primary', enabled: true },
-  { id: 'investor_portal', label: 'View Investor Portal', href: 'https://stack.angellist.com/s/lp1srl5cnf', type: 'secondary', enabled: true },
-  { id: 'data_room', label: 'Access Data Room', href: 'https://stack.angellist.com/s/x8g9yjgpbw', type: 'secondary', enabled: true },
+  { id: 'website', label: 'Visit Website', href: '#', type: 'primary', enabled: true },
+  { id: 'calendar', label: 'Schedule a Call', href: '#', type: 'primary', enabled: true },
+  { id: 'learn_more', label: 'Learn More', href: '#', type: 'secondary', enabled: true },
 ]
 
 function ResourceEditorRow({
@@ -89,7 +88,7 @@ export default function SignaturesResourcesPanel() {
 
   // Resources
   const [resources, setResources] = useState<ResourceLink[]>(DEFAULT_RESOURCES);
-  // Theme for button previews (fallback to PortalPay teal theme)
+  // Theme for button previews
   const [themePrimary, setThemePrimary] = useState<string>('#0f766e');
   const [themeSecondary, setThemeSecondary] = useState<string>('#14b8a6');
 

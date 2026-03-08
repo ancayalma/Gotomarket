@@ -32,7 +32,25 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json().catch(() => ({}));
-        const personaName: string = String(body?.personaName || "Krishna Patel").trim();
+        
+        // Fetch the user's name for persona (replaces hardcoded "Krishna Patel")
+        const currentUser = await prismadb.users.findUnique({
+            where: { id: session.user.id },
+            select: { name: true, team_id: true }
+        });
+        const defaultPersonaName = currentUser?.name || session.user.name || "Team Representative";
+        
+        // Fetch brand identity for location context (replaces hardcoded "Santa Fe")
+        let brandLocation = "";
+        if (currentUser?.team_id) {
+            const brand = await (prismadb as any).teamBrandIdentity.findUnique({
+                where: { team_id: currentUser.team_id },
+                select: { location: true, company_name: true }
+            });
+            brandLocation = brand?.location || "";
+        }
+        
+        const personaName: string = String(body?.personaName || defaultPersonaName).trim();
         const projectRole: string = String(body?.projectRole || "").trim();
         const goalKeywords: string = String(body?.goalKeywords || "").trim();
         const projectId: string | undefined = body?.projectId || undefined;
@@ -186,7 +204,7 @@ Requirements:
 - Personalize: connect the project’s value to their focus; demonstrate homework.
 - Maintain first-person voice throughout (I/me). No third-person references to ${personaName.split(" ")[0] || "the author"}.
 - No explicit headings; write as natural prose paragraphs.
-- End with a confident CTA that mentions remote availability and the Santa Fe location.
+- End with a confident CTA that mentions remote availability${brandLocation ? ` and ${brandLocation} location` : ""}.
 `.trim();
 
             promptText = [personaLine, `\n\nGoal:\n${expandedGoal}`, projectBlock, `\n\n${styleAndReqs}`]

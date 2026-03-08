@@ -1167,37 +1167,53 @@ model TeamBrandIdentity {
   team_id   String   @unique @db.ObjectId
   team      Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
   
-  // Core Information
-  company_name String?
-  industry     String?
-  location     String?
-  twitter_handle String?
+  // ── Core Information ──
+  company_name       String?
+  industry           String?
+  location           String?
+  website_url        String?
+  phone_number       String?
+  company_email      String?
+  tagline            String?  // Elevator pitch / one-liner
+  logo_url           String?
+  primary_brand_color String? // Hex or rgb value for email templates
 
-  // Strategic Vision
+  // ── Strategic Vision ──
   mission_statement String?
   core_philosophy   String?
 
-  // Brand Pillars
+  // ── Brand Pillars ──
   core_values             String[]
   strategic_focus_areas   String[]
   competitive_advantages  String[]
+  key_products_services   String[] // What you sell
+  pain_points_solved      String[] // Problems you fix for prospects
 
-  // Target Audience
-  audience_description  String?
+  // ── Target Audience ──
+  audience_description   String?
   business_model_summary String?
+  ideal_customer_profile String? // ICP: job titles, company sizes, industries
 
-  // Persona
+  // ── Persona & Voice ──
   persona_preset      String? // PROFESSIONAL, HUMOROUS, SNARKY
   brand_voice         String? // e.g. Visionary, Authoritative, Cyber-Industrial, Revolutionary
   agent_tone          String? // e.g. Efficient, Precise, Autonomous, Direct
   communication_style String? // e.g. Mission-Oriented, Technical but Accessible, Futuristic
+  outreach_approach   String? // How we approach prospects in emails/SMS/calls
+  messaging_themes    String[] // Topic pillars for outreach messaging
+  cta_preferences     String[] // e.g. "Book a Demo", "Free Trial", "Let's Talk"
+  objection_handling  String? // Common objections and how to counter them
+  do_not_say          String[] // Words, phrases, or topics to avoid
 
-  // Content Strategy
-  engagement_style String?
-  hashtag_strategy String?
-  content_themes   String[]
+  // ── Channel Settings ──
+  email_compliance_footer    String? // CAN-SPAM: physical address + unsubscribe text
+  sms_opt_out_message        String? // TCPA: e.g. "Reply STOP to unsubscribe"
+  call_script_intro          String? // Standard phone opening
+  follow_up_cadence          String? // Default days between follow-ups
+  business_hours             String? // When to send outreach (e.g. "9am-5pm EST")
+  preferred_channel_priority String[] // Ranked: EMAIL, SMS, PHONE
 
-  // Setup completion tracking
+  // ── Setup completion tracking ──
   setup_completed Boolean @default(false)
 
   createdAt DateTime @default(now()) @db.Date

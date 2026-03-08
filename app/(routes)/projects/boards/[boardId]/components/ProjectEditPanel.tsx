@@ -289,7 +289,7 @@ export default function ProjectEditPanel({ boardId }: Props) {
   const [defaultSetName, setDefaultSetName] = useState<string>("");
   const [defaultSetConfigText, setDefaultSetConfigText] = useState<string>("{}");
   const [defaultButtons, setDefaultButtons] = useState<ButtonItem[]>([]);
-  // Theme colors for email-styled preview (match vcrun.py PortalPay styles)
+  // Theme colors for email-styled preview
   const [builderPrimaryColor, setBuilderPrimaryColor] = useState<string>("#0f766e");
   const [builderSecondaryColor, setBuilderSecondaryColor] = useState<string>("#14b8a6");
   const [loadingDefaultSet, setLoadingDefaultSet] = useState(false);

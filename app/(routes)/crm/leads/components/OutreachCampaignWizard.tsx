@@ -136,12 +136,10 @@ export default function OutreachCampaignWizard({
     const [campaignTitle, setCampaignTitle] = useState(campaign?.title || "");
     const [campaignBriefing, setCampaignBriefing] = useState("");
     const [userName, setUserName] = useState("");
-    const [userTitle, setUserTitle] = useState("Founder");
-    const [companyName, setCompanyName] = useState("The Utility Company");
+    const [userTitle, setUserTitle] = useState("");
+    const [companyName, setCompanyName] = useState("");
     const [productName, setProductName] = useState(campaign?.title || "");
-    const [meetingPreferences, setMeetingPreferences] = useState(
-        "- I am based in Santa Fe, New Mexico.\n- I'm available for remote meetings with all investors.\n- In-person meetings only if you're in Albuquerque or Santa Fe, NM."
-    );
+    const [meetingPreferences, setMeetingPreferences] = useState("");
 
     // Step 3: AI Prompt Template
     const [promptTemplate, setPromptTemplate] = useState(DEFAULT_PROMPT_TEMPLATE);
@@ -301,6 +299,43 @@ export default function OutreachCampaignWizard({
         checkSmsConfig();
     }, []);
 
+    // Fetch brand identity to auto-populate fields (removes hardcoded values)
+    useEffect(() => {
+        const fetchBrand = async () => {
+            try {
+                const res = await fetch("/api/admin/brand");
+                if (!res.ok) return;
+                const brand = await res.json();
+
+                // Auto-populate company name from brand (replaces hardcoded "The Utility Company")
+                if (brand.company_name && !companyName) {
+                    setCompanyName(brand.company_name);
+                }
+
+                // Auto-populate meeting preferences from brand location (replaces hardcoded "Santa Fe")
+                if (!meetingPreferences && brand.location) {
+                    setMeetingPreferences(
+                        `- I am based in ${brand.location}.\n- I'm available for remote meetings.`
+                    );
+                }
+
+                // Auto-populate user title if not set
+                if (!userTitle && brand.persona_preset) {
+                    setUserTitle(brand.persona_preset);
+                }
+
+                // If no campaign briefing and brand has mission, use it as seed
+                if (!campaignBriefing && brand.mission_statement) {
+                    setCampaignBriefing(brand.mission_statement);
+                }
+            } catch (error) {
+                console.error("Failed to fetch brand identity:", error);
+            }
+        };
+        fetchBrand();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Fetch campaign data when campaignId is provided
     useEffect(() => {
         if (!campaignId) return;
@@ -308,7 +343,7 @@ export default function OutreachCampaignWizard({
         const fetchCampaign = async () => {
             setLoadingCampaign(true);
             try {
-                const res = await fetch(`/api/projects/${encodeURIComponent(campaignId)}/summary`);
+                const res = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}`);
                 if (res.ok) {
                     const data = await res.json();
                     setFetchedCampaign(data);
@@ -968,7 +1003,7 @@ export default function OutreachCampaignWizard({
                                     <Label htmlFor="productName">Product/Project Name *</Label>
                                     <Input
                                         id="productName"
-                                        placeholder="e.g., PortalPay"
+                                        placeholder="e.g., Our Main Solution"
                                         value={productName}
                                         onChange={(e) => setProductName(e.target.value)}
                                     />
@@ -1000,7 +1035,7 @@ export default function OutreachCampaignWizard({
 - Traction metrics
 - Target audience
 
-Example from vcrun.py:
+Example:
 "- Crypto-native payment gateway enabling physical merchants to accept stablecoins
 - Multi-Token Infrastructure: USDC, USDT, cbBTC, cbXRP, ETH on Base
 - Cost Revolution: 2–3% savings vs card rails

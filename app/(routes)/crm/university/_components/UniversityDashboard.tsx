@@ -50,7 +50,7 @@ import { MermaidDiagram, CRM_FLOW_DIAGRAM, CONVERSION_FLOW_DIAGRAM, CRM_FLOW_DIA
 import AutoConversionFlow from "./AutoConversionFlow";
 import FlowStatsCharts from "./FlowStatsCharts";
 import ProjectWorkflowGuide from "./ProjectWorkflowGuide";
-import { PROJECT_WORKFLOW_DESKTOP, PROJECT_WORKFLOW_MOBILE, PROJECT_WORKFLOW_LEGEND } from "./ProjectWorkflowDiagrams";
+import { PROJECT_WORKFLOW_DESKTOP, PROJECT_WORKFLOW_MOBILE, PROJECT_WORKFLOW_LEGEND, CAMPAIGN_PIPELINE_DESKTOP, CAMPAIGN_PIPELINE_MOBILE, CAMPAIGN_PIPELINE_LEGEND } from "./ProjectWorkflowDiagrams";
 import TabNavigationCard from "./TabNavigationCard";
 import GettingStarted from "./GettingStarted";
 import { Rocket } from "lucide-react";
@@ -583,6 +583,21 @@ export default function UniversityDashboard({ plan, userLevel, user }: Universit
                             overviewHow="Follow the visual 'Setup to Launch' flow. Reference the 'Pool Management' guide to see how to properly shard your lead lists for maximum agent efficiency."
                         />
                         <ProjectWorkflowGuide />
+
+                        {/* Campaign Pipeline Flow - Brand Identity Data Flow */}
+                        <div className="mt-4">
+                            <FlowDiagramCard
+                                title="Campaign Pipeline — Brand Identity Flow"
+                                description="Your Brand Identity is set up once and flows automatically through every stage. Campaigns inherit company context, the LeadGen Wizard pre-fills ICP targeting, and the Outreach Wizard builds AI prompts — all from your brand data. Zero re-typing."
+                                accentColor="violet"
+                                legend={CAMPAIGN_PIPELINE_LEGEND}
+                            >
+                                <MermaidDiagram
+                                    chart={CAMPAIGN_PIPELINE_DESKTOP}
+                                    mobileChart={CAMPAIGN_PIPELINE_MOBILE}
+                                />
+                            </FlowDiagramCard>
+                        </div>
 
                         <div className="mt-4">
                             <FlowDiagramCard

@@ -57,7 +57,7 @@ type Props = {
   apiEndpoint?: string; // Override POST target (e.g. "/api/campaigns")
 }
 
-const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint = "/api/projects" }: Props) => {
+const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint = "/api/campaigns" }: Props) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("basics");
@@ -67,6 +67,10 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
   const [geosInput, setGeosInput] = useState("");
   const [titlesInput, setTitlesInput] = useState("");
   const [propsInput, setPropsInput] = useState("");
+
+  // Brand identity data for product selector
+  const [brandProducts, setBrandProducts] = useState<string[]>([]);
+  const [productFocus, setProductFocus] = useState("");
 
   const [isMounted, setIsMounted] = useState(false);
   const [hasPrefetched, setHasPrefetched] = useState(false);
@@ -128,6 +132,10 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
           if (brand && Object.keys(brand).length > 0) {
             const currentVals = form.getValues();
             
+            // Store available products for the product selector
+            if (Array.isArray(brand.key_products_services) && brand.key_products_services.length > 0) {
+              setBrandProducts(brand.key_products_services);
+            }
             // Map industry -> target_industries
             if ((!currentVals.target_industries || currentVals.target_industries.length === 0) && brand.industry) {
               const parsed = brand.industry.split(",").map((s: string) => s.trim()).filter(Boolean);
@@ -195,7 +203,9 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
     try {
       const payload = {
         ...data,
-        status: "ACTIVE"
+        status: "ACTIVE",
+        // Include product focus if selected (multi-product brand support)
+        ...(productFocus ? { product_focus: productFocus } : {}),
       };
       await axios.post(apiEndpoint, payload);
       toast({
@@ -288,7 +298,7 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
             New {entityName}
           </DialogTitle>
           <DialogDescription>
-            Create a {entityName.toLowerCase()} board with context for your team.
+            Create a new {entityName.toLowerCase()} with brand identity and outreach context.
           </DialogDescription>
         </DialogHeader>
         {isLoading ? (
@@ -381,6 +391,33 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
                       )}
                     />
 
+                    {/* Product Focus — only shown if brand has multiple products */}
+                    {brandProducts.length > 1 && (
+                      <FormItem>
+                        <FormLabel>Product / Service Focus</FormLabel>
+                        <Select
+                          onValueChange={(val) => setProductFocus(val)}
+                          defaultValue={productFocus}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select product line (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {brandProducts.map((product) => (
+                              <SelectItem key={product} value={product}>
+                                {product}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className="text-xs">
+                          Which product line is this campaign promoting?
+                        </FormDescription>
+                      </FormItem>
+                    )}
+
                     <FormField
                       control={form.control}
                       name="require_approval"
@@ -389,10 +426,10 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
                           <div className="space-y-0.5">
                             <FormLabel className="flex items-center gap-2">
                               <ShieldCheck className="w-4 h-4 text-amber-500" />
-                              Require Project Approval
+                              Require Approval
                             </FormLabel>
                             <FormDescription className="text-xs">
-                              Members must get admin approval before starting work
+                              Members must get admin approval before launching outreach
                             </FormDescription>
                           </div>
                           <FormControl>

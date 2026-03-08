@@ -57,6 +57,9 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
     return isOpen && leadIds && leadIds.length > 0 && (useEmail || useSms || usePhone);
   }, [isOpen, leadIds, useEmail, useSms, usePhone]);
 
+  // Brand identity for dynamic prompt building
+  const [brandInfo, setBrandInfo] = useState<any>(null);
+
   useEffect(() => {
     if (!isOpen) return;
     // Load defaults once when opening
@@ -80,6 +83,19 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
         if (r.ok) {
           const j = await r.json();
           setResources(j?.resources || []);
+          // Pre-fill meeting link from resources if available
+          const calRes = (j?.resources || []).find((res: any) => res.id === "calendar");
+          if (calRes?.href && calRes.href !== "#") {
+            setMeetingLinkOverride(calRes.href);
+          }
+        }
+      } catch {}
+      // Fetch brand identity for dynamic prompts
+      try {
+        const b = await fetch("/api/admin/brand");
+        if (b.ok) {
+          const brand = await b.json();
+          setBrandInfo(brand);
         }
       } catch {}
     })();
@@ -96,8 +112,33 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
   async function generateBatchPrompt() {
     try {
       setLoadingPrompt(true);
-      // Reference vcrun.py persona and requirements, enriched with pool context
-      const base = defaultPrompt?.trim().length ? defaultPrompt.trim() : `\nPersona:\nYou are Krishna Patel — Founder of The Utility Company (TUC) and creator of PortalPay. Write entirely in first person (I/me).\n\nGoal:\nCraft a personalized VC outreach email about PortalPay tailored to the recipients (batch).\n\nRequirements:\n- Return JSON with keys \"subject\" and \"body\".\n- Body plain text (no HTML), 250–300 words.\n- Narrative, insight-driven; no section headings.\n- End with confident CTA (remote meetings; Santa Fe based).\n`;
+      // Build dynamic prompt from brand identity (replaces hardcoded Krishna Patel fallback)
+      const brandName = brandInfo?.company_name || "our company";
+      const brandMission = brandInfo?.mission_statement || "";
+      const brandVoice = brandInfo?.brand_voice || "professional and confident";
+      const brandLocation = brandInfo?.location || "";
+      const brandCTAs = Array.isArray(brandInfo?.cta_preferences) ? brandInfo.cta_preferences.join("; ") : "schedule a meeting";
+      const brandProducts = Array.isArray(brandInfo?.key_products_services) ? brandInfo.key_products_services.join(", ") : "";
+      const brandApproach = brandInfo?.outreach_approach || "";
+
+      const base = defaultPrompt?.trim().length ? defaultPrompt.trim() : [
+        `Persona:`,
+        `You are writing on behalf of ${brandName}. Write entirely in first person (I/me).`,
+        brandMission ? `Mission: ${brandMission}` : "",
+        brandProducts ? `Products/Services: ${brandProducts}` : "",
+        ``,
+        `Goal:`,
+        `Craft personalized outreach emails tailored to the recipients (batch).`,
+        brandApproach ? `Approach: ${brandApproach}` : "",
+        ``,
+        `Requirements:`,
+        `- Return JSON with keys "subject" and "body".`,
+        `- Body plain text (no HTML), 250–300 words.`,
+        `- Narrative, insight-driven; no section headings.`,
+        `- Voice: ${brandVoice}.`,
+        `- End with confident CTA: ${brandCTAs}.`,
+        brandLocation ? `- Location context: ${brandLocation}.` : "",
+      ].filter(Boolean).join("\n");
       const summary = `\nBatch Context:\n- Pool: ${poolId || "(n/a)"}\n- Leads selected: ${leadIds.length}\n- IDs: ${leadIds.slice(0, 12).join(", ")} ${leadIds.length>12?"…":""}\n- Use stored resources & signature; include tracking pixel.\n`;
       setPromptOverride([base, summary].join("\n"));
       toast.success("Batch prompt initialized. You can edit it before sending.");
@@ -314,7 +355,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
           <div className="space-y-4">
             <div className="text-sm">Ready to send personalized emails.</div>
             <div className="text-xs text-muted-foreground">Leads selected: {leadIds.length}</div>
-            <label className="flex items-center gap-2 text-sm"><Checkbox checked={testMode} onCheckedChange={(v) => setTestMode(!!v)} /> Test mode (send to founders@theutilitycompany.co)</label>
+            <label className="flex items-center gap-2 text-sm"><Checkbox checked={testMode} onCheckedChange={(v) => setTestMode(!!v)} /> Test mode (send to your email instead of contacts)</label>
             <div>
               <label className="text-xs font-medium">Batch Prompt Override</label>
               <Textarea className="mt-1" rows={6} value={promptOverride} onChange={(e) => setPromptOverride(e.target.value)} />

@@ -33,9 +33,10 @@ export const LeadGenWizardSchema = z.object({
       maxContactsPerCompany: z.number().int().positive().max(50).default(3).optional(),
     })
     .optional(),
-  // Link to a project (optional)
-  // Link to a project (optional)
+  // Link to a project (optional - legacy)
   projectId: z.string().optional(),
+  // Link to a campaign (optional - preferred)
+  campaignId: z.string().optional(),
   // Append to existing pool (optional)
   existingPoolId: z.string().optional(),
 });
@@ -108,6 +109,7 @@ export async function startLeadGenJob(
           ...parsed.data.icp,
           limits: parsed.data.limits ?? {},
           assignedProjectId: parsed.data.projectId || undefined,
+          assignedCampaignId: parsed.data.campaignId || undefined,
         },
         // status defaults to "ACTIVE"
       },
@@ -147,6 +149,22 @@ export async function startLeadGenJob(
     },
     select: { id: true },
   });
+
+  // Link pool to campaign if campaignId provided
+  const campaignId = parsed.data.campaignId;
+  if (campaignId && poolId) {
+    try {
+      await (prismadbCrm as any).crm_Outreach_Campaigns.update({
+        where: { id: campaignId },
+        data: {
+          pool: poolId,
+          total_leads: { increment: 0 }, // Will be updated when candidates are created
+        },
+      });
+    } catch {
+      // Campaign may not exist or not be accessible — non-fatal
+    }
+  }
 
   return { poolId: poolId!, jobId: job.id };
 }

@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getEffectiveRoleModules } from "@/actions/permissions/get-effective-permissions";
 import { PermissionsProvider } from "@/components/providers/permissions-provider";
+import { systemLogger } from "@/lib/logger";
 
 export default async function CrmLayout({
     children,
@@ -53,12 +54,11 @@ export default async function CrmLayout({
             }
         }
 
-        console.log('[DEBUG CRM LAYOUT]', {
+        systemLogger.info('[CRM LAYOUT] Module resolution:', {
             userId: session.user.id,
             teamRole: user?.team_role,
-            isSuperAdmin: isSuperAdmin,
-            allowedModulesLength: allowedModules.length,
-            modules: allowedModules // Inspect the actual list
+            isSuperAdmin,
+            allowedModulesCount: allowedModules.length,
         });
     }
 
