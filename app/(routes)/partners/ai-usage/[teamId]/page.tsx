@@ -128,20 +128,23 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
     let completionTokens = 0;
     let requestCount = 0;
     const modelUsage: Record<string, number> = {};
-    const userUsage: Record<string, { name: string, email: string, total: number, requests: number }> = {};
+    const userUsage: Record<string, { name: string, email: string, total: number, promptTokens: number, completionTokens: number, requests: number }> = {};
 
     // Initialize users
     (teamMembers as any[]).forEach(u => {
-        userUsage[u.id] = { name: u.name || "Unknown", email: u.email, total: 0, requests: 0 };
+        userUsage[u.id] = { name: u.name || "Unknown", email: u.email, total: 0, promptTokens: 0, completionTokens: 0, requests: 0 };
     });
 
     // A. Parse Chat
     (messagesWithUsage as any[]).forEach((msg: any) => {
         const usage = (msg.tokenUsage || {}) as any;
         const tokens = (usage.totalTokens || 0);
+        const pTokens = (usage.promptTokens || usage.inputTokens || 0);
+        const cTokens = (usage.completionTokens || usage.outputTokens || 0);
+
         totalTokens += tokens;
-        promptTokens += (usage.promptTokens || 0);
-        completionTokens += (usage.completionTokens || 0);
+        promptTokens += pTokens;
+        completionTokens += cTokens;
         requestCount += 1;
 
         const modelName = msg.model || "Unknown Model";
@@ -150,6 +153,8 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
         const userId = sessionToUserMap.get(msg.session);
         if (userId && userUsage[userId]) {
             userUsage[userId].total += tokens;
+            userUsage[userId].promptTokens += pTokens;
+            userUsage[userId].completionTokens += cTokens;
             userUsage[userId].requests += 1;
         }
     });
@@ -167,6 +172,8 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
 
         if (log.user_id && userUsage[log.user_id]) {
             userUsage[log.user_id].total += tokens;
+            userUsage[log.user_id].promptTokens += log.tokens_in;
+            userUsage[log.user_id].completionTokens += log.tokens_out;
             userUsage[log.user_id].requests += 1;
         }
     });
@@ -216,13 +223,13 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
                 <div className="grid gap-6">
                     {/* KPI Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="indigo">
+                        <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="teal">
                             <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">Total Tokens</p>
                             <p className="text-3xl text-tremor-content-strong dark:text-dark-tremor-content-strong font-semibold">
                                 {totalTokens.toLocaleString()}
                             </p>
                         </Card>
-                        <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="fuchsia">
+                        <Card className="bg-[#09090b] border-[#27272a]" decoration="top" decorationColor="indigo">
                             <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">Total Requests</p>
                             <p className="text-3xl text-tremor-content-strong dark:text-dark-tremor-content-strong font-semibold">
                                 {requestCount.toLocaleString()}
@@ -265,6 +272,8 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
                                     <tr>
                                         <th className="py-2 pl-4 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">Team Member</th>
                                         <th className="py-2 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-right">Requests</th>
+                                        <th className="py-2 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-right text-teal-500">Prompt</th>
+                                        <th className="py-2 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-right text-fuchsia-500">Output</th>
                                         <th className="py-2 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-right">Total Tokens</th>
                                         <th className="py-2 pr-4 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong text-right">% of Total</th>
                                     </tr>
@@ -277,6 +286,8 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
                                                 <div className="text-xs text-tremor-content dark:text-dark-tremor-content">{u.email}</div>
                                             </td>
                                             <td className="py-3 pr-4 text-right font-mono text-tremor-content dark:text-dark-tremor-content">{u.requests.toLocaleString()}</td>
+                                            <td className="py-3 pr-4 text-right font-mono text-teal-400/80">{u.promptTokens.toLocaleString()}</td>
+                                            <td className="py-3 pr-4 text-right font-mono text-fuchsia-400/80">{u.completionTokens.toLocaleString()}</td>
                                             <td className="py-3 pr-4 text-right font-bold font-mono text-tremor-content-strong dark:text-dark-tremor-content-strong">{u.total.toLocaleString()}</td>
                                             <td className="py-3 pr-4 text-right text-xs">
                                                 {totalTokens > 0 ? Math.round((u.total / totalTokens) * 100) : 0}%

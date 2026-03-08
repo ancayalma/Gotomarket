@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { LayoutDashboard, Users, MessageSquare, Mail, Copy, Shield, Phone, AtSign, Building2, Bot, Package } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, Mail, Copy, Shield, Phone, AtSign, Building2, Bot, Package, Key } from "lucide-react";
 import { toast } from "sonner";
 
 import TeamSettingsForm from "./TeamSettingsForm";
@@ -17,6 +17,8 @@ import SystemResendConfig from "@/components/system/SystemResendConfig";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ApiKeysManager } from "@/app/admin/(dashboard)/api-keys/_components/ApiKeysManager";
+import { ApiLogsViewer } from "@/app/admin/(dashboard)/api-keys/_components/ApiLogsViewer";
 
 import { NavigationCard } from "../../_components/NavigationCard";
 
@@ -45,9 +47,11 @@ type Props = {
     };
     customRoles?: any[];
     departments?: any[];
+    apiKeys?: any[];
+    apiLogs?: any[];
 };
 
-const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendData, ownerInfo, roleCounts, customRoles, departments }: Props) => {
+const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendData, ownerInfo, roleCounts, customRoles, departments, apiKeys, apiLogs }: Props) => {
     const [activeTab, setActiveTab] = useState("overview");
 
     const isOrgAdmin = currentUserInfo?.isGlobalAdmin || (
@@ -128,6 +132,15 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
                 icon: Package,
                 color: "from-amber-500/20 to-orange-500/20",
                 iconColor: "text-amber-500",
+            });
+            
+            cards.push({
+                id: "api",
+                title: "API Hub",
+                description: "Keys & Webhooks",
+                icon: Key,
+                color: "from-emerald-500/20 to-teal-500/20",
+                iconColor: "text-emerald-500",
             });
         }
     }
@@ -316,6 +329,34 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
                         currentPlan={team.assigned_plan}
                         initialOverrides={team.module_overrides || []}
                     />
+                )}
+                {activeTab === "api" && currentUserInfo?.isGlobalAdmin && (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-xl font-semibold tracking-tight">API Keys</h3>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                        Secure Access
+                                    </span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 animate-pulse">
+                                        {team.slug === "basalthq" ? "Exempt Plan Ready" : (team.assigned_plan?.slug || team.subscription_plan || "FREE").toUpperCase() !== "FREE" ? `${(team.assigned_plan?.slug || team.subscription_plan)} Plan Ready` : "Select Plan"}
+                                    </span>
+                                </div>
+                            </div>
+                            <ApiKeysManager initialKeys={apiKeys || []} teamId={team.id} hasPlan={team.slug === "basalthq" || (team.assigned_plan?.slug || team.subscription_plan || "FREE").toUpperCase() !== "FREE"} />
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-xl font-semibold tracking-tight">API Audit Logs</h3>
+                                <span className="text-[10px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    Real-time
+                                </span>
+                            </div>
+                            <ApiLogsViewer initialLogs={apiLogs || []} />
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

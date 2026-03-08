@@ -1,6 +1,8 @@
 import "../globals.css";
 import { Inter } from "next/font/google";
 import { Metadata } from "next";
+import UtilityBar from "@/components/UtilityBar";
+import Footer from "@/app/(routes)/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,8 +18,14 @@ export default function BasaltECHOLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className={inter.className}>
-            {children}
+        <div className={`${inter.className} min-h-screen flex flex-col overflow-hidden`}>
+            <div className="flex-1 overflow-y-auto">
+                {children}
+            </div>
+            <div className="shrink-0">
+                <UtilityBar />
+                <Footer />
+            </div>
         </div>
     );
 }

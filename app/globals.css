@@ -1289,28 +1289,7 @@ div.headlessui-portal>div,
   border: none !important;
 }
 
-/* 9. Tremor Chart Theme Correction - CRITICAL FIX */
-/* Force all chart bars, areas, and lines to respect our theme primary */
-.recharts-rectangle.recharts-bar-rectangle,
-.recharts-area-area,
-.recharts-curve.recharts-area-curve,
-.recharts-pie-sector,
-.recharts-sector {
-  fill: hsl(var(--primary)) !important;
-  stroke: hsl(var(--primary)) !important;
-  opacity: 1 !important;
-}
-
-/* Specific colors for multi-category charts if needed (overriding the above) */
-.recharts-layer.recharts-bar-rectangles:nth-child(2) path,
-.recharts-layer.recharts-area:nth-child(2) path {
-  fill: hsl(var(--primary) / 0.8) !important;
-}
-
-.recharts-layer.recharts-bar-rectangles:nth-child(3) path,
-.recharts-layer.recharts-area:nth-child(3) path {
-  fill: hsl(var(--primary) / 0.6) !important;
-}
+/* Removed Tremor Chart Theme Correction so colors props work correctly */
 
 /* Tooltip Styling - Critical for dark/purple themes */
 .tremor-ChartingTooltip,
