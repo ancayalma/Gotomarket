@@ -209,11 +209,11 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                             animate={{ opacity: 1, x: 0, scale: 1 }}
                             exit={{ opacity: 0, x: -8, scale: 0.96 }}
                             transition={{ duration: 0.12, ease: "easeOut" }}
-                            className="min-w-[200px] max-h-[70vh] overflow-y-auto p-1 rounded-xl border border-border shadow-2xl backdrop-blur-xl bg-popover/95 custom-scrollbar"
+                            className="w-max max-h-[70vh] overflow-y-auto p-1 rounded-xl border border-border shadow-2xl backdrop-blur-xl bg-popover/95 custom-scrollbar"
                         >
                             {/* Header */}
-                            <div className="px-3 py-1.5 border-b border-border/50 mb-1 shrink-0">
-                                <span className="text-[10px] uppercase tracking-wider font-bold text-primary/80">{title}</span>
+                            <div className="pb-1 mb-1 border-b border-border/50 shrink-0">
+                                <span className="text-[10px] uppercase tracking-wider font-bold text-primary/80 px-1">{title}</span>
                             </div>
 
                             {/* Sub-items */}
@@ -227,7 +227,7 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                                             href={subItem.href}
                                             onClick={(e) => e.stopPropagation()}
                                             className={cn(
-                                                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors duration-200",
+                                                "flex items-center gap-1.5 px-1.5 py-1 rounded-lg text-sm transition-colors duration-200",
                                                 isSubActive
                                                     ? "bg-primary/20 text-primary font-medium"
                                                     : "text-muted-foreground hover:text-foreground hover:bg-muted/30"

@@ -34,8 +34,11 @@ export default async function CrmLayout({
         isMember = user?.team_role === "MEMBER";
 
         const role = (user?.team_role || '').trim().toUpperCase();
-        // Check DB is_admin flag OR role-based access
-        isSuperAdmin = (user as any)?.is_admin === true || ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN', 'ADMIN'].includes(role);
+        // PLATFORM_ADMIN and OWNER are the highest tiers in the system, superseding the basic is_admin flag.
+        const isHighestTier = ['PLATFORM_ADMIN', 'OWNER', 'SUPER_ADMIN', 'PLATFORM ADMIN', 'SYSADM'].includes(role);
+        
+        // isSuperAdmin determines if the user gets wildcard access to all modules
+        isSuperAdmin = isHighestTier || (user as any)?.is_admin === true || role === 'ADMIN';
 
         if (isSuperAdmin) {
             allowedModules = ['*'];
