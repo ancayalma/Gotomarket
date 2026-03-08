@@ -16,7 +16,7 @@ export async function GET(_req: Request) {
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    const url = getGmailAuthUrl(userId);
+    const url = await getGmailAuthUrl(userId);
     const redirectUri = getOAuth2ClientRedirectUri();
     
     // Log for debugging

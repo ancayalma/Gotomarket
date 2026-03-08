@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { exchangeCodeForTokens } from "@/lib/gmail";
+import { exchangeCodeForTokens, getGmailClientForUser } from "@/lib/gmail";
 import { systemLogger } from "@/lib/logger";
 
 /**
@@ -56,6 +56,37 @@ export async function GET(req: Request) {
     }
 
     await exchangeCodeForTokens(userId, code);
+
+    // [WEBHOOK SETUP] Register push notifications if Pub/Sub topic is configured
+    try {
+      const pubsubTopic = process.env.GOOGLE_PUBSUB_TOPIC;
+      if (pubsubTopic) {
+        const gmail = await getGmailClientForUser(userId);
+        if (gmail) {
+          const watchRes = await gmail.users.watch({
+            userId: 'me',
+            requestBody: {
+              topicName: pubsubTopic,
+              labelIds: ['INBOX', 'SENT'],
+              labelFilterAction: 'include'
+            }
+          });
+          
+          if (watchRes.data.historyId) {
+            import('@/lib/prisma').then(({ prismadb }) => {
+              prismadb.gmail_Tokens.updateMany({
+                where: { user: userId },
+                data: { historyId: watchRes.data.historyId }
+              }).catch(console.error);
+            });
+          }
+          systemLogger.info(`[GOOGLE_WEBHOOK] Registered push for user ${userId}`);
+        }
+      }
+    } catch (watchErr: any) {
+      systemLogger.error("[GOOGLE_WEBHOOK_SETUP_FAILED]", watchErr?.message || watchErr);
+      // Fail gracefully so user still gets connected
+    }
 
     // Redirect back to CRM Leads page indicating success
     const redirectOk = `${origin}/en/crm/leads?google=connected`;

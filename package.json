@@ -1,6 +1,6 @@
 {
   "name": "basaltcrm-app",
-  "version": "1.2.3k",
+  "version": "1.2.3m",
   "author": "Michael Milton (BasaltHQ)",
   "private": true,
   "scripts": {
@@ -101,6 +101,7 @@
     "googleapis": "167.0.0",
     "imap": "^0.8.19",
     "isomorphic-dompurify": "^3.0.0",
+    "isomorphic-fetch": "^3.0.0",
     "jotai": "^2.16.1",
     "jspdf": "^4.2.0",
     "lucide-react": "^0.556.0",
@@ -161,6 +162,7 @@
     "@prisma/client": "^6.19.2",
     "@types/bcrypt": "^6.0.0",
     "@types/imap": "^0.8.43",
+    "@types/isomorphic-fetch": "^0.0.39",
     "@types/mailparser": "^3.4.6",
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^7.0.4",

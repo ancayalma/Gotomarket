@@ -17,7 +17,7 @@ export async function GET() {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   try {
-    const url = getGmailAuthUrl(session.user.id);
+    const url = await getGmailAuthUrl(session.user.id);
     return NextResponse.json({ url }, { status: 200 });
   } catch (error) {
      

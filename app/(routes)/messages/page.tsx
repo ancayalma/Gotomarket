@@ -91,9 +91,48 @@ const MessagesRoute = async () => {
                 status: m.status
             };
         });
+
+        const rawEmails = await prismadb.crm_Emails.findMany({
+            where: {
+                user_id: session.user.id
+            },
+            orderBy: { date: "desc" },
+            take: 100,
+        });
+
+        const mappedEmails = rawEmails.map((email: any) => {
+            const isMeSender = !email.is_inbound;
+
+            const fromUser = isMeSender 
+                ? { id: session.user.id, name: session.user.name || session.user.email, email: session.user.email } 
+                : { id: email.from_email || `ext-${email.id}`, name: email.from_name || email.from_email, email: email.from_email };
+            
+            const toUser = isMeSender 
+                ? { id: email.to_emails?.[0]?.email || `ext-${email.id}`, name: email.to_emails?.[0]?.email, email: email.to_emails?.[0]?.email } 
+                : { id: session.user.id, name: session.user.name || session.user.email, email: session.user.email };
+
+            return {
+                id: email.id, 
+                subject: email.subject || "(No Subject)",
+                body: email.snippet || "",
+                createdAt: email.date,
+                is_read: email.is_read,
+                is_important: false,
+                labels: [email.provider || "email"], 
+                from_user_id: fromUser.id as string,
+                to_user_id: toUser.id as string,
+                from_user: fromUser,
+                to_user: toUser,
+                recipients: isMeSender ? [] : [{ recipient_id: session.user.id, is_read: email.is_read }],
+                status: "SENT"
+            };
+        });
+
+        messages = [...messages, ...mappedEmails].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 100);
+
     } catch (e) {
         console.error("Failed to fetch messages", e);
-        messages = [];
+        messages = messages || [];
     }
 
     // Fetch form submissions (visible based on form visibility)

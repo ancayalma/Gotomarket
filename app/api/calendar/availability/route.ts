@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCalendarClientForUser } from "@/lib/gmail";
+import { getGraphClient } from "@/lib/microsoft";
 import { prismadb } from "@/lib/prisma";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -65,13 +66,14 @@ export async function GET(req: Request) {
     }
 
     const calendar = await getCalendarClientForUser(userId);
-    if (!calendar) {
+    const graphClient = !calendar ? await getGraphClient(userId) : null;
+    if (!calendar && !graphClient) {
       return NextResponse.json(
         {
           ok: false,
           connected: false,
-          error: "Google not connected",
-          hint: "Connect Google in CRM or via /api/google/auth-url and retry. Preferences will be honored once connected.",
+          error: "No calendar connected",
+          hint: "Connect Google or Microsoft in CRM and retry. Preferences will be honored once connected.",
         },
         { status: 404 }
       );
@@ -103,36 +105,58 @@ export async function GET(req: Request) {
       if (defaultId && !candidateIds.includes(defaultId)) {
         candidateIds.push(defaultId);
       }
-      try {
-        const cl = await calendar.calendarList.list();
-        const accessibleIds = new Set(((cl.data.items || []) as any[]).map((i: any) => String(i.id)));
-        const validIds = candidateIds.filter((id) => accessibleIds.has(String(id)));
-        const idsToUse = validIds.length ? validIds : ["primary"];
-        items = idsToUse.map((id) => ({ id }));
-      } catch {
-        // If listing fails, fall back to candidateIds
-        items = candidateIds.map((id) => ({ id }));
+      if (calendar) {
+        try {
+          const cl = await calendar.calendarList.list();
+          const accessibleIds = new Set(((cl.data.items || []) as any[]).map((i: any) => String(i.id)));
+          const validIds = candidateIds.filter((id) => accessibleIds.has(String(id)));
+          const idsToUse = validIds.length ? validIds : ["primary"];
+          items = idsToUse.map((id) => ({ id }));
+        } catch {
+          items = candidateIds.map((id) => ({ id }));
+        }
+      } else if (graphClient) {
+        // Microsoft default logic
+        try {
+          const cl = await graphClient.api("/me/calendars").select("id,isDefaultCalendar").get();
+          const accessibleIds = new Set(((cl.value || []) as any[]).map((i: any) => String(i.id)));
+          const validIds = candidateIds.filter((id) => accessibleIds.has(String(id)));
+          const defaultCal = cl.value.find((i: any) => i.isDefaultCalendar);
+          const defaultIdMs = defaultCal ? defaultCal.id : candidateIds[0] || "";
+          
+          let idsToUse = validIds;
+          if (idsToUse.length === 0 || idsToUse.includes("primary")) {
+              idsToUse = [defaultIdMs]; 
+          }
+          items = idsToUse.map((id) => ({ id }));
+        } catch {
+          items = candidateIds.map((id) => ({ id }));
+        }
       }
     }
 
-    const res = await calendar.freebusy.query({
-      requestBody: {
-        timeMin: startUtcISO,
-        timeMax: endUtcISO,
-        timeZone,
-        items,
-      },
-    });
-
-    // Collect and merge busy intervals across all selected calendars
     type Interval = { start: string; end: string };
     const intervals: Interval[] = [];
-    const calMap: Record<string, any> = (res.data?.calendars ?? {}) as any;
-    for (const key of Object.keys(calMap)) {
-      const arr: Interval[] = Array.isArray(calMap[key]?.busy) ? calMap[key].busy : [];
-      for (const b of arr) {
-        if (b?.start && b?.end) {
-          intervals.push({ start: b.start, end: b.end });
+    let fallbackUsed = false;
+
+    if (calendar) {
+      // Google Logic
+      const res = await calendar.freebusy.query({
+        requestBody: {
+          timeMin: startUtcISO,
+          timeMax: endUtcISO,
+          timeZone,
+          items,
+        },
+      });
+
+      const calMap: Record<string, any> = (res.data?.calendars ?? {}) as any;
+      for (const key of Object.keys(calMap)) {
+        const arr: Interval[] = Array.isArray(calMap[key]?.busy) ? calMap[key].busy : [];
+        for (const b of arr) {
+          if (b?.start && b?.end) {
+            intervals.push({ start: b.start, end: b.end });
+          }
         }
       }
     }
@@ -158,8 +182,7 @@ export async function GET(req: Request) {
     }
 
     // Fallback: if freebusy returned no busy intervals, derive busy from events.list across selected calendars
-    let fallbackUsed = false;
-    if (merged.length === 0) {
+    if (merged.length === 0 && calendar) {
       try {
         const derived: Interval[] = [];
         for (const it of items) {
@@ -230,6 +253,61 @@ export async function GET(req: Request) {
           fallbackUsed = true;
         }
       } catch {}
+    } else if (graphClient) {
+      // Microsoft Logic
+      try {
+        const payload = {
+            schedules: items.map(i => i.id).filter(id => id && id !== "primary"),
+            startTime: {
+                dateTime: startUtcISO,
+                timeZone: "UTC"
+            },
+            endTime: {
+                dateTime: endUtcISO,
+                timeZone: "UTC"
+            },
+            availabilityViewInterval: 15
+        };
+
+        // If 'primary' is the only thing passed and we didn't resolve it, use the default mailbox for schedule.
+        if (payload.schedules.length === 0) {
+            payload.schedules = [((session as any)?.user?.email) || ""];
+        }
+
+        const res = await graphClient.api("/me/calendar/getSchedule").post(payload);
+        for (const schedule of res?.value || []) {
+            const arr = schedule.scheduleItems || [];
+            for (const b of arr) {
+                if (b.status === "busy" || b.status === "oof" || b.status === "tentative") {
+                    if (b?.start?.dateTime && b?.end?.dateTime) {
+                        // Graph returns times without Z, but specifies UTC. Ensure ISO format.
+                        intervals.push({ 
+                            start: dayjs.utc(b.start.dateTime).toISOString(), 
+                            end: dayjs.utc(b.end.dateTime).toISOString() 
+                        });
+                    }
+                }
+            }
+        }
+      } catch {}
+    }
+
+    // Merge overlapping intervals (again if MS added some, or recreate)
+    intervals.sort((a, b) => toMillis(a.start) - toMillis(b.start));
+    merged.length = 0; // Clear merged
+    for (const cur of intervals) {
+      if (merged.length === 0) {
+        merged.push({ ...cur });
+        continue;
+      }
+      const last = merged[merged.length - 1];
+      if (toMillis(cur.start) <= toMillis(last.end)) {
+        if (toMillis(cur.end) > toMillis(last.end)) {
+          last.end = cur.end;
+        }
+      } else {
+        merged.push({ ...cur });
+      }
     }
 
     // Compute free intervals within [start, end] by subtracting merged busy blocks

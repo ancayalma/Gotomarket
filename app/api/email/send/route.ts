@@ -5,6 +5,8 @@ import sendEmail from "@/lib/sendmail";
 import { prismadb } from "@/lib/prisma";
 import crypto from "crypto";
 import { systemLogger } from "@/lib/logger";
+import { getGmailClientForUser } from "@/lib/gmail";
+import { getGraphClient } from "@/lib/microsoft";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -97,14 +99,92 @@ export async function POST(req: Request) {
             });
         }
 
-        // 4. Dispatch Email
-        await sendEmail({
-            from: process.env.EMAIL_FROM,
-            to,
-            subject,
-            text, // Plain text fallback
-            html: processedHtml,
-        });
+        // 4. Dispatch Email natively or via SES fallback
+        const gmailClient = await getGmailClientForUser(userId);
+        const graphClient = !gmailClient ? await getGraphClient(userId) : null;
+
+        if (gmailClient) {
+            const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+            const messageParts = [
+                `To: ${to}`,
+                `Subject: ${utf8Subject}`,
+                "Content-Type: text/html; charset=utf-8",
+                "MIME-Version: 1.0",
+                "",
+                processedHtml
+            ];
+            
+            const messageContent = messageParts.join("\r\n");
+            const encodedMessage = Buffer.from(messageContent)
+                .toString("base64")
+                .replace(/\+/g, "-")
+                .replace(/\//g, "_")
+                .replace(/=+$/, "");
+
+            const res = await gmailClient.users.messages.send({
+                userId: "me",
+                requestBody: { raw: encodedMessage }
+            });
+
+            // Log into CRM Emails
+            await prismadb.crm_Emails.create({
+                data: {
+                    user_id: userId,
+                    provider: 'google',
+                    message_id: res.data.id || `local-${Date.now()}`,
+                    subject: subject,
+                    snippet: text.substring(0, 100),
+                    to_emails: [{ email: to }],
+                    is_inbound: false,
+                    is_read: true,
+                    date: new Date(),
+                    lead_id: targetLeadId,
+                    contact_id: contactId,
+                } as any
+            });
+
+        } else if (graphClient) {
+            const messagePayload = {
+                message: {
+                    subject: subject,
+                    body: {
+                        contentType: "HTML",
+                        content: processedHtml
+                    },
+                    toRecipients: [{ emailAddress: { address: to } }]
+                },
+                saveToSentItems: "true"
+            };
+
+            await graphClient.api('/me/sendMail').post(messagePayload);
+
+            // Log into CRM Emails
+            await prismadb.crm_Emails.create({
+                data: {
+                    user_id: userId,
+                    provider: 'microsoft',
+                    message_id: `ms-${Date.now()}`,
+                    subject: subject,
+                    snippet: text.substring(0, 100),
+                    to_emails: [{ email: to }],
+                    is_inbound: false,
+                    is_read: true,
+                    date: new Date(),
+                    lead_id: targetLeadId,
+                    contact_id: contactId,
+                } as any
+            });
+
+        } else {
+            // Fallback to SES
+            await sendEmail({
+                from: process.env.EMAIL_FROM,
+                to,
+                subject,
+                text, // Plain text fallback
+                html: processedHtml,
+            });
+        }
 
         return NextResponse.json({ message: "Email sent successfully", token: trackingToken });
     } catch (error) {

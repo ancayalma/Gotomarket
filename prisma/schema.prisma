@@ -21,10 +21,10 @@ enum TeamType {
 // ═══════════════════════════════════════════════════════════════════
 
 enum QuestStatus {
-  DRAFT      // Created but not yet visible to team
-  ACTIVE     // Live and trackable
-  COMPLETED  // Deadline passed or manually closed
-  ARCHIVED   // Retired / hidden
+  DRAFT // Created but not yet visible to team
+  ACTIVE // Live and trackable
+  COMPLETED // Deadline passed or manually closed
+  ARCHIVED // Retired / hidden
 }
 
 enum QuestDifficulty {
@@ -137,17 +137,17 @@ model crm_Leads {
   pipeline_stage             PipelineStage?  @default(Identify)
 
   // Extended outreach channel fields
-  outreach_transport        String?
-  sms_status                String?
-  sms_sent_at               DateTime? @db.Date
-  last_sms_id               String?
-  phone_verified            Boolean?  @default(false)
-  call_status               String?
-  connect_contact_id        String?
-  call_recording_url        String?
-  call_transcript_url       String?
-  aws_eum_session_id        String?
-  opt_out                   Boolean?  @default(false)
+  outreach_transport  String?
+  sms_status          String?
+  sms_sent_at         DateTime? @db.Date
+  last_sms_id         String?
+  phone_verified      Boolean?  @default(false)
+  call_status         String?
+  connect_contact_id  String?
+  call_recording_url  String?
+  call_transcript_url String?
+  aws_eum_session_id  String?
+  opt_out             Boolean?  @default(false)
 
   lead_pool_maps         crm_Lead_Pools_Leads[]
   contact_candidate_maps crm_Contact_Candidate_Leads[]
@@ -305,11 +305,11 @@ model crm_Outreach_Campaigns {
   pool    String? @db.ObjectId
 
   // Campaign-specific overrides
-  prompt_override String?
-  signature_html  String?
-  signature_meta  Json?
-  resource_links  Json?
-  meeting_link    String?
+  prompt_override   String?
+  signature_html    String?
+  signature_meta    Json?
+  resource_links    Json?
+  meeting_link      String?
   campaign_branding Json? // Snapshot/Override of TeamBrandIdentity for this specific campaign
 
   // Channels enabled
@@ -432,7 +432,7 @@ model crm_Contacts {
   last_name              String
   office_phone           String?
   mobile_phone           String?
-  opt_out                Boolean?  @default(false)
+  opt_out                Boolean?            @default(false)
   website                String?
   position               String?
   status                 Boolean             @default(true)
@@ -943,7 +943,7 @@ model Users {
   lastLoginAt          DateTime?                @db.Date
   name                 String?
   password             String?
-  lastKnownRegion      String?                  // E.g., 'CA', 'NY', etc. for MAU tracking (AB 853)
+  lastKnownRegion      String? // E.g., 'CA', 'NY', etc. for MAU tracking (AB 853)
   lastActiveAt         DateTime?                @db.Date
   resetToken           String?
   resetTokenExpires    DateTime?
@@ -1028,23 +1028,23 @@ model Users {
   created_validation_rules ValidationRule[] @relation(name: "ValidationRuleCreator")
 
   // Phase 3: Approval Process
-  created_approval_processes ApprovalProcess[]       @relation(name: "ApprovalProcessCreator")
-  approval_step_approvals    ApprovalStep[]          @relation(name: "ApprovalStepApprover")
-  approval_submissions       ApprovalRequest[]       @relation(name: "ApprovalSubmitter")
+  created_approval_processes ApprovalProcess[] @relation(name: "ApprovalProcessCreator")
+  approval_step_approvals    ApprovalStep[]    @relation(name: "ApprovalStepApprover")
+  approval_submissions       ApprovalRequest[] @relation(name: "ApprovalSubmitter")
 
   // Gamification & University
-  university_level           Int                     @default(1)
-  approval_actions           ApprovalRequestAction[] @relation(name: "ApprovalActor")
-  notifications              Notification[]
-  quotes                     crm_Quotes[]
+  university_level Int                     @default(1)
+  approval_actions ApprovalRequestAction[] @relation(name: "ApprovalActor")
+  notifications    Notification[]
+  quotes           crm_Quotes[]
 
   // Quest System
-  created_quests         Quest[]         @relation(name: "QuestCreator")
-  quest_progress         QuestProgress[] @relation(name: "UserQuestProgress")
-  quest_points_total     Int             @default(0)
-  quest_points_season    Int             @default(0)
-  quest_streak           Int             @default(0)
-  quest_badges           String[]
+  created_quests      Quest[]         @relation(name: "QuestCreator")
+  quest_progress      QuestProgress[] @relation(name: "UserQuestProgress")
+  quest_points_total  Int             @default(0)
+  quest_points_season Int             @default(0)
+  quest_streak        Int             @default(0)
+  quest_badges        String[]
 
   dashboard_preference   DashboardPreference?
   navigation_preferences NavigationConfig[]
@@ -1060,6 +1060,7 @@ model Users {
   mfaBackupCodes  String? // JSON string of hashed backup codes
   session_version Int             @default(1)
   authenticators  Authenticator[] // For WebAuthn (Fingerprint/Biometrics)
+  crmEmails       crm_Emails[]
 }
 
 model Team {
@@ -1156,26 +1157,26 @@ model Team {
   integrations       Tenant_Integrations?
   system_activities  SystemActivity[]
   // Widget Configuration
-  revenue_target     Int @default(10000)
+  revenue_target     Int                  @default(10000)
 
   // Quest System
-  quests             Quest[]         @relation(name: "TeamQuests")
+  quests Quest[] @relation(name: "TeamQuests")
 }
 
 model TeamBrandIdentity {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  team_id   String   @unique @db.ObjectId
-  team      Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
-  
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  team_id String @unique @db.ObjectId
+  team    Team   @relation(fields: [team_id], references: [id], onDelete: Cascade)
+
   // ── Core Information ──
-  company_name       String?
-  industry           String?
-  location           String?
-  website_url        String?
-  phone_number       String?
-  company_email      String?
-  tagline            String?  // Elevator pitch / one-liner
-  logo_url           String?
+  company_name        String?
+  industry            String?
+  location            String?
+  website_url         String?
+  phone_number        String?
+  company_email       String?
+  tagline             String? // Elevator pitch / one-liner
+  logo_url            String?
   primary_brand_color String? // Hex or rgb value for email templates
 
   // ── Strategic Vision ──
@@ -1183,11 +1184,11 @@ model TeamBrandIdentity {
   core_philosophy   String?
 
   // ── Brand Pillars ──
-  core_values             String[]
-  strategic_focus_areas   String[]
-  competitive_advantages  String[]
-  key_products_services   String[] // What you sell
-  pain_points_solved      String[] // Problems you fix for prospects
+  core_values            String[]
+  strategic_focus_areas  String[]
+  competitive_advantages String[]
+  key_products_services  String[] // What you sell
+  pain_points_solved     String[] // Problems you fix for prospects
 
   // ── Target Audience ──
   audience_description   String?
@@ -1221,48 +1222,48 @@ model TeamBrandIdentity {
 }
 
 model Quest {
-  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
-  icon        String          @default("Sword")
-  color       String          @default("amber")
+  icon        String  @default("Sword")
+  color       String  @default("amber")
 
   // Quest Configuration
-  quest_type      String      // e.g. "close_deals", "send_outreach", "custom_manual"
-  target_count    Int         @default(1)
-  target_field    String?
-  difficulty      QuestDifficulty @default(MEDIUM)
+  quest_type   String // e.g. "close_deals", "send_outreach", "custom_manual"
+  target_count Int             @default(1)
+  target_field String?
+  difficulty   QuestDifficulty @default(MEDIUM)
 
   // Rewards
-  qp_reward       Int         @default(100)
-  xp_reward       Int         @default(10)
-  badge_name      String?
-  badge_icon      String?
+  qp_reward  Int     @default(100)
+  xp_reward  Int     @default(10)
+  badge_name String?
+  badge_icon String?
 
   // Sprint Duration
-  duration_preset  String?     // WEEKEND_SPRINT, WEEKLY_SPRINT, BIWEEKLY, MONTHLY, QUARTERLY, STRONG_START, STRONG_FINISH, CUSTOM, OPEN_ENDED
-  status           QuestStatus @default(DRAFT)
-  starts_at        DateTime?   @db.Date
-  ends_at          DateTime?   @db.Date
-  is_recurring     Boolean     @default(false)
+  duration_preset   String? // WEEKEND_SPRINT, WEEKLY_SPRINT, BIWEEKLY, MONTHLY, QUARTERLY, STRONG_START, STRONG_FINISH, CUSTOM, OPEN_ENDED
+  status            QuestStatus @default(DRAFT)
+  starts_at         DateTime?   @db.Date
+  ends_at           DateTime?   @db.Date
+  is_recurring      Boolean     @default(false)
   recurrence_preset String?
 
   // Ownership
-  created_by       String      @db.ObjectId
-  creator          Users       @relation(name: "QuestCreator", fields: [created_by], references: [id])
-  team_id          String      @db.ObjectId
-  assigned_team    Team        @relation(name: "TeamQuests", fields: [team_id], references: [id], onDelete: Cascade)
+  created_by    String @db.ObjectId
+  creator       Users  @relation(name: "QuestCreator", fields: [created_by], references: [id])
+  team_id       String @db.ObjectId
+  assigned_team Team   @relation(name: "TeamQuests", fields: [team_id], references: [id], onDelete: Cascade)
 
   // Participation
-  is_team_wide     Boolean     @default(true)
-  assigned_users   String[]    @db.ObjectId
+  is_team_wide   Boolean  @default(true)
+  assigned_users String[] @db.ObjectId
 
   // Metadata
-  created_at       DateTime    @default(now()) @db.Date
-  updated_at       DateTime    @updatedAt @db.Date
+  created_at DateTime @default(now()) @db.Date
+  updated_at DateTime @updatedAt @db.Date
 
   // Relations
-  progress         QuestProgress[]
+  progress QuestProgress[]
 
   @@index([team_id])
   @@index([status])
@@ -1270,27 +1271,27 @@ model Quest {
 }
 
 model QuestProgress {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  quest_id        String    @db.ObjectId
-  quest           Quest     @relation(fields: [quest_id], references: [id], onDelete: Cascade)
+  quest_id String @db.ObjectId
+  quest    Quest  @relation(fields: [quest_id], references: [id], onDelete: Cascade)
 
-  user_id         String    @db.ObjectId
-  user            Users     @relation(name: "UserQuestProgress", fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.ObjectId
+  user    Users  @relation(name: "UserQuestProgress", fields: [user_id], references: [id], onDelete: Cascade)
 
   // Tracking
-  current_count   Int       @default(0)
-  is_completed    Boolean   @default(false)
-  completed_at    DateTime? @db.Date
+  current_count Int       @default(0)
+  is_completed  Boolean   @default(false)
+  completed_at  DateTime? @db.Date
 
   // Rewards
-  qp_awarded      Int       @default(0)
-  xp_awarded      Boolean   @default(false)
+  qp_awarded      Int     @default(0)
+  xp_awarded      Boolean @default(false)
   bonuses_applied Json?
 
   // Metadata
-  started_at      DateTime  @default(now()) @db.Date
-  updated_at      DateTime  @updatedAt @db.Date
+  started_at DateTime @default(now()) @db.Date
+  updated_at DateTime @updatedAt @db.Date
 
   @@unique([quest_id, user_id])
   @@index([user_id])
@@ -1440,6 +1441,11 @@ model gmail_Tokens {
   createdAt     DateTime? @default(now()) @db.Date
   updatedAt     DateTime? @updatedAt @db.Date
 
+  // Webhook / Sync
+  historyId           String?
+  webhook_resource_id String?
+  webhook_expires_at  DateTime? @db.Date
+
   assigned_user Users? @relation(fields: [user], references: [id], onDelete: Cascade)
 }
 
@@ -1455,7 +1461,50 @@ model microsoft_Tokens {
   createdAt     DateTime? @default(now()) @db.Date
   updatedAt     DateTime? @updatedAt @db.Date
 
+  // Webhook / Sync
+  deltaLink               String?
+  subscription_id         String?
+  subscription_expires_at DateTime? @db.Date
+
   assigned_user Users? @relation(fields: [user], references: [id], onDelete: Cascade)
+}
+
+model crm_Emails {
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  v          Int?    @map("__v")
+  user_id    String  @db.ObjectId // The user whose inbox this belongs to
+  provider   String // "google" or "microsoft"
+  message_id String  @unique // Provider's message ID
+  thread_id  String? // Provider's thread ID
+
+  // Relations mapped
+  lead_id    String? @db.ObjectId
+  contact_id String? @db.ObjectId
+  account_id String? @db.ObjectId
+  team_id    String? @db.ObjectId
+
+  // Metadata
+  subject    String?
+  snippet    String?
+  from_email String?
+  from_name  String?
+  to_emails  Json? // Array of { email, name }
+  cc_emails  Json?
+  bcc_emails Json?
+
+  // Content (encrypted if sensitive, but typically metadata is enough if full body is fetched on demand, or we encrypt the body)
+  body_html String? // Encrypted
+  body_text String? // Encrypted
+
+  is_inbound      Boolean @default(true) // false if user sent it
+  is_read         Boolean @default(false)
+  has_attachments Boolean @default(false)
+
+  date      DateTime @db.Date // From email header
+  createdAt DateTime @default(now()) @db.Date
+  updatedAt DateTime @updatedAt @db.Date
+
+  assigned_user Users? @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 enum EmailProvider {
@@ -3955,10 +4004,10 @@ model crm_Subscriptions {
   // Billing invoices for this subscription
   invoices crm_BillingInvoice[]
 
-  @@index([next_billing_date])
-
   // Synthesis Layer (AI Memory)
   knowledgeSignals KnowledgeSignal[]
+
+  @@index([next_billing_date])
 }
 
 // Per-cycle billing invoices (subscription receipts)
@@ -4058,16 +4107,16 @@ model ContextNode {
   createdAt DateTime @default(now()) @db.Date
   updatedAt DateTime @updatedAt @db.Date
 
-  accountId String?  @db.ObjectId
-  leadId    String?  @db.ObjectId
+  accountId String? @db.ObjectId
+  leadId    String? @db.ObjectId
 
   summary         String?
   lifecycleStatus String?
   sentimentScore  Float?
   intentLevel     String?
 
-  account         crm_Accounts? @relation(fields: [accountId], references: [id])
-  lead            crm_Leads?    @relation(fields: [leadId], references: [id])
+  account crm_Accounts? @relation(fields: [accountId], references: [id])
+  lead    crm_Leads?    @relation(fields: [leadId], references: [id])
 
   knowledgeSignals KnowledgeSignal[]
   embeddings       VectorEmbedding[]
@@ -4080,31 +4129,31 @@ model KnowledgeSignal {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @default(now()) @db.Date
 
-  contextNodeId String? @db.ObjectId
+  contextNodeId String?      @db.ObjectId
   contextNode   ContextNode? @relation(fields: [contextNodeId], references: [id])
 
   type       String
   content    String
   confidence Float?
 
-  sourceType  String
-  sourceUrl   String?
+  sourceType String
+  sourceUrl  String?
 
-  accountId       String? @db.ObjectId
-  leadId          String? @db.ObjectId
-  outreachItemId  String? @db.ObjectId
-  taskId          String? @db.ObjectId
-  invoiceId       String? @db.ObjectId
-  subscriptionId  String? @db.ObjectId
+  accountId      String? @db.ObjectId
+  leadId         String? @db.ObjectId
+  outreachItemId String? @db.ObjectId
+  taskId         String? @db.ObjectId
+  invoiceId      String? @db.ObjectId
+  subscriptionId String? @db.ObjectId
 
-  account         crm_Accounts?         @relation(fields: [accountId], references: [id])
-  lead            crm_Leads?            @relation(fields: [leadId], references: [id])
-  outreachItem    crm_Outreach_Items?   @relation(fields: [outreachItemId], references: [id])
-  task            Tasks?                @relation(fields: [taskId], references: [id])
-  invoice         Invoices?             @relation(fields: [invoiceId], references: [id])
-  subscription    crm_Subscriptions?    @relation(fields: [subscriptionId], references: [id])
+  account      crm_Accounts?       @relation(fields: [accountId], references: [id])
+  lead         crm_Leads?          @relation(fields: [leadId], references: [id])
+  outreachItem crm_Outreach_Items? @relation(fields: [outreachItemId], references: [id])
+  task         Tasks?              @relation(fields: [taskId], references: [id])
+  invoice      Invoices?           @relation(fields: [invoiceId], references: [id])
+  subscription crm_Subscriptions?  @relation(fields: [subscriptionId], references: [id])
 
-  embeddings      VectorEmbedding[]
+  embeddings VectorEmbedding[]
 
   @@index([contextNodeId])
   @@index([accountId])
@@ -4117,13 +4166,13 @@ model VectorEmbedding {
 
   embedding Float[]
 
-  text      String
+  text String
 
   contextNodeId     String? @db.ObjectId
   knowledgeSignalId String? @db.ObjectId
 
-  contextNode       ContextNode?      @relation(fields: [contextNodeId], references: [id])
-  knowledgeSignal   KnowledgeSignal?  @relation(fields: [knowledgeSignalId], references: [id])
+  contextNode     ContextNode?     @relation(fields: [contextNodeId], references: [id])
+  knowledgeSignal KnowledgeSignal? @relation(fields: [knowledgeSignalId], references: [id])
 
   @@index([contextNodeId])
   @@index([knowledgeSignalId])

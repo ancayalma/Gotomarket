@@ -84,9 +84,26 @@ export function getOAuth2ClientRedirectUri(): string {
   return `${baseUrl}/api/google/callback`;
 }
 
-export function getOAuth2Client() {
-  const clientId = requireEnv("GMAIL_CLIENT_ID");
-  const clientSecret = requireEnv("GMAIL_CLIENT_SECRET");
+export async function resolveGoogleConfig() {
+  let config: any = null;
+  try {
+    config = await prismadb.systemAuthConfig.findUnique({ where: { provider: "google" } });
+  } catch (e) {
+    // Ignore DB error for config lookup if the table doesn't exist yet or other DB error
+  }
+
+  const clientId = config?.enabled && config?.clientId ? config.clientId : process.env.GMAIL_CLIENT_ID;
+  const clientSecret = config?.enabled && config?.clientSecret ? config.clientSecret : process.env.GMAIL_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error("Missing Google OAuth configuration. Please configure it in SystemAuthConfig or .env");
+  }
+
+  return { clientId, clientSecret };
+}
+
+export async function getOAuth2Client() {
+  const { clientId, clientSecret } = await resolveGoogleConfig();
 
   const redirectUri = getOAuth2ClientRedirectUri();
 
@@ -102,8 +119,8 @@ export function getOAuth2Client() {
  * Create OAuth consent URL for the current user.
  * Persisting userId in state allows mapping back on callback.
  */
-export function getGmailAuthUrl(userId: string) {
-  const oauth2 = getOAuth2Client();
+export async function getGmailAuthUrl(userId: string) {
+  const oauth2 = await getOAuth2Client();
   const state = Buffer.from(JSON.stringify({ u: userId })).toString("base64url");
   const url = oauth2.generateAuthUrl({
     access_type: "offline",
@@ -119,7 +136,7 @@ export function getGmailAuthUrl(userId: string) {
  * Exchange code for tokens and upsert into gmail_Tokens for the user.
  */
 export async function exchangeCodeForTokens(userId: string, code: string) {
-  const oauth2 = getOAuth2Client();
+  const oauth2 = await getOAuth2Client();
   const { tokens } = await oauth2.getToken(code);
   if (!tokens.access_token || !tokens.refresh_token) {
     // In some cases Google doesn't resend refresh_token if already granted; ensure we keep existing one.
@@ -167,7 +184,7 @@ export async function exchangeCodeForTokens(userId: string, code: string) {
  * Will set credentials from DB and attempt to refresh when expired.
  */
 export async function getGmailClientForUser(userId: string) {
-  const oauth2 = getOAuth2Client();
+  const oauth2 = await getOAuth2Client();
   const token = await prismadb.gmail_Tokens.findFirst({ where: { user: userId }, orderBy: { updatedAt: "desc" } });
   if (!token) return null;
 
@@ -241,7 +258,7 @@ export async function sendViaGmail(
  * Get a Google OAuth2 client seeded with the user's stored credentials.
  */
 export async function getGoogleOAuth2ForUser(userId: string) {
-  const oauth2 = getOAuth2Client();
+  const oauth2 = await getOAuth2Client();
   const token = await prismadb.gmail_Tokens.findFirst({ where: { user: userId }, orderBy: { updatedAt: "desc" } });
   if (!token) return null;
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCalendarClientForUser } from "@/lib/gmail";
+import { getGraphClient } from "@/lib/microsoft";
 import { prismadb } from "@/lib/prisma";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -52,8 +53,10 @@ export async function POST(req: Request) {
     }
 
     const calendar = await getCalendarClientForUser(userId);
-    if (!calendar) {
-      return NextResponse.json({ ok: false, connected: false, error: "Google not connected" }, { status: 404 });
+    const graphClient = !calendar ? await getGraphClient(userId) : null;
+    
+    if (!calendar && !graphClient) {
+      return NextResponse.json({ ok: false, connected: false, error: "No calendar connected" }, { status: 404 });
     }
 
     const body = await req.json();
@@ -73,10 +76,18 @@ export async function POST(req: Request) {
     let targetCalendarId = requestedCalendarId || undefined;
     // Validate requested calendarId against accessible calendars; if not accessible, unset to trigger default resolution
     try {
-      const cl = await calendar.calendarList.list();
-      const accessibleIds = new Set(((cl.data.items || []) as any[]).map((i: any) => String(i.id)));
-      if (targetCalendarId && !accessibleIds.has(String(targetCalendarId))) {
-        targetCalendarId = undefined;
+      if (calendar) {
+          const cl = await calendar.calendarList.list();
+          const accessibleIds = new Set(((cl.data.items || []) as any[]).map((i: any) => String(i.id)));
+          if (targetCalendarId && !accessibleIds.has(String(targetCalendarId))) {
+            targetCalendarId = undefined;
+          }
+      } else if (graphClient) {
+          const cl = await graphClient.api("/me/calendars").select("id").get();
+          const accessibleIds = new Set(((cl.value || []) as any[]).map((i: any) => String(i.id)));
+          if (targetCalendarId && !accessibleIds.has(String(targetCalendarId))) {
+            targetCalendarId = undefined;
+          }
       }
     } catch { }
     if (!targetCalendarId) {
@@ -97,25 +108,34 @@ export async function POST(req: Request) {
     let organizerEmailUsed: string | undefined = targetCalendarId;
     try {
       if (!organizerEmailUsed || organizerEmailUsed === "primary") {
-        const cl = await calendar.calendarList.list();
-        const primaryItem = (cl.data.items || []).find((i: any) => i.primary);
-        organizerEmailUsed =
-          typeof primaryItem?.id === "string"
-            ? primaryItem.id
-            : organizerEmailUsed || ((session as any)?.user?.email as string | undefined);
+        if (calendar) {
+            const cl = await calendar.calendarList.list();
+            const primaryItem = (cl.data.items || []).find((i: any) => i.primary);
+            organizerEmailUsed =
+              typeof primaryItem?.id === "string"
+                ? primaryItem.id
+                : organizerEmailUsed || ((session as any)?.user?.email as string | undefined);
+        } else if (graphClient) {
+            organizerEmailUsed = ((session as any)?.user?.email) || "primary";
+        }
       }
     } catch { }
     // Derive timeZone from target calendar or primary if not provided
     if (!timeZone) {
       try {
-        if (targetCalendarId && targetCalendarId !== "primary") {
-          const calMeta = await calendar.calendars.get({ calendarId: targetCalendarId });
-          timeZone = String((calMeta.data as any)?.timeZone || "");
-        }
-        if (!timeZone) {
-          const cl2 = await calendar.calendarList.list();
-          const primaryItem2 = (cl2.data.items || []).find((i: any) => i.primary);
-          timeZone = String((primaryItem2 as any)?.timeZone || "");
+        if (calendar) {
+            if (targetCalendarId && targetCalendarId !== "primary") {
+              const calMeta = await calendar.calendars.get({ calendarId: targetCalendarId });
+              timeZone = String((calMeta.data as any)?.timeZone || "");
+            }
+            if (!timeZone) {
+              const cl2 = await calendar.calendarList.list();
+              const primaryItem2 = (cl2.data.items || []).find((i: any) => i.primary);
+              timeZone = String((primaryItem2 as any)?.timeZone || "");
+            }
+        } else if (graphClient) {
+            const mailbox = await graphClient.api("/me/mailboxSettings").get();
+            timeZone = mailbox?.timeZone || undefined;
         }
       } catch { }
       if (!timeZone) timeZone = "UTC";
@@ -139,55 +159,98 @@ export async function POST(req: Request) {
     const startUtcISO = startZoned.utc().toISOString();
     const endUtcISO = endZoned.utc().toISOString();
 
-    const requestBody: any = {
-      summary: title,
-      description,
-      start: { dateTime: startUtcISO, timeZone },
-      end: { dateTime: endUtcISO, timeZone },
-      attendees: attendees.map((email) => ({ email })),
-      location,
-      // Optional reminders override
-      ...(remindersMinutes.length
-        ? {
-          reminders: {
-            useDefault: false,
-            overrides: remindersMinutes.map((m) => ({ method: "popup", minutes: m })),
+    let eventId: string | undefined;
+    let htmlLink: string | undefined;
+    let hangoutLink: string | undefined;
+
+    if (calendar) {
+        const requestBody: any = {
+          summary: title,
+          description,
+          start: { dateTime: startUtcISO, timeZone },
+          end: { dateTime: endUtcISO, timeZone },
+          attendees: attendees.map((email) => ({ email })),
+          location,
+          // Optional reminders override
+          ...(remindersMinutes.length
+            ? {
+              reminders: {
+                useDefault: false,
+                overrides: remindersMinutes.map((m) => ({ method: "popup", minutes: m })),
+              },
+            }
+            : {}),
+          // Try to auto-create a Google Meet link if possible
+          conferenceData: {
+            createRequest: {
+              requestId: "basaltcrm-" + Math.random().toString(36).slice(2),
+              conferenceSolutionKey: { type: "hangoutsMeet" },
+            },
           },
+        };
+
+        try {
+          const insert = await calendar.events.insert({
+            calendarId: targetCalendarId,
+            requestBody,
+            conferenceDataVersion: 1,
+            sendUpdates: "all",
+          });
+          const event = insert.data;
+          eventId = event.id || undefined;
+          htmlLink = event.htmlLink || undefined;
+          hangoutLink =
+            event.hangoutLink ||
+            (event.conferenceData?.entryPoints || []).find((e: any) => e.entryPointType === "video")?.uri ||
+            undefined;
+        } catch (err) {
+          systemLogger.error("[CALENDAR_EVENTS_INSERT]", (err as any)?.message || err);
+          return NextResponse.json(
+            { ok: false, error: (err as any)?.message || String(err), calendarIdUsed: targetCalendarId },
+            { status: 400 }
+          );
         }
-        : {}),
-      // Try to auto-create a Google Meet link if possible
-      conferenceData: {
-        createRequest: {
-          requestId: "basaltcrm-" + Math.random().toString(36).slice(2),
-          conferenceSolutionKey: { type: "hangoutsMeet" },
-        },
-      },
-    };
+    } else if (graphClient) {
+        const payload: any = {
+            subject: title,
+            body: {
+                contentType: "HTML",
+                content: description
+            },
+            start: {
+                dateTime: startUtcISO,
+                timeZone: "UTC"
+            },
+            end: {
+                dateTime: endUtcISO,
+                timeZone: "UTC"
+            },
+            attendees: attendees.map(email => ({
+                emailAddress: { address: email },
+                type: "required"
+            })),
+            isOnlineMeeting: true,
+            onlineMeetingProvider: "teamsForBusiness"
+        };
+        
+        if (location) {
+            payload.location = { displayName: location };
+        }
 
-    let insert;
-    try {
-      insert = await calendar.events.insert({
-        calendarId: targetCalendarId,
-        requestBody,
-        conferenceDataVersion: 1,
-        sendUpdates: "all",
-      });
-    } catch (err) {
-
-      systemLogger.error("[CALENDAR_EVENTS_INSERT]", (err as any)?.message || err);
-      return NextResponse.json(
-        { ok: false, error: (err as any)?.message || String(err), calendarIdUsed: targetCalendarId },
-        { status: 400 }
-      );
+        try {
+            const endpoint = targetCalendarId && targetCalendarId !== "primary" ? `/me/calendars/${targetCalendarId}/events` : `/me/events`;
+            const msEvent = await graphClient.api(endpoint).post(payload);
+            eventId = msEvent.id;
+            htmlLink = msEvent.webLink;
+            hangoutLink = msEvent.onlineMeeting?.joinUrl;
+        } catch (err) {
+            systemLogger.error("[CALENDAR_EVENTS_INSERT_MS]", (err as any)?.message || err);
+            return NextResponse.json(
+                { ok: false, error: (err as any)?.message || String(err), calendarIdUsed: targetCalendarId },
+                { status: 400 }
+            );
+        }
     }
-
-    const event = insert.data;
-    const eventId = event.id || undefined;
-    const htmlLink = event.htmlLink || undefined;
-    const hangoutLink =
-      event.hangoutLink ||
-      (event.conferenceData?.entryPoints || []).find((e: any) => e.entryPointType === "video")?.uri ||
-      undefined;
 
     // If this was for a lead, update outreach fields and insert activity
     // Support both leadId (MongoDB ObjectId) and email address lookup

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCalendarClientForUser } from "@/lib/gmail";
+import { getGraphClient } from "@/lib/microsoft";
 import { systemLogger } from "@/lib/logger";
 
 /**
@@ -42,8 +43,10 @@ export async function GET(req: Request) {
     }
 
     const calendar = await getCalendarClientForUser(userId);
-    if (!calendar) {
-      return NextResponse.json({ ok: false, connected: false, error: "Google not connected" }, { status: 404 });
+    const graphClient = !calendar ? await getGraphClient(userId) : null;
+    
+    if (!calendar && !graphClient) {
+      return NextResponse.json({ ok: false, connected: false, error: "No calendar connected" }, { status: 404 });
     }
 
     // Determine target calendars
@@ -57,8 +60,24 @@ export async function GET(req: Request) {
     }
 
     // Fetch calendar list to get default colors and summaries
-    const calListRes = await calendar.calendarList.list({ maxResults: 250, showHidden: true });
-    const calListItems = Array.isArray(calListRes.data.items) ? calListRes.data.items : [];
+    const calListItems = [];
+    if (calendar) {
+      const calListRes = await calendar.calendarList.list({ maxResults: 250, showHidden: true });
+      if (Array.isArray(calListRes.data.items)) {
+          calListItems.push(...calListRes.data.items);
+      }
+    } else if (graphClient) {
+      const msCalendars = await graphClient.api("/me/calendars").select("id,name,color,hexColor").get();
+      if (Array.isArray(msCalendars.value)) {
+          msCalendars.value.forEach((c: any) => {
+              calListItems.push({
+                  id: c.id,
+                  summary: c.name,
+                  backgroundColor: c.hexColor || undefined,
+              });
+          });
+      }
+    }
     const calMeta: Record<string, { id: string; summary: string; backgroundColor?: string; foregroundColor?: string }> = {};
     for (const c of calListItems) {
       if (!c.id) continue;
@@ -72,20 +91,22 @@ export async function GET(req: Request) {
 
     // Fetch Google color maps (events and calendars)
     let colorMapEvents: Record<string, { background: string; foreground: string }> = {};
-    try {
-      const colors = await calendar.colors.get({});
-      const eventColors = colors.data?.event || {};
-      for (const key of Object.keys(eventColors || {})) {
-        const entry: any = (eventColors as any)[key];
-        if (entry?.background) {
-          colorMapEvents[key] = {
-            background: entry.background,
-            foreground: entry.foreground || "#000000",
-          };
+    if (calendar) {
+      try {
+        const colors = await calendar.colors.get({});
+        const eventColors = colors.data?.event || {};
+        for (const key of Object.keys(eventColors || {})) {
+          const entry: any = (eventColors as any)[key];
+          if (entry?.background) {
+            colorMapEvents[key] = {
+              background: entry.background,
+              foreground: entry.foreground || "#000000",
+            };
+          }
         }
+      } catch {
+        // ignore if unavailable
       }
-    } catch {
-      // ignore if unavailable
     }
 
     type ApiEvent = {
@@ -109,56 +130,98 @@ export async function GET(req: Request) {
     // Collect events per calendar
     for (const calId of targetIds) {
       try {
-        const list = await calendar.events.list({
-          calendarId: calId,
-          timeMin: startDate.toISOString(),
-          timeMax: endDate.toISOString(),
-          singleEvents: true,
-          orderBy: "startTime",
-          maxResults: 2500,
-          showDeleted: false,
-        });
+        if (calendar) {
+            const list = await calendar.events.list({
+              calendarId: calId,
+              timeMin: startDate.toISOString(),
+              timeMax: endDate.toISOString(),
+              singleEvents: true,
+              orderBy: "startTime",
+              maxResults: 2500,
+              showDeleted: false,
+            });
 
-        const items = Array.isArray(list.data.items) ? list.data.items : [];
-        for (const ev of items) {
-          const startISO = ev.start?.dateTime || ev.start?.date || undefined;
-          const endISO = ev.end?.dateTime || ev.end?.date || undefined;
-          if (!startISO || !endISO) continue;
+            const items = Array.isArray(list.data.items) ? list.data.items : [];
+            for (const ev of items) {
+              const startISO = ev.start?.dateTime || ev.start?.date || undefined;
+              const endISO = ev.end?.dateTime || ev.end?.date || undefined;
+              if (!startISO || !endISO) continue;
 
-          let eventColor: { background: string; foreground: string; source: "event" | "calendar" } | undefined;
+              let eventColor: { background: string; foreground: string; source: "event" | "calendar" } | undefined;
 
-          if (ev.colorId && colorMapEvents[ev.colorId]) {
-            eventColor = { background: colorMapEvents[ev.colorId].background, foreground: colorMapEvents[ev.colorId].foreground, source: "event" };
-          } else {
-            const meta = calMeta[calId];
-            if (meta?.backgroundColor) {
-              eventColor = { background: meta.backgroundColor, foreground: meta.foregroundColor || "#000000", source: "calendar" };
+              if (ev.colorId && colorMapEvents[ev.colorId]) {
+                eventColor = { background: colorMapEvents[ev.colorId].background, foreground: colorMapEvents[ev.colorId].foreground, source: "event" };
+              } else {
+                const meta = calMeta[calId];
+                if (meta?.backgroundColor) {
+                  eventColor = { background: meta.backgroundColor, foreground: meta.foregroundColor || "#000000", source: "calendar" };
+                }
+              }
+
+              events.push({
+                id: ev.id || `${calId}:${startISO}`,
+                calendarId: calId,
+                calendarSummary: calMeta[calId]?.summary || calId,
+                summary: ev.summary || undefined,
+                description: ev.description || undefined,
+                startISO,
+                endISO,
+                allDay: !!ev.start?.date && !ev.start?.dateTime,
+                location: ev.location || undefined,
+                attendees: Array.isArray(ev.attendees)
+                  ? ev.attendees.map((a) => ({
+                      email: a.email ?? undefined,
+                      responseStatus: a.responseStatus ?? undefined,
+                    }))
+                  : undefined,
+                htmlLink: ev.htmlLink || undefined,
+                hangoutLink:
+                  ev.hangoutLink ||
+                  (ev.conferenceData?.entryPoints || []).find((e: any) => e.entryPointType === "video")?.uri ||
+                  undefined,
+                color: eventColor,
+              });
             }
-          }
+        } else if (graphClient) {
+            const endpoint = calId === "primary" ? "/me/calendarview" : `/me/calendars/${calId}/calendarview`;
+            const list = await graphClient.api(endpoint)
+                .query({ startDateTime: startDate.toISOString(), endDateTime: endDate.toISOString() })
+                .top(2500)
+                .get();
 
-          events.push({
-            id: ev.id || `${calId}:${startISO}`,
-            calendarId: calId,
-            calendarSummary: calMeta[calId]?.summary || calId,
-            summary: ev.summary || undefined,
-            description: ev.description || undefined,
-            startISO,
-            endISO,
-            allDay: !!ev.start?.date && !ev.start?.dateTime,
-            location: ev.location || undefined,
-            attendees: Array.isArray(ev.attendees)
-              ? ev.attendees.map((a) => ({
-                  email: a.email ?? undefined,
-                  responseStatus: a.responseStatus ?? undefined,
-                }))
-              : undefined,
-            htmlLink: ev.htmlLink || undefined,
-            hangoutLink:
-              ev.hangoutLink ||
-              (ev.conferenceData?.entryPoints || []).find((e: any) => e.entryPointType === "video")?.uri ||
-              undefined,
-            color: eventColor,
-          });
+            const items = list.value || [];
+            for (const ev of items) {
+              const startISO = ev.start?.dateTime ? `${ev.start.dateTime}Z` : undefined;
+              const endISO = ev.end?.dateTime ? `${ev.end.dateTime}Z` : undefined;
+              if (!startISO || !endISO) continue;
+
+              let eventColor: { background: string; foreground: string; source: "event" | "calendar" } | undefined;
+              const meta = calMeta[calId];
+              if (meta?.backgroundColor) {
+                eventColor = { background: meta.backgroundColor, foreground: meta.foregroundColor || "#000000", source: "calendar" };
+              }
+
+              events.push({
+                id: ev.id || `${calId}:${startISO}`,
+                calendarId: calId,
+                calendarSummary: calMeta[calId]?.summary || calId,
+                summary: ev.subject || undefined,
+                description: ev.bodyPreview || undefined,
+                startISO,
+                endISO,
+                allDay: !!ev.isAllDay,
+                location: ev.location?.displayName || undefined,
+                attendees: Array.isArray(ev.attendees)
+                  ? ev.attendees.map((a: any) => ({
+                      email: a.emailAddress?.address ?? undefined,
+                      responseStatus: undefined, // Requires more complex mapping if needed
+                    }))
+                  : undefined,
+                htmlLink: ev.webLink || undefined,
+                hangoutLink: ev.onlineMeeting?.joinUrl || undefined,
+                color: eventColor,
+              });
+            }
         }
       } catch (e: any) {
         // Continue other calendars even if one fails

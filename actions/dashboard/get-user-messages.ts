@@ -50,7 +50,33 @@ export const getUserMessages = async () => {
         });
     }
 
-    // 3. Normalize and Combine
+    // 3. Fetch Unread Inbound Emails
+    const unreadEmails = await prismadb.crm_Emails.findMany({
+        where: {
+            user_id: userId,
+            is_inbound: true,
+            is_read: false,
+        },
+        orderBy: {
+            date: "desc"
+        },
+        take: 100
+    });
+
+    // 4. Fetch Unread Inbound SMS
+    const unreadSms = await prismadb.crm_Lead_Activities.findMany({
+        where: {
+            user: userId,
+            type: { in: ["sms_received", "inbound_sms"] },
+            // If there's an is_read flag, add it here. Otherwise, rely on a recent timeframe or status
+        },
+        orderBy: {
+            createdAt: "desc"
+        },
+        take: 30
+    });
+
+    // 5. Normalize and Combine
     const notifications = [
         ...(internalMessages as any[]).map(m => ({
             id: m.message.id,
@@ -59,11 +85,11 @@ export const getUserMessages = async () => {
             title: m.message.subject,
             body: m.message.body_text || "No content",
             sender: {
-                name: m.message.sender_name || "Unknown",
+                name: m.message.sender_name || "System",
                 email: m.message.sender_email,
                 avatar: null as string | null
             },
-            url: `/messages?id=${m.message.id}` // Assuming /messages route
+            url: `/messages?id=${m.message.id}` 
         })),
         ...formSubmissions.map(f => ({
             id: f.id,
@@ -76,7 +102,33 @@ export const getUserMessages = async () => {
                 email: f.extracted_email,
                 avatar: null as string | null
             },
-            url: `/messages?tab=forms&id=${f.id}` // Assuming /messages handles forms too
+            url: `/messages?tab=forms&id=${f.id}`
+        })),
+        ...unreadEmails.map((e: any) => ({
+            id: e.message_id, // Important to use message_id or id, we'll use id so marking read works
+            type: 'email' as const,
+            createdAt: e.date,
+            title: e.subject || "No Subject",
+            body: e.snippet || "",
+            sender: {
+                name: e.from_name || e.from_email || "Unknown",
+                email: e.from_email,
+                avatar: null as string | null
+            },
+            url: `/crm/leads/${e.lead_id || e.id}` // Redirect to lead or message page
+        })),
+        ...unreadSms.map((s: any) => ({
+            id: s.id,
+            type: 'message' as const, // Treat as generic message for icon mapping if no sms type exists
+            createdAt: s.createdAt,
+            title: "New SMS Received",
+            body: (s.metadata as any)?.message || s.notes || "SMS Message",
+            sender: {
+                name: (s.metadata as any)?.from_phone || "Unknown Number",
+                email: null,
+                avatar: null as string | null
+            },
+            url: `/crm/leads/${s.lead || s.id}`
         }))
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 100);

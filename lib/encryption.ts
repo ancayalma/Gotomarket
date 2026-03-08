@@ -174,4 +174,5 @@ export const SECRET_FIELDS: Record<string, string[]> = {
     gmail_Tokens: ["access_token", "refresh_token"],
     microsoft_Tokens: ["access_token", "refresh_token"],
     systemServices: ["serviceKey", "servicePassword"],
+    crm_Emails: ["body_html", "body_text"],
 };

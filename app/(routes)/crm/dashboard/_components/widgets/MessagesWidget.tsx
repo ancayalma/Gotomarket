@@ -15,7 +15,7 @@ import { NewMessageModal } from "@/app/(routes)/messages/components/modals/NewMe
 
 interface NotificationItem {
     id: string;
-    type: 'message' | 'form';
+    type: 'message' | 'form' | 'email';
     createdAt: Date;
     title: string;
     body: string;
@@ -54,7 +54,7 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
         setMessages(initialMessages);
     }, [initialMessages]);
 
-    const handleMarkRead = async (id: string, type: 'message' | 'form') => {
+    const handleMarkRead = async (id: string, type: 'message' | 'form' | 'email') => {
         const previousMessages = [...messages];
         setMessages(prev => prev.filter(m => m.id !== id));
 

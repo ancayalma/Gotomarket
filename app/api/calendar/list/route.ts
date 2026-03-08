@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCalendarClientForUser } from "@/lib/gmail";
+import { getGraphClient } from "@/lib/microsoft";
 import { systemLogger } from "@/lib/logger";
 
 /**
@@ -19,35 +20,49 @@ export async function GET(_req: Request) {
     }
 
     const calendar = await getCalendarClientForUser(userId);
-    if (!calendar) {
-      return NextResponse.json({ ok: false, connected: false, error: "Google not connected" }, { status: 404 });
+    let calendars: Array<{ id: string; summary: string; primary?: boolean }> = [];
+
+    if (calendar) {
+      // Google Calendar Logic
+      let pageToken: string | undefined = undefined;
+
+      do {
+        const pageRes: any = await calendar.calendarList.list({
+          maxResults: 250,
+          showHidden: true,
+          pageToken,
+        });
+        pageToken = (pageRes as any).data?.nextPageToken || undefined;
+
+        const items: any[] = Array.isArray((pageRes as any).data?.items) ? (pageRes as any).data.items : [];
+        const batch = items
+          .map((c: any) => ({
+            id: c?.id || "",
+            summary: c?.summary || c?.id || "",
+            primary: !!c?.primary,
+          }))
+          .filter((c: any) => !!c.id);
+
+        calendars = calendars.concat(batch);
+      } while (pageToken);
+
+      return NextResponse.json({ ok: true, calendars, provider: "google" }, { status: 200 });
     }
 
-    // Paginate through all pages to ensure all calendars are detected
-    let calendars: Array<{ id: string; summary: string; primary?: boolean }> = [];
-    let pageToken: string | undefined = undefined;
+    // Fallback to Microsoft
+    const graphClient = await getGraphClient(userId);
+    if (graphClient) {
+      const msCalendars = await graphClient.api('/me/calendars').select('id,name,isDefaultCalendar').get();
+      const items = msCalendars.value || [];
+      const batch = items.map((c: any) => ({
+        id: c.id,
+        summary: c.name || "Calendar",
+        primary: !!c.isDefaultCalendar,
+      }));
+      return NextResponse.json({ ok: true, calendars: batch, provider: "microsoft" }, { status: 200 });
+    }
 
-    do {
-      const pageRes: any = await calendar.calendarList.list({
-        maxResults: 250,
-        showHidden: true,
-        pageToken,
-      });
-      pageToken = (pageRes as any).data?.nextPageToken || undefined;
-
-      const items: any[] = Array.isArray((pageRes as any).data?.items) ? (pageRes as any).data.items : [];
-      const batch = items
-        .map((c: any) => ({
-          id: c?.id || "",
-          summary: c?.summary || c?.id || "",
-          primary: !!c?.primary,
-        }))
-        .filter((c: any) => !!c.id);
-
-      calendars = calendars.concat(batch);
-    } while (pageToken);
-
-    return NextResponse.json({ ok: true, calendars }, { status: 200 });
+    return NextResponse.json({ ok: false, connected: false, error: "No calendar provider connected" }, { status: 404 });
   } catch (e: any) {
 
     systemLogger.error("[CALENDAR_LIST_GET]", e?.message || e);

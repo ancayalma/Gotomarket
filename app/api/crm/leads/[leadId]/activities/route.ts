@@ -104,7 +104,42 @@ export async function GET(_req: Request, { params }: Params) {
       return activity;
     });
 
-    return NextResponse.json({ activities: mergedActivities }, { status: 200 });
+    // Fetch Native Synced Emails from Google/Microsoft
+    const syncedEmails = await prismadb.crm_Emails.findMany({
+      where: { lead_id: leadId },
+      orderBy: { date: "desc" },
+      take: 50,
+      include: {
+        assigned_user: {
+          select: { name: true, image: true, avatar: true }
+        }
+      }
+    });
+
+    const mappedEmails = syncedEmails.map((email: any) => ({
+      id: email.id,
+      type: email.is_inbound ? 'reply_received' : 'EMAIL',
+      metadata: {
+        subject: email.subject,
+        snippet: email.snippet,
+        from_email: email.from_email,
+        messageId: email.message_id,
+        threadId: email.thread_id,
+        provider: email.provider
+      },
+      createdAt: email.date,
+      assigned_user: email.assigned_user ? {
+        name: email.assigned_user.name,
+        avatar: (email.assigned_user as any).avatar || (email.assigned_user as any).image
+      } : undefined
+    }));
+
+    // Combine, sort, and slice
+    const allTimeline = [...mergedActivities, ...mappedEmails]
+      .sort((a, b) => new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime())
+      .slice(0, 75);
+
+    return NextResponse.json({ activities: allTimeline }, { status: 200 });
   } catch (error) {
 
     systemLogger.error("[LEAD_ACTIVITIES_GET]", error);

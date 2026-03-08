@@ -12,7 +12,7 @@ export async function GET(req: Request) {
     }
 
     try {
-        const url = getMicrosoftAuthUrl(userId);
+        const url = await getMicrosoftAuthUrl(userId);
         return NextResponse.redirect(url);
     } catch (error: any) {
         return new NextResponse(error.message, { status: 500 });
