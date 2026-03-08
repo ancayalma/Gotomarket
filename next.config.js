@@ -63,7 +63,7 @@ const nextConfig = {
       },
     ];
   },
-  output: "standalone",
+  // output: "standalone", // Disabled for Plesk/Windows to avoid NTFS invalid file path errors
 };
 
 module.exports = nextConfig;
