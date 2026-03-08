@@ -31,6 +31,14 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+check_db.ts
+check_extends.ts
+debug_products.ts
+fix_todos.js
+patch-logger.js
+patch-sessions.js
+test-create.ts
+test-remote.mjs
 
 # local env files
 .env*.local
