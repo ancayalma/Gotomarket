@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { systemLogger } from "@/lib/logger";
+import { prismadbCrm } from "@/lib/prisma-crm";
 
 export type ActionResponse = {
     success: boolean;
@@ -39,6 +40,65 @@ export async function closeDealAndCreateProject(opportunityId: string): Promise<
         const projectTitle = opportunity.name || "New Project";
         const projectDescription = opportunity.description || `Project created from opportunity: ${opportunity.name}`;
 
+        // Trace campaign context via the associated lead
+        let brandLogoUrl = undefined;
+        let brandPrimaryColor = undefined;
+        let meetingLink = undefined;
+        let targetIndustries = [];
+        let targetGeos = [];
+        let targetTitles = [];
+        let campaignBrief = undefined;
+
+        if (opportunity.lead_id) {
+            try {
+                // Find pools that include this lead
+                const maps = await (prismadbCrm as any).crm_Lead_Pools_Leads.findMany({
+                    where: { lead: opportunity.lead_id },
+                    select: { pool: true },
+                    orderBy: { createdAt: "desc" },
+                });
+
+                for (const m of maps) {
+                    if (!m?.pool) continue;
+                    const pool = await (prismadbCrm as any).crm_Lead_Pools.findUnique({
+                        where: { id: m.pool },
+                        select: { icpConfig: true },
+                    });
+
+                    if (pool?.icpConfig) {
+                        const icp = pool.icpConfig as any;
+                        if (icp.industries) targetIndustries = icp.industries;
+                        if (icp.geos) targetGeos = icp.geos;
+                        if (icp.titles) targetTitles = icp.titles;
+
+                        const campaignId = icp.assignedCampaignId as string | undefined;
+                        if (campaignId) {
+                            const campaign = await (prismadbCrm as any).crm_Outreach_Campaigns.findUnique({
+                                where: { id: campaignId },
+                                select: { campaign_branding: true, meeting_link: true, description: true },
+                            });
+                            
+                            if (campaign) {
+                                if (campaign.campaign_branding) {
+                                    const branding = campaign.campaign_branding as any;
+                                    brandLogoUrl = branding.logo_url || undefined;
+                                    brandPrimaryColor = branding.primary_brand_color || undefined;
+                                }
+                                meetingLink = campaign.meeting_link || undefined;
+                                campaignBrief = campaign.description || undefined;
+                                break; // use newest non-empty pool's campaign
+                            }
+                        }
+                        
+                        // Fall back to just ICP if no campaign
+                        break;
+                    }
+                }
+            } catch (e) {
+                systemLogger.error("[PROJECT_TRANSITION_TRACE_ERROR]", e);
+            }
+        }
+
         const newProject = await prismadb.boards.create({
             data: {
                 v: 0,
@@ -50,6 +110,15 @@ export async function closeDealAndCreateProject(opportunityId: string): Promise<
                 createdBy: session.user.id,
                 updatedBy: session.user.id,
                 team_id: opportunity.team_id,
+
+                // Campaign Context preserved
+                brand_logo_url: brandLogoUrl,
+                brand_primary_color: brandPrimaryColor,
+                meeting_link: meetingLink,
+                target_industries: targetIndustries,
+                target_geos: targetGeos,
+                target_titles: targetTitles,
+                campaign_brief: campaignBrief,
             },
         });
 
