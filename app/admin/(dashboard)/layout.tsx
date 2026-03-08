@@ -11,8 +11,9 @@ import { ReactNode } from "react";
 import Header from "@/app/(routes)/components/Header";
 import SideBar from "@/app/(routes)/components/SideBar";
 import Footer from "@/app/(routes)/components/Footer";
-import { LearnProvider } from "@/components/providers/learn-provider";
 import ThemeGuard from "@/components/ThemeGuard";
+import UtilityBar from "@/components/UtilityBar";
+
 
 const AnyFooter = Footer as any;
 const AnySideBar = SideBar as any;
@@ -39,9 +40,6 @@ export default async function AdminDashboardLayout({
     const build = await getAllCommits();
 
     // Check if user is partner admin (BasaltHQ) or global admin
-    // We need to fetch the user again with team slug to be sure, or rely on teamInfo if it has slug
-    // teamInfo from getCurrentUserTeamId returns { id, name, plan, isAdmin, isOwner }
-    // It doesn't seem to return slug. Let's fetch user to be safe and consistent with page.tsx
     const user = await prismadb.users.findUnique({
         where: { email: session.user.email as string },
         include: { assigned_team: true }
@@ -52,7 +50,6 @@ export default async function AdminDashboardLayout({
     return (
         <ThemeGuard>
             <div className="fixed inset-0 flex h-[100dvh] overflow-hidden">
-                {/* Removed Global Sidebar for Admin to avoid confusion */}
                 {/* Restored Global Sidebar for Admin */}
                 <AnySideBar />
                 <div className="flex flex-col h-full w-full min-w-0 overflow-hidden">
@@ -66,12 +63,13 @@ export default async function AdminDashboardLayout({
                     <div className="flex flex-1 min-h-0 overflow-hidden">
                         <AdminSidebar showModules={!!showModules} />
                         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4">
-                            <LearnProvider>
-                                {children}
-                            </LearnProvider>
+                            {children}
                         </div>
                     </div>
-                    <AnyFooter />
+                    <div className="shrink-0">
+                        <UtilityBar />
+                        <AnyFooter />
+                    </div>
                 </div>
             </div>
         </ThemeGuard>

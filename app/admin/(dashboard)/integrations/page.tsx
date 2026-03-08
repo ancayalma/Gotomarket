@@ -9,6 +9,7 @@ import { MercurySettingsForm } from "./_components/MercurySettingsForm";
 import { CloudflareSettingsForm } from "./_components/CloudflareSettingsForm";
 import { ShopifySettingsForm, WooCommerceSettingsForm } from "./_components/ECommerceSettingsForm";
 import { LearnLink } from "@/components/ui/LearnLink";
+import Container from "@/app/(routes)/components/ui/Container";
 
 export default async function IntegrationsSettingsPage() {
     const session = await getServerSession(authOptions);
@@ -26,7 +27,11 @@ export default async function IntegrationsSettingsPage() {
     });
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
+        <Container 
+            title="Integrations" 
+            description="Connect your CRM to external services for payments, commerce, and security." 
+            fluid
+        >
             <LearnLink
                 tab="admin"
                 overviewTitle="External Service Integrations"
@@ -34,12 +39,6 @@ export default async function IntegrationsSettingsPage() {
                 overviewWhy="Authenticating these services here unlocks automated financial tracking and advanced bot protection across your entire team's LeadGen forms and outreach sequences."
                 overviewHow="Locate your API keys or Access Tokens in the provider's dashboard, paste them into the appropriate card below, and hit 'Save Integration' to activate the link."
             />
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Integrations</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Connect your CRM to external services for payments, commerce, and security.</p>
-                </div>
-            </div>
 
             {/* Payments & E-Commerce */}
             <div>
@@ -100,6 +99,6 @@ export default async function IntegrationsSettingsPage() {
                     <WooCommerceSettingsForm initialData={integration} />
                 </div>
             </div>
-        </div>
+        </Container>
     );
 }

@@ -26,12 +26,15 @@ const TeamDetailsPage = async ({ params }: { params: Promise<{ teamId: string }>
     let customRoles: any[] = [];
     let departments: any[] = [];
 
+    let apiKeys: any[] = [];
+    let apiLogs: any[] = [];
+
     const role = (currentUserInfo?.teamRole || '').toUpperCase();
     const isTeamSuperAdmin = currentUserInfo?.teamId === team?.id && ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM'].includes(role);
     const canManageTeam = currentUserInfo?.isGlobalAdmin || isTeamSuperAdmin;
 
     if (canManageTeam && team) {
-        const [resend_key, owner, roleCountsData, customRolesData, departmentsData] = await Promise.all([
+        const [resend_key, owner, roleCountsData, customRolesData, departmentsData, keysData, logsData] = await Promise.all([
             prismadb.systemServices.findFirst({
                 where: { name: "resend_smtp" },
             }),
@@ -74,6 +77,17 @@ const TeamDetailsPage = async ({ params }: { params: Promise<{ teamId: string }>
                 },
                 orderBy: { name: "asc" },
             }),
+            // Fetch API Keys
+            prismadb.crm_ApiKeys.findMany({
+                where: { tenant_id: team.id },
+                orderBy: { createdAt: "desc" }
+            }),
+            // Fetch API Logs
+            prismadb.crm_ApiLogs.findMany({
+                where: { tenant_id: team.id },
+                orderBy: { timestamp: "desc" },
+                take: 50
+            })
         ]);
 
         systemResendData = {
@@ -92,6 +106,8 @@ const TeamDetailsPage = async ({ params }: { params: Promise<{ teamId: string }>
         };
         customRoles = customRolesData;
         departments = departmentsData;
+        apiKeys = keysData;
+        apiLogs = logsData;
     }
 
     if (!team) {
@@ -117,6 +133,8 @@ const TeamDetailsPage = async ({ params }: { params: Promise<{ teamId: string }>
                 roleCounts={roleCounts}
                 customRoles={customRoles}
                 departments={departments}
+                apiKeys={apiKeys}
+                apiLogs={apiLogs}
             />
         </div>
     );

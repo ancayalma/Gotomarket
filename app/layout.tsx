@@ -16,6 +16,8 @@ import { SessionProvider } from "@/app/providers/SessionProvider";
 import { SWRSessionProvider } from "@/components/providers/swr-session-provider";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { LearnProvider } from "@/components/providers/learn-provider";
+import UtilityBar from "@/components/UtilityBar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -110,7 +112,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <SWRSessionProvider>
             <ThemeProvider>
               <RecentActivityTracker />
-              {children}
+              <LearnProvider>
+                {children}
+              </LearnProvider>
               {/* Team Suspension Check */}
               <SuspensionCheck />
               <ToastProvider />

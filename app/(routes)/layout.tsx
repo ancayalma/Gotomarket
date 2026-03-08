@@ -8,12 +8,11 @@ import SideBar from "./components/SideBar";
 import Footer from "./components/Footer";
 import { Metadata } from "next";
 import { SmartBreadcrumb } from "@/components/SmartBreadcrumb";
-import UtilityBar from "@/components/UtilityBar";
-import { LearnProvider } from "@/components/providers/learn-provider";
 import ForcePasswordChangeCheck from "@/components/auth/ForcePasswordChangeCheck";
 import TermsConsentCheck from "@/components/auth/TermsConsentCheck";
 import IdleSessionTimeout from "@/components/auth/IdleSessionTimeout";
 import ThemeGuard from "@/components/ThemeGuard";
+import UtilityBar from "@/components/UtilityBar";
 import { prismadb } from "@/lib/prisma";
 import { BrandSetupInterceptor } from "@/components/modals/BrandSetupInterceptor";
 
@@ -119,35 +118,31 @@ export default async function AppLayout({
   }
 
   return (
-    <LearnProvider>
-      <ThemeGuard>
-        <BrandSetupInterceptor isOpen={needsBrandSetup} teamId={userTeamId} />
-        <IdleSessionTimeout />
-        <TermsConsentCheck />
-        <ForcePasswordChangeCheck />
-        <div className="fixed inset-0 flex h-[100dvh] overflow-hidden">
-          <SideBar />
-          <div className="flex flex-col h-full w-full min-w-0 overflow-hidden">
-            <Header
-              id={session.user.id as string}
-              name={session.user.name as string}
-              email={session.user.email as string}
-              avatar={session.user.image as string}
-              lang={session.user.userLanguage as string}
-            />
-            <SmartBreadcrumb className="shrink-0" />
-            <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">
-              {children}
-            </div>
-            <div className="shrink-0">
-              <UtilityBar />
-            </div>
-            <div className="shrink-0">
-              <Footer />
-            </div>
+    <ThemeGuard>
+      <BrandSetupInterceptor isOpen={needsBrandSetup} teamId={userTeamId} />
+      <IdleSessionTimeout />
+      <TermsConsentCheck />
+      <ForcePasswordChangeCheck />
+      <div className="fixed inset-0 flex h-[100dvh] overflow-hidden">
+        <SideBar />
+        <div className="flex flex-col h-full w-full min-w-0 overflow-hidden">
+          <Header
+            id={session.user.id as string}
+            name={session.user.name as string}
+            email={session.user.email as string}
+            avatar={session.user.image as string}
+            lang={session.user.userLanguage as string}
+          />
+          <SmartBreadcrumb className="shrink-0" />
+          <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">
+            {children}
+          </div>
+          <div className="shrink-0">
+            <UtilityBar />
+            <Footer />
           </div>
         </div>
-      </ThemeGuard>
-    </LearnProvider>
+      </div>
+    </ThemeGuard>
   );
 }

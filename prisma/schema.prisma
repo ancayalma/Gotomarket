@@ -1061,6 +1061,7 @@ model Users {
   session_version Int             @default(1)
   authenticators  Authenticator[] // For WebAuthn (Fingerprint/Biometrics)
   crmEmails       crm_Emails[]
+  api_keys        crm_ApiKeys[]
 }
 
 model Team {
@@ -1161,6 +1162,9 @@ model Team {
 
   // Quest System
   quests Quest[] @relation(name: "TeamQuests")
+
+  // API Management
+  api_keys crm_ApiKeys[]
 }
 
 model TeamBrandIdentity {
@@ -4176,4 +4180,40 @@ model VectorEmbedding {
 
   @@index([contextNodeId])
   @@index([knowledgeSignalId])
+}
+
+// -----------------------------------------------------------------------------
+// APIM (API Management) Models - Phase 1
+// -----------------------------------------------------------------------------
+
+model crm_ApiKeys {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  tenant_id  String    @db.ObjectId
+  name       String // e.g., "Next.js Production Key"
+  key_prefix String // e.g., "sk_live_abc" (stored plain text for UI identification)
+  key_hash   String // bcrypt hashed full key for secure validation
+  status     String    @default("ACTIVE") // ACTIVE, REVOKED
+  last_used  DateTime?
+  created_by String    @db.ObjectId
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  team Team  @relation(fields: [tenant_id], references: [id])
+  user Users @relation(fields: [created_by], references: [id])
+}
+
+// API Audit Logs for both Platform and Client usage visibility
+model crm_ApiLogs {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  tenant_id   String   @db.ObjectId
+  api_key_id  String?  @db.ObjectId // Optional if anonymous or failed
+  endpoint    String
+  method      String
+  status_code Int
+  ip_address  String?
+  user_agent  String?
+  request_dur Int? // Request duration in ms
+  timestamp   DateTime @default(now())
+
+  // We intentionally omit relation constraint to ApiKeys to preserve audit logs even if keys are deleted
 }

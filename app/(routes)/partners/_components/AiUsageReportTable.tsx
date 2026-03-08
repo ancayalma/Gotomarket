@@ -127,8 +127,8 @@ export const AiUsageReportTable = ({ data, basaltTeamId, unknownTeamId }: AiUsag
                         <tr>
                             <th className="py-2 pr-4 pl-4 font-semibold text-foreground text-xs uppercase tracking-wider">Entity Name</th>
                             <th className="py-2 pr-4 font-semibold text-foreground text-right text-xs uppercase tracking-wider">Requests</th>
-                            <th className="py-2 pr-4 font-semibold text-foreground text-right text-xs uppercase tracking-wider">Prompt</th>
-                            <th className="py-2 pr-4 font-semibold text-foreground text-right text-xs uppercase tracking-wider">Output</th>
+                            <th className="py-2 pr-4 font-semibold text-teal-500 text-right text-xs uppercase tracking-wider">Prompt</th>
+                            <th className="py-2 pr-4 font-semibold text-fuchsia-500 text-right text-xs uppercase tracking-wider">Output</th>
                             <th className="py-2 pr-4 font-semibold text-foreground text-right text-xs uppercase tracking-wider">Total Tokens</th>
                             <th className="py-2 pr-4 font-semibold text-foreground text-right"></th>
                         </tr>
@@ -150,8 +150,8 @@ export const AiUsageReportTable = ({ data, basaltTeamId, unknownTeamId }: AiUsag
                                     </div>
                                 </td>
                                 <td className="py-3 pr-4 text-right font-mono text-foreground text-sm">{item.requestCount.toLocaleString()}</td>
-                                <td className="py-3 pr-4 text-right font-mono text-muted-foreground text-sm">{item.promptTokens.toLocaleString()}</td>
-                                <td className="py-3 pr-4 text-right font-mono text-muted-foreground text-sm">{item.completionTokens.toLocaleString()}</td>
+                                <td className="py-3 pr-4 text-right font-mono text-teal-400/80 text-sm">{item.promptTokens.toLocaleString()}</td>
+                                <td className="py-3 pr-4 text-right font-mono text-fuchsia-400/80 text-sm">{item.completionTokens.toLocaleString()}</td>
                                 <td className="py-3 pr-4 text-right font-bold font-mono text-foreground text-sm">{item.totalTokens.toLocaleString()}</td>
                                 <td className="py-3 pr-4 text-right">
                                     {item.id !== unknownTeamId && (

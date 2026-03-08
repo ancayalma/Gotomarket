@@ -227,11 +227,11 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
             };
         }
 
-        const usage = (msg.tokenUsage || {}) as { promptTokens?: number, completionTokens?: number, totalTokens?: number };
+        const usage = (msg.tokenUsage || {}) as { promptTokens?: number, completionTokens?: number, totalTokens?: number, inputTokens?: number, outputTokens?: number };
         const tokens = (usage.totalTokens || 0);
         teamUsage[targetId].totalTokens += tokens;
-        teamUsage[targetId].promptTokens += (usage.promptTokens || 0);
-        teamUsage[targetId].completionTokens += (usage.completionTokens || 0);
+        teamUsage[targetId].promptTokens += (usage.promptTokens || usage.inputTokens || 0);
+        teamUsage[targetId].completionTokens += (usage.completionTokens || usage.outputTokens || 0);
         teamUsage[targetId].requestCount += 1;
 
         // Model Distribution
@@ -343,7 +343,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
                 <div className="grid gap-6">
                     {/* KPI Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Card className="bg-card border-border/50" decoration="top" decorationColor="primary">
+                        <Card className="bg-card border-border/50" decoration="top" decorationColor="teal">
                             <p className="text-tremor-default text-muted-foreground uppercase tracking-widest font-semibold">Total Token Consumption</p>
                             <p className="text-3xl text-foreground font-bold mt-2">
                                 {totalPlatformTokens.toLocaleString()}
@@ -355,7 +355,7 @@ export default async function PartnersAiUsagePage({ searchParams }: PageProps) {
                                 {activeOrgCount}
                             </p>
                         </Card>
-                        <Card className="bg-card border-border/50" decoration="top" decorationColor="amber">
+                        <Card className="bg-card border-border/50" decoration="top" decorationColor="indigo">
                             <p className="text-tremor-default text-muted-foreground uppercase tracking-widest font-semibold">Total AI Requests</p>
                             <p className="text-3xl text-foreground font-bold mt-2">
                                 {totalRequests.toLocaleString()}
