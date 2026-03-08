@@ -13,7 +13,19 @@ Configure via env (optional):
 */
 
 const { spawnSync } = require("child_process");
-require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
+const dotenv = require("dotenv");
+
+// Load .env files in order of priority: .env.production.local, .env.local, .env.production, .env
+const envFiles = [".env.production.local", ".env.local", ".env.production", ".env"];
+for (const file of envFiles) {
+  const envPath = path.resolve(process.cwd(), file);
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+}
+
 
 function withDbName(raw, dbName) {
   try {
