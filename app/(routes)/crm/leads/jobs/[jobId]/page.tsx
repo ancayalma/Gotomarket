@@ -299,7 +299,7 @@ export default function LeadGenJobDetailPage({
     }
   };
 
-  const logs = data?.job?.logs || [];
+  const logs = useMemo(() => data?.job?.logs || [], [data?.job?.logs]);
   const latestLog = logs[logs.length - 1];
   const latestActivity = latestLog ? classifyLog(latestLog) : "info";
   const accentColor = ACTIVITY_CONFIG[latestActivity].accentHex;
