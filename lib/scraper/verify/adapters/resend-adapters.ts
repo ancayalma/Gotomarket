@@ -38,7 +38,7 @@ export function buildResendAdapters(): VerificationOptions["adapters"] {
       const e = (email || "").toLowerCase();
       if (!e.includes("@")) return "unknown" as const;
 
-      // Check Contact Candidates first
+      // 1. Check existing DB records first (Contact Candidates)
       const cc = await prismadbCrm.crm_Contact_Candidates.findFirst({
         where: { email: e },
         select: { emailStatus: true },
@@ -54,7 +54,11 @@ export function buildResendAdapters(): VerificationOptions["adapters"] {
       if (gp?.emailStatus === "VALID") return "accept" as const;
       if (gp?.emailStatus === "INVALID") return "reject" as const;
 
-      return "unknown" as const;
+      // 2. Perform a native, free SMTP Ping
+      const { nativeSmtpPing } = await import("../smtp-ping");
+      const pingResult = await nativeSmtpPing(email);
+      
+      return pingResult;
     },
 
     now: () => Date.now(),

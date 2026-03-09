@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { toast } from "react-hot-toast";
 import { LearnLink } from "@/components/ui/LearnLink";
+import { manualAgentEnrichment } from "@/actions/leads/manual-enrichment";
 
 type ContactCandidate = {
     id: string;
@@ -89,6 +90,29 @@ export default function ApprovalCenterPage() {
         // For now, let's mock the UI hiding or show toast. Let me know if you want the API added.
         toast.error("Candidate Rejected (Skipped).");
         setProcessing(null);
+    };
+
+    const handleDeepSearch = async (candidateId: string) => {
+        if (!session?.user?.id) {
+            toast.error("You must be logged in.");
+            return;
+        }
+
+        setProcessing(`research_${candidateId}`);
+        try {
+            const result = await manualAgentEnrichment(candidateId, session.user.id);
+            if (result.success) {
+                toast.success("Domain enriched! Credits charged.");
+                mutate();
+            } else {
+                toast.error(result.message || "Failed to enrich domain.");
+            }
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.message || "Failed to trigger deep research.");
+        } finally {
+            setProcessing(null);
+        }
     };
 
     if (isLoading) {
@@ -178,15 +202,26 @@ export default function ApprovalCenterPage() {
                                                 size="icon"
                                                 className="h-9 w-9 text-destructive border-destructive/20 hover:bg-destructive/10"
                                                 onClick={() => handleReject(candidate.id)}
-                                                disabled={processing === candidate.id}
+                                                disabled={!!processing && processing !== candidate.id}
                                             >
                                                 <X className="w-4 h-4" />
                                             </Button>
+                                            {(!candidate.contacts || candidate.contacts.length === 0) && (
+                                                <Button
+                                                    variant="outline"
+                                                    className="h-9 px-3 border-indigo-500/30 text-indigo-500 hover:bg-indigo-500/10 hover:text-indigo-400 gap-1 dark:text-indigo-400"
+                                                    onClick={() => handleDeepSearch(candidate.id)}
+                                                    disabled={!!processing}
+                                                >
+                                                    {processing === `research_${candidate.id}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                                    <span className="text-xs font-semibold">Deep Research</span>
+                                                </Button>
+                                            )}
                                             <Button
                                                 size="icon"
                                                 className="h-9 w-9 bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20 shadow-lg"
                                                 onClick={() => handleApprove(candidate.id)}
-                                                disabled={processing === candidate.id}
+                                                disabled={!!processing && processing !== candidate.id}
                                             >
                                                 {processing === candidate.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                             </Button>

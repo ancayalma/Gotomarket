@@ -578,7 +578,7 @@ async function extractPageData(page: any): Promise<{
  */
 import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
 
-async function visitWebsiteForAgent(url: string, userId?: string, icp?: ICPConfig): Promise<any> {
+export async function visitWebsiteForAgent(url: string, userId?: string, icp?: ICPConfig): Promise<any> {
   const db: any = prismadbCrm;
   const domain = normalizeDomain(url);
   const cacheThreshold = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000); // 14 days
@@ -930,7 +930,7 @@ async function visitWebsiteForAgent(url: string, userId?: string, icp?: ICPConfi
 /**
  * Use AI to enrich missing company fields
  */
-async function enrichCompanyDataWithAI(
+export async function enrichCompanyDataWithAI(
   domain: string,
   extractedData: any,
   userId: string,
@@ -997,7 +997,7 @@ Based on this information, provide:
 /**
  * Execute agent tool call
  */
-async function executeToolCall(toolName: string, args: any, context: any): Promise<any> {
+export async function executeToolCall(toolName: string, args: any, context: any): Promise<any> {
   switch (toolName) {
     case "search_companies":
       const searchResults = await ddgWebSearch(args.query, args.count || 20);

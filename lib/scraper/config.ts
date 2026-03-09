@@ -25,7 +25,7 @@ export const ScraperConfig = {
   // Email verification
   verify: {
     enabled: bool(process.env.SCRAPER_VERIFY_ENABLE, true),
-    stages: stages(process.env.SCRAPER_VERIFY_STAGES, ["syntax","mx"]),
+    stages: stages(process.env.SCRAPER_VERIFY_STAGES, ["syntax","mx","smtp"]),
     domainTtlDays: int(process.env.SCRAPER_VERIFY_DOMAIN_TTL_DAYS, 7),
     smtpTtlDays: int(process.env.SCRAPER_VERIFY_SMTP_TTL_DAYS, 1),
     useAdapters: bool(process.env.SCRAPER_VERIFY_USE_ADAPTERS, true),

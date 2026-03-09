@@ -192,12 +192,14 @@ export async function runLeadGenPipeline({
 
     createdCandidates = result.companiesSaved + serpAddedCandidates;
 
-    // 3. Consume Credits for Agentic session + Discovery
+    // 3. Consume Credits for Agentic session + Discovery + Enrichment
     if (!isPlatformAdmin) {
       const sessionCost = isResume ? 0 : 25;
       const discoveryCost = createdCandidates * 1;
-      await consumeLeadGenCredits(teamId, sessionCost + discoveryCost);
-      creditsConsumed = sessionCost + discoveryCost;
+      const agentEnrichmentCost = result.companiesSaved * 5;
+      const totalCost = sessionCost + discoveryCost + agentEnrichmentCost;
+      await consumeLeadGenCredits(teamId, totalCost);
+      creditsConsumed = totalCost;
     }
 
     // Update counters
