@@ -27,14 +27,14 @@ export async function POST(req: Request) {
       );
     }
 
-    systemLogger.error("[PARSE_ICP] Parsing natural language prompt...");
-    
+    systemLogger.info("[PARSE_ICP] Parsing natural language prompt...");
+
     const parsed = await parseICPFromNaturalLanguage(
       prompt.trim(),
       session.user.id
     );
 
-    systemLogger.error("[PARSE_ICP] Parsing complete:", parsed);
+    systemLogger.info("[PARSE_ICP] Parsing complete:", parsed);
 
     return NextResponse.json(parsed, { status: 200 });
   } catch (error) {

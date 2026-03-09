@@ -284,8 +284,26 @@ export function isGenericEmailLocalPart(local: string | null | undefined): boole
   const l = local.toLowerCase();
   const tokens = l.split(/[\.\+\-_]/g);
   const generics = new Set([
-    'info', 'contact', 'sales', 'support', 'admin', 'help', 'hello', 'team', 'office',
-    'enquiries', 'enquiry', 'marketing', 'press', 'careers'
+    // Role / department
+    'info', 'contact', 'contacts', 'sales', 'support', 'admin', 'help', 'hello', 'hi',
+    'team', 'office', 'enquiries', 'enquiry', 'marketing', 'press', 'careers', 'hr',
+    'billing', 'accounts', 'accounting', 'finance', 'legal', 'compliance', 'operations',
+    'service', 'services', 'customerservice', 'customersupport', 'customercare',
+    'reception', 'frontdesk', 'helpdesk', 'techsupport',
+    // Generic functional
+    'no-reply', 'noreply', 'donotreply', 'bounce', 'mailer', 'daemon', 'postmaster',
+    'webmaster', 'hostmaster', 'abuse', 'security', 'privacy', 'feedback',
+    'subscribe', 'unsubscribe', 'newsletter', 'notifications', 'alerts', 'updates',
+    // Common non-name prefixes
+    'boarding', 'onboarding', 'signup', 'register', 'welcome', 'getstarted',
+    'partnerships', 'partner', 'partners', 'affiliate', 'affiliates', 'referral',
+    'media', 'pr', 'comms', 'communications', 'editorial', 'editor', 'news', 'newsroom',
+    'jobs', 'recruiting', 'talent', 'people', 'hiring',
+    'general', 'main', 'company', 'business', 'corporate', 'headquarters', 'hq',
+    'orders', 'order', 'shipping', 'returns', 'refunds', 'warranty', 'claims',
+    'management', 'managers', 'staff', 'employees',
+    'ipos', 'prm', 'tpa', 'api', 'dev', 'developer', 'developers', 'engineering',
+    'it', 'sysadmin', 'ops', 'devops', 'infrastructure',
   ]);
   if (tokens.some(t => generics.has(t))) return true;
   // Also consider exact/prefix/suffix forms like "sales-us", "info.team"
@@ -306,11 +324,11 @@ export function deriveFullNameFromEmail(email: string | null | undefined): strin
   const local = parts[0].replace(/\d+/g, ''); // strip numbers like jsmith23
   if (!local) return null;
   const tokens = local.split(/[\.\+\-_]/g).filter(Boolean);
-  if (tokens.length === 0) return null;
+  if (tokens.length < 2) return null; // Single-word emails (boarding@, hi@) are NOT names
+  // Each token must be letter-only and >= 2 chars to be a plausible name part
+  if (!tokens.every(t => /^[a-zA-Z]{2,}$/.test(t))) return null;
   const words = tokens.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-  if (words.length >= 2) return words.slice(0, 3).join(' ');
-  if (words.length === 1 && words[0].length >= 2) return words[0];
-  return null;
+  return words.slice(0, 3).join(' ');
 }
 
 // Create a friendly company-like name from a domain (e.g., acme.com -> "Acme")
@@ -330,7 +348,8 @@ export function friendlyNameFromDomain(domain: string | null | undefined): strin
   return name;
 }
 
-// Build a safe display name for a contact, avoiding placeholders like "Direct Direct"
+// Build a safe display name for a contact
+// NEVER returns the company name — that was the source of the garbage data bug
 export function safeContactDisplayName(
   inputName: string | null | undefined,
   email?: string | null | undefined,
@@ -341,9 +360,18 @@ export function safeContactDisplayName(
   const lower = (normalizedInput || '').toLowerCase();
 
   // If we have a real input name and it's not a placeholder, use it
-  if (normalizedInput && lower !== 'direct' && lower !== 'unknown') {
+  if (normalizedInput && lower !== 'direct' && lower !== 'unknown' && lower !== 'contact') {
     // Collapse duplicate consecutive tokens (e.g., "John John" -> "John")
-    return normalizedInput.replace(/\b(\w+)\s+\1\b/gi, '$1');
+    const collapsed = normalizedInput.replace(/\b(\w+)\s+\1\b/gi, '$1');
+
+    // Final check: make sure the name isn't the company name
+    const compLower = (companyName || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+    const nameLower = collapsed.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+    if (compLower && (nameLower === compLower || compLower.includes(nameLower) || nameLower.includes(compLower))) {
+      // Name IS the company name — don't use it
+    } else {
+      return collapsed;
+    }
   }
 
   // Try to derive from email if it's not a generic/role-based local part
@@ -353,12 +381,47 @@ export function safeContactDisplayName(
       const fromEmail = deriveFullNameFromEmail(email);
       if (fromEmail) return fromEmail;
     }
+
+    // For role-based emails, create descriptive labels
+    const ROLE_LABELS: Record<string, string> = {
+      // General
+      'info': 'General Contact', 'contact': 'General Contact', 'hello': 'General Contact',
+      'hi': 'General Contact', 'general': 'General Contact', 'main': 'General Contact',
+      'office': 'General Contact', 'company': 'General Contact', 'business': 'General Contact',
+      'corporate': 'General Contact', 'hq': 'General Contact', 'headquarters': 'General Contact',
+      // Sales
+      'sales': 'Sales Contact', 'partnerships': 'Sales Contact', 'partner': 'Sales Contact',
+      'affiliate': 'Sales Contact', 'referral': 'Sales Contact',
+      // Support
+      'support': 'Support Contact', 'help': 'Support Contact', 'helpdesk': 'Support Contact',
+      'customerservice': 'Support Contact', 'customersupport': 'Support Contact',
+      'customercare': 'Support Contact', 'techsupport': 'Support Contact',
+      // Onboarding
+      'boarding': 'Onboarding Contact', 'onboarding': 'Onboarding Contact',
+      'signup': 'Onboarding Contact', 'register': 'Onboarding Contact', 'welcome': 'Onboarding Contact',
+      // Admin & Finance
+      'admin': 'Admin Contact', 'billing': 'Billing Contact', 'finance': 'Finance Contact',
+      'accounting': 'Finance Contact', 'accounts': 'Finance Contact',
+      'legal': 'Legal Contact', 'compliance': 'Compliance Contact',
+      // HR & Recruiting
+      'careers': 'Recruiting Contact', 'hr': 'HR Contact', 'hiring': 'Recruiting Contact',
+      'recruiting': 'Recruiting Contact', 'talent': 'Recruiting Contact', 'jobs': 'Recruiting Contact',
+      'people': 'HR Contact',
+      // Marketing & PR
+      'press': 'Press Contact', 'marketing': 'Marketing Contact', 'pr': 'Press Contact',
+      'media': 'Press Contact', 'comms': 'Communications Contact', 'editorial': 'Editorial Contact',
+      'news': 'Press Contact', 'newsroom': 'Press Contact', 'newsletter': 'Marketing Contact',
+      // Operations
+      'operations': 'Operations Contact', 'ops': 'Operations Contact',
+      'orders': 'Orders Contact', 'shipping': 'Shipping Contact', 'returns': 'Returns Contact',
+      'service': 'Service Contact', 'services': 'Service Contact',
+      'management': 'Management Contact', 'reception': 'Front Desk Contact',
+      'frontdesk': 'Front Desk Contact',
+    };
+    const roleLabel = ROLE_LABELS[local.split(/[.\-_]/)[0]];
+    if (roleLabel) return roleLabel;
   }
 
-  // Fallback to company name if available
-  const comp = normalizeCompanyName(companyName || '') || null;
-  if (comp) return comp;
-
-  // Fallback to friendly domain
-  return friendlyNameFromDomain(domain || '');
+  // Final fallback — NEVER use company name
+  return 'General Contact';
 }

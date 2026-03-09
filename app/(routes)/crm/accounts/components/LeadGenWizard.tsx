@@ -262,7 +262,7 @@ export default function LeadGenWizardPage() {
             } catch (err) { console.error(err); }
 
             toast.success("AI Agent started successfully!");
-            router.push("/lists");
+            router.push(`/crm/leads/jobs/${data.jobId}`);
             return;
           }
         } catch (parseErr) {
@@ -311,7 +311,7 @@ export default function LeadGenWizardPage() {
       } catch (err) { console.error(err); }
 
       toast.success("Lead generation started successfully!");
-      router.push("/crm/accounts?tab=pools");
+      router.push(`/crm/leads/jobs/${data.jobId}`);
 
     } catch (err: any) {
       toast.error(err.message || "Failed to start job");

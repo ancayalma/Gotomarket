@@ -20,7 +20,8 @@ import {
     Plus,
     Palette,
     MoreVertical,
-    Search
+    Search,
+    Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -315,6 +316,16 @@ export default function ListsView() {
                                                     >
                                                         View
                                                     </Button>
+                                                    {pool.latestJob && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                                                            onClick={() => router.push(`/crm/leads/jobs/${pool.latestJob!.id}`)}
+                                                        >
+                                                            <Bot className="w-4 h-4 mr-1" /> Job
+                                                        </Button>
+                                                    )}
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
@@ -394,6 +405,16 @@ export default function ListsView() {
                                         >
                                             Work List
                                         </Button>
+                                        {pool.latestJob && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1 text-xs font-bold uppercase tracking-wider h-8 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                                                onClick={() => router.push(`/crm/leads/jobs/${pool.latestJob!.id}`)}
+                                            >
+                                                <Bot className="w-3.5 h-3.5 mr-1" /> View Job
+                                            </Button>
+                                        )}
                                         <Button
                                             variant="outline"
                                             size="sm"

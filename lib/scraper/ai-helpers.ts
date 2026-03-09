@@ -126,16 +126,34 @@ Requirements:
 4. Vary query structure for diversity
 5. Target business directories and listings`;
 
-    const result = await generateObject({
-      model,
-      schema: z.object({
-        queries: z.array(z.string()),
-      }),
-      prompt,
-      system: "You are an expert at crafting search queries for B2B lead generation. Generate diverse, effective queries that will find relevant company websites.",
-    });
+    let queries: string[] = [];
+    try {
+      const result = await generateObject({
+        model,
+        schema: z.object({
+          queries: z.array(z.string()),
+        }),
+        prompt,
+        system: "You are an expert at crafting search queries for B2B lead generation. Generate diverse, effective queries that will find relevant company websites.",
+      });
+      queries = result.object.queries.slice(0, count);
+    } catch (schemaError: any) {
+      // Model sometimes returns queries as a stringified JSON array — parse it manually
+      const text = schemaError?.text || schemaError?.value?.queries;
+      if (typeof text === "string") {
+        try {
+          const parsed = JSON.parse(text);
+          if (Array.isArray(parsed)) {
+            queries = parsed.slice(0, count);
+          } else if (parsed?.queries && Array.isArray(parsed.queries)) {
+            queries = parsed.queries.slice(0, count);
+          }
+        } catch {
+          // JSON parse also failed, fall through to fallback
+        }
+      }
+    }
 
-    const queries = result.object.queries.slice(0, count);
     return queries.length > 0 ? queries : generateFallbackQueries(icp);
   } catch (error) {
     console.error("AI query generation failed:", error);

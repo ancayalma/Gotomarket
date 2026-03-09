@@ -26,11 +26,14 @@ export async function runLeadGenPipeline({
   const job = await db.crm_Lead_Gen_Jobs.findUnique({ where: { id: jobId } });
   if (!job) throw new Error("Job not found");
 
-  // 1. Fetch team and check initial credits
+  // 1. Fetch team, role, and check initial credits
   const user = await mainDb.users.findUnique({
     where: { id: userId },
     select: {
       team_id: true,
+      is_admin: true,
+      is_account_admin: true,
+      assigned_role: { select: { name: true } },
       assigned_team: {
         include: {
           assigned_plan: true
@@ -41,11 +44,14 @@ export async function runLeadGenPipeline({
   if (!user?.team_id) throw new Error("User has no team association for billing.");
   const teamId = user.team_id;
 
+  // Platform admins bypass credits entirely
+  const isPlatformAdmin = user.assigned_role?.name === "SuperAdmin" || user.is_admin || user.is_account_admin;
+
   const planSlug = user.assigned_team?.assigned_plan?.slug || user.assigned_team?.subscription_plan || "FREE";
   const isFreePlan = planSlug.toUpperCase() === "FREE" || planSlug.toUpperCase() === "FREE_TRIAL";
 
   // Enforce Puppeteer scraping for FREE plans (disable paid APIs)
-  if (isFreePlan) {
+  if (isFreePlan && !isPlatformAdmin) {
     if (!job.providers) job.providers = {};
     job.providers.agenticAI = false;
     job.providers.aiQueries = false;
@@ -54,19 +60,26 @@ export async function runLeadGenPipeline({
     job.providers.crawler = true; // Rely on Puppeteer enrichment
   }
 
-  const currentCredits = await getTeamLeadGenCredits(teamId);
-  if (currentCredits <= 0) {
-    await db.crm_Lead_Gen_Jobs.update({
-      where: { id: jobId },
-      data: {
-        status: "FAILED",
-        logs: [
-          ...(job.logs || []),
-          { ts: new Date().toISOString(), level: "ERROR", msg: "Out of LeadGen credits. Please top up in AI Settings." }
-        ]
-      },
-    });
-    throw new Error("No LeadGen credits remaining.");
+  if (!isPlatformAdmin) {
+    const { resetLeadGenCredits } = await import("@/lib/scraper/credits");
+    let currentCredits = await getTeamLeadGenCredits(teamId);
+    // Auto-initialize credits on first run if no config exists
+    if (currentCredits <= 0) {
+      currentCredits = await resetLeadGenCredits(teamId);
+    }
+    if (currentCredits <= 0) {
+      await db.crm_Lead_Gen_Jobs.update({
+        where: { id: jobId },
+        data: {
+          status: "FAILED",
+          logs: [
+            ...(job.logs || []),
+            { ts: new Date().toISOString(), level: "ERROR", msg: "Out of LeadGen credits. Please top up in AI Settings." }
+          ]
+        },
+      });
+      throw new Error("No LeadGen credits remaining.");
+    }
   }
 
   // Mark RUNNING
@@ -180,10 +193,12 @@ export async function runLeadGenPipeline({
     createdCandidates = result.companiesSaved + serpAddedCandidates;
 
     // 3. Consume Credits for Agentic session + Discovery
-    const sessionCost = isResume ? 0 : 25;
-    const discoveryCost = createdCandidates * 1;
-    await consumeLeadGenCredits(teamId, sessionCost + discoveryCost);
-    creditsConsumed = sessionCost + discoveryCost;
+    if (!isPlatformAdmin) {
+      const sessionCost = isResume ? 0 : 25;
+      const discoveryCost = createdCandidates * 1;
+      await consumeLeadGenCredits(teamId, sessionCost + discoveryCost);
+      creditsConsumed = sessionCost + discoveryCost;
+    }
 
     // Update counters
     await db.crm_Lead_Gen_Jobs.update({
@@ -219,7 +234,7 @@ export async function runLeadGenPipeline({
       serpEvents += res.sourceEvents;
       uniqueDomains = res.uniqueDomains;
 
-      if (res.createdCandidates > 0) {
+      if (res.createdCandidates > 0 && !isPlatformAdmin) {
         await consumeLeadGenCredits(teamId, res.createdCandidates);
         creditsConsumed += res.createdCandidates;
       }
@@ -244,7 +259,7 @@ export async function runLeadGenPipeline({
       enrichedCount = enrichmentResult.enriched;
       enrichmentFailed = enrichmentResult.failed;
 
-      if (enrichedCount > 0) {
+      if (enrichedCount > 0 && !isPlatformAdmin) {
         await consumeLeadGenCredits(teamId, enrichedCount * 5);
         creditsConsumed += enrichedCount * 5;
       }

@@ -9,7 +9,7 @@
 
 import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
 import { z } from "zod";
-import { generateObject, generateText, tool, ModelMessage } from "ai";
+import { generateObject, generateText, tool, type ModelMessage } from "ai";
 
 import { prismadbCrm } from "@/lib/prisma-crm";
 // import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
@@ -52,9 +52,9 @@ type ICPConfig = {
 };
 
 /**
- * Search companies using Serper API
+ * Search companies using DuckDuckGo HTML — zero dependencies, no API key
+ * Uses the HTML-only endpoint which returns server-rendered results parseable with regex
  */
-import { googleCustomSearch } from "./google-search";
 
 async function ddgWebSearch(query: string, count: number = 20): Promise<Array<{
   name: string;
@@ -63,17 +63,95 @@ async function ddgWebSearch(query: string, count: number = 20): Promise<Array<{
   domain: string;
 }>> {
   try {
-    const results = await googleCustomSearch(query, count);
-    return results.map(r => ({
-      name: r.title,
-      url: r.link,
-      snippet: r.snippet || "",
-      domain: r.domain || "" // Filter out below
-    })).filter(r => r.domain);
+    const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    const response = await fetch(ddgUrl, {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`DuckDuckGo HTTP error: ${response.status}`);
+      return [];
+    }
+
+    const html = await response.text();
+
+    // Parse result links from DDG HTML
+    // DDG HTML results have: <a rel="nofollow" class="result__a" href="...">Title</a>
+    // and snippets in: <a class="result__snippet" ...>Snippet text</a>
+    const results: Array<{ name: string; url: string; snippet: string; domain: string }> = [];
+
+    // Extract result blocks — each result has a link and snippet
+    // DDG wraps external URLs in redirect: //duckduckgo.com/l/?uddg=ENCODED_URL&...
+    const linkRegex = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+    const snippetRegex = /<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
+
+    const links: Array<{ href: string; title: string }> = [];
+    let match;
+    while ((match = linkRegex.exec(html)) !== null) {
+      links.push({ href: match[1], title: stripHtml(match[2]).trim() });
+    }
+
+    const snippets: string[] = [];
+    while ((match = snippetRegex.exec(html)) !== null) {
+      snippets.push(stripHtml(match[1]).trim());
+    }
+
+    for (let i = 0; i < links.length && results.length < count; i++) {
+      let href = links[i].href;
+
+      // Decode DDG redirect URLs: //duckduckgo.com/l/?uddg=ENCODED_URL&...
+      if (href.includes("duckduckgo.com/l/")) {
+        const uddgMatch = href.match(/[?&]uddg=([^&]+)/);
+        if (uddgMatch) {
+          href = decodeURIComponent(uddgMatch[1]);
+        }
+      }
+
+      // Skip non-http links
+      if (!href.startsWith("http://") && !href.startsWith("https://")) continue;
+
+      // Extract domain
+      try {
+        const u = new URL(href);
+        let hostname = u.hostname.replace(/^www\./i, "");
+
+        // Filter out non-company domains
+        const excludePatterns = [
+          'wikipedia.org', 'youtube.com', 'facebook.com',
+          'twitter.com', 'instagram.com', 'duckduckgo.com',
+          'reddit.com', 'medium.com', 'github.com',
+          'pinterest.com', 'tiktok.com', 'snapchat.com',
+          'google.com', 'bing.com', 'yahoo.com',
+        ];
+        if (excludePatterns.some(p => hostname.includes(p))) continue;
+
+        results.push({
+          name: links[i].title,
+          url: href,
+          snippet: snippets[i] || "",
+          domain: hostname,
+        });
+      } catch {
+        continue;
+      }
+    }
+
+    console.log(`[DDG Search] "${query}" -> ${results.length} results`);
+    return results;
   } catch (error) {
-    console.error("Serper API search error:", error);
+    console.error("DuckDuckGo search error:", error);
     return [];
   }
+}
+
+/** Strip HTML tags from a string */
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ");
 }
 
 function extractDomain(url: string): string {
@@ -124,12 +202,12 @@ const saveCompanySchema = z.object({
   industry: z.string().describe("Primary industry"),
   techStack: z.array(z.string()).optional().describe("Detected technologies"),
   contacts: z.array(z.object({
-    name: z.string().describe("Contact name (can be empty string if unknown)"),
-    title: z.string().describe("Job title (can be 'Contact' if unknown)"),
+    name: z.string().describe("REAL person name (FirstName LastName). NEVER use company name. Empty string if unknown."),
+    title: z.string().describe("REAL job title (e.g. 'CEO', 'VP Sales', 'Founder'). NEVER 'Contact' or 'General Contact'. Empty string if unknown."),
     email: z.string().describe("Email address"),
     phone: z.string().describe("Phone number (can be empty string if unknown)"),
     linkedin: z.string().optional().describe("LinkedIn profile URL"),
-  })).describe("List of contacts with at least one email or phone"),
+  })).describe("Contacts found. Each MUST have a real email. Name should be a real person's name, not the company name."),
 });
 
 const refineSearchStrategySchema = z.object({
@@ -495,17 +573,12 @@ async function extractPageData(page: any): Promise<{
 }
 
 /**
- * Visit website and autonomously crawl subpages using Firecrawl Deep Research
+ * Visit website using Puppeteer (real browser) to extract company data
+ * Visits homepage + high-value subpages (/about, /contact, /team)
  */
-import FirecrawlApp from "@mendable/firecrawl-js";
+import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
 
 async function visitWebsiteForAgent(url: string, userId?: string, icp?: ICPConfig): Promise<any> {
-  const apiKey = process.env.FIRECRAWL_API_KEY;
-  if (!apiKey) {
-    console.warn("FIRECRAWL_API_KEY is not set.");
-    return { error: "Firecrawl API key not set." };
-  }
-
   const db: any = prismadbCrm;
   const domain = normalizeDomain(url);
   const cacheThreshold = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000); // 14 days
@@ -547,114 +620,305 @@ async function visitWebsiteForAgent(url: string, userId?: string, icp?: ICPConfi
     }
   }
 
-  const firecrawl = new FirecrawlApp({ apiKey });
-
+  // 2. Visit with Puppeteer (real browser)
+  let browser;
   try {
-    // We use the crawl endpoint to autonomously navigate up to 5 sub-pages
-    // extracting structured data on each using our exact schema requirements.
-    const response = await firecrawl.crawl(url, {
-      limit: 5,
-      pollInterval: 2, // poll every 2 seconds
-      scrapeOptions: {
-        formats: ["extract"],
-        extract: {
-          schema: {
-            type: "object",
-            properties: {
-              title: { type: "string" },
-              description: { type: "string" },
-              emails: { type: "array", items: { type: "string" } },
-              phones: { type: "array", items: { type: "string" } },
-              socialLinks: {
-                type: "object",
-                properties: {
-                  linkedin: { type: "string" },
-                  twitter: { type: "string" },
-                  facebook: { type: "string" },
-                  instagram: { type: "string" },
-                  github: { type: "string" }
+    browser = await launchBrowser();
+    const page = await newPageWithDefaults(browser);
+
+    const targetUrl = url.startsWith("http") ? url : `https://${url}`;
+    const allEmails = new Set<string>();
+    const allPhones = new Set<string>();
+    const socialLinks: Record<string, string> = {};
+    const pagesVisited: string[] = [];
+    const allContacts: Array<{ name: string; title: string; email: string; phone: string; linkedin: string }> = [];
+    const allLinkedinProfiles: string[] = [];
+    let title = "";
+    let description = "";
+    const errors: string[] = [];
+
+    /**
+     * Extract structured data from the current page's rendered DOM
+     * Enhanced: extracts structured contacts, LinkedIn profiles, and team members
+     */
+    const extractPageData = async () => {
+      return await page.evaluate(() => {
+        const text = document.body?.innerText || "";
+
+        // Title
+        const pageTitle = document.title || "";
+
+        // Meta description
+        const metaDesc = (document.querySelector('meta[name="description"]') as HTMLMetaElement)?.content || "";
+
+        // ─── Structured Contact Extraction ───
+        const contacts: Array<{ name: string; title: string; email: string; phone: string; linkedin: string }> = [];
+        const seenEmails = new Set<string>();
+
+        // 1. Mailto links with context: find email + nearby name/title
+        document.querySelectorAll('a[href^="mailto:"]').forEach(a => {
+          const email = (a as HTMLAnchorElement).href.replace("mailto:", "").split("?")[0].toLowerCase();
+          if (!email || seenEmails.has(email)) return;
+          if (email.endsWith(".png") || email.endsWith(".jpg") || email.includes("example.com")) return;
+          seenEmails.add(email);
+
+          // Look for context around the mailto link
+          let name = "";
+          let title = "";
+          const parent = a.closest("li, div, p, td, article, section, figure, .team-member, [class*='card'], [class*='person'], [class*='member']");
+          if (parent) {
+            // Look for name in headings or strong/bold near the email
+            const heading = parent.querySelector("h1, h2, h3, h4, h5, strong, b, [class*='name']");
+            if (heading) {
+              const candidateName = (heading as HTMLElement).innerText?.trim();
+              if (candidateName && candidateName.length > 2 && candidateName.length < 60 && candidateName.split(" ").length >= 2) {
+                name = candidateName;
+              }
+            }
+            // Look for title in smaller text elements
+            const titleEl = parent.querySelector("[class*='title'], [class*='role'], [class*='position'], small, .subtitle, em");
+            if (titleEl) {
+              const candidateTitle = (titleEl as HTMLElement).innerText?.trim();
+              if (candidateTitle && candidateTitle.length > 2 && candidateTitle.length < 80) {
+                title = candidateTitle;
+              }
+            }
+          }
+
+          contacts.push({ name, title, email, phone: "", linkedin: "" });
+        });
+
+        // 2. Text emails (not already found via mailto)
+        const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+        const textEmails = text.match(emailRegex) || [];
+        for (const email of textEmails) {
+          const lower = email.toLowerCase();
+          if (seenEmails.has(lower)) continue;
+          if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".gif") ||
+            lower.includes("example.com") || lower.includes("sentry") || lower.includes("webpack")) continue;
+          seenEmails.add(lower);
+          contacts.push({ name: "", title: "", email: lower, phone: "", linkedin: "" });
+        }
+
+        // 3. Team member cards / people sections
+        const teamSelectors = [
+          '.team-member', '.staff-member', '[class*="team"] [class*="card"]',
+          '[class*="person"]', '[class*="member"]', '[class*="leadership"]',
+          '[class*="staff"]', '.bio', '[class*="executive"]',
+          'figure', '[class*="card"]',
+        ];
+        for (const sel of teamSelectors) {
+          try {
+            document.querySelectorAll(sel).forEach(card => {
+              const cardText = (card as HTMLElement).innerText || "";
+              const heading = card.querySelector("h2, h3, h4, h5, strong, b, [class*='name']");
+              const candidateName = heading ? (heading as HTMLElement).innerText?.trim() : "";
+              const titleEl = card.querySelector("[class*='title'], [class*='role'], [class*='position'], small, em, p");
+              const candidateTitle = titleEl ? (titleEl as HTMLElement).innerText?.trim() : "";
+
+              // Must look like a real person name (2+ words, reasonable length)
+              if (!candidateName || candidateName.length < 4 || candidateName.length > 60 || candidateName.split(" ").length < 2) return;
+
+              // Check if this card has an email
+              const mailtoLink = card.querySelector('a[href^="mailto:"]');
+              const email = mailtoLink ? (mailtoLink as HTMLAnchorElement).href.replace("mailto:", "").split("?")[0].toLowerCase() : "";
+
+              // Check for LinkedIn link
+              const linkedinLink = card.querySelector('a[href*="linkedin.com/in/"]');
+              const linkedin = linkedinLink ? (linkedinLink as HTMLAnchorElement).href : "";
+
+              // If we already have this email in contacts, update the name/title
+              if (email && seenEmails.has(email)) {
+                const existing = contacts.find(c => c.email === email);
+                if (existing && !existing.name && candidateName) {
+                  existing.name = candidateName;
+                  if (candidateTitle && candidateTitle.length < 80) existing.title = candidateTitle;
+                  if (linkedin) existing.linkedin = linkedin;
                 }
-              },
-              techStack: { type: "array", items: { type: "string" } }
+                return;
+              }
+
+              // Add as new contact if it has email or LinkedIn
+              if (email || linkedin) {
+                if (email) seenEmails.add(email);
+                contacts.push({
+                  name: candidateName,
+                  title: (candidateTitle && candidateTitle.length < 80) ? candidateTitle : "",
+                  email: email || "",
+                  phone: "",
+                  linkedin: linkedin || "",
+                });
+              }
+            });
+          } catch { /* selector may not exist */ }
+        }
+
+        // 4. Phone numbers
+        const phoneRegex = /(?:\+?1[\s.-]?)?\(?[0-9]{3}\)?[\s.-]?[0-9]{3}[\s.-]?[0-9]{4}/g;
+        const phones = Array.from(new Set(text.match(phoneRegex) || []));
+
+        // Attach first phone to contacts without one
+        if (phones.length > 0) {
+          for (const contact of contacts) {
+            if (!contact.phone) {
+              contact.phone = phones[0];
+              break;
             }
           }
         }
-      } as any
-    });
 
-    if (response.status !== "completed") {
-      return { error: `Firecrawl failed or cancelled. Status: ${response.status}` };
+        // 5. Social links (company-level)
+        const socials: Record<string, string> = {};
+        const linkedinProfiles: string[] = [];
+        document.querySelectorAll("a[href]").forEach(a => {
+          const href = (a as HTMLAnchorElement).href;
+          if (href.includes("linkedin.com/company")) socials.linkedin = href;
+          if (href.includes("linkedin.com/in/")) linkedinProfiles.push(href);
+          if (href.includes("twitter.com/") || href.includes("x.com/")) socials.twitter = href;
+          if (href.includes("facebook.com/")) socials.facebook = href;
+          if (href.includes("instagram.com/")) socials.instagram = href;
+          if (href.includes("github.com/")) socials.github = href;
+        });
+
+        return { pageTitle, metaDesc, contacts, phones, socials, linkedinProfiles };
+      });
+    };
+
+    // Visit homepage
+    try {
+      await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+      await new Promise(r => setTimeout(r, 2000)); // Let JS render
+
+      // Dismiss cookie banners / overlays
+      try {
+        const dismissSelectors = [
+          'button[id*="accept"]', 'button[id*="cookie"]', 'button[class*="accept"]',
+          'button[class*="cookie"]', 'a[id*="accept"]', '[aria-label*="accept"]',
+          '[aria-label*="close"]', 'button[class*="close"]', '.cookie-banner button',
+          '#cookie-consent button', '.gdpr button',
+        ];
+        for (const sel of dismissSelectors) {
+          try {
+            const btn = await page.$(sel);
+            if (btn) { await btn.click(); break; }
+          } catch { /* ignore */ }
+        }
+      } catch { /* ignore overlay dismiss errors */ }
+
+      const homeData = await extractPageData();
+      title = homeData.pageTitle;
+      description = homeData.metaDesc;
+      homeData.contacts.forEach(c => { if (c.email) allEmails.add(c.email); });
+      homeData.phones.forEach(p => allPhones.add(p));
+      Object.assign(socialLinks, homeData.socials);
+      allContacts.push(...homeData.contacts);
+      allLinkedinProfiles.push(...(homeData.linkedinProfiles || []));
+      pagesVisited.push(targetUrl);
+      console.log(`[PUPPETEER] Homepage: ${homeData.contacts.length} contacts, ${homeData.phones.length} phones`);
+    } catch (navErr) {
+      errors.push(`Homepage navigation failed: ${(navErr as Error).message}`);
     }
 
-    const pagesVisited: string[] = [];
-    let title = "";
-    let description = "";
-    const emails = new Set<string>();
-    const phones = new Set<string>();
-    const socialLinks: any = {};
-    const techStack = new Set<string>();
+    // Visit high-value subpages (expanded list, limit 5)
+    const subpages = ["/about", "/contact", "/team", "/about-us", "/contact-us", "/our-team", "/leadership", "/people", "/staff", "/careers"];
+    const baseDomain = targetUrl.replace(/\/+$/, "");
+    let subpagesVisited = 0;
 
-    for (const page of response.data || []) {
-      pagesVisited.push(page.metadata?.sourceURL || "");
-      const data = ((page as any).extract || page.json) as any;
-      if (!data) continue;
+    for (const path of subpages) {
+      if (subpagesVisited >= 5) break;
+      try {
+        const subUrl = `${baseDomain}${path}`;
+        const response = await page.goto(subUrl, { waitUntil: "domcontentloaded", timeout: 12000 });
 
-      if (!title) title = data.title || "";
-      if (!description) description = data.description || "";
+        // Skip 404s and redirects back to homepage
+        if (response && response.status() >= 400) continue;
+        const finalUrl = page.url();
+        if (pagesVisited.includes(finalUrl)) continue;
 
-      if (Array.isArray(data.emails)) data.emails.forEach((x: string) => emails.add(x));
-      if (Array.isArray(data.phones)) data.phones.forEach((x: string) => phones.add(x));
-      if (Array.isArray(data.techStack)) data.techStack.forEach((x: string) => techStack.add(x));
-      if (data.socialLinks) {
-        Object.assign(socialLinks, Object.fromEntries(Object.entries(data.socialLinks).filter(([_, v]) => v)));
+        await new Promise(r => setTimeout(r, 1500));
+
+        const subData = await extractPageData();
+        // Merge contacts, deduplicating by email
+        for (const c of subData.contacts) {
+          if (c.email && allEmails.has(c.email)) {
+            // Update existing contact with better data
+            const existing = allContacts.find(ec => ec.email === c.email);
+            if (existing) {
+              if (!existing.name && c.name) existing.name = c.name;
+              if (!existing.title && c.title) existing.title = c.title;
+              if (!existing.linkedin && c.linkedin) existing.linkedin = c.linkedin;
+            }
+          } else {
+            if (c.email) allEmails.add(c.email);
+            allContacts.push(c);
+          }
+        }
+        subData.phones.forEach(p => allPhones.add(p));
+        Object.assign(socialLinks, subData.socials);
+        allLinkedinProfiles.push(...(subData.linkedinProfiles || []));
+        pagesVisited.push(subUrl);
+        subpagesVisited++;
+
+        if (!description && subData.metaDesc) description = subData.metaDesc;
+        console.log(`[PUPPETEER] ${path}: +${subData.contacts.length} contacts, +${subData.phones.length} phones`);
+      } catch {
+        // Subpage not found or timed out, continue
       }
     }
 
     const finalResult = {
       title,
       description,
-      emails: Array.from(emails),
-      phones: Array.from(phones),
+      contacts: allContacts.slice(0, 20),
+      emails: Array.from(allEmails).slice(0, 15),
+      phones: Array.from(allPhones).slice(0, 10),
       socialLinks,
-      techStack: Array.from(techStack),
+      linkedinProfiles: Array.from(new Set(allLinkedinProfiles)).slice(0, 10),
+      techStack: [] as string[],
       pagesVisited: pagesVisited.filter(Boolean),
-      errors: []
+      errors,
     };
 
-    // 3. Cache the Result Globally
+    // 3. Cache result globally
     if (domain) {
       try {
-        await db.crm_Global_Companies.upsert({
-          where: { domain },
-          create: {
-            domain,
-            companyName: title,
-            description,
-            techStack: finalResult.techStack,
-            emails: finalResult.emails,
-            phones: finalResult.phones,
-            socialLinks: finalResult.socialLinks,
-            lastSeen: new Date(),
-          },
-          update: {
-            companyName: title,
-            description,
-            techStack: finalResult.techStack,
-            emails: finalResult.emails,
-            phones: finalResult.phones,
-            socialLinks: finalResult.socialLinks,
-            lastSeen: new Date(),
-          }
+        const dedupeKey = `company:${domain}`;
+        const existing = await db.crm_Global_Companies.findFirst({
+          where: { OR: [{ domain }, { dedupeKey }] },
+          select: { id: true },
         });
+
+        const cacheData = {
+          companyName: title,
+          description,
+          techStack: finalResult.techStack,
+          emails: finalResult.emails,
+          phones: finalResult.phones,
+          socialLinks: finalResult.socialLinks,
+          lastSeen: new Date(),
+        };
+
+        if (existing) {
+          await db.crm_Global_Companies.update({
+            where: { id: existing.id },
+            data: cacheData,
+          });
+        } else {
+          await db.crm_Global_Companies.create({
+            data: { ...cacheData, domain, dedupeKey, firstSeen: new Date(), status: "ACTIVE" },
+          });
+        }
       } catch (cacheErr) {
-        console.error("[CACHE_SAVE_ERROR] Failed to save to global cache:", cacheErr);
+        // Silently ignore — cache is best-effort
       }
     }
 
     return finalResult;
   } catch (error) {
-    console.error("Firecrawl error:", error);
+    console.error("[VISIT_WEBSITE] Puppeteer error:", error);
     return { error: (error as Error).message };
+  } finally {
+    if (browser) await closeBrowser(browser);
   }
 }
 
@@ -821,10 +1085,80 @@ async function executeToolCall(toolName: string, args: any, context: any): Promi
         return { success: false, error: "Invalid domain" };
       }
 
+      // Directory / aggregator domain blocklist — these are never real leads
+      const DIRECTORY_DOMAINS = new Set([
+        'crunchbase.com', 'linkedin.com', 'f6s.com', 'tracxn.com', 'growthlist.co',
+        'pitchbook.com', 'owler.com', 'zoominfo.com', 'apollo.io', 'clearbit.com',
+        'builtwith.com', 'stackshare.io', 'g2.com', 'capterra.com', 'clutch.co',
+        'glassdoor.com', 'indeed.com', 'yelp.com', 'bbb.org', 'trustpilot.com',
+        'producthunt.com', 'angel.co', 'wellfound.com', 'techcrunch.com',
+        'bloomberg.com', 'reuters.com', 'forbes.com', 'inc.com', 'entrepreneur.com',
+        'wikipedia.org', 'reddit.com', 'twitter.com', 'x.com', 'facebook.com',
+        'instagram.com', 'youtube.com', 'tiktok.com', 'github.com',
+        'ycombinator.com', 'similarweb.com', 'alexa.com', 'semrush.com',
+        'manta.com', 'dnb.com', 'hoovers.com', 'yellowpages.com',
+        'mapquest.com', 'google.com', 'bing.com', 'yahoo.com',
+      ]);
+      if (DIRECTORY_DOMAINS.has(domain)) {
+        console.log(`[SAVE_COMPANY] Validation failed: "${domain}" is a directory/aggregator, not a real lead`);
+        return { success: false, error: `"${domain}" is a directory/aggregator website, not a prospectable company` };
+      }
+
       // Validate: Must have at least one contact with email or phone
       if (!args.contacts || !Array.isArray(args.contacts) || args.contacts.length === 0) {
         console.log("[SAVE_COMPANY] Validation failed: No contacts");
         return { success: false, error: "Cannot save company without contacts" };
+      }
+      // ── Contact Name Quality Validation ──
+      // Reject names that are company names, department labels, or generic placeholders
+      const companyNameLower = (args.companyName || "").toLowerCase().trim();
+      const domainBase = domain.split(".")[0]?.toLowerCase() || "";
+      const BOGUS_NAME_PATTERNS = [
+        /^(general\s+)?contact$/i, /^customer\s*service$/i, /^sales$/i,
+        /^support$/i, /^info$/i, /^admin$/i, /^billing$/i, /^hr$/i,
+        /^marketing$/i, /^office$/i, /^reception$/i, /^help\s*desk$/i,
+        /^accounts?$/i, /^enquir(y|ies)$/i, /^team$/i, /^staff$/i,
+        /^management$/i, /^operations$/i, /^service$/i, /^direct$/i,
+        /^unknown$/i, /^n\/?a$/i, /^none$/i, /^-$/,
+      ];
+      const BOGUS_TITLE_PATTERNS = [
+        /^contact$/i, /^general\s+contact$/i, /^n\/?a$/i, /^unknown$/i,
+        /^-$/i, /^none$/i, /^employee$/i, /^staff$/i, /^company$/i,
+      ];
+
+      for (const contact of (args.contacts || [])) {
+        const nameLower = (contact.name || "").toLowerCase().trim();
+
+        // Clear name if it matches/contains the company name (or vice versa)
+        if (nameLower && companyNameLower) {
+          const nameNorm = nameLower.replace(/[^a-z0-9\s]/g, "");
+          const compNorm = companyNameLower.replace(/[^a-z0-9\s]/g, "");
+          if (nameNorm === compNorm || compNorm.includes(nameNorm) || nameNorm.includes(compNorm) || nameNorm.includes(domainBase)) {
+            console.log(`[SAVE_COMPANY] Clearing bogus name "${contact.name}" (matches company name)`);
+            contact.name = "";
+          }
+        }
+
+        // Clear names that are department labels or generic placeholders
+        if (contact.name && BOGUS_NAME_PATTERNS.some(p => p.test(contact.name.trim()))) {
+          console.log(`[SAVE_COMPANY] Clearing bogus name "${contact.name}" (generic label)`);
+          contact.name = "";
+        }
+
+        // Clear bogus titles
+        if (contact.title && BOGUS_TITLE_PATTERNS.some(p => p.test(contact.title.trim()))) {
+          contact.title = "";
+        }
+
+        // If email local part looks like a name (firstname.lastname), derive the name
+        if (!contact.name && contact.email) {
+          const local = contact.email.split("@")[0] || "";
+          // Check if local part has name-like pattern: first.last, first_last, firstlast
+          const nameParts = local.split(/[._\-]/);
+          if (nameParts.length >= 2 && nameParts.every((p: string) => p.length >= 2 && /^[a-zA-Z]+$/.test(p))) {
+            contact.name = nameParts.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(" ");
+          }
+        }
       }
 
       // Augment contacts with pattern-based guesses behind feature flag
@@ -902,30 +1236,29 @@ async function executeToolCall(toolName: string, args: any, context: any): Promi
       });
 
       try {
-        // Save to global index
+        // Save to global index (findFirst + update/create to avoid dedupeKey constraint)
         const dedupeKey = generateCompanyDedupeKey(domain);
-        await db.crm_Global_Companies.upsert({
-          where: { dedupeKey },
-          create: {
-            domain,
-            dedupeKey,
-            companyName,
-            description,
-            industry,
-            techStack: args.techStack || [],
-            firstSeen: new Date(),
-            lastSeen: new Date(),
-            status: "ACTIVE",
-            provenance: { source: "agentic_ai", jobId: context.jobId }
-          },
-          update: {
-            companyName,
-            description,
-            industry,
-            techStack: args.techStack || [],
-            lastSeen: new Date()
-          }
+        const existingGlobal = await db.crm_Global_Companies.findFirst({
+          where: { OR: [{ domain }, { dedupeKey }] },
+          select: { id: true },
         });
+        const globalCacheData = {
+          companyName,
+          description,
+          industry,
+          techStack: args.techStack || [],
+          lastSeen: new Date(),
+        };
+        if (existingGlobal) {
+          await db.crm_Global_Companies.update({
+            where: { id: existingGlobal.id },
+            data: globalCacheData,
+          });
+        } else {
+          await db.crm_Global_Companies.create({
+            data: { ...globalCacheData, domain, dedupeKey, firstSeen: new Date(), status: "ACTIVE", provenance: { source: "agentic_ai", jobId: context.jobId } },
+          });
+        }
 
         // Calculate quality score based on data completeness
         // Base score starts at 50, add points for quality signals
@@ -1241,58 +1574,89 @@ TARGET: ${maxCompanies} companies with HIGH-QUALITY contact information
 
 1. ⚠️ **EMAIL REQUIREMENT**: NEVER save a company without AT LEAST ONE email address
 2. **MULTIPLE CONTACTS**: Extract ALL contacts from EVERY qualified company (aim for 3-5+ per company)
-3. **AUTONOMOUS DEEP RESEARCH**: The visit_website tool automatically crawls up to 5 subpages (/about, /team, /contact) for you! You do NOT need to manually visit subpages of the same domain.
+3. **AUTONOMOUS DEEP RESEARCH**: The visit_website tool automatically crawls up to 5 subpages (/about, /team, /contact, /leadership, /careers, /people) for you! It returns STRUCTURED CONTACTS with names, titles, emails, and LinkedIn URLs already extracted.
 4. **PARALLEL EXECUTION**: Visit 5-10 different company websites simultaneously for speed.
 5. **QUALITY > SPEED**: Better to save 20 perfect companies with contacts than 100 with missing data.
 
 ═══════════════════════════════════════════════════════
+🚨 CONTACT NAME RULES (MANDATORY - VIOLATIONS REJECTED)
+═══════════════════════════════════════════════════════
+
+**The contact name field is for REAL HUMAN NAMES only.**
+
+✅ GOOD contact examples:
+- { name: "John Smith", title: "CEO", email: "john@company.com" }
+- { name: "Maria Garcia", title: "VP Sales", email: "maria.garcia@company.com" }
+- { name: "", title: "", email: "info@company.com" }  ← no name known, leave empty
+
+❌ BAD contact examples (system will REJECT these):
+- { name: "Acme Corp", title: "Contact", email: "info@acme.com" }  ← company name as person name!
+- { name: "Customer Service", title: "General Contact", email: "support@acme.com" }  ← department as name!
+- { name: "Sales", title: "Sales Contact", email: "sales@acme.com" }  ← department label!
+
+**RULES:**
+- Contact name MUST be a real person's first and last name (e.g., "Jane Doe")
+- If you do NOT know the person's real name, set name to EMPTY STRING ""
+- NEVER use the company name, domain name, or department name as a contact name
+- For title: use real job titles ("CEO", "VP Sales", "Marketing Director"), NOT "Contact" or "General Contact"
+- If you don't know the title, set title to EMPTY STRING ""
+- The system will automatically label unnamed contacts as "General Contact" or "Sales Contact" based on email type
+
+**NEVER SAVE THESE AS COMPANIES (they are directories/aggregators, NOT real leads):**
+Crunchbase, LinkedIn, F6S, Tracxn, GrowthList, PitchBook, ZoomInfo, Apollo, G2, Capterra,
+Clutch, Glassdoor, Indeed, Yelp, ProductHunt, Wikipedia, Reddit, Twitter/X, Facebook, GitHub,
+YouTube, TikTok, Instagram, Bloomberg, Forbes, TechCrunch, Entrepreneur, Inc, YCombinator.
+Only save ACTUAL COMPANY WEBSITES with real business operations.`;
+
+  systemPrompt += `
+═══════════════════════════════════════════════════════
 🔍 MASTER CONTACT EXTRACTION STRATEGIES
 ═══════════════════════════════════════════════════════
 
-**WHERE TO FIND EMAILS (Priority Order):**
+** WHERE TO FIND EMAILS(Priority Order):**
 
-1. **Contact Pages** (domain.com/contact, /contact-us)
-   - General inquiry emails (info@, contact@, hello@)
-   - Department emails (sales@, support@, careers@)
-   - Individual contact forms with emails
+    1. ** Contact Pages ** (domain.com / contact, /contact-us)
+      - General inquiry emails(info@, contact@, hello@)
+        - Department emails(sales@, support@, careers@)
+          - Individual contact forms with emails
 
-2. **Team/About Pages** (domain.com/team, /about, /about-us, /leadership)
-   - Founder/CEO emails
-   - Leadership team contacts
-   - Employee bios with email addresses
+2. ** Team / About Pages ** (domain.com / team, /about, /about - us, /leadership)
+    - Founder / CEO emails
+      - Leadership team contacts
+        - Employee bios with email addresses
 
-3. **Footer & Header**
-   - Company-wide contact emails
-   - Support/sales emails
-   - Press/media contact emails
+  3. ** Footer & Header **
+    - Company - wide contact emails
+      - Support / sales emails
+        - Press / media contact emails
 
-4. **Careers Pages** (domain.com/careers, /jobs)
-   - Recruiting emails
-   - HR contact information
-   - "Questions? Contact recruiter@..."
+  4. ** Careers Pages ** (domain.com / careers, /jobs)
+    - Recruiting emails
+      - HR contact information
+        - "Questions? Contact recruiter@..."
 
-5. **Press/Media Pages** (domain.com/press, /media, /newsroom)
-   - PR contact emails
-   - Media inquiry addresses
+  5. ** Press / Media Pages ** (domain.com / press, /media, /newsroom)
+    - PR contact emails
+      - Media inquiry addresses
 
-6. **Blog/Articles** (domain.com/blog)
-   - Author emails
-   - Contact the editor emails
+  6. ** Blog / Articles ** (domain.com / blog)
+    - Author emails
+      - Contact the editor emails
 
-**ADVANCED TACTICS:**
+        ** ADVANCED TACTICS:**
 
-- **Visit 3-5 pages per company minimum**: Homepage + Contact + Team + About + Careers
-- **Look in page source**: Sometimes emails are in mailto: links or meta tags
-- **Check subdomains**: blog.company.com, careers.company.com might have different contacts
-- **Extract from text patterns**: Look for email patterns like firstname@domain.com
-- **LinkedIn URLs**: Extract any LinkedIn profile URLs (useful even without email)
-- **Phone numbers**: Extract all phone numbers as backup contact methods
+- ** Visit 3 - 5 pages per company minimum **: Homepage + Contact + Team + About + Careers
+    - ** Look in page source **: Sometimes emails are in mailto: links or meta tags
+      - ** Check subdomains **: blog.company.com, careers.company.com might have different contacts
+        - ** Extract from text patterns **: Look for email patterns like firstname @domain.com
+- ** LinkedIn URLs **: Extract any LinkedIn profile URLs(useful even without email)
+    - ** Phone numbers **: Extract all phone numbers as backup contact methods
 
 ═══════════════════════════════════════════════════════
 🔎 DUCKDUCKGO SEARCH MASTERY
 ═══════════════════════════════════════════════════════
 
-**EFFECTIVE QUERY PATTERNS:**
+** EFFECTIVE QUERY PATTERNS:**
 
 ✓ Industry + Location:
   "${icp.industries?.[0] || 'SaaS'} companies in ${icp.geos?.[0] || 'San Francisco'}"
@@ -1301,68 +1665,68 @@ TARGET: ${maxCompanies} companies with HIGH-QUALITY contact information
   "top ${icp.industries?.[0] || 'fintech'} startups ${icp.geos?.[0] || 'New York'}"
   "Series A ${icp.industries?.[0] || 'AI'} companies"
   
-✓ Industry + Hiring (great for finding active companies):
-  "${icp.industries?.[0] || 'tech'} companies hiring ${icp.titles?.[0] || 'engineers'}"
+✓ Industry + Hiring(great for finding active companies):
+    "${icp.industries?.[0] || 'tech'} companies hiring ${icp.titles?.[0] || 'engineers'}"
   "${icp.industries?.[0] || 'SaaS'} careers page"
   
-✓ Technology-specific:
+✓ Technology - specific:
   "companies using ${icp.techStack?.[0] || 'React'}"
   "built with ${icp.techStack?.[0] || 'Node.js'}"
 
-✓ Company directories (very effective):
+✓ Company directories(very effective):
   "site:crunchbase.com ${icp.industries?.[0] || 'SaaS'} ${icp.geos?.[0] || ''}"
   "site:linkedin.com/company ${icp.industries?.[0] || 'AI'}"
   "site:producthunt.com ${icp.industries?.[0] || 'productivity'}"
 
-**SEARCH STRATEGY:**
-- Start with 3-5 diverse queries in your first search batch
-- If results are poor quality, try different keywords
-- Prioritize actual company websites over directories
-- Mix broad and specific queries for coverage
+    ** SEARCH STRATEGY:**
+      - Start with 3 - 5 diverse queries in your first search batch
+        - If results are poor quality, try different keywords
+          - Prioritize actual company websites over directories
+            - Mix broad and specific queries for coverage
 
 ═══════════════════════════════════════════════════════
-🎬 OPTIMAL WORKFLOW (FOLLOW THIS PATTERN)
+🎬 OPTIMAL WORKFLOW(FOLLOW THIS PATTERN)
 ═══════════════════════════════════════════════════════
 
-**ITERATION 1-3: Cast Wide Net**
-1. Execute 3-5 searches with diverse queries
-2. Visit top 10-15 company websites IN PARALLEL
-3. Use visit_website on the company domain (it will automatically Deep Crawl for you)
-4. Save companies that have emails (aim for 5-10 companies per iteration)
+** ITERATION 1 - 3: Cast Wide Net **
+    1. Execute 3 - 5 searches with diverse queries
+  2. Visit top 10 - 15 company websites IN PARALLEL
+  3. Use visit_website on the company domain(it will automatically Deep Crawl for you)
+    4. Save companies that have emails(aim for 5 - 10 companies per iteration)
 
-**ITERATION 4-10: Deep Qualification**
-1. If you have < 50% of target, do more searches
+** ITERATION 4 - 10: Deep Qualification **
+    1. If you have < 50 % of target, do more searches
 2. Extract ALL possible contacts from the visit_website results
-3. Save only ICP-aligned companies with decision-maker emails
+  3. Save only ICP - aligned companies with decision - maker emails
 
-**ITERATION 10+: Quality Refinement**
-1. Review what's working - which search queries yielded best results?
-**EXCELLENT PERFORMANCE:**
-- 80%+ of companies have 3+ contacts
-- 90%+ of contacts have emails
-- 100% ICP alignment
-- Average 5+ contacts per company
+    ** ITERATION 10 +: Quality Refinement **
+      1. Review what's working - which search queries yielded best results?
+        ** EXCELLENT PERFORMANCE:**
+          - 80 % + of companies have 3 + contacts
+            - 90 % + of contacts have emails
+              - 100 % ICP alignment
+                - Average 5 + contacts per company
 
-**GOOD PERFORMANCE:**
-- 60%+ of companies have 2+ contacts
-- 80%+ of contacts have emails
-- 90% ICP alignment
-- Average 3+ contacts per company
+                  ** GOOD PERFORMANCE:**
+                    - 60 % + of companies have 2 + contacts
+                      - 80 % + of contacts have emails
+                        - 90 % ICP alignment
+                          - Average 3 + contacts per company
 
-**NEEDS IMPROVEMENT:**
-- < 50% of companies have 2+ contacts
-- < 70% of contacts have emails
-- < 80% ICP alignment
+                            ** NEEDS IMPROVEMENT:**
+                              - <50% of companies have 2 + contacts
+                                - <70% of contacts have emails
+                                  - <80% ICP alignment
 
-YOUR TOOLS (use in parallel whenever possible):
-1. search_companies - DuckDuckGo search
-2. visit_website - Extract data from any URL
-3. save_company - Save qualified companies with contacts
+YOUR TOOLS(use in parallel whenever possible):
+  1. search_companies - DuckDuckGo search
+  2. visit_website - Extract data from any URL
+  3. save_company - Save qualified companies with contacts
 4. refine_search_strategy - Evaluate and adjust
 
-Remember: QUALITY > QUANTITY. Better to save 50 perfect companies with 250 contacts than 100 companies with 100 contacts.
+  Remember: QUALITY > QUANTITY.Better to save 50 perfect companies with 250 contacts than 100 companies with 100 contacts.
 
-Be strategic, thorough, and relentless in finding contact information. Good luck! 🚀`;
+Be strategic, thorough, and relentless in finding contact information.Good luck! 🚀`;
 
   // Start with a User message; pass systemPrompt via the 'system' option in generateText
   const messages: ModelMessage[] = [
@@ -1371,17 +1735,19 @@ Be strategic, thorough, and relentless in finding contact information. Good luck
       content: `Begin lead generation. Find ${maxCompanies} companies matching the ICP.
 
 WORKFLOW TO FOLLOW:
-1. First, use search_companies to find relevant companies
-2. Then, use visit_website IN PARALLEL on multiple promising URLs from the search results
-3. After extracting data, IMMEDIATELY use save_company if you found AT LEAST ONE email
-4. For missing company info, provide defaults (description can be basic, industry from ICP)
-5. Save ALL emails as separate contacts - if you found 5 emails, create 5 contact objects
-6. Continue this cycle (search → visit → save) until you reach ${maxCompanies} saved companies
+  1. First, use search_companies to find relevant companies
+  2. Then, use visit_website IN PARALLEL on multiple promising URLs from the search results
+  3. The visit_website tool returns STRUCTURED CONTACTS (with name, title, email, linkedin). Use these directly!
+  4. After extracting data, IMMEDIATELY use save_company if you found AT LEAST ONE email
+  5. For each email found, create a contact object. Set name to EMPTY STRING "" if you don't know the real person name.
+  6. NEVER use the company name as a contact name. The system handles unnamed contacts automatically.
+  7. Continue this cycle (search -> visit -> save) until you reach ${maxCompanies} saved companies
 
-IMPORTANT: 
-- Create separate contact entry for EACH email found (leave name empty if unknown)
-- Don't skip companies due to missing description/industry - provide reasonable defaults
-- The goal is to save companies WITH contacts, not to be perfectionist about company details
+CONTACT RULES (CRITICAL):
+  - name MUST be a real person's FirstName LastName, or empty string ""
+  - NEVER set name to the company name, department name, or generic labels
+  - title MUST be a real job title (CEO, VP Sales, etc), or empty string ""
+  - The system will auto-label unnamed contacts as "General Contact" or "Sales Contact" based on email
 
 Start now by searching for companies.`
     }
@@ -1550,23 +1916,23 @@ Start now by searching for companies.`
           let logMsg = "";
           switch (toolName) {
             case "search_companies":
-              logMsg = `🔍 [${index + 1}/${toolCount}] Searching: "${(toolArgs as any).query}"`;
+              logMsg = `🔍[${index + 1}/${toolCount}]Searching: "${(toolArgs as any).query}"`;
               break;
             case "visit_website":
               const urlDomain = extractDomain((toolArgs as any).url);
-              logMsg = `🌐 [${index + 1}/${toolCount}] Visiting: ${urlDomain || (toolArgs as any).url}`;
+              logMsg = `🌐[${index + 1}/${toolCount}] Visiting: ${urlDomain || (toolArgs as any).url} `;
               break;
             case "analyze_company_fit":
-              logMsg = `🔬 [${index + 1}/${toolCount}] Analyzing: ${(toolArgs as any).domain}`;
+              logMsg = `🔬[${index + 1}/${toolCount}] Analyzing: ${(toolArgs as any).domain} `;
               break;
             case "save_company":
-              logMsg = `💾 [${index + 1}/${toolCount}] Saving: ${(toolArgs as any).companyName || (toolArgs as any).domain}`;
+              logMsg = `💾[${index + 1}/${toolCount}] Saving: ${(toolArgs as any).companyName || (toolArgs as any).domain} `;
               break;
             case "refine_search_strategy":
-              logMsg = `🎯 [${index + 1}/${toolCount}] Strategy: ${(toolArgs as any).reasoning?.substring(0, 100) ?? ''}...`;
+              logMsg = `🎯[${index + 1}/${toolCount}] Strategy: ${(toolArgs as any).reasoning?.substring(0, 100) ?? ''}...`;
               break;
             default:
-              logMsg = `🤖 [${index + 1}/${toolCount}] ${toolName}`;
+              logMsg = `🤖[${index + 1}/${toolCount}] ${toolName} `;
           }
           addLog(logMsg);
         });
@@ -1601,7 +1967,7 @@ Start now by searching for companies.`
           }
         }
 
-        let summary = `✅ Batch complete: ${toolCount} tool call${toolCount > 1 ? 's' : ''}`;
+        let summary = `✅ Batch complete: ${toolCount} tool call${toolCount > 1 ? 's' : ''} `;
         if (savedResults.length > 0) summary += ` | ${savedResults.length} saved`;
         summary += ` | Total: ${companiesSaved}/${maxCompanies} companies (${contactsSaved} contacts)`;
         addLog(summary);

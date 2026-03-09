@@ -1,4 +1,3 @@
-import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { generateAISearchQueries } from "./ai-helpers";
 import { runGoogleSearchForJob } from "./google-search";
@@ -22,7 +21,7 @@ type LeadGenJob = {
   id: string;
   pool: string;
   user: string;
-  providers?: { serp?: boolean; [k: string]: any };
+  providers?: { serp?: boolean;[k: string]: any };
   queryTemplates?: { base?: string[] };
   counters?: Record<string, number>;
   logs?: any[];
@@ -129,83 +128,76 @@ function mergeProvenance(prev: any, addition: any): any {
   }
 }
 
+/** Strip HTML tags from a string */
+function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ");
+}
+
 /**
- * Perform a DuckDuckGo HTML search to avoid heavy anti-bot measures.
- * Extract top result links and domains.
- * Now with progressive fallback to ensure results.
+ * Perform a DuckDuckGo HTML search using plain fetch — zero dependencies.
+ * Parse the server-rendered HTML results with regex.
  */
 async function ddgSearch(query: string): Promise<SerpResult[]> {
-  const browser = await launchBrowser();
   try {
-    const page = await newPageWithDefaults(browser);
-    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 });
-    
-    // Wait for content
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Try multiple selectors (DDG structure may vary)
-    const results = await page.evaluate(() => {
-      const extracted: Array<{ title: string; href: string }> = [];
-      
-      // Try multiple selector patterns
-      const selectors = [
-        'a.result__a',           // Classic DDG HTML
-        'article h2 a',          // Alternative structure
-        '.result__title a',      // Another variant
-        'a[href*="http"]'        // Generic fallback
-      ];
-      
-      for (const selector of selectors) {
-        const links = document.querySelectorAll(selector);
-        if (links.length > 0) {
-          links.forEach((link, idx) => {
-            if (idx < 25) { // Get more results
-              const anchor = link as HTMLAnchorElement;
-              const href = anchor.href;
-              // Filter out DDG internal links
-              if (href && !href.includes('duckduckgo.com') && 
-                  (href.startsWith('http://') || href.startsWith('https://'))) {
-                extracted.push({
-                  title: (anchor.textContent || '').trim(),
-                  href: href
-                });
-              }
-            }
-          });
-          if (extracted.length > 0) break; // Found results, stop trying selectors
-        }
-      }
-      
-      return extracted;
+    const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    const response = await fetch(ddgUrl, {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
     });
 
-    const withDomains: SerpResult[] = results.map((r) => ({
-      ...r,
-      domain: ((): string | null => {
+    if (!response.ok) {
+      console.error(`DuckDuckGo HTTP error: ${response.status}`);
+      return [];
+    }
+
+    const html = await response.text();
+
+    // Parse result links: <a class="result__a" href="...">Title</a>
+    const linkRegex = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+    const results: SerpResult[] = [];
+    let match;
+
+    while ((match = linkRegex.exec(html)) !== null) {
+      let href = match[1];
+      const title = stripHtmlTags(match[2]).trim();
+
+      // Decode DDG redirect URLs: //duckduckgo.com/l/?uddg=ENCODED_URL&...
+      if (href.includes("duckduckgo.com/l/")) {
+        const uddgMatch = href.match(/[?&]uddg=([^&]+)/);
+        if (uddgMatch) {
+          href = decodeURIComponent(uddgMatch[1]);
+        }
+      }
+
+      if (!href.startsWith("http://") && !href.startsWith("https://")) continue;
+
+      const domain = ((): string | null => {
         try {
-          const u = new URL(r.href);
+          const u = new URL(href);
           let hostname = u.hostname.replace(/^www\./i, "");
-          // Filter out common non-company domains
-          const excludePatterns = ['wikipedia.org', 'youtube.com', 'facebook.com', 
-                                   'twitter.com', 'linkedin.com', 'instagram.com',
-                                   'reddit.com', 'medium.com', 'github.com'];
-          if (excludePatterns.some(p => hostname.includes(p))) {
-            return null;
-          }
+          const excludePatterns = ['wikipedia.org', 'youtube.com', 'facebook.com',
+            'twitter.com', 'linkedin.com', 'instagram.com',
+            'reddit.com', 'medium.com', 'github.com',
+            'duckduckgo.com', 'google.com', 'bing.com'];
+          if (excludePatterns.some(p => hostname.includes(p))) return null;
           return hostname;
         } catch {
           return null;
         }
-      })(),
-    }));
+      })();
 
-    return withDomains.filter(r => r.domain !== null);
+      results.push({ title, href, domain });
+    }
+
+    console.log(`[DDG SERP] "${query}" -> ${results.filter(r => r.domain).length} results`);
+    return results.filter(r => r.domain !== null);
   } catch (error) {
     console.error(`DDG search error for "${query}":`, error);
     return [];
-  } finally {
-    await closeBrowser(browser);
   }
 }
 
@@ -237,7 +229,7 @@ export async function runSerpScraperForJob(jobId: string, userId?: string): Prom
   if (!job) throw new Error("Job not found for SERP");
 
   const effectiveUserId = userId || job.user;
-  
+
   const pool = await db.crm_Lead_Pools.findUnique({
     where: { id: job.pool },
     select: { id: true, icpConfig: true },
@@ -247,7 +239,7 @@ export async function runSerpScraperForJob(jobId: string, userId?: string): Prom
   // Try AI-powered query generation first
   const maxCompanies = icp.limits?.maxCompanies ?? 100;
   let queries: string[] = [];
-  
+
   const useAI = job.providers?.aiQueries !== false;
   if (useAI && effectiveUserId) {
     try {
@@ -260,9 +252,9 @@ export async function runSerpScraperForJob(jobId: string, userId?: string): Prom
           ],
         },
       });
-      
+
       queries = await generateAISearchQueries(icp, effectiveUserId, Math.min(15, Math.ceil(maxCompanies / 5)));
-      
+
       await db.crm_Lead_Gen_Jobs.update({
         where: { id: jobId },
         data: {
@@ -276,17 +268,17 @@ export async function runSerpScraperForJob(jobId: string, userId?: string): Prom
       console.error("AI query generation failed:", error);
     }
   }
-  
+
   // Fallback to template-based queries if AI fails or disabled
   const templates =
     (job.queryTemplates?.base && job.queryTemplates.base.length
       ? job.queryTemplates.base
       : [
-          "site:linkedin.com/company {industry} {geo}",
-          "site:crunchbase.com/organization {industry} {geo}",
-          "{industry} companies in {geo} using {tech}",
-        ]);
-  
+        "site:linkedin.com/company {industry} {geo}",
+        "site:crunchbase.com/organization {industry} {geo}",
+        "{industry} companies in {geo} using {tech}",
+      ]);
+
   if (queries.length === 0) {
     queries = buildQueries(templates, icp, Math.min(30, Math.max(5, Math.ceil(maxCompanies / 3))));
   }
@@ -309,11 +301,11 @@ export async function runSerpScraperForJob(jobId: string, userId?: string): Prom
 
   // Rate limiting between queries
   const perQueryDelayMs = Number(process.env.SCRAPER_QUERY_DELAY_MS || 1500);
-  
+
   // Progressive loosening: If we don't find enough results, try broader queries
   let attemptLevel = 0;
   const maxAttempts = 3;
-  
+
   while (attemptLevel < maxAttempts && allDomains.length < Math.min(10, maxCompanies)) {
     if (attemptLevel > 0) {
       // Log that we're loosening search
@@ -326,7 +318,7 @@ export async function runSerpScraperForJob(jobId: string, userId?: string): Prom
           ],
         },
       });
-      
+
       // Generate broader queries for next attempt
       if (attemptLevel === 1) {
         // Remove tech stack requirement
@@ -346,68 +338,68 @@ export async function runSerpScraperForJob(jobId: string, userId?: string): Prom
       }
     }
 
-  for (const q of queries) {
-    let results: SerpResult[] = [];
-    try {
-      results = await ddgSearch(q);
-    } catch (err) {
-      // Log error but continue
-      await db.crm_Lead_Gen_Jobs.update({
-        where: { id: jobId },
-        data: {
-          logs: [
-            ...(job.logs || []),
-            { ts: new Date().toISOString(), level: "WARN", msg: `SERP error for "${q}": ${(err as Error).message}` },
-          ],
-        },
-      });
-    }
-
-    const domains = dedupe(
-      results
-        .map((r) => r.domain)
-        .filter((d): d is string => !!d)
-        .map((d) => d.toLowerCase())
-        .filter((d) => !exclude.has(d))
-    );
-
-    allDomains.push(...domains);
-
-    // Persist a single source event per query with metadata summary
-    try {
-      await db.crm_Lead_Source_Events.create({
-        data: {
-          job: jobId,
-          type: "serp",
-          query: q,
-          url: results[0]?.href || null,
-          fetchedAt: new Date(),
-          metadata: {
-            note: "SERP query results",
-            domains: domains.slice(0, 20),
-            totalResults: results.length,
+    for (const q of queries) {
+      let results: SerpResult[] = [];
+      try {
+        results = await ddgSearch(q);
+      } catch (err) {
+        // Log error but continue
+        await db.crm_Lead_Gen_Jobs.update({
+          where: { id: jobId },
+          data: {
+            logs: [
+              ...(job.logs || []),
+              { ts: new Date().toISOString(), level: "WARN", msg: `SERP error for "${q}": ${(err as Error).message}` },
+            ],
           },
-        },
-      });
-      sourceEvents++;
-    } catch {
-      // ignore individual event errors
+        });
+      }
+
+      const domains = dedupe(
+        results
+          .map((r) => r.domain)
+          .filter((d): d is string => !!d)
+          .map((d) => d.toLowerCase())
+          .filter((d) => !exclude.has(d))
+      );
+
+      allDomains.push(...domains);
+
+      // Persist a single source event per query with metadata summary
+      try {
+        await db.crm_Lead_Source_Events.create({
+          data: {
+            job: jobId,
+            type: "serp",
+            query: q,
+            url: results[0]?.href || null,
+            fetchedAt: new Date(),
+            metadata: {
+              note: "SERP query results",
+              domains: domains.slice(0, 20),
+              totalResults: results.length,
+            },
+          },
+        });
+        sourceEvents++;
+      } catch {
+        // ignore individual event errors
+      }
+
+      // delay
+      if (perQueryDelayMs > 0) {
+        await sleep(perQueryDelayMs);
+      }
+
+      // If we've found enough domains for this attempt level, break early
+      if (allDomains.length >= maxCompanies) {
+        break;
+      }
     }
 
-    // delay
-    if (perQueryDelayMs > 0) {
-      await sleep(perQueryDelayMs);
-    }
-    
-    // If we've found enough domains for this attempt level, break early
-    if (allDomains.length >= maxCompanies) {
-      break;
-    }
+    attemptLevel++;
   }
-  
-  attemptLevel++;
-  }
-  
+
   // Final check: If still no results after all attempts
   if (allDomains.length === 0) {
     await db.crm_Lead_Gen_Jobs.update({
@@ -415,10 +407,10 @@ export async function runSerpScraperForJob(jobId: string, userId?: string): Prom
       data: {
         logs: [
           ...(job.logs || []),
-          { 
-            ts: new Date().toISOString(), 
-            level: "ERROR", 
-            msg: "No companies found after all search attempts. This may indicate: (1) ICP criteria too narrow, (2) Search engine blocking, (3) No matching companies exist. Try broader ICP criteria or check logs for search errors." 
+          {
+            ts: new Date().toISOString(),
+            level: "ERROR",
+            msg: "No companies found after all search attempts. This may indicate: (1) ICP criteria too narrow, (2) Search engine blocking, (3) No matching companies exist. Try broader ICP criteria or check logs for search errors."
           },
         ],
       },
