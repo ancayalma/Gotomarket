@@ -3,8 +3,6 @@ import BasaltNavbar from "@/components/basaltcrm-landing/BasaltNavbar";
 import BasaltFooter from "@/components/basaltcrm-landing/BasaltFooter";
 import GeometricBackground from "@/app/components/GeometricBackground";
 import DocsSidebar from "./components/DocsSidebar";
-import UtilityBar from "@/components/UtilityBar";
-import Footer from "@/app/(routes)/components/Footer";
 
 export default function DocsLayout({
     children,
@@ -33,10 +31,6 @@ export default function DocsLayout({
                     </main>
                 </div>
 
-                <div className="shrink-0">
-                    <UtilityBar />
-                    <Footer />
-                </div>
                 <BasaltFooter />
             </div>
         </div>
