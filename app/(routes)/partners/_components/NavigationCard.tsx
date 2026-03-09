@@ -50,7 +50,7 @@ export const NavigationCard = ({ card, loading = false, className, isActive, onC
                 {card.title}
             </h3>
             <span className={cn(
-                "block text-xl font-bold tracking-tight text-foreground mt-0.5 px-2 truncate",
+                "block text-xl md:text-lg lg:text-xl font-bold tracking-tight text-foreground mt-0.5 px-2",
             )}>
                 {card.description}
             </span>
