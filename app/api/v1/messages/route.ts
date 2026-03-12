@@ -42,11 +42,11 @@ export async function GET(req: NextRequest) {
                 prismadb.crm_Leads.findMany({
                     where: { team_id: auth!.tenantId },
                     select: { id: true },
-                }).then(leads => leads.map(l => l.id)),
+                }).then((leads: { id: string }[]) => leads.map(l => l.id)),
                 prismadb.crm_Contacts.findMany({
                     where: { team_id: auth!.tenantId },
                     select: { id: true },
-                }).then(contacts => contacts.map(c => c.id)),
+                }).then((contacts: { id: string }[]) => contacts.map(c => c.id)),
             ]);
 
             where.OR = [
