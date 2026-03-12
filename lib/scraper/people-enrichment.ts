@@ -116,10 +116,38 @@ export async function enrichPeopleForJob(
                             return (el?.textContent || "").trim();
                         }
 
+                        // Common website headings that look like person names but aren't
+                        const GARBAGE_PHRASES = new Set([
+                            'join our team', 'meet the team', 'our team', 'the team', 'about us',
+                            'contact us', 'get in touch', 'learn more', 'read more', 'see more',
+                            'view all', 'show more', 'load more', 'sign up', 'log in', 'sign in',
+                            'pay later', 'pay now', 'buy now', 'shop now', 'get started',
+                            'free trial', 'request demo', 'book demo', 'schedule demo',
+                            'our mission', 'our vision', 'our story', 'our values', 'our culture',
+                            'decrease abandonment', 'increase conversion', 'targeting cookies',
+                            'accept cookies', 'cookie settings', 'privacy policy', 'terms conditions',
+                            'terms of service', 'cookie policy', 'manage cookies', 'accept all',
+                            'reject all', 'customize settings', 'your privacy',
+                            'middle east', 'north america', 'latin america', 'asia pacific',
+                            'united states', 'united kingdom', 'european union', 'south america',
+                            'talk to sales', 'talk an expert', 'find out more', 'explore features',
+                            'explore products', 'explore solutions', 'why choose us',
+                            'how it works', 'what we do', 'who we are', 'where we are',
+                            'pricing plans', 'compare plans', 'all features', 'key features',
+                            'customer stories', 'case studies', 'success stories',
+                            'shopping rewards', 'digital payments', 'online payments',
+                            'mobile payments', 'payment solutions', 'payment processing',
+                            'global payments', 'merchant services', 'business solutions',
+                            'enterprise solutions', 'small business', 'all rights reserved',
+                            'copyright notice', 'follow us', 'stay connected',
+                        ]);
+
                         function looksLikeName(s: string): boolean {
                             // Basic heuristic: 2-4 tokens with capitalized initials
                             const parts = s.trim().split(/\s+/).filter(Boolean);
                             if (parts.length < 2 || parts.length > 4) return false;
+                            // Reject known non-name phrases
+                            if (GARBAGE_PHRASES.has(s.trim().toLowerCase())) return false;
                             let score = 0;
                             for (const p of parts) {
                                 if (/^[A-Z][a-z'’\-]+$/.test(p)) score++;

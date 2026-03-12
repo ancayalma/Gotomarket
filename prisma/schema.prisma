@@ -464,6 +464,9 @@ model crm_Contacts {
   // Service Cloud: Cases linked to this contact
   cases  crm_Cases[]
   quotes crm_Quotes[]
+
+  // API messaging: Activities linked to this contact
+  lead_activities crm_Lead_Activities[] @relation(name: "LeadActivitiesToContact")
 }
 
 enum crm_Contact_Type {
@@ -2035,16 +2038,26 @@ enum PipelineStage {
 }
 
 model crm_Lead_Activities {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  v         Int      @default(0) @map("__v")
-  lead      String?  @db.ObjectId
-  user      String?  @db.ObjectId
-  type      String
-  metadata  Json?
-  createdAt DateTime @default(now()) @db.Date
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  v               Int      @default(0) @map("__v")
+  conversation_id String?  // Thread ID for grouping bidirectional messages
+  lead            String?  @db.ObjectId
+  contact         String?  @db.ObjectId // Direct contact link for API messaging
+  user            String?  @db.ObjectId
+  type            String
+  direction       String?  // "INBOUND" | "OUTBOUND"
+  channel         String?  // "EMAIL" | "SMS" | "NOTE" | "API"
+  subject         String?
+  body            String?
+  metadata        Json?
+  createdAt       DateTime @default(now()) @db.Date
 
-  assigned_lead crm_Leads? @relation(name: "LeadActivitiesToLead", fields: [lead], references: [id])
-  assigned_user Users?     @relation(name: "LeadActivitiesToUser", fields: [user], references: [id], onDelete: SetNull)
+  assigned_lead    crm_Leads?    @relation(name: "LeadActivitiesToLead", fields: [lead], references: [id])
+  assigned_contact crm_Contacts? @relation(name: "LeadActivitiesToContact", fields: [contact], references: [id])
+  assigned_user    Users?        @relation(name: "LeadActivitiesToUser", fields: [user], references: [id], onDelete: SetNull)
+
+  @@index([conversation_id])
+  @@index([contact])
 }
 
 // Button set presets per project (Boards)

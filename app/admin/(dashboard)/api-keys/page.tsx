@@ -7,6 +7,7 @@ import { LearnLink } from "@/components/ui/LearnLink";
 import { ApiKeysManager } from "./_components/ApiKeysManager";
 import { ApiLogsViewer } from "./_components/ApiLogsViewer";
 import { ApiUsageQuota } from "./_components/ApiUsageQuota";
+import { ApiDocsViewer } from "./_components/ApiDocsViewer";
 import Container from "@/app/(routes)/components/ui/Container";
 
 export default async function ApiKeysSettingsPage() {
@@ -18,7 +19,7 @@ export default async function ApiKeysSettingsPage() {
 
     const team = await prismadb.team.findUnique({
         where: { id: teamInfo.teamId },
-        select: { 
+        select: {
             slug: true,
             subscription_plan: true,
             assigned_plan: { select: { slug: true, name: true } }
@@ -43,9 +44,9 @@ export default async function ApiKeysSettingsPage() {
     });
 
     return (
-        <Container 
-            title="API & Webhooks" 
-            description="Manage API keys and view real-time API request audit logs for Headless configurations." 
+        <Container
+            title="API & Webhooks"
+            description="Manage API keys and view real-time API request audit logs for Headless configurations."
             fluid
         >
             <LearnLink
@@ -105,14 +106,19 @@ export default async function ApiKeysSettingsPage() {
                             <li><strong>Authenticate Requests:</strong> When making calls from Next.js to the CRM, include the header <code>Authorization: Bearer YOUR_API_KEY</code>.</li>
                         </ol>
                         <div className="p-4 bg-black/40 rounded-xl font-mono text-xs border border-white/5 overflow-x-auto">
-                            <span className="text-green-400">{'// Example Next.js Fetch'}</span><br/>
-                            const res = await fetch('https://api.yourcrm.com/api/v1/customers/123/subscriptions', {'{'}<br/>
-                            &nbsp;&nbsp;headers: {'{'}<br/>
-                            &nbsp;&nbsp;&nbsp;&nbsp;'Authorization': `Bearer ${'{'}process.env.CRM_API_KEY{'}'}`<br/>
-                            &nbsp;&nbsp;{'}'}<br/>
+                            <span className="text-green-400">{'// Example Next.js Fetch'}</span><br />
+                            const res = await fetch('https://api.yourcrm.com/api/v1/customers/123/subscriptions', {'{'}<br />
+                            &nbsp;&nbsp;headers: {'{'}<br />
+                            &nbsp;&nbsp;&nbsp;&nbsp;'Authorization': `Bearer ${'{'}process.env.CRM_API_KEY{'}'}`<br />
+                            &nbsp;&nbsp;{'}'}<br />
                             {'}'});
                         </div>
                     </div>
+                </div>
+
+                {/* API Reference Documentation */}
+                <div className="col-span-1 xl:col-span-2">
+                    <ApiDocsViewer />
                 </div>
             </div>
         </Container>

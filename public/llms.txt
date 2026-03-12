@@ -1,0 +1,220 @@
+# BasaltCRM API
+
+> BasaltCRM is an enterprise CRM platform with a REST API for ecommerce integrations, customer tracking, bidirectional messaging, and headless CRM access.
+
+## Authentication
+
+All `/api/v1/*` endpoints require a Bearer token:
+
+```
+Authorization: Bearer sk_live_your_api_key_here
+```
+
+Generate keys from the Admin panel under API & Webhooks. Keys use bcrypt hashing and are only shown once at creation.
+
+## Base URL
+
+```
+https://your-crm-domain.com
+```
+
+## Response Envelope
+
+Success:
+```json
+{ "data": { ... }, "meta": { "total": 42, "page": 1, "pageSize": 25, "hasMore": true } }
+```
+
+Error:
+```json
+{ "error": { "code": "NOT_FOUND", "message": "Resource not found" } }
+```
+
+## Pagination
+
+All list endpoints accept `?page=1&pageSize=25` (max 100).
+
+---
+
+## Contacts
+
+Manage individual people (customers). Supports email-based upsert deduplication — safe to call on every ecommerce purchase.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/v1/contacts | List contacts. Query: `page`, `pageSize`, `email`, `status`, `type`, `search` |
+| POST | /api/v1/contacts | Create or upsert contact. Deduplicates by `email`. Required: `last_name` |
+| GET | /api/v1/contacts/{contactId} | Get single contact |
+| PUT | /api/v1/contacts/{contactId} | Partial update contact |
+| DELETE | /api/v1/contacts/{contactId} | Soft-delete (sets status inactive) |
+
+### POST /api/v1/contacts — Example Body
+```json
+{
+  "first_name": "Jane",
+  "last_name": "Doe",
+  "email": "jane@shop.com",
+  "mobile_phone": "+1234567890",
+  "tags": ["vip", "ecommerce"]
+}
+```
+
+---
+
+## Leads
+
+Manage prospective customers. Email-based upsert deduplication.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/v1/leads | List leads. Query: `status`, `email`, `company`, `pipeline_stage`, `search` |
+| POST | /api/v1/leads | Create or upsert lead. Deduplicates by `email`. Required: `lastName` |
+| GET | /api/v1/leads/{leadId} | Get single lead |
+| PUT | /api/v1/leads/{leadId} | Update lead |
+| DELETE | /api/v1/leads/{leadId} | Soft-delete (archives) |
+
+### POST /api/v1/leads — Example Body
+```json
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "email": "john@acme.com",
+  "company": "Acme Corp",
+  "lead_source": "Website"
+}
+```
+
+---
+
+## Accounts
+
+Company/organization profiles. Name-based upsert deduplication.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/v1/accounts | List accounts. Query: `name`, `status`, `search` |
+| POST | /api/v1/accounts | Create or upsert account. Deduplicates by `name`. Required: `name` |
+| GET | /api/v1/accounts/{accountId} | Get account with linked contacts and leads |
+| PUT | /api/v1/accounts/{accountId} | Update account |
+| DELETE | /api/v1/accounts/{accountId} | Soft-delete |
+
+### POST /api/v1/accounts — Example Body
+```json
+{
+  "name": "Acme Corp",
+  "email": "info@acme.com",
+  "type": "Customer",
+  "website": "https://acme.com"
+}
+```
+
+---
+
+## Messages (Bidirectional)
+
+Send outbound messages and receive inbound customer replies. Supports conversation threading via `conversation_id`.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/v1/messages | List messages. Query: `contactId`, `leadId`, `direction` (INBOUND/OUTBOUND), `channel`, `conversation_id` |
+| POST | /api/v1/messages | Send outbound message. Auto-delivers email when `channel: "email"` |
+| POST | /api/v1/messages/inbound | Webhook: push customer replies into CRM. Auto-creates contacts for unknown emails |
+| GET | /api/v1/messages/{messageId} | Get message with full thread context |
+| GET | /api/v1/messages/threads/{threadId} | Get complete conversation thread |
+
+### POST /api/v1/messages — Send Outbound
+```json
+{
+  "to": { "email": "jane@shop.com" },
+  "subject": "Order Update",
+  "body": "Your order has shipped!",
+  "channel": "email"
+}
+```
+`to` accepts: `{ contactId }`, `{ leadId }`, or `{ email }` (auto-resolves to contact/lead).
+
+### POST /api/v1/messages/inbound — Receive Webhook
+```json
+{
+  "email": "customer@shop.com",
+  "body": "Where is my order?",
+  "subject": "Order Question",
+  "conversation_id": "conv_456",
+  "metadata": { "orderId": "ORD-789" }
+}
+```
+Unknown emails auto-create a contact tagged `["auto-created", "inbound-api"]`.
+
+---
+
+## Opportunities
+
+Deal pipeline and revenue tracking.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/v1/opportunities | List opportunities. Query: `search`, `sales_stage` |
+| POST | /api/v1/opportunities | Create opportunity. Required: `name` |
+| GET | /api/v1/opportunities/{opportunityId} | Get single opportunity |
+| PUT | /api/v1/opportunities/{opportunityId} | Update opportunity |
+
+### POST /api/v1/opportunities — Example Body
+```json
+{
+  "name": "Enterprise Deal",
+  "budget": 50000,
+  "sales_stage": "Negotiation",
+  "close_date": "2026-06-30"
+}
+```
+
+---
+
+## Tasks
+
+Task management and assignment.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/v1/tasks | List tasks. Query: `status` |
+| POST | /api/v1/tasks | Create task. Required: `title` |
+| GET | /api/v1/tasks/{taskId} | Get single task |
+| PUT | /api/v1/tasks/{taskId} | Update task |
+
+### POST /api/v1/tasks — Example Body
+```json
+{
+  "title": "Follow up with Jane",
+  "priority": "HIGH",
+  "status": "TODO",
+  "due_date": "2026-04-01"
+}
+```
+
+---
+
+## Error Codes
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 401 | UNAUTHORIZED | Missing or invalid API key |
+| 400 | VALIDATION_ERROR | Invalid request body or missing required fields |
+| 404 | NOT_FOUND | Resource not found or doesn't belong to your tenant |
+| 500 | INTERNAL_ERROR | Unexpected server error |
+
+---
+
+## Ecommerce Integration Quickstart
+
+1. Generate an API key from Admin → API & Webhooks
+2. Store in `.env`: `CRM_API_KEY=sk_live_...`
+3. On customer signup/purchase: `POST /api/v1/contacts` with email (upserts automatically)
+4. Send order updates: `POST /api/v1/messages` with `channel: "email"`
+5. Receive replies: POST to `/api/v1/messages/inbound` from your email/chat system
+6. View conversations in CRM under the contact/lead timeline
+
+## Optional Links
+
+- [API Reference (Interactive)](https://your-crm-domain.com/developers/api-reference)
+- [Authentication Guide](https://your-crm-domain.com/developers/authentication)
+- [Webhooks](https://your-crm-domain.com/developers/webhooks)

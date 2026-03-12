@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
         // Verify plan status
         const team = await prismadb.team.findUnique({
-            where: { id: user.teamId as string },
+            where: { id: teamInfo.teamId },
             select: { slug: true, subscription_plan: true, assigned_plan: { select: { slug: true } } }
         });
 

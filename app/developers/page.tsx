@@ -20,7 +20,7 @@ const CARDS = [
   {
     icon: <Terminal className="w-6 h-6 text-emerald-400" />,
     title: "API Reference",
-    description: "Complete REST API reference covering 60+ endpoints for Leads, Contacts, Accounts, Projects, Invoices, and Agent Commerce.",
+    description: "Complete REST API reference covering 90+ endpoints for Leads, Contacts, Accounts, Messages, Opportunities, and the External v1 API for ecommerce.",
     href: "/developers/api-reference",
     tag: "REST",
     tagColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -90,7 +90,7 @@ export default function DevelopersPage() {
               {/* Quick Stats */}
               <div className="inline-flex items-center gap-6 px-6 py-3 rounded-full bg-white/5 border border-white/10 text-sm">
                 <span className="text-gray-400">
-                  <strong className="text-white font-semibold">60+</strong> API Endpoints
+                  <strong className="text-white font-semibold">90+</strong> API Endpoints
                 </span>
                 <span className="w-px h-4 bg-white/10" />
                 <span className="text-gray-400">

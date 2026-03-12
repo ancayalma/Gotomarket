@@ -2,7 +2,8 @@ import BasaltNavbar from "@/components/basaltcrm-landing/BasaltNavbar";
 import BasaltFooter from "@/components/basaltcrm-landing/BasaltFooter";
 import GeometricBackground from "@/app/components/GeometricBackground";
 import Link from "next/link";
-import { ArrowLeft, Server, Database, Globe, Code, Zap, ChevronRight, Copy, Lock, Package, Users, Building, Target, FileText, Bot, PhoneCall, LifeBuoy, BookOpen, Calendar as CalendarIcon, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Server, Database, Globe, Code, Zap, ChevronRight, Copy, Lock, Package, Users, Building, Target, FileText, Bot, PhoneCall, LifeBuoy, BookOpen, Calendar as CalendarIcon, ShoppingCart, MessageSquare, ClipboardList } from "lucide-react";
+import { TryableEntityGroup } from "./TryItWidgets";
 
 export const metadata = {
     title: "API Reference - BasaltCRM Developers",
@@ -189,6 +190,7 @@ export default function ApiReferencePage() {
                         {/* Navigation Tabs (Simulated with scroll links) */}
                         <div className="flex flex-wrap gap-4 mb-12 py-2 border-b border-white/5">
                             {[
+                                { name: "⚡ External API v1", id: "v1" },
                                 { name: "Core Dynamics", id: "core" },
                                 { name: "Sales & Revenue", id: "sales" },
                                 { name: "Support & Success", id: "support" },
@@ -198,11 +200,130 @@ export default function ApiReferencePage() {
                                 <Link
                                     key={tab.id}
                                     href={`#section-${tab.id}`}
-                                    className="text-sm font-bold text-gray-400 hover:text-cyan-400 transition-colors px-1"
+                                    className={`text-sm font-bold transition-colors px-1 ${tab.id === 'v1' ? 'text-cyan-400 hover:text-cyan-300' : 'text-gray-400 hover:text-cyan-400'}`}
                                 >
                                     {tab.name}
                                 </Link>
                             ))}
+                        </div>
+
+                        {/* ============================================================ */}
+                        {/* Section: External API v1 (Ecommerce + Messaging)           */}
+                        {/* ============================================================ */}
+                        <div id="section-v1" className="mb-20 scroll-mt-32">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                                    <Globe className="w-6 h-6 text-cyan-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-3xl font-bold">External API <span className="text-cyan-400">v1</span></h2>
+                                    <p className="text-gray-500 text-sm">Bearer-token authenticated endpoints for ecommerce integrations and headless CRM access.</p>
+                                </div>
+                                <span className="ml-auto px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 animate-pulse">
+                                    Interactive — Try It Now
+                                </span>
+                            </div>
+
+                            {/* Auth Banner */}
+                            <div className="bg-cyan-500/5 border border-cyan-500/15 rounded-xl p-5 mb-8">
+                                <h4 className="text-sm font-semibold text-cyan-400 flex items-center gap-2 mb-2">
+                                    <Lock className="w-4 h-4" /> Authentication
+                                </h4>
+                                <p className="text-sm text-gray-400 mb-3">Include your API key in every request:</p>
+                                <code className="block bg-black/40 border border-white/5 rounded-lg px-4 py-2 font-mono text-sm text-emerald-300">
+                                    Authorization: Bearer sk_live_your_api_key_here
+                                </code>
+                            </div>
+
+                            <div className="grid lg:grid-cols-1 gap-10">
+                                {/* Contacts */}
+                                <TryableEntityGroup
+                                    name="Contacts"
+                                    icon={<Users className="w-5 h-5 text-blue-400" />}
+                                    desc="Customer tracking with email-based upsert deduplication. Ideal for ecommerce customer sync."
+                                    codeColor="text-blue-200/80"
+                                    routes={[
+                                        { method: "GET", path: "/api/v1/contacts", desc: "List contacts (paginated, filterable)", tryable: true },
+                                        { method: "POST", path: "/api/v1/contacts", desc: "Create/upsert by email", tryable: true, exampleBody: { first_name: "Jane", last_name: "Doe", email: "jane@shop.com", tags: ["ecommerce"] } },
+                                        { method: "GET", path: "/api/v1/contacts/[contactId]", desc: "Get single contact", tryable: true },
+                                        { method: "PUT", path: "/api/v1/contacts/[contactId]", desc: "Update contact", tryable: true, exampleBody: { first_name: "Jane", tags: ["vip"] } },
+                                        { method: "DELETE", path: "/api/v1/contacts/[contactId]", desc: "Soft-delete contact", tryable: true },
+                                    ]}
+                                />
+
+                                {/* Leads */}
+                                <TryableEntityGroup
+                                    name="Leads"
+                                    icon={<Target className="w-5 h-5 text-emerald-400" />}
+                                    desc="Lead management with email deduplication. Push prospects from your website funnel."
+                                    codeColor="text-emerald-200/80"
+                                    routes={[
+                                        { method: "GET", path: "/api/v1/leads", desc: "List leads (filterable by status, company)", tryable: true },
+                                        { method: "POST", path: "/api/v1/leads", desc: "Create/upsert by email", tryable: true, exampleBody: { firstName: "John", lastName: "Smith", email: "john@acme.com", company: "Acme Corp", lead_source: "Website" } },
+                                        { method: "GET", path: "/api/v1/leads/[leadId]", desc: "Get single lead", tryable: true },
+                                        { method: "PUT", path: "/api/v1/leads/[leadId]", desc: "Update lead", tryable: true, exampleBody: { status: "CONTACTED" } },
+                                        { method: "DELETE", path: "/api/v1/leads/[leadId]", desc: "Soft-delete lead", tryable: true },
+                                    ]}
+                                />
+
+                                {/* Accounts */}
+                                <TryableEntityGroup
+                                    name="Accounts"
+                                    icon={<Building className="w-5 h-5 text-purple-400" />}
+                                    desc="Company accounts with name-based deduplication. Supports B2B ecommerce."
+                                    codeColor="text-purple-200/80"
+                                    routes={[
+                                        { method: "GET", path: "/api/v1/accounts", desc: "List accounts", tryable: true },
+                                        { method: "POST", path: "/api/v1/accounts", desc: "Create/upsert by name", tryable: true, exampleBody: { name: "Acme Corp", email: "info@acme.com", type: "Customer" } },
+                                        { method: "GET", path: "/api/v1/accounts/[accountId]", desc: "Get with linked contacts/leads", tryable: true },
+                                        { method: "PUT", path: "/api/v1/accounts/[accountId]", desc: "Update account", tryable: true, exampleBody: { website: "https://acme.com" } },
+                                        { method: "DELETE", path: "/api/v1/accounts/[accountId]", desc: "Soft-delete account", tryable: true },
+                                    ]}
+                                />
+
+                                {/* Messages (Bidirectional) */}
+                                <TryableEntityGroup
+                                    name="Messages (Bidirectional)"
+                                    icon={<MessageSquare className="w-5 h-5 text-orange-400" />}
+                                    desc="Send outbound messages and receive customer replies via webhook. Full conversation threading."
+                                    codeColor="text-orange-200/80"
+                                    routes={[
+                                        { method: "GET", path: "/api/v1/messages", desc: "List messages (filter by contact, direction)", tryable: true },
+                                        { method: "POST", path: "/api/v1/messages", desc: "Send outbound message (email delivery)", tryable: true, exampleBody: { to: { email: "jane@shop.com" }, subject: "Order Update", body: "Your order has shipped!", channel: "email" } },
+                                        { method: "POST", path: "/api/v1/messages/inbound", desc: "Webhook: push customer replies into CRM", tryable: true, exampleBody: { email: "customer@shop.com", body: "Where is my order?", subject: "Question", metadata: { orderId: "ORD-789" } } },
+                                        { method: "GET", path: "/api/v1/messages/[messageId]", desc: "Get message with thread context", tryable: true },
+                                        { method: "GET", path: "/api/v1/messages/threads/[threadId]", desc: "Full conversation thread", tryable: true },
+                                    ]}
+                                />
+
+                                {/* Opportunities */}
+                                <TryableEntityGroup
+                                    name="Opportunities"
+                                    icon={<Zap className="w-5 h-5 text-amber-400" />}
+                                    desc="Deal pipeline management via API."
+                                    codeColor="text-amber-200/80"
+                                    routes={[
+                                        { method: "GET", path: "/api/v1/opportunities", desc: "List opportunities", tryable: true },
+                                        { method: "POST", path: "/api/v1/opportunities", desc: "Create opportunity", tryable: true, exampleBody: { name: "Enterprise Deal", budget: 50000, sales_stage: "Negotiation" } },
+                                        { method: "GET", path: "/api/v1/opportunities/[opportunityId]", desc: "Get single opportunity", tryable: true },
+                                        { method: "PUT", path: "/api/v1/opportunities/[opportunityId]", desc: "Update opportunity", tryable: true, exampleBody: { sales_stage: "Closed Won" } },
+                                    ]}
+                                />
+
+                                {/* Tasks */}
+                                <TryableEntityGroup
+                                    name="Tasks"
+                                    icon={<ClipboardList className="w-5 h-5 text-cyan-400" />}
+                                    desc="Task management via API."
+                                    codeColor="text-cyan-200/80"
+                                    routes={[
+                                        { method: "GET", path: "/api/v1/tasks", desc: "List tasks", tryable: true },
+                                        { method: "POST", path: "/api/v1/tasks", desc: "Create task", tryable: true, exampleBody: { title: "Follow up with Jane", priority: "HIGH", status: "TODO" } },
+                                        { method: "GET", path: "/api/v1/tasks/[taskId]", desc: "Get single task", tryable: true },
+                                        { method: "PUT", path: "/api/v1/tasks/[taskId]", desc: "Update task", tryable: true, exampleBody: { status: "DONE" } },
+                                    ]}
+                                />
+                            </div>
                         </div>
 
                         {/* Section: Core Dynamics */}

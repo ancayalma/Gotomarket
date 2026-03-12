@@ -103,7 +103,6 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
       include: {
         contacts: {
           orderBy: { confidence: "desc" },
-          take: 1,
         },
       },
     });
@@ -172,39 +171,69 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
       }
     }
 
-    const candidateItems = activeCandidates.map((c: any) => {
-      const contact = c.contacts?.[0];
-      const nameParts = contact?.fullName?.split(" ") || [];
-      const lastName = nameParts.length > 1 ? nameParts.pop() : (contact?.fullName || c.companyName || "Candidate");
-      const firstName = nameParts.join(" ");
+    // Build candidate items — one row per CONTACT with email (not per company)
+    const candidateItems: any[] = [];
+    for (const c of activeCandidates) {
+      const allContacts: any[] = c.contacts || [];
+      // Filter to contacts that actually have emails
+      const contactsWithEmail = allContacts.filter((ct: any) => ct.email && ct.email.trim().length > 0);
 
-      // Extract email from description if missing (regex)
-      let email = contact?.email || c.email;
-      if (!email && c.description) {
-        const match = c.description.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-        if (match) email = match[0];
+      if (contactsWithEmail.length > 0) {
+        // Create one row per contact with email
+        for (const contact of contactsWithEmail) {
+          const nameParts = contact.fullName?.split(" ") || [];
+          const lastName = nameParts.length > 1 ? nameParts.pop() : (contact.fullName || "");
+          const firstName = nameParts.join(" ");
+
+          candidateItems.push({
+            id: `${c.id}_${contact.id}`,
+            accountId: c.accountsIDs || null,
+            contactId: null,
+            firstName: firstName || "",
+            lastName: lastName as string || "",
+            company: c.companyName || null,
+            jobTitle: contact.title || null,
+            email: contact.email,
+            phone: contact.phone || null,
+            description: c.description,
+            lead_source: "POOL_CANDIDATE",
+            status: c.status || "IDENTIFIED",
+            type: "CANDIDATE",
+            outreach_status: "IDLE",
+            pipeline_stage: "Identify",
+            createdAt: c.freshnessAt || new Date(),
+            updatedAt: new Date(),
+          });
+        }
+      } else {
+        // No contacts with email — show a single row with company info
+        // Try the best available contact for name/title
+        const bestContact = allContacts[0];
+        const nameParts = bestContact?.fullName?.split(" ") || [];
+        const lastName = nameParts.length > 1 ? nameParts.pop() : (bestContact?.fullName || c.companyName || "Candidate");
+        const firstName = nameParts.join(" ");
+
+        candidateItems.push({
+          id: c.id,
+          accountId: c.accountsIDs || null,
+          contactId: null,
+          firstName: firstName || "",
+          lastName: lastName as string,
+          company: c.companyName || null,
+          jobTitle: bestContact?.title || null,
+          email: null,
+          phone: bestContact?.phone || null,
+          description: c.description,
+          lead_source: "POOL_CANDIDATE",
+          status: c.status || "IDENTIFIED",
+          type: "CANDIDATE",
+          outreach_status: "IDLE",
+          pipeline_stage: "Identify",
+          createdAt: c.freshnessAt || new Date(),
+          updatedAt: new Date(),
+        });
       }
-
-      return {
-        id: c.id,
-        accountId: c.accountsIDs || null,
-        contactId: null, // Candidates don't have a contact ID in the main contacts table yet
-        firstName: firstName || "",
-        lastName: lastName as string,
-        company: c.companyName || null,
-        jobTitle: contact?.title || null,
-        email: email || null,
-        phone: contact?.phone || null,
-        description: c.description,
-        lead_source: "POOL_CANDIDATE",
-        status: c.status || "IDENTIFIED",
-        type: "CANDIDATE",
-        outreach_status: "IDLE",
-        pipeline_stage: "Identify",
-        createdAt: c.freshnessAt || new Date(),
-        updatedAt: new Date(),
-      };
-    });
+    }
 
     // Merge and sort (Legacy Leads + New Account Items + Unconverted Candidates)
     const allLeads = [...leads, ...accountItems, ...candidateItems].sort((a: any, b: any) => {
