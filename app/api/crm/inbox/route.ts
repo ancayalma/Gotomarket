@@ -30,7 +30,7 @@ export async function GET(req: Request) {
         user_id: userId,
         is_inbound: true,
         // Only fetch emails that need attention
-        is_read: false, 
+        is_read: false,
       },
       orderBy: { date: 'desc' },
       take: limit,
@@ -78,31 +78,61 @@ export async function GET(req: Request) {
       messageId: msg.message_id
     }));
 
-    // 3. Fetch Inbound SMS (If logged as activities in CRM)
-    // Adjust type string based on your exact Enums.
-    const inboundSmsActivities = await prismadb.crm_Lead_Activities.findMany({
-      where: {
-        user: userId,
-        type: { in: ["sms_received", "inbound_sms"] },
-        // Add additional filter if you have a way to mark SMS as "read" or "handled"
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
+    // 3. Fetch Inbound API Messages & SMS (from v1 messages endpoint + legacy SMS)
+    // Get team's leads/contacts to scope the query
+    const user = await prismadb.users.findUnique({
+      where: { id: userId },
+      select: { team_id: true }
     });
+    const teamId = user?.team_id;
 
-    const smsItems = inboundSmsActivities.map((act: any) => ({
-      id: act.id,
-      type: "sms",
-      subject: "New SMS Received",
-      snippet: (act.metadata as any)?.message || act.notes || "",
-      from: (act.metadata as any)?.from_phone || "Unknown Number",
-      date: act.createdAt,
-      isRead: false,
-      leadId: act.lead
-    }));
+    let apiMessageItems: any[] = [];
+    if (teamId) {
+      const [teamLeadIds, teamContactIds] = await Promise.all([
+        prismadb.crm_Leads.findMany({
+          where: { team_id: teamId },
+          select: { id: true },
+        }).then((leads: { id: string }[]) => leads.map(l => l.id)),
+        prismadb.crm_Contacts.findMany({
+          where: { team_id: teamId },
+          select: { id: true },
+        }).then((contacts: { id: string }[]) => contacts.map(c => c.id)),
+      ]);
+
+      const inboundActivities = await prismadb.crm_Lead_Activities.findMany({
+        where: {
+          type: { in: ["API_MESSAGE", "EMAIL", "SMS", "NOTE", "sms_received", "inbound_sms"] },
+          OR: [
+            { lead: { in: teamLeadIds } },
+            { contact: { in: teamContactIds } },
+          ],
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
+
+      apiMessageItems = inboundActivities.map((act: any) => {
+        const meta = (act.metadata || {}) as any;
+        return {
+          id: act.id,
+          type: act.type === "API_MESSAGE" ? "api" : (act.channel || "sms").toLowerCase(),
+          subject: act.subject || `${act.channel || "API"} Message`,
+          snippet: act.body || act.notes || meta?.message || "",
+          from: act.direction === "INBOUND"
+            ? (meta.recipientEmail || meta.fromEmail || meta.from_phone || "Customer")
+            : ((session as any)?.user?.name || "You"),
+          date: act.createdAt,
+          isRead: false,
+          leadId: act.lead,
+          contactId: act.contact,
+          direction: act.direction,
+          conversation_id: act.conversation_id,
+        };
+      });
+    }
 
     // Merge and sort all stream items by date descending
-    const inboxStream = [...emailItems, ...notificationItems, ...smsItems].sort((a, b) => {
+    const inboxStream = [...emailItems, ...notificationItems, ...apiMessageItems].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       return dateB - dateA; // Descending

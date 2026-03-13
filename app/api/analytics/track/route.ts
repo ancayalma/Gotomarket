@@ -24,20 +24,25 @@ export async function POST(req: Request) {
         const city = req.headers.get('x-vercel-ip-city') || req.headers.get('cf-ipcity') || null;
         const country = req.headers.get('x-vercel-ip-country') || req.headers.get('cf-ipcountry') || null;
 
-        // Store the page view
-        await prismadb.pageView.create({
-            data: {
-                path: String(path),
-                userAgent: userAgent ? String(userAgent) : null,
-                ipHash: String(ipHash),
-                city: city ? String(city) : null,
-                country: country ? String(country) : null,
-            },
-        });
+        // Store the page view (non-critical — don't 500 if DB write fails)
+        try {
+            await prismadb.pageView.create({
+                data: {
+                    path: String(path),
+                    userAgent: userAgent ? String(userAgent) : null,
+                    ipHash: String(ipHash),
+                    city: city ? String(city) : null,
+                    country: country ? String(country) : null,
+                },
+            });
+        } catch (dbErr) {
+            // Silently handle — MongoDB standalone may not support implicit transactions
+            systemLogger.warn("[ANALYTICS_TRACK_DB_WARN]", dbErr);
+        }
 
         return NextResponse.json({ success: true });
     } catch (error) {
         systemLogger.error("[ANALYTICS_TRACK_ERROR]", error);
-        return new NextResponse("Internal Error", { status: 500 });
+        return NextResponse.json({ success: true }); // Don't 500 for analytics
     }
 }

@@ -84,6 +84,18 @@ interface Message {
     to_user?: TeamMember | null;
     recipients?: { recipient_id: string; is_archived?: boolean; is_deleted?: boolean; is_read?: boolean }[];
     status?: string;
+    _apiMeta?: {
+        conversation_id?: string;
+        direction?: string;
+        channel?: string;
+        contactId?: string;
+        leadId?: string;
+        clientName?: string;
+        clientEmail?: string;
+    };
+    _thread?: Message[];
+    direction?: string;
+    senderName?: string;
 }
 
 interface FormSubmission {
@@ -176,6 +188,12 @@ export function InternalMessagesComponent({
     const [isSending, setIsSending] = React.useState(false);
     const [draftId, setDraftId] = React.useState<string | null>(null);
 
+    // API message reply state
+    const [apiReplyOpen, setApiReplyOpen] = React.useState(false);
+    const [apiReplyBody, setApiReplyBody] = React.useState("");
+    const [apiReplySending, setApiReplySending] = React.useState(false);
+    const [apiReplyChannel, setApiReplyChannel] = React.useState<"EMAIL" | "NOTE">("NOTE");
+
     // Filter messages based on active nav and search
     const getStatus = React.useCallback((m: Message) => {
         const isMeSender = m.from_user_id === currentUserId;
@@ -195,6 +213,8 @@ export function InternalMessagesComponent({
         switch (activeNav) {
             case "inbox":
                 filtered = messages.filter(m => {
+                    // API messages (threads) always show in inbox, never in sent
+                    if (m._apiMeta) return true;
                     const { isMeSender, isTrash, isArchived, myRecipient } = getStatus(m);
                     // Inbox contains messages where I am recipient, not trashed, not archived
                     return !!myRecipient && !isTrash && !isArchived;
@@ -202,6 +222,8 @@ export function InternalMessagesComponent({
                 break;
             case "sent":
                 filtered = messages.filter(m => {
+                    // Exclude API messages from sent — they show as threads in inbox
+                    if (m._apiMeta) return false;
                     const { isMeSender, isTrash, isDraft } = getStatus(m);
                     return isMeSender && !isTrash && !isDraft;
                 });
@@ -419,6 +441,11 @@ export function InternalMessagesComponent({
 
     // Message Handlers
     const handleArchiveMessage = async (messageId: string) => {
+        const msg = messages.find(m => m.id === messageId);
+        if (msg?._apiMeta) {
+            // API messages: delete the thread entirely (no archive concept)
+            return handleDeleteApiThread(msg);
+        }
         try {
             await fetch(`/api/messages/${messageId}`, {
                 method: "PATCH",
@@ -431,6 +458,10 @@ export function InternalMessagesComponent({
     };
 
     const handleDeleteMessage = async (messageId: string) => {
+        const msg = messages.find(m => m.id === messageId);
+        if (msg?._apiMeta) {
+            return handleDeleteApiThread(msg);
+        }
         try {
             await fetch(`/api/messages/${messageId}`, {
                 method: "PATCH",
@@ -455,6 +486,10 @@ export function InternalMessagesComponent({
     };
 
     const handlePermanentDeleteMessage = async (messageId: string) => {
+        const msg = messages.find(m => m.id === messageId);
+        if (msg?._apiMeta) {
+            return handleDeleteApiThread(msg);
+        }
         setIsDeletingSubmission(true);
         try {
             await fetch(`/api/messages/${messageId}`, {
@@ -469,6 +504,32 @@ export function InternalMessagesComponent({
             toast.error("Failed to delete");
         } finally {
             setIsDeletingSubmission(false);
+        }
+    };
+
+    // Delete an entire API message thread
+    const handleDeleteApiThread = async (msg: Message) => {
+        try {
+            // Collect all message IDs from the thread
+            const threadIds = msg._thread
+                ? msg._thread.map((m: any) => m.id)
+                : [msg.id];
+
+            const res = await fetch("/api/crm/messages/thread", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messageIds: threadIds }),
+            });
+
+            if (!res.ok) throw new Error("Failed to delete");
+
+            toast.success("Conversation deleted");
+            setSelectedMessageId(null);
+            setShowDeleteConfirm(false);
+            setMessageToDelete(null);
+            router.refresh();
+        } catch (e) {
+            toast.error("Failed to delete conversation");
         }
     };
 
@@ -611,6 +672,50 @@ export function InternalMessagesComponent({
         } finally {
             setIsSending(false);
         }
+    };
+
+    // Reply to API-originated messages (creates crm_Lead_Activities in same thread)
+    const handleApiReply = async () => {
+        if (!selectedMessage?._apiMeta || !apiReplyBody.trim()) {
+            toast.error("Please enter a reply message");
+            return;
+        }
+
+        setApiReplySending(true);
+        try {
+            const res = await fetch("/api/crm/messages/reply", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    messageId: selectedMessage.id,
+                    body: apiReplyBody,
+                    subject: selectedMessage.subject ? `Re: ${selectedMessage.subject}` : undefined,
+                    channel: apiReplyChannel.toLowerCase(),
+                    sendEmail: apiReplyChannel === "EMAIL",
+                }),
+            });
+
+            if (!res.ok) throw new Error("Failed to send reply");
+
+            const data = await res.json();
+            toast.success(
+                apiReplyChannel === "EMAIL"
+                    ? "Reply sent via email!"
+                    : "Reply added to thread!"
+            );
+            setApiReplyBody("");
+            setApiReplyOpen(false);
+            router.refresh();
+        } catch (error) {
+            toast.error("Failed to send reply");
+        } finally {
+            setApiReplySending(false);
+        }
+    };
+
+    // Check if a message is an API message
+    const isApiMessage = (msg: Message | null) => {
+        return !!msg?._apiMeta;
     };
 
     const getInitials = (name: string | null | undefined) => {
@@ -1523,7 +1628,18 @@ export function InternalMessagesComponent({
                                             <>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                                                            if (isApiMessage(selectedMessage)) {
+                                                                setApiReplyOpen(true);
+                                                                setApiReplyChannel(selectedMessage?._apiMeta?.channel === "EMAIL" ? "EMAIL" : "NOTE");
+                                                            } else {
+                                                                // Existing internal message reply: open compose with pre-filled recipient
+                                                                setComposeToUserId(selectedMessage!.from_user_id === currentUserId ? selectedMessage!.to_user_id : selectedMessage!.from_user_id);
+                                                                setComposeSubject(`Re: ${selectedMessage!.subject || ""}`);
+                                                                setComposeBody("");
+                                                                setComposeOpen(true);
+                                                            }
+                                                        }}>
                                                             <Reply className="h-4 w-4" />
                                                         </Button>
                                                     </TooltipTrigger>
@@ -1587,9 +1703,135 @@ export function InternalMessagesComponent({
                                     </div>
                                 </div>
                                 <ScrollArea className="flex-1 p-4">
-                                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                                        <div className="whitespace-pre-wrap">{selectedMessage.body}</div>
-                                    </div>
+                                    {/* API message badges */}
+                                    {isApiMessage(selectedMessage) && (
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-400 border-blue-500/30">
+                                                {selectedMessage._apiMeta?.channel || "NOTE"}
+                                            </Badge>
+                                            {selectedMessage._apiMeta?.conversation_id && (
+                                                <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-mono">
+                                                    Thread: {selectedMessage._apiMeta.conversation_id.slice(0, 8)}...
+                                                </Badge>
+                                            )}
+                                            {selectedMessage._thread && selectedMessage._thread.length > 1 && (
+                                                <Badge variant="outline" className="text-xs">
+                                                    {selectedMessage._thread.length} messages
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Chat-style thread view for API messages */}
+                                    {isApiMessage(selectedMessage) && selectedMessage._thread && selectedMessage._thread.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {selectedMessage._thread.map((threadMsg: any, idx: number) => {
+                                                const isOut = threadMsg.direction === "OUTBOUND" || threadMsg._apiMeta?.direction === "OUTBOUND";
+                                                return (
+                                                    <div key={threadMsg.id} className={cn("flex", isOut ? "justify-end" : "justify-start")}>
+                                                        <div className={cn(
+                                                            "max-w-[80%] rounded-xl px-4 py-3 shadow-sm",
+                                                            isOut
+                                                                ? "bg-primary text-primary-foreground rounded-br-sm"
+                                                                : "bg-muted rounded-bl-sm"
+                                                        )}>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className={cn("text-xs font-semibold", isOut ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                                                                    {threadMsg.senderName || threadMsg.from_user?.name || (isOut ? "You" : "Customer")}
+                                                                </span>
+                                                                <span className={cn("text-[10px]", isOut ? "text-primary-foreground/60" : "text-muted-foreground/60")}>
+                                                                    {format(new Date(threadMsg.createdAt), "MMM d, h:mm a")}
+                                                                </span>
+                                                            </div>
+                                                            <div className={cn("text-sm whitespace-pre-wrap", isOut ? "text-primary-foreground" : "")}>
+                                                                {threadMsg.body}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                                            <div className="whitespace-pre-wrap">{selectedMessage.body}</div>
+                                        </div>
+                                    )}
+
+                                    {/* API Reply Inline Form */}
+                                    {isApiMessage(selectedMessage) && apiReplyOpen && (
+                                        <div className="mt-4 border rounded-lg p-4 bg-muted/30">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <Reply className="h-4 w-4 text-muted-foreground" />
+                                                <span className="text-sm font-medium">Reply to thread</span>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Label className="text-xs text-muted-foreground w-16">Channel</Label>
+                                                    <Select
+                                                        value={apiReplyChannel}
+                                                        onValueChange={(val: any) => setApiReplyChannel(val)}
+                                                    >
+                                                        <SelectTrigger className="h-8 w-32 text-xs">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="EMAIL">Email</SelectItem>
+                                                            <SelectItem value="NOTE">Note</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {apiReplyChannel === "EMAIL" && (
+                                                        <span className="text-xs text-amber-500">Will send actual email</span>
+                                                    )}
+                                                </div>
+                                                <Textarea
+                                                    placeholder="Type your reply..."
+                                                    rows={3}
+                                                    value={apiReplyBody}
+                                                    onChange={(e) => setApiReplyBody(e.target.value)}
+                                                    className="text-sm"
+                                                    autoFocus
+                                                />
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setApiReplyOpen(false);
+                                                            setApiReplyBody("");
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={handleApiReply}
+                                                        disabled={apiReplySending || !apiReplyBody.trim()}
+                                                        className="gap-2"
+                                                    >
+                                                        <Send className="h-3 w-3" />
+                                                        {apiReplySending ? "Sending..." : "Send Reply"}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Quick reply button for API messages when form is closed */}
+                                    {isApiMessage(selectedMessage) && !apiReplyOpen && (
+                                        <div className="mt-4">
+                                            <Button
+                                                variant="outline"
+                                                className="w-full gap-2"
+                                                onClick={() => {
+                                                    setApiReplyOpen(true);
+                                                    setApiReplyChannel(selectedMessage?._apiMeta?.channel === "EMAIL" ? "EMAIL" : "NOTE");
+                                                }}
+                                            >
+                                                <Reply className="h-4 w-4" />
+                                                Reply to this message
+                                            </Button>
+                                        </div>
+                                    )}
                                 </ScrollArea>
                             </>
                         ) : (
