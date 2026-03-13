@@ -91,8 +91,8 @@ export async function POST(req: NextRequest) {
                 team_id: auth!.tenantId,
                 name: body.name,
                 description: body.description || undefined,
-                budget: body.budget ? parseInt(String(body.budget), 10) : 0,
-                expected_revenue: body.expected_revenue ? parseInt(String(body.expected_revenue), 10) : 0,
+                budget: body.budget != null ? Math.round(Number(body.budget)) || 0 : 0,
+                expected_revenue: body.expected_revenue != null ? Math.round(Number(body.expected_revenue)) || 0 : 0,
                 currency: body.currency || "USD",
                 close_date: body.close_date ? new Date(body.close_date) : undefined,
                 sales_stage: salesStageId,
@@ -109,6 +109,6 @@ export async function POST(req: NextRequest) {
         return apiSuccess(opp, undefined, 201);
     } catch (err: any) {
         console.error("[V1_OPPORTUNITIES_POST]", err?.message || err);
-        return apiError("INTERNAL_ERROR", "Failed to create opportunity", 500);
+        return apiError("INTERNAL_ERROR", `Failed to create opportunity: ${err?.message || "Unknown error"}`, 500);
     }
 }
