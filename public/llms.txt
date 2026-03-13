@@ -118,13 +118,16 @@ Example Response:
   "data": [
     {
       "id": "abc123",
+      "team_id": "team456",
       "first_name": "Jane",
       "last_name": "Doe",
       "email": "jane@example.com",
       "status": true,
       "type": "Customer",
       "tags": ["vip"],
-      "createdAt": "2026-03-01T00:00:00.000Z"
+      "accountsIDs": "acc789",
+      "opportunitiesIDs": ["opp123"],
+      "cratedAt": "2026-03-01T00:00:00.000Z"
     }
   ],
   "meta": { "total": 1, "page": 1, "pageSize": 25, "hasMore": false }
@@ -158,17 +161,29 @@ Example Body:
 }
 ```
 
-Example Response:
+Example Response (201 Created or 200 Upserted):
 ```json
 {
   "data": {
     "id": "abc123",
+    "team_id": "team456",
+    "accountId": null,
     "first_name": "Jane",
     "last_name": "Doe",
-    "email": "jane@shop.com"
+    "email": "jane@shop.com",
+    "mobile_phone": "+1234567890",
+    "type": "Customer",
+    "status": true,
+    "_upserted": false
   }
 }
 ```
+
+Key response fields for chaining:
+- `data.id` → use as `contactId` when creating an opportunity
+- `data.team_id` → tenant identifier
+- `data.accountId` → linked account (if any)
+- `data._upserted` → `true` if existing record was updated, absent on new creates
 
 ### GET /api/v1/contacts/{contactId}
 
@@ -302,6 +317,27 @@ Example Body:
   "website": "https://acme.com"
 }
 ```
+
+Example Response (201 Created or 200 Upserted):
+```json
+{
+  "data": {
+    "id": "acc789",
+    "team_id": "team456",
+    "name": "Acme Corp",
+    "email": "info@acme.com",
+    "type": "Customer",
+    "status": "Active",
+    "website": "https://acme.com",
+    "_upserted": false
+  }
+}
+```
+
+Key response fields for chaining:
+- `data.id` → use as `accountId` when creating an opportunity
+- `data.team_id` → tenant identifier
+- `data._upserted` → `true` if existing record was updated
 
 ### GET /api/v1/accounts/{accountId}
 

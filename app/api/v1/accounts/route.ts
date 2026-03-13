@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
                 orderBy: { createdAt: "desc" },
                 select: {
                     id: true,
+                    team_id: true,
                     name: true,
                     email: true,
                     description: true,
@@ -106,7 +107,17 @@ export async function POST(req: NextRequest) {
                     office_phone: office_phone || existing.office_phone,
                 },
             });
-            return apiSuccess(updated, undefined, 200);
+            return apiSuccess({
+                id: updated.id,
+                team_id: updated.team_id,
+                name: updated.name,
+                email: updated.email,
+                type: updated.type,
+                status: updated.status,
+                website: updated.website,
+                updatedAt: updated.updatedAt,
+                _upserted: true,
+            }, undefined, 200);
         }
 
         const newAccount = await prismadb.crm_Accounts.create({
@@ -135,7 +146,16 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        return apiSuccess(newAccount, undefined, 201);
+        return apiSuccess({
+            id: newAccount.id,
+            team_id: newAccount.team_id,
+            name: newAccount.name,
+            email: newAccount.email,
+            type: newAccount.type,
+            status: newAccount.status,
+            website: newAccount.website,
+            createdAt: newAccount.createdAt,
+        }, undefined, 201);
     } catch (err) {
         console.error("[V1_ACCOUNTS_POST]", err);
         return apiError("INTERNAL_ERROR", "Failed to create account", 500);

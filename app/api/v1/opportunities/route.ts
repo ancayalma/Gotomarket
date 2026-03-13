@@ -54,13 +54,12 @@ export async function POST(req: NextRequest) {
         let salesStageId: string | undefined = undefined;
         if (body.sales_stage || body.stage) {
             const stageInput = body.sales_stage || body.stage;
-            // Check if it looks like an ObjectId (24 hex chars)
             if (/^[0-9a-fA-F]{24}$/.test(stageInput)) {
                 salesStageId = stageInput;
             } else {
-                // Try to find by name
+                // Global lookup table — no team_id filter
                 const stage = await prismadb.crm_Opportunities_Sales_Stages.findFirst({
-                    where: { name: { equals: stageInput, mode: "insensitive" }, team_id: auth!.tenantId },
+                    where: { name: { equals: stageInput, mode: "insensitive" } },
                 });
                 salesStageId = stage?.id || undefined;
             }
@@ -72,17 +71,45 @@ export async function POST(req: NextRequest) {
             if (/^[0-9a-fA-F]{24}$/.test(body.type)) {
                 typeId = body.type;
             } else {
+                // Global lookup table — no team_id filter
                 const oppType = await prismadb.crm_Opportunities_Type.findFirst({
-                    where: { name: { equals: body.type, mode: "insensitive" }, team_id: auth!.tenantId },
+                    where: { name: { equals: body.type, mode: "insensitive" } },
                 });
                 typeId = oppType?.id || undefined;
             }
         }
 
-        // Resolve account: accept accountId
+        // Resolve account — validate it belongs to this tenant
         let accountId: string | undefined = undefined;
-        if (body.accountId || body.account_id || body.account) {
-            accountId = body.accountId || body.account_id || body.account;
+        const rawAccountId = body.accountId || body.account_id || body.account;
+        if (rawAccountId) {
+            const acc = await prismadb.crm_Accounts.findFirst({
+                where: { id: rawAccountId, team_id: auth!.tenantId },
+                select: { id: true },
+            });
+            accountId = acc?.id || undefined;
+        }
+
+        // Resolve contact — validate it belongs to this tenant
+        let contactId: string | undefined = undefined;
+        const rawContactId = body.contactId || body.contact_id;
+        if (rawContactId) {
+            const con = await prismadb.crm_Contacts.findFirst({
+                where: { id: rawContactId, team_id: auth!.tenantId },
+                select: { id: true },
+            });
+            contactId = con?.id || undefined;
+        }
+
+        // Resolve lead — validate it belongs to this tenant
+        let leadId: string | undefined = undefined;
+        const rawLeadId = body.leadId || body.lead_id;
+        if (rawLeadId) {
+            const lead = await prismadb.crm_Leads.findFirst({
+                where: { id: rawLeadId, team_id: auth!.tenantId },
+                select: { id: true },
+            });
+            leadId = lead?.id || undefined;
         }
 
         const opp = await prismadb.crm_Opportunities.create({
@@ -99,8 +126,9 @@ export async function POST(req: NextRequest) {
                 type: typeId,
                 assigned_to: body.assigned_to || undefined,
                 account: accountId,
-                contact: body.contactId || body.contact_id || undefined,
-                lead_id: body.leadId || body.lead_id || undefined,
+                contact: contactId,
+                connected_contacts: contactId ? [contactId] : [],
+                lead_id: leadId,
                 lead_source: body.lead_source || undefined,
                 next_step: body.next_step || undefined,
             },

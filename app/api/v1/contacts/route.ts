@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
                 orderBy: { cratedAt: "desc" },
                 select: {
                     id: true,
+                    team_id: true,
                     first_name: true,
                     last_name: true,
                     email: true,
@@ -54,6 +55,8 @@ export async function GET(req: NextRequest) {
                     description: true,
                     website: true,
                     tags: true,
+                    accountsIDs: true,
+                    opportunitiesIDs: true,
                     social_twitter: true,
                     social_facebook: true,
                     social_linkedin: true,
@@ -116,7 +119,19 @@ export async function POST(req: NextRequest) {
                         last_activity: new Date(),
                     },
                 });
-                return apiSuccess(updated, undefined, 200);
+                return apiSuccess({
+                    id: updated.id,
+                    team_id: updated.team_id,
+                    accountId: updated.accountsIDs || null,
+                    first_name: updated.first_name,
+                    last_name: updated.last_name,
+                    email: updated.email,
+                    mobile_phone: updated.mobile_phone,
+                    type: updated.type,
+                    status: updated.status,
+                    updatedAt: updated.updatedAt,
+                    _upserted: true,
+                }, undefined, 200);
             }
         }
 
@@ -144,7 +159,18 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        return apiSuccess(newContact, undefined, 201);
+        return apiSuccess({
+            id: newContact.id,
+            team_id: newContact.team_id,
+            accountId: newContact.accountsIDs || null,
+            first_name: newContact.first_name,
+            last_name: newContact.last_name,
+            email: newContact.email,
+            mobile_phone: newContact.mobile_phone,
+            type: newContact.type,
+            status: newContact.status,
+            cratedAt: newContact.cratedAt,
+        }, undefined, 201);
     } catch (err) {
         console.error("[V1_CONTACTS_POST]", err);
         return apiError("INTERNAL_ERROR", "Failed to create contact", 500);
