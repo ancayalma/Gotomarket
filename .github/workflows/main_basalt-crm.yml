@@ -38,6 +38,7 @@ jobs:
                   GOOGLE_ID: ${{ secrets.GOOGLE_ID }}
                   GOOGLE_SECRET: ${{ secrets.GOOGLE_SECRET }}
                   # Add Stripe
+                  STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
                   STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
                   STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
               run: |
