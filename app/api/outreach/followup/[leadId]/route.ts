@@ -5,7 +5,7 @@ import { prismadb } from "@/lib/prisma";
 import sendEmail from "@/lib/sendmail";
 import { render } from "@react-email/render";
 import OutreachTemplate, { type ResourceLink } from "@/emails/OutreachTemplate";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 import React from "react";
@@ -149,7 +149,7 @@ export async function POST(req: Request, { params }: Params) {
     const trackingPixelUrl = baseUrl ? `${baseUrl}/api/outreach/open/${encodeURIComponent(token)}.png` : undefined;
 
     // OpenAI client
-    const { model } = await getAiSdkModel(session.user.id);
+    const { model, modelId, teamId } = await getAiSdkModel(session.user.id);
     if (!model) return new NextResponse("AI model not configured", { status: 500 });
 
     const contactName = [lead.firstName, lead.lastName].filter(Boolean).join(" ").trim();
@@ -170,7 +170,7 @@ export async function POST(req: Request, { params }: Params) {
     let subject = "Quick follow-up";
     let bodyText = "Hello,\n\nJust following up on my previous note...\n\nThanks.";
     try {
-      const { object } = await generateObject({
+      const { object, usage } = await generateObject({
         model,
         schema: z.object({
           subject: z.string(),
@@ -183,6 +183,14 @@ export async function POST(req: Request, { params }: Params) {
       });
       subject = object.subject || subject;
       bodyText = object.body || bodyText;
+
+      // Track AI token usage
+      await logAiUsage({
+        teamId, userId: session.user.id, service: "email",
+        model: modelId || "unknown",
+        usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+        description: "Outreach followup email"
+      });
     } catch (err: any) {
 
       systemLogger.error("[FOLLOWUP][AI_ERROR]", err?.message || err);

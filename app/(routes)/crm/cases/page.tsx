@@ -66,7 +66,7 @@ const CasesPage = async (props: { searchParams: Promise<any> }) => {
     });
 
     return (
-        <div className="h-full w-full">
+        <div className="h-full w-full px-4 md:px-6 lg:px-8 pb-36 md:pb-4">
             <LearnLink
                 tab="cases"
                 overviewTitle="Service Console"

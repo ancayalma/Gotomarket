@@ -6,6 +6,7 @@ import { prismadb } from "@/lib/prisma"; // Use lib/prisma explicitly
 import { getAiClient } from "@/lib/ai-helper"; // We'll create this next
 import { streamText } from 'ai';
 import { systemLogger } from "@/lib/logger";
+import { logAiUsage } from "@/lib/openai";
 
 export const maxDuration = 300; // 5 minutes
 
@@ -39,6 +40,12 @@ export async function POST(req: Request) {
     const result = streamText({
       model: model,
       messages,
+      onFinish: async ({ usage }: any) => {
+        await logAiUsage({ teamId: user.assigned_team.id, userId: user.id, service: "chat",
+          model: `${provider}:chat`, 
+          usage: { promptTokens: usage?.promptTokens || 0, completionTokens: usage?.completionTokens || 0 },
+          description: "Chat completion (legacy)" });
+      }
     });
 
     return result.toTextStreamResponse();

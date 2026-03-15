@@ -30,6 +30,8 @@ export const BrandSetupInterceptor = ({ isOpen, teamId }: Props) => {
     // Use local state to handle the "skip" action for this session
     if (isOpen) {
       setShow(true);
+      // Signal to other components (e.g. ProductTour) that brand setup is active
+      try { sessionStorage.setItem("crm_brand_setup_active", "true"); } catch {}
     }
   }, [isOpen]);
 
@@ -39,6 +41,9 @@ export const BrandSetupInterceptor = ({ isOpen, teamId }: Props) => {
 
   const handleSkip = () => {
     setShow(false);
+    // Clear the flag and notify listeners (e.g. ProductTour) that brand setup is done
+    try { sessionStorage.removeItem("crm_brand_setup_active"); } catch {}
+    window.dispatchEvent(new Event("crm_brand_setup_closed"));
   };
 
   const handleScrapeAndSetup = async () => {
@@ -61,6 +66,8 @@ export const BrandSetupInterceptor = ({ isOpen, teamId }: Props) => {
 
       toast.success("AI successfully generated brand identity!");
       setShow(false);
+      try { sessionStorage.removeItem("crm_brand_setup_active"); } catch {}
+      window.dispatchEvent(new Event("crm_brand_setup_closed"));
       
       // Let's take them to the admin brand identity page to review the output
       router.push("/admin/brand");
@@ -104,7 +111,11 @@ export const BrandSetupInterceptor = ({ isOpen, teamId }: Props) => {
             Skip for now
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => router.push("/admin/brand")} disabled={isLoading}>
+            <Button variant="outline" onClick={() => {
+                try { sessionStorage.removeItem("crm_brand_setup_active"); } catch {}
+                window.dispatchEvent(new Event("crm_brand_setup_closed"));
+                router.push("/admin/brand");
+              }} disabled={isLoading}>
               Enter Manually
             </Button>
             <Button 

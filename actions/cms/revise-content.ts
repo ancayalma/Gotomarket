@@ -1,6 +1,6 @@
 "use server";
 
-import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
 import { generateText } from "ai";
 
 export async function reviseContent(
@@ -8,7 +8,7 @@ export async function reviseContent(
     instruction: string,
     type: "blog" | "docs" | "career"
 ) {
-    const { model } = await getAiSdkModel("system");
+    const { model, modelId, teamId } = await getAiSdkModel("system");
     if (!model) {
         throw new Error("AI model not configured");
     }
@@ -43,7 +43,7 @@ export async function reviseContent(
     `;
 
     try {
-        const { text } = await generateText({
+        const { text, usage } = await generateText({
             model,
             messages: [
                 { role: "system", content: "You are a helpful AI editor." },
@@ -51,6 +51,10 @@ export async function reviseContent(
             ],
             temperature: isReasoningModel(model.modelId) ? undefined : 1,
         });
+
+        await logAiUsage({ teamId, userId: null, service: "general", model: modelId || "unknown",
+            usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+            description: "CMS content revision" });
 
         return text;
     } catch (error) {

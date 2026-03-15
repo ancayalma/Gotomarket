@@ -52,6 +52,9 @@ export const checkTeamLimit = (
         if (metric === 'emails_per_month') {
             limit = (team.assigned_plan as any).emails_per_month ?? getSubscriptionPlan(team.assigned_plan.slug).limits.emails_per_month;
         }
+        if (metric === 'ai_tokens') {
+            limit = (team.assigned_plan as any).ai_tokens_included ?? getSubscriptionPlan(team.assigned_plan.slug).limits.ai_tokens;
+        }
 
         if (limit === -1) return true;
         return currentUsage < limit;

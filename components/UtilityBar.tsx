@@ -123,7 +123,7 @@ export default function UtilityBar() {
 
     return (
         <TooltipProvider>
-            <div className="relative shrink-0">
+            <div className="relative shrink-0 hidden md:block">
                 {/* The Main Utility Bar */}
                 <div className={cn(
                     "w-full bg-background/80 backdrop-blur-md border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out",

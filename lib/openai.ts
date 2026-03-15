@@ -6,6 +6,7 @@ import { createMistral } from "@ai-sdk/mistral";
 import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
 import { prismadb } from "@/lib/prisma";
 import { decryptSecret } from "@/lib/encryption";
+import { consumeAiTokens } from "@/lib/ai-tokens";
 
 
 export function isReasoningModel(modelId: string | undefined | null): boolean {
@@ -311,6 +312,15 @@ export async function logAiUsage({
 }) {
     if (!teamId) return;
 
+    // Token pricing: Claude Haiku 4.5 cost + 50% markup
+    // Haiku cost: $1.00/1M input, $5.00/1M output
+    // With 50% markup: $1.50/1M input, $7.50/1M output
+    const PRICE_PER_INPUT_TOKEN = 1.5 / 1_000_000;   // $0.0000015
+    const PRICE_PER_OUTPUT_TOKEN = 7.5 / 1_000_000;   // $0.0000075
+    const cost =
+      (usage.promptTokens * PRICE_PER_INPUT_TOKEN) +
+      (usage.completionTokens * PRICE_PER_OUTPUT_TOKEN);
+
     try {
         await prismadb.crm_AiUsageLog.create({
             data: {
@@ -320,10 +330,16 @@ export async function logAiUsage({
                 model_used: model,
                 tokens_in: usage.promptTokens,
                 tokens_out: usage.completionTokens,
-                cost: 0, // Automated cost calculation can be added here
+                cost,
                 description: description || `AI ${service} interaction`
             }
         });
+
+        // Deduct from team's AI token balance
+        const totalTokens = (usage.promptTokens || 0) + (usage.completionTokens || 0);
+        if (totalTokens > 0) {
+            await consumeAiTokens(teamId, totalTokens);
+        }
     } catch (error) {
         console.error("[LOG_AI_USAGE_ERROR]", error);
     }

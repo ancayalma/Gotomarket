@@ -107,12 +107,12 @@ export function LeadsKanbanBoard({ leads }: LeadsKanbanBoardProps) {
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
-            <div className="flex gap-4 h-[calc(100vh-320px)] overflow-x-auto pb-4 custom-scrollbar">
+            <div className="flex flex-col md:flex-row gap-4 md:h-[calc(100vh-320px)] md:overflow-x-auto pb-36 md:pb-4 custom-scrollbar">
                 {DEFAULT_STAGES.map((stage) => {
                     const stageLeads = localLeads.filter(l => l.pipeline_stage === stage.id);
 
                     return (
-                        <div key={stage.id} className="flex flex-col min-w-[320px] max-w-[320px] bg-muted/30 rounded-xl border border-border/50">
+                        <div key={stage.id} className="flex flex-col w-full md:min-w-[320px] md:max-w-[320px] bg-muted/30 rounded-xl border border-border/50">
                             <div className="p-4 flex items-center justify-between border-b bg-background/40 backdrop-blur-sm rounded-t-xl">
                                 <div className="flex flex-col">
                                     <h3 className="font-black uppercase tracking-tighter text-sm italic bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent italic">

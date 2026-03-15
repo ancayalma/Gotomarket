@@ -399,38 +399,90 @@ const DynamicModuleMenu = ({
             />
 
             {/* ═══════════════ MOBILE BOTTOM NAV ═══════════════ */}
-            <div className="md:hidden fixed bottom-1 left-0 right-0 z-[100] px-4">
-                <div className="bg-background/80 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-row items-center justify-between px-2 py-1 gap-1 shadow-2xl">
-                    {/* Render first 5 visible hub items or root items */}
-                    {navStructure
-                        .flatMap(item => (item.type === 'group' ? (item.children || []) : [item]))
-                        .filter(isVisible)
-                        .filter(item => item.href && item.href !== '#')
-                        .slice(0, 5)
-                        .map((item) => {
-                            const hasAccess = checkPermission(item);
-                            const isLocked = item.isPremium && !hasAccess;
+            {(() => {
+                const flatItems = navStructure
+                    .flatMap(item => (item.type === 'group' ? (item.children || []) : [item]))
+                    .filter(isVisible)
+                    .filter(item => item.href && item.href !== '#');
 
-                            return (
-                                <MenuItem
-                                    key={item.id}
-                                    href={isLocked ? "#" : (item.href || "#")}
-                                    icon={getIcon(item.iconName)}
-                                    title={item.label}
-                                    isOpen={false}
-                                    isActive={pathname.startsWith(item.href || "")}
-                                    isMobile
-                                    isLocked={isLocked}
-                                />
-                            );
-                        })}
+                // Find the active item that has children (popout sub-items)
+                const activeParentWithChildren = flatItems.find(item =>
+                    item.children && item.children.length > 0 && pathname.startsWith(item.href || "")
+                );
 
-                    {/* Always show settings link if Admin */}
-                    {isPartnerAdmin && !navStructure.some(i => i.href === "/partners") && (
-                        <MenuItem href="/partners" icon={Globe} title="Platform" isOpen={false} isActive={pathname.includes("/partners")} isMobile />
-                    )}
-                </div>
-            </div>
+                return (
+                    <>
+                        {/* Layer 2 — Dynamic sub-nav from popout children */}
+                        {activeParentWithChildren && activeParentWithChildren.children && (
+                            <div className="md:hidden fixed bottom-[52px] left-0 right-0 z-[90]">
+                                <div className="bg-background/80 backdrop-blur-xl border-t border-white/10 rounded-t-2xl flex flex-row items-center gap-1 p-1 overflow-x-auto no-scrollbar shadow-2xl">
+                                    {activeParentWithChildren.children.filter(isVisible).map((child) => {
+                                        const childHref = child.href || "#";
+                                        const isChildActive = childHref.includes("?")
+                                            ? pathname + window.location.search === childHref
+                                            : pathname.startsWith(childHref);
+                                        return (
+                                            <a
+                                                key={child.id}
+                                                href={childHref}
+                                                className={cn(
+                                                    "flex flex-col items-center justify-center min-w-[48px] py-1.5 px-2 rounded-xl transition-colors duration-200 gap-0.5 shrink-0 relative",
+                                                    isChildActive ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-primary"
+                                                )}
+                                            >
+                                                {child.iconName && React.createElement(getIcon(child.iconName), { className: "w-4 h-4" })}
+                                                <span className="uppercase tracking-wider truncate max-w-[56px]"
+                                                    style={{
+                                                        fontFamily: 'var(--nav-item-font)',
+                                                        fontSize: 'calc(var(--nav-item-size) * 0.5)',
+                                                        fontWeight: 'var(--nav-item-weight)',
+                                                        fontStyle: 'var(--nav-item-style)',
+                                                        lineHeight: '1.2'
+                                                    }}>
+                                                    {child.label.split(' ')[0]}
+                                                </span>
+                                                {isChildActive && (
+                                                    <div className="absolute top-0 w-6 h-0.5 bg-primary rounded-b-full" />
+                                                )}
+                                            </a>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Layer 1 — Primary nav */}
+                        <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100]">
+                            <div className="bg-background/80 backdrop-blur-xl border-t border-white/10 rounded-t-2xl flex flex-row items-center px-2 py-1 gap-1 shadow-2xl overflow-x-auto no-scrollbar">
+                                {flatItems.map((item) => {
+                                    const hasAccess = checkPermission(item);
+                                    const isLocked = item.isPremium && !hasAccess;
+                                    const hasSubNav = !!(item.children && item.children.length > 0);
+
+                                    return (
+                                        <MenuItem
+                                            key={item.id}
+                                            href={isLocked ? "#" : (item.href || "#")}
+                                            icon={getIcon(item.iconName)}
+                                            title={item.label}
+                                            isOpen={false}
+                                            isActive={pathname.startsWith(item.href || "")}
+                                            isMobile
+                                            isLocked={isLocked}
+                                            hasSubNav={hasSubNav}
+                                        />
+                                    );
+                                })}
+
+                                {/* Always show settings link if Admin */}
+                                {isPartnerAdmin && !navStructure.some(i => i.href === "/partners") && (
+                                    <MenuItem href="/partners" icon={Globe} title="Platform" isOpen={false} isActive={pathname.includes("/partners")} isMobile />
+                                )}
+                            </div>
+                        </div>
+                    </>
+                );
+            })()}
 
         </>
     );

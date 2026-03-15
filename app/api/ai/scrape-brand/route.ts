@@ -5,6 +5,7 @@ import { prismadb } from "@/lib/prisma";
 import { getAiClient } from "@/lib/ai-helper";
 import { generateText } from "ai";
 import { systemLogger } from "@/lib/logger";
+import { logAiUsage } from "@/lib/openai";
 
 export const maxDuration = 300;
 
@@ -98,10 +99,18 @@ export async function POST(req: Request) {
             Do not include any other text outside of the JSON. If a value isn't obvious, make your best inferential guess based on the text context.
         `;
 
-        const { text } = await generateText({
+        const { text, usage } = await generateText({
             model: model,
             system: systemMessage,
             prompt: `Website URL: ${url}\n\nWebsite content:\n\n${textContent}`,
+        });
+
+        // Track AI token usage
+        await logAiUsage({
+            teamId, userId: session.user.id || null, service: "general",
+            model: "brand-scraper",
+            usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+            description: `Brand scrape: ${url}`
         });
 
         const cleanJsonText = text.replace(/```json/gi, '').replace(/```/g, '').trim();

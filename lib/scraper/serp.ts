@@ -134,69 +134,82 @@ function stripHtmlTags(html: string): string {
 }
 
 /**
- * Perform a DuckDuckGo HTML search using plain fetch — zero dependencies.
- * Parse the server-rendered HTML results with regex.
+ * Primary search: Google via Serper.dev API (fast, reliable, structured).
+ * Fallback: DuckDuckGo HTML scrape if SERPER_API_KEY is not set.
  */
-async function ddgSearch(query: string): Promise<SerpResult[]> {
-  try {
-    const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-    const response = await fetch(ddgUrl, {
-      method: "GET",
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
-    });
-
-    if (!response.ok) {
-      console.error(`DuckDuckGo HTTP error: ${response.status}`);
-      return [];
+async function webSearch(query: string): Promise<SerpResult[]> {
+  // Try Serper.dev (Google) first
+  if (process.env.SERPER_API_KEY) {
+    try {
+      const { googleCustomSearch } = await import("./google-search");
+      const results = await googleCustomSearch(query, 10);
+      console.log(`[Google SERP] "${query}" -> ${results.length} results`);
+      return results.map(r => ({
+        title: r.title,
+        href: r.link,
+        domain: r.domain,
+      }));
+    } catch (error) {
+      console.error(`Google search error for "${query}":`, error);
     }
+  }
 
-    const html = await response.text();
+  // Fallback: Puppeteer Google search
+  let browser;
+  try {
+    const { launchBrowser, newPageWithDefaults, closeBrowser } = await import("@/lib/browser");
+    browser = await launchBrowser();
+    const page = await newPageWithDefaults(browser);
 
-    // Parse result links: <a class="result__a" href="...">Title</a>
-    const linkRegex = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
-    const results: SerpResult[] = [];
-    let match;
+    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=15&hl=en`;
+    await page.goto(googleUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    while ((match = linkRegex.exec(html)) !== null) {
-      let href = match[1];
-      const title = stripHtmlTags(match[2]).trim();
+    const results = await page.evaluate(() => {
+      const items: Array<{ title: string; href: string; domain: string | null }> = [];
+      const excludePatterns = [
+        'wikipedia.org', 'youtube.com', 'facebook.com', 'twitter.com',
+        'linkedin.com', 'instagram.com', 'reddit.com', 'medium.com',
+        'github.com', 'google.com', 'bing.com', 'yahoo.com',
+      ];
 
-      // Decode DDG redirect URLs: //duckduckgo.com/l/?uddg=ENCODED_URL&...
-      if (href.includes("duckduckgo.com/l/")) {
-        const uddgMatch = href.match(/[?&]uddg=([^&]+)/);
-        if (uddgMatch) {
-          href = decodeURIComponent(uddgMatch[1]);
-        }
-      }
+      // Try multiple selector strategies for Google results
+      const anchors = document.querySelectorAll('#search a[href^="http"], #rso a[href^="http"]');
+      const seen = new Set<string>();
 
-      if (!href.startsWith("http://") && !href.startsWith("https://")) continue;
+      for (let i = 0; i < anchors.length && items.length < 15; i++) {
+        const a = anchors[i] as HTMLAnchorElement;
+        const href = a.href;
+        if (!href || href.includes('google.com/') || seen.has(href)) continue;
 
-      const domain = ((): string | null => {
+        // Only take links that have an h3 (organic results)
+        const h3 = a.querySelector('h3');
+        if (!h3) continue;
+
+        seen.add(href);
         try {
           const u = new URL(href);
-          let hostname = u.hostname.replace(/^www\./i, "");
-          const excludePatterns = ['wikipedia.org', 'youtube.com', 'facebook.com',
-            'twitter.com', 'linkedin.com', 'instagram.com',
-            'reddit.com', 'medium.com', 'github.com',
-            'duckduckgo.com', 'google.com', 'bing.com'];
-          if (excludePatterns.some(p => hostname.includes(p))) return null;
-          return hostname;
-        } catch {
-          return null;
-        }
-      })();
+          const hostname = u.hostname.replace(/^www\./i, '');
+          if (excludePatterns.some(p => hostname.includes(p))) continue;
+          items.push({
+            title: h3.textContent?.trim() || '',
+            href,
+            domain: hostname,
+          });
+        } catch { continue; }
+      }
+      return items;
+    });
 
-      results.push({ title, href, domain });
-    }
-
-    console.log(`[DDG SERP] "${query}" -> ${results.filter(r => r.domain).length} results`);
-    return results.filter(r => r.domain !== null);
+    console.log(`[Google Puppeteer SERP] "${query}" -> ${results.length} results`);
+    await closeBrowser(browser);
+    return results;
   } catch (error) {
-    console.error(`DDG search error for "${query}":`, error);
+    console.error(`Google Puppeteer search error for "${query}":`, error);
+    if (browser) {
+      const { closeBrowser } = await import("@/lib/browser");
+      await closeBrowser(browser);
+    }
     return [];
   }
 }
@@ -341,7 +354,7 @@ export async function runSerpScraperForJob(jobId: string, userId?: string): Prom
     for (const q of queries) {
       let results: SerpResult[] = [];
       try {
-        results = await ddgSearch(q);
+        results = await webSearch(q);
       } catch (err) {
         // Log error but continue
         await db.crm_Lead_Gen_Jobs.update({

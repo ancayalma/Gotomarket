@@ -6,6 +6,7 @@ import { prismadb } from "@/lib/prisma";
 import { getAiClient } from "@/lib/ai-helper";
 import { streamText } from 'ai';
 import { systemLogger } from "@/lib/logger";
+import { logAiUsage } from "@/lib/openai";
 
 export const maxDuration = 300;
 
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
             return new NextResponse("Team not found", { status: 400 });
         }
 
-        const { model } = await getAiClient(user.assigned_team.id);
+        const { model, provider } = await getAiClient(user.assigned_team.id);
 
         const prompt = `
       You are an expert professional email assistant. 
@@ -43,6 +44,14 @@ export async function POST(req: Request) {
         const result = streamText({
             model: model,
             messages: [{ role: 'user', content: prompt }],
+            onFinish: async ({ usage }: any) => {
+                await logAiUsage({
+                    teamId: user.assigned_team.id, userId: user.id, service: "email",
+                    model: `${provider}:enhance-email`,
+                    usage: { promptTokens: usage?.promptTokens || 0, completionTokens: usage?.completionTokens || 0 },
+                    description: "Email enhancement"
+                });
+            }
         });
 
         return result.toTextStreamResponse();

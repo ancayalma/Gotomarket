@@ -3,9 +3,48 @@
  * Uses OpenAI/Azure OpenAI for intelligent query generation, content analysis, and entity resolution
  */
 
-import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { consumeAiTokens } from "@/lib/ai-tokens";
+
+/**
+ * Shared token tracker for lead generation AI helpers.
+ * Create one instance per lead gen job, pass to all helper calls,
+ * then call flush() at the end to deduct from the team's AI token balance.
+ */
+export class LeadGenTokenTracker {
+  private _prompt = 0;
+  private _completion = 0;
+  constructor(public readonly teamId: string | null) {}
+
+  /** Record tokens from a generateObject/generateText usage result */
+  record(usage: any) {
+    if (!usage) return;
+    this._prompt += usage.promptTokens || 0;
+    this._completion += usage.completionTokens || 0;
+  }
+
+  get total() { return this._prompt + this._completion; }
+
+  /** Consume all accumulated tokens from the team balance and log to audit */
+  async flush() {
+    if (!this.teamId || this.total <= 0) return;
+    try {
+      await logAiUsage({
+        teamId: this.teamId,
+        userId: null,
+        service: "leadgen",
+        model: "leadgen-helpers",
+        usage: { promptTokens: this._prompt, completionTokens: this._completion },
+        description: `Lead gen helper functions: ${this.total} tokens`,
+      });
+      console.log(`[LEADGEN_HELPERS_TOKENS] Logged ${this.total} tokens for team ${this.teamId}`);
+    } catch (err) {
+      console.error("[LEADGEN_HELPERS_TOKEN_LOG_ERROR]", err);
+    }
+  }
+}
 
 type ICPConfig = {
   industries?: string[];
@@ -27,7 +66,8 @@ type ICPConfig = {
  */
 export async function parseICPFromNaturalLanguage(
   naturalLanguagePrompt: string,
-  userId: string
+  userId: string,
+  tracker?: LeadGenTokenTracker
 ): Promise<{
   industries: string[];
   companySizes: string[];
@@ -78,6 +118,7 @@ Fill out ALL fields using knowledge:
       prompt: prompt,
     });
 
+    tracker?.record(result.usage);
     return result.object;
   } catch (error) {
     console.error("AI form completion failed:", error);
@@ -101,7 +142,8 @@ Fill out ALL fields using knowledge:
 export async function generateAISearchQueries(
   icp: ICPConfig,
   userId: string,
-  count: number = 10
+  count: number = 10,
+  tracker?: LeadGenTokenTracker
 ): Promise<string[]> {
   try {
     const { model } = await getAiSdkModel(userId);
@@ -136,6 +178,7 @@ Requirements:
         prompt,
         system: "You are an expert at crafting search queries for B2B lead generation. Generate diverse, effective queries that will find relevant company websites.",
       });
+      tracker?.record(result.usage);
       queries = result.object.queries.slice(0, count);
     } catch (schemaError: any) {
       // Model sometimes returns queries as a stringified JSON array — parse it manually
@@ -185,7 +228,8 @@ function generateFallbackQueries(icp: ICPConfig): string[] {
 export async function analyzeCompanyWithAI(
   domain: string,
   description: string,
-  userId: string
+  userId: string,
+  tracker?: LeadGenTokenTracker
 ): Promise<{
   industry: string | null;
   companyType: string | null;
@@ -226,6 +270,7 @@ Description: ${description}`;
       system: "You are a B2B company analyst. Analyze companies and return structured JSON data.",
     });
 
+    tracker?.record(result.usage);
     return result.object;
   } catch (error) {
     console.error("AI company analysis failed:", error);
@@ -253,7 +298,8 @@ export async function calculateAIICPScore(
     techStack?: any;
   },
   icp: ICPConfig,
-  userId: string
+  userId: string,
+  tracker?: LeadGenTokenTracker
 ): Promise<{
   score: number;
   reasoning: string;
@@ -298,7 +344,7 @@ ${icp.notes ? `- Additional: ${icp.notes}` : ""}`;
     });
 
     return {
-      score: result.object.score,
+      score: (tracker?.record(result.usage), result.object.score),
       reasoning: result.object.reasoning,
       recommendations: result.object.recommendations.slice(0, 3)
     };
@@ -319,7 +365,8 @@ ${icp.notes ? `- Additional: ${icp.notes}` : ""}`;
 export async function extractContactsWithAI(
   text: string,
   companyDomain: string,
-  userId: string
+  userId: string,
+  tracker?: LeadGenTokenTracker
 ): Promise<Array<{
   name: string | null;
   title: string | null;
@@ -354,6 +401,7 @@ ${text.substring(0, 2000)}`;
       system: "You are an expert at extracting structured contact information from unstructured text. Return valid JSON.",
     });
 
+    tracker?.record(result.usage);
     return result.object.contacts.slice(0, 10);
   } catch (error) {
     console.error("AI contact extraction failed:", error);
@@ -368,7 +416,8 @@ ${text.substring(0, 2000)}`;
 export async function resolveDuplicateCompaniesWithAI(
   company1: { domain: string; companyName?: string | null; description?: string | null },
   company2: { domain: string; companyName?: string | null; description?: string | null },
-  userId: string
+  userId: string,
+  tracker?: LeadGenTokenTracker
 ): Promise<{
   areSame: boolean;
   confidence: number;
@@ -407,6 +456,7 @@ COMPANY B:
       system: "You are an expert at entity resolution. Determine if two company records represent the same entity.",
     });
 
+    tracker?.record(result.usage);
     return result.object;
   } catch (error) {
     console.error("AI duplicate resolution failed:", error);
@@ -430,7 +480,8 @@ export async function generateOutreachEmailWithAI(
     companyDescription?: string | null;
   },
   icp: ICPConfig,
-  userId: string
+  userId: string,
+  tracker?: LeadGenTokenTracker
 ): Promise<{
   subject: string;
   body: string;
@@ -473,6 +524,7 @@ Requirements:
       system: "You are an expert B2B sales professional. Write personalized, effective outreach emails.",
     });
 
+    tracker?.record(result.usage);
     return result.object;
   } catch (error) {
     console.error("AI email generation failed:", error);

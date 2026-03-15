@@ -172,23 +172,21 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
         </div>
       )}
 
-      {/* Mobile Stacked Bottom Nav (Layer 3) - Positioned above Layer 2 - Hidden for members */}
       {!isMember && (
         <div
-          className={cn(
-            "md:hidden fixed left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border/50 flex items-center justify-around z-40 px-2 shadow-sm overflow-y-hidden transition-colors duration-300",
-            isMobileExpanded ? "h-16 py-1" : "h-12"
-          )}
-          style={{ bottom: layer2Expanded ? '136px' : '128px' }}
-          onClick={() => setIsMobileExpanded(!isMobileExpanded)}
+          className="md:hidden fixed bottom-[100px] left-0 right-0 z-[80]"
         >
+          <div
+            className="bg-background/80 backdrop-blur-xl border-t border-white/10 rounded-t-2xl flex flex-row items-center gap-1 p-1 overflow-x-auto no-scrollbar shadow-2xl"
+            onClick={() => setIsMobileExpanded(!isMobileExpanded)}
+          >
           {leadsNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.id}
                 onClick={(e) => {
-                  e.stopPropagation(); // Prevent container click
+                  e.stopPropagation();
                   if (!isMobileExpanded) {
                     setIsMobileExpanded(true);
                     return;
@@ -196,35 +194,33 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
                   setTab(item.id);
                 }}
                 className={cn(
-                  "flex flex-col items-center justify-center min-w-[60px] gap-0.5 transition-colors relative",
-                  isMobileExpanded ? "h-14 justify-end pb-1" : "h-full justify-center",
-                  selected === item.id ? "text-primary" : "text-primary/60 hover:text-primary"
+                  "flex flex-col items-center justify-center min-w-[48px] py-1.5 px-2 rounded-xl transition-colors duration-200 gap-0.5 shrink-0 relative",
+                  selected === item.id ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-primary"
                 )}
               >
                 <Icon className="w-4 h-4" />
 
-                {/* Label - Only visible when expanded */}
                 <span className={cn(
-                  "uppercase tracking-wider truncate max-w-full px-1 transition-colors duration-200",
+                  "uppercase tracking-wider truncate max-w-[56px] transition-all duration-200",
                   isMobileExpanded ? "opacity-100 h-auto" : "opacity-0 h-0 overflow-hidden"
                 )}
                 style={{
                     fontFamily: 'var(--nav-item-font)',
-                    fontSize: 'calc(var(--nav-item-size) * 0.65)',
+                    fontSize: 'calc(var(--nav-item-size) * 0.5)',
                     fontWeight: 'var(--nav-item-weight)',
-                    fontStyle: 'var(--nav-item-style)', overflow: 'visible',
-                    paddingRight: '0.4em'
+                    fontStyle: 'var(--nav-item-style)',
+                    lineHeight: '1.2'
                 }}>
                   {item.label.split(' ')[0]}
                 </span>
 
-                {/* Top Cursor Animation */}
                 {selected === item.id && (
-                  <div className="absolute top-0 w-8 h-0.5 bg-primary rounded-b-full" />
+                  <div className="absolute top-0 w-6 h-0.5 bg-primary rounded-b-full" />
                 )}
               </button>
             );
           })}
+          </div>
         </div>
       )}
 
@@ -236,7 +232,7 @@ export default function TabsContainer({ title, description, managerSlot, wizardS
           <Separator className="mt-2" />
         </div>
 
-        <div className="flex-1 px-4 md:px-6 lg:px-8 pb-20 md:pb-4">
+        <div className="flex-1 px-4 md:px-6 lg:px-8 pb-36 md:pb-4">
           {selected === "accounts" && managerSlot}
           {selected === "wizard" && wizardSlot}
           {selected === "pools" && poolsSlot}

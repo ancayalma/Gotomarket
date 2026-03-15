@@ -34,7 +34,7 @@ interface BillingModalProps {
 
 import { saveSubscription } from "@/actions/billing/save-subscription";
 import { PaymentModal } from "@/app/(routes)/invoice/detail/[invoiceId]/_components/PaymentModal";
-import { SUBSCRIPTION_PLANS } from "@/config/subscriptions";
+import { SUBSCRIPTION_PLANS, SURGE_DISCOUNT_PERCENT } from "@/config/subscriptions";
 import { getMyTeamSubscription } from "@/actions/billing/get-my-subscription";
 
 const PLANS_CONFIG = [
@@ -44,9 +44,9 @@ const PLANS_CONFIG = [
         monthly: SUBSCRIPTION_PLANS.INDIVIDUAL_BASIC.price,
         annual: SUBSCRIPTION_PLANS.INDIVIDUAL_BASIC.price * 12 * 0.8,
         features: [
+            "5M AI Tokens / mo",
             "1,000 LeadGen Credits",
-            "15,000 Emails / mo",
-            "Standard AI Enrichment",
+            "5,000 Emails / mo",
             "2 User Licenses"
         ]
     },
@@ -56,8 +56,8 @@ const PLANS_CONFIG = [
         monthly: SUBSCRIPTION_PLANS.INDIVIDUAL_PRO.price,
         annual: SUBSCRIPTION_PLANS.INDIVIDUAL_PRO.price * 12 * 0.8,
         features: [
+            "20M AI Tokens / mo",
             "5,000 LeadGen Credits",
-            "50,000 Emails / mo",
             "Full Agentic Research",
             "BasaltECHO AI Calling",
             "4 User Licenses"
@@ -70,7 +70,7 @@ const PLANS_CONFIG = [
         monthly: 0,
         annual: 0,
         features: [
-            "Unlimited Leads",
+            "Unlimited AI Tokens",
             "Custom Engineering",
             "White-label Options",
             "Dedicated Support"
@@ -83,9 +83,8 @@ const HIERARCHY = ["FREE", "INDIVIDUAL_BASIC", "INDIVIDUAL_PRO", "ENTERPRISE", "
 
 export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
     const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
-    const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
+    const [paymentProvider, setPaymentProvider] = useState<"STRIPE" | "SURGE">("STRIPE");
     const [loading, setLoading] = useState(false);
-    const [wallet, setWallet] = useState("");
     const [currentPlanSlug, setCurrentPlanSlug] = useState<string>("FREE");
 
     const filteredPlans = useMemo(() => {
@@ -118,7 +117,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
         }
     }, [isOpen]);
 
-    // Payment Modal State
+    // Payment Modal State (for Surge flow)
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
     const [activeInvoiceId, setActiveInvoiceId] = useState<string | null>(null);
@@ -132,75 +131,57 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
     };
     const billingDayStr = `${getOrdinal(signupDay)} of each month`;
 
-    // Auto-switch to Crypto mode if wallet is entered AND valid
-    const handleWalletChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        setWallet(val);
-
-        // Strict ETH address validation: 0x followed by 40 hex characters
-        const isValidParams = val.startsWith("0x") && val.length === 42;
-
-        if (isValidParams) {
-            setPaymentMethod("crypto");
-            setBillingCycle("annual");
-        } else if (val.length === 0 && paymentMethod === "crypto") {
-            setPaymentMethod("card");
-        }
-    };
-
+    // Price calculations
     const monthlyPrice = selectedPlan?.monthly || 0;
     let finalPrice = monthlyPrice;
     let discountLabel = "";
 
-    // Derived state for validation
-    const isCryptoValid = wallet.startsWith("0x") && wallet.length === 42;
-
     if (billingCycle === "annual") {
-        if (paymentMethod === "crypto" && isCryptoValid) {
-            // 25% Discount for Crypto P2P (Annual) - ONLY if wallet is valid
-            finalPrice = (monthlyPrice * 12) * 0.75;
-            discountLabel = "Crypto P2P (-25%)";
-        } else {
-            // 20% Discount for Card/Standard (Annual)
-            finalPrice = (monthlyPrice * 12) * 0.80;
-            discountLabel = "Annual (-20%)";
-        }
-    } else {
-        finalPrice = monthlyPrice;
+        finalPrice = (monthlyPrice * 12) * 0.80;
+        discountLabel = "Annual (-20%)";
     }
 
+    // Surge gets the 5% discount on top
+    if (paymentProvider === "SURGE") {
+        finalPrice = finalPrice * (1 - SURGE_DISCOUNT_PERCENT / 100);
+        discountLabel = discountLabel
+            ? `${discountLabel} + Surge (-${SURGE_DISCOUNT_PERCENT}%)`
+            : `Surge (-${SURGE_DISCOUNT_PERCENT}%)`;
+    }
 
     const handleSave = async () => {
         setLoading(true);
         try {
             const res = await saveSubscription({
                 planName: selectedPlan.slug,
-                amount: finalPrice,
+                amount: billingCycle === "annual" ? (monthlyPrice * 12) * 0.80 : monthlyPrice,
                 billingDay: signupDay,
-                customerWallet: wallet.startsWith("0x") ? wallet : undefined,
-                discountApplied: billingCycle === "annual", // Logic tracks if ANY annual discount applied
-                interval: billingCycle
+                discountApplied: paymentProvider === "SURGE",
+                interval: billingCycle,
+                paymentProvider,
             });
 
             if (res.error) {
                 toast.error(res.error);
                 setLoading(false);
-            } else if (res.url && res.invoiceId) {
-                console.log("[BillingModal] Success, received URL:", res.url);
-                toast.success("Opening Secure Portal...");
+            } else if (res.url) {
+                toast.success("Opening Payment Portal...");
 
-                // Set these first
-                setPaymentUrl(res.url as string);
-                setActiveInvoiceId(res.invoiceId as string);
-                setPaymentModalOpen(true);
+                if (res.provider === "STRIPE" || paymentProvider === "STRIPE") {
+                    // Stripe: redirect to Stripe Checkout
+                    window.location.href = res.url;
+                } else {
+                    // Surge: open in-app PaymentModal
+                    setPaymentUrl(res.url as string);
+                    setActiveInvoiceId((res as any).invoiceId as string);
+                    setPaymentModalOpen(true);
 
-                // Small delay before closing the parent to avoid Radix overlay conflicts
-                setTimeout(() => {
-                    onClose();
-                    setLoading(false);
-                }, 300);
+                    setTimeout(() => {
+                        onClose();
+                        setLoading(false);
+                    }, 300);
+                }
             } else {
-                console.log("[BillingModal] No URL returned, showing success toast only.");
                 toast.success(`Subscription Plan Updated!`);
                 onClose();
                 setLoading(false);
@@ -210,6 +191,9 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
             setLoading(false);
         }
     };
+
+    const isStripe = paymentProvider === "STRIPE";
+    const isSurge = paymentProvider === "SURGE";
 
     return (
         <>
@@ -232,9 +216,9 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                             </DialogHeader>
 
                             {/* Billing Toggle */}
-                            <div className="flex bg-zinc-900/50 p-1.5 rounded-xl mb-8 border border-zinc-800/50 relative z-10">
+                            <div className="flex bg-zinc-900/50 p-1.5 rounded-xl mb-4 border border-zinc-800/50 relative z-10">
                                 <button
-                                    onClick={() => { setBillingCycle("monthly"); setPaymentMethod("card"); }}
+                                    onClick={() => setBillingCycle("monthly")}
                                     className={cn(
                                         "flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors",
                                         billingCycle === "monthly" ? "bg-zinc-800 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
@@ -250,11 +234,32 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                     )}
                                 >
                                     Annual
-                                    <div className={cn("absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent translate-x-[-100%] animate-[shimmer_2s_infinite]", billingCycle === "annual" ? "block" : "hidden")} />
-                                    <span className={cn("ml-2 text-[10px] px-1.5 py-0.5 rounded-full transition-colors",
-                                        (paymentMethod === 'crypto' && isCryptoValid) ? "bg-emerald-500/20 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]" : "bg-cyan-500/20 text-cyan-400")}>
-                                        {(paymentMethod === 'crypto' && isCryptoValid) ? '-25%' : '-20%'}
-                                    </span>
+                                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400">-20%</span>
+                                </button>
+                            </div>
+
+                            {/* Payment Provider Toggle */}
+                            <div className="flex bg-zinc-900/50 p-1.5 rounded-xl mb-8 border border-zinc-800/50 relative z-10">
+                                <button
+                                    onClick={() => setPaymentProvider("STRIPE")}
+                                    className={cn(
+                                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5",
+                                        isStripe ? "bg-indigo-600/30 text-indigo-300 shadow-lg border border-indigo-500/30" : "text-zinc-500 hover:text-zinc-300"
+                                    )}
+                                >
+                                    <CreditCard className="w-3 h-3" />
+                                    Stripe
+                                </button>
+                                <button
+                                    onClick={() => setPaymentProvider("SURGE")}
+                                    className={cn(
+                                        "flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors relative flex items-center justify-center gap-1.5",
+                                        isSurge ? "bg-emerald-600/30 text-emerald-300 shadow-lg border border-emerald-500/30" : "text-zinc-500 hover:text-zinc-300"
+                                    )}
+                                >
+                                    <Zap className="w-3 h-3" />
+                                    BasaltSurge
+                                    <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-black">-{SURGE_DISCOUNT_PERCENT}%</span>
                                 </button>
                             </div>
 
@@ -299,7 +304,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                             {!plan.isContactSales && (
                                                 <div className="mt-3 flex items-baseline gap-1">
                                                     <span className="text-2xl font-mono font-bold tracking-tighter text-white">
-                                                        ${billingCycle === "monthly" ? plan.monthly : Math.round(billingCycle === "annual" ? (paymentMethod === 'crypto' ? plan.annual / 12 : (plan.monthly * 12 * 0.8) / 12) : plan.monthly)}
+                                                        ${billingCycle === "monthly" ? plan.monthly : Math.round((plan.monthly * 12 * 0.8) / 12)}
                                                     </span>
                                                     <span className="text-xs text-zinc-500 font-medium">/mo</span>
                                                     {billingCycle === "annual" && (
@@ -319,40 +324,22 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                 )}
                             </div>
 
-                            <div className="mt-6 relative z-10">
-                                <Label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2 block">
-                                    P2P Discount Activator
-                                </Label>
-                                <div className="relative group">
-                                    <div className={cn("absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-lg blur opacity-20 transition duration-500", isCryptoValid ? "opacity-75 animate-pulse" : "group-hover:opacity-40")}></div>
-                                    <Input
-                                        placeholder="Paste Wallet Address (0x)..."
-                                        value={wallet}
-                                        onChange={handleWalletChange}
-                                        className={cn(
-                                            "bg-zinc-950 border-zinc-800 h-10 text-xs font-mono relative focus:ring-0 transition-colors pl-9",
-                                            isCryptoValid ? "border-emerald-500/50 text-emerald-400" : "focus:border-emerald-500"
-                                        )}
-                                    />
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                                        <div className={cn("w-2 h-2 rounded-full transition-colors duration-300", isCryptoValid ? "bg-emerald-400 shadow-[0_0_10px_#34d399]" : "bg-zinc-700")} />
+                            {/* Surge Discount Info */}
+                            {isSurge && (
+                                <div className="mt-6 relative z-10">
+                                    <div className="flex items-center gap-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                                        <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                                        <div>
+                                            <p className="text-[11px] text-emerald-400 font-bold uppercase tracking-wider">
+                                                {SURGE_DISCOUNT_PERCENT}% Surge Discount Active
+                                            </p>
+                                            <p className="text-[9px] text-emerald-400/60 mt-0.5">
+                                                Manual monthly billing via BasaltSurge portal
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div className={cn("overflow-hidden transition-colors duration-500 ease-in-out", isCryptoValid ? "max-h-12 opacity-100 mt-3" : "max-h-0 opacity-0 mt-0")}>
-                                    <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                                        <Sparkles className="w-3 h-3 text-emerald-400 animate-spin-slow" />
-                                        <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider animate-pulse">
-                                            25% P2P Discount Unlocked
-                                        </p>
-                                    </div>
-                                </div>
-                                {!isCryptoValid && (
-                                    <p className="text-[9px] text-zinc-500 mt-2 font-medium uppercase tracking-widest animate-pulse pl-1">
-                                        Pay with Crypto • <span className="text-emerald-400">Save 25%</span>
-                                    </p>
-                                )}
-                            </div>
+                            )}
                         </div>
 
                         {/* Main Content / Payment Method */}
@@ -362,54 +349,60 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                             <div className="max-w-xl mx-auto w-full h-full flex flex-col z-10">
                                 <div className="mb-8">
                                     <h3 className="text-3xl font-bold mb-3 flex items-center gap-3 tracking-tight text-white">
-                                        {paymentMethod === 'crypto' ? (
+                                        {isSurge ? (
                                             <>
                                                 <div className="p-2 bg-emerald-500/10 rounded-lg">
-                                                    <Sparkles className="text-emerald-400 w-6 h-6" />
+                                                    <Zap className="text-emerald-400 w-6 h-6" />
                                                 </div>
-                                                $USDC Peer to Peer
+                                                BasaltSurge Portal
                                             </>
                                         ) : (
                                             <>
                                                 <div className="p-2 bg-indigo-500/10 rounded-lg">
                                                     <CreditCard className="text-indigo-400 w-6 h-6" />
                                                 </div>
-                                                Information
+                                                Stripe Checkout
                                             </>
                                         )}
                                     </h3>
                                     <p className="text-zinc-400 text-sm leading-relaxed max-w-md">
                                         {selectedPlan?.isContactSales
                                             ? "Enterprise deployments require a tailored architecture. Speak with our infrastructure team to design your dedicated instance."
-                                            : paymentMethod === 'crypto'
-                                                ? "Direct wallet-to-wallet transfer. No intermediaries. No automated pull. Pure P2P settlement."
-                                                : "Secure automated billing via BasaltSURGE Hybrid Rails. Funds settled in USDC on Base."}
+                                            : isSurge
+                                                ? `Manual monthly billing via BasaltSurge Hybrid Rails. Save ${SURGE_DISCOUNT_PERCENT}% — funds settled in USDC on Base.`
+                                                : "Automated recurring billing via Stripe. Card or bank payments with instant activation."}
                                     </p>
                                 </div>
 
-                                <Card className={cn("bg-zinc-900/50 border-zinc-800 mb-8 overflow-hidden transition-colors duration-500", selectedPlan?.isContactSales ? "border-primary/30" : paymentMethod === 'crypto' ? "border-emerald-500/30 ring-1 ring-emerald-500/20" : "")}>
+                                <Card className={cn("bg-zinc-900/50 border-zinc-800 mb-8 overflow-hidden transition-colors duration-500", selectedPlan?.isContactSales ? "border-primary/30" : isSurge ? "border-emerald-500/30 ring-1 ring-emerald-500/20" : "border-indigo-500/30 ring-1 ring-indigo-500/20")}>
                                     <div className="flex flex-row md:items-center p-6 gap-6">
-                                        <div className={cn("hidden md:flex w-12 h-12 rounded-full items-center justify-center flex-shrink-0", selectedPlan?.isContactSales ? "bg-primary/10" : paymentMethod === 'crypto' ? "bg-emerald-500/10" : "bg-indigo-500/10")}>
-                                            {selectedPlan?.isContactSales ? <Zap className="w-6 h-6 text-primary" /> : paymentMethod === 'crypto' ? <Sparkles className="w-6 h-6 text-emerald-400" /> : <ShieldCheck className="w-6 h-6 text-indigo-400" />}
+                                        <div className={cn("hidden md:flex w-12 h-12 rounded-full items-center justify-center flex-shrink-0", selectedPlan?.isContactSales ? "bg-primary/10" : isSurge ? "bg-emerald-500/10" : "bg-indigo-500/10")}>
+                                            {selectedPlan?.isContactSales ? <Zap className="w-6 h-6 text-primary" /> : isSurge ? <Sparkles className="w-6 h-6 text-emerald-400" /> : <ShieldCheck className="w-6 h-6 text-indigo-400" />}
                                         </div>
                                         <div className="space-y-1">
                                             <h4 className="text-sm font-bold text-white uppercase tracking-wider">
-                                                {selectedPlan?.isContactSales ? "Request Enterprise Access" : paymentMethod === 'crypto' ? "PEER-TO-PEER SETTLEMENT" : "Secure Payment Portal"}
+                                                {selectedPlan?.isContactSales
+                                                    ? "Request Enterprise Access"
+                                                    : isSurge
+                                                        ? "BASALTSURGE HYBRID RAILS"
+                                                        : "Automated Stripe Billing"}
                                             </h4>
                                             <p className="text-xs text-zinc-500 leading-relaxed max-w-sm">
                                                 {selectedPlan?.isContactSales
-                                                    ? "Includes unlimited leads, custom AI modules, and specialized service level agreements (SLAs)."
-                                                    : paymentMethod === 'crypto'
-                                                        ? "Direct P2P Transfer. Must be settled in USDC on Base Network to qualify for the 25% discount."
-                                                        : "Redirects to BasaltSURGE Safe Portal for PCI-compliant card vaulting."}
+                                                    ? "Includes unlimited AI tokens, custom AI modules, and specialized service level agreements (SLAs)."
+                                                    : isSurge
+                                                        ? `Pay manually each month via the Surge payment portal. ${SURGE_DISCOUNT_PERCENT}% discount applied automatically.`
+                                                        : "Stripe manages recurring charges automatically. Cancel or modify anytime via the Customer Portal."}
                                             </p>
                                         </div>
                                     </div>
-                                    {!selectedPlan?.isContactSales && paymentMethod !== 'crypto' && (
+                                    {!selectedPlan?.isContactSales && (
                                         <div className="bg-zinc-950/50 px-6 py-2 flex items-center justify-between border-t border-zinc-800/50">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                                <span className="text-[10px] text-zinc-400 font-medium">Results: Encryption Active</span>
+                                                <div className={cn("w-1.5 h-1.5 rounded-full", isSurge ? "bg-emerald-500" : "bg-indigo-500")} />
+                                                <span className="text-[10px] text-zinc-400 font-medium">
+                                                    {isSurge ? "Manual Payment • Surge Portal" : "Auto-Billing • Stripe Secure"}
+                                                </span>
                                             </div>
                                             <Clock className="text-zinc-600 w-3 h-3" />
                                         </div>
@@ -420,9 +413,13 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                     <div className="flex justify-between items-center text-sm p-5 rounded-2xl bg-zinc-900/30 border border-zinc-800/50 hover:bg-zinc-900/50 transition-colors">
                                         <div className="flex items-center gap-3">
                                             <Calendar className="text-zinc-500 w-4 h-4" />
-                                            <span className="font-medium text-zinc-300">Next Billing Day</span>
+                                            <span className="font-medium text-zinc-300">
+                                                {isStripe ? "Billing Frequency" : "Next Billing Day"}
+                                            </span>
                                         </div>
-                                        <span className="font-mono font-bold text-cyan-400">{billingDayStr}</span>
+                                        <span className="font-mono font-bold text-cyan-400">
+                                            {isStripe ? (billingCycle === "annual" ? "Annually" : "Monthly (Auto)") : billingDayStr}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm p-5 rounded-2xl bg-zinc-900/30 border border-zinc-800/50 hover:bg-zinc-900/50 transition-colors relative group">
                                         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
@@ -432,11 +429,11 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                         </div>
                                         <div className="text-right relative z-10">
                                             <div className="text-[10px] text-zinc-500 mb-0.5 text-right uppercase tracking-wider font-bold">
-                                                {selectedPlan.name} • {billingCycle}
+                                                {selectedPlan.name} • {billingCycle} • {paymentProvider}
                                             </div>
                                             <div className="flex items-center justify-end gap-2">
                                                 {discountLabel && (
-                                                    <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-bold uppercase", paymentMethod === 'crypto' ? "bg-emerald-500/20 text-emerald-400" : "bg-cyan-500/20 text-cyan-400")}>
+                                                    <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-bold uppercase", isSurge ? "bg-emerald-500/20 text-emerald-400" : "bg-cyan-500/20 text-cyan-400")}>
                                                         {discountLabel}
                                                     </span>
                                                 )}
@@ -454,7 +451,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                             "w-full h-16 rounded-2xl text-lg font-bold shadow-2xl transition-colors group overflow-hidden relative",
                                             selectedPlan?.isContactSales
                                                 ? "bg-primary hover:bg-primary/90"
-                                                : paymentMethod === 'crypto'
+                                                : isSurge
                                                     ? "bg-emerald-600 hover:bg-emerald-500 hover:shadow-[0_0_40px_rgba(16,185,129,0.4)]"
                                                     : "bg-indigo-600 hover:bg-indigo-500 hover:shadow-[0_0_40px_rgba(79,70,229,0.4)]"
                                         )}
@@ -472,7 +469,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                                 </>
                                             ) : (
                                                 <>
-                                                    {paymentMethod === 'crypto' ? "Confirm P2P Transfer (USDC Only)" : `Activate ${selectedPlan?.name}`}
+                                                    {isSurge ? `Activate via Surge (Save ${SURGE_DISCOUNT_PERCENT}%)` : `Activate ${selectedPlan?.name} via Stripe`}
                                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                                 </>
                                             )}
@@ -481,9 +478,9 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                     <p className="text-center text-[10px] text-zinc-600 mt-6 leading-relaxed px-8">
                                         {selectedPlan?.isContactSales
                                             ? "By clicking, our sales team will reach out to the organization owner within 24 hours."
-                                            : paymentMethod === 'crypto'
-                                                ? "P2P Transactions must be in USDC on Base Network. Volatility protection ensures your rate is locked."
-                                                : "By subscribing, you enable BasaltSURGE Hybrid Rails. Charges are processed in USDC via Base network automation."}
+                                            : isSurge
+                                                ? `BasaltSurge processes manual monthly payments. ${SURGE_DISCOUNT_PERCENT}% discount applied. Settled in USDC on Base.`
+                                                : "Stripe securely handles your payment information. You can manage your subscription anytime via the Customer Portal."}
                                     </p>
                                 </div>
                             </div>

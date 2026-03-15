@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { LucideIcon, Lock } from "lucide-react";
+import { LucideIcon, Lock, ChevronUp } from "lucide-react";
 
 type MenuItemProps = {
     href: string;
@@ -18,9 +18,10 @@ type MenuItemProps = {
     onMouseEnter?: () => void;
     onMouseLeave?: () => void;
     isLocked?: boolean;
+    hasSubNav?: boolean;
 };
 
-const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile = false, badge, onMouseEnter, onMouseLeave, isLocked }: MenuItemProps) => {
+const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile = false, badge, onMouseEnter, onMouseLeave, isLocked, hasSubNav }: MenuItemProps) => {
     // Determine label for collapsed/mobile view
     // Specific override: Dashboard -> Home
     const rawLabel = title;
@@ -33,14 +34,17 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
             <Link href={isLocked ? "#" : href} onClick={isLocked ? (e) => e.preventDefault() : onClick} className="flex-shrink-0">
                 <div
                     className={cn(
-                        "relative flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-colors duration-200 gap-0.5",
+                        "relative flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-colors duration-200 gap-0.5",
                         isActive
                             ? "bg-primary/20 text-primary"
                             : "text-muted-foreground",
                         isLocked && "opacity-60 grayscale cursor-not-allowed"
                     )}
                 >
-                    <Icon className={cn("w-6 h-6", isActive && "text-primary")} />
+                    {hasSubNav && (
+                        <ChevronUp className="w-3 h-3 text-primary/50 absolute -top-0.5" />
+                    )}
+                    <Icon className={cn("w-5 h-5", isActive && "text-primary")} />
                     {isLocked && (
                         <div className="absolute top-1 right-2">
                             <Lock className="w-3 h-3 text-muted-foreground" />

@@ -1,5 +1,5 @@
 import { authOptions } from "@/lib/auth";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 import { streamText } from "ai";
 import { getServerSession } from "next-auth";
 
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { model } = await getAiSdkModel(session.user.id);
+  const { model, modelId, teamId } = await getAiSdkModel(session.user.id);
 
   if (!model) {
     return new Response("No openai key found", { status: 500 });
@@ -28,6 +28,12 @@ export async function POST(req: Request) {
       { role: "system", content: "You are a helpful assistant." },
       { role: "user", content: prompt },
     ],
+    onFinish: async ({ usage }: any) => {
+      await logAiUsage({ teamId, userId: session.user.id, service: "general",
+        model: modelId || "unknown",
+        usage: { promptTokens: usage?.promptTokens || 0, completionTokens: usage?.completionTokens || 0 },
+        description: "OpenAI completion" });
+    }
   });
 
   return result.toTextStreamResponse();

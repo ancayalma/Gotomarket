@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { LucideIcon, ChevronRight, Lock } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 
 // SubItem Type
@@ -33,6 +33,8 @@ type ExpandableMenuItemProps = {
 const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, isMobile = false, badge, isLocked, onMouseEnter, onMouseLeave }: ExpandableMenuItemProps) => {
     const pathname = usePathname();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
 
     const [showFlyout, setShowFlyout] = useState(false);
     const [flyoutPos, setFlyoutPos] = useState({ top: 0, left: 0 });
@@ -219,8 +221,10 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                             {/* Sub-items */}
                             <div className="flex flex-col gap-0.5">
                                 {items.map((subItem) => {
-                                    // loose match for active state so sub-routes stay highlighted
-                                    const isSubActive = pathname === subItem.href || pathname.startsWith(subItem.href);
+                                    const hasQuery = subItem.href.includes('?');
+                                    const isSubActive = hasQuery
+                                        ? fullPath === subItem.href
+                                        : (pathname === subItem.href || pathname.startsWith(subItem.href + '/')) && !searchParams.toString();
                                     return (
                                         <Link
                                             key={subItem.href}
@@ -238,7 +242,7 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                                                 className="truncate"
                                                 style={{
                                                     fontFamily: 'var(--nav-item-font)',
-                                                    fontSize: 'calc(var(--nav-item-size) * 0.8)',
+                                                    fontSize: '11px',
                                                     fontWeight: 'var(--nav-item-weight)',
                                                     fontStyle: 'var(--nav-item-style)',
                                                     paddingRight: '0.3em'

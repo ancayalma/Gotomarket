@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 import { generateText } from "ai";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
     const roleDesc = roleKey === "custom" ? roleNotes : rolePreset.description;
 
     // Compose prompt request for Azure/OpenAI
-    const { model } = await getAiSdkModel("system");
+    const { model, modelId, teamId } = await getAiSdkModel("system");
     if (!model) {
       return new NextResponse("AI model not configured", { status: 500 });
     }
@@ -153,11 +153,21 @@ export async function POST(req: Request) {
       .filter(Boolean)
       .join("\n");
 
-    const { text } = await generateText({
+    const { text, usage } = await generateText({
       model,
       system: sys,
       prompt: userContent,
     });
+
+    // Track AI token usage
+    if (session?.user?.id) {
+      await logAiUsage({
+        teamId, userId: session.user.id, service: "general",
+        model: modelId || "unknown",
+        usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+        description: "CRM prompt generation"
+      });
+    }
 
 
 

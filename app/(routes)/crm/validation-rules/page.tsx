@@ -32,7 +32,7 @@ export default async function ValidationRulesPage() {
                 overviewHow="Create new rules using the Formula Builder. You can define triggers for specific fields and custom error messages that populate in the UI when a user attempts to save record data that violates your business constraints."
             />
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b gap-3">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg">
                         <Shield className="h-6 w-6 text-white" />
@@ -49,7 +49,7 @@ export default async function ValidationRulesPage() {
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6 pb-36 md:pb-6">
                 <Suspense fallback={<div>Loading rules...</div>}>
                     <ValidationRulesClient rules={rules} teamId={teamId || ""} />
                 </Suspense>

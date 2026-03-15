@@ -81,14 +81,48 @@ export default function LeadsManagerTabs({ leads: initialLeads, crmData, default
 
   return (
     <div className="w-full h-full flex flex-col">
-      {/* Navigation Cards Grid */}
-      {/* Navigation Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 flex-shrink-0 pb-4 pt-4 -mt-2">
+      {/* Mobile: Compact pill tabs */}
+      <div className="flex md:hidden items-center gap-2 flex-wrap mb-3 pt-3 flex-shrink-0">
+        {visibleCards.map((card) => {
+          const CardIcon = card.icon;
+          return (
+            <button
+              key={card.id}
+              onClick={() => setActiveTab(card.id as typeof activeTab)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
+                activeTab === card.id
+                  ? "bg-primary/20 text-primary border border-primary/30"
+                  : "bg-muted/50 text-muted-foreground border border-border/50 hover:bg-muted"
+              }`}
+            >
+              <CardIcon className="w-3.5 h-3.5" />
+              {card.title}
+            </button>
+          );
+        })}
+        {canCreate && (
+          <RightViewModal
+            customTrigger
+            label={
+              <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors">
+                <Plus className="w-3.5 h-3.5" />
+                Add Lead
+              </button>
+            }
+            title="Create New Lead"
+            description="Fill out the form below to add a new lead to your CRM."
+          >
+            <NewLeadForm users={users} accounts={accounts} projects={projects} />
+          </RightViewModal>
+        )}
+      </div>
+
+      {/* Desktop: DashboardCard Grid */}
+      <div className="hidden md:grid md:grid-cols-4 gap-3 mb-3 flex-shrink-0 pb-4 pt-4 -mt-2">
         {visibleCards.map((card) => {
           let variant: "info" | "violet" | "warning" | "default" = "default";
           if (card.id === "all") variant = "info";
           if (card.id === "workspace") variant = "violet";
-
 
           return (
             <DashboardCard

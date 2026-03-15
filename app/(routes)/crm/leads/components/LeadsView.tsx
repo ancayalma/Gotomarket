@@ -78,7 +78,10 @@ export default function LeadsView({ data, crmData }: Props) {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
+  const [viewMode, setViewMode] = useState<"table" | "kanban">(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return "kanban";
+    return "table";
+  });
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [selectedEmailLead, setSelectedEmailLead] = useState<Lead | null>(null);
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
@@ -207,25 +210,25 @@ export default function LeadsView({ data, crmData }: Props) {
         recipientName={`${selectedEmailLead?.firstName || ""} ${selectedEmailLead?.lastName || ""}`}
         leadId={selectedEmailLead?.id}
       />
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <Switch
               checked={allSelected}
               onCheckedChange={toggleAll}
             />
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mr-2">Select Current Page</span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mr-2 hidden sm:inline">Select Current Page</span>
           </div>
           <EnhancedDateFilter
             onFilterChange={setDateRange}
             storageKey="crm-leads-view-date-filter"
             initialType="all-time"
           />
-          <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Total Selected: {selectedIds.length}</span>
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hidden sm:inline">Total Selected: {selectedIds.length}</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Rows per page:</span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hidden sm:inline">Rows per page:</span>
             <select
               className="h-8 rounded border px-2 text-[10px] uppercase tracking-wider font-semibold bg-[#0a0a0a] border-white/10 text-white"
               value={itemsPerPage}
@@ -238,15 +241,15 @@ export default function LeadsView({ data, crmData }: Props) {
             </select>
           </div>
 
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-[200px]">
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-auto sm:w-[200px]">
             <TabsList className="grid w-full grid-cols-2 bg-muted/50 border border-white/10">
               <TabsTrigger value="table" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-                <ListIcon className="w-4 h-4 mr-2" />
-                Table
+                <ListIcon className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Table</span>
               </TabsTrigger>
               <TabsTrigger value="kanban" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-                <LayoutGrid className="w-4 h-4 mr-2" />
-                Kanban
+                <LayoutGrid className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Kanban</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>

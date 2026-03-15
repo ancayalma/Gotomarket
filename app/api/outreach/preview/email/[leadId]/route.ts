@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 import OutreachTemplate, { type ResourceLink } from "@/emails/OutreachTemplate";
@@ -195,13 +195,13 @@ Project Briefing:
         const userPromptWithProject = [userPrompt, projectBlock].filter(Boolean).join("\\n\\n");
 
         // OpenAI client
-        const { model } = await getAiSdkModel(session.user.id);
+        const { model, modelId, teamId } = await getAiSdkModel(session.user.id);
         if (!model) return new NextResponse("AI model not configured", { status: 500 });
 
         let subject = "Exploring Partnership Opportunities";
         let bodyText = "Hello,\n\nI'd like to explore how we could create value together.\n\nThanks.";
         try {
-            const { object } = await generateObject({
+            const { object, usage } = await generateObject({
                 model,
                 schema: z.object({
                     subject: z.string(),
@@ -214,6 +214,14 @@ Project Briefing:
             });
             subject = object.subject || subject;
             bodyText = object.body || bodyText;
+
+            // Track AI token usage
+            await logAiUsage({
+                teamId, userId: session.user.id, service: "email",
+                model: modelId || "unknown",
+                usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+                description: "Outreach email preview"
+            });
         } catch (err: any) {
             // leave defaults on error
 

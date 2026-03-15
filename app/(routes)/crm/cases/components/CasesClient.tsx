@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     Headset,
     Plus,
@@ -83,7 +83,14 @@ export default function CasesClient({
     const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
+    const searchParamsHook = useSearchParams();
+    const currentView = searchParamsHook.get('view') || 'list';
     const [activeView, setActiveView] = useState(initialView);
+
+    // Sync activeView with URL changes
+    useEffect(() => {
+        setActiveView(currentView);
+    }, [currentView]);
 
 
 
@@ -165,6 +172,98 @@ export default function CasesClient({
 
     if (activeView === "kb") {
         return <KnowledgeBaseView initialArticles={initialArticles} />;
+    }
+
+    // Queue view: show actionable cases sorted by priority
+    if (activeView === "queue") {
+        const PRIORITY_ORDER: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+        const queueCases = cases
+            .filter((c: any) => !["RESOLVED", "CLOSED"].includes(c.status?.toUpperCase()))
+            .sort((a: any, b: any) => (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99));
+
+        return (
+            <div className="flex flex-col h-full bg-background">
+                <div className="shrink-0 border-b border-border/50 bg-background/95 backdrop-blur px-4 md:px-6 lg:px-8 py-4">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/20">
+                            <Inbox className="w-5 h-5 text-amber-400" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl md:text-4xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tighter uppercase leading-none">
+                                Case Queue
+                            </h1>
+                            <p className="text-muted-foreground/80 mt-1 text-[10px] md:text-xs font-medium tracking-wide italic border-l-2 border-amber-500/30 pl-4">
+                                {queueCases.length} actionable cases • sorted by priority
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-auto px-4 md:px-6 lg:px-8 py-4 pb-36 md:pb-4">
+                    {queueCases.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                            <CheckCircle2 className="w-12 h-12 mb-4 opacity-30" />
+                            <p className="text-lg font-medium">Queue is clear</p>
+                            <p className="text-sm">No open cases require attention</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {queueCases.map((c: any) => {
+                                const statusCfg = STATUS_CONFIG[c.status] || STATUS_CONFIG.NEW;
+                                const priorityCfg = PRIORITY_CONFIG[c.priority] || PRIORITY_CONFIG.MEDIUM;
+                                const StatusIcon = statusCfg.icon;
+
+                                return (
+                                    <div
+                                        key={c.id}
+                                        onClick={() => router.push(`/crm/cases/${c.id}`)}
+                                        className={cn(
+                                            "group relative flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-colors duration-200",
+                                            "bg-card/50 hover:bg-card border-border/50 hover:border-border hover:shadow-lg hover:shadow-primary/5",
+                                            c.priority === "CRITICAL" && "border-red-500/30 bg-red-500/5 animate-pulse"
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "absolute left-0 top-3 bottom-3 w-1 rounded-r-full transition-colors",
+                                            c.priority === "CRITICAL" ? "bg-red-500" :
+                                                c.priority === "HIGH" ? "bg-orange-500" :
+                                                    c.priority === "MEDIUM" ? "bg-blue-500" : "bg-slate-500"
+                                        )} />
+
+                                        <div className="flex-1 min-w-0 pl-3">
+                                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                <span className="text-xs font-mono text-muted-foreground">{c.case_number}</span>
+                                                <Badge className={cn("text-[10px] border", statusCfg.color)}>
+                                                    <StatusIcon className="w-3 h-3 mr-1" />
+                                                    {statusCfg.label}
+                                                </Badge>
+                                                <Badge className={cn("text-[10px] border", priorityCfg.color)}>
+                                                    {priorityCfg.label}
+                                                </Badge>
+                                                {!c.assigned_user && (
+                                                    <Badge className="text-[10px] bg-yellow-500/20 text-yellow-400 border-yellow-500/30 border">
+                                                        Unassigned
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                                                {c.subject}
+                                            </h3>
+                                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                                {c.contact && (
+                                                    <span>{c.contact.first_name} {c.contact.last_name}</span>
+                                                )}
+                                                <span className="text-muted-foreground/60">• {getTimeSince(c.createdAt)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
     }
 
     return (

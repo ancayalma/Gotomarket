@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
 import { generateText } from "ai";
 import { systemLogger } from "@/lib/logger";
 
@@ -130,7 +130,7 @@ export async function POST(req: Request) {
             },
         };
 
-        const { model } = await getAiSdkModel(session.user.id);
+        const { model, modelId, teamId } = await getAiSdkModel(session.user.id);
         if (!model) {
             return new NextResponse("AI model not configured", { status: 500 });
         }
@@ -165,13 +165,21 @@ export async function POST(req: Request) {
 
         let promptText = "";
         try {
-            const { text } = await generateText({
+            const { text, usage } = await generateText({
                 model,
                 system,
                 prompt: user,
                 temperature: isReasoningModel(model.modelId) ? undefined : 1,
             });
             promptText = text.trim();
+
+            // Track AI token usage
+            await logAiUsage({
+                teamId, userId: session.user.id, service: "email",
+                model: modelId || "unknown",
+                usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+                description: "Outreach prompt composition"
+            });
         } catch (err: any) {
 
             systemLogger.error("[OUTREACH_PROMPT_COMPOSE][AI_ERROR]", err?.message || err);

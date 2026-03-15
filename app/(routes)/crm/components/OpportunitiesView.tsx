@@ -40,7 +40,10 @@ const OpportunitiesView = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
-  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
+  const [viewMode, setViewMode] = useState<"table" | "kanban">(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return "kanban";
+    return "table";
+  });
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [open, setOpen] = useState(false);
@@ -112,8 +115,8 @@ const OpportunitiesView = ({
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div>
                 <CardTitle
                   onClick={() => router.push("/crm/opportunities")}
@@ -127,15 +130,15 @@ const OpportunitiesView = ({
               </div>
 
               {!isClosedView && (
-                <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-[200px]">
+                <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-auto sm:w-[200px]">
                   <TabsList className="grid w-full grid-cols-2 bg-muted/50 border border-border/50">
                     <TabsTrigger value="table" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                      <List className="w-4 h-4 mr-2" />
-                      Table
+                      <List className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Table</span>
                     </TabsTrigger>
                     <TabsTrigger value="kanban" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                      <LayoutGrid className="w-4 h-4 mr-2" />
-                      Kanban
+                      <LayoutGrid className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Kanban</span>
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
@@ -144,12 +147,13 @@ const OpportunitiesView = ({
             <div className="flex space-x-2">
               <Sheet open={open} onOpenChange={() => setOpen(false)}>
                 <Button
-                  className="my-2 cursor-pointer shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow"
+                  className="my-2 cursor-pointer shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow text-xs sm:text-sm"
                   onClick={() => setOpen(true)}
                 >
-                  + New Opportunity
+                  <span className="hidden sm:inline">+ New Opportunity</span>
+                  <span className="sm:hidden">+ New</span>
                 </Button>
-                <SheetContent className="min-w-[1000px] space-y-2 border-l border-white/10 glass">
+                <SheetContent className="min-w-[100vw] sm:min-w-[1000px] space-y-2 border-l border-white/10 glass">
                   <SheetHeader>
                     <SheetTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Create new opportunity</SheetTitle>
                   </SheetHeader>

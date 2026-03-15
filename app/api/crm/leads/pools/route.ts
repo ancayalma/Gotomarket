@@ -59,7 +59,7 @@ export async function GET() {
 
     if (isMember) {
       // Members: Use two separate queries and merge to avoid OR clause issues
-      systemLogger.error("[LEADS_POOLS_GET] Member query - fetching pools for user:", session.user.id);
+      systemLogger.info("[LEADS_POOLS_GET] Member query - fetching pools for user:", session.user.id);
 
       // Query 1: Pools created by member
       const createdPools = await (prismadb.crm_Lead_Pools as any).findMany({
@@ -67,7 +67,7 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
         select: poolSelect,
       });
-      systemLogger.error("[LEADS_POOLS_GET] Created pools count:", createdPools.length);
+      systemLogger.info("[LEADS_POOLS_GET] Created pools count:", createdPools.length);
 
       // Query 2: Pools where member is assigned
       const assignedPools = await (prismadb.crm_Lead_Pools as any).findMany({
@@ -75,7 +75,7 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
         select: poolSelect,
       });
-      systemLogger.error("[LEADS_POOLS_GET] Assigned pools count:", assignedPools.length);
+      systemLogger.info("[LEADS_POOLS_GET] Assigned pools count:", assignedPools.length);
 
       // Merge and dedupe by id
       const poolMap = new Map<string, any>();
@@ -107,7 +107,7 @@ export async function GET() {
       }
     }
 
-    systemLogger.error("[LEADS_POOLS_GET] Total pools returned:", pools.length);
+    systemLogger.info("[LEADS_POOLS_GET] Total pools returned:", pools.length);
 
     const results = pools.map((p: any) => ({
       id: p.id,

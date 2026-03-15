@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { systemLogger } from "@/lib/logger";
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
             return new NextResponse("Missing type or data", { status: 400 });
         }
 
-        const { model } = await getAiSdkModel(auth.user.id);
+        const { model, modelId, teamId } = await getAiSdkModel(auth.user.id);
         if (!model) {
             return new NextResponse("AI Model not configured", { status: 500 });
         }
@@ -70,11 +70,18 @@ export async function POST(req: Request) {
             return new NextResponse("Invalid score type", { status: 400 });
         }
 
-        const { object } = await generateObject({
+        const { object, usage } = await generateObject({
             model,
             schema: ScoreSchema,
             prompt: userPrompt,
             system: systemPrompt,
+        });
+
+        await logAiUsage({
+            teamId, userId: auth.user.id, service: "analysis",
+            model: modelId || "unknown",
+            usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+            description: `AI score: ${type}`
         });
 
         return NextResponse.json(object);

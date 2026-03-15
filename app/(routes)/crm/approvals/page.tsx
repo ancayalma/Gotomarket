@@ -35,7 +35,7 @@ export default async function ApprovalsPage() {
                 overviewHow="Navigate the Pending tab to review requests awaiting your input, or open the Processes tab to define the actual logic flow for how an approval propagates across the team."
             />
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b gap-3">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-gradient-to-br from-rose-500 to-pink-600 rounded-lg">
                         <CheckCircle2 className="h-6 w-6 text-white" />
@@ -52,7 +52,7 @@ export default async function ApprovalsPage() {
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-6 overflow-auto">
+            <div className="flex-1 p-4 sm:p-6 overflow-auto pb-36 md:pb-6">
                 <Suspense fallback={<div>Loading approvals...</div>}>
                     <ApprovalsClient
                         processes={JSON.parse(JSON.stringify(processes))}

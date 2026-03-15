@@ -7,11 +7,13 @@
  * - Refine search strategy based on results
  */
 
-import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
 import { z } from "zod";
 import { generateObject, generateText, tool, type ModelMessage } from "ai";
 
 import { prismadbCrm } from "@/lib/prisma-crm";
+import { consumeAiTokens } from "@/lib/ai-tokens";
+import { checkTeamQuota } from "@/lib/quota-service";
 // import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
 import {
   normalizeDomain,
@@ -62,90 +64,125 @@ async function ddgWebSearch(query: string, count: number = 20): Promise<Array<{
   snippet: string;
   domain: string;
 }>> {
-  try {
-    const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-    const response = await fetch(ddgUrl, {
-      method: "GET",
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
-    });
+  const excludePatterns = [
+    'wikipedia.org', 'youtube.com', 'facebook.com',
+    'twitter.com', 'instagram.com', 'google.com',
+    'reddit.com', 'medium.com', 'github.com',
+    'pinterest.com', 'tiktok.com', 'snapchat.com',
+    'bing.com', 'yahoo.com', 'quora.com',
+    'linkedin.com', 'glassdoor.com',
+  ];
 
-    if (!response.ok) {
-      console.error(`DuckDuckGo HTTP error: ${response.status}`);
-      return [];
-    }
+  // Primary: Serper.dev API (structured Google results, no scraping)
+  const serperKey = process.env.SERPER_API_KEY;
+  if (serperKey) {
+    try {
+      const response = await fetch("https://google.serper.dev/search", {
+        method: "POST",
+        headers: { "X-API-KEY": serperKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ q: query, num: Math.min(count, 30) }),
+      });
 
-    const html = await response.text();
+      if (response.ok) {
+        const data = await response.json();
+        const results: Array<{ name: string; url: string; snippet: string; domain: string }> = [];
 
-    // Parse result links from DDG HTML
-    // DDG HTML results have: <a rel="nofollow" class="result__a" href="...">Title</a>
-    // and snippets in: <a class="result__snippet" ...>Snippet text</a>
-    const results: Array<{ name: string; url: string; snippet: string; domain: string }> = [];
-
-    // Extract result blocks — each result has a link and snippet
-    // DDG wraps external URLs in redirect: //duckduckgo.com/l/?uddg=ENCODED_URL&...
-    const linkRegex = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
-    const snippetRegex = /<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
-
-    const links: Array<{ href: string; title: string }> = [];
-    let match;
-    while ((match = linkRegex.exec(html)) !== null) {
-      links.push({ href: match[1], title: stripHtml(match[2]).trim() });
-    }
-
-    const snippets: string[] = [];
-    while ((match = snippetRegex.exec(html)) !== null) {
-      snippets.push(stripHtml(match[1]).trim());
-    }
-
-    for (let i = 0; i < links.length && results.length < count; i++) {
-      let href = links[i].href;
-
-      // Decode DDG redirect URLs: //duckduckgo.com/l/?uddg=ENCODED_URL&...
-      if (href.includes("duckduckgo.com/l/")) {
-        const uddgMatch = href.match(/[?&]uddg=([^&]+)/);
-        if (uddgMatch) {
-          href = decodeURIComponent(uddgMatch[1]);
+        for (const item of (data.organic || [])) {
+          if (results.length >= count) break;
+          try {
+            const u = new URL(item.link);
+            const hostname = u.hostname.replace(/^www\./i, "");
+            if (excludePatterns.some(p => hostname.includes(p))) continue;
+            results.push({
+              name: (item.title || "").slice(0, 120),
+              url: item.link,
+              snippet: (item.snippet || "").slice(0, 200),
+              domain: hostname,
+            });
+          } catch { continue; }
         }
+
+        console.log(`[Google/Serper] "${query}" -> ${results.length} results`);
+        return results;
       }
-
-      // Skip non-http links
-      if (!href.startsWith("http://") && !href.startsWith("https://")) continue;
-
-      // Extract domain
-      try {
-        const u = new URL(href);
-        let hostname = u.hostname.replace(/^www\./i, "");
-
-        // Filter out non-company domains
-        const excludePatterns = [
-          'wikipedia.org', 'youtube.com', 'facebook.com',
-          'twitter.com', 'instagram.com', 'duckduckgo.com',
-          'reddit.com', 'medium.com', 'github.com',
-          'pinterest.com', 'tiktok.com', 'snapchat.com',
-          'google.com', 'bing.com', 'yahoo.com',
-        ];
-        if (excludePatterns.some(p => hostname.includes(p))) continue;
-
-        results.push({
-          name: links[i].title,
-          url: href,
-          snippet: snippets[i] || "",
-          domain: hostname,
-        });
-      } catch {
-        continue;
-      }
+    } catch (error) {
+      console.error("Serper API error:", error);
     }
+  }
 
-    console.log(`[DDG Search] "${query}" -> ${results.length} results`);
+  // Fallback: Puppeteer Google search
+  let browser;
+  try {
+    const { launchBrowser: lb, newPageWithDefaults: np, closeBrowser: cb } = await import("@/lib/browser");
+    browser = await lb();
+    const page = await np(browser);
+
+    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=${Math.min(count + 5, 30)}&hl=en`;
+    await page.goto(googleUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const results = await page.evaluate((maxCount: number) => {
+      const items: Array<{ name: string; url: string; snippet: string; domain: string }> = [];
+      const excludes = [
+        'wikipedia.org', 'youtube.com', 'facebook.com', 'twitter.com',
+        'instagram.com', 'google.com', 'reddit.com', 'medium.com',
+        'github.com', 'bing.com', 'yahoo.com', 'linkedin.com',
+      ];
+
+      // Find all anchors with h3 inside (organic results)
+      const anchors = document.querySelectorAll('#search a[href^="http"], #rso a[href^="http"]');
+      const seen = new Set<string>();
+
+      for (let i = 0; i < anchors.length && items.length < maxCount; i++) {
+        const a = anchors[i] as HTMLAnchorElement;
+        const href = a.href;
+        if (!href || href.includes('google.com/') || seen.has(href)) continue;
+
+        const h3 = a.querySelector('h3');
+        if (!h3) continue;
+
+        seen.add(href);
+        try {
+          const u = new URL(href);
+          const hostname = u.hostname.replace(/^www\./i, '');
+          if (excludes.some(p => hostname.includes(p))) continue;
+
+          // Try to find snippet in parent container
+          let snippet = '';
+          const parent = a.closest('[data-sokoban-container], .g, [data-hveid]');
+          if (parent) {
+            const spans = Array.from(parent.querySelectorAll('span'));
+            for (let si = 0; si < spans.length; si++) {
+              const txt = (spans[si] as HTMLElement).textContent?.trim() || '';
+              if (txt.length > 40 && !txt.includes('http') && txt !== h3.textContent?.trim()) {
+                snippet = txt.slice(0, 200);
+                break;
+              }
+            }
+          }
+
+          items.push({
+            name: (h3.textContent?.trim() || '').slice(0, 120),
+            url: href,
+            snippet,
+            domain: hostname,
+          });
+        } catch { continue; }
+      }
+      return items;
+    }, count);
+
+    console.log(`[Google/Puppeteer] "${query}" -> ${results.length} results`);
     return results;
+
   } catch (error) {
-    console.error("DuckDuckGo search error:", error);
+    console.error("Google Puppeteer search error:", error);
     return [];
+  } finally {
+    if (browser) {
+      const { closeBrowser: cb } = await import("@/lib/browser");
+      await cb(browser);
+    }
   }
 }
 
@@ -1027,19 +1064,37 @@ export async function executeToolCall(toolName: string, args: any, context: any)
       } catch (dbErr) {
         console.error("Failed to update job for search query", dbErr);
       }
+      // Truncate results to reduce token usage — only send top 10 with minimal fields
+      const trimmedResults = searchResults.slice(0, 10).map((r: any) => ({
+        title: (r.title || '').slice(0, 80),
+        url: r.url,
+        domain: r.domain || (r.url ? extractDomain(r.url) : ''),
+        snippet: (r.snippet || '').slice(0, 120),
+      }));
       return {
         success: true,
-        results: searchResults,
+        results: trimmedResults,
         count: searchResults.length
       };
 
     case "visit_website":
       const siteData = await visitWebsiteForAgent(args.url, context.userId, context.icp);
-      return {
-        success: !siteData.error,
-        data: siteData,
-        url: args.url
-      };
+      // Truncate visit results to only essential fields for token efficiency
+      if (siteData && !siteData.error) {
+        return {
+          success: true,
+          url: args.url,
+          title: (siteData.title || '').slice(0, 100),
+          description: (siteData.description || '').slice(0, 200),
+          contacts: (siteData.contacts || []).slice(0, 10).map((c: any) => ({
+            name: c.name || '', title: c.title || '', email: c.email || '', linkedin: c.linkedin || ''
+          })),
+          emails: (siteData.emails || []).slice(0, 10),
+          phones: (siteData.phones || []).slice(0, 5),
+          pagesVisited: (siteData.pagesVisited || []).length,
+        };
+      }
+      return { success: false, url: args.url, error: siteData?.error || 'Failed to load' };
 
     case "analyze_company_fit":
       // AI will analyze this in its next turn
@@ -1534,222 +1589,52 @@ export async function runAgenticLeadGeneration(
   contactsSaved: number;
   iterations: number;
 }> {
-  const { model } = await getAiSdkModel(userId);
+  const { model, provider, modelId } = await getAiSdkModel(userId);
   if (!model) {
     throw new Error("AI model not configured");
   }
 
   const db: any = prismadbCrm;
+
+  // Resolve team_id for AI token tracking
+  let teamId: string | null = null;
+  try {
+    const userRecord = await db.users.findUnique({
+      where: { id: userId },
+      select: { team_id: true }
+    });
+    teamId = userRecord?.team_id || null;
+  } catch (e) {
+    console.warn("[LEADGEN] Could not resolve team_id for token tracking", e);
+  }
+  let accumulatedTokens = 0;
   const isResume = !!initialState && (initialState.companiesSaved || 0) > 0;
 
-  // Initial prompt for the agent
-  let systemPrompt = `You are an ELITE B2B lead generation agent with world-class expertise in search, web scraping, and contact discovery. Your mission: autonomously find and qualify ${maxCompanies} PERFECT-FIT companies with ACTUAL decision-maker contact information.
+  // Compact system prompt — optimized for token efficiency
+  let systemPrompt = `You are a B2B lead generation agent. Find ${maxCompanies} companies matching the ICP with real contact emails.
 
-ICP CRITERIA (Ideal Customer Profile):
-- Industries: ${icp.industries?.join(", ") || "Any"}
-- Geographies: ${icp.geos?.join(", ") || "Any"}
-- Tech Stack: ${icp.techStack?.join(", ") || "Any"}
-- Target Titles: ${icp.titles?.join(", ") || "Any"}
-${icp.notes ? `- Additional Notes: ${icp.notes}` : ""}
+ICP: Industries: ${icp.industries?.join(", ") || "Any"} | Geos: ${icp.geos?.join(", ") || "Any"} | Tech: ${icp.techStack?.join(", ") || "Any"} | Titles: ${icp.titles?.join(", ") || "Any"}
+${icp.notes ? `Notes: ${icp.notes}` : ""}
 
-TARGET: ${maxCompanies} companies with HIGH-QUALITY contact information
-`;
+RULES:
+- NEVER save a company without at least one real email address
+- visit_website auto-crawls subpages and returns structured contacts — use the data directly
+- Contact name must be a real person name or empty string "" (never company/department names)
+- Skip directories: Crunchbase, LinkedIn, G2, Capterra, Glassdoor, ProductHunt, Wikipedia, etc.
+- Use parallel tool calls for speed (visit multiple sites at once)
+
+WORKFLOW: search_companies → visit_website (parallel) → save_company → repeat
+Tools: search_companies, visit_website, save_company, refine_search_strategy`;
 
   if (isResume) {
-    systemPrompt += `
-═══════════════════════════════════════════════════════
-🔄 RESUMPTION CONTEXT
-═══════════════════════════════════════════════════════
-- **Previous Progress**: You already saved ${initialState?.companiesSaved || 0} companies and ${initialState?.contactsSaved || 0} contacts.
-- **Goal Remaining**: Find ${maxCompanies - (initialState?.companiesSaved || 0)} more companies.
-- **Avoid Duplication**: You have already explored these search queries: ${initialState?.queryTemplates?.join(", ") || "None"}.
-- **Action**: Start by exploring NEW search queries or deeper research on existing results.
-`;
+    systemPrompt += `\nRESUME: Already saved ${initialState?.companiesSaved || 0} companies, ${initialState?.contactsSaved || 0} contacts. Need ${maxCompanies - (initialState?.companiesSaved || 0)} more. Previous queries: ${initialState?.queryTemplates?.join(", ") || "None"}. Use NEW queries.`;
   }
-
-  systemPrompt += `
-═══════════════════════════════════════════════════════
-🎯 CRITICAL SUCCESS CRITERIA (READ CAREFULLY)
-═══════════════════════════════════════════════════════
-
-1. ⚠️ **EMAIL REQUIREMENT**: NEVER save a company without AT LEAST ONE email address
-2. **MULTIPLE CONTACTS**: Extract ALL contacts from EVERY qualified company (aim for 3-5+ per company)
-3. **AUTONOMOUS DEEP RESEARCH**: The visit_website tool automatically crawls up to 5 subpages (/about, /team, /contact, /leadership, /careers, /people) for you! It returns STRUCTURED CONTACTS with names, titles, emails, and LinkedIn URLs already extracted.
-4. **PARALLEL EXECUTION**: Visit 5-10 different company websites simultaneously for speed.
-5. **QUALITY > SPEED**: Better to save 20 perfect companies with contacts than 100 with missing data.
-
-═══════════════════════════════════════════════════════
-🚨 CONTACT NAME RULES (MANDATORY - VIOLATIONS REJECTED)
-═══════════════════════════════════════════════════════
-
-**The contact name field is for REAL HUMAN NAMES only.**
-
-✅ GOOD contact examples:
-- { name: "John Smith", title: "CEO", email: "john@company.com" }
-- { name: "Maria Garcia", title: "VP Sales", email: "maria.garcia@company.com" }
-- { name: "", title: "", email: "info@company.com" }  ← no name known, leave empty
-
-❌ BAD contact examples (system will REJECT these):
-- { name: "Acme Corp", title: "Contact", email: "info@acme.com" }  ← company name as person name!
-- { name: "Customer Service", title: "General Contact", email: "support@acme.com" }  ← department as name!
-- { name: "Sales", title: "Sales Contact", email: "sales@acme.com" }  ← department label!
-
-**RULES:**
-- Contact name MUST be a real person's first and last name (e.g., "Jane Doe")
-- If you do NOT know the person's real name, set name to EMPTY STRING ""
-- NEVER use the company name, domain name, or department name as a contact name
-- For title: use real job titles ("CEO", "VP Sales", "Marketing Director"), NOT "Contact" or "General Contact"
-- If you don't know the title, set title to EMPTY STRING ""
-- The system will automatically label unnamed contacts as "General Contact" or "Sales Contact" based on email type
-
-**NEVER SAVE THESE AS COMPANIES (they are directories/aggregators, NOT real leads):**
-Crunchbase, LinkedIn, F6S, Tracxn, GrowthList, PitchBook, ZoomInfo, Apollo, G2, Capterra,
-Clutch, Glassdoor, Indeed, Yelp, ProductHunt, Wikipedia, Reddit, Twitter/X, Facebook, GitHub,
-YouTube, TikTok, Instagram, Bloomberg, Forbes, TechCrunch, Entrepreneur, Inc, YCombinator.
-Only save ACTUAL COMPANY WEBSITES with real business operations.`;
-
-  systemPrompt += `
-═══════════════════════════════════════════════════════
-🔍 MASTER CONTACT EXTRACTION STRATEGIES
-═══════════════════════════════════════════════════════
-
-** WHERE TO FIND EMAILS(Priority Order):**
-
-    1. ** Contact Pages ** (domain.com / contact, /contact-us)
-      - General inquiry emails(info@, contact@, hello@)
-        - Department emails(sales@, support@, careers@)
-          - Individual contact forms with emails
-
-2. ** Team / About Pages ** (domain.com / team, /about, /about - us, /leadership)
-    - Founder / CEO emails
-      - Leadership team contacts
-        - Employee bios with email addresses
-
-  3. ** Footer & Header **
-    - Company - wide contact emails
-      - Support / sales emails
-        - Press / media contact emails
-
-  4. ** Careers Pages ** (domain.com / careers, /jobs)
-    - Recruiting emails
-      - HR contact information
-        - "Questions? Contact recruiter@..."
-
-  5. ** Press / Media Pages ** (domain.com / press, /media, /newsroom)
-    - PR contact emails
-      - Media inquiry addresses
-
-  6. ** Blog / Articles ** (domain.com / blog)
-    - Author emails
-      - Contact the editor emails
-
-        ** ADVANCED TACTICS:**
-
-- ** Visit 3 - 5 pages per company minimum **: Homepage + Contact + Team + About + Careers
-    - ** Look in page source **: Sometimes emails are in mailto: links or meta tags
-      - ** Check subdomains **: blog.company.com, careers.company.com might have different contacts
-        - ** Extract from text patterns **: Look for email patterns like firstname @domain.com
-- ** LinkedIn URLs **: Extract any LinkedIn profile URLs(useful even without email)
-    - ** Phone numbers **: Extract all phone numbers as backup contact methods
-
-═══════════════════════════════════════════════════════
-🔎 DUCKDUCKGO SEARCH MASTERY
-═══════════════════════════════════════════════════════
-
-** EFFECTIVE QUERY PATTERNS:**
-
-✓ Industry + Location:
-  "${icp.industries?.[0] || 'SaaS'} companies in ${icp.geos?.[0] || 'San Francisco'}"
-  
-✓ Industry + Company Stage:
-  "top ${icp.industries?.[0] || 'fintech'} startups ${icp.geos?.[0] || 'New York'}"
-  "Series A ${icp.industries?.[0] || 'AI'} companies"
-  
-✓ Industry + Hiring(great for finding active companies):
-    "${icp.industries?.[0] || 'tech'} companies hiring ${icp.titles?.[0] || 'engineers'}"
-  "${icp.industries?.[0] || 'SaaS'} careers page"
-  
-✓ Technology - specific:
-  "companies using ${icp.techStack?.[0] || 'React'}"
-  "built with ${icp.techStack?.[0] || 'Node.js'}"
-
-✓ Company directories(very effective):
-  "site:crunchbase.com ${icp.industries?.[0] || 'SaaS'} ${icp.geos?.[0] || ''}"
-  "site:linkedin.com/company ${icp.industries?.[0] || 'AI'}"
-  "site:producthunt.com ${icp.industries?.[0] || 'productivity'}"
-
-    ** SEARCH STRATEGY:**
-      - Start with 3 - 5 diverse queries in your first search batch
-        - If results are poor quality, try different keywords
-          - Prioritize actual company websites over directories
-            - Mix broad and specific queries for coverage
-
-═══════════════════════════════════════════════════════
-🎬 OPTIMAL WORKFLOW(FOLLOW THIS PATTERN)
-═══════════════════════════════════════════════════════
-
-** ITERATION 1 - 3: Cast Wide Net **
-    1. Execute 3 - 5 searches with diverse queries
-  2. Visit top 10 - 15 company websites IN PARALLEL
-  3. Use visit_website on the company domain(it will automatically Deep Crawl for you)
-    4. Save companies that have emails(aim for 5 - 10 companies per iteration)
-
-** ITERATION 4 - 10: Deep Qualification **
-    1. If you have < 50 % of target, do more searches
-2. Extract ALL possible contacts from the visit_website results
-  3. Save only ICP - aligned companies with decision - maker emails
-
-    ** ITERATION 10 +: Quality Refinement **
-      1. Review what's working - which search queries yielded best results?
-        ** EXCELLENT PERFORMANCE:**
-          - 80 % + of companies have 3 + contacts
-            - 90 % + of contacts have emails
-              - 100 % ICP alignment
-                - Average 5 + contacts per company
-
-                  ** GOOD PERFORMANCE:**
-                    - 60 % + of companies have 2 + contacts
-                      - 80 % + of contacts have emails
-                        - 90 % ICP alignment
-                          - Average 3 + contacts per company
-
-                            ** NEEDS IMPROVEMENT:**
-                              - <50% of companies have 2 + contacts
-                                - <70% of contacts have emails
-                                  - <80% ICP alignment
-
-YOUR TOOLS(use in parallel whenever possible):
-  1. search_companies - DuckDuckGo search
-  2. visit_website - Extract data from any URL
-  3. save_company - Save qualified companies with contacts
-4. refine_search_strategy - Evaluate and adjust
-
-  Remember: QUALITY > QUANTITY.Better to save 50 perfect companies with 250 contacts than 100 companies with 100 contacts.
-
-Be strategic, thorough, and relentless in finding contact information.Good luck! 🚀`;
 
   // Start with a User message; pass systemPrompt via the 'system' option in generateText
   const messages: ModelMessage[] = [
     {
       role: "user",
-      content: `Begin lead generation. Find ${maxCompanies} companies matching the ICP.
-
-WORKFLOW TO FOLLOW:
-  1. First, use search_companies to find relevant companies
-  2. Then, use visit_website IN PARALLEL on multiple promising URLs from the search results
-  3. The visit_website tool returns STRUCTURED CONTACTS (with name, title, email, linkedin). Use these directly!
-  4. After extracting data, IMMEDIATELY use save_company if you found AT LEAST ONE email
-  5. For each email found, create a contact object. Set name to EMPTY STRING "" if you don't know the real person name.
-  6. NEVER use the company name as a contact name. The system handles unnamed contacts automatically.
-  7. Continue this cycle (search -> visit -> save) until you reach ${maxCompanies} saved companies
-
-CONTACT RULES (CRITICAL):
-  - name MUST be a real person's FirstName LastName, or empty string ""
-  - NEVER set name to the company name, department name, or generic labels
-  - title MUST be a real job title (CEO, VP Sales, etc), or empty string ""
-  - The system will auto-label unnamed contacts as "General Contact" or "Sales Contact" based on email
-
-Start now by searching for companies.`
+      content: `Find ${maxCompanies} ICP-matching companies. Start by searching, then visit promising sites in parallel, then save companies with emails. Go.`
     }
   ];
 
@@ -1794,7 +1679,10 @@ Start now by searching for companies.`
       counters: {
         companiesFound: companiesSaved,
         contactsSaved,
+        contactsCreated: contactsSaved,
+        agentIterations: iterations,
         iterations,
+        tokensUsed: accumulatedTokens,
         progress: Math.min(100, Math.round((companiesSaved / maxCompanies) * 100))
       }
     };
@@ -1882,22 +1770,61 @@ Start now by searching for companies.`
     }
 
     try {
-      // Use generateText from AI SDK
-      // We pass the full history (messages) so it knows what happened
-      // We also pass the tools definition
-      // maxSteps is handled by maxIterations (default 50) in the while loop above
+      // Message history windowing — keep only recent messages to control token growth
+      // Keep first user message + last MAX_HISTORY_MESSAGES to maintain context without bloat
+      const MAX_HISTORY_MESSAGES = 8; // ~4 round-trips of assistant+tool messages
+      let windowedMessages = messages;
+      if (messages.length > MAX_HISTORY_MESSAGES + 1) {
+        const firstMsg = messages[0]; // Original user instruction
+        const recentMsgs = messages.slice(-MAX_HISTORY_MESSAGES);
+        // Insert a compact progress summary so the agent knows what happened
+        windowedMessages = [
+          firstMsg,
+          {
+            role: "user" as const,
+            content: `[PROGRESS] Saved ${companiesSaved}/${maxCompanies} companies, ${contactsSaved} contacts, ${iterations - 1} iterations, ${accumulatedTokens} tokens used. Continue searching and saving.`
+          },
+          ...recentMsgs
+        ];
+      }
+
       const tools = buildToolsDefinition(context);
       const genOpts: any = {
         model,
         system: systemPrompt,
-        messages,
+        messages: windowedMessages,
         tools,
       };
       // Only set temperature for non-reasoning models; omit entirely otherwise
       if (!isReasoningModel(model.modelId)) {
         genOpts.temperature = 1;
       }
-      const { text, toolCalls, response, toolResults } = await generateText(genOpts);
+      const { text, toolCalls, response, toolResults, usage } = await generateText(genOpts);
+
+      // Track AI token usage
+      if (usage) {
+        const usageAny = usage as any;
+        const iterationTokens = usageAny.totalTokens || ((usageAny.promptTokens || 0) + (usageAny.completionTokens || 0));
+        accumulatedTokens += iterationTokens;
+        console.log(`[LEADGEN_DEBUG] Iteration ${iterations}: +${iterationTokens} tokens (prompt=${usageAny.promptTokens || 0}, completion=${usageAny.completionTokens || 0}, accumulated=${accumulatedTokens})`);
+
+        // Log to AI Usage audit in real-time (non-blocking)
+        if (teamId && iterationTokens > 0) {
+          logAiUsage({
+            teamId,
+            userId: userId || null,
+            service: "leadgen",
+            model: `${provider}:${modelId}`,
+            usage: {
+              promptTokens: usageAny.promptTokens || 0,
+              completionTokens: usageAny.completionTokens || 0,
+            },
+            description: `Lead gen iteration ${iterations} (job: ${jobId.slice(0, 8)})`,
+          }).catch(err => console.error("[LEADGEN_ITER_LOG]", err));
+        }
+      } else {
+        console.warn(`[LEADGEN_DEBUG] Iteration ${iterations}: NO usage object returned from generateText!`);
+      }
 
       // Check if agent wants to use tools
       if (toolCalls && toolCalls.length > 0) {
@@ -2111,23 +2038,34 @@ Don't keep searching - SAVE the companies you've already found!`;
   }
 
   // Log completion
-  addLog(`🤖 Agent complete: ${companiesSaved} companies, ${contactsSaved} contacts in ${iterations} iterations`);
+  addLog(`🤖 Agent complete: ${companiesSaved} companies, ${contactsSaved} contacts in ${iterations} iterations (${accumulatedTokens.toLocaleString()} AI tokens used)`);
   await flushLogsToDb(true); // Force final flush
-  // Mark job as completed in DB
+
+  // Token logging already handled per-iteration above — just log summary
+  if (teamId && accumulatedTokens > 0) {
+    console.log(`[LEADGEN_TOKENS] Total: ${accumulatedTokens} tokens for team ${teamId} (logged per-iteration)`);
+  }
   try {
     await db.crm_Lead_Gen_Jobs.update({
       where: { id: jobId },
       data: {
-        status: "COMPLETED",
+        status: "SUCCESS",
+        finishedAt: new Date(),
         counters: {
-          companiesSaved,
+          companiesFound: companiesSaved,
           contactsSaved,
+          contactsCreated: contactsSaved,
+          agentIterations: iterations,
           iterations,
+          tokensUsed: accumulatedTokens,
           progress: 100
         }
       }
     });
-  } catch { }
+    console.log(`[LEADGEN] Final write SUCCESS: tokensUsed=${accumulatedTokens}, companies=${companiesSaved}`);
+  } catch (err) {
+    console.error("[LEADGEN] FINAL WRITE FAILED:", err);
+  }
 
   return {
     companiesSaved,

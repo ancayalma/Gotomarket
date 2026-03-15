@@ -326,14 +326,32 @@ export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
         try {
             const seen = localStorage.getItem(TOUR_KEY);
             const sessionDismissed = sessionStorage.getItem("crm_onboarding_session_dismissed") === "true";
+            const brandSetupActive = sessionStorage.getItem("crm_brand_setup_active") === "true";
 
             // If shown once, explicitly dismissed on server, or dismissed for this session, don't show
-            if (!seen && !dismissed && !sessionDismissed) {
+            if (!seen && !dismissed && !sessionDismissed && !brandSetupActive) {
                 // Small delay to let the dashboard fully render before measuring
                 const t = setTimeout(() => setActive(true), 1400);
                 return () => clearTimeout(t);
             }
         } catch { /* ignore */ }
+    }, [mounted, dismissed]);
+
+    // 2b. If tour was deferred because brand setup was active, start it when brand setup closes
+    useEffect(() => {
+        if (!mounted) return;
+        const handler = () => {
+            try {
+                const seen = localStorage.getItem(TOUR_KEY);
+                const sessionDismissed = sessionStorage.getItem("crm_onboarding_session_dismissed") === "true";
+                if (!seen && !dismissed && !sessionDismissed) {
+                    const t = setTimeout(() => setActive(true), 800);
+                    return () => clearTimeout(t);
+                }
+            } catch { /* ignore */ }
+        };
+        window.addEventListener("crm_brand_setup_closed", handler);
+        return () => window.removeEventListener("crm_brand_setup_closed", handler);
     }, [mounted, dismissed]);
 
     // 3. Listen for session dismissal events (e.g. from the checklist 'X' button)

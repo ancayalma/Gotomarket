@@ -1,9 +1,9 @@
 import { streamText } from "ai";
-import { google } from "@ai-sdk/google";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { systemLogger } from "@/lib/logger";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -33,9 +33,17 @@ Format the output as a clean bulleted list, similar to a executive summary. Keep
 Conversation Transcript:
 ${transcript}`;
 
+        const { model, modelId, teamId } = await getAiSdkModel(session.user.id);
+
         const result = streamText({
-            model: google("gemini-1.5-pro"),
+            model,
             prompt: prompt,
+            onFinish: async ({ usage }: any) => {
+                await logAiUsage({ teamId, userId: session.user.id, service: "analysis",
+                    model: modelId || "unknown",
+                    usage: { promptTokens: usage?.promptTokens || 0, completionTokens: usage?.completionTokens || 0 },
+                    description: "Conversation summarization" });
+            }
         });
 
         return result.toTextStreamResponse();

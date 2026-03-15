@@ -1,7 +1,7 @@
 
 import { prismadb } from "@/lib/prisma";
 import { generateText } from "ai";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 import { format } from "date-fns";
 
 export async function getEnergyPulse(userId: string) {
@@ -52,11 +52,15 @@ export async function getEnergyPulse(userId: string) {
             Format: { "forecast": "...", "suggestion": "...", "loadPercent": ${loadPercent}, "status": "${status}" }
         `;
 
-        const { model } = await getAiSdkModel(userId);
-        const { text } = await generateText({
+        const { model, modelId, teamId } = await getAiSdkModel(userId);
+        const { text, usage } = await generateText({
             model,
             prompt,
         });
+
+        await logAiUsage({ teamId, userId, service: "general", model: modelId || "unknown",
+            usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+            description: "Calendar energy pulse" });
 
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         return jsonMatch ? JSON.parse(jsonMatch[0]) : { forecast: text, suggestion: "Maintain current trajectory.", loadPercent, status };

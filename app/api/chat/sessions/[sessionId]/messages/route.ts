@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbChat } from "@/lib/prisma-chat";
 const db: any = prismadbChat;
-import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
 import { streamText, tool } from "ai";
 import { z } from "zod";
 import { retrieveRelevantFacts } from "@/lib/vector-search";
@@ -229,7 +229,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
           } as any)
         },
         maxSteps: 3,
-        onFinish: async ({ text: completion }: any) => {
+        onFinish: async ({ text: completion, usage }: any) => {
           try {
             if (!chatSession.isTemporary) {
               await db.chat_Messages.create({
@@ -245,6 +245,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
               await db.chat_Sessions.update({
                 where: { id: sessionId },
                 data: { updatedAt: new Date() },
+              });
+            }
+            // Track AI token usage
+            if (usage) {
+              await logAiUsage({
+                teamId: aiResult.teamId, userId: auth.user.id, service: "chat",
+                model: aiResult.modelId || "unknown",
+                usage: { promptTokens: usage.promptTokens || 0, completionTokens: usage.completionTokens || 0 },
+                description: "Chat session message"
               });
             }
           } catch (e) {

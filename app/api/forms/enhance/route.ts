@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         const { formConfig, prompt } = body;
 
         // Get the AI model configured for this user/team
-        const { model } = await getAiSdkModel(session.user.id);
+        const { model, modelId, teamId } = await getAiSdkModel(session.user.id);
 
         // Build the system prompt
         const systemPrompt = `You are a form design expert specializing in lead capture forms for CRM systems.
@@ -88,11 +88,18 @@ Improvements to make:
         }
 
         // Use generateObject with schema for guaranteed JSON output
-        const { object: enhanced } = await generateObject({
+        const { object: enhanced, usage } = await generateObject({
             model,
             schema: FormConfigSchema,
             system: systemPrompt,
             prompt: userPrompt,
+        });
+
+        await logAiUsage({
+            teamId, userId: session.user.id, service: "general",
+            model: modelId || "unknown",
+            usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+            description: "Form enhancement"
         });
 
         // Ensure positions are sequential

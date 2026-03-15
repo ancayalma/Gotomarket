@@ -1,7 +1,7 @@
 
 import { prismadb } from "@/lib/prisma";
 import { generateText } from "ai";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 import { format } from "date-fns";
 
 export async function getAIDailyBriefing(userId: string) {
@@ -59,11 +59,15 @@ export async function getAIDailyBriefing(userId: string) {
             Respond in JSON format: { "summary": "...", "highValueAlerts": ["...", "..."] }
         `;
 
-        const { model } = await getAiSdkModel(userId);
-        const { text } = await generateText({
+        const { model, modelId, teamId } = await getAiSdkModel(userId);
+        const { text, usage } = await generateText({
             model,
             prompt,
         });
+
+        await logAiUsage({ teamId, userId, service: "general", model: modelId || "unknown",
+            usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+            description: "Calendar AI daily briefing" });
 
         // Try to parse JSON from the response if it's wrapped in markers or just raw
         const jsonMatch = text.match(/\{[\s\S]*\}/);

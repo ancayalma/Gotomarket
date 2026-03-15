@@ -137,7 +137,7 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                                         <span className="whitespace-nowrap uppercase tracking-normal leading-normal"
                                             style={{
                                                 fontFamily: 'var(--nav-item-font)',
-                                                fontSize: 'var(--nav-item-size)',
+                                                fontSize: '11px',
                                                 fontWeight: 'var(--nav-item-weight)',
                                                 fontStyle: 'var(--nav-item-style)', overflow: 'visible'
                                             }}
@@ -179,9 +179,12 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                 </button>
             </div>
 
-            {/* Mobile Admin Sub-Nav (Horizontal Scroll) */}
-            <div className="md:hidden fixed bottom-[72px] left-0 right-0 z-[90] px-4">
-                <div className="bg-[#18181b]/80 backdrop-blur-xl border border-primary/20 rounded-2xl flex flex-row items-center gap-1 p-1 overflow-x-auto no-scrollbar shadow-xl shadow-black/50">
+            {/* Mobile Admin Sub-Nav (Layer 2 — Floating Pill) */}
+            <div className="md:hidden fixed bottom-[52px] left-0 right-0 z-[90]">
+                <div
+                    className="bg-background/80 backdrop-blur-xl border-t border-white/10 rounded-t-2xl flex flex-row items-center gap-1 p-1 overflow-x-auto no-scrollbar shadow-2xl"
+                    onClick={() => setIsMobileExpanded(!isMobileExpanded)}
+                >
                     {navItems.map((item) => {
                         const isActive = item.exact
                             ? pathname === item.href
@@ -190,28 +193,39 @@ export default function AdminSidebar({ showModules = false }: AdminSidebarProps)
                         return (
                             <button
                                 key={item.label}
-                                onClick={() => router.push(item.href)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!isMobileExpanded) {
+                                        setIsMobileExpanded(true);
+                                        return;
+                                    }
+                                    router.push(item.href);
+                                }}
                                 className={cn(
-                                    "flex flex-col items-center justify-center min-w-[70px] py-1.5 px-2 rounded-xl transition-colors duration-200 gap-0.5 shrink-0",
+                                    "flex flex-col items-center justify-center min-w-[48px] py-1.5 px-2 rounded-xl transition-colors duration-200 gap-0.5 shrink-0",
                                     isActive
                                         ? "bg-primary/20 text-primary"
-                                        : "text-primary/60 hover:text-primary"
+                                        : "text-muted-foreground hover:text-primary"
                                 )}
                             >
-                                <item.icon className={cn("w-4 h-4", isActive ? "text-primary" : "text-primary/60")} />
+                                <item.icon className={cn("w-4 h-4", isActive ? "text-primary" : "text-muted-foreground")} />
                                 <span className={cn(
-                                    "uppercase tracking-wider truncate max-w-[64px]",
-                                    isActive ? "text-primary" : "text-primary/50"
+                                    "uppercase tracking-wider truncate max-w-[56px] transition-all duration-200",
+                                    isMobileExpanded ? "opacity-100 h-auto" : "opacity-0 h-0 overflow-hidden"
                                 )}
                                 style={{
                                     fontFamily: 'var(--nav-item-font)',
-                                    fontSize: 'calc(var(--nav-item-size) * 0.65)',
+                                    fontSize: 'calc(var(--nav-item-size) * 0.5)',
                                     fontWeight: 'var(--nav-item-weight)',
-                                    fontStyle: 'var(--nav-item-style)', overflow: 'visible',
-                                    paddingRight: '0.4em'
+                                    fontStyle: 'var(--nav-item-style)',
+                                    lineHeight: '1.2'
                                 }}>
                                     {item.label.split(' ')[0]}
                                 </span>
+
+                                {isActive && (
+                                    <div className="absolute top-0 w-6 h-0.5 bg-primary rounded-b-full" />
+                                )}
                             </button>
                         );
                     })}

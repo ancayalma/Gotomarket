@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { generateText } from "ai";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -67,10 +67,17 @@ export async function POST(req: Request) {
             Respond in JSON format: { "summary": "...", "advice": ["...", "...", "..."], "alert": "..." }
         `;
 
-        const { model } = await getAiSdkModel(session.user.id);
-        const { text } = await generateText({
+        const { model, modelId, teamId } = await getAiSdkModel(session.user.id);
+        const { text, usage } = await generateText({
             model,
             prompt,
+        });
+
+        await logAiUsage({
+            teamId, userId: session.user.id, service: "general",
+            model: modelId || "unknown",
+            usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+            description: "Calendar record briefing"
         });
 
         const jsonMatch = text.match(/\{[\s\S]*\}/);

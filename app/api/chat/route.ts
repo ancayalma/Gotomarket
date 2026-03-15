@@ -4,9 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { prismadbChat } from "@/lib/prisma-chat";
 import { prismadb } from "@/lib/prisma";
 const db: any = prismadbChat;
-import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
 import { streamText } from "ai";
 import { systemLogger } from "@/lib/logger";
+import { checkTeamQuota } from "@/lib/quota-service";
 
 /**
  * Build the CRM Chief Agent system prompt with current time and comprehensive ontology
@@ -307,6 +308,17 @@ export async function POST(req: Request) {
             });
             if (user?.assigned_team?.name) teamName = user.assigned_team.name;
             if (user?.team_role) userRole = user.team_role;
+
+            // Enforce AI token quota before processing
+            if (user?.team_id) {
+                const quota = await checkTeamQuota(user.team_id, "AI_TOKENS", auth!.user.id);
+                if (!quota.allowed) {
+                    return new NextResponse(
+                        JSON.stringify({ error: quota.message || "AI token limit reached. Please top up your AI tokens." }),
+                        { status: 429, headers: { "Content-Type": "application/json" } }
+                    );
+                }
+            }
         } catch (e) {
             console.warn("Failed to fetch user context for chat", e);
         }
@@ -411,6 +423,32 @@ export async function POST(req: Request) {
                                 where: { id: sessionId },
                                 data: { updatedAt: new Date() },
                             });
+                        }
+
+                        // Log usage and consume AI tokens via centralized logAiUsage
+                        if (usage) {
+                            const usageAny = usage as any;
+                            try {
+                                const chatUser = await prismadb.users.findUnique({
+                                    where: { id: auth!.user.id },
+                                    select: { team_id: true }
+                                });
+                                if (chatUser?.team_id) {
+                                    await logAiUsage({
+                                        teamId: chatUser.team_id,
+                                        userId: auth!.user.id,
+                                        service: "chat",
+                                        model: model.modelId || "unknown",
+                                        usage: {
+                                            promptTokens: usageAny.promptTokens || 0,
+                                            completionTokens: usageAny.completionTokens || 0
+                                        },
+                                        description: "Chat completion"
+                                    });
+                                }
+                            } catch (tokenErr) {
+                                systemLogger.error("[CHAT_AI_TOKEN_CONSUME_ERROR]", tokenErr);
+                            }
                         }
                     } catch (e) {
                         systemLogger.error("[CHAT_MESSAGES_ON_COMPLETION_SAVE_ERROR]", e);

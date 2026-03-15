@@ -1,11 +1,11 @@
 "use server";
 
-import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 
 export async function generateBlogPost(topic: string) {
-    const { model } = await getAiSdkModel("system");
+    const { model, modelId, teamId } = await getAiSdkModel("system");
     if (!model) {
         throw new Error("AI model not configured");
     }
@@ -53,6 +53,10 @@ export async function generateBlogPost(topic: string) {
             ],
             temperature: isReasoningModel(model.modelId) ? undefined : 1,
         });
+
+        await logAiUsage({ teamId, userId: null, service: "general", model: modelId || "unknown",
+            usage: { promptTokens: 0, completionTokens: 0 },
+            description: "CMS blog post generation" });
 
         return object;
     } catch (error) {

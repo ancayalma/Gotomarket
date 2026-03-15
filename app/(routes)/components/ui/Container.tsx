@@ -49,7 +49,7 @@ const Container = ({
     }
 
     return (
-        <div className={`space-y-4 p-4 md:p-6 lg:p-8 pt-6 min-w-0 ${fluid ? 'w-full max-w-none' : ''}`}>
+        <div className={`space-y-4 p-4 md:p-6 lg:p-8 pt-6 pb-36 md:pb-8 min-w-0 ${fluid ? 'w-full max-w-none' : ''}`}>
             {(title || description) && (
                 <div className="shrink-0">
                     <div className="flex items-start justify-between gap-4 border-b border-primary/20 pb-4">

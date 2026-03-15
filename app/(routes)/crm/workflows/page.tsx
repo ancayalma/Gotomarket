@@ -35,7 +35,7 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
         <UpgradeGate featureId="workflows" title="FlowState Automation Locked" description="Visual workflow automation requires an upgraded workspace plan.">
             <div className="flex flex-col h-full">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b gap-3">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg">
                             <Zap className="h-6 w-6 text-white" />
@@ -60,7 +60,7 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 p-6 overflow-auto">
+                <div className="flex-1 p-4 sm:p-6 overflow-auto pb-36 md:pb-6">
                     {isEditorView ? (
                         <MermaidEditor />
                     ) : workflows.length === 0 ? (

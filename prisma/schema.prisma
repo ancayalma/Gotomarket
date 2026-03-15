@@ -1384,6 +1384,11 @@ model Plan {
   max_credits             Int @default(0)
   leadgen_credits_monthly Int @default(0)
 
+  // AI Token Economy
+  ai_tokens_included Int   @default(0)       // Tokens included per billing cycle
+  ai_topup_price     Float @default(9.99)    // Price per top-up purchase (USD)
+  ai_topup_tokens    Int   @default(6000000) // Tokens granted per top-up
+
   // Subscription Settings
   billing_cycle     BillingCycle @default(MONTHLY)
   grace_period_days Int          @default(7)
@@ -1674,6 +1679,10 @@ model TeamAiConfig {
   leadgen_credits_balance    Int       @default(0)
   leadgen_credits_last_reset DateTime? @db.Date
   configuration              Json? // For service-specific model overrides
+
+  // AI Token Balance (Monthly refill from plan, top-ups add to balance)
+  ai_token_balance    Int       @default(0)
+  ai_tokens_last_reset DateTime? @db.Date
 }
 
 // =============================================================================
@@ -3996,11 +4005,18 @@ model crm_Subscriptions {
   account_id String?       @db.ObjectId
   account    crm_Accounts? @relation(fields: [account_id], references: [id])
 
+  // Payment Provider
+  payment_provider String @default("SURGE") // "STRIPE" or "SURGE"
+
+  // Stripe Identity
+  stripe_customer_id     String? // Stripe Customer ID (cus_xxx)
+  stripe_subscription_id String? // Stripe Subscription ID (sub_xxx)
+
   // Surge Identity
   surge_vault_token String? // The token provided by Surge after card entry
   customer_email    String?
   customer_wallet   String? // Optional 0x wallet for Hybrid Fallback / Direct Crypto
-  discount_applied  Boolean @default(false) // 5% Discount for wallet usage
+  discount_applied  Boolean @default(false) // 5% Discount for BasaltSurge manual payment
 
   // Billing Config
   plan_name   String

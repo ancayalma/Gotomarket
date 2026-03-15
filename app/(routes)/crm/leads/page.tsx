@@ -34,7 +34,7 @@ const LeadsPage = async ({ searchParams }: LeadsPageProps) => {
   const leads = await getLeads();
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full px-4 md:px-6 lg:px-8 pb-36 md:pb-4">
       <LearnLink
         tab="leads"
         overviewTitle="Lead Intelligence"

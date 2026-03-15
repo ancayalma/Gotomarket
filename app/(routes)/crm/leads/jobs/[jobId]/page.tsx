@@ -4,7 +4,7 @@ import { use, useState, useRef, useEffect, useMemo } from "react";
 import useSWR from "swr";
 import fetcher from "@/lib/fetcher";
 import { useRouter } from "next/navigation";
-import { Play, Pause, Square, ArrowRight, RotateCcw } from "lucide-react";
+import { Play, Pause, Square, ArrowRight, RotateCcw, Cpu } from "lucide-react";
 import { LearnLink } from "@/components/ui/LearnLink";
 
 type JobStatus = "QUEUED" | "RUNNING" | "PAUSED" | "STOPPED" | "SUCCESS" | "FAILED";
@@ -308,6 +308,7 @@ export default function LeadGenJobDetailPage({
   const contactsFound = data?.job?.counters?.contactsCreated || 0;
   const iterations = data?.job?.counters?.agentIterations || 0;
   const target = data?.job?.counters?.targetCompanies || 100;
+  const tokensUsed = data?.job?.counters?.tokensUsed || 0;
   const progressPct = Math.min(100, target > 0 ? (companiesFound / target) * 100 : 0);
 
   // Activity type counts
@@ -407,6 +408,7 @@ export default function LeadGenJobDetailPage({
             <MetricTile label="Companies" value={companiesFound} accent="text-emerald-400" />
             <MetricTile label="Contacts" value={contactsFound} accent="text-sky-400" />
             <MetricTile label="Iterations" value={iterations} accent="text-violet-400" />
+            <MetricTile label="AI Tokens" value={tokensUsed.toLocaleString()} accent="text-amber-400" />
             <MetricTile label="Target" value={target} accent="text-zinc-400" />
           </div>
 

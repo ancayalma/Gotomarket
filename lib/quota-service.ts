@@ -1,14 +1,27 @@
 import { prismadb } from "@/lib/prisma";
 import { systemLogger } from "@/lib/logger";
+import { getTeamAiTokenBalance } from "@/lib/ai-tokens";
 
-export type QuotaResource = "LEADS" | "USERS" | "STORAGE" | "CREDITS" | "CONTACTS" | "ACCOUNTS" | "OPPORTUNITIES";
+export type QuotaResource = "LEADS" | "USERS" | "STORAGE" | "CREDITS" | "AI_TOKENS" | "CONTACTS" | "ACCOUNTS" | "OPPORTUNITIES";
 
 /**
  * SOC2 A1.2: Enforce tenant-level resource quotas based on their subscription plan.
  * Prevents "Noisy Neighbor" resource exhaustion and subscription fraud.
+ * Platform admins (is_admin) bypass all quota checks for testing purposes.
  */
-export async function checkTeamQuota(teamId: string, resource: QuotaResource): Promise<{ allowed: boolean; message?: string }> {
+export async function checkTeamQuota(teamId: string, resource: QuotaResource, userId?: string): Promise<{ allowed: boolean; message?: string }> {
     try {
+        // Admin bypass: platform superadmins always pass quota checks
+        if (userId) {
+            const requestingUser = await prismadb.users.findUnique({
+                where: { id: userId },
+                select: { is_admin: true }
+            });
+            if (requestingUser?.is_admin) {
+                return { allowed: true };
+            }
+        }
+
         const team = await prismadb.team.findUnique({
             where: { id: teamId },
             include: { assigned_plan: true }
@@ -16,9 +29,8 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource): P
 
         if (!team) return { allowed: false, message: "Team not found" };
         if (!team.assigned_plan) {
-            // If no plan, assume FREE limits
             const freePlan = await prismadb.plan.findUnique({ where: { slug: "FREE" } });
-            if (!freePlan) return { allowed: true }; // Fallback safety
+            if (!freePlan) return { allowed: true };
             (team as any).assigned_plan = freePlan;
         }
 
@@ -78,21 +90,20 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource): P
                 break;
             }
             case "CREDITS": {
-                // Sum all AI usage logs for this team
-                const usageLogs = await prismadb.crm_AiUsageLog.aggregate({
-                    where: { tenant_id: teamId },
-                    _sum: { cost: true } // Or use a 'credits' field if we add one. For now max_credits as a numeric limit.
-                });
-
-                // If we assume 1 credit = 1 unit of work (e.g. 1 request or 1000 tokens), 
-                // we might need a better metric. Let's use count of requests for now if 'cost' is not credits.
-                // Or better, check if plan.max_credits is > 0
                 const currentUsage = await prismadb.crm_AiUsageLog.count({
                     where: { tenant_id: teamId }
                 });
 
                 if (plan.max_credits !== -1 && currentUsage >= plan.max_credits) {
                     return { allowed: false, message: `AI Credit limit reached (${plan.max_credits} credits max). Upgrade your plan for more.` };
+                }
+                break;
+            }
+            case "AI_TOKENS": {
+                const balance = await getTeamAiTokenBalance(teamId);
+                // -1 = unlimited
+                if (balance !== -1 && balance <= 0) {
+                    return { allowed: false, message: "AI token balance exhausted. Top up or upgrade your plan." };
                 }
                 break;
             }

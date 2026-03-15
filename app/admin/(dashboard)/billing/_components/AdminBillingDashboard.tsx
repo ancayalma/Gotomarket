@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadInvoicePDF, downloadInvoicesSummaryPDF } from "@/lib/generate-invoice-pdf";
+import { PlanSelector } from "./PlanSelector";
 
 // Service icon/color mapping
 const SERVICE_META: Record<string, { icon: React.ElementType; color: string; label: string }> = {
@@ -68,11 +69,15 @@ export function AdminBillingDashboard({
     const [echoBalance, setEchoBalance] = useState<any>(null);
     const [echoLoading, setEchoLoading] = useState(true);
 
-    const isExempt = subscription?.plan_name === "PLATFORM_ADMIN" || subscription?.last_charge_status === "SYSTEM_FREE_TIER";
-    const displayPlanName = isExempt ? "Platform Admin (Exempt)" : subscription ? subscription.plan_name : "None";
-    const displayAmount = isExempt ? "0.00" : subscription?.amount?.toFixed(2);
-    const displayNextDate = isExempt ? "Lifetime Access" : subscription?.next_billing_date ? format(new Date(subscription.next_billing_date), "MMM d, yyyy") : "—";
-    const displayInterval = isExempt ? "exempt" : subscription?.interval;
+    const INTERNAL_SLUGS = ["basalt", "basalthq", "ledger1"];
+    const teamSlug = subscription?.team?.slug?.toLowerCase() || "";
+    const isInternalTeam = INTERNAL_SLUGS.includes(teamSlug);
+    const isExempt = isInternalTeam && (subscription?.plan_name === "PLATFORM_ADMIN" || subscription?.last_charge_status === "SYSTEM_FREE_TIER");
+    const isFree = !subscription || (!isExempt && (!subscription.plan_name || subscription.amount === 0));
+    const displayPlanName = isExempt ? "Platform Admin (Exempt)" : isFree ? "Free" : subscription.plan_name;
+    const displayAmount = isExempt || isFree ? "0.00" : subscription?.amount?.toFixed(2);
+    const displayNextDate = isExempt ? "Lifetime Access" : isFree ? "No billing scheduled" : subscription?.next_billing_date ? format(new Date(subscription.next_billing_date), "MMM d, yyyy") : "—";
+    const displayInterval = isExempt ? "exempt" : isFree ? "free" : subscription?.interval;
 
     // Fetch BasaltECHO balance live
     useEffect(() => {
@@ -159,7 +164,7 @@ export function AdminBillingDashboard({
                         </div>
                         <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-1">Subscription</div>
                         <div className="flex items-baseline gap-2">
-                            <div className="text-2xl font-bold text-white tracking-tight">
+                            <div className="text-lg font-bold text-white tracking-tight truncate">
                                 {displayPlanName}
                             </div>
                         </div>
@@ -185,7 +190,7 @@ export function AdminBillingDashboard({
                             <Calendar className="w-full h-full text-cyan-500" />
                         </div>
                         <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-1">Next Billing Date</div>
-                        <div className="text-2xl font-bold text-cyan-400 tracking-tight">
+                        <div className="text-lg font-bold text-cyan-400 tracking-tight truncate">
                             {displayNextDate}
                         </div>
                         <div className="mt-2 text-[10px] text-zinc-500 font-medium">
@@ -201,7 +206,7 @@ export function AdminBillingDashboard({
                             <Cpu className="w-full h-full text-violet-500" />
                         </div>
                         <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-1">AI Usage (This Month)</div>
-                        <div className="text-2xl font-bold text-violet-400 tracking-tight">
+                        <div className="text-lg font-bold text-violet-400 tracking-tight">
                             ${totalAiCost.toFixed(2)}
                         </div>
                         <div className="mt-2 text-[10px] text-zinc-500 font-medium">
@@ -221,7 +226,7 @@ export function AdminBillingDashboard({
                             <div className="h-7 w-24 bg-zinc-800 animate-pulse rounded" />
                         ) : echoBalance ? (
                             <>
-                                <div className="text-2xl font-bold text-emerald-400 tracking-tight">
+                                <div className="text-lg font-bold text-emerald-400 tracking-tight">
                                     {Math.floor((echoBalance.balanceSeconds || 0) / 60)} min
                                 </div>
                                 <div className="mt-2 text-[10px] text-zinc-500 font-medium">
@@ -230,7 +235,7 @@ export function AdminBillingDashboard({
                             </>
                         ) : (
                             <>
-                                <div className="text-2xl font-bold text-zinc-500 tracking-tight">—</div>
+                                <div className="text-lg font-bold text-zinc-500 tracking-tight">—</div>
                                 <div className="mt-2 text-[10px] text-zinc-500 font-medium">Not configured</div>
                             </>
                         )}
@@ -239,11 +244,15 @@ export function AdminBillingDashboard({
             </div>
 
             {/* Tabs for sections */}
-            <Tabs defaultValue="subscription" className="w-full">
+            <Tabs defaultValue="plans" className="w-full">
                 <TabsList className="bg-zinc-900 border border-zinc-800 p-1">
+                    <TabsTrigger value="plans" className="gap-2 data-[state=active]:bg-zinc-800">
+                        <Wallet className="w-4 h-4" />
+                        Plans & Pricing
+                    </TabsTrigger>
                     <TabsTrigger value="subscription" className="gap-2 data-[state=active]:bg-zinc-800">
                         <Receipt className="w-4 h-4" />
-                        Subscription
+                        Invoices
                     </TabsTrigger>
                     <TabsTrigger value="ai-usage" className="gap-2 data-[state=active]:bg-zinc-800">
                         <Cpu className="w-4 h-4" />
@@ -254,6 +263,11 @@ export function AdminBillingDashboard({
                         BasaltECHO
                     </TabsTrigger>
                 </TabsList>
+
+                {/* Plans & Pricing Tab */}
+                <TabsContent value="plans" className="mt-4">
+                    <PlanSelector subscription={subscription} teamId={teamId} />
+                </TabsContent>
 
                 {/* Subscription Tab */}
                 <TabsContent value="subscription" className="mt-4">

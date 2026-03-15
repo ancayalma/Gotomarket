@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbChat } from "@/lib/prisma-chat";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { systemLogger } from "@/lib/logger";
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
         // Format messages for the prompt
         // We'll summarize the conversation for the "Regress-LM" simulation
-        const { model } = await getAiSdkModel(auth.user.id);
+        const { model, modelId, teamId } = await getAiSdkModel(auth.user.id);
         if (!model) {
             return new NextResponse("AI Model configuration missing", { status: 500 });
         }
@@ -66,11 +66,19 @@ export async function POST(req: Request) {
         const formattedMessages = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join("\n---\n");
         const prompt = `Analyze this conversation:\n\n${formattedMessages}`;
 
-        const { object } = await generateObject({
+        const { object, usage } = await generateObject({
             model,
             schema: AnalysisSchema,
             prompt: prompt,
             system: systemPrompt,
+        });
+
+        // Track AI token usage
+        await logAiUsage({
+            teamId, userId: auth.user.id, service: "analysis",
+            model: modelId || "unknown",
+            usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+            description: "Chat session analysis"
         });
 
         return NextResponse.json(object);

@@ -6,6 +6,7 @@ import { prismadb } from "@/lib/prisma";
 import { getAiClient } from "@/lib/ai-helper";
 import { generateText } from "ai";
 import { systemLogger } from "@/lib/logger";
+import { logAiUsage } from "@/lib/openai";
 
 export const maxDuration = 300;
 
@@ -54,19 +55,15 @@ export async function POST(req: Request) {
             prompt: prompt,
         });
 
-        // Log usage for quota enforcement
+        // Track AI token usage
         try {
-            await prismadb.crm_AiUsageLog.create({
-                data: {
-                    tenant_id: user.assigned_team.id,
-                    user_id: user.id,
-                    service: "text_generation",
-                    model_used: `${provider}:${modelId}`,
-                    tokens_in: (usage as any)?.promptTokens || 0,
-                    tokens_out: (usage as any)?.completionTokens || 0,
-                    cost: 0, // In standard implementation, we can calculate this if needed
-                    description: `Generated text for prompt: ${prompt.substring(0, 50)}...`
-                }
+            await logAiUsage({
+                teamId: user.assigned_team.id,
+                userId: user.id,
+                service: "general",
+                model: `${provider}:${modelId}`,
+                usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+                description: `Generated text for prompt: ${prompt.substring(0, 50)}...`
             });
         } catch (logError) {
             systemLogger.error("[AI_USAGE_LOG_ERROR]", logError);
