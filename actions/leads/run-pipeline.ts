@@ -50,8 +50,70 @@ export async function runLeadGenPipeline({
   const planSlug = user.assigned_team?.assigned_plan?.slug || user.assigned_team?.subscription_plan || "FREE";
   const isFreePlan = planSlug.toUpperCase() === "FREE" || planSlug.toUpperCase() === "FREE_TRIAL";
 
-  // Enforce Puppeteer scraping for FREE plans (disable paid APIs)
+  // ── FREE PLAN LIMITS ──────────────────────────────────────────────────
+  // Free accounts: max 1 lead gen run per month, max 50 contacts per month
+  const FREE_MONTHLY_RUNS = 1;
+  const FREE_MONTHLY_CONTACTS = 50;
+
   if (isFreePlan && !isPlatformAdmin) {
+    // Count completed/running jobs for this team in the current calendar month
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    const teamMemberIds = (await mainDb.users.findMany({
+      where: { team_id: teamId },
+      select: { id: true }
+    })).map((u: any) => u.id);
+
+    const monthlyJobs = await db.crm_Lead_Gen_Jobs.findMany({
+      where: {
+        user: { in: teamMemberIds },
+        startedAt: { gte: monthStart },
+        status: { in: ["SUCCESS", "RUNNING", "QUEUED"] },
+        id: { not: jobId } // Don't count this job itself
+      },
+      select: { id: true, counters: true }
+    });
+
+    if (monthlyJobs.length >= FREE_MONTHLY_RUNS) {
+      await db.crm_Lead_Gen_Jobs.update({
+        where: { id: jobId },
+        data: {
+          status: "FAILED",
+          logs: [
+            ...(Array.isArray(job.logs) ? job.logs : []),
+            { ts: new Date().toISOString(), level: "ERROR", msg: `Free plan limit: ${FREE_MONTHLY_RUNS} lead gen run(s) per month. Upgrade for unlimited runs.` }
+          ]
+        },
+      });
+      throw new Error(`Free plan allows ${FREE_MONTHLY_RUNS} lead gen run(s) per month. Upgrade your plan for unlimited access.`);
+    }
+
+    // Count contacts already captured this month
+    let monthlyContacts = 0;
+    monthlyJobs.forEach((j: any) => {
+      monthlyContacts += (j.counters?.contactsCreated || j.counters?.contactsSaved || 0);
+    });
+    const remainingContacts = Math.max(0, FREE_MONTHLY_CONTACTS - monthlyContacts);
+    if (remainingContacts <= 0) {
+      await db.crm_Lead_Gen_Jobs.update({
+        where: { id: jobId },
+        data: {
+          status: "FAILED",
+          logs: [
+            ...(Array.isArray(job.logs) ? job.logs : []),
+            { ts: new Date().toISOString(), level: "ERROR", msg: `Free plan limit: ${FREE_MONTHLY_CONTACTS} contacts per month reached. Upgrade for unlimited contacts.` }
+          ]
+        },
+      });
+      throw new Error(`Free plan contact limit (${FREE_MONTHLY_CONTACTS}/month) reached. Upgrade your plan.`);
+    }
+
+    // Cap the target for this job
+    job._freeContactCap = remainingContacts;
+
+    // Enforce Puppeteer scraping for FREE plans (disable paid APIs)
     if (!job.providers) job.providers = {};
     job.providers.agenticAI = false;
     job.providers.aiQueries = false;
@@ -113,12 +175,18 @@ export async function runLeadGenPipeline({
       select: { icpConfig: true }
     });
 
+    let maxCompanies = (pool?.icpConfig as any)?.limits?.maxCompanies || 100;
+    // Cap for free plan contact limit
+    if (job._freeContactCap && job._freeContactCap < maxCompanies) {
+      maxCompanies = job._freeContactCap;
+    }
+
     const result = await runAgenticLeadGeneration(
       jobId,
       userId,
       pool?.icpConfig as any || {},
       job.pool,
-      (pool?.icpConfig as any)?.limits?.maxCompanies || 100,
+      maxCompanies,
       {
         companiesSaved: job.counters?.companiesSaved || 0,
         contactsSaved: job.counters?.contactsSaved || 0,

@@ -41,6 +41,11 @@ jobs:
                   STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
                   STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
                   STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+                  STRIPE_PRICE_INDIVIDUAL_BASIC_MONTHLY: ${{ secrets.STRIPE_PRICE_INDIVIDUAL_BASIC_MONTHLY }}
+                  STRIPE_PRICE_INDIVIDUAL_BASIC_ANNUAL: ${{ secrets.STRIPE_PRICE_INDIVIDUAL_BASIC_ANNUAL }}
+                  STRIPE_PRICE_INDIVIDUAL_PRO_MONTHLY: ${{ secrets.STRIPE_PRICE_INDIVIDUAL_PRO_MONTHLY }}
+                  STRIPE_PRICE_INDIVIDUAL_PRO_ANNUAL: ${{ secrets.STRIPE_PRICE_INDIVIDUAL_PRO_ANNUAL }}
+                  STRIPE_PRICE_AI_TOPUP: ${{ secrets.STRIPE_PRICE_AI_TOPUP }}
               run: |
                   npm install
                   npx prisma generate

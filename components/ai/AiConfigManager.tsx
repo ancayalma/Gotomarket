@@ -142,6 +142,13 @@ const PROVIDER_META: Record<string, { name: string; color: string; gradient: str
         icon: <MistralIcon className="w-8 h-8" />,
         url: "https://console.mistral.ai/api-keys",
     },
+    BEDROCK: {
+        name: "AWS Bedrock",
+        color: "text-orange-300",
+        gradient: "from-orange-500/20 to-amber-500/20",
+        icon: <Zap className="w-7 h-7" />,
+        url: "https://console.aws.amazon.com/bedrock/",
+    },
 };
 
 // Fallback metadata for custom/unknown providers

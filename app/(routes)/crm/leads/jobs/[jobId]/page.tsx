@@ -299,7 +299,7 @@ export default function LeadGenJobDetailPage({
     }
   };
 
-  const logs = useMemo(() => data?.job?.logs || [], [data?.job?.logs]);
+  const logs = useMemo(() => Array.isArray(data?.job?.logs) ? data.job.logs : [], [data?.job?.logs]);
   const latestLog = logs[logs.length - 1];
   const latestActivity = latestLog ? classifyLog(latestLog) : "info";
   const accentColor = ACTIVITY_CONFIG[latestActivity].accentHex;
@@ -309,6 +309,8 @@ export default function LeadGenJobDetailPage({
   const iterations = data?.job?.counters?.agentIterations || 0;
   const target = data?.job?.counters?.targetCompanies || 100;
   const tokensUsed = data?.job?.counters?.tokensUsed || 0;
+  const promptTokens = data?.job?.counters?.promptTokens || 0;
+  const completionTokens = data?.job?.counters?.completionTokens || 0;
   const progressPct = Math.min(100, target > 0 ? (companiesFound / target) * 100 : 0);
 
   // Activity type counts
@@ -408,7 +410,8 @@ export default function LeadGenJobDetailPage({
             <MetricTile label="Companies" value={companiesFound} accent="text-emerald-400" />
             <MetricTile label="Contacts" value={contactsFound} accent="text-sky-400" />
             <MetricTile label="Iterations" value={iterations} accent="text-violet-400" />
-            <MetricTile label="AI Tokens" value={tokensUsed.toLocaleString()} accent="text-amber-400" />
+            <MetricTile label="Prompt Tokens" value={promptTokens.toLocaleString()} accent="text-amber-400" />
+            <MetricTile label="Completion" value={completionTokens.toLocaleString()} accent="text-orange-400" />
             <MetricTile label="Target" value={target} accent="text-zinc-400" />
           </div>
 
@@ -429,6 +432,24 @@ export default function LeadGenJobDetailPage({
                   }}
                 />
               </div>
+            </div>
+          )}
+
+          {/* Insufficient AI Token Banner */}
+          {data?.job?.status === "FAILED" && (data?.job?.counters as any)?.failReason === "INSUFFICIENT_AI_TOKENS" && (
+            <div className="rounded-lg border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-amber-400 font-semibold text-sm">⚡ AI Token Balance Exhausted</p>
+                <p className="text-zinc-400 text-xs mt-0.5">
+                  {companiesFound} companies saved before running out. Top up your AI credits to run more lead generation.
+                </p>
+              </div>
+              <a
+                href="/admin/ai-usage"
+                className="shrink-0 px-4 py-2 rounded-md bg-amber-500 text-black text-xs font-bold hover:bg-amber-400 transition-colors"
+              >
+                Top Up Credits
+              </a>
             </div>
           )}
         </div>

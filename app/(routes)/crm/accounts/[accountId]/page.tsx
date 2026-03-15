@@ -40,6 +40,8 @@ import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
 import { LearnLink } from "@/components/ui/LearnLink";
 
+import { notFound } from "next/navigation";
+
 interface AccountDetailPageProps {
   params: Promise<{
     accountId: string;
@@ -49,6 +51,11 @@ interface AccountDetailPageProps {
 const AccountDetailPage = async (props: AccountDetailPageProps) => {
   const params = await props.params;
   const { accountId } = params;
+
+  // Guard: if accountId is not a valid MongoDB ObjectID, bail early
+  // This prevents route collisions (e.g. /crm/accounts/lists) from crashing Prisma
+  if (!/^[a-f0-9]{24}$/i.test(accountId)) return notFound();
+
   const currentUserInfo = await getCurrentUserTeamId();
   const account: crm_Accounts | null = await getAccount(accountId);
   const opportunities: crm_Opportunities[] =

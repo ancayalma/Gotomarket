@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import fetcher from "@/lib/fetcher";
@@ -43,6 +43,16 @@ type Lead = {
     jobTitle: string;
     status: string;
     createdAt: string;
+    // Populated by grouping logic for multi-contact display
+    _allContacts?: Array<{
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone: string;
+        jobTitle: string;
+        contactId?: string;
+    }>;
 };
 
 type PoolDetails = {
@@ -94,9 +104,55 @@ export default function AccountListDetailsPage() {
         setSortConfig({ key, direction });
     };
 
-    const filteredAndSortedLeads = (pool?.leads || [])
+    // Group leads by company to show all contacts per company row
+    const groupedLeads = useMemo(() => {
+        const raw = pool?.leads || [];
+        const groups = new Map<string, Lead>();
+
+        for (const lead of raw) {
+            const key = lead.company || lead.lastName || lead.id;
+            const existing = groups.get(key);
+
+            if (existing) {
+                // Merge into existing group
+                if (!existing._allContacts) {
+                    existing._allContacts = [{
+                        id: existing.id,
+                        firstName: existing.firstName,
+                        lastName: existing.lastName,
+                        email: existing.email,
+                        phone: existing.phone,
+                        jobTitle: existing.jobTitle,
+                        contactId: existing.contactId,
+                    }];
+                }
+                existing._allContacts.push({
+                    id: lead.id,
+                    firstName: lead.firstName,
+                    lastName: lead.lastName,
+                    email: lead.email,
+                    phone: lead.phone,
+                    jobTitle: lead.jobTitle,
+                    contactId: lead.contactId,
+                });
+                // Prefer the first non-empty email/phone as the primary
+                if (!existing.email && lead.email) existing.email = lead.email;
+                if (!existing.phone && lead.phone) existing.phone = lead.phone;
+                if (!existing.accountId && lead.accountId) existing.accountId = lead.accountId;
+            } else {
+                groups.set(key, { ...lead });
+            }
+        }
+
+        return Array.from(groups.values());
+    }, [pool?.leads]);
+
+    const filteredAndSortedLeads = groupedLeads
         .filter(lead => {
-            const searchStr = `${lead.company || ""} ${lead.firstName || ""} ${lead.lastName || ""} ${lead.email || ""} ${lead.phone || ""}`.toLowerCase();
+            const allEmails = lead._allContacts?.map(c => c.email).filter(Boolean).join(" ") || lead.email || "";
+            const allPhones = lead._allContacts?.map(c => c.phone).filter(Boolean).join(" ") || lead.phone || "";
+            const allNames = lead._allContacts?.map(c => `${c.firstName} ${c.lastName}`).join(" ") || `${lead.firstName} ${lead.lastName}`;
+            const searchStr = `${lead.company || ""} ${allNames} ${allEmails} ${allPhones}`.toLowerCase();
             return searchStr.includes(searchTerm.toLowerCase());
         })
         .sort((a, b) => {
@@ -246,8 +302,21 @@ export default function AccountListDetailsPage() {
                         </TableHeader>
                         <TableBody>
                             {filteredAndSortedLeads.length > 0 ? (
-                                filteredAndSortedLeads.map((lead) => (
-                                    <TableRow key={lead.id} className="group hover:bg-muted/30 transition-colors">
+                                filteredAndSortedLeads.map((lead) => {
+                                    const contacts = lead._allContacts || [{
+                                        id: lead.id,
+                                        firstName: lead.firstName,
+                                        lastName: lead.lastName,
+                                        email: lead.email,
+                                        phone: lead.phone,
+                                        jobTitle: lead.jobTitle,
+                                        contactId: lead.contactId,
+                                    }];
+                                    const uniqueEmails = Array.from(new Set(contacts.map(c => c.email).filter(Boolean)));
+                                    const uniquePhones = Array.from(new Set(contacts.map(c => c.phone).filter(Boolean)));
+
+                                    return (
+                                    <TableRow key={lead.id} className="group hover:bg-muted/30 transition-colors align-top">
                                         <TableCell className="font-semibold text-primary">
                                             {lead.accountId ? (
                                                 <button
@@ -261,24 +330,40 @@ export default function AccountListDetailsPage() {
                                             )}
                                         </TableCell>
                                         <TableCell className="font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                                            {lead.email || "—"}
+                                            {uniqueEmails.length > 0 ? (
+                                                <div className="flex flex-col gap-0.5">
+                                                    {uniqueEmails.map((email, i) => (
+                                                        <span key={i} className="text-sm">{email}</span>
+                                                    ))}
+                                                </div>
+                                            ) : "—"}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">
-                                            {lead.phone || "—"}
+                                            {uniquePhones.length > 0 ? (
+                                                <div className="flex flex-col gap-0.5">
+                                                    {uniquePhones.map((phone, i) => (
+                                                        <span key={i} className="text-sm">{phone}</span>
+                                                    ))}
+                                                </div>
+                                            ) : "—"}
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex flex-col">
-                                                {lead.contactId ? (
-                                                    <button
-                                                        onClick={() => router.push(`/crm/contacts/${lead.contactId}`)}
-                                                        className="font-medium hover:underline text-left transition-colors"
-                                                    >
-                                                        {lead.firstName} {lead.lastName}
-                                                    </button>
-                                                ) : (
-                                                    <span className="font-medium">{lead.firstName} {lead.lastName}</span>
+                                            <div className="flex flex-col gap-1">
+                                                {contacts.map((contact, ci) => (
+                                                    <div key={ci} className="flex flex-col">
+                                                        {contact.contactId ? (
+                                                            <button
+                                                                onClick={() => router.push(`/crm/contacts/${contact.contactId}`)}
+                                                                className="font-medium hover:underline text-left transition-colors text-sm"
+                                                            >
+                                                                {contact.firstName} {contact.lastName}
+                                                            </button>
+                                                        ) : (
+                                                            (contact.firstName || contact.lastName) && <span className="font-medium text-sm">{contact.firstName} {contact.lastName}</span>
                                                 )}
-                                                {lead.jobTitle && <span className="text-xs text-muted-foreground">{lead.jobTitle}</span>}
+                                                        {contact.jobTitle && <span className="text-xs text-muted-foreground">{contact.jobTitle}</span>}
+                                                    </div>
+                                                ))}
                                             </div>
                                         </TableCell>
                                         <TableCell>
@@ -305,7 +390,8 @@ export default function AccountListDetailsPage() {
                                             </Button>
                                         </TableCell>
                                     </TableRow>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">

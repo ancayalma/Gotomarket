@@ -243,7 +243,7 @@ export async function getAiSdkModel(
             finalModelId = systemOverrides[service].modelId;
         } else {
             finalProvider = defaultSystemConfig?.provider || "BEDROCK";
-            finalModelId = defaultSystemConfig?.defaultModelId || "anthropic.claude-3-5-haiku-20241022-v1:0";
+            finalModelId = defaultSystemConfig?.defaultModelId || process.env.AWS_AI_MODEL_ID || "us.anthropic.claude-haiku-4-5-20251001-v1:0";
         }
         configSource = "system";
     }
@@ -312,11 +312,26 @@ export async function logAiUsage({
 }) {
     if (!teamId) return;
 
-    // Token pricing: Claude Haiku 4.5 cost + 50% markup
-    // Haiku cost: $1.00/1M input, $5.00/1M output
-    // With 50% markup: $1.50/1M input, $7.50/1M output
-    const PRICE_PER_INPUT_TOKEN = 1.5 / 1_000_000;   // $0.0000015
-    const PRICE_PER_OUTPUT_TOKEN = 7.5 / 1_000_000;   // $0.0000075
+    // Model-aware token pricing (base cost + 50% markup)
+    // Format: [inputCostPer1M, outputCostPer1M] (base, before markup)
+    const MODEL_PRICING: Record<string, [number, number]> = {
+      'qwen3-next-80b':        [0.15,  1.20],   // Qwen3 Next 80B A3B
+      'qwen3-coder-30b':       [0.15,  0.60],   // Qwen3 Coder 30B
+      'qwen3-235b':            [0.75,  3.00],   // Qwen3 235B A22B
+      'qwen3-32b':             [0.30,  1.20],   // Qwen3 32B Dense
+      'claude-haiku-4-5':      [1.00,  5.00],   // Claude Haiku 4.5
+      'claude-3-5-haiku':      [1.00,  5.00],   // Claude 3.5 Haiku
+      'claude-3-5-sonnet':     [3.00, 15.00],   // Claude 3.5 Sonnet
+      'claude-sonnet-4':       [3.00, 15.00],   // Claude Sonnet 4
+    };
+    const DEFAULT_PRICING: [number, number] = [1.00, 5.00]; // Fallback (Haiku-level)
+    const MARKUP = 1.5; // 50% markup
+
+    const modelLower = model.toLowerCase();
+    const pricingKey = Object.keys(MODEL_PRICING).find(k => modelLower.includes(k));
+    const [baseInput, baseOutput] = pricingKey ? MODEL_PRICING[pricingKey] : DEFAULT_PRICING;
+    const PRICE_PER_INPUT_TOKEN = (baseInput * MARKUP) / 1_000_000;
+    const PRICE_PER_OUTPUT_TOKEN = (baseOutput * MARKUP) / 1_000_000;
     const cost =
       (usage.promptTokens * PRICE_PER_INPUT_TOKEN) +
       (usage.completionTokens * PRICE_PER_OUTPUT_TOKEN);
@@ -340,7 +355,11 @@ export async function logAiUsage({
         if (totalTokens > 0) {
             await consumeAiTokens(teamId, totalTokens);
         }
-    } catch (error) {
+    } catch (error: any) {
+        // Re-throw insufficient token errors so callers can halt gracefully
+        if (error?.message?.includes('Insufficient AI tokens')) {
+            throw error;
+        }
         console.error("[LOG_AI_USAGE_ERROR]", error);
     }
 }

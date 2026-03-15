@@ -54,63 +54,207 @@ type ICPConfig = {
 };
 
 /**
- * Search companies using DuckDuckGo HTML — zero dependencies, no API key
- * Uses the HTML-only endpoint which returns server-rendered results parseable with regex
+ * Search companies using a multi-tier strategy:
+ * 1. Puppeteer DuckDuckGo (primary — DDG doesn't block headless browsers)
+ * 2. HTTP DuckDuckGo HTML (no browser needed — most reliable fallback)
+ * 3. Puppeteer Google (last resort — with consent-page handling)
  */
 
-async function ddgWebSearch(query: string, count: number = 20): Promise<Array<{
-  name: string;
-  url: string;
-  snippet: string;
-  domain: string;
-}>> {
-  const excludePatterns = [
-    'wikipedia.org', 'youtube.com', 'facebook.com',
-    'twitter.com', 'instagram.com', 'google.com',
-    'reddit.com', 'medium.com', 'github.com',
-    'pinterest.com', 'tiktok.com', 'snapchat.com',
-    'bing.com', 'yahoo.com', 'quora.com',
-    'linkedin.com', 'glassdoor.com',
-  ];
+const SEARCH_EXCLUDE_PATTERNS = [
+  'wikipedia.org', 'youtube.com', 'facebook.com',
+  'twitter.com', 'instagram.com', 'google.com',
+  'reddit.com', 'medium.com', 'github.com',
+  'pinterest.com', 'tiktok.com', 'snapchat.com',
+  'bing.com', 'yahoo.com', 'quora.com',
+  'linkedin.com', 'glassdoor.com', 'duckduckgo.com',
+];
 
-  // Primary: Serper.dev API (structured Google results, no scraping)
-  const serperKey = process.env.SERPER_API_KEY;
-  if (serperKey) {
+function isExcludedDomain(hostname: string): boolean {
+  return SEARCH_EXCLUDE_PATTERNS.some(p => hostname.includes(p));
+}
+
+function extractUrlDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./i, '');
+  } catch { return ''; }
+}
+
+type SerpResult = { name: string; url: string; snippet: string; domain: string };
+
+/** Tier 1: Puppeteer DuckDuckGo — bot-friendly, most reliable */
+async function ddgPuppeteerSearch(query: string, count: number): Promise<SerpResult[]> {
+  let browser;
+  try {
+    const { launchBrowser: lb, newPageWithDefaults: np, closeBrowser: cb } = await import("@/lib/browser");
+    browser = await lb();
+    const page = await np(browser);
+
+    const ddgUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=web`;
+    await page.goto(ddgUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+
+    // Wait for results to render (DDG uses JS rendering)
     try {
-      const response = await fetch("https://google.serper.dev/search", {
-        method: "POST",
-        headers: { "X-API-KEY": serperKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ q: query, num: Math.min(count, 30) }),
-      });
+      await page.waitForSelector('[data-result], .result, article[data-testid="result"]', { timeout: 8000 });
+    } catch {
+      // Results might already be there or use a different selector
+    }
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-      if (response.ok) {
-        const data = await response.json();
-        const results: Array<{ name: string; url: string; snippet: string; domain: string }> = [];
+    const results = await page.evaluate((maxCount: number) => {
+      const items: Array<{ name: string; url: string; snippet: string; domain: string }> = [];
+      const excludes = [
+        'wikipedia.org', 'youtube.com', 'facebook.com', 'twitter.com',
+        'instagram.com', 'google.com', 'reddit.com', 'medium.com',
+        'github.com', 'bing.com', 'yahoo.com', 'linkedin.com', 'duckduckgo.com',
+      ];
+      const seen = new Set<string>();
 
-        for (const item of (data.organic || [])) {
-          if (results.length >= count) break;
+      // DDG result selectors (multiple patterns for robustness)
+      const resultContainers = document.querySelectorAll(
+        '[data-result="web"], article[data-testid="result"], .result, .nrn-react-div li[data-layout="organic"]'
+      );
+
+      for (let i = 0; i < resultContainers.length && items.length < maxCount; i++) {
+        const container = resultContainers[i];
+        // Find the main link
+        const link = container.querySelector('a[href^="http"]') as HTMLAnchorElement | null;
+        if (!link) continue;
+
+        const href = link.href;
+        if (!href || seen.has(href)) continue;
+
+        try {
+          const u = new URL(href);
+          const hostname = u.hostname.replace(/^www\./i, '');
+          if (excludes.some(p => hostname.includes(p))) continue;
+          if (hostname.includes('duckduckgo.com')) continue;
+
+          seen.add(href);
+
+          // Title: look for heading or the link text itself
+          const heading = container.querySelector('h2, h3, [data-testid="result-title-a"]');
+          const name = (heading?.textContent?.trim() || link.textContent?.trim() || '').slice(0, 120);
+          if (!name) continue;
+
+          // Snippet: look for description text
+          const snippetEl = container.querySelector(
+            '[data-result="snippet"], .result__snippet, [data-testid="result-snippet"], span.kY2IgmnCmOGjharHErah'
+          );
+          const snippet = (snippetEl?.textContent?.trim() || '').slice(0, 200);
+
+          items.push({ name, url: href, snippet, domain: hostname });
+        } catch { continue; }
+      }
+
+      // Fallback: if no results found via containers, try all links with reasonable text
+      if (items.length === 0) {
+        const allLinks = document.querySelectorAll('a[href^="http"]');
+        for (let i = 0; i < allLinks.length && items.length < maxCount; i++) {
+          const a = allLinks[i] as HTMLAnchorElement;
+          const href = a.href;
+          if (!href || seen.has(href)) continue;
           try {
-            const u = new URL(item.link);
-            const hostname = u.hostname.replace(/^www\./i, "");
-            if (excludePatterns.some(p => hostname.includes(p))) continue;
-            results.push({
-              name: (item.title || "").slice(0, 120),
-              url: item.link,
-              snippet: (item.snippet || "").slice(0, 200),
-              domain: hostname,
-            });
+            const u = new URL(href);
+            const hostname = u.hostname.replace(/^www\./i, '');
+            if (excludes.some(p => hostname.includes(p))) continue;
+            if (hostname.includes('duckduckgo.com')) continue;
+            const text = a.textContent?.trim() || '';
+            if (text.length < 5 || text.length > 200) continue;
+            seen.add(href);
+            items.push({ name: text.slice(0, 120), url: href, snippet: '', domain: hostname });
           } catch { continue; }
         }
-
-        console.log(`[Google/Serper] "${query}" -> ${results.length} results`);
-        return results;
       }
-    } catch (error) {
-      console.error("Serper API error:", error);
+
+      return items;
+    }, count);
+
+    console.log(`[DDG/Puppeteer] "${query}" -> ${results.length} results`);
+    return results;
+  } catch (error) {
+    console.error("[DDG/Puppeteer] Search error:", error);
+    return [];
+  } finally {
+    if (browser) {
+      const { closeBrowser: cb } = await import("@/lib/browser");
+      await cb(browser);
     }
   }
+}
 
-  // Fallback: Puppeteer Google search
+/** Tier 2: HTTP DuckDuckGo HTML — no browser, fast, reliable */
+async function ddgHttpSearch(query: string, count: number): Promise<SerpResult[]> {
+  try {
+    const response = await fetch("https://html.duckduckgo.com/html/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+      },
+      body: `q=${encodeURIComponent(query)}&b=`,
+    });
+
+    if (!response.ok) {
+      console.error(`[DDG/HTTP] HTTP ${response.status}`);
+      return [];
+    }
+
+    const html = await response.text();
+    const results: SerpResult[] = [];
+    const seen = new Set<string>();
+
+    // Parse DDG HTML results — each result has class "result" with .result__a (title link) and .result__snippet
+    // Match result links: <a class="result__a" href="...">Title</a>
+    const linkRegex = /<a[^>]+class="result__a"[^>]*href="([^"]+)"[^>]*>([^<]*(?:<[^>]*>[^<]*)*)<\/a>/gi;
+    const snippetRegex = /<a[^>]+class="result__snippet"[^>]*>([^<]*(?:<[^>]*>[^<]*)*)<\/a>/gi;
+
+    const links: Array<{ url: string; title: string }> = [];
+    let linkMatch;
+    while ((linkMatch = linkRegex.exec(html)) !== null && links.length < count + 10) {
+      let url = linkMatch[1];
+      const title = linkMatch[2].replace(/<[^>]*>/g, '').trim();
+      // DDG wraps URLs in a redirect — extract the actual URL
+      if (url.includes('uddg=')) {
+        try {
+          const decoded = new URL(url, 'https://duckduckgo.com');
+          url = decoded.searchParams.get('uddg') || url;
+        } catch { /* keep original */ }
+      }
+      if (url.startsWith('http')) {
+        links.push({ url, title });
+      }
+    }
+
+    const snippets: string[] = [];
+    let snippetMatch;
+    while ((snippetMatch = snippetRegex.exec(html)) !== null) {
+      snippets.push(snippetMatch[1].replace(/<[^>]*>/g, '').trim());
+    }
+
+    for (let i = 0; i < links.length && results.length < count; i++) {
+      const { url, title } = links[i];
+      if (seen.has(url)) continue;
+      const hostname = extractUrlDomain(url);
+      if (!hostname || isExcludedDomain(hostname)) continue;
+      seen.add(url);
+      results.push({
+        name: title.slice(0, 120),
+        url,
+        snippet: (snippets[i] || '').slice(0, 200),
+        domain: hostname,
+      });
+    }
+
+    console.log(`[DDG/HTTP] "${query}" -> ${results.length} results`);
+    return results;
+  } catch (error) {
+    console.error("[DDG/HTTP] Search error:", error);
+    return [];
+  }
+}
+
+/** Tier 3: Puppeteer Google — last resort with consent page handling */
+async function googlePuppeteerSearch(query: string, count: number): Promise<SerpResult[]> {
   let browser;
   try {
     const { launchBrowser: lb, newPageWithDefaults: np, closeBrowser: cb } = await import("@/lib/browser");
@@ -121,6 +265,38 @@ async function ddgWebSearch(query: string, count: number = 20): Promise<Array<{
     await page.goto(googleUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
     await new Promise(resolve => setTimeout(resolve, 1500));
 
+    // Handle Google consent page (cookie dialog)
+    try {
+      const consentSelectors = [
+        'button[id="L2AGLb"]',           // "I agree" button
+        'button[aria-label="Accept all"]',
+        'button[aria-label="Aceptar todo"]',
+        'form[action*="consent"] button',
+        '#CXQnmb button',                // Another consent variant
+        'button.tHlp8d',                 // Generic consent button
+      ];
+      for (const sel of consentSelectors) {
+        try {
+          const btn = await page.$(sel);
+          if (btn) {
+            await btn.click();
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            break;
+          }
+        } catch { /* ignore */ }
+      }
+    } catch { /* consent handling failed, continue */ }
+
+    // Wait for actual search results
+    try {
+      await page.waitForSelector('#search, #rso', { timeout: 8000 });
+    } catch {
+      // Log what page we actually landed on for debugging
+      const pageTitle = await page.title();
+      const pageUrl = page.url();
+      console.warn(`[Google/Puppeteer] No #search found. Page: "${pageTitle}" URL: ${pageUrl}`);
+    }
+
     const results = await page.evaluate((maxCount: number) => {
       const items: Array<{ name: string; url: string; snippet: string; domain: string }> = [];
       const excludes = [
@@ -129,7 +305,6 @@ async function ddgWebSearch(query: string, count: number = 20): Promise<Array<{
         'github.com', 'bing.com', 'yahoo.com', 'linkedin.com',
       ];
 
-      // Find all anchors with h3 inside (organic results)
       const anchors = document.querySelectorAll('#search a[href^="http"], #rso a[href^="http"]');
       const seen = new Set<string>();
 
@@ -147,7 +322,6 @@ async function ddgWebSearch(query: string, count: number = 20): Promise<Array<{
           const hostname = u.hostname.replace(/^www\./i, '');
           if (excludes.some(p => hostname.includes(p))) continue;
 
-          // Try to find snippet in parent container
           let snippet = '';
           const parent = a.closest('[data-sokoban-container], .g, [data-hveid]');
           if (parent) {
@@ -174,9 +348,8 @@ async function ddgWebSearch(query: string, count: number = 20): Promise<Array<{
 
     console.log(`[Google/Puppeteer] "${query}" -> ${results.length} results`);
     return results;
-
   } catch (error) {
-    console.error("Google Puppeteer search error:", error);
+    console.error("[Google/Puppeteer] Search error:", error);
     return [];
   } finally {
     if (browser) {
@@ -184,6 +357,20 @@ async function ddgWebSearch(query: string, count: number = 20): Promise<Array<{
       await cb(browser);
     }
   }
+}
+
+async function ddgWebSearch(query: string, count: number = 20, jobId?: string): Promise<SerpResult[]> {
+  // Tier 1: Puppeteer DuckDuckGo (bot-friendly, JS-rendered results)
+  const ddgResults = await ddgPuppeteerSearch(query, count);
+  if (ddgResults.length > 0) return ddgResults;
+
+  // Tier 2: HTTP DuckDuckGo HTML (no browser, fast, reliable)
+  const httpResults = await ddgHttpSearch(query, count);
+  if (httpResults.length > 0) return httpResults;
+
+  // No results from either DDG method
+  console.warn(`[SERP] DDG returned 0 results for: "${query}"`);
+  return [];
 }
 
 /** Strip HTML tags from a string */
@@ -1033,11 +1220,26 @@ Based on this information, provide:
 
 /**
  * Execute agent tool call
+ * Checks job status before executing — bails out if job was stopped/paused
  */
 export async function executeToolCall(toolName: string, args: any, context: any): Promise<any> {
+  // ── Abort check: bail out immediately if job was stopped ──
+  try {
+    const jobStatus = await (prismadbCrm as any).crm_Lead_Gen_Jobs.findUnique({
+      where: { id: context.jobId },
+      select: { status: true }
+    });
+    if (jobStatus?.status === "STOPPED") {
+      console.log(`[TOOL_ABORT] ${toolName} aborted — job was stopped by user`);
+      return { success: false, aborted: true, reason: "Job stopped by user" };
+    }
+  } catch (e) {
+    // Non-fatal: continue if status check fails
+  }
+
   switch (toolName) {
     case "search_companies":
-      const searchResults = await ddgWebSearch(args.query, args.count || 20);
+      const searchResults = await ddgWebSearch(args.query, args.count || 20, context.jobId);
       // Log the search outcome to the job for traceability
       try {
         const top = searchResults.slice(0, 5).map(r => r.domain || (r.url ? extractDomain(r.url) : '')).filter(Boolean).join(', ');
@@ -1056,7 +1258,7 @@ export async function executeToolCall(toolName: string, args: any, context: any)
           data: {
             queryTemplates: newTemplates,
             logs: [
-              ...(job?.logs || []),
+              ...(Array.isArray(job?.logs) ? job.logs : []),
               { ts: new Date().toISOString(), msg: `🔍 search_companies("${args.query}") -> ${searchResults.length} results. Top: ${top || 'none'}` }
             ]
           }
@@ -1086,11 +1288,12 @@ export async function executeToolCall(toolName: string, args: any, context: any)
           url: args.url,
           title: (siteData.title || '').slice(0, 100),
           description: (siteData.description || '').slice(0, 200),
-          contacts: (siteData.contacts || []).slice(0, 10).map((c: any) => ({
-            name: c.name || '', title: c.title || '', email: c.email || '', linkedin: c.linkedin || ''
+          contacts: (siteData.contacts || []).slice(0, 15).map((c: any) => ({
+            name: c.name || '', title: c.title || '', email: c.email || '',
+            phone: c.phone || '', linkedin: c.linkedin || ''
           })),
-          emails: (siteData.emails || []).slice(0, 10),
-          phones: (siteData.phones || []).slice(0, 5),
+          emails: (siteData.emails || []).slice(0, 15),
+          phones: (siteData.phones || []).slice(0, 10),
           pagesVisited: (siteData.pagesVisited || []).length,
         };
       }
@@ -1608,6 +1811,8 @@ export async function runAgenticLeadGeneration(
     console.warn("[LEADGEN] Could not resolve team_id for token tracking", e);
   }
   let accumulatedTokens = 0;
+  let accumulatedPromptTokens = 0;
+  let accumulatedCompletionTokens = 0;
   const isResume = !!initialState && (initialState.companiesSaved || 0) > 0;
 
   // Compact system prompt — optimized for token efficiency
@@ -1619,11 +1824,12 @@ ${icp.notes ? `Notes: ${icp.notes}` : ""}
 RULES:
 - NEVER save a company without at least one real email address
 - visit_website auto-crawls subpages and returns structured contacts — use the data directly
+- Include ALL contacts, emails, and phone numbers found by visit_website in save_company — do NOT omit any
 - Contact name must be a real person name or empty string "" (never company/department names)
 - Skip directories: Crunchbase, LinkedIn, G2, Capterra, Glassdoor, ProductHunt, Wikipedia, etc.
 - Use parallel tool calls for speed (visit multiple sites at once)
 
-WORKFLOW: search_companies → visit_website (parallel) → save_company → repeat
+WORKFLOW: search_companies → visit_website (parallel) → save_company (include ALL contacts) → repeat
 Tools: search_companies, visit_website, save_company, refine_search_strategy`;
 
   if (isResume) {
@@ -1683,6 +1889,8 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
         agentIterations: iterations,
         iterations,
         tokensUsed: accumulatedTokens,
+        promptTokens: accumulatedPromptTokens,
+        completionTokens: accumulatedCompletionTokens,
         progress: Math.min(100, Math.round((companiesSaved / maxCompanies) * 100))
       }
     };
@@ -1771,21 +1979,53 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
 
     try {
       // Message history windowing — keep only recent messages to control token growth
-      // Keep first user message + last MAX_HISTORY_MESSAGES to maintain context without bloat
-      const MAX_HISTORY_MESSAGES = 8; // ~4 round-trips of assistant+tool messages
+      // CRITICAL: never split tool_use / tool_result pairs or Bedrock will 400
+      const MAX_HISTORY_MESSAGES = 6;
       let windowedMessages = messages;
       if (messages.length > MAX_HISTORY_MESSAGES + 1) {
         const firstMsg = messages[0]; // Original user instruction
-        const recentMsgs = messages.slice(-MAX_HISTORY_MESSAGES);
-        // Insert a compact progress summary so the agent knows what happened
-        windowedMessages = [
-          firstMsg,
-          {
-            role: "user" as const,
-            content: `[PROGRESS] Saved ${companiesSaved}/${maxCompanies} companies, ${contactsSaved} contacts, ${iterations - 1} iterations, ${accumulatedTokens} tokens used. Continue searching and saving.`
-          },
-          ...recentMsgs
-        ];
+        // Walk backward from the end to find a safe cut point.
+        // A position is safe to cut at IF:
+        //   1. The message at that position is NOT role='tool' (orphaned tool result)
+        //   2. The message BEFORE that position is NOT an assistant with tool_use content
+        //      (which would leave a tool_use without its matching tool_result)
+        let cutIdx = messages.length - MAX_HISTORY_MESSAGES;
+        // Ensure cutIdx is at least 1 (don't cut before the first message)
+        if (cutIdx < 1) cutIdx = 1;
+        // Search forward for a safe boundary
+        let foundSafe = false;
+        for (let i = cutIdx; i < messages.length - 1; i++) {
+          const msg = messages[i] as any;
+          const prevMsg = messages[i - 1] as any;
+          // Skip if this message IS a tool result (cutting here orphans it)
+          if (msg.role === 'tool') continue;
+          // Skip if previous message is an assistant with tool_use content
+          // (cutting here would leave tool_use without its tool_result)
+          if (prevMsg.role === 'assistant' && Array.isArray(prevMsg.content)) {
+            const hasToolUse = prevMsg.content.some((c: any) =>
+              c.type === 'tool-use' || c.type === 'tool_use' || c.type === 'tool-call'
+            );
+            if (hasToolUse) continue;
+          }
+          // This position is safe
+          cutIdx = i;
+          foundSafe = true;
+          break;
+        }
+        // If no safe cut found, keep ALL messages (don't risk breaking pairs)
+        if (!foundSafe) {
+          windowedMessages = messages;
+        } else {
+          const recentMsgs = messages.slice(cutIdx);
+          windowedMessages = [
+            firstMsg,
+            {
+              role: "user" as const,
+              content: `[PROGRESS] Saved ${companiesSaved}/${maxCompanies} companies, ${contactsSaved} contacts, ${iterations - 1} iterations. Continue searching and saving. Include ALL contacts in each save_company call.`
+            },
+            ...recentMsgs
+          ];
+        }
       }
 
       const tools = buildToolsDefinition(context);
@@ -1804,23 +2044,62 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
       // Track AI token usage
       if (usage) {
         const usageAny = usage as any;
-        const iterationTokens = usageAny.totalTokens || ((usageAny.promptTokens || 0) + (usageAny.completionTokens || 0));
-        accumulatedTokens += iterationTokens;
-        console.log(`[LEADGEN_DEBUG] Iteration ${iterations}: +${iterationTokens} tokens (prompt=${usageAny.promptTokens || 0}, completion=${usageAny.completionTokens || 0}, accumulated=${accumulatedTokens})`);
+        // Different providers use different property names:
+        // OpenAI/Anthropic: promptTokens, completionTokens
+        // Bedrock: inputTokens, outputTokens
+        // Some: prompt_tokens, completion_tokens
+        const pTok = usageAny.promptTokens || usageAny.inputTokens || usageAny.prompt_tokens || 0;
+        const cTok = usageAny.completionTokens || usageAny.outputTokens || usageAny.completion_tokens || 0;
+        const totalTok = usageAny.totalTokens || usageAny.total_tokens || (pTok + cTok);
+        // If we got a total but no split, estimate based on typical tool-calling ratio
+        const effectivePrompt = pTok > 0 ? pTok : (cTok > 0 ? 0 : Math.round(totalTok * 0.7));
+        const effectiveCompletion = cTok > 0 ? cTok : (pTok > 0 ? 0 : totalTok - effectivePrompt);
+        accumulatedTokens += totalTok;
+        accumulatedPromptTokens += effectivePrompt;
+        accumulatedCompletionTokens += effectiveCompletion;
+        console.log(`[LEADGEN_DEBUG] Iteration ${iterations}: +${totalTok} tokens (prompt=${effectivePrompt}, completion=${effectiveCompletion}, total=${accumulatedTokens} [P:${accumulatedPromptTokens} C:${accumulatedCompletionTokens}]) [raw keys: ${Object.keys(usageAny).join(',')}]`);
 
         // Log to AI Usage audit in real-time (non-blocking)
-        if (teamId && iterationTokens > 0) {
-          logAiUsage({
-            teamId,
-            userId: userId || null,
-            service: "leadgen",
-            model: `${provider}:${modelId}`,
-            usage: {
-              promptTokens: usageAny.promptTokens || 0,
-              completionTokens: usageAny.completionTokens || 0,
-            },
-            description: `Lead gen iteration ${iterations} (job: ${jobId.slice(0, 8)})`,
-          }).catch(err => console.error("[LEADGEN_ITER_LOG]", err));
+        if (teamId && totalTok > 0) {
+         try {
+            await logAiUsage({
+              teamId,
+              userId: userId || null,
+              service: "leadgen",
+              model: `${provider}:${modelId}`,
+              usage: {
+                promptTokens: effectivePrompt,
+                completionTokens: effectiveCompletion,
+              },
+              description: `Lead gen iteration ${iterations} (job: ${jobId.slice(0, 8)})`,
+            });
+          } catch (usageErr: any) {
+            if (usageErr?.message?.includes('Insufficient AI tokens')) {
+              addLog(`🚫 AI token balance exhausted. ${companiesSaved} companies saved. Please top up your AI credits to continue.`, "ERROR");
+              await db.crm_Lead_Gen_Jobs.update({
+                where: { id: jobId },
+                data: {
+                  status: "FAILED",
+                  finishedAt: new Date(),
+                  counters: {
+                    companiesFound: companiesSaved,
+                    contactsSaved,
+                    contactsCreated: contactsSaved,
+                    agentIterations: iterations,
+                    iterations,
+                    tokensUsed: accumulatedTokens,
+                    promptTokens: accumulatedPromptTokens,
+                    completionTokens: accumulatedCompletionTokens,
+                    progress: Math.min(100, Math.round((companiesSaved / maxCompanies) * 100)),
+                    failReason: "INSUFFICIENT_AI_TOKENS"
+                  }
+                }
+              });
+              await flushLogsToDb(true);
+              return { companiesSaved, contactsSaved, iterations };
+            }
+            console.error("[LEADGEN_ITER_LOG]", usageErr);
+          }
         }
       } else {
         console.warn(`[LEADGEN_DEBUG] Iteration ${iterations}: NO usage object returned from generateText!`);
@@ -1992,18 +2271,9 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
 
         // Add a user message to keep it going with more direct instructions
         if (companiesSaved < maxCompanies) {
-          const feedbackMsg = `Progress: ${companiesSaved}/${maxCompanies} companies saved (${contactsSaved} contacts).
-
-${companiesSaved === 0 ? '⚠️ You haven\'t saved ANY companies yet!\n\n' : ''}IMMEDIATE NEXT STEP:
-1. Look at the website data you've extracted
-2. For EACH website with emails, call save_company RIGHT NOW
-3. Format: { domain, companyName, description, industry, techStack: [], contacts: [{name: "", title: "Contact", email: "...", phone: "..."}] }
-
-Don't keep searching - SAVE the companies you've already found!`;
-
           messages.push({
             role: "user",
-            content: feedbackMsg
+            content: `${companiesSaved}/${maxCompanies} saved. ${companiesSaved === 0 ? 'Save companies you found now! ' : ''}Continue: search → visit → save_company (ALL contacts).`
           });
           addLog(`📍 Checkpoint: ${companiesSaved}/${maxCompanies} companies | Directing agent to save...`);
           await flushLogsToDb(false); // Opportunistic flush
@@ -2038,7 +2308,7 @@ Don't keep searching - SAVE the companies you've already found!`;
   }
 
   // Log completion
-  addLog(`🤖 Agent complete: ${companiesSaved} companies, ${contactsSaved} contacts in ${iterations} iterations (${accumulatedTokens.toLocaleString()} AI tokens used)`);
+  addLog(`🤖 Agent complete: ${companiesSaved} companies, ${contactsSaved} contacts in ${iterations} iterations (${accumulatedTokens.toLocaleString()} tokens: ${accumulatedPromptTokens.toLocaleString()} prompt + ${accumulatedCompletionTokens.toLocaleString()} completion)`);
   await flushLogsToDb(true); // Force final flush
 
   // Token logging already handled per-iteration above — just log summary
@@ -2058,6 +2328,8 @@ Don't keep searching - SAVE the companies you've already found!`;
           agentIterations: iterations,
           iterations,
           tokensUsed: accumulatedTokens,
+          promptTokens: accumulatedPromptTokens,
+          completionTokens: accumulatedCompletionTokens,
           progress: 100
         }
       }
