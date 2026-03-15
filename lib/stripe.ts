@@ -20,7 +20,7 @@ export const stripe = new Stripe(process.env.STRIPE_API_KEY || "", {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
 
 /**
  * Get or create a Stripe Customer for a team.
@@ -146,8 +146,8 @@ export async function createStripeCheckoutSession(
             customer: customerId,
             mode: "subscription",
             line_items: lineItems,
-            success_url: `${APP_URL}/settings/billing?session_id={CHECKOUT_SESSION_ID}&status=success`,
-            cancel_url: `${APP_URL}/settings/billing?status=cancelled`,
+            success_url: `${APP_URL}/admin/billing?session_id={CHECKOUT_SESSION_ID}&status=success`,
+            cancel_url: `${APP_URL}/admin/billing?status=cancelled`,
             metadata: {
                 team_id: teamId,
                 plan_slug: planSlug,
@@ -205,8 +205,8 @@ export async function createStripeTopUpSession(
             customer: customerId,
             mode: "payment",
             line_items: lineItems,
-            success_url: `${APP_URL}/settings/billing?topup=success`,
-            cancel_url: `${APP_URL}/settings/billing?topup=cancelled`,
+            success_url: `${APP_URL}/admin/billing?topup=success`,
+            cancel_url: `${APP_URL}/admin/billing?topup=cancelled`,
             metadata: {
                 team_id: teamId,
                 type: "AI_TOKEN_TOPUP",
@@ -228,7 +228,7 @@ export async function createStripePortalSession(customerId: string) {
     try {
         const session = await stripe.billingPortal.sessions.create({
             customer: customerId,
-            return_url: `${APP_URL}/settings/billing`,
+            return_url: `${APP_URL}/admin/billing`,
         });
 
         return session;

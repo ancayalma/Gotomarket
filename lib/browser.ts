@@ -1,87 +1,125 @@
-import chromium from "@sparticuz/chromium";
 import puppeteerCore, { Browser, Page } from "puppeteer-core";
+import { existsSync } from "fs";
 
 /**
- * Headless Chromium launcher compatible with local dev, Docker, and serverless.
+ * Headless Chromium launcher compatible with local dev, Linux Plesk, and serverless.
  *
- * - Tries @sparticuz/chromium for serverless environments
- * - Falls back to CHROME_PATH env var if provided
- * - Optionally falls back to full puppeteer (if installed) for local dev
- *
- * You can set CHROME_PATH to your local Chrome executable to avoid full puppeteer.
- *   Windows example: C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe
- *   macOS example: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
- *   Linux example: /usr/bin/google-chrome
+ * Fallback order:
+ *   1. CHROME_PATH env var (explicit override)
+ *   2. Well-known Linux Chrome/Chromium paths (for Plesk / bare-metal Linux)
+ *   3. Full puppeteer (bundled Chromium – local dev / CI)
+ *   4. @sparticuz/chromium (AWS Lambda / serverless only – dynamic import)
  */
-export async function launchBrowser(): Promise<Browser> {
-  let executablePath: string | null = null;
 
-  // First check for CHROME_PATH env var (recommended for local dev)
-  if (process.env.CHROME_PATH) {
-    executablePath = process.env.CHROME_PATH;
-  }
+/* ── Well-known browser paths per platform ───────────────────────── */
+const LINUX_CANDIDATES = [
+  "/usr/bin/google-chrome-stable",
+  "/usr/bin/google-chrome",
+  "/usr/bin/chromium-browser",
+  "/usr/bin/chromium",
+  "/snap/bin/chromium",
+  "/usr/lib/chromium/chromium",
+  "/opt/google/chrome/chrome",
+];
 
-  // If no CHROME_PATH, try full puppeteer (local dev with bundled Chromium)
-  if (!executablePath) {
+const WIN_CANDIDATES = [
+  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+  "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+];
+
+function detectSystemBrowser(): string | null {
+  const candidates =
+    process.platform === "win32" ? WIN_CANDIDATES : LINUX_CANDIDATES;
+  for (const p of candidates) {
     try {
-      const puppeteer = (await import("puppeteer")).default;
-      return await puppeteer.launch({
-        headless: true,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-gpu",
-        ],
-      }) as any as Browser;
-    } catch (err) {
-      // Silently try next method
+      if (existsSync(p)) return p;
+    } catch {
+      // permission denied – keep scanning
+    }
+  }
+  return null;
+}
+
+const HEADLESS_ARGS = [
+  "--no-sandbox",
+  "--disable-setuid-sandbox",
+  "--disable-dev-shm-usage",
+  "--disable-gpu",
+  "--disable-software-rasterizer",
+  "--single-process",
+];
+
+export async function launchBrowser(): Promise<Browser> {
+  /* ── 1. Explicit env override ─────────────────────────────────── */
+  let executablePath: string | null = process.env.CHROME_PATH || null;
+
+  /* ── 2. Auto-detect system browser (Linux / Windows) ──────────── */
+  if (!executablePath) {
+    executablePath = detectSystemBrowser();
+    if (executablePath) {
+      console.log(`[browser] Auto-detected system browser: ${executablePath}`);
     }
   }
 
-  // Try @sparticuz/chromium for serverless environments
+  /* ── 3. Full puppeteer (bundled Chromium – local dev) ──────────── */
   if (!executablePath) {
     try {
-      // @sparticuz/chromium.executablePath can be a string or Promise<string>
+      const puppeteer = (await import("puppeteer")).default;
+      console.log("[browser] Launching via bundled puppeteer Chromium");
+      return (await puppeteer.launch({
+        headless: true,
+        args: HEADLESS_ARGS,
+      })) as any as Browser;
+    } catch {
+      // Not installed or binary missing – fall through
+    }
+  }
+
+  /* ── 4. @sparticuz/chromium (serverless only) ─────────────────── */
+  if (!executablePath && process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    try {
+      const chromium = (await import("@sparticuz/chromium")).default;
       const chromiumExecPath: any = chromium.executablePath;
-      if (typeof chromiumExecPath === 'string') {
+      if (typeof chromiumExecPath === "string") {
         executablePath = chromiumExecPath;
-      } else if (typeof chromiumExecPath === 'function') {
+      } else if (typeof chromiumExecPath === "function") {
         executablePath = await chromiumExecPath();
       } else {
         executablePath = await chromiumExecPath;
       }
+      if (executablePath) {
+        console.log(`[browser] Using @sparticuz/chromium: ${executablePath}`);
+      }
     } catch (err) {
-      console.error("@sparticuz/chromium failed:", err);
-      executablePath = null;
+      console.error("[browser] @sparticuz/chromium failed:", err);
     }
   }
 
-  // If still no executable path, throw helpful error
+  /* ── Bail if nothing found ────────────────────────────────────── */
   if (!executablePath) {
+    const isLinux = process.platform === "linux";
     throw new Error(
-      "No Chromium executable found. For local development:\n" +
-      "1. Set CHROME_PATH environment variable to your Chrome installation, e.g.:\n" +
-      "   Windows: C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\n" +
-      "   macOS: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome\n" +
-      "   Linux: /usr/bin/google-chrome\n" +
-      "2. Or ensure 'puppeteer' package is installed (already in package.json)\n" +
-      "Run: pnpm install"
+      "No Chromium executable found.\n" +
+        (isLinux
+          ? "Install Chrome on the server:\n" +
+            "  sudo apt-get install -y google-chrome-stable\n" +
+            "  # or: sudo apt-get install -y chromium-browser\n"
+          : "Set CHROME_PATH to your Chrome/Edge installation, e.g.:\n" +
+            "  Windows: C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\n" +
+            "  macOS:   /Applications/Google Chrome.app/Contents/MacOS/Google Chrome\n") +
+        "Or set the CHROME_PATH environment variable."
     );
   }
 
-  // Launch using puppeteer-core with found executable
+  /* ── Launch puppeteer-core with discovered executable ──────────── */
+  console.log(`[browser] Launching puppeteer-core with: ${executablePath}`);
   const browser = await puppeteerCore.launch({
     headless: true,
     executablePath,
-    args: [
-      ...chromium.args,
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-    ],
-    defaultViewport: (chromium as any).defaultViewport ?? { width: 1280, height: 800 },
+    args: HEADLESS_ARGS,
+    defaultViewport: { width: 1280, height: 800 },
   });
 
   return browser;

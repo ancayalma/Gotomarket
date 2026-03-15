@@ -1,9 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +34,7 @@ import {
     TrendingUp,
     Wallet,
     AlertTriangle,
+    XCircle,
     Sparkles,
     Bot,
     Mail,
@@ -33,6 +43,7 @@ import {
     Zap,
 } from "lucide-react";
 import { toast } from "sonner";
+import { BillingModal } from "@/components/modals/BillingModal";
 import { downloadInvoicePDF, downloadInvoicesSummaryPDF } from "@/lib/generate-invoice-pdf";
 import { PlanSelector } from "./PlanSelector";
 
@@ -66,8 +77,33 @@ export function AdminBillingDashboard({
     teamId,
 
 }: AdminBillingDashboardProps) {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
     const [echoBalance, setEchoBalance] = useState<any>(null);
     const [echoLoading, setEchoLoading] = useState(true);
+    const [cancelledModalOpen, setCancelledModalOpen] = useState(false);
+    const [cancelledType, setCancelledType] = useState<"subscription" | "topup">("subscription");
+    const [billingModalOpen, setBillingModalOpen] = useState(false);
+
+    // Detect cancellation query params from Stripe redirect
+    useEffect(() => {
+        const status = searchParams.get("status");
+        const topup = searchParams.get("topup");
+
+        if (status === "cancelled") {
+            setCancelledType("subscription");
+            setCancelledModalOpen(true);
+        } else if (topup === "cancelled") {
+            setCancelledType("topup");
+            setCancelledModalOpen(true);
+        }
+
+        // Clean up query params from URL
+        if (status || topup) {
+            router.replace("/admin/billing", { scroll: false });
+        }
+    }, [searchParams, router]);
 
     const INTERNAL_SLUGS = ["basalt", "basalthq", "ledger1"];
     const teamSlug = subscription?.team?.slug?.toLowerCase() || "";
@@ -552,6 +588,54 @@ export function AdminBillingDashboard({
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            {/* Cancellation Warning Modal */}
+            <Dialog open={cancelledModalOpen} onOpenChange={setCancelledModalOpen}>
+                <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-white">
+                    <DialogHeader>
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
+                            <XCircle className="h-7 w-7 text-amber-400" />
+                        </div>
+                        <DialogTitle className="text-center text-lg font-bold tracking-tight">
+                            {cancelledType === "topup" ? "Top-Up Cancelled" : "Subscription Cancelled"}
+                        </DialogTitle>
+                        <DialogDescription className="text-center text-zinc-400 text-sm leading-relaxed mt-2">
+                            {cancelledType === "topup"
+                                ? "Your AI token top-up purchase was not completed. No charges have been made to your account."
+                                : "Your subscription process was not completed. No charges have been made to your account."}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-2 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/50">
+                        <p className="text-xs text-zinc-500 leading-relaxed">
+                            If this was unintentional, you can continue where you left off by clicking below. Otherwise, you can dismiss this message and subscribe at any time from the Plans &amp; Pricing tab.
+                        </p>
+                    </div>
+                    <DialogFooter className="mt-4 flex flex-col sm:flex-row gap-2">
+                        <Button
+                            variant="outline"
+                            className="flex-1 border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800"
+                            onClick={() => setCancelledModalOpen(false)}
+                        >
+                            OK
+                        </Button>
+                        <Button
+                            className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold"
+                            onClick={() => {
+                                setCancelledModalOpen(false);
+                                setBillingModalOpen(true);
+                            }}
+                        >
+                            Continue Subscription
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Billing Modal (re-opened from cancellation flow) */}
+            <BillingModal
+                isOpen={billingModalOpen}
+                onClose={() => setBillingModalOpen(false)}
+            />
         </div>
     );
 }
