@@ -13,7 +13,8 @@
     "doc:agent": "npx ts-node scripts/generate-agent-docs.ts",
     "doc:crm": "npx ts-node scripts/generate-module-docs.ts",
     "doc:quests": "npx ts-node scripts/seed-quests-doc.ts",
-    "doc:sync": "npm run doc:agent && npm run doc:crm && npm run doc:quests && npm run permissions:check"
+    "doc:sync": "npm run doc:agent && npm run doc:crm && npm run doc:quests && npm run permissions:check",
+    "postinstall": "npx --yes @puppeteer/browsers install chrome@stable"
   },
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "^4.0.77",

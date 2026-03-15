@@ -64,3 +64,6 @@ standardize_headings_2.py
 standardize_headings_3.py
 
 /scripts/vcrun.py
+
+# puppeteer browser cache (downloaded by postinstall)
+/chrome/

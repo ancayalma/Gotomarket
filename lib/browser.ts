@@ -1,5 +1,6 @@
 import puppeteerCore, { Browser, Page } from "puppeteer-core";
-import { existsSync } from "fs";
+import { existsSync, readdirSync, statSync } from "fs";
+import { join, resolve } from "path";
 
 /**
  * Headless Chromium launcher compatible with local dev, Linux Plesk, and serverless.
@@ -7,8 +8,9 @@ import { existsSync } from "fs";
  * Fallback order:
  *   1. CHROME_PATH env var (explicit override)
  *   2. Well-known Linux Chrome/Chromium paths (for Plesk / bare-metal Linux)
- *   3. Full puppeteer (bundled Chromium – local dev / CI)
- *   4. @sparticuz/chromium (AWS Lambda / serverless only – dynamic import)
+ *   3. @puppeteer/browsers cache (downloaded by postinstall script)
+ *   4. Full puppeteer (bundled Chromium – local dev / CI)
+ *   5. @sparticuz/chromium (AWS Lambda / serverless only – dynamic import)
  */
 
 /* ── Well-known browser paths per platform ───────────────────────── */
@@ -42,6 +44,61 @@ function detectSystemBrowser(): string | null {
   return null;
 }
 
+/**
+ * Scan the @puppeteer/browsers cache for a downloaded Chrome executable.
+ * The `npx @puppeteer/browsers install chrome@stable` postinstall script
+ * downloads Chrome into a `chrome/` directory relative to the project root.
+ * Structure: chrome/linux-<buildId>/chrome-linux64/chrome (Linux)
+ *        or: chrome/win64-<buildId>/chrome-win64/chrome.exe (Windows)
+ */
+function detectCachedBrowser(): string | null {
+  // Search multiple potential cache locations
+  const projectRoot = resolve(__dirname, "..");
+  const cacheRoots = [
+    join(projectRoot, "chrome"),           // default: <project>/chrome/
+    join(projectRoot, ".cache", "puppeteer"), // older puppeteer cache location
+  ];
+
+  const chromeBinaryNames =
+    process.platform === "win32" ? ["chrome.exe"] : ["chrome", "chromium"];
+
+  for (const cacheRoot of cacheRoots) {
+    try {
+      if (!existsSync(cacheRoot) || !statSync(cacheRoot).isDirectory()) continue;
+      // Walk max 4 levels deep to find the chrome binary
+      const found = findFileRecursive(cacheRoot, chromeBinaryNames, 4);
+      if (found) return found;
+    } catch {
+      // skip
+    }
+  }
+  return null;
+}
+
+/** Simple recursive file finder limited by depth */
+function findFileRecursive(
+  dir: string,
+  names: string[],
+  maxDepth: number
+): string | null {
+  if (maxDepth <= 0) return null;
+  try {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isFile() && names.includes(entry.name)) {
+        return fullPath;
+      }
+      if (entry.isDirectory()) {
+        const found = findFileRecursive(fullPath, names, maxDepth - 1);
+        if (found) return found;
+      }
+    }
+  } catch {
+    // skip – permission error, etc.
+  }
+  return null;
+}
+
 const HEADLESS_ARGS = [
   "--no-sandbox",
   "--disable-setuid-sandbox",
@@ -63,7 +120,15 @@ export async function launchBrowser(): Promise<Browser> {
     }
   }
 
-  /* ── 3. Full puppeteer (bundled Chromium – local dev) ──────────── */
+  /* ── 3. @puppeteer/browsers cache (postinstall download) ────────── */
+  if (!executablePath) {
+    executablePath = detectCachedBrowser();
+    if (executablePath) {
+      console.log(`[browser] Found cached Chrome: ${executablePath}`);
+    }
+  }
+
+  /* ── 4. Full puppeteer (bundled Chromium – local dev) ──────────── */
   if (!executablePath) {
     try {
       const puppeteer = (await import("puppeteer")).default;
@@ -77,7 +142,7 @@ export async function launchBrowser(): Promise<Browser> {
     }
   }
 
-  /* ── 4. @sparticuz/chromium (serverless only) ─────────────────── */
+  /* ── 5. @sparticuz/chromium (serverless only) ─────────────────── */
   if (!executablePath && process.env.AWS_LAMBDA_FUNCTION_NAME) {
     try {
       const chromium = (await import("@sparticuz/chromium")).default;
