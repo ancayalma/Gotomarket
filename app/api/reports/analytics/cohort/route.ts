@@ -79,7 +79,7 @@ export async function GET(req: Request) {
         }
 
         // For each cohort, compute the metric for each subsequent month
-        for (const [cohortKey, accountIds] of accountCohorts) {
+        for (const [cohortKey, accountIds] of Array.from(accountCohorts)) {
             const cohortDate = new Date(cohortKey + "-01");
             const monthsData: Record<number, { value: number; pct: number }> = {};
 
@@ -91,7 +91,7 @@ export async function GET(req: Request) {
 
                 if (monthStart > new Date()) break;
 
-                const monthOpps = opportunities.filter(o =>
+                const monthOpps = opportunities.filter((o: any) =>
                     o.account &&
                     accountIds.includes(typeof o.account === "string" ? o.account : (o.account as any).id || "") &&
                     o.createdAt >= monthStart &&
@@ -102,10 +102,10 @@ export async function GET(req: Request) {
                 if (metric === "deals") {
                     value = monthOpps.length;
                 } else if (metric === "revenue") {
-                    value = monthOpps.reduce((sum, o) => sum + (o.expected_revenue || 0), 0);
+                    value = monthOpps.reduce((sum: number, o: any) => sum + (o.expected_revenue || 0), 0);
                 } else if (metric === "retention") {
                     // Unique accounts that had activity
-                    const activeAccounts = new Set(monthOpps.map(o =>
+                    const activeAccounts = new Set(monthOpps.map((o: any) =>
                         typeof o.account === "string" ? o.account : (o.account as any)?.id
                     ).filter(Boolean));
                     value = activeAccounts.size;

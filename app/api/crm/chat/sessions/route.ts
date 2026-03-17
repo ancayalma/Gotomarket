@@ -46,7 +46,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json({
             sessions,
-            queueStats: queueStats.reduce((acc: any, s) => {
+            queueStats: queueStats.reduce((acc: any, s: any) => {
                 acc[s.status] = s._count;
                 return acc;
             }, {}),

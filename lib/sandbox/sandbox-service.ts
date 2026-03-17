@@ -156,14 +156,14 @@ export async function diffSandbox(sandboxId: string) {
         entityMap.get(key)!.push(log);
     }
 
-    for (const [key, entityLogs] of entityMap) {
-        const modifyLogs = entityLogs.filter(l => l.action === "MODIFY");
+    for (const [key, entityLogs] of Array.from(entityMap)) {
+        const modifyLogs = entityLogs.filter((l: any) => l.action === "MODIFY");
         if (modifyLogs.length > 0) {
             diffs.push({
                 entity_type: entityLogs[0].entity_type as EntityType,
                 entity_name: entityLogs[0].entity_name || "Unknown",
                 sandbox_id: entityLogs[0].entity_id,
-                changes: modifyLogs.map(l => {
+                changes: modifyLogs.map((l: any) => {
                     const diff = l.diff as Record<string, unknown>;
                     return JSON.stringify(diff);
                 }),
@@ -176,8 +176,8 @@ export async function diffSandbox(sandboxId: string) {
         logs,
         diffs,
         stats: {
-            totalCloned: logs.filter(l => l.action === "CLONE").length,
-            totalModified: logs.filter(l => l.action === "MODIFY").length,
+            totalCloned: logs.filter((l: any) => l.action === "CLONE").length,
+            totalModified: logs.filter((l: any) => l.action === "MODIFY").length,
         },
     };
 }

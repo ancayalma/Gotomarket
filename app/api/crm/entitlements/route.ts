@@ -108,7 +108,7 @@ export async function checkEntitlement(accountId: string, channel: string = "ema
     }
 
     // Find a matching entitlement for the channel
-    const matching = entitlements.find(e =>
+    const matching = entitlements.find((e: any) =>
         e.channels.length === 0 || e.channels.includes(channel)
     );
 

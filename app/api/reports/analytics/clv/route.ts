@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 
         // Calculate CLV for each account
         const now = new Date();
-        const accountCLVs = accounts.map(account => {
+        const accountCLVs = accounts.map((account: any) => {
             const wonDeals = account.opportunities.filter((o: any) =>
                 o.status === "WON" || o.status === "CLOSED_WON"
             );
@@ -108,7 +108,7 @@ export async function GET(req: Request) {
                 healthScore,
                 totalOpportunities: allDeals.length,
             };
-        }).filter(a => a.dealCount > 0); // Only show accounts with at least one won deal
+        }).filter((a: any) => a.dealCount > 0); // Only show accounts with at least one won deal
 
         // Sort
         const sortFn: Record<string, (a: any, b: any) => number> = {
@@ -122,13 +122,13 @@ export async function GET(req: Request) {
 
         // Aggregate stats
         const totalCustomers = accountCLVs.length;
-        const totalLifetimeValue = accountCLVs.reduce((sum, a) => sum + a.totalRevenue, 0);
+        const totalLifetimeValue = accountCLVs.reduce((sum: number, a: any) => sum + a.totalRevenue, 0);
         const avgCLV = totalCustomers > 0 ? Math.round(totalLifetimeValue / totalCustomers) : 0;
         const medianCLV = totalCustomers > 0
             ? accountCLVs[Math.floor(totalCustomers / 2)]?.totalRevenue || 0
             : 0;
         const avgHealthScore = totalCustomers > 0
-            ? Math.round(accountCLVs.reduce((sum, a) => sum + a.healthScore, 0) / totalCustomers)
+            ? Math.round(accountCLVs.reduce((sum: number, a: any) => sum + a.healthScore, 0) / totalCustomers)
             : 0;
 
         // CLV distribution (quartiles)
@@ -138,7 +138,7 @@ export async function GET(req: Request) {
 
         // Top segment analysis
         const topTier = accountCLVs.slice(0, Math.ceil(totalCustomers * 0.2));
-        const topTierRevenue = topTier.reduce((sum, a) => sum + a.totalRevenue, 0);
+        const topTierRevenue = topTier.reduce((sum: number, a: any) => sum + a.totalRevenue, 0);
         const topTierPct = totalLifetimeValue > 0 ? Math.round((topTierRevenue / totalLifetimeValue) * 100) : 0;
 
         return NextResponse.json({

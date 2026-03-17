@@ -71,7 +71,7 @@ export async function POST(
             },
         });
 
-        const existingTotal = existingSplits.reduce((sum, s) => sum + s.split_pct, 0);
+        const existingTotal = existingSplits.reduce((sum: number, s: any) => sum + s.split_pct, 0);
         if (existingTotal + split_pct > 100) {
             return new NextResponse(
                 `Total split percentage would be ${existingTotal + split_pct}%. Maximum is 100%.`,

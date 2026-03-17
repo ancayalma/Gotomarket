@@ -162,9 +162,9 @@ export async function getLinkedInSequenceStatus(campaignId: string) {
 
     const stats = {
         total: items.length,
-        pending: items.filter(i => i.status === "PENDING" || i.status === "READY").length,
-        sent: items.filter(i => i.status === "SENT" || i.status === "DELIVERED").length,
-        replied: items.filter(i => i.status === "REPLIED").length,
+        pending: items.filter((i: any) => i.status === "PENDING" || i.status === "READY").length,
+        sent: items.filter((i: any) => i.status === "SENT" || i.status === "DELIVERED").length,
+        replied: items.filter((i: any) => i.status === "REPLIED").length,
         connectionRate: 0,
         replyRate: 0,
     };

@@ -28,7 +28,7 @@ export async function assignVariant(campaignId: string): Promise<string | null> 
     if (campaign?.ab_winner_variant) return campaign.ab_winner_variant;
 
     // Weighted random selection
-    const totalWeight = variants.reduce((sum, v) => sum + v.weight, 0);
+    const totalWeight = variants.reduce((sum: number, v: any) => sum + v.weight, 0);
     let random = Math.random() * totalWeight;
 
     for (const variant of variants) {
@@ -92,7 +92,7 @@ async function checkAutoWinner(campaignId: string) {
     });
 
     // All variants must meet the minimum send threshold
-    const qualifiedVariants = variants.filter(v => v.total_sent >= threshold);
+    const qualifiedVariants = variants.filter((v: any) => v.total_sent >= threshold);
     if (qualifiedVariants.length < 2) return;
 
     // Find the best performer
@@ -147,10 +147,10 @@ export async function getABTestResults(campaignId: string) {
     const metric = campaign?.ab_winner_metric || "open_rate";
 
     // Calculate relative lift for each variant against control
-    const control = variants.find(v => v.is_control);
+    const control = variants.find((v: any) => v.is_control);
     const controlRate = control ? (control as any)[metric] || 0 : 0;
 
-    const results = variants.map(v => ({
+    const results = variants.map((v: any) => ({
         id: v.id,
         name: v.name,
         is_control: v.is_control,
