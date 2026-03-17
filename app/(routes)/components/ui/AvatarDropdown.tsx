@@ -83,9 +83,10 @@ const AvatarDropdown = ({ avatar, userId, name, email }: Props) => {
             <span>Account Settings</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => {
+          <DropdownMenuItem onClick={async () => {
             clearUserCache();
-            signOut({ callbackUrl: `${window.location.origin}/sign-in?loggedOut=true` });
+            await signOut({ redirect: false });
+            window.location.href = `/sign-in?loggedOut=true`;
           }}>
             <LogOut className="w-4 h-4 inline-block mr-2 stroke-current text-gray-500" />
             <span>Sign Out</span>
