@@ -51,7 +51,8 @@ export async function POST(req: Request) {
       });
 
       try {
-        const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/${tokenUrlFriendly}`;
+        const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+        const resetLink = `${appUrl}/reset-password/${tokenUrlFriendly}`;
         const emailHtml = await render(
           PasswordResetEmail({
             username: user.name || "User",

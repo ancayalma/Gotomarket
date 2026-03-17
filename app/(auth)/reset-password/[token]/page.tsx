@@ -6,13 +6,11 @@ const ResetPasswordPage = async (props: { params: Promise<{ token: string }> }) 
     const token = params.token;
 
     return (
-        <div className="h-full">
-            <div className="flex justify-center mt-10 mb-8 pt-8">
+        <div className="flex flex-col items-center justify-center w-full h-full px-4">
+            <div className="flex justify-center mb-8">
                 <ThemedLogo variant="wide" className="h-[50px] w-auto" />
             </div>
-            <div>
-                <ResetPasswordForm token={token} />
-            </div>
+            <ResetPasswordForm token={token} />
         </div>
     );
 };
