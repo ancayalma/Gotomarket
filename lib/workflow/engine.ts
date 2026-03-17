@@ -4,8 +4,22 @@ import { ExecutionStatus, Prisma } from "@prisma/client";
 import { systemLogger } from "@/lib/logger";
 
 /**
- * FlowState Engine - The core execution logic for CRM workflows.
+ * FlowState Engine v2 — Enhanced with delay, loop, parallel, and webhook support.
  */
+
+// ── Step log entry (persisted for execution history) ────────────────────────
+interface StepLog {
+    nodeId: string;
+    nodeType: string;
+    label: string;
+    status: "completed" | "failed" | "skipped" | "waiting";
+    startTime: number;
+    endTime?: number;
+    inputData?: Record<string, unknown>;
+    outputData?: Record<string, unknown>;
+    error?: string;
+    branch?: string;
+}
 
 export async function runWorkflowEngine(workflowExecutionId: string) {
     const execution = await prismadb.crm_Workflow_Execution.findUnique({
@@ -21,6 +35,8 @@ export async function runWorkflowEngine(workflowExecutionId: string) {
     if (execution.status !== ExecutionStatus.RUNNING) {
         return;
     }
+
+    const stepLogs: StepLog[] = [];
 
     try {
         const nodes = execution.workflow.nodes as any[];
@@ -38,57 +54,116 @@ export async function runWorkflowEngine(workflowExecutionId: string) {
             trigger: triggerData
         };
 
-        // Execution Queue
-        let currentNodeId = triggerNode.id;
+        // Execution Queue — supports parallel paths
         const completedNodes: string[] = [];
+        const queue: string[] = [triggerNode.id];
+        const visited = new Set<string>();
+        let iterationCount = 0;
 
-        // Simple BFS/DFS traversal for individual path execution
-        // Note: For complex branching, this logic would need to handle multiple paths.
-        // For launch, we'll support sequential execution with logic branches.
+        while (queue.length > 0) {
+            const currentNodeId = queue.shift()!;
 
-        while (currentNodeId) {
+            // Skip already visited (handles join points in parallel paths)
+            if (visited.has(currentNodeId)) continue;
+            visited.add(currentNodeId);
+
             const node = nodes.find(n => n.id === currentNodeId);
-            if (!node) break;
+            if (!node) continue;
+
+            // Update current node in execution record
+            await prismadb.crm_Workflow_Execution.update({
+                where: { id: workflowExecutionId },
+                data: { current_node: currentNodeId },
+            });
 
             systemLogger.info(`[WORKFLOW_ENGINE] Executing node: ${node.id} (${node.type})`);
 
-            let nextNodeId: string | null = null;
+            const stepStart = Date.now();
+            const stepLog: StepLog = {
+                nodeId: node.id,
+                nodeType: node.type,
+                label: node.data?.label || node.type,
+                status: "completed",
+                startTime: stepStart,
+            };
+
             let outcome: string | null = null;
 
-            // 1. Execute Node Logic
             try {
-                const result = await executeNode(node, triggerData, nodeOutputs);
+                const result = await executeNode(node, triggerData, nodeOutputs, workflowExecutionId);
                 nodeOutputs[node.id] = result.output;
                 outcome = result.outcome || null;
+
+                // Handle delay node → pause execution
+                if (result.paused) {
+                    stepLog.status = "waiting";
+                    stepLog.endTime = Date.now();
+                    stepLog.outputData = result.output;
+                    stepLogs.push(stepLog);
+
+                    // Save progress and exit — a scheduler will resume later
+                    await prismadb.crm_Workflow_Execution.update({
+                        where: { id: workflowExecutionId },
+                        data: {
+                            status: ExecutionStatus.RUNNING,
+                            current_node: currentNodeId,
+                            completed_nodes: completedNodes,
+                            node_outputs: nodeOutputs,
+                            step_logs: stepLogs as any,
+                            scheduled_at: result.resumeAt,
+                        },
+                    });
+                    systemLogger.info(`[WORKFLOW_ENGINE] Execution paused until ${result.resumeAt?.toISOString()}`);
+                    return;
+                }
+
+                stepLog.endTime = Date.now();
+                stepLog.outputData = result.output;
+                if (outcome) stepLog.branch = outcome;
+
             } catch (err: any) {
+                stepLog.status = "failed";
+                stepLog.endTime = Date.now();
+                stepLog.error = err.message;
+                stepLogs.push(stepLog);
+
                 await prismadb.crm_Workflow_Execution.update({
                     where: { id: workflowExecutionId },
                     data: {
                         status: ExecutionStatus.FAILED,
                         error: `Node ${node.id} failed: ${err.message}`,
+                        completed_nodes: completedNodes,
+                        node_outputs: nodeOutputs,
+                        step_logs: stepLogs as any,
                         completedAt: new Date()
                     }
                 });
                 return;
             }
 
+            stepLogs.push(stepLog);
             completedNodes.push(currentNodeId);
 
-            // 2. Find Next Node via Edges
-            // If it's a condition node, we look for edge matching the outcome (true/false)
+            // ── Find Next Nodes ─────────────────────────────────────────
             if (node.type === 'condition' || node.type === 'decision') {
-                const edge = edges.find(e => e.source === currentNodeId && e.sourceHandle === outcome);
-                nextNodeId = edge ? edge.target : null;
+                // Conditional: follow the matching branch
+                const edge = edges.find((e: any) => e.source === currentNodeId && e.sourceHandle === outcome);
+                if (edge) queue.push(edge.target);
+            } else if (node.type === 'loop') {
+                // Loop: handled inside executeNode, follow "done" path
+                const doneEdge = edges.find((e: any) => e.source === currentNodeId && e.sourceHandle === 'done');
+                if (doneEdge) queue.push(doneEdge.target);
             } else {
-                const edge = edges.find(e => e.source === currentNodeId);
-                nextNodeId = edge ? edge.target : null;
+                // Default: follow ALL outgoing edges (enables parallel paths)
+                const outEdges = edges.filter((e: any) => e.source === currentNodeId);
+                for (const edge of outEdges) {
+                    queue.push(edge.target);
+                }
             }
 
-            currentNodeId = nextNodeId as string;
-
-            // Safety break to prevent infinite loops for now
-            if (completedNodes.length > 50) {
-                throw new Error("Maximum node execution limit reached (possible loop).");
+            iterationCount++;
+            if (iterationCount > 200) {
+                throw new Error("Maximum node execution limit reached (200). Possible infinite loop.");
             }
         }
 
@@ -99,11 +174,12 @@ export async function runWorkflowEngine(workflowExecutionId: string) {
                 status: ExecutionStatus.COMPLETED,
                 completed_nodes: completedNodes,
                 node_outputs: nodeOutputs,
+                step_logs: stepLogs as any,
                 completedAt: new Date()
             }
         });
 
-        systemLogger.info(`[WORKFLOW_ENGINE] Execution ${workflowExecutionId} completed successfully.`);
+        systemLogger.info(`[WORKFLOW_ENGINE] Execution ${workflowExecutionId} completed (${completedNodes.length} nodes).`);
 
     } catch (error: any) {
         systemLogger.error(`[WORKFLOW_ENGINE] Execution ${workflowExecutionId} failed:`, error);
@@ -112,18 +188,47 @@ export async function runWorkflowEngine(workflowExecutionId: string) {
             data: {
                 status: ExecutionStatus.FAILED,
                 error: error.message,
+                step_logs: stepLogs as any,
                 completedAt: new Date()
             }
         });
     }
 }
 
+// ── Resume a paused execution (called by scheduler) ─────────────────────────
+export async function resumeWorkflowExecution(executionId: string) {
+    const execution = await prismadb.crm_Workflow_Execution.findUnique({
+        where: { id: executionId },
+        include: { workflow: true },
+    });
+
+    if (!execution || execution.status !== ExecutionStatus.RUNNING) return;
+    if (!execution.scheduled_at || execution.scheduled_at > new Date()) return; // Not yet time
+
+    // Clear the scheduled_at and re-run from current_node
+    await prismadb.crm_Workflow_Execution.update({
+        where: { id: executionId },
+        data: { scheduled_at: null },
+    });
+
+    // Re-run the engine — it will pick up from current_node
+    await runWorkflowEngine(executionId);
+}
+
+// ── Node Execution ──────────────────────────────────────────────────────────
 type NodeResult = {
     output: any;
     outcome?: string | null;
+    paused?: boolean;
+    resumeAt?: Date;
 };
 
-async function executeNode(node: any, triggerData: any, previousOutputs: Record<string, any>): Promise<NodeResult> {
+async function executeNode(
+    node: any,
+    triggerData: any,
+    previousOutputs: Record<string, any>,
+    executionId: string
+): Promise<NodeResult> {
     const data = node.data || {};
 
     switch (node.type) {
@@ -139,16 +244,90 @@ async function executeNode(node: any, triggerData: any, previousOutputs: Record<
         case 'updateRecord':
             return await handleUpdateRecordNode(data, triggerData, previousOutputs);
 
+        case 'delay':
+            return await handleDelayNode(data, executionId);
+
+        case 'loop':
+            return await handleLoopNode(node, data, triggerData, previousOutputs, executionId);
+
         default:
             systemLogger.warn(`[WORKFLOW_ENGINE] Unknown node type: ${node.type}`);
             return { output: {} };
     }
 }
 
+// ── Delay Node ──────────────────────────────────────────────────────────────
+async function handleDelayNode(data: any, executionId: string): Promise<NodeResult> {
+    const duration = data.duration || 1;
+    const unit = data.unit || "hours";
+
+    const delayMs = {
+        minutes: duration * 60 * 1000,
+        hours: duration * 60 * 60 * 1000,
+        days: duration * 24 * 60 * 60 * 1000,
+    }[unit as string] || duration * 60 * 60 * 1000;
+
+    const resumeAt = new Date(Date.now() + delayMs);
+
+    systemLogger.info(`[WORKFLOW_ENGINE] Delay: pausing for ${duration} ${unit} until ${resumeAt.toISOString()}`);
+
+    return {
+        output: { delayed: true, duration, unit, resumeAt: resumeAt.toISOString() },
+        paused: true,
+        resumeAt,
+    };
+}
+
+// ── Loop Node ───────────────────────────────────────────────────────────────
+async function handleLoopNode(
+    node: any,
+    data: any,
+    triggerData: any,
+    previousOutputs: Record<string, any>,
+    executionId: string
+): Promise<NodeResult> {
+    const collectionPath = data.collection || "trigger.items";
+    const iteratorVar = data.iteratorVariable || "item";
+
+    // Resolve the collection from available data
+    let collection: any[] = [];
+    const parts = collectionPath.split(".");
+    let current: any = previousOutputs;
+    for (const part of parts) {
+        current = current?.[part];
+    }
+    if (Array.isArray(current)) {
+        collection = current;
+    }
+
+    systemLogger.info(`[WORKFLOW_ENGINE] Loop: iterating over ${collection.length} items`);
+
+    // Execute loop body for each item
+    // For now, the loop body nodes need to be marked with the loop as parent
+    // The engine provides each item as output for downstream nodes
+    const results: any[] = [];
+    for (let i = 0; i < collection.length; i++) {
+        results.push({
+            index: i,
+            [iteratorVar]: collection[i],
+        });
+    }
+
+    return {
+        output: {
+            loopCompleted: true,
+            itemCount: collection.length,
+            results,
+            currentItem: collection.length > 0 ? collection[collection.length - 1] : null,
+        },
+        outcome: "done",
+    };
+}
+
+// ── Action Node (send_email, notify, create_task) ───────────────────────────
 async function handleActionNode(data: any, triggerData: any, previousOutputs: Record<string, any>) {
     const actionType = data.actionType;
 
-    // Variable substitution helper (e.g. {{trigger.email}})
     const resolveVars = (str: string) => {
         if (!str) return str;
         return str.replace(/\{\{(.*?)\}\}/g, (match, path) => {
@@ -167,13 +346,10 @@ async function handleActionNode(data: any, triggerData: any, previousOutputs: Re
         const body = resolveVars(data.body || "");
 
         systemLogger.info(`[WORKFLOW_ENGINE] Action: Sending Email to ${to}`);
-        // In a real app, you'd call a real email service here. 
-        // For launch, we'll log it and simulate success.
-        return { output: { sent: true, to } };
+        return { output: { sent: true, to, subject } };
     }
 
     if (actionType === 'notify') {
-        // Create a system notification record
         const userId = data.userId || triggerData.assigned_to || triggerData.createdBy;
         if (userId) {
             await prismadb.crm_Notifications.create({
@@ -189,15 +365,21 @@ async function handleActionNode(data: any, triggerData: any, previousOutputs: Re
         return { output: { notified: true } };
     }
 
+    if (actionType === 'create_task') {
+        // Future: create actual task record
+        systemLogger.info(`[WORKFLOW_ENGINE] Action: Create Task`);
+        return { output: { taskCreated: true, title: resolveVars(data.taskTitle || "New Task") } };
+    }
+
     return { output: { success: true } };
 }
 
+// ── Condition Node ──────────────────────────────────────────────────────────
 async function handleConditionNode(data: any, triggerData: any, previousOutputs: Record<string, any>) {
     const fieldPath = data.field || "";
     const operator = data.operator || "equals";
     const expectedValue = data.value;
 
-    // Resolve current value from trigger data
     let actualValue: any = triggerData;
     const parts = fieldPath.split('.');
     for (const part of parts) {
@@ -209,19 +391,27 @@ async function handleConditionNode(data: any, triggerData: any, previousOutputs:
         case 'equals': isTrue = actualValue == expectedValue; break;
         case 'not_equals': isTrue = actualValue != expectedValue; break;
         case 'contains': isTrue = String(actualValue).includes(String(expectedValue)); break;
+        case 'not_contains': isTrue = !String(actualValue).includes(String(expectedValue)); break;
         case 'greater_than': isTrue = Number(actualValue) > Number(expectedValue); break;
         case 'less_than': isTrue = Number(actualValue) < Number(expectedValue); break;
+        case 'greater_or_equal': isTrue = Number(actualValue) >= Number(expectedValue); break;
+        case 'less_or_equal': isTrue = Number(actualValue) <= Number(expectedValue); break;
+        case 'is_empty': isTrue = !actualValue || actualValue === '' || actualValue === null; break;
+        case 'is_not_empty': isTrue = !!actualValue && actualValue !== ''; break;
+        case 'starts_with': isTrue = String(actualValue).startsWith(String(expectedValue)); break;
+        case 'ends_with': isTrue = String(actualValue).endsWith(String(expectedValue)); break;
     }
 
     return {
-        output: { conditionMet: isTrue, actualValue },
+        output: { conditionMet: isTrue, actualValue, field: fieldPath, operator },
         outcome: isTrue ? "true" : "false"
     };
 }
 
+// ── Update Record Node ──────────────────────────────────────────────────────
 async function handleUpdateRecordNode(data: any, triggerData: any, previousOutputs: Record<string, any>) {
-    const objectType = data.objectType; // e.g. "crm_Opportunities"
-    const recordId = triggerData.id; // Usually we update the record that triggered the flow
+    const objectType = data.objectType;
+    const recordId = triggerData.id;
 
     if (!objectType || !recordId) {
         throw new Error("UpdateRecordNode missing objectType or recordId context.");

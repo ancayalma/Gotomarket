@@ -15,6 +15,9 @@ import {
     Inbox,
     FileText,
     X,
+    MessageSquareText,
+    BookOpen,
+    List,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +39,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import KnowledgeBaseView from "./KnowledgeBaseView";
+import LiveChatConsole from "./LiveChatConsole";
 import { useToast } from "@/components/ui/use-toast";
 
 interface CasesClientProps {
@@ -170,8 +174,55 @@ export default function CasesClient({
         return `${days}d ago`;
     };
 
+    // Shared view tab bar for all views
+    const ViewTabs = () => (
+        <div className="flex items-center gap-1 border-b border-border/50 px-4 md:px-6 lg:px-8 bg-background/95 backdrop-blur">
+            {[
+                { key: "list", label: "Cases", icon: List },
+                { key: "queue", label: "Queue", icon: Inbox },
+                { key: "chat", label: "Live Chat", icon: MessageSquareText },
+                { key: "kb", label: "Knowledge Base", icon: BookOpen },
+            ].map(tab => (
+                <button
+                    key={tab.key}
+                    onClick={() => {
+                        setActiveView(tab.key);
+                        router.push(tab.key === "list" ? "/crm/cases" : `/crm/cases?view=${tab.key}`);
+                    }}
+                    className={cn(
+                        "flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-[1px]",
+                        activeView === tab.key
+                            ? "border-primary text-primary"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                >
+                    <tab.icon className="w-3.5 h-3.5" />
+                    {tab.label}
+                </button>
+            ))}
+        </div>
+    );
+
     if (activeView === "kb") {
-        return <KnowledgeBaseView initialArticles={initialArticles} />;
+        return (
+            <div className="flex flex-col h-full">
+                <ViewTabs />
+                <div className="flex-1 overflow-auto">
+                    <KnowledgeBaseView initialArticles={initialArticles} />
+                </div>
+            </div>
+        );
+    }
+
+    if (activeView === "chat") {
+        return (
+            <div className="flex flex-col h-full">
+                <ViewTabs />
+                <div className="flex-1 overflow-auto px-4 md:px-6 lg:px-8 py-4 pb-36 md:pb-4">
+                    <LiveChatConsole />
+                </div>
+            </div>
+        );
     }
 
     // Queue view: show actionable cases sorted by priority
@@ -183,21 +234,7 @@ export default function CasesClient({
 
         return (
             <div className="flex flex-col h-full bg-background">
-                <div className="shrink-0 border-b border-border/50 bg-background/95 backdrop-blur px-4 md:px-6 lg:px-8 py-4">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/20">
-                            <Inbox className="w-5 h-5 text-amber-400" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl md:text-4xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tighter uppercase leading-none">
-                                Case Queue
-                            </h1>
-                            <p className="text-muted-foreground/80 mt-1 text-[10px] md:text-xs font-medium tracking-wide italic border-l-2 border-amber-500/30 pl-4">
-                                {queueCases.length} actionable cases • sorted by priority
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                <ViewTabs />
 
                 <div className="flex-1 overflow-auto px-4 md:px-6 lg:px-8 py-4 pb-36 md:pb-4">
                     {queueCases.length === 0 ? (
@@ -293,6 +330,8 @@ export default function CasesClient({
                             New Case
                         </Button>
                     </div>
+
+                    <ViewTabs />
 
                     {/* Stats Bar */}
                     {stats && (

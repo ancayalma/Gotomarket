@@ -33,7 +33,9 @@ import AccountsTasksView from "./components/TasksView";
 import ContractsView from "../../components/ContractsView";
 import { LeadTimeline } from "../../leads/[leadId]/components/LeadTimeline";
 import { BasicView as LeadBasicView } from "../../leads/[leadId]/components/BasicView";
-import { History, Info } from "lucide-react";
+import { History, Info, Shield, GitBranch } from "lucide-react";
+import EntitlementPanel from "../components/EntitlementPanel";
+import AccountHierarchyPanel from "../components/AccountHierarchyPanel";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
@@ -190,6 +192,18 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
               >
                 Documents ({documents?.length || 0})
               </TabsTrigger>
+              <TabsTrigger
+                value="entitlements"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+              >
+                Entitlements
+              </TabsTrigger>
+              <TabsTrigger
+                value="hierarchy"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+              >
+                Hierarchy
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="activity" className="space-y-6 animate-in fade-in-50 duration-500">
@@ -286,6 +300,14 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
                 overviewHow="Drag and drop files to upload. Use the search bar to find specific assets or sort by upload date to see the latest additions."
               />
               <DocumentsView data={documents} />
+            </TabsContent>
+
+            <TabsContent value="entitlements" className="animate-in fade-in-50 duration-500">
+              <EntitlementPanel accountId={accountId} />
+            </TabsContent>
+
+            <TabsContent value="hierarchy" className="animate-in fade-in-50 duration-500">
+              <AccountHierarchyPanel accountId={accountId} />
             </TabsContent>
           </Tabs>
 

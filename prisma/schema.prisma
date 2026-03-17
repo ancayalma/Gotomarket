@@ -92,9 +92,17 @@ model crm_Accounts {
   account_subscriptions crm_Subscriptions[]
   additional_emails     String[]
 
+  // Account Hierarchy (parent/child companies)
+  parent_account_id String?        @db.ObjectId
+  parent_account    crm_Accounts?  @relation(name: "AccountHierarchy", fields: [parent_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  child_accounts    crm_Accounts[] @relation(name: "AccountHierarchy")
+
   // Synthesis Layer (AI Memory)
   contextNodes     ContextNode[]
   knowledgeSignals KnowledgeSignal[]
+
+  // Service Cloud
+  entitlements crm_Entitlement[]
 }
 
 model crm_Leads {
@@ -252,6 +260,17 @@ model crm_Opportunities {
 
   lead_source String?
   lead_id     String? @db.ObjectId
+
+  // Multi-Currency Support
+  currency_code      String? @default("USD") // ISO 4217 code
+  converted_budget   Float?  // Budget converted to team's base currency
+  converted_revenue  Float?  // Revenue converted to team's base currency
+
+  // Competitor Tracking
+  competitors crm_Opportunity_Competitors[]
+
+  // Revenue Splits (multi-rep credit)
+  splits crm_Opportunity_Splits[]
 }
 
 enum crm_Opportunity_Status {
@@ -259,6 +278,92 @@ enum crm_Opportunity_Status {
   INACTIVE
   PENDING
   CLOSED
+}
+
+// ── Competitor Tracking ─────────────────────────────────────────────────────
+enum CompetitorThreatLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum CompetitorOutcome {
+  ACTIVE       // Still competing
+  WON_AGAINST  // We won the deal
+  LOST_TO      // We lost to this competitor
+  NO_DECISION  // Deal was lost to no decision
+}
+
+model crm_Opportunity_Competitors {
+  id             String               @id @default(auto()) @map("_id") @db.ObjectId
+  opportunity_id String               @db.ObjectId
+  opportunity    crm_Opportunities    @relation(fields: [opportunity_id], references: [id], onDelete: Cascade)
+
+  name           String               // Competitor company name
+  website        String?              // Competitor website
+  contact_name   String?              // Their sales rep if known
+  product        String?              // Competing product/solution
+  strengths      String?              // Their key strengths
+  weaknesses     String?              // Their known weaknesses
+  strategy       String?              // Our counter-strategy
+  threat_level   CompetitorThreatLevel @default(MEDIUM)
+  outcome        CompetitorOutcome     @default(ACTIVE)
+  price_position String?              // e.g., "20% lower", "premium"
+
+  createdAt      DateTime             @default(now()) @db.Date
+  updatedAt      DateTime?            @updatedAt @db.Date
+  createdBy      String?              @db.ObjectId
+
+  @@index([opportunity_id])
+}
+
+// ── Revenue Splits (Multi-Rep Credit) ───────────────────────────────────────
+enum SplitType {
+  PRIMARY   // Primary deal owner
+  OVERLAY   // Overlay specialist (e.g., SE, solutions)
+  SUPPORT   // Supporting role
+  REFERRAL  // Referral credit
+}
+
+model crm_Opportunity_Splits {
+  id             String            @id @default(auto()) @map("_id") @db.ObjectId
+  opportunity_id String            @db.ObjectId
+  opportunity    crm_Opportunities @relation(fields: [opportunity_id], references: [id], onDelete: Cascade)
+
+  user_id        String            @db.ObjectId
+  user           Users             @relation(name: "OpportunitySplitUser", fields: [user_id], references: [id], onDelete: Cascade)
+
+  split_pct      Float             // Percentage (0-100), all splits on an opp should sum to 100
+  split_type     SplitType         @default(PRIMARY)
+  revenue_credit Float?            // Calculated: expected_revenue * (split_pct / 100)
+  note           String?           // Optional note for this split
+
+  createdAt      DateTime          @default(now()) @db.Date
+  updatedAt      DateTime?         @updatedAt @db.Date
+
+  @@unique([opportunity_id, user_id])
+  @@index([user_id])
+}
+
+// ── Multi-Currency Exchange Rates ───────────────────────────────────────────
+model crm_Currency {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  code                String   @unique // ISO 4217: USD, EUR, GBP, JPY, etc.
+  name                String   // "US Dollar", "Euro", etc.
+  symbol              String   // "$", "€", "£", "¥"
+  decimal_places      Int      @default(2)
+  exchange_rate_to_usd Float   // 1 unit of this currency = X USD
+  is_active           Boolean  @default(true)
+
+  // Team scope (null = system-wide default rates)
+  team_id             String?  @db.ObjectId
+
+  last_updated        DateTime @default(now()) @db.Date
+  createdAt           DateTime @default(now()) @db.Date
+
+  @@unique([code, team_id])
+  @@index([team_id])
 }
 
 model crm_campaigns {
@@ -284,6 +389,7 @@ enum OutreachChannelType {
   EMAIL
   SMS
   PHONE
+  LINKEDIN
 }
 
 model crm_Outreach_Campaigns {
@@ -324,6 +430,13 @@ model crm_Outreach_Campaigns {
   calls_initiated Int @default(0)
   meetings_booked Int @default(0)
 
+  // A/B Testing
+  ab_enabled               Boolean  @default(false)
+  ab_winner_metric         String?  // "open_rate", "reply_rate", "click_rate"
+  ab_winner_variant        String?  // Winning variant ID
+  ab_auto_winner_threshold Int?     @default(100) // Min sends before auto-picking winner
+  ab_decided_at            DateTime? @db.Date
+
   // Timestamps
   createdAt   DateTime? @default(now()) @db.Date
   updatedAt   DateTime? @updatedAt @db.Date
@@ -331,7 +444,8 @@ model crm_Outreach_Campaigns {
   completedAt DateTime? @db.Date
 
   // Relations
-  outreach_items   crm_Outreach_Items[]
+  outreach_items crm_Outreach_Items[]
+  ab_variants    crm_Outreach_AB_Variant[]
   assigned_user    Users?               @relation(name: "OutreachCampaignsUser", fields: [user], references: [id], onDelete: SetNull)
   assigned_team    Team?                @relation(name: "OutreachCampaignsTeam", fields: [team_id], references: [id])
   assigned_project Boards?              @relation(name: "OutreachCampaignsProject", fields: [project], references: [id])
@@ -369,6 +483,14 @@ model crm_Outreach_Items {
   body_text String?
   body_html String?
 
+  // A/B Testing: which variant was used for this item
+  ab_variant_id String? @db.ObjectId
+
+  // LinkedIn-specific fields
+  linkedin_profile_url String?
+  linkedin_message     String?
+  linkedin_action      String? // "connect", "message", "inmail"
+
   // Tracking
   message_id     String?
   tracking_token String?
@@ -391,6 +513,48 @@ model crm_Outreach_Items {
 
   // Synthesis Layer (AI Memory)
   knowledgeSignals KnowledgeSignal[]
+
+  // A/B variant relation
+  variant crm_Outreach_AB_Variant? @relation(fields: [ab_variant_id], references: [id])
+}
+
+// A/B Test Variants for Outreach Templates
+model crm_Outreach_AB_Variant {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  campaign_id String @db.ObjectId
+  name        String // e.g., "Variant A", "Variant B"
+  weight      Int    @default(50) // % of traffic
+  is_control  Boolean @default(false)
+
+  // Template content
+  subject       String?
+  body_template String?
+  body_html     String?
+  tone          String? // "formal", "casual", "direct", "empathetic"
+  cta_text      String?
+  cta_url       String?
+
+  // Performance metrics (denormalized)
+  total_sent     Int @default(0)
+  total_opened   Int @default(0)
+  total_clicked  Int @default(0)
+  total_replied  Int @default(0)
+  total_bounced  Int @default(0)
+
+  open_rate  Float @default(0)
+  click_rate Float @default(0)
+  reply_rate Float @default(0)
+
+  is_winner Boolean @default(false)
+
+  createdAt DateTime @default(now()) @db.Date
+  updatedAt DateTime @updatedAt @db.Date
+
+  // Relations
+  campaign crm_Outreach_Campaigns @relation(fields: [campaign_id], references: [id])
+  items    crm_Outreach_Items[]
+
+  @@index([campaign_id])
 }
 
 model crm_Opportunities_Sales_Stages {
@@ -467,6 +631,9 @@ model crm_Contacts {
 
   // API messaging: Activities linked to this contact
   lead_activities crm_Lead_Activities[] @relation(name: "LeadActivitiesToContact")
+
+  // Portal access tokens
+  portal_tokens crm_Portal_Token[]
 }
 
 enum crm_Contact_Type {
@@ -966,6 +1133,7 @@ model Users {
   leads                crm_Leads[]
   created_by_user      crm_Opportunities[]      @relation(name: "created_by_user_relation")
   assigned_opportunity crm_Opportunities[]      @relation(name: "assigned_to_user_relation")
+  opportunity_splits   crm_Opportunity_Splits[] @relation(name: "OpportunitySplitUser")
   assigned_contacts    crm_Contacts[]           @relation(name: "assigned_contacts")
   crated_contacts      crm_Contacts[]           @relation(name: "created_contacts")
   openAi_key           openAi_keys[]
@@ -1065,6 +1233,9 @@ model Users {
   authenticators  Authenticator[] // For WebAuthn (Fingerprint/Biometrics)
   crmEmails       crm_Emails[]
   api_keys        crm_ApiKeys[]
+
+  // Live Chat agent sessions
+  chat_agent_sessions crm_Live_Chat_Session[] @relation(name: "ChatAgent")
 }
 
 model Team {
@@ -1168,6 +1339,9 @@ model Team {
 
   // API Management
   api_keys crm_ApiKeys[]
+
+  // Sandbox Environments
+  sandboxes Sandbox[]
 }
 
 model TeamBrandIdentity {
@@ -2802,6 +2976,14 @@ model SavedReport {
   teamId String? @db.ObjectId
   // Optional: team Team? @relation(fields: [teamId], references: [id])
 
+  // Scheduled Delivery
+  schedule_enabled    Boolean  @default(false)
+  schedule_cron       String?  // Cron expression (e.g., "0 9 * * 1" for weekly Monday 9am)
+  schedule_recipients String[] // Email addresses to send the report to
+  schedule_last_sent  DateTime? @db.Date
+  schedule_format     String?  @default("HTML") // HTML, PDF, CSV
+  schedule_timezone   String?  @default("America/Chicago")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -2913,6 +3095,12 @@ model crm_Workflow {
   executions    crm_Workflow_Execution[]
   assigned_team Team?                    @relation(name: "WorkflowTeam", fields: [team_id], references: [id])
   creator       Users?                   @relation(name: "WorkflowCreator", fields: [created_by], references: [id], onDelete: SetNull)
+
+  // Webhook trigger (external systems can fire this workflow via token)
+  webhook_token String? @unique // UUID token for webhook URL
+
+  // Sandbox
+  sandbox_id String? @db.ObjectId
 }
 
 model crm_Workflow_Execution {
@@ -2923,9 +3111,11 @@ model crm_Workflow_Execution {
 
   status          ExecutionStatus @default(RUNNING)
   trigger_data    Json? // Data that triggered the workflow
+  trigger_source  String? // "manual", "event", "webhook", "scheduled"
   current_node    String? // Current node being executed
   completed_nodes String[] // Already executed node IDs
   node_outputs    Json? // Output data from each node
+  step_logs       Json? // Array of StepLog entries for execution history
   scheduled_at    DateTime?       @db.Date // For delay nodes
   error           String?
 
@@ -2933,6 +3123,7 @@ model crm_Workflow_Execution {
   completedAt DateTime? @db.Date
 
   @@index([workflow_id, status])
+  @@index([startedAt])
 }
 
 // =============================================================================
@@ -2954,7 +3145,8 @@ enum CustomFieldType {
   URL
   PHONE
   LOOKUP // Future: Relation to another object
-  FORMULA // Future: Calculated field
+  FORMULA // Calculated field from expression
+  ROLLUP  // Aggregate from child records
 }
 
 model CustomObjectDefinition {
@@ -2986,6 +3178,9 @@ model CustomObjectDefinition {
   team_id       String? @db.ObjectId
   assigned_team Team?   @relation(fields: [team_id], references: [id])
 
+  // Sandbox
+  sandbox_id String? @db.ObjectId
+
   @@unique([team_id, apiName])
 }
 
@@ -3009,6 +3204,15 @@ model CustomFieldDefinition {
   // Type specific config
   options    Json? // For SELECT/MULTI_SELECT: [{label: "Red", value: "red"}]
   validation Json? // Regex patterns, min/max values
+
+  // Formula field config
+  formula_expression String? // e.g. "budget * probability / 100"
+
+  // Rollup field config
+  rollup_function String? // SUM, COUNT, AVG, MIN, MAX
+  rollup_object   String? // Child object apiName (e.g. "crm_Opportunities")
+  rollup_field    String? // Field to aggregate on child
+  rollup_filter   Json?   // Optional filter criteria for child records
 
   // UI Layout
   order      Int     @default(0)
@@ -3077,6 +3281,9 @@ model PageLayout {
 
   team_id       String? @db.ObjectId
   assigned_team Team?   @relation(fields: [team_id], references: [id])
+
+  // Sandbox
+  sandbox_id String? @db.ObjectId
 
   @@index([object_id])
 }
@@ -3197,6 +3404,113 @@ model crm_Cases {
   @@index([assigned_to])
   @@index([contact_id])
   @@index([account_id])
+}
+
+// Entitlement Management — what support a customer is entitled to
+model crm_Entitlement {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  name       String // e.g., "Premium Support", "Standard SLA"
+  account_id String @db.ObjectId
+  account    crm_Accounts @relation(fields: [account_id], references: [id])
+
+  // Entitlement type
+  type       String // "cases", "hours", "unlimited"
+
+  // Limits
+  total_cases       Int?   // Max cases allowed (null = unlimited)
+  remaining_cases   Int?   // Decrements on case creation
+  total_hours       Float? // Support hours included
+  remaining_hours   Float?
+  response_time_hrs Int?   // Guaranteed first response in hours
+
+  // Channel restrictions
+  channels String[] // ["email", "phone", "chat", "portal"]
+
+  // Validity
+  start_date DateTime  @db.Date
+  end_date   DateTime  @db.Date
+  is_active  Boolean   @default(true)
+
+  // Team
+  team_id String? @db.ObjectId
+
+  createdAt DateTime @default(now()) @db.Date
+  updatedAt DateTime @updatedAt @db.Date
+
+  @@index([account_id])
+  @@index([team_id])
+}
+
+// Live Chat Sessions
+model crm_Live_Chat_Session {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Visitor info
+  visitor_name    String?
+  visitor_email   String?
+  visitor_page    String? // URL where chat was initiated
+  visitor_ip      String?
+
+  // Contact linkage (if known customer)
+  contact_id String?       @db.ObjectId
+  account_id String?       @db.ObjectId
+
+  // Agent assignment
+  agent_id      String? @db.ObjectId
+  agent         Users?  @relation(name: "ChatAgent", fields: [agent_id], references: [id], onDelete: SetNull)
+  department    String?
+  queue_name    String?
+
+  // Status
+  status        String  @default("waiting") // "waiting", "active", "ended", "missed"
+
+  // Messages stored as JSON array
+  messages      Json? // [{sender, text, timestamp, type}]
+
+  // Outcome
+  satisfaction_rating Int?    // 1-5
+  case_id             String? @db.ObjectId // Linked case if created from chat
+  resolution_notes    String?
+
+  // Timestamps
+  startedAt   DateTime  @default(now()) @db.Date
+  firstReplyAt DateTime? @db.Date
+  endedAt     DateTime? @db.Date
+
+  // Team
+  team_id String? @db.ObjectId
+
+  @@index([status])
+  @@index([agent_id])
+  @@index([team_id])
+}
+
+// Portal Access Tokens for customer self-service
+model crm_Portal_Token {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+
+  contact_id String       @db.ObjectId
+  contact    crm_Contacts @relation(fields: [contact_id], references: [id])
+  account_id String?      @db.ObjectId
+
+  // Token
+  token      String  @unique // JWT or UUID
+  is_active  Boolean @default(true)
+
+  // Permissions
+  permissions String[] // ["view_cases", "create_cases", "view_invoices", "view_knowledge"]
+
+  // Session tracking
+  last_login     DateTime? @db.Date
+  login_count    Int       @default(0)
+  ip_whitelist   String[]  // Optional: restrict IPs
+
+  // Expiry
+  expires_at DateTime? @db.Date
+
+  createdAt DateTime @default(now()) @db.Date
+
+  @@index([contact_id])
 }
 
 model crm_Case_Comments {
@@ -3610,6 +3924,9 @@ model ValidationRule {
   // Team scoping
   team_id       String @db.ObjectId
   assigned_team Team   @relation(fields: [team_id], references: [id])
+
+  // Sandbox
+  sandbox_id String? @db.ObjectId
 
   @@index([team_id, object_type])
   @@index([is_active])
@@ -4245,4 +4562,67 @@ model crm_ApiLogs {
   timestamp   DateTime @default(now())
 
   // We intentionally omit relation constraint to ApiKeys to preserve audit logs even if keys are deleted
+}
+
+// =============================================================================
+// SANDBOX ENVIRONMENTS
+// Isolated environments for testing configuration changes
+// =============================================================================
+
+enum SandboxStatus {
+  ACTIVE
+  PROMOTED
+  DISCARDED
+}
+
+model Sandbox {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String        // e.g., "Q3 Workflow Refactor"
+  description String?
+  status      SandboxStatus @default(ACTIVE)
+
+  // Team scoping
+  team_id   String @db.ObjectId
+  team      Team   @relation(fields: [team_id], references: [id])
+
+  // Audit
+  created_by String   @db.ObjectId
+  createdAt  DateTime @default(now()) @db.Date
+  updatedAt  DateTime @updatedAt @db.Date
+
+  // Track what was cloned into this sandbox
+  cloned_entity_ids Json? // { workflows: [...], validationRules: [...], customObjects: [...], layouts: [...] }
+
+  // Promotion tracking
+  promotedAt DateTime? @db.Date
+  promotedBy String?   @db.ObjectId
+
+  // Relations
+  deploy_logs SandboxDeployLog[]
+
+  @@index([team_id])
+  @@index([status])
+}
+
+model SandboxDeployLog {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+
+  sandbox_id  String  @db.ObjectId
+  sandbox     Sandbox @relation(fields: [sandbox_id], references: [id], onDelete: Cascade)
+
+  // What happened
+  action      String // CLONE, MODIFY, PROMOTE, DISCARD
+  entity_type String // "crm_Workflow", "ValidationRule", "CustomObjectDefinition", "PageLayout"
+  entity_id   String @db.ObjectId
+  entity_name String? // Human-readable name of the entity
+
+  // Change diff (for MODIFY and PROMOTE)
+  diff Json? // { before: {...}, after: {...} }
+
+  // Audit
+  performed_by String   @db.ObjectId
+  performedAt  DateTime @default(now()) @db.Date
+
+  @@index([sandbox_id])
+  @@index([entity_type])
 }

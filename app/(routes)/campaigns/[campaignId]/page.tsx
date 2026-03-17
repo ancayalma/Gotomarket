@@ -22,6 +22,8 @@ import {
     CheckCircle2,
     Edit3,
     Package,
+    FlaskConical,
+    Linkedin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +36,8 @@ import {
     CardTitle,
     CardDescription,
 } from "@/components/ui/card";
+import ABTestingPanel from "@/app/(routes)/crm/leads/components/ABTestingPanel";
+import LinkedInSequencePanel from "@/app/(routes)/crm/leads/components/LinkedInSequencePanel";
 
 type CampaignDetail = {
     id: string;
@@ -256,6 +260,14 @@ export default function CampaignDetailPage() {
                         <TabsTrigger value="analytics" className="gap-2 rounded-lg text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                             <BarChart3 className="w-3.5 h-3.5" />
                             Analytics
+                        </TabsTrigger>
+                        <TabsTrigger value="abtesting" className="gap-2 rounded-lg text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <FlaskConical className="w-3.5 h-3.5" />
+                            A/B Tests
+                        </TabsTrigger>
+                        <TabsTrigger value="linkedin" className="gap-2 rounded-lg text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <Linkedin className="w-3.5 h-3.5" />
+                            LinkedIn
                         </TabsTrigger>
                     </TabsList>
 
@@ -522,6 +534,16 @@ export default function CampaignDetailPage() {
                                 </CardContent>
                             </Card>
                         </div>
+                    </TabsContent>
+
+                    {/* A/B Testing Tab */}
+                    <TabsContent value="abtesting" className="mt-6">
+                        <ABTestingPanel campaignId={campaignId} />
+                    </TabsContent>
+
+                    {/* LinkedIn Tab */}
+                    <TabsContent value="linkedin" className="mt-6">
+                        <LinkedInSequencePanel campaignId={campaignId} />
                     </TabsContent>
                 </Tabs>
             </div>

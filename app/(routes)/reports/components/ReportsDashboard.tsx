@@ -5,7 +5,7 @@ import { EnhancedDateFilter } from "@/components/date-filter/EnhancedDateFilter"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, BarChart } from "@tremor/react";
 import { Activity, DollarSign, TrendingUp, Filter, Printer, Plus } from "lucide-react";
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition, useEffect, useRef, useCallback } from "react";
 import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ import { getTasksByMonth } from "@/actions/projects/get-tasks";
 import { getLeadsByMonth } from "@/actions/crm/get-leads";
 import { AISummaryModal } from "@/components/reports/AISummaryModal";
 import { CustomReportsPanel } from "@/components/reports/CustomReportsPanel";
+import CohortAnalysisChart from "./CohortAnalysisChart";
+import CLVDashboard from "./CLVDashboard";
 import Link from "next/link";
 
 // Types
@@ -93,13 +95,17 @@ export default function ReportsDashboard({
     const pipelineCount = (opps || []).reduce((acc: number, curr: any) => acc + (curr.Number || 0), 0);
     const tasksCount = (tasks || []).reduce((acc: number, curr: any) => acc + (curr.Number || 0), 0);
 
+    const handleDateFilterChange = useCallback((range: { from: Date | undefined; to: Date | undefined }) => {
+        setDate(range);
+    }, []);
+
     return (
         <div className="flex flex-col space-y-6">
             {/* Utility Bar */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 gap-4">
                 <div className="flex flex-col sm:flex-row gap-4">
                     <EnhancedDateFilter
-                        onFilterChange={(range) => setDate(range)}
+                        onFilterChange={handleDateFilterChange}
                         storageKey="crm-reports-dashboard-date-filter"
                         initialType="monthly"
                     />
@@ -261,6 +267,26 @@ export default function ReportsDashboard({
                                 colors={["indigo"]}
                                 showAnimation={true}
                             />
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Advanced Analytics */}
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Cohort Analysis</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CohortAnalysisChart />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Customer Lifetime Value</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CLVDashboard />
                         </CardContent>
                     </Card>
                 </div>

@@ -111,7 +111,7 @@ export async function GET(_req: Request, { params }: Params) {
       take: 50,
       include: {
         assigned_user: {
-          select: { name: true, image: true, avatar: true }
+          select: { name: true, avatar: true }
         }
       }
     });

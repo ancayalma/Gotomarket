@@ -8,7 +8,8 @@
 // Token types for the lexer
 export type TokenType =
     | 'NUMBER' | 'STRING' | 'BOOLEAN' | 'IDENTIFIER' | 'FUNCTION'
-    | 'OPERATOR' | 'LPAREN' | 'RPAREN' | 'COMMA'
+    | 'OPERATOR' | 'PLUS' | 'MINUS' | 'MULTIPLY' | 'DIVIDE'
+    | 'LPAREN' | 'RPAREN' | 'COMMA'
     | 'AND' | 'OR' | 'NOT' | 'EOF';
 
 export interface Token {
@@ -111,6 +112,29 @@ export function tokenize(formula: string): Token[] {
             continue;
         }
 
+        // Arithmetic operators
+        if (formula[i] === '+') {
+            tokens.push({ type: 'PLUS', value: '+' });
+            i++;
+            continue;
+        }
+        if (formula[i] === '*') {
+            tokens.push({ type: 'MULTIPLY', value: '*' });
+            i++;
+            continue;
+        }
+        if (formula[i] === '/') {
+            tokens.push({ type: 'DIVIDE', value: '/' });
+            i++;
+            continue;
+        }
+        // Minus handled in number parsing above; standalone minus for subtraction:
+        if (formula[i] === '-') {
+            tokens.push({ type: 'MINUS', value: '-' });
+            i++;
+            continue;
+        }
+
         // Identifiers, keywords, and functions
         if (/[a-zA-Z_]/.test(formula[i])) {
             let ident = '';
@@ -207,15 +231,56 @@ export class FormulaParser {
     }
 
     private parseComparison(): unknown {
-        const left = this.parsePrimary();
+        const left = this.parseAdditive();
 
         if (this.peek().type === 'OPERATOR') {
             const op = this.consume().value as string;
-            const right = this.parsePrimary();
+            const right = this.parseAdditive();
             return this.compare(left, op, right);
         }
 
         return left;
+    }
+
+    private parseAdditive(): unknown {
+        let left = this.parseMultiplicative();
+        while (this.peek().type === 'PLUS' || this.peek().type === 'MINUS') {
+            const op = this.consume();
+            const right = this.parseMultiplicative();
+            if (op.type === 'PLUS') {
+                left = Number(left) + Number(right);
+            } else {
+                left = Number(left) - Number(right);
+            }
+        }
+        return left;
+    }
+
+    private parseMultiplicative(): unknown {
+        let left = this.parseUnary();
+        while (this.peek().type === 'MULTIPLY' || this.peek().type === 'DIVIDE') {
+            const op = this.consume();
+            const right = this.parseUnary();
+            if (op.type === 'MULTIPLY') {
+                left = Number(left) * Number(right);
+            } else {
+                const divisor = Number(right);
+                left = divisor === 0 ? 0 : Number(left) / divisor;
+            }
+        }
+        return left;
+    }
+
+    private parseUnary(): unknown {
+        if (this.peek().type === 'MINUS') {
+            this.consume();
+            return -Number(this.parsePrimary());
+        }
+        if (this.peek().type === 'PLUS') {
+            this.consume();
+            return Number(this.parsePrimary());
+        }
+        return this.parsePrimary();
     }
 
     private compare(left: unknown, op: string, right: unknown): boolean {
@@ -365,6 +430,42 @@ export class FormulaParser {
             case 'DAY': {
                 const d = args[0] instanceof Date ? args[0] : new Date(String(args[0] ?? ''));
                 return d.getDate();
+            }
+            case 'ROUND':
+                return Math.round(Number(args[0] ?? 0) * Math.pow(10, Number(args[1] ?? 0))) / Math.pow(10, Number(args[1] ?? 0));
+            case 'CEILING':
+                return Math.ceil(Number(args[0] ?? 0));
+            case 'FLOOR':
+                return Math.floor(Number(args[0] ?? 0));
+            case 'POWER':
+                return Math.pow(Number(args[0] ?? 0), Number(args[1] ?? 1));
+            case 'MOD':
+                return Number(args[0] ?? 0) % Number(args[1] ?? 1);
+            case 'SQRT':
+                return Math.sqrt(Number(args[0] ?? 0));
+            case 'LOG':
+                return Math.log10(Number(args[0] ?? 1));
+            case 'CONCAT': {
+                return args.map(a => String(a ?? '')).join('');
+            }
+            case 'SUBSTITUTE': {
+                const str = String(args[0] ?? '');
+                const find = String(args[1] ?? '');
+                const repl = String(args[2] ?? '');
+                return str.split(find).join(repl);
+            }
+            case 'DATEVALUE':
+                return new Date(String(args[0] ?? ''));
+            case 'DATEDIFF': {
+                const d1 = args[0] instanceof Date ? args[0] : new Date(String(args[0] ?? ''));
+                const d2 = args[1] instanceof Date ? args[1] : new Date(String(args[1] ?? ''));
+                const unit = String(args[2] ?? 'days').toUpperCase();
+                const diffMs = d2.getTime() - d1.getTime();
+                if (unit === 'DAYS') return Math.floor(diffMs / 86400000);
+                if (unit === 'HOURS') return Math.floor(diffMs / 3600000);
+                if (unit === 'MONTHS') return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+                if (unit === 'YEARS') return d2.getFullYear() - d1.getFullYear();
+                return Math.floor(diffMs / 86400000);
             }
             default:
                 throw new Error(`Unknown function: ${name}`);

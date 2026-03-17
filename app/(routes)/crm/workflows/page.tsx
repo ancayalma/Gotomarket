@@ -16,6 +16,7 @@ export const metadata = {
 };
 
 import { MermaidEditor } from "./components/MermaidEditor";
+import ExecutionHistoryPanel from "./components/ExecutionHistoryPanel";
 
 export default async function WorkflowsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
     const session = await getServerSession(authOptions);
@@ -26,6 +27,7 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
 
     const awaitedSearchParams = await searchParams;
     const isEditorView = awaitedSearchParams?.view === "editor";
+    const isHistoryView = awaitedSearchParams?.view === "history";
 
     // Get user's team_id from session or user record
     const teamId = (session.user as { team_id?: string }).team_id;
@@ -42,10 +44,10 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
                         </div>
                         <div>
                             <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tighter uppercase leading-none">
-                                {isEditorView ? "Visual Editor" : "FlowState"}
+                                {isEditorView ? "Visual Editor" : isHistoryView ? "Execution History" : "FlowState"}
                             </h1>
                             <p className="text-muted-foreground/80 mt-2 text-base font-medium tracking-wide italic border-l-2 border-primary/30 pl-4">
-                                {isEditorView ? "Design and test FlowState automations with Mermaid.js" : "Visual workflow automation for your CRM"}
+                                {isEditorView ? "Design and test FlowState automations with Mermaid.js" : isHistoryView ? "Review past workflow executions and outcomes" : "Visual workflow automation for your CRM"}
                             </p>
                         </div>
                     </div>
@@ -63,6 +65,8 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
                 <div className="flex-1 p-4 sm:p-6 overflow-auto pb-36 md:pb-6">
                     {isEditorView ? (
                         <MermaidEditor />
+                    ) : isHistoryView ? (
+                        <ExecutionHistoryPanel />
                     ) : workflows.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center">
                             <div className="p-4 bg-muted rounded-full mb-4">

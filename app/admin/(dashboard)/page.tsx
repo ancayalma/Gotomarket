@@ -5,7 +5,7 @@ import { prismadb } from "@/lib/prisma";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { LearnLink } from "@/components/ui/LearnLink";
 
-import { Users, ShieldCheck, UserCheck, Eye, Building2, LayoutDashboard } from "lucide-react";
+import { Users, ShieldCheck, UserCheck, Eye, Building2, LayoutDashboard, Box } from "lucide-react";
 
 // UI Components
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUsers } from "@/actions/get-users";
 import TeamMembersTable from "@/app/(routes)/partners/[teamId]/_components/TeamMembersTable";
 import DepartmentsView from "@/app/(routes)/partners/[teamId]/_components/DepartmentsView";
+import SandboxManager from "@/app/(routes)/crm/settings/components/SandboxManager";
 
 export default async function AdminDashboardPage({
   searchParams
@@ -24,7 +25,7 @@ export default async function AdminDashboardPage({
   const resolvedSearchParams = await searchParams;
   const session = await getServerSession(authOptions);
   const teamInfo = await getCurrentUserTeamId();
-  const activeTab = resolvedSearchParams?.tab === 'departments' ? 'departments' : 'overview';
+  const activeTab = resolvedSearchParams?.tab === 'departments' ? 'departments' : resolvedSearchParams?.tab === 'sandbox' ? 'sandbox' : 'overview';
 
   if (!teamInfo?.teamId) {
     return (
@@ -94,7 +95,7 @@ export default async function AdminDashboardPage({
         overviewHow="Invite new members via the Invite Form, audit your existing user base in the data table, or organize your team structure by creating and managing Departments."
       />
       <Tabs defaultValue={activeTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+        <TabsList className="grid w-full grid-cols-3 max-w-[500px]">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <LayoutDashboard className="w-4 h-4" />
             Overview
@@ -107,6 +108,10 @@ export default async function AdminDashboardPage({
                 {departments.length}
               </span>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="sandbox" className="flex items-center gap-2">
+            <Box className="w-4 h-4" />
+            Sandbox
           </TabsTrigger>
         </TabsList>
 
@@ -140,6 +145,12 @@ export default async function AdminDashboardPage({
               departments={departments as any}
               isSuperAdmin={isSuperAdmin}
             />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sandbox" className="outline-none">
+          <div className="bg-card/50 border border-border rounded-xl p-6">
+            <SandboxManager />
           </div>
         </TabsContent>
       </Tabs>

@@ -60,6 +60,18 @@ const nodeCategories = [
         ],
     },
     {
+        title: "Triggers",
+        items: [
+            {
+                type: "trigger",
+                label: "Webhook",
+                description: "External system trigger",
+                icon: Bell,
+                color: "text-cyan-500",
+            },
+        ],
+    },
+    {
         title: "Actions",
         items: [
             {

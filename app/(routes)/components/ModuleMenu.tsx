@@ -134,6 +134,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
   const serviceSubItems: SubMenuItemType[] = [
     { label: "Agent Workspace", href: "/crm/cases" },
     { label: "Case Queue", href: "/crm/cases?view=queue" },
+    { label: "Live Chat", href: "/crm/cases?view=chat" },
     { label: "Knowledge Base", href: "/crm/cases?view=kb" },
   ];
 
@@ -141,6 +142,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
   const flowsSubItems: SubMenuItemType[] = [
     { label: "All Workflows", href: "/crm/workflows" },
     { label: "Visual Editor", href: "/crm/workflows?view=editor" },
+    { label: "Execution History", href: "/crm/workflows?view=history" },
   ];
 
   const platformSubItems: SubMenuItemType[] = [

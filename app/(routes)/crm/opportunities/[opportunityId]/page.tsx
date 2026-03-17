@@ -5,6 +5,7 @@ import { BasicView } from "./components/BasicView";
 import DocumentsView from "../../components/DocumentsView";
 import ContactsView from "../../components/ContactsView";
 import AccountsView from "../../components/AccountsView";
+import CompetitorPanel from "../components/CompetitorPanel";
 
 import { getAllCrmData } from "@/actions/crm/get-crm-data";
 import { getOpportunity } from "@/actions/crm/get-opportunity";
@@ -129,6 +130,7 @@ const OpportunityView = async (
         {hasAccess('opportunities.detail.accounts') && <AccountsView crmData={crmData} data={accounts} />}
         {hasAccess('opportunities.detail.contacts') && <ContactsView crmData={crmData} data={contacts} />}
         {hasAccess('opportunities.detail.documents') && <DocumentsView data={documents} />}
+        <CompetitorPanel opportunityId={opportunityId} />
       </div>
     </Container>
   );
