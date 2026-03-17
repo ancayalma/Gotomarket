@@ -105,7 +105,11 @@ export function PlanSelector({ subscription, teamId }: PlanSelectorProps) {
     const [tokenUnlimited, setTokenUnlimited] = useState(false);
 
     const currentPlan = subscription?.plan_name || "FREE";
-    const isExempt = currentPlan === "PLATFORM_ADMIN" || currentPlan === "EXEMPT";
+    const INTERNAL_SLUGS = ["basalt", "basalthq", "ledger1"];
+    const teamSlug = subscription?.team?.slug?.toLowerCase() || "";
+    const isInternalTeam = INTERNAL_SLUGS.includes(teamSlug);
+    const isExempt = currentPlan === "PLATFORM_ADMIN" || currentPlan === "EXEMPT" || (isInternalTeam && subscription?.last_charge_status === "SYSTEM_FREE_TIER");
+    const surgeAvailable = process.env.NEXT_PUBLIC_SURGE_BILLING_ENABLED === "true";
 
     useEffect(() => {
         fetch("/api/ai/tokens/balance")
@@ -248,9 +252,9 @@ export function PlanSelector({ subscription, teamId }: PlanSelectorProps) {
             {/* ── Plan Cards ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 {PLANS.map((plan, idx) => {
-                    const isCurrent = plan.slug === currentPlan;
-                    const isUpgrade = idx > currentPlanIndex && currentPlanIndex >= 0;
-                    const isDowngrade = idx < currentPlanIndex;
+                    const isCurrent = !isExempt && plan.slug === currentPlan;
+                    const isUpgrade = !isExempt && idx > currentPlanIndex && currentPlanIndex >= 0;
+                    const isDowngrade = !isExempt && idx < currentPlanIndex;
                     const isEnterprise = "enterprise" in plan && plan.enterprise;
                     const isPopular = "popular" in plan && plan.popular;
 
@@ -382,9 +386,9 @@ export function PlanSelector({ subscription, teamId }: PlanSelectorProps) {
                                             {/* Surge Button */}
                                             <Button
                                                 variant="outline"
-                                                className="w-full gap-2 border-emerald-500/20 text-emerald-400 hover:bg-emerald-950/30 hover:border-emerald-500/40"
-                                                onClick={() => handleCheckout("surge", plan.slug, isAnnual ? "annual" : "monthly")}
-                                                disabled={!!loading}
+                                                className={`w-full gap-2 ${surgeAvailable ? "border-emerald-500/20 text-emerald-400 hover:bg-emerald-950/30 hover:border-emerald-500/40" : "border-zinc-700 text-zinc-500 cursor-not-allowed opacity-50"}`}
+                                                onClick={() => surgeAvailable && handleCheckout("surge", plan.slug, isAnnual ? "annual" : "monthly")}
+                                                disabled={!!loading || !surgeAvailable}
                                             >
                                                 {loadingSurge ? (
                                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -394,7 +398,11 @@ export function PlanSelector({ subscription, teamId }: PlanSelectorProps) {
                                                 <span className="flex-1 text-left">
                                                     Surge — ${surgePriceVal}
                                                 </span>
-                                                <Badge className="bg-green-500/20 text-green-400 border-green-500/20 text-[8px] px-1">{SURGE_DISCOUNT}% OFF</Badge>
+                                                {surgeAvailable ? (
+                                                    <Badge className="bg-green-500/20 text-green-400 border-green-500/20 text-[8px] px-1">{SURGE_DISCOUNT}% OFF</Badge>
+                                                ) : (
+                                                    <Badge className="bg-zinc-700/50 text-zinc-500 border-zinc-600/30 text-[8px] px-1">Coming Soon</Badge>
+                                                )}
                                             </Button>
                                         </>
                                     )}
@@ -448,9 +456,9 @@ export function PlanSelector({ subscription, teamId }: PlanSelectorProps) {
                             {/* Surge Top-Up */}
                             <Button
                                 variant="outline"
-                                className="gap-2 border-emerald-500/20 text-emerald-400 hover:bg-emerald-950/30 hover:border-emerald-500/40"
-                                onClick={() => handleTopUp("surge")}
-                                disabled={!!loading || tokenUnlimited}
+                                className={`gap-2 ${surgeAvailable ? "border-emerald-500/20 text-emerald-400 hover:bg-emerald-950/30 hover:border-emerald-500/40" : "border-zinc-700 text-zinc-500 cursor-not-allowed opacity-50"}`}
+                                onClick={() => surgeAvailable && handleTopUp("surge")}
+                                disabled={!!loading || tokenUnlimited || !surgeAvailable}
                             >
                                 {loading === "topup-surge" ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -458,7 +466,11 @@ export function PlanSelector({ subscription, teamId }: PlanSelectorProps) {
                                     <Hexagon className="w-3.5 h-3.5" />
                                 )}
                                 ${surgePrice(TOPUP.price)} — Surge
-                                <Badge className="bg-green-500/20 text-green-400 border-green-500/20 text-[8px] px-1">{SURGE_DISCOUNT}% OFF</Badge>
+                                {surgeAvailable ? (
+                                    <Badge className="bg-green-500/20 text-green-400 border-green-500/20 text-[8px] px-1">{SURGE_DISCOUNT}% OFF</Badge>
+                                ) : (
+                                    <Badge className="bg-zinc-700/50 text-zinc-500 border-zinc-600/30 text-[8px] px-1">Coming Soon</Badge>
+                                )}
                             </Button>
                         </div>
                     </div>

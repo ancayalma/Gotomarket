@@ -141,11 +141,11 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                             width: isOpen ? "auto" : 0,
                             display: isOpen ? "flex" : "none",
                         }}
-                        className="ml-2.5 flex-1 items-center justify-between overflow-hidden whitespace-nowrap z-10"
+                        className="ml-2.5 flex-1 items-center justify-between overflow-hidden z-10"
                     >
                         <span
                             className={cn(
-                                "flex items-center gap-2 uppercase tracking-tight py-0 px-2 leading-normal",
+                                "flex flex-col uppercase tracking-tight py-0 px-2 leading-normal",
                                 isActive ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-colors duration-300"
                             )}
                             style={{
@@ -156,11 +156,11 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
                                 paddingRight: '0.4em'
                             }}
                         >
-                            {title}
+                            <span className="whitespace-nowrap">{title}</span>
                             {isLocked && (
-                                <span className="text-[10px] bg-muted/50 text-muted-foreground px-1.5 py-0.5 rounded flex items-center gap-1.5 border border-border/50 not-italic font-bold">
-                                    <Lock className="w-2.5 h-2.5" />
-                                    <span className="hidden xl:inline">Upgrade</span>
+                                <span className="text-[7px] bg-muted/50 text-muted-foreground px-1 py-[1px] rounded flex items-center gap-1 border border-border/50 not-italic font-bold w-fit mt-0.5 leading-tight">
+                                    <Lock className="w-2 h-2" />
+                                    Upgrade
                                 </span>
                             )}
                         </span>

@@ -4,6 +4,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { decryptSecret } from "@/lib/encryption";
 import axios from 'axios';
 import https from 'https';
 import { systemLogger } from "@/lib/logger";
@@ -35,12 +36,14 @@ export async function getSurgeReceipt(invoiceId: string) {
             return null;
         }
 
+        const apiKey = decryptSecret(integration.surge_api_key) || integration.surge_api_key;
+
         const response = await axios.get(
             `${SURGE_API_BASE}/receipts/${invoice.surge_payment_id}`,
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Ocp-Apim-Subscription-Key': integration.surge_api_key
+                    'Ocp-Apim-Subscription-Key': apiKey
                 },
                 httpsAgent: httpsAgent
             }

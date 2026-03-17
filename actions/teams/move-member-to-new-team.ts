@@ -36,10 +36,16 @@ export async function moveMemberToNewTeam(
             return { error: `A team with slug "${teamSlug}" already exists.` };
         }
 
-        // 3. Create the new team
+        // 3. Create the new team — default to FREE plan if none specified
+        let resolvedPlanId = planId;
+        if (!resolvedPlanId) {
+            const freePlan = await prismadb.plan.findFirst({ where: { slug: "FREE" } });
+            if (freePlan) resolvedPlanId = freePlan.id;
+        }
+
         let renewalDate = null;
-        if (planId) {
-            const plan = await prismadb.plan.findUnique({ where: { id: planId } });
+        if (resolvedPlanId) {
+            const plan = await prismadb.plan.findUnique({ where: { id: resolvedPlanId } });
             if (plan) {
                 const now = new Date();
                 if (plan.billing_cycle === 'MONTHLY') {
@@ -55,7 +61,7 @@ export async function moveMemberToNewTeam(
                 name: teamName,
                 slug: teamSlug,
                 owner_id: userId,
-                plan_id: planId,
+                plan_id: resolvedPlanId,
                 renewal_date: renewalDate,
             }
         });

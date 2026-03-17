@@ -51,6 +51,11 @@ export async function saveSubscription(data: {
             discountApplied = true;
         }
 
+        // Hard gate: Surge billing must be explicitly enabled
+        if (provider === "SURGE" && process.env.SURGE_BILLING_ENABLED !== "true") {
+            return { error: "BasaltSurge billing is not enabled in this environment." };
+        }
+
         // Calculate next billing date
         const now = new Date();
         let nextBillingDate = new Date(now.getFullYear(), now.getMonth(), data.billingDay);
@@ -71,7 +76,9 @@ export async function saveSubscription(data: {
 
         const isInternalTeam = team && ['basalt', 'basalthq', 'ledger1'].includes(team.slug.toLowerCase());
 
-        const status = "ACTIVE";
+        // Internal/exempt teams get ACTIVE immediately; everyone else starts PENDING
+        // until payment is confirmed via Stripe/Surge webhook
+        const status = isInternalTeam ? "ACTIVE" : "PENDING_PAYMENT";
         const lastChargeStatus = isInternalTeam ? "SYSTEM_FREE_TIER" : "PENDING_FIRST_PAYMENT";
 
         // 1. Create/Update the Subscription Record

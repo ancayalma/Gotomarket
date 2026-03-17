@@ -87,6 +87,9 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
     const [loading, setLoading] = useState(false);
     const [currentPlanSlug, setCurrentPlanSlug] = useState<string>("FREE");
 
+    // Hard opt-in: Surge billing is only available when explicitly enabled
+    const surgeAvailable = process.env.NEXT_PUBLIC_SURGE_BILLING_ENABLED === "true";
+
     const filteredPlans = useMemo(() => {
         return PLANS_CONFIG.filter((p: any) => {
             const currentIdx = HIERARCHY.indexOf(currentPlanSlug);
@@ -251,15 +254,22 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                     Stripe
                                 </button>
                                 <button
-                                    onClick={() => setPaymentProvider("SURGE")}
+                                    onClick={() => surgeAvailable && setPaymentProvider("SURGE")}
+                                    disabled={!surgeAvailable}
                                     className={cn(
                                         "flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors relative flex items-center justify-center gap-1.5",
-                                        isSurge ? "bg-emerald-600/30 text-emerald-300 shadow-lg border border-emerald-500/30" : "text-zinc-500 hover:text-zinc-300"
+                                        !surgeAvailable
+                                            ? "text-zinc-600 cursor-not-allowed opacity-50"
+                                            : isSurge ? "bg-emerald-600/30 text-emerald-300 shadow-lg border border-emerald-500/30" : "text-zinc-500 hover:text-zinc-300"
                                     )}
                                 >
                                     <Zap className="w-3 h-3" />
                                     BasaltSurge
-                                    <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-black">-{SURGE_DISCOUNT_PERCENT}%</span>
+                                    {surgeAvailable ? (
+                                        <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-black">-{SURGE_DISCOUNT_PERCENT}%</span>
+                                    ) : (
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-700/50 text-zinc-500 font-black uppercase tracking-wider">Coming Soon</span>
+                                    )}
                                 </button>
                             </div>
 
@@ -456,7 +466,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                                     : "bg-indigo-600 hover:bg-indigo-500 hover:shadow-[0_0_40px_rgba(79,70,229,0.4)]"
                                         )}
                                         onClick={handleSave}
-                                        disabled={loading || !selectedPlan}
+                                        disabled={loading || !selectedPlan || (isSurge && !surgeAvailable)}
                                     >
                                         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
                                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />

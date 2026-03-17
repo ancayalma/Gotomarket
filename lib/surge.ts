@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { prismadb } from '@/lib/prisma';
+import { decryptSecret } from '@/lib/encryption';
 import https from 'https';
 export * from './surge-x402';
 export * from './surge-ucp';
@@ -32,7 +33,7 @@ export async function createSurgeCheckoutSession(tenantId: string, invoice: any,
         });
 
         // Fallback to ENV for Dev/Testing if DB config is missing
-        let apiKey = integration?.surge_api_key;
+        let apiKey = decryptSecret(integration?.surge_api_key) || integration?.surge_api_key;
         if (!apiKey && process.env.SURGE_API_KEY) {
             apiKey = process.env.SURGE_API_KEY;
         }
@@ -179,7 +180,7 @@ export async function getSurgePaymentStatus(tenantId: string, receiptId: string)
             where: { tenant_id: tenantId }
         });
 
-        let apiKey = integration?.surge_api_key;
+        let apiKey = decryptSecret(integration?.surge_api_key) || integration?.surge_api_key;
         if (!apiKey && process.env.SURGE_API_KEY) {
             apiKey = process.env.SURGE_API_KEY;
         }

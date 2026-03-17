@@ -26,9 +26,16 @@ export const createTeam = async (name: string, slug: string, planId?: string) =>
         }
 
 
+        // Resolve plan: use provided planId or default to FREE tier
+        let resolvedPlanId = planId;
+        if (!resolvedPlanId) {
+            const freePlan = await prismadb.plan.findFirst({ where: { slug: "FREE" } });
+            if (freePlan) resolvedPlanId = freePlan.id;
+        }
+
         let renewalDate = null;
-        if (planId) {
-            const plan = await prismadb.plan.findUnique({ where: { id: planId } });
+        if (resolvedPlanId) {
+            const plan = await prismadb.plan.findUnique({ where: { id: resolvedPlanId } });
             if (plan) {
                 const now = new Date();
                 if (plan.billing_cycle === 'MONTHLY') {
@@ -43,7 +50,7 @@ export const createTeam = async (name: string, slug: string, planId?: string) =>
             data: {
                 name,
                 slug,
-                plan_id: planId,
+                plan_id: resolvedPlanId,
                 renewal_date: renewalDate,
             },
         });

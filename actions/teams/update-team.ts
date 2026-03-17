@@ -13,7 +13,9 @@ export const updateTeam = async (teamId: string, data: { name?: string; slug?: s
         const currentUser = await getCurrentUserTeamId();
         if (!currentUser?.userId) return { error: "Unauthorized" };
 
-        if ((currentUser.teamId !== teamId || !currentUser.isAdmin)) {
+        // Global admins can modify any team; regular admins can only modify their own
+        const isGlobalAdmin = currentUser.isGlobalAdmin;
+        if (!isGlobalAdmin && (currentUser.teamId !== teamId || !currentUser.isAdmin)) {
             return { error: "Unauthorized: You do not have permission to modify this team." };
         }
 

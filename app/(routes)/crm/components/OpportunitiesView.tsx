@@ -75,11 +75,11 @@ const OpportunitiesView = ({
   const avgDealSize = countDeals > 0 ? totalValue / countDeals : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 overflow-hidden">
       {!isClosedView ? (
         <LeadOpportunitiesPanel metrics={{ totalValue, countDeals, avgDealSize, isClosedView }} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <Card className="bg-gradient-to-br from-primary/10 via-background to-background border-primary/20">
             <CardHeader className="py-4">
               <CardDescription className="text-xs uppercase tracking-wider font-semibold">
@@ -178,7 +178,7 @@ const OpportunitiesView = ({
           </div>
           <Separator className="bg-white/5" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-hidden p-2 sm:p-6">
           {!displayData || displayData.length === 0 ? (
             <div className="py-20 text-center text-muted-foreground bg-muted/5 rounded-xl border border-white/5 mx-2 my-2">
               {isClosedView ? "No closed deals found" : "No active pipeline found"}
@@ -188,7 +188,9 @@ const OpportunitiesView = ({
               {viewMode === "table" ? (
                 <OpportunitiesDataTable data={displayData} columns={columns} />
               ) : (
-                <KanbanBoard opportunities={displayData} stages={saleStages} />
+                <div className="overflow-x-auto min-w-0 -mx-1 px-1 custom-scrollbar">
+                  <KanbanBoard opportunities={displayData} stages={saleStages} />
+                </div>
               )}
             </>
           )}

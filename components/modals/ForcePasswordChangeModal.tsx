@@ -55,10 +55,15 @@ const ForcePasswordChangeModal = ({ isOpen }: ForcePasswordChangeModalProps) => 
     };
 
     return (
-        <Dialog.Root open={isOpen}>
+        <Dialog.Root open={isOpen} modal>
             <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm animate-in fade-in duration-300" />
-                <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-full max-w-md -translate-x-1/2 -translate-y-1/2 p-1 focus:outline-none">
+                <Dialog.Overlay className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md animate-in fade-in duration-300" />
+                <Dialog.Content
+                    className="fixed left-1/2 top-1/2 z-[201] w-full max-w-md -translate-x-1/2 -translate-y-1/2 p-1 focus:outline-none"
+                    onPointerDownOutside={(e) => e.preventDefault()}
+                    onEscapeKeyDown={(e) => e.preventDefault()}
+                    onInteractOutside={(e) => e.preventDefault()}
+                >
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}

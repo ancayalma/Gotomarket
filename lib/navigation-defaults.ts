@@ -48,6 +48,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Accounts",
                 iconName: "Building2",
                 href: "/crm/accounts",
+                permissions: { feature: "accounts" },
                 children: [
                     { id: "sub_accounts_all", type: "item", label: "All Accounts", href: "/crm/accounts?tab=accounts", iconName: "Building2" },
                     { id: "sub_accounts_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/accounts?tab=wizard", iconName: "Wand2" }
@@ -58,7 +59,8 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Contacts",
                 iconName: "Contact",
-                href: "/crm/contacts"
+                href: "/crm/contacts",
+                permissions: { feature: "contacts" }
             },
             {
                 id: "nav_lists",
@@ -66,7 +68,8 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Lists",
                 iconName: "List",
                 href: "/lists",
-                permissions: { minRole: "ADMIN" }
+                permissions: { minRole: "ADMIN", feature: "outreach" },
+                isPremium: true
             },
             {
                 id: "nav_campaigns",
@@ -74,7 +77,8 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Campaigns",
                 iconName: "Megaphone",
                 href: "/campaigns",
-                permissions: { minRole: "ADMIN" }
+                permissions: { minRole: "ADMIN", feature: "outreach" },
+                isPremium: true
             },
             {
                 id: "nav_forms",
@@ -90,7 +94,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Calendar",
                 iconName: "Calendar",
                 href: "/crm/calendar",
-                permissions: { minRole: "ADMIN" }
+                permissions: { minRole: "ADMIN", feature: "leads" }
             }
         ]
     },
@@ -107,14 +111,17 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Command",
                 iconName: "Radio",
-                href: "/crm/sales-command"
+                href: "/crm/sales-command",
+                permissions: { feature: "sales-command" },
+                isPremium: true
             },
             {
                 id: "nav_leads",
                 type: "item",
                 label: "Leads",
                 iconName: "Users",
-                href: "/crm/leads"
+                href: "/crm/leads",
+                permissions: { feature: "leads" }
             },
             {
                 id: "nav_deals",
@@ -122,6 +129,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Deals",
                 iconName: "Target",
                 href: "/crm/opportunities",
+                permissions: { feature: "opportunities" },
                 children: [
                     { id: "sub_deals_pipeline", type: "item", label: "Pipeline View", href: "/crm/opportunities" },
                     { id: "sub_deals_closed", type: "item", label: "Won / Lost", href: "/crm/opportunities?view=closed" }
@@ -140,7 +148,9 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Quotes",
                 iconName: "FileText",
-                href: "/crm/quotes"
+                href: "/crm/quotes",
+                permissions: { feature: "quotes" },
+                isPremium: true
             },
             {
                 id: "nav_insights",
@@ -148,6 +158,8 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Insights",
                 iconName: "Zap",
                 href: "/crm/insights",
+                permissions: { feature: "insights" },
+                isPremium: true,
                 badge: "new"
             },
             {
@@ -156,6 +168,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Quests",
                 iconName: "Sword",
                 href: "/crm/quests",
+                permissions: { feature: "quests" },
                 isPremium: true
             }
         ]
@@ -173,6 +186,8 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Service",
                 iconName: "Headset",
                 href: "/crm/cases",
+                permissions: { feature: "cases" },
+                isPremium: true,
                 badge: "serviceBadge",
                 children: [
                     { id: "sub_service_workspace", type: "item", label: "Agent Workspace", href: "/crm/cases" },
@@ -208,7 +223,8 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Invoices",
                 iconName: "FileCheck",
                 href: "/invoice",
-                permissions: { module: "invoice" }
+                permissions: { module: "invoice", feature: "invoice" },
+                isPremium: true
             },
             {
                 id: "nav_reports",
@@ -226,6 +242,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 iconName: "UserCog",
                 href: "/employees",
                 permissions: { module: "employee", feature: "employee" },
+                isPremium: true,
                 children: [
                     { id: "sub_staff_all", type: "item", label: "All Staff", href: "/employees", iconName: "Users" },
                     { id: "sub_staff_kpis", type: "item", label: "KPI Tracking", href: "/employees?tab=kpis", iconName: "FileBarChart" },
@@ -246,14 +263,18 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Contracts",
                 iconName: "FileText",
-                href: "/crm/contracts"
+                href: "/crm/contracts",
+                permissions: { feature: "contracts" },
+                isPremium: true
             },
             {
                 id: "nav_products",
                 type: "item",
                 label: "Products",
                 iconName: "Package",
-                href: "/crm/products"
+                href: "/crm/products",
+                permissions: { feature: "products" },
+                isPremium: true
             },
             {
                 id: "nav_varuni",
@@ -261,7 +282,8 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Varuni AI",
                 iconName: "Sparkles",
                 href: "/openAi",
-                permissions: { module: "openai" }
+                permissions: { module: "openai", feature: "ai_lab" },
+                isPremium: true
             }
         ]
     },
@@ -278,7 +300,9 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Approvals",
                 iconName: "CheckCircle2",
-                href: "/crm/approvals"
+                href: "/crm/approvals",
+                permissions: { feature: "approvals" },
+                isPremium: true
             },
             {
                 id: "nav_flows",
@@ -286,6 +310,8 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Flows",
                 iconName: "Zap",
                 href: "/crm/workflows",
+                permissions: { feature: "workflows" },
+                isPremium: true,
                 children: [
                     { id: "sub_flows_all", type: "item", label: "All Workflows", href: "/crm/workflows" },
                     { id: "sub_flows_editor", type: "item", label: "Visual Editor", href: "/crm/workflows?view=editor" }
@@ -296,7 +322,9 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Guards",
                 iconName: "Shield",
-                href: "/crm/validation-rules"
+                href: "/crm/validation-rules",
+                permissions: { feature: "guard-rules" },
+                isPremium: true
             }
         ]
     },
@@ -325,7 +353,8 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Learn",
                 iconName: "GraduationCap",
-                href: "/crm/university"
+                href: "/crm/university",
+                permissions: { feature: "university" }
             },
             {
                 id: "nav_audit",

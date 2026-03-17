@@ -45,6 +45,11 @@ export default async function AdminDashboardLayout({
         include: { assigned_team: true }
     });
 
+    // Enforce password change — redirect back to main app where modal will force the change
+    if (user?.mustChangePassword) {
+        return redirect(`/`);
+    }
+
     const showModules = user?.is_admin || user?.assigned_team?.slug === "basalthq";
 
     return (

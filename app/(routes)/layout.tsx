@@ -91,11 +91,12 @@ export default async function AppLayout({
 
   let needsBrandSetup = false;
   let userTeamId = "";
+  let mustChangePassword = false;
   
   if (session?.user?.id) {
       const fullUser = await prismadb.users.findUnique({
           where: { id: session.user.id },
-          select: { team_id: true, team_role: true, is_admin: true, assigned_role: { select: { name: true } } }
+          select: { team_id: true, team_role: true, is_admin: true, mustChangePassword: true, assigned_role: { select: { name: true } } }
       });
       if (fullUser?.team_id) {
           userTeamId = fullUser.team_id;
@@ -111,6 +112,7 @@ export default async function AppLayout({
               }
           }
       }
+      mustChangePassword = fullUser?.mustChangePassword === true;
   }
 
   if (user?.userStatus === "INACTIVE") {
@@ -119,10 +121,10 @@ export default async function AppLayout({
 
   return (
     <ThemeGuard>
-      <BrandSetupInterceptor isOpen={needsBrandSetup} teamId={userTeamId} />
+      <BrandSetupInterceptor isOpen={needsBrandSetup && !mustChangePassword} teamId={userTeamId} />
       <IdleSessionTimeout />
       <TermsConsentCheck />
-      <ForcePasswordChangeCheck />
+      <ForcePasswordChangeCheck serverFlag={mustChangePassword} />
       <div className="fixed inset-0 flex h-[100dvh] overflow-hidden">
         <SideBar />
         <div className="flex flex-col h-full w-full min-w-0 overflow-hidden">

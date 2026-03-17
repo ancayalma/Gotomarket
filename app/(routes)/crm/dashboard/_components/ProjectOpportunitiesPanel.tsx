@@ -155,7 +155,7 @@ export default function LeadOpportunitiesPanel({
       transition={{ duration: 0.4 }}
       className="space-y-6"
     >
-      <div className={`grid grid-cols-1 ${metrics ? 'md:grid-cols-4' : 'md:grid-cols-1'} gap-4`}>
+      <div className={`grid grid-cols-1 ${metrics ? 'sm:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-1'} gap-4`}>
         <div className="flex flex-col gap-4 items-start bg-gradient-to-br from-background via-background shadow-[0_8px_30px_rgb(0,0,0,0.04)] to-primary/[0.03] p-4 rounded-xl border border-white/5 h-full justify-center">
           <div className="w-full relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-blue-500/30 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
