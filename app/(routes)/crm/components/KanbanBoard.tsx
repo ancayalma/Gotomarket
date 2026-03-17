@@ -102,7 +102,7 @@ export function KanbanBoard({ opportunities, stages }: KanbanBoardProps) {
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
-            <div className="flex gap-3 overflow-x-auto min-w-0 md:h-[calc(100vh-320px)] pb-36 md:pb-4 custom-scrollbar">
+            <div className="flex flex-nowrap gap-3 md:h-[calc(100vh-320px)] pb-36 md:pb-4">
                 {sortedStages.map((stage) => {
                     const stageDeals = localDeals.filter(d => d.sales_stage === stage.id);
                     const totalValue = stageDeals.reduce((sum, d) => sum + (d.expected_revenue || 0), 0);

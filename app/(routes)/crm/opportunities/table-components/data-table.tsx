@@ -47,6 +47,7 @@ export function OpportunitiesDataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   // Mobile detection using shared hook
   const isMobile = useIsMobile();
+  const isNarrow = useIsMobile(1024); // tablet / narrow desktop
 
   const {
     columnVisibility,
@@ -118,13 +119,13 @@ export function OpportunitiesDataTable<TData, TValue>({
 
   // Force grid view on mobile
   React.useEffect(() => {
-    if (isMobile) {
+    if (isNarrow) {
       setViewMode("card");
     }
-  }, [isMobile, setViewMode]);
+  }, [isNarrow, setViewMode]);
 
   // Map "card" viewMode to internal "grid" layout
-  const currentView = isMobile ? "grid" : (viewMode === "card" ? "grid" : viewMode);
+  const currentView = isNarrow ? "grid" : (viewMode === "card" ? "grid" : viewMode);
 
   return (
     <div className="space-y-4">
@@ -135,7 +136,7 @@ export function OpportunitiesDataTable<TData, TValue>({
 
         <div className="flex items-center gap-2 self-end md:self-auto">
           {/* Layout Toggles (Desktop Only) */}
-          {!isMobile && (
+          {!isNarrow && (
             <ViewToggle value={viewMode} onChange={setViewMode} />
           )}
 
@@ -174,74 +175,76 @@ export function OpportunitiesDataTable<TData, TValue>({
             </div>
           ) : (
             <>
-              <div className="rounded-md border overflow-x-auto bg-background/50 backdrop-blur-sm">
-                <Table className="table-fixed w-full border-collapse">
-                  <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => {
-                          return (
-                            <TableHead
-                              key={header.id}
-                              className={`${currentView === "compact" ? "h-8 py-1" : ""} relative min-w-0 h-10 px-2 group overflow-visible`}
-                              style={{ width: header.getSize() }}
-                            >
-                              <div className="flex items-center h-full w-full">
-                                {header.isPlaceholder
-                                  ? null
-                                  : flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext()
-                                  )}
-                              </div>
-                              {header.column.getCanResize() && (
-                                <div
-                                  onMouseDown={header.getResizeHandler()}
-                                  onTouchStart={header.getResizeHandler()}
-                                  className={`absolute right-0 top-0 h-full w-4 cursor-col-resize select-none touch-none z-10 flex justify-center items-center group-hover:opacity-100 transition-opacity ${header.column.getIsResizing() ? "opacity-100" : "opacity-0"}`}
-                                >
-                                  <div className={`w-[2px] h-full ${header.column.getIsResizing() ? "bg-primary" : "bg-border group-hover:bg-primary/50"}`} />
+              <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
+                <div className="rounded-md border overflow-x-auto bg-background/50 backdrop-blur-sm custom-scrollbar">
+                  <Table className="table-fixed w-full border-collapse">
+                    <TableHeader>
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id}>
+                          {headerGroup.headers.map((header) => {
+                            return (
+                              <TableHead
+                                key={header.id}
+                                className={`${currentView === "compact" ? "h-8 py-1" : ""} relative min-w-0 h-10 px-2 group overflow-visible`}
+                                style={{ width: header.getSize() }}
+                              >
+                                <div className="flex items-center h-full w-full">
+                                  {header.isPlaceholder
+                                    ? null
+                                    : flexRender(
+                                      header.column.columnDef.header,
+                                      header.getContext()
+                                    )}
                                 </div>
-                              )}
-                            </TableHead>
-                          );
-                        })}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {table.getRowModel().rows?.length ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          data-state={row.getIsSelected() && "selected"}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell
-                              key={cell.id}
-                              className={`${currentView === "compact" ? "py-1" : ""} truncate min-w-0`}
-                              style={{ width: cell.column.getSize() }}
-                            >
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </TableCell>
-                          ))}
+                                {header.column.getCanResize() && (
+                                  <div
+                                    onMouseDown={header.getResizeHandler()}
+                                    onTouchStart={header.getResizeHandler()}
+                                    className={`absolute right-0 top-0 h-full w-4 cursor-col-resize select-none touch-none z-10 flex justify-center items-center group-hover:opacity-100 transition-opacity ${header.column.getIsResizing() ? "opacity-100" : "opacity-0"}`}
+                                  >
+                                    <div className={`w-[2px] h-full ${header.column.getIsResizing() ? "bg-primary" : "bg-border group-hover:bg-primary/50"}`} />
+                                  </div>
+                                )}
+                              </TableHead>
+                            );
+                          })}
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={columns.length}
-                          className="h-24 text-center"
-                        >
-                          No results.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                      ))}
+                    </TableHeader>
+                    <TableBody>
+                      {table.getRowModel().rows?.length ? (
+                        table.getRowModel().rows.map((row) => (
+                          <TableRow
+                            key={row.id}
+                            data-state={row.getIsSelected() && "selected"}
+                          >
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell
+                                key={cell.id}
+                                className={`${currentView === "compact" ? "py-1" : ""} truncate min-w-0`}
+                                style={{ width: cell.column.getSize() }}
+                              >
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={columns.length}
+                            className="h-24 text-center"
+                          >
+                            No results.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
               <DataTablePagination table={table} />
             </>
