@@ -9,12 +9,11 @@ import {
   Link,
   Preview,
   Section,
-  Tailwind,
   Text,
 } from "@react-email/components";
 import * as React from "react";
 
-interface VercelInviteUserEmailProps {
+interface PasswordResetEmailProps {
   username?: string;
   avatar?: string | null;
   email: string;
@@ -30,57 +29,77 @@ export const PasswordResetEmail = ({
   email,
   resetLink,
   userLanguage,
-}: VercelInviteUserEmailProps) => {
+}: PasswordResetEmailProps) => {
   const previewText = `Password reset from ${process.env.NEXT_PUBLIC_APP_NAME}`;
+
+  // Only use HTTP(S) avatar URLs - never inline base64 (causes Gmail clipping)
+  const safeAvatar =
+    avatar && avatar.startsWith("http")
+      ? avatar
+      : `${baseUrl}/images/nouser.png`;
 
   return (
     <Html>
       <Head />
       <Preview>{previewText}</Preview>
-      <Tailwind>
-        <Body className="bg-white my-auto mx-auto font-sans">
-          <Container className="border border-solid border-[#eaeaea] rounded my-[40px] mx-auto p-[20px] w-[465px]">
-            <Section className="mt-[32px]">
-              <Img
-                src={avatar || `${baseUrl}/images/nouser.png`}
-                width="50"
-                height="50"
-                alt="User Avatar"
-                className="my-0 mx-auto rounded-full"
-              />
-            </Section>
-            <Heading className="text-black text-[24px] font-normal text-center p-0 my-[30px] mx-0">
-              Password reset for: <strong>{username}</strong>
-            </Heading>
-            <Text className="text-black text-[14px] leading-[24px]">
-              Hello {username},
-            </Text>
-            <Text className="text-black text-[14px] leading-[24px]">
-              A password reset was requested for your account.
-            </Text>
-            <Text className="text-black text-[14px] leading-[24px]">
-              Your username: <strong>{email}</strong>
-            </Text>
-            <Text className="text-black text-[14px] leading-[24px]">
-              Click the following link to securely reset your password: <br />
-              <Link href={resetLink} className="text-blue-500 underline">{resetLink}</Link>
-            </Text>
-            <Text className="text-black text-[14px] leading-[24px]">
-              Please login to{" "}
-              <Link
-                href={process.env.NEXT_PUBLIC_APP_URL}
-                className="text-blue-500 underline"
-              >
-                {process.env.NEXT_PUBLIC_APP_URL}
-              </Link>
-            </Text>
-            <Text className="text-black text-[14px] leading-[24px]">
-              Thank you, {process.env.NEXT_PUBLIC_APP_NAME}
-            </Text>
-            <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
-          </Container>
-        </Body>
-      </Tailwind>
+      <Body style={{ backgroundColor: "#ffffff", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif", margin: "0 auto" }}>
+        <Container style={{ border: "1px solid #eaeaea", borderRadius: "8px", margin: "40px auto", padding: "20px", maxWidth: "465px" }}>
+          <Section style={{ textAlign: "center", marginTop: "16px" }}>
+            <Img
+              src={safeAvatar}
+              width="50"
+              height="50"
+              alt="User Avatar"
+              style={{ margin: "0 auto", borderRadius: "50%", display: "block" }}
+            />
+          </Section>
+          <Heading style={{ color: "#000", fontSize: "24px", fontWeight: "normal", textAlign: "center", padding: "0", margin: "30px 0" }}>
+            Password reset for: <strong>{username}</strong>
+          </Heading>
+          <Text style={{ color: "#000", fontSize: "14px", lineHeight: "24px" }}>
+            Hello {username},
+          </Text>
+          <Text style={{ color: "#000", fontSize: "14px", lineHeight: "24px" }}>
+            A password reset was requested for your account.
+          </Text>
+          <Text style={{ color: "#000", fontSize: "14px", lineHeight: "24px" }}>
+            Your username: <strong>{email}</strong>
+          </Text>
+          <Text style={{ color: "#000", fontSize: "14px", lineHeight: "24px" }}>
+            Click the following link to securely reset your password:
+          </Text>
+          <Section style={{ textAlign: "center", margin: "24px 0" }}>
+            <Link
+              href={resetLink}
+              style={{
+                backgroundColor: "#0ea5e9",
+                color: "#ffffff",
+                padding: "12px 24px",
+                borderRadius: "6px",
+                textDecoration: "none",
+                fontSize: "14px",
+                fontWeight: "600",
+                display: "inline-block",
+              }}
+            >
+              Reset Password
+            </Link>
+          </Section>
+          <Text style={{ color: "#666", fontSize: "12px", lineHeight: "20px" }}>
+            Or copy this link: <Link href={resetLink} style={{ color: "#0ea5e9" }}>{resetLink}</Link>
+          </Text>
+          <Text style={{ color: "#666", fontSize: "12px", lineHeight: "20px" }}>
+            This link expires in 15 minutes. If you did not request this reset, please ignore this email.
+          </Text>
+          <Hr style={{ border: "1px solid #eaeaea", margin: "26px 0", width: "100%" }} />
+          <Text style={{ color: "#999", fontSize: "12px", textAlign: "center" as const }}>
+            {process.env.NEXT_PUBLIC_APP_NAME} &middot;{" "}
+            <Link href={baseUrl} style={{ color: "#999" }}>
+              {baseUrl}
+            </Link>
+          </Text>
+        </Container>
+      </Body>
     </Html>
   );
 };

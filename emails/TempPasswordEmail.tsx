@@ -41,7 +41,7 @@ export const TempPasswordEmail = ({
                     <Container className="border border-solid border-[#eaeaea] rounded my-[40px] mx-auto p-[20px] w-[465px]">
                         <Section className="mt-[32px]">
                             <Img
-                                src={avatar || `${baseUrl}/images/nouser.png`}
+                                src={avatar && avatar.startsWith("http") ? avatar : `${baseUrl}/images/nouser.png`}
                                 width="50"
                                 height="50"
                                 alt="User Avatar"

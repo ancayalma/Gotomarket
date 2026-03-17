@@ -85,7 +85,7 @@ const AvatarDropdown = ({ avatar, userId, name, email }: Props) => {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => {
             clearUserCache();
-            signOut({ callbackUrl: `https://crm.basalthq.com/sign-in?loggedOut=true` });
+            signOut({ callbackUrl: `${window.location.origin}/sign-in?loggedOut=true` });
           }}>
             <LogOut className="w-4 h-4 inline-block mr-2 stroke-current text-gray-500" />
             <span>Sign Out</span>
