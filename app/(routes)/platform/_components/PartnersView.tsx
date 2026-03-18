@@ -265,26 +265,17 @@ const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
                     <div>
                         <h4 className="font-semibold">Action Required</h4>
                         <p className="text-sm">
-                            There are <span className="font-bold">{pendingCount}</span> team(s) awaiting payment confirmation or approval.
+                            There are <span className="font-bold">{pendingCount}</span> company(s) awaiting payment confirmation or approval.
                         </p>
                     </div>
                 </div>
             )}
-            <div className="flex flex-col md:flex-row justify-end items-start md:items-center gap-4">
-                <div className="flex flex-wrap gap-2">
-                </div>
-                {/* View Toggle */}
-                <div className="flex items-center ml-2">
-                    <ViewToggle value={viewMode} onChange={setViewMode} />
-                </div>
-            </div>
-
             {/* Search & Filter Bar - Condensed */}
             <div className="flex flex-col md:flex-row gap-4 items-center bg-zinc-900/40 p-3 rounded-xl border border-white/5">
                 <div className="relative w-full md:w-1/3">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/50 h-3.5 w-3.5" />
                     <Input
-                        placeholder="Search teams..."
+                        placeholder="Search companies..."
                         className="pl-9 h-9 bg-zinc-900/50 border-white/5 text-xs"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -325,6 +316,7 @@ const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
                             <SelectItem value="members">Member Count</SelectItem>
                         </SelectContent>
                     </Select>
+                    <ViewToggle value={viewMode} onChange={setViewMode} />
                 </div>
             </div>
 
@@ -362,7 +354,7 @@ const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openRenewalDialog(team)}>
                                                 <CalendarClock className="h-4 w-4 text-muted-foreground" />
                                             </Button>
-                                            <LinkHref href={`/partners/${team.id}`}>
+                                            <LinkHref href={`/platform/${team.id}`}>
                                                 <Button variant="ghost" size="sm">Manage</Button>
                                             </LinkHref>
                                         </div>
@@ -372,7 +364,7 @@ const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
                             {filteredTeams.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={5} className="h-24 text-center">
-                                        No teams found.
+                                        No companies found.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -459,7 +451,7 @@ const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
                                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openRenewalDialog(team)}>
                                             <CalendarClock className="h-4 w-4 text-muted-foreground" />
                                         </Button>
-                                        <LinkHref href={`/partners/${team.id}`}>
+                                        <LinkHref href={`/platform/${team.id}`}>
                                             <Button variant="ghost" size="sm">
                                                 <Edit className="w-4 h-4 mr-2" />
                                                 Manage
@@ -474,8 +466,8 @@ const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
             )}
             {filteredTeams.length === 0 && (
                 <div className="text-center py-10">
-                    <h3 className="text-lg font-medium">No teams found</h3>
-                    <p>Get started by creating your first team.</p>
+                    <h3 className="text-lg font-medium">No companies found</h3>
+                    <p>Get started by creating your first company.</p>
                 </div>
             )}
 

@@ -34,7 +34,7 @@ export const PartnersNavigation = ({
             icon: Key,
             color: "from-cyan-500/20 to-blue-500/20",
             iconColor: "text-cyan-500",
-            href: "/partners/ai-system-config",
+            href: "/platform/ai-system-config",
             hidden: hideSystemKeys
         },
         {
@@ -44,7 +44,7 @@ export const PartnersNavigation = ({
             icon: DollarSign,
             color: "from-emerald-500/20 to-green-500/20",
             iconColor: "text-emerald-500",
-            href: "/partners/ai-pricing",
+            href: "/platform/ai-pricing",
             hidden: hideModelPricing
         },
         {
@@ -54,7 +54,7 @@ export const PartnersNavigation = ({
             icon: Mail,
             color: "from-blue-500/20 to-indigo-500/20",
             iconColor: "text-blue-500",
-            href: "/partners/email-system-config",
+            href: "/platform/email-system-config",
             hidden: hideSystemKeys
         },
         {
@@ -64,7 +64,7 @@ export const PartnersNavigation = ({
             icon: List,
             color: "from-purple-500/20 to-pink-500/20",
             iconColor: "text-purple-500",
-            href: "/partners/plans",
+            href: "/platform/plans",
             hidden: hideManagePlans
         },
         {
@@ -74,7 +74,7 @@ export const PartnersNavigation = ({
             icon: BarChart,
             color: "from-orange-500/20 to-lime-500/20",
             iconColor: "text-orange-500",
-            href: "/partners/ai-usage",
+            href: "/platform/ai-usage",
             hidden: hideSystemKeys
         }
     ];
@@ -85,7 +85,7 @@ export const PartnersNavigation = ({
         <div className="flex flex-col gap-4 mb-3 flex-shrink-0">
             {showBackButton && (
                 <div>
-                    <Link href="/partners">
+                    <Link href="/platform">
                         <Button variant="ghost" className="pl-0 hover:pl-2 transition-colors">
                             <ChevronLeft className="w-4 h-4 mr-1" />
                             Back to Platform

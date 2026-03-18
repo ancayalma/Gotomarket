@@ -30,7 +30,7 @@ export default async function PartnerEmailConfigPage() {
         >
             <div className="p-4 space-y-6 max-w-5xl">
                 <div>
-                    <Link href="/partners">
+                    <Link href="/platform">
                         <Button variant="ghost" className="pl-0 hover:pl-2 transition-colors">
                             <ChevronLeft className="w-4 h-4 mr-1" />
                             Back to Platform

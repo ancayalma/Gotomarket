@@ -31,7 +31,7 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
     // 1. User is part of the requested team
     // 2. OR User is a super admin (we might need a better check for super admin if 'is_admin' isn't it)
     // Looking at other files, God Mode usually implies being able to see everything. 
-    // Let's rely on the fact that if they are accessing via /partners, they are likely trusted or we should verify their global role.
+    // Let's rely on the fact that if they are accessing via /platform, they are likely trusted or we should verify their global role.
     // For safety, let's allow if user.team_id === params.teamId OR if they are a "Partner" admin.
 
     // Wait, the user said "We as the sys admin with god mode".

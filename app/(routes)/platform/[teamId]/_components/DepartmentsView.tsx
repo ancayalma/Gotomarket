@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Building2, Plus, Users, Settings2, Trash2, Edit2, UserPlus, LayoutGrid, List, Table as TableIcon, ShieldCheck } from "lucide-react";
+import { Building2, Plus, Users, Settings2, Trash2, Edit2, UserPlus, LayoutGrid, List, Table as TableIcon, ShieldCheck, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -39,11 +39,13 @@ import { deleteDepartment } from "@/actions/departments/delete-department";
 import { updateDepartment } from "@/actions/departments/update-department";
 import { AddDepartmentMemberModal } from "./AddDepartmentMemberModal";
 import { ViewDepartmentMembersModal } from "./ViewDepartmentMembersModal";
+import { DepartmentModulesModal } from "./DepartmentModulesModal";
 
 interface Department {
     id: string;
     name: string;
     slug: string;
+    allowed_modules?: string[];
     _count: { members: number };
     members: Array<{
         id: string;
@@ -71,6 +73,7 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
     const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [viewMode, setViewMode] = useState<"grid" | "list" | "table">("grid");
+    const [deptForModules, setDeptForModules] = useState<Department | null>(null);
 
     useEffect(() => {
         setDepartments(initialDepartments);
@@ -188,6 +191,13 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                 <DropdownMenuItem onClick={() => router.push(`/${window.location.pathname.split('/')[1]}/admin/modules`)}>
                     <ShieldCheck className="w-4 h-4 mr-2" />
                     Manage Roles
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDeptForModules(dept)}>
+                    <Layers className="w-4 h-4 mr-2" />
+                    Configure Modules
+                    {dept.allowed_modules && dept.allowed_modules.length > 0 && (
+                        <span className="ml-auto text-xs text-muted-foreground">{dept.allowed_modules.length}</span>
+                    )}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => openEditModal(dept)}>
                     <Edit2 className="w-4 h-4 mr-2" />
@@ -358,6 +368,12 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                                                 <span>{dept._count?.members || 0} members</span>
                                             </div>
                                         </div>
+                                        {dept.allowed_modules && dept.allowed_modules.length > 0 && (
+                                            <Badge variant="outline" className="text-xs mt-2">
+                                                <Layers className="w-3 h-3 mr-1" />
+                                                {dept.allowed_modules.length} modules
+                                            </Badge>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <div className="hidden md:flex -space-x-2">
@@ -522,6 +538,17 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                     departmentName={deptForView.name}
                     members={deptForView.members}
                     isSuperAdmin={isSuperAdmin}
+                    departmentAllowedModules={deptForView.allowed_modules || []}
+                />
+            )}
+
+            {/* Department Modules Modal */}
+            {deptForModules && (
+                <DepartmentModulesModal
+                    isOpen={!!deptForModules}
+                    onClose={() => setDeptForModules(null)}
+                    departmentId={deptForModules.id}
+                    departmentName={deptForModules.name}
                 />
             )}
 

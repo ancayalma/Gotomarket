@@ -33,12 +33,12 @@ export default async function PartnerAiConfigPage() {
         >
             <div className="p-4 space-y-4">
                 <div className="flex gap-4 mb-6">
-                    <Link href="/partners">
+                    <Link href="/platform">
                         <Button variant="outline">
                             &larr; Back to Platform
                         </Button>
                     </Link>
-                    <Link href="/partners/ai-pricing">
+                    <Link href="/platform/ai-pricing">
                         <Button variant="outline">
                             Manage AI Pricing
                         </Button>

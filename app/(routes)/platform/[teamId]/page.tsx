@@ -117,7 +117,7 @@ const TeamDetailsPage = async ({ params }: { params: Promise<{ teamId: string }>
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
             <div className="flex items-center space-x-4 mb-4">
-                <Link href="/partners" className="btn btn-ghost btn-sm">
+                <Link href="/platform" className="btn btn-ghost btn-sm">
                     <ChevronLeft className="w-4 h-4 mr-2" />
                     Back
                 </Link>

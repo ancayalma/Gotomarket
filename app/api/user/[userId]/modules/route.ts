@@ -4,6 +4,33 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { systemLogger } from "@/lib/logger";
 
+export async function GET(
+    req: Request,
+    { params }: { params: Promise<{ userId: string }> }
+) {
+    const { userId } = await params;
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        const user = await prismadb.users.findUnique({
+            where: { id: userId },
+            select: { assigned_modules: true }
+        });
+
+        if (!user) {
+            return NextResponse.json({ assigned_modules: [] });
+        }
+
+        return NextResponse.json({ assigned_modules: user.assigned_modules || [] });
+    } catch (error) {
+        systemLogger.error("[USER_MODULES_GET]", error);
+        return new NextResponse("Internal Error", { status: 500 });
+    }
+}
+
 export async function POST(
     req: Request,
     { params }: { params: Promise<{ userId: string }> }

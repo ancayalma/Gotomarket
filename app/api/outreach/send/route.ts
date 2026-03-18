@@ -303,7 +303,7 @@ export async function POST(req: Request) {
           text,
           html,
           senderId: session.user.id,
-        });
+        }, "OUTREACH");
 
         // We don't have the messageId directly from sendTeamEmail in all cases yet, 
         // but we assume success if no error thrown.

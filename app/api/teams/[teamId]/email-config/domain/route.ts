@@ -59,7 +59,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
 
         // 4. Update TeamEmailConfig with domain info
         const existingConfig = await prismadb.teamEmailConfig.findUnique({
-            where: { team_id: params.teamId }
+            where: { team_id_purpose: { team_id: params.teamId, purpose: "GENERAL" } }
         });
 
         const domainData = {
@@ -79,6 +79,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             await prismadb.teamEmailConfig.create({
                 data: {
                     team_id: params.teamId,
+                    purpose: "GENERAL",
                     provider: "PLATFORM_SES",
                     from_email: `noreply@${cleanDomain}`,
                     ...domainData,
@@ -157,7 +158,7 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const config = await prismadb.teamEmailConfig.findUnique({
-        where: { team_id: params.teamId }
+        where: { team_id_purpose: { team_id: params.teamId, purpose: "GENERAL" } }
     });
 
     if (!config?.custom_domain) {

@@ -1122,6 +1122,7 @@ model Users {
   userStatus           ActiveStatus             @default(PENDING)
   userLanguage         Language                 @default(en)
   mustChangePassword   Boolean                  @default(false)
+  sesEmailVerified     Boolean                  @default(false)
   termsAccepted        Boolean                  @default(false)
   termsAcceptedAt      DateTime?                @db.Date
   tasksComment         tasksComments[]
@@ -1288,7 +1289,7 @@ model Team {
   message_portals    crm_Message_Portal[]     @relation(name: "PortalTeam")
 
   ai_config      TeamAiConfig?
-  email_config   TeamEmailConfig?
+  email_configs  TeamEmailConfig[]
   sms_config     TeamSmsConfig?
   custom_roles   CustomRole[]
   captcha_config TeamCaptchaConfig?
@@ -1297,6 +1298,9 @@ model Team {
 
   // Custom Feature Overrides for this team
   module_overrides String[]
+
+  // Department-level module whitelist (set by company admin, cascades to members)
+  allowed_modules  String[]
 
   // Dynamic Schema Engine
   custom_objects CustomObjectDefinition[]
@@ -1706,7 +1710,8 @@ enum EmailProvider {
 
 model TeamEmailConfig {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
-  team_id String @unique @db.ObjectId
+  team_id String @db.ObjectId
+  purpose String @default("GENERAL") // "GENERAL" | "OUTREACH" | "INBOUND"
 
   provider EmailProvider @default(PLATFORM_SES)
 
@@ -1752,6 +1757,8 @@ model TeamEmailConfig {
   updatedAt DateTime @updatedAt @db.Date
 
   assigned_team Team @relation(fields: [team_id], references: [id])
+
+  @@unique([team_id, purpose])
 }
 
 model systemServices {

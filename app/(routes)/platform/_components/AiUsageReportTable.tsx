@@ -155,7 +155,7 @@ export const AiUsageReportTable = ({ data, basaltTeamId, unknownTeamId }: AiUsag
                                 <td className="py-3 pr-4 text-right font-bold font-mono text-foreground text-sm">{item.totalTokens.toLocaleString()}</td>
                                 <td className="py-3 pr-4 text-right">
                                     {item.id !== unknownTeamId && (
-                                        <Link href={`/partners/ai-usage/${item.id}`}>
+                                        <Link href={`/platform/ai-usage/${item.id}`}>
                                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity hover:bg-primary/10 hover:text-primary">
                                                 <ExternalLink className="h-4 w-4" />
                                             </Button>

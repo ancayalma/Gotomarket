@@ -40,7 +40,7 @@ export function ActiveUsersModal({ isOpen, onClose }: ActiveUsersModalProps) {
                         Active Users
                     </DialogTitle>
                     <DialogDescription className="text-slate-400">
-                        Team members active recently.
+                        Personnel active recently.
                     </DialogDescription>
                 </DialogHeader>
 

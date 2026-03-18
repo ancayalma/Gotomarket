@@ -13,8 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // import { AdminUserDataTable } from "@/app/cms/(dashboard)/users/table-components/data-table";
 // import { columns } from "@/app/cms/(dashboard)/users/table-components/columns";
 import { getUsers } from "@/actions/get-users";
-import TeamMembersTable from "@/app/(routes)/partners/[teamId]/_components/TeamMembersTable";
-import DepartmentsView from "@/app/(routes)/partners/[teamId]/_components/DepartmentsView";
+import TeamMembersTable from "@/app/(routes)/platform/[teamId]/_components/TeamMembersTable";
+import DepartmentsView from "@/app/(routes)/platform/[teamId]/_components/DepartmentsView";
 import SandboxManager from "@/app/(routes)/crm/settings/components/SandboxManager";
 
 export default async function AdminDashboardPage({
@@ -50,7 +50,11 @@ export default async function AdminDashboardPage({
         parent_id: teamId,
         team_type: "DEPARTMENT",
       } as any,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        allowed_modules: true,
         members: {
           select: {
             id: true,
@@ -82,23 +86,23 @@ export default async function AdminDashboardPage({
 
   return (
     <Container
-      title="Administration"
-      description="Manage your Organization, invite new members, configure user access, and organize your team into departments."
+      title="Company Directory"
+      description="Manage your company personnel, configure access controls, and organize your team into departments."
       // action={<SendMailToAll />}
       fluid
     >
       <LearnLink
         tab="admin"
-        overviewTitle="System Administration"
-        overviewWhat="The core governance panel for your organization. This is where you manage user identities, team permissions, and departmental hierarchies."
-        overviewWhy="Centralized control is vital for security and operational clarity. By managing users and departments here, you ensure that every team member has exactly the access they need to perform their role without over-exposing sensitive data."
-        overviewHow="Invite new members via the Invite Form, audit your existing user base in the data table, or organize your team structure by creating and managing Departments."
+        overviewTitle="Company Directory"
+        overviewWhat="The core governance panel for your organization. This is where you manage personnel, permissions, and departmental hierarchies."
+        overviewWhy="Centralized control is vital for security and operational clarity. By managing personnel and departments here, you ensure that every team member has exactly the access they need to perform their role without over-exposing sensitive data."
+        overviewHow="Invite new members via the Personnel tab, audit your existing user base, or organize your structure by creating and managing Departments."
       />
       <Tabs defaultValue={activeTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3 max-w-[500px]">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <LayoutDashboard className="w-4 h-4" />
-            Overview
+            Personnel
           </TabsTrigger>
           <TabsTrigger value="departments" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
@@ -126,7 +130,7 @@ export default async function AdminDashboardPage({
 
           {/* Users Table */}
           <div className="space-y-4">
-            <h4 className="text-lg font-bold uppercase tracking-tight text-primary/80 ml-1">Team Directory</h4>
+            <h4 className="text-lg font-bold uppercase tracking-tight text-primary/80 ml-1">Company Directory</h4>
             <TeamMembersTable
               teamId={teamId}
               teamSlug={team?.slug || ""}

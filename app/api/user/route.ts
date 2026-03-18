@@ -235,6 +235,7 @@ export async function POST(req: Request) {
       await prismadb.teamEmailConfig.create({
         data: {
           team_id: team.id,
+          purpose: "GENERAL",
           provider: "PLATFORM_SES",
           from_email: email,
           from_name: companyName,

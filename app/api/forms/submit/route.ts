@@ -435,7 +435,7 @@ export async function POST(req: NextRequest) {
                             </div>
                             `,
                             attachments
-                        });
+                        }, "INBOUND");
                         systemLogger.error(`[Email Success] ${recipient}`);
                     } catch (emailErr: any) {
                         systemLogger.error(`[Email Failure] ${recipient}:`, emailErr.message || emailErr);
@@ -453,7 +453,7 @@ export async function POST(req: NextRequest) {
                     from: undefined, // Use team config
                     subject: form.auto_respond_subject || `Received: ${form.name}`,
                     text: form.auto_respond_body || "Thank you for contacting us. We have received your message and will get back to you shortly.",
-                });
+                }, "INBOUND");
             } catch (replyErr) {
                 console.error("Failed to send auto-reply:", replyErr);
             }

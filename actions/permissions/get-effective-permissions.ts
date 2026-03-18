@@ -22,19 +22,36 @@ export async function getEffectiveRoleModules(teamId: string, role: string, scop
             }
         });
 
+        let modules: string[] = [];
+
         if (permission) {
-            return permission.modules;
+            modules = permission.modules;
+        } else {
+            // Fallback to defaults
+            if (role === 'SUPER_ADMIN' || role === 'PLATFORM_ADMIN' || role === 'PLATFORM ADMIN') return ['*'];
+
+            const config = ROLE_CONFIGS[role as Exclude<TeamRole, 'SUPER_ADMIN' | 'PLATFORM_ADMIN'>];
+            modules = config ? config.defaultModules : [];
         }
 
-        // Fallback to defaults
-        // Note: For SUPER_ADMIN, defaults are usually ALL, but this function is mainly for configurable roles.
-        // If role doesn't exist in ROLE_CONFIGS (e.g. SUPER_ADMIN), return empty or handle?
-        // ROLE_CONFIGS excludes SUPER_ADMIN keys.
+        // If user is in a department, intersect with department's allowed_modules
+        if (scope === 'DEPARTMENT' && teamId) {
+            try {
+                const department = await prismadb.team.findUnique({
+                    where: { id: teamId },
+                    select: { allowed_modules: true }
+                });
 
-        if (role === 'SUPER_ADMIN' || role === 'PLATFORM_ADMIN' || role === 'PLATFORM ADMIN') return ['*'];
+                if (department?.allowed_modules && department.allowed_modules.length > 0) {
+                    // Intersect: only allow modules that the department has whitelisted
+                    modules = modules.filter(m => department.allowed_modules.includes(m));
+                }
+            } catch (err) {
+                console.error("Failed to fetch department allowed_modules:", err);
+            }
+        }
 
-        const config = ROLE_CONFIGS[role as Exclude<TeamRole, 'SUPER_ADMIN' | 'PLATFORM_ADMIN'>];
-        return config ? config.defaultModules : [];
+        return modules;
 
     } catch (error) {
         console.error("Failed to fetch effective permissions:", error);

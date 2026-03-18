@@ -22,9 +22,18 @@ interface EmailOptions {
     senderId?: string; // Required for GOOGLE_GMAIL provider
 }
 
-export async function sendTeamEmail(teamId: string, options: EmailOptions) {
-    // 1. Fetch Config
-    const config = await prismadb.teamEmailConfig.findUnique({ where: { team_id: teamId } });
+export async function sendTeamEmail(teamId: string, options: EmailOptions, purpose: "GENERAL" | "OUTREACH" | "INBOUND" = "GENERAL") {
+    // 1. Fetch Config for the requested purpose, fallback to GENERAL
+    let config = await prismadb.teamEmailConfig.findUnique({
+        where: { team_id_purpose: { team_id: teamId, purpose } }
+    });
+
+    // Fallback to GENERAL if purpose-specific config not found
+    if (!config && purpose !== "GENERAL") {
+        config = await prismadb.teamEmailConfig.findUnique({
+            where: { team_id_purpose: { team_id: teamId, purpose: "GENERAL" } }
+        });
+    }
 
     // 2. Strict Requirement for Team Configuration
     // To protect the system SES reputation, mass outreach/client emails MUST use the team's own service.

@@ -55,6 +55,19 @@ export default async function CrmLayout({
                     allowedModules = await getEffectiveRoleModules(contextId, user.team_role, scope);
                 }
             }
+
+            // If user is in a department, intersect with department's allowed_modules
+            if (user.department_id && allowedModules.length > 0 && !allowedModules.includes('*')) {
+                try {
+                    const dept = await prismadb.team.findUnique({
+                        where: { id: user.department_id },
+                        select: { allowed_modules: true }
+                    });
+                    if (dept?.allowed_modules && dept.allowed_modules.length > 0) {
+                        allowedModules = allowedModules.filter(m => dept.allowed_modules.includes(m));
+                    }
+                } catch {}
+            }
         }
 
         systemLogger.info('[CRM LAYOUT] Module resolution:', {

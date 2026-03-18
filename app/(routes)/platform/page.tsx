@@ -15,8 +15,9 @@ import { LearnLink } from "@/components/ui/LearnLink";
 import { getAllSubscriptions } from "@/actions/billing/get-all-subscriptions";
 import { getAllBillingInvoices } from "@/actions/billing/get-team-billing-invoices";
 import { BillingHistoryView } from "./_components/BillingHistoryView";
+import { DomainRequestsView } from "./_components/DomainRequestsView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users as UsersIcon, History, CheckCircle2 } from "lucide-react";
+import { Users as UsersIcon, History, CheckCircle2, Globe } from "lucide-react";
 
 const PartnersPage = async () => {
     const session = await getServerSession(authOptions);
@@ -62,14 +63,14 @@ const PartnersPage = async () => {
     return (
         <Container
             title="Platform"
-            description="Manage your Teams and CRM Instances"
+            description="Manage your Companies and CRM Instances"
         >
             <LearnLink
                 tab="partners"
                 overviewTitle="Platform Management"
-                overviewWhat="The multi-tenant control center for managing disparate CRM teams, subscription plans, and global platform billing."
+                overviewWhat="The multi-tenant control center for managing disparate CRM companies, subscription plans, and global platform billing."
                 overviewWhy="For platform owners and partners, visibility across all client instances is essential for support and billing. This view allows you to manage the entire ecosystem from a single, high-level dashboard."
-                overviewHow="Track total registered versus active teams, monitor platform-wide user growth, and drill into specific team billing histories or subscription plan assignments."
+                overviewHow="Track total registered versus active companies, monitor platform-wide user growth, and drill into specific company billing histories or subscription plan assignments."
             />
             <div className="p-4 space-y-6">
                 <PartnersNavigation availablePlans={plans as any} />
@@ -79,7 +80,7 @@ const PartnersPage = async () => {
                     <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/40 p-5 transition-colors duration-300 hover:border-white/10">
                         <UsersIcon className="absolute -right-4 -bottom-4 w-24 h-24 -rotate-12 opacity-5 text-white pointer-events-none transition-transform duration-500 group-hover:scale-110" />
                         <div className="relative z-10">
-                            <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-1">Total Teams</div>
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-1">Total Companies</div>
                             <div className="flex items-baseline gap-2">
                                 <div className="text-4xl font-bold text-white tracking-tighter">{totalTeamsCount}</div>
                                 <div className="text-xs text-zinc-500 font-medium pb-1.5">Registered</div>
@@ -92,7 +93,7 @@ const PartnersPage = async () => {
                             <CheckCircle2 className="w-full h-full" />
                         </div>
                         <div className="relative z-10">
-                            <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-1">Active Teams</div>
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-1">Active Companies</div>
                             <div className="flex items-baseline gap-2">
                                 <div className="text-4xl font-bold text-green-500 tracking-tighter">{activeTeamsCount}</div>
                                 <div className="text-xs text-green-500/60 font-medium pb-1.5">Live Now</div>
@@ -115,21 +116,25 @@ const PartnersPage = async () => {
                 </div>
 
 
-                <Tabs defaultValue="teams" className="w-full">
+                <Tabs defaultValue="companies" className="w-full">
                     <div className="flex items-center justify-between mb-4">
                         <TabsList className="bg-zinc-900 border border-zinc-800 p-1">
-                            <TabsTrigger value="teams" className="gap-2 data-[state=active]:bg-zinc-800">
+                            <TabsTrigger value="companies" className="gap-2 data-[state=active]:bg-zinc-800">
                                 <UsersIcon className="w-4 h-4" />
-                                Teams
+                                Companies
                             </TabsTrigger>
                             <TabsTrigger value="billing" className="gap-2 data-[state=active]:bg-zinc-800">
                                 <History className="w-4 h-4" />
                                 Billing History
                             </TabsTrigger>
+                            <TabsTrigger value="domains" className="gap-2 data-[state=active]:bg-zinc-800">
+                                <Globe className="w-4 h-4" />
+                                Domain Requests
+                            </TabsTrigger>
                         </TabsList>
                     </div>
 
-                    <TabsContent value="teams" className="mt-0 space-y-4">
+                    <TabsContent value="companies" className="mt-0 space-y-4">
                         <Suspense fallback={<div className="h-96 w-full bg-zinc-900/50 animate-pulse rounded-2xl" />}>
                             <PartnersView initialTeams={teams as any} availablePlans={plans as any} />
                         </Suspense>
@@ -137,6 +142,10 @@ const PartnersPage = async () => {
 
                     <TabsContent value="billing" className="mt-0">
                         <BillingHistoryView subscriptions={subscriptions} invoices={billingInvoices} />
+                    </TabsContent>
+
+                    <TabsContent value="domains" className="mt-0">
+                        <DomainRequestsView />
                     </TabsContent>
                 </Tabs>
             </div>

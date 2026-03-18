@@ -5,10 +5,10 @@ import { prismadbChat } from "@/lib/prisma-chat";
 import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { Card, Title, Subtitle, Legend } from "@tremor/react";
-import { ModelDistributionChart } from "@/app/(routes)/partners/_components/ModelDistributionChart";
+import { ModelDistributionChart } from "@/app/(routes)/platform/_components/ModelDistributionChart";
 import Container from "@/app/(routes)/components/ui/Container";
-import { AiUsageCharts } from "@/app/(routes)/partners/_components/AiUsageCharts";
-import { DateRangeSelector } from "@/app/(routes)/partners/_components/DateRangeSelector";
+import { AiUsageCharts } from "@/app/(routes)/platform/_components/AiUsageCharts";
+import { DateRangeSelector } from "@/app/(routes)/platform/_components/DateRangeSelector";
 import { ChevronLeft, Calendar, User } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -201,7 +201,7 @@ export default async function TeamAiUsageDrilldownPage({ params, searchParams }:
             <div className="dark space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#09090b] p-6 rounded-xl border border-[#27272a] shadow-sm">
                     <div className="flex items-center gap-4 shrink-0">
-                        <Link href="/partners/ai-usage">
+                        <Link href="/platform/ai-usage">
                             <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hover:bg-zinc-800 transition-colors">
                                 <ChevronLeft className="h-6 w-6" />
                             </Button>

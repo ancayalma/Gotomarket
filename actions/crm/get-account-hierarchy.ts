@@ -1,8 +1,7 @@
-"use server";
-
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 export type AccountHierarchyNode = {
     id: string;
@@ -17,6 +16,7 @@ export type AccountHierarchyNode = {
 /**
  * Get the full account hierarchy tree for a given account.
  * Walks up to find the root, then down to get all descendants.
+ * Scoped to the user's team.
  */
 export async function getAccountHierarchy(accountId: string): Promise<{
     root: AccountHierarchyNode;
@@ -25,13 +25,16 @@ export async function getAccountHierarchy(accountId: string): Promise<{
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return null;
 
-    // Walk up to find the root
+    const teamInfo = await getCurrentUserTeamId();
+    if (!teamInfo?.teamId) return null;
+
+    // Walk up to find the root (scoped to team)
     let rootId = accountId;
     const maxDepth = 10; // Safety limit
     let depth = 0;
     while (depth < maxDepth) {
-        const account = await prismadb.crm_Accounts.findUnique({
-            where: { id: rootId },
+        const account = await prismadb.crm_Accounts.findFirst({
+            where: { id: rootId, team_id: teamInfo.teamId },
             select: { parent_account_id: true },
         });
         if (!account?.parent_account_id) break;
@@ -40,17 +43,17 @@ export async function getAccountHierarchy(accountId: string): Promise<{
     }
 
     // Build tree from root
-    const tree = await buildAccountTree(rootId);
+    const tree = await buildAccountTree(rootId, teamInfo.teamId);
     if (!tree) return null;
 
     return { root: tree, currentAccountId: accountId };
 }
 
-async function buildAccountTree(accountId: string, depth = 0): Promise<AccountHierarchyNode | null> {
+async function buildAccountTree(accountId: string, teamId: string, depth = 0): Promise<AccountHierarchyNode | null> {
     if (depth > 5) return null; // Max recursion depth
 
-    const account = await prismadb.crm_Accounts.findUnique({
-        where: { id: accountId },
+    const account = await prismadb.crm_Accounts.findFirst({
+        where: { id: accountId, team_id: teamId },
         select: {
             id: true,
             name: true,
@@ -58,6 +61,7 @@ async function buildAccountTree(accountId: string, depth = 0): Promise<AccountHi
             status: true,
             industry_type: { select: { name: true } },
             child_accounts: {
+                where: { team_id: teamId },
                 select: { id: true },
             },
         },
@@ -67,7 +71,7 @@ async function buildAccountTree(accountId: string, depth = 0): Promise<AccountHi
 
     const children: AccountHierarchyNode[] = [];
     for (const child of account.child_accounts) {
-        const childNode = await buildAccountTree(child.id, depth + 1);
+        const childNode = await buildAccountTree(child.id, teamId, depth + 1);
         if (childNode) children.push(childNode);
     }
 

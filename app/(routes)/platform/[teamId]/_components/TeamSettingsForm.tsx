@@ -180,7 +180,7 @@ const TeamSettingsForm = ({ team, availablePlans = [] }: Props) => {
                 toast.error(res.error);
             } else {
                 toast.success("Team deleted");
-                router.push("/partners");
+                router.push("/platform");
                 router.refresh();
             }
         } catch (error) {

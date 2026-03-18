@@ -92,8 +92,25 @@ ${feedback}
     const uniqueEmails = ["support@basalthq.com"];
 
     try {
-      if (teamId) {
-        // Use Team's custom mail service if available (Enforces BYO Email for feedback)
+      // Priority 1: Use the user's own SES-verified email for platform functions
+      const senderUser = await prismadb.users.findUnique({
+        where: { id: userId },
+        select: { sesEmailVerified: true }
+      });
+
+      if (senderUser?.sesEmailVerified && senderEmail) {
+        // User has a verified SES identity — send directly from their email via system SES
+        const cleanSenderName = senderName.replace(/[<>]/g, "").trim();
+        await sendEmail({
+          from: `"${cleanSenderName}" <${senderEmail}>`,
+          to: uniqueEmails[0],
+          replyTo: senderEmail,
+          subject: subject,
+          text: feedbackContent,
+          html: feedbackContent.replace(/\n/g, "<br>"),
+        });
+      } else if (teamId) {
+        // Fallback: Use Team's custom mail service if available
         await sendTeamEmail(teamId, {
           to: uniqueEmails[0],
           replyTo: senderEmail,
@@ -102,7 +119,7 @@ ${feedback}
           html: feedbackContent.replace(/\n/g, "<br>"),
         });
       } else {
-        // Fallback for users without a team (System relay)
+        // Fallback for users without a team or verified email (System relay)
         let rawFrom = process.env.EMAIL_FROM || "sales@basalthq.com";
         if (rawFrom.includes("<")) {
           rawFrom = rawFrom.split("<")[1].split(">")[0];
