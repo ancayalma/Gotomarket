@@ -1177,7 +1177,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                       >
                         {res.icon && res.icon !== "none" ? (
                           <>
-                            <img src={resolveIconUrl(res.icon) || ""} alt="" className="w-3.5 h-3.5 dark:invert" style={{ filter: "brightness(0) invert(1)" }} />
+                            <img src={resolveIconUrl(res.icon) || ""} alt="" className="w-3.5 h-3.5 dark:invert" />
                             <span className="truncate">{iconKeyToLabel(res.icon)}</span>
                           </>
                         ) : (
@@ -1226,7 +1226,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                                         isActive ? 'bg-primary/10 ring-1 ring-primary' : ''
                                       }`}
                                     >
-                                      {path && <img src={path} alt="" className="w-4 h-4 dark:invert" style={{ filter: "brightness(0) invert(1)" }} />}
+                                      {path && <img src={path} alt="" className="w-4 h-4 dark:invert" />}
                                       <span className="text-[8px] text-muted-foreground mt-0.5 truncate w-full text-center">{iconKeyToLabel(iconKey).split(' ')[0]}</span>
                                     </button>
                                   );

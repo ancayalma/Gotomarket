@@ -284,7 +284,7 @@ export function resolveIconUrl(iconName?: string, baseUrl?: string, colorHex?: s
   if (colorHex) {
     return `${base}/api/outreach/icon?name=${filename}&color=${colorHex}`;
   }
-  return `${base}/icons/lucide/${filename}.svg`;
+  return `${base}/api/outreach/icon?name=${filename}`;
 }
 
 /**
