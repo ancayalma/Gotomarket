@@ -166,8 +166,8 @@ export async function POST(req: Request) {
         // Always fetch brand identity for the team
         let defaultBranding: any = null;
         if (user?.team_id) {
-            const teamBrand = await prisma.teamBrandIdentity.findUnique({
-                where: { team_id: user.team_id }
+            const teamBrand = await prisma.teamBrandIdentity.findFirst({
+                where: { team_id: user.team_id, is_default: true }
             });
             if (teamBrand) {
                 const { id, team_id, setup_completed, createdAt, updatedAt, ...brandProps } = teamBrand;

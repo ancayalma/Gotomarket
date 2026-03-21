@@ -107,10 +107,11 @@ export default async function AppLayout({
           const isSuperAdmin = fullUser.is_admin === true || ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN', 'ADMIN'].includes(role) || pRole === 'SUPERADMIN';
           isPlatformAdmin = isSuperAdmin;
           if (isSuperAdmin) {
-              const brandIdentity = await prismadb.teamBrandIdentity.findUnique({
-                  where: { team_id: userTeamId }
+              // Check if ANY brand has been set up (not just the default)
+              const anySetupBrand = await prismadb.teamBrandIdentity.findFirst({
+                  where: { team_id: userTeamId, OR: [{ setup_completed: true }, { company_name: { not: "" } }] }
               });
-              if (!brandIdentity || !brandIdentity.setup_completed) {
+              if (!anySetupBrand) {
                   needsBrandSetup = true;
               }
           }

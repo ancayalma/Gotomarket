@@ -6,6 +6,10 @@ import { systemLogger } from "@/lib/logger";
 
 /**
  * GET/POST /api/profile/signature
+ * Supports optional ?brandId= query param for per-brand signatures.
+ * Without brandId: operates on user-level signature (backward compatible).
+ * With brandId: operates on TeamBrandIdentity signature_html / signature_meta.
+ *
  * GET: returns { signature_html, signature_meta, signature_updated_at }
  * POST: body { signatureHtml: string, meta?: any } - saves sanitized HTML and meta
  */
@@ -28,11 +32,35 @@ function sanitizeSignatureHtml(html: string) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
+    const { searchParams } = new URL(req.url);
+    const brandId = searchParams.get("brandId");
+
+    if (brandId) {
+      // Brand-level signature
+      const brand = await prismadb.teamBrandIdentity.findUnique({
+        where: { id: brandId },
+        select: {
+          signature_html: true,
+          signature_meta: true,
+          updatedAt: true,
+        },
+      });
+      return NextResponse.json(
+        {
+          signature_html: brand?.signature_html || "",
+          signature_meta: brand?.signature_meta || null,
+          signature_updated_at: brand?.updatedAt || null,
+        },
+        { status: 200 }
+      );
+    }
+
+    // User-level signature (backward compatible)
     const user = await prismadb.users.findUnique({
       where: { id: session.user.id },
       select: {
@@ -62,6 +90,9 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
+    const { searchParams } = new URL(req.url);
+    const brandId = searchParams.get("brandId");
+
     const payload = await req.json().catch(() => ({}));
     const signatureHtmlRaw = (payload?.signatureHtml ?? "").toString();
     const meta = payload?.meta;
@@ -72,6 +103,19 @@ export async function POST(req: Request) {
 
     const signatureHtml = sanitizeSignatureHtml(signatureHtmlRaw);
 
+    if (brandId) {
+      // Brand-level save
+      await prismadb.teamBrandIdentity.update({
+        where: { id: brandId },
+        data: {
+          signature_html: signatureHtml,
+          signature_meta: meta ?? undefined,
+        },
+      });
+      return NextResponse.json({ status: "ok" }, { status: 200 });
+    }
+
+    // User-level save (backward compatible)
     await prismadb.users.update({
       where: { id: session.user.id },
       data: {

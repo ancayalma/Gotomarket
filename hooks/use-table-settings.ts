@@ -15,7 +15,7 @@ export function useTableSettings(storageKey: string, isMobile: boolean = false) 
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnSizing, setColumnSizing] = React.useState<Record<string, number>>({});
-    const [viewMode, setViewMode] = React.useState<string>("table");
+    const [viewMode, setViewMode] = React.useState<string>("card");
     const [pageSize, setPageSize] = React.useState<number>(10);
     const [isLoaded, setIsLoaded] = React.useState(false);
 

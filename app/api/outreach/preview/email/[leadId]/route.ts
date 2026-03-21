@@ -5,9 +5,8 @@ import { prismadb } from "@/lib/prisma";
 import { getAiSdkModel, logAiUsage } from "@/lib/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
-import OutreachTemplate, { type ResourceLink } from "@/emails/OutreachTemplate";
-import { render } from "@react-email/render";
-import React from "react";
+import type { ResourceLink } from "@/emails/OutreachTemplate";
+import { renderOutreachTemplate } from "@/lib/outreach/outreach-templates";
 import { systemLogger } from "@/lib/logger";
 
 /**
@@ -39,6 +38,7 @@ type RequestBody = {
     meetingLinkOverride?: string;
     resourceLinksOverride?: ResourceLink[];
     signatureHtmlOverride?: string;
+    templateId?: string;
 };
 
 // Default resource configuration if user has none
@@ -245,19 +245,17 @@ Project Briefing:
         const signatureHtml =
             typeof body.signatureHtmlOverride === "string" ? body.signatureHtmlOverride : (user.signature_html || undefined);
 
-        // Render HTML using OutreachTemplate
-        const html = await render(
-            React.createElement(OutreachTemplate, {
-                subjectPreview: subject,
-                bodyText,
-                resources,
-                signatureHtml,
-                brand: {
-                    accentColor: "#F54029",
-                    primaryText: "#1f2937",
-                },
-            }),
-        );
+        // Render HTML using selected template
+        const html = await renderOutreachTemplate(body.templateId, {
+            subjectPreview: subject,
+            bodyText,
+            resources,
+            signatureHtml,
+            brand: {
+                accentColor: "#F54029",
+                primaryText: "#1f2937",
+            },
+        });
 
         return NextResponse.json(
             {

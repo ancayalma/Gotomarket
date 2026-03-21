@@ -621,7 +621,7 @@ function PurposeConfigForm({
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────
-export function TeamEmailSettings({ teamId, planSlug }: TeamEmailSettingsProps) {
+export function TeamEmailSettings({ teamId, planSlug, title }: TeamEmailSettingsProps & { title?: string }) {
     const [configs, setConfigs] = useState<Record<EmailPurpose, EmailConfig | null>>({
         GENERAL: null,
         OUTREACH: null,
@@ -656,7 +656,7 @@ export function TeamEmailSettings({ teamId, planSlug }: TeamEmailSettingsProps) 
             <CardHeader>
                 <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                     <Mail className="w-5 h-5 text-primary" />
-                    Company Email Settings
+                    {title || "Company Email Settings"}
                 </CardTitle>
                 <CardDescription>
                     Configure separate email identities for different purposes. Outreach and Inbound fall back to General if not configured.

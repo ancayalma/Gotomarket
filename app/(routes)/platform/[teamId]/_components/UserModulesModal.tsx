@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 import { Layers, Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,10 +42,10 @@ export function UserModulesModal({ isOpen, onClose, userId, userName, department
     useEffect(() => {
         if (isOpen && userId) {
             setIsFetching(true);
-            fetch(`/api/user/${userId}/modules`)
+            fetch(`/api/users/${userId}/modules`)
                 .then((res) => res.json())
                 .then((data) => {
-                    const userModules = data?.assigned_modules || [];
+                    const userModules = data?.modules || [];
                     setSelected(userModules);
                 })
                 .catch(() => toast.error("Failed to load user modules"))
@@ -65,8 +65,8 @@ export function UserModulesModal({ isOpen, onClose, userId, userName, department
     const handleSave = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/user/${userId}/modules`, {
-                method: "POST",
+            const res = await fetch(`/api/users/${userId}/modules`, {
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ modules: selected }),
             });

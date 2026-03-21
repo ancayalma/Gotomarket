@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Building2, Plus, Users, Settings2, Trash2, Edit2, UserPlus, LayoutGrid, List, Table as TableIcon, ShieldCheck, Layers } from "lucide-react";
+import { Building2, Plus, Users, Settings2, Trash2, Edit2, UserPlus, LayoutGrid, List, Table as TableIcon, ShieldCheck, Layers, AlertTriangle, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
     Dialog,
     DialogContent,
@@ -199,6 +200,10 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                         <span className="ml-auto text-xs text-muted-foreground">{dept.allowed_modules.length}</span>
                     )}
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/admin/departments/${dept.id}/settings`)}>
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    Department Settings
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => openEditModal(dept)}>
                     <Edit2 className="w-4 h-4 mr-2" />
                     Rename
@@ -319,9 +324,14 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                                                 <Users className="w-4 h-4" />
                                                 <span>{dept._count?.members || 0} members</span>
                                             </div>
-                                            {getAdminCount(dept) > 0 && (
+                                            {getAdminCount(dept) > 0 ? (
                                                 <Badge variant="secondary" className="text-xs">
                                                     {getAdminCount(dept)} admin{getAdminCount(dept) !== 1 ? "s" : ""}
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-400 border-amber-500/30 gap-1">
+                                                    <AlertTriangle className="w-3 h-3" />
+                                                    No Admin
                                                 </Badge>
                                             )}
                                         </div>
@@ -329,12 +339,21 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                                         {dept.members.length > 0 && (
                                             <div className="mt-4 flex -space-x-2">
                                                 {dept.members.slice(0, 5).map((member) => (
-                                                    <div
-                                                        key={member.id}
-                                                        className="w-8 h-8 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-xs font-medium"
-                                                        title={member.name || member.email}
-                                                    >
-                                                        {(member.name || member.email)[0].toUpperCase()}
+                                                    <div key={member.id} className="relative">
+                                                        <Avatar
+                                                            className="w-8 h-8 border-2 border-background"
+                                                            title={member.name || member.email}
+                                                        >
+                                                            <AvatarImage src={member.avatar || undefined} />
+                                                            <AvatarFallback className="text-xs">
+                                                                {(member.name || member.email)[0].toUpperCase()}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        {(member.team_role === "ADMIN" || member.team_role === "SUPER_ADMIN") && (
+                                                            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-500 border-2 border-background flex items-center justify-center">
+                                                                <Star className="w-2.5 h-2.5 text-white fill-white" />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                                 {dept.members.length > 5 && (
@@ -366,6 +385,12 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                                                 <span>•</span>
                                                 <Users className="w-3 h-3" />
                                                 <span>{dept._count?.members || 0} members</span>
+                                                {getAdminCount(dept) === 0 && (
+                                                    <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-400 border-amber-500/30 gap-1">
+                                                        <AlertTriangle className="w-3 h-3" />
+                                                        No Admin
+                                                    </Badge>
+                                                )}
                                             </div>
                                         </div>
                                         {dept.allowed_modules && dept.allowed_modules.length > 0 && (
@@ -378,8 +403,21 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                                     <div className="flex items-center gap-4">
                                         <div className="hidden md:flex -space-x-2">
                                             {dept.members.slice(0, 5).map((member) => (
-                                                <div key={member.id} className="w-8 h-8 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-xs font-medium" title={member.name || member.email}>
-                                                    {(member.name || member.email)[0].toUpperCase()}
+                                                <div key={member.id} className="relative">
+                                                    <Avatar
+                                                        className="w-8 h-8 border-2 border-background"
+                                                        title={member.name || member.email}
+                                                    >
+                                                        <AvatarImage src={member.avatar || undefined} />
+                                                        <AvatarFallback className="text-xs">
+                                                            {(member.name || member.email)[0].toUpperCase()}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    {(member.team_role === "ADMIN" || member.team_role === "SUPER_ADMIN") && (
+                                                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-500 border-2 border-background flex items-center justify-center">
+                                                            <Star className="w-2.5 h-2.5 text-white fill-white" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ))}
                                             {dept.members.length > 5 && <div className="w-8 h-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs text-muted-foreground">+{dept.members.length - 5}</div>}
@@ -419,6 +457,12 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                                                 <div className="flex items-center gap-2">
                                                     <Users className="w-3 h-3 text-muted-foreground" />
                                                     <span>{dept._count?.members || 0}</span>
+                                                    {getAdminCount(dept) === 0 && (
+                                                        <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-400 border-amber-500/30 gap-1">
+                                                            <AlertTriangle className="w-3 h-3" />
+                                                            No Admin
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">

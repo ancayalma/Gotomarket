@@ -6,10 +6,14 @@ import { systemLogger } from "@/lib/logger";
 
 /**
  * GET/POST /api/profile/resources
- * GET: returns user's resource_links JSON (or defaults)
+ * Supports optional ?brandId= query param for per-brand resources.
+ * Without brandId: operates on user-level resource_links (backward compatible).
+ * With brandId: operates on TeamBrandIdentity resource_links.
+ *
+ * GET: returns user's or brand's resource_links JSON (or defaults)
  * POST: body { resourceLinks: ResourceLink[] } - saves resource_links
  *
- * ResourceLink shape (suggested):
+ * ResourceLink shape:
  * { id: string, label: string, href: string, type?: "primary" | "secondary", iconUrl?: string, enabled?: boolean }
  */
 
@@ -46,28 +50,40 @@ function sanitizeResources(input: any): any[] {
   return out.length ? out : DEFAULT_RESOURCES;
 }
 
-export async function GET() {
+function parseResourceLinks(raw: any): any[] {
+  try {
+    if (raw && typeof raw === "object" && Array.isArray(raw) && raw.length) {
+      return raw;
+    }
+  } catch {}
+  return DEFAULT_RESOURCES;
+}
+
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
+    const { searchParams } = new URL(req.url);
+    const brandId = searchParams.get("brandId");
+
+    if (brandId) {
+      // Brand-level resources
+      const brand = await prismadb.teamBrandIdentity.findUnique({
+        where: { id: brandId },
+        select: { resource_links: true },
+      });
+      const resources = parseResourceLinks(brand?.resource_links);
+      return NextResponse.json({ resources }, { status: 200 });
+    }
+
+    // User-level resources (backward compatible)
     const user = await prismadb.users.findUnique({
       where: { id: session.user.id },
       select: { resource_links: true },
     });
 
-    let resources = DEFAULT_RESOURCES;
-    try {
-      if (user?.resource_links && typeof user.resource_links === "object") {
-        const parsed = user.resource_links as any;
-        if (Array.isArray(parsed) && parsed.length) {
-          resources = parsed;
-        }
-      }
-    } catch {
-      resources = DEFAULT_RESOURCES;
-    }
-
+    const resources = parseResourceLinks(user?.resource_links);
     return NextResponse.json({ resources }, { status: 200 });
   } catch (error) {
 
@@ -81,9 +97,24 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
+    const { searchParams } = new URL(req.url);
+    const brandId = searchParams.get("brandId");
+
     const payload = await req.json().catch(() => ({}));
     const sanitized = sanitizeResources(payload?.resourceLinks);
 
+    if (brandId) {
+      // Brand-level save
+      await prismadb.teamBrandIdentity.update({
+        where: { id: brandId },
+        data: {
+          resource_links: sanitized as any,
+        },
+      });
+      return NextResponse.json({ status: "ok", resources: sanitized }, { status: 200 });
+    }
+
+    // User-level save (backward compatible)
     await prismadb.users.update({
       where: { id: session.user.id },
       data: {

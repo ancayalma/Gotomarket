@@ -1,21 +1,156 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-hot-toast";
+import { Sparkles, Loader2, Plus, Trash2, GripVertical, ExternalLink, Building2, Mail, User, CheckCircle2, LayoutTemplate, Check, FileText as FileTextIcon } from "lucide-react";
+import { OUTREACH_TEMPLATES, type OutreachTemplateId } from "@/lib/outreach/outreach-template-meta";
+import { ICON_CATEGORIES, ICON_KEYS, resolveIconUrl } from "@/lib/outreach/outreach-icons";
+
+// Filtered icon keys per template style (no longer filtered, return all)
+const ALL_ICON_KEYS = ["none", ...ICON_KEYS];
+
+function getIconOptionsForTemplate(templateId: OutreachTemplateId): string[] {
+  return ALL_ICON_KEYS;
+}
+
+/** Convert camelCase icon key to human-readable label */
+function iconKeyToLabel(key: string): string {
+  if (key === "none") return "No icon";
+  return key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+}
+
+
+// Per-template preview style presets for resource buttons
+function getTemplatePreviewStyles(templateId: OutreachTemplateId): {
+  primary: React.CSSProperties;
+  secondary: React.CSSProperties;
+  wrapper: string;
+} {
+  switch (templateId) {
+    case "professional":
+      return {
+        primary: {
+          background: "linear-gradient(135deg, #F54029 0%, #e03520 100%)",
+          color: "#fff", borderRadius: 9999, padding: "8px 18px",
+          fontSize: 13, fontWeight: 600, fontFamily: "Inter, Arial, sans-serif",
+          border: "none", display: "inline-flex", alignItems: "center", gap: 6,
+        },
+        secondary: {
+          background: "transparent", color: "#F54029",
+          border: "2px solid #F54029", borderRadius: 9999, padding: "6px 16px",
+          fontSize: 13, fontWeight: 600, fontFamily: "Inter, Arial, sans-serif",
+          display: "inline-flex", alignItems: "center", gap: 6,
+        },
+        wrapper: "flex flex-wrap gap-3",
+      };
+    case "bold":
+      return {
+        primary: {
+          background: "linear-gradient(135deg, #F54029 0%, #ff6b4a 100%)",
+          color: "#fff", borderRadius: 8, padding: "12px 24px",
+          fontSize: 14, fontWeight: 800, fontFamily: "Inter, Arial, sans-serif",
+          border: "none", letterSpacing: 0.5, textTransform: "uppercase" as const,
+          display: "inline-flex", alignItems: "center", gap: 8,
+          boxShadow: "0 4px 14px rgba(245,64,41,0.4)",
+        },
+        secondary: {
+          background: "#1f2937", color: "#f1f5f9",
+          border: "1px solid #374151", borderRadius: 8, padding: "12px 24px",
+          fontSize: 14, fontWeight: 800, fontFamily: "Inter, Arial, sans-serif",
+          letterSpacing: 0.5, textTransform: "uppercase" as const,
+          display: "inline-flex", alignItems: "center", gap: 8,
+        },
+        wrapper: "flex flex-col gap-3",
+      };
+    case "executive":
+      return {
+        primary: {
+          background: "transparent", color: "#92734a",
+          border: "2px solid #92734a", borderRadius: 0, padding: "10px 28px",
+          fontSize: 12, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif",
+          textTransform: "uppercase" as const, letterSpacing: 2,
+          display: "inline-flex", alignItems: "center", gap: 8,
+        },
+        secondary: {
+          background: "transparent", color: "#6b7280",
+          border: "1px solid #d1d5db", borderRadius: 0, padding: "8px 20px",
+          fontSize: 12, fontWeight: 500, fontFamily: "Georgia, 'Times New Roman', serif",
+          textTransform: "uppercase" as const, letterSpacing: 1.5,
+          display: "inline-flex", alignItems: "center", gap: 8,
+        },
+        wrapper: "flex flex-wrap gap-4",
+      };
+    case "playful":
+      return {
+        primary: {
+          background: "linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)",
+          color: "#fff", borderRadius: 16, padding: "10px 22px",
+          fontSize: 13, fontWeight: 700, fontFamily: "Inter, Arial, sans-serif",
+          border: "none", boxShadow: "0 4px 12px rgba(124,58,237,0.3)",
+          display: "inline-flex", alignItems: "center", gap: 6,
+        },
+        secondary: {
+          background: "#f3e8ff", color: "#7c3aed",
+          border: "2px solid #c4b5fd", borderRadius: 16, padding: "8px 18px",
+          fontSize: 13, fontWeight: 600, fontFamily: "Inter, Arial, sans-serif",
+          display: "inline-flex", alignItems: "center", gap: 6,
+        },
+        wrapper: "flex flex-wrap gap-3",
+      };
+    case "newsletter":
+      return {
+        primary: {
+          background: "#1a1a2e", color: "#e2e8f0",
+          borderRadius: 4, padding: "10px 20px",
+          fontSize: 13, fontWeight: 600, fontFamily: "Inter, Arial, sans-serif",
+          border: "none", display: "inline-flex", alignItems: "center", gap: 6,
+        },
+        secondary: {
+          background: "#f8fafc", color: "#1a1a2e",
+          border: "1px solid #e2e8f0", borderRadius: 4, padding: "10px 20px",
+          fontSize: 13, fontWeight: 500, fontFamily: "Inter, Arial, sans-serif",
+          display: "inline-flex", alignItems: "center", gap: 6,
+        },
+        wrapper: "grid grid-cols-2 gap-3",
+      };
+    case "minimal":
+    default:
+      return {
+        primary: {
+          background: "#F54029", color: "#fff",
+          borderRadius: 6, padding: "8px 16px",
+          fontSize: 13, fontWeight: 500, fontFamily: "Inter, Arial, sans-serif",
+          border: "none", display: "inline-flex", alignItems: "center", gap: 6,
+        },
+        secondary: {
+          background: "transparent", color: "#374151",
+          border: "1px solid #d1d5db", borderRadius: 6, padding: "8px 16px",
+          fontSize: 13, fontWeight: 500, fontFamily: "Inter, Arial, sans-serif",
+          display: "inline-flex", alignItems: "center", gap: 6,
+        },
+        wrapper: "flex flex-wrap gap-2",
+      };
+  }
+}
+import dynamic from "next/dynamic";
+
+// Lazy-load SignatureBuilder (heavy component with dnd, react-icons, etc.)
+const SignatureBuilder = dynamic(() => import("@/components/SignatureBuilder"), { ssr: false, loading: () => <div className="flex items-center justify-center py-12 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading signature builder...</div> });
 
 // Simple stepper header
-function StepHeader({ step, total }: { step: number; total: number }) {
+function StepHeader({ step, total, labels }: { step: number; total: number; labels: string[] }) {
   return (
-    <div className="flex items-center justify-between text-xs text-muted-foreground">
-      <div>Step {step} / {total}</div>
-      <div className="flex items-center gap-2">
-        <span className="h-1 w-24 rounded bg-secondary overflow-hidden">
-          <span className="block h-1 bg-primary" style={{ width: `${(step/total)*100}%` }} />
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div>Step {step} / {total} — <span className="font-medium text-foreground">{labels[step - 1]}</span></div>
+        <span className="h-1 w-32 rounded bg-secondary overflow-hidden">
+          <span className="block h-1 bg-primary transition-all" style={{ width: `${(step/total)*100}%` }} />
         </span>
       </div>
     </div>
@@ -26,100 +161,391 @@ export type FirstContactWizardProps = {
   isOpen: boolean;
   onClose: () => void;
   leadIds: string[]; // selected leads from manager table
+  leadData?: any[]; // optional: full lead objects from parent (avoids re-fetch)
   initialPrompt?: string; // optional: prefill batch prompt (e.g., per-pool)
   poolId?: string; // optional: current pool context
+  listContext?: {
+    name: string;
+    description?: string;
+    contactsCount: number;
+    icpConfig?: any;
+  };
 };
 
-export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPrompt, poolId }: FirstContactWizardProps) {
+const STEP_LABELS = ["Channels", "Brand", "AI Prep", "Signature", "Resources", "Template", "Review & Send"];
+
+export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData, initialPrompt, poolId, listContext }: FirstContactWizardProps) {
   const [active, setActive] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 7;
 
   // Step 1: Channels selection
   const [useEmail, setUseEmail] = useState(true);
   const [usePhone, setUsePhone] = useState(false);
   const [useSms, setUseSms] = useState(false);
 
-  // Step 2: AI prep
+  // Step 2: Brand selection (multi-brand)
+  const [brands, setBrands] = useState<any[]>([]);
+  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
+  const [isMultiBrand, setIsMultiBrand] = useState(false);
+  const [loadingBrands, setLoadingBrands] = useState(false);
+
+  // Step 3: AI prep
   const [defaultPrompt, setDefaultPrompt] = useState("");
   const [promptOverride, setPromptOverride] = useState("");
   const [meetingLinkOverride, setMeetingLinkOverride] = useState("");
   const [loadingPrompt, setLoadingPrompt] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiOverrideActive, setAiOverrideActive] = useState(false);
+  const [senderOverrideEnabled, setSenderOverrideEnabled] = useState(false);
+  const [senderOverrideName, setSenderOverrideName] = useState("");
+  const [senderOverrideTitle, setSenderOverrideTitle] = useState("");
 
-  // Step 3: Signature & resources
-  const [signatureHtml, setSignatureHtml] = useState("");
+  // Step 4: Signature (handled by SignatureBuilder component internally)
+  // Step 5: Template selection
+  const [selectedTemplate, setSelectedTemplate] = useState<OutreachTemplateId>("minimal");
+  // Template customization state
+  const [bgTexture, setBgTexture] = useState<string>("none");
+  const [borderAccent, setBorderAccent] = useState<string>("none");
+  const [cardStyle, setCardStyle] = useState<string>("flat");
+  const [dividerStyle, setDividerStyle] = useState<string>("thin");
+  const [showResources, setShowResources] = useState<boolean>(true);
+  const [templatePreviewHtml, setTemplatePreviewHtml] = useState<string>("");
+  const [loadingTemplatePreview, setLoadingTemplatePreview] = useState(false);
+  const [themeColorOverride, setThemeColorOverride] = useState<string>(""); // empty = use brand default
+  const [secondaryColorOverride, setSecondaryColorOverride] = useState<string>(""); // empty = default green
+
+  // Step 6: Resources
   const [resources, setResources] = useState<any[]>([]);
-  const [savingSignature, setSavingSignature] = useState(false);
   const [savingResources, setSavingResources] = useState(false);
 
-  // Step 4: Review & Send
+  // Step 7: Review & Send
   const [testMode, setTestMode] = useState(false);
+  const [testEmailRecipients, setTestEmailRecipients] = useState("");
+  const [senderMode, setSenderMode] = useState<"company" | "personal">("company");
+  const [emailConfigs, setEmailConfigs] = useState<any[]>([]);
+  const [testLeadId, setTestLeadId] = useState<string | null>(null);
+  const { data: session } = useSession();
   const canSend = useMemo(() => {
     return isOpen && leadIds && leadIds.length > 0 && (useEmail || useSms || usePhone);
   }, [isOpen, leadIds, useEmail, useSms, usePhone]);
 
+  // Draft persistence
+  const [hasDraft, setHasDraft] = useState(false);
+  const [draftMeta, setDraftMeta] = useState<{ name: string; updatedAt: string } | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [loadingDraft, setLoadingDraft] = useState(false);
+
+  // Generate a stable 24-char hex string as a fallback pool ID for drafts
+  const fallbackPoolId = React.useMemo(() => {
+    if (poolId) return poolId;
+    if (!leadIds || leadIds.length === 0) return null;
+    const str = leadIds.slice().sort().join("_");
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    const hex = Math.abs(hash).toString(16).padStart(8, "0");
+    return (hex + hex + hex).slice(0, 24);
+  }, [poolId, leadIds]);
+
+  // Check for existing draft on open
+  useEffect(() => {
+    if (!isOpen || !fallbackPoolId) return;
+    fetch(`/api/outreach/drafts?poolId=${encodeURIComponent(fallbackPoolId)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.draft) {
+          setHasDraft(true);
+          setDraftMeta({ name: data.draft.name, updatedAt: data.draft.updatedAt });
+        } else {
+          setHasDraft(false);
+          setDraftMeta(null);
+        }
+      })
+      .catch(() => {});
+  }, [isOpen, fallbackPoolId]);
+
+  const saveDraft = async () => {
+    const draftPoolId = fallbackPoolId;
+    if (!draftPoolId) { toast.error("Cannot save draft — no context"); return; }
+    setSavingDraft(true);
+    try {
+      const state = {
+        active,
+        useEmail, usePhone, useSms,
+        selectedBrandId,
+        promptOverride, meetingLinkOverride,
+        aiOverrideActive, senderOverrideEnabled, senderOverrideName, senderOverrideTitle,
+        selectedTemplate, themeColorOverride, secondaryColorOverride,
+        bgTexture, borderAccent, cardStyle, dividerStyle, showResources,
+        senderMode, testMode, testEmailRecipients,
+      };
+      const res = await fetch("/api/outreach/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          poolId: draftPoolId,
+          name: listContext?.name ? `Draft: ${listContext.name}` : "Untitled Draft",
+          state,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setHasDraft(true);
+      setDraftMeta({ name: data.draft.name, updatedAt: data.draft.updatedAt });
+      toast.success("Draft saved");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to save draft");
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  const loadDraft = async () => {
+    if (!fallbackPoolId) return;
+    setLoadingDraft(true);
+    try {
+      const res = await fetch(`/api/outreach/drafts?poolId=${encodeURIComponent(fallbackPoolId)}`);
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      if (!data.draft?.state) { toast.error("No draft found"); return; }
+      const s = data.draft.state;
+      if (s.active) setActive(s.active);
+      if (s.useEmail !== undefined) setUseEmail(s.useEmail);
+      if (s.usePhone !== undefined) setUsePhone(s.usePhone);
+      if (s.useSms !== undefined) setUseSms(s.useSms);
+      if (s.selectedBrandId) setSelectedBrandId(s.selectedBrandId);
+      if (s.promptOverride) setPromptOverride(s.promptOverride);
+      if (s.meetingLinkOverride) setMeetingLinkOverride(s.meetingLinkOverride);
+      if (s.aiOverrideActive !== undefined) setAiOverrideActive(s.aiOverrideActive);
+      if (s.senderOverrideEnabled !== undefined) setSenderOverrideEnabled(s.senderOverrideEnabled);
+      if (s.senderOverrideName) setSenderOverrideName(s.senderOverrideName);
+      if (s.senderOverrideTitle) setSenderOverrideTitle(s.senderOverrideTitle);
+      if (s.selectedTemplate) setSelectedTemplate(s.selectedTemplate);
+      if (s.bgTexture) setBgTexture(s.bgTexture);
+      if (s.borderAccent) setBorderAccent(s.borderAccent);
+      if (s.cardStyle) setCardStyle(s.cardStyle);
+      if (s.dividerStyle) setDividerStyle(s.dividerStyle);
+      if (s.showResources !== undefined) setShowResources(s.showResources);
+      if (s.themeColorOverride) setThemeColorOverride(s.themeColorOverride);
+      if (s.secondaryColorOverride) setSecondaryColorOverride(s.secondaryColorOverride);
+      if (s.senderMode) setSenderMode(s.senderMode);
+      if (s.testMode !== undefined) setTestMode(s.testMode);
+      if (s.testEmailRecipients) setTestEmailRecipients(s.testEmailRecipients);
+      toast.success("Draft loaded");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to load draft");
+    } finally {
+      setLoadingDraft(false);
+    }
+  };
+
   // Brand identity for dynamic prompt building
   const [brandInfo, setBrandInfo] = useState<any>(null);
+
+  // Get the currently selected brand object
+  const selectedBrand = useMemo(() => {
+    if (!isMultiBrand || brands.length === 0) return brandInfo;
+    return brands.find((b: any) => b.id === selectedBrandId) || brandInfo;
+  }, [isMultiBrand, brands, selectedBrandId, brandInfo]);
+
+  // Brand-aware API URLs
+  const resourcesApiUrl = useMemo(() => {
+    return selectedBrandId ? `/api/profile/resources?brandId=${selectedBrandId}` : "/api/profile/resources";
+  }, [selectedBrandId]);
+
+  // Helper to load resources for a specific brand or user-level
+  async function loadResources(brandIdOverride?: string | null) {
+    try {
+      const url = brandIdOverride ? `/api/profile/resources?brandId=${brandIdOverride}` : "/api/profile/resources";
+      const r = await fetch(url);
+      if (r.ok) {
+        const j = await r.json();
+        setResources(j?.resources || []);
+        const calRes = (j?.resources || []).find((res: any) => res.id === "calendar");
+        if (calRes?.href && calRes.href !== "#") {
+          setMeetingLinkOverride(calRes.href);
+        }
+      }
+    } catch {}
+  }
 
   useEffect(() => {
     if (!isOpen) return;
     // Load defaults once when opening
     (async () => {
+      let savedPrompt = "";
       try {
         const p = await fetch("/api/profile/outreach-prompt");
         if (p.ok) {
           const j = await p.json();
-          setDefaultPrompt(j?.promptText || "");
+          savedPrompt = j?.promptText || "";
+          setDefaultPrompt(savedPrompt);
         }
       } catch {}
+      // Load resources (user-level initially, brand-level loaded after brand fetch)
+      await loadResources();
+      // Fetch brand identity / multi-brand data
+      let fetchedBrand: any = null;
       try {
-        const s = await fetch("/api/profile/signature");
-        if (s.ok) {
-          const j = await s.json();
-          setSignatureHtml(j?.signature_html || "");
-        }
-      } catch {}
-      try {
-        const r = await fetch("/api/profile/resources");
-        if (r.ok) {
-          const j = await r.json();
-          setResources(j?.resources || []);
-          // Pre-fill meeting link from resources if available
-          const calRes = (j?.resources || []).find((res: any) => res.id === "calendar");
-          if (calRes?.href && calRes.href !== "#") {
-            setMeetingLinkOverride(calRes.href);
-          }
-        }
-      } catch {}
-      // Fetch brand identity for dynamic prompts
-      try {
+        setLoadingBrands(true);
         const b = await fetch("/api/admin/brand");
         if (b.ok) {
-          const brand = await b.json();
-          setBrandInfo(brand);
+          const data = await b.json();
+          if (data.multiBrand && Array.isArray(data.brands)) {
+            // Multi-brand team
+            setIsMultiBrand(true);
+            setBrands(data.brands);
+            const defaultBrand = data.brands.find((br: any) => br.is_default) || data.brands[0];
+            setSelectedBrandId(defaultBrand?.id || null);
+            fetchedBrand = defaultBrand;
+            setBrandInfo(defaultBrand);
+          } else {
+            // Single-brand team
+            setIsMultiBrand(false);
+            setBrands([]);
+            fetchedBrand = data;
+            setBrandInfo(data);
+          }
+        }
+      } catch {} finally {
+        setLoadingBrands(false);
+      }
+
+      // Fetch team email configs for sender selection
+      try {
+        const ec = await fetch("/api/admin/email-config");
+        if (ec.ok) {
+          const configs = await ec.json();
+          setEmailConfigs(Array.isArray(configs) ? configs : configs?.configs || []);
         }
       } catch {}
+
+      // Set test lead from leadData or fallback to first ID
+      if (leadData && leadData.length > 0) {
+        const withEmail = leadData.filter((l: any) => l.email);
+        if (withEmail.length > 0) setTestLeadId(withEmail[0]?.id || leadIds[0]);
+        else setTestLeadId(leadIds[0]);
+      } else if (leadIds.length > 0) {
+        setTestLeadId(leadIds[0]);
+      }
+
+      // Auto-populate Default Prompt from brand template if no saved prompt exists
+      if (!savedPrompt?.trim()?.length && fetchedBrand) {
+        const brandName = fetchedBrand?.company_name || "our company";
+        const brandMission = fetchedBrand?.mission_statement || "";
+        const brandVoice = fetchedBrand?.brand_voice || "professional and confident";
+        const brandLocation = fetchedBrand?.location || "";
+        const brandCTAs = Array.isArray(fetchedBrand?.cta_preferences) ? fetchedBrand.cta_preferences.join("; ") : "schedule a meeting";
+        const brandProducts = Array.isArray(fetchedBrand?.key_products_services) ? fetchedBrand.key_products_services.join(", ") : "";
+        const brandApproach = fetchedBrand?.outreach_approach || "";
+
+        const template = [
+          `Persona:`,
+          `You are writing on behalf of ${brandName}. Write entirely in first person (I/me).`,
+          brandMission ? `Mission: ${brandMission}` : "",
+          brandProducts ? `Products/Services: ${brandProducts}` : "",
+          ``,
+          `Goal:`,
+          `Craft personalized outreach emails tailored to the recipients (batch).`,
+          brandApproach ? `Approach: ${brandApproach}` : "",
+          ``,
+          `Requirements:`,
+          `- Return JSON with keys "subject" and "body".`,
+          `- Body plain text (no HTML), 250–300 words.`,
+          `- Narrative, insight-driven; no section headings.`,
+          `- Voice: ${brandVoice}.`,
+          `- End with confident CTA: ${brandCTAs}.`,
+          brandLocation ? `- Location context: ${brandLocation}.` : "",
+        ].filter(Boolean).join("\n");
+        setDefaultPrompt(template);
+      }
     })();
     // Prefill per-pool prompt if provided
     if (initialPrompt && initialPrompt.trim().length) {
       setPromptOverride(initialPrompt);
     }
     setActive(1);
+    setSelectedTemplate("minimal");
+    setTemplatePreviewHtml("");
   }, [isOpen, initialPrompt]);
 
-  function next() { setActive((a) => Math.min(totalSteps, a + 1)); }
-  function prev() { setActive((a) => Math.max(1, a - 1)); }
+  // Re-load resources when brand selection changes
+  useEffect(() => {
+    if (!isOpen || !selectedBrandId) return;
+    loadResources(selectedBrandId);
+  }, [selectedBrandId]);
+
+  // When brand selection changes, rebuild the default prompt using selected brand
+
+  // Generate template preview HTML via API
+  const generateTemplatePreview = async (templateId: OutreachTemplateId) => {
+    setLoadingTemplatePreview(true);
+    try {
+      const res = await fetch("/api/outreach/preview/template", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          templateId,
+          brandId: selectedBrandId || undefined,
+          props: {
+            brand: {
+              accentColor: themeColorOverride || (selectedBrand || brandInfo)?.primary_brand_color || "#F54029",
+              ...(secondaryColorOverride || (selectedBrand || brandInfo)?.secondary_brand_color ? { secondaryColor: secondaryColorOverride || (selectedBrand || brandInfo)?.secondary_brand_color } : {}),
+              ...((selectedBrand || brandInfo)?.logo_url ? { logoUrl: (selectedBrand || brandInfo).logo_url } : {}),
+            },
+            resources: resources.filter((r: any) => r.enabled !== false),
+            templateOptions: { bgTexture, borderAccent, cardStyle, dividerStyle, showResources },
+          },
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setTemplatePreviewHtml(data.html || "");
+    } catch (err) {
+      console.error("Failed to render template preview:", err);
+      setTemplatePreviewHtml('<div style="padding:20px;color:#ef4444;">Failed to load preview</div>');
+    } finally {
+      setLoadingTemplatePreview(false);
+    }
+  };
+
+  // Trigger preview when entering template step or changing template
+  useEffect(() => {
+    if (active === 6) {
+      generateTemplatePreview(selectedTemplate);
+    }
+  }, [selectedTemplate, active, themeColorOverride, secondaryColorOverride, bgTexture, borderAccent, cardStyle, dividerStyle, showResources]);
+
+  function next() {
+    let nextStep = active + 1;
+    // Auto-skip brand selection step for single-brand teams
+    if (nextStep === 2 && !isMultiBrand) {
+      nextStep = 3;
+    }
+    setActive(Math.min(totalSteps, nextStep));
+  }
+  function prev() {
+    let prevStep = active - 1;
+    // Auto-skip brand selection step for single-brand teams
+    if (prevStep === 2 && !isMultiBrand) {
+      prevStep = 1;
+    }
+    setActive(Math.max(1, prevStep));
+  }
 
   async function generateBatchPrompt() {
     try {
       setLoadingPrompt(true);
-      // Build dynamic prompt from brand identity (replaces hardcoded Krishna Patel fallback)
-      const brandName = brandInfo?.company_name || "our company";
-      const brandMission = brandInfo?.mission_statement || "";
-      const brandVoice = brandInfo?.brand_voice || "professional and confident";
-      const brandLocation = brandInfo?.location || "";
-      const brandCTAs = Array.isArray(brandInfo?.cta_preferences) ? brandInfo.cta_preferences.join("; ") : "schedule a meeting";
-      const brandProducts = Array.isArray(brandInfo?.key_products_services) ? brandInfo.key_products_services.join(", ") : "";
-      const brandApproach = brandInfo?.outreach_approach || "";
+      const brand = selectedBrand || brandInfo;
+      const brandName = brand?.company_name || "our company";
+      const brandMission = brand?.mission_statement || "";
+      const brandVoice = brand?.brand_voice || "professional and confident";
+      const brandLocation = brand?.location || "";
+      const brandCTAs = Array.isArray(brand?.cta_preferences) ? brand.cta_preferences.join("; ") : "schedule a meeting";
+      const brandProducts = Array.isArray(brand?.key_products_services) ? brand.key_products_services.join(", ") : "";
+      const brandApproach = brand?.outreach_approach || "";
 
       const base = defaultPrompt?.trim().length ? defaultPrompt.trim() : [
         `Persona:`,
@@ -140,8 +566,9 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
         brandLocation ? `- Location context: ${brandLocation}.` : "",
       ].filter(Boolean).join("\n");
       const summary = `\nBatch Context:\n- Pool: ${poolId || "(n/a)"}\n- Leads selected: ${leadIds.length}\n- IDs: ${leadIds.slice(0, 12).join(", ")} ${leadIds.length>12?"…":""}\n- Use stored resources & signature; include tracking pixel.\n`;
-      setPromptOverride([base, summary].join("\n"));
-      toast.success("Batch prompt initialized. You can edit it before sending.");
+      setDefaultPrompt([base, summary].join("\n"));
+      setAiOverrideActive(false);
+      toast.success("Default prompt populated. You can edit it or use AI Generate.");
     } catch (e: any) {
       toast.error(e?.message || "Failed to build batch prompt");
     } finally {
@@ -149,24 +576,36 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
     }
   }
 
-  async function saveSignature() {
+  async function aiGeneratePrompt() {
     try {
-      setSavingSignature(true);
-      const res = await fetch("/api/profile/signature", {
+      setAiGenerating(true);
+      const res = await fetch("/api/ai/generate-outreach-prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ signatureHtml, meta: { wizardSaved: true } })
+        body: JSON.stringify({
+          listContext: listContext || null,
+          leadCount: leadIds.length,
+          brandId: selectedBrandId || undefined,
+          senderName: senderOverrideEnabled && senderOverrideName?.trim() ? senderOverrideName.trim() : undefined,
+          senderTitle: senderOverrideEnabled && senderOverrideTitle?.trim() ? senderOverrideTitle.trim() : undefined,
+        }),
       });
-      if (res.ok) toast.success("Signature saved"); else toast.error(await res.text());
+      if (!res.ok) throw new Error(await res.text());
+      const { prompt } = await res.json();
+      setPromptOverride(prompt);
+      setAiOverrideActive(true);
+      toast.success("AI prompt generated from your brand & list context!");
     } catch (e: any) {
-      toast.error(e?.message || "Failed to save signature");
-    } finally { setSavingSignature(false); }
+      toast.error(e?.message || "Failed to generate AI prompt");
+    } finally {
+      setAiGenerating(false);
+    }
   }
 
   async function saveResources() {
     try {
       setSavingResources(true);
-      const res = await fetch("/api/profile/resources", {
+      const res = await fetch(resourcesApiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resourceLinks: resources })
@@ -203,20 +642,43 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
     }
   }
 
-  async function sendOutreach() {
+  async function sendOutreach(forceTestMode?: boolean) {
+    const isTest = forceTestMode !== undefined ? forceTestMode : testMode;
     if (!canSend) {
       toast.error("Select at least one lead and channel (Email/SMS/Phone)");
       return;
     }
     try {
+      const testEmailValue = isTest && testEmailRecipients.trim() ? testEmailRecipients.trim() : undefined;
+      // In test mode, only send for the selected test lead (not all leads)
+      const sendLeadIds = isTest && testLeadId ? [testLeadId] : leadIds;
+      // For test mode, include inline lead data so the API doesn't need to look it up
+      const testLeadData = isTest && testLeadId && leadData
+        ? leadData.filter((l: any) => l.email).find((l: any) => l.id === testLeadId)
+        : undefined;
       const emailReq = useEmail ? fetch("/api/outreach/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          leadIds,
-          test: testMode,
+          leadIds: sendLeadIds,
+          leadData: (leadData || []).filter((l: any) => l.email).map((l: any) => ({
+            id: l.id, firstName: l.firstName, lastName: l.lastName,
+            company: l.company, jobTitle: l.jobTitle, email: l.email,
+          })),
+          test: isTest,
+          testEmail: testEmailValue,
+          inlineLeads: testLeadData ? [testLeadData] : undefined,
           promptOverride: promptOverride?.trim() || undefined,
           meetingLinkOverride: meetingLinkOverride?.trim() || undefined,
+          brandId: selectedBrandId || undefined,
+          senderMode,
+          templateId: selectedTemplate,
+          themeColorOverride: themeColorOverride || undefined,
+          secondaryColorOverride: secondaryColorOverride || undefined,
+          templateOptions: { bgTexture, borderAccent, cardStyle, dividerStyle, showResources },
+          senderOverride: senderOverrideEnabled && senderOverrideName?.trim()
+            ? { name: senderOverrideName.trim(), title: senderOverrideTitle?.trim() || undefined }
+            : undefined,
         })
       }) : null;
 
@@ -224,13 +686,13 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          leadIds,
-          test: testMode,
+          leadIds: sendLeadIds,
+          test: isTest,
           promptOverride: promptOverride?.trim() || undefined,
         })
       }) : null;
 
-      // Initiate phone calls one-by-one (non-blocking). We do not auto-dial; calls are initiated via Amazon Connect.
+      // Initiate phone calls one-by-one (non-blocking)
       const phoneReqs: Promise<Response | null>[] = [];
       if (usePhone) {
         for (const id of leadIds) {
@@ -270,7 +732,10 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
       const okAll = responses.every((r) => r && r.ok);
       if (okAll || (emailSummary || smsSummary || phoneSummary)) {
         toast.success([emailSummary, smsSummary, phoneSummary].filter(Boolean).join("; "));
-        onClose();
+        // Only close the modal for real sends, not test sends
+        if (!isTest) {
+          onClose();
+        }
       } else {
         const firstError = responses.find((r) => !r || !r.ok);
         const idx = firstError ? responses.indexOf(firstError) : -1;
@@ -284,14 +749,35 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className={`${
+        active === 4 || active === 5 || active === 6
+          ? "sm:max-w-[90vw] lg:max-w-7xl"
+          : active === 7
+            ? "sm:max-w-3xl"
+            : "sm:max-w-2xl"
+      } transition-all duration-300 max-h-[98vh] flex flex-col`}>
         <DialogHeader>
           <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Initiate First Contact</DialogTitle>
-          <StepHeader step={active} total={totalSteps} />
+          <StepHeader step={active} total={totalSteps} labels={STEP_LABELS} />
         </DialogHeader>
 
+        {/* ════════════════ Step 1: Channel Selection ════════════════ */}
         {active === 1 && (
           <div className="space-y-4">
+            {/* Load Draft Banner */}
+            {hasDraft && fallbackPoolId && draftMeta && (
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+                <FileTextIcon className="w-4 h-4 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">{draftMeta.name}</p>
+                  <p className="text-[11px] text-muted-foreground">Saved {new Date(draftMeta.updatedAt).toLocaleDateString()} at {new Date(draftMeta.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+                <Button size="sm" variant="secondary" onClick={loadDraft} disabled={loadingDraft} className="shrink-0">
+                  {loadingDraft ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                  Load Draft
+                </Button>
+              </div>
+            )}
             <div className="text-sm text-muted-foreground">Select channels to use for this batch. Email and SMS send immediately; Phone is ready to initiate from the Leads Workspace and will not auto-dial.</div>
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2"><Checkbox checked={useEmail} onCheckedChange={(v) => setUseEmail(!!v)} /> Email</label>
@@ -301,16 +787,128 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
           </div>
         )}
 
-        {active === 2 && (
+        {/* ════════════════ Step 2: Brand Selection (multi-brand teams only) ════════════════ */}
+        {active === 2 && isMultiBrand && (
           <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">Initialize AI to prepare a batch prompt. Start from your saved default and enrich with the selected leads/project context.</div>
+            <div className="text-sm text-muted-foreground">Select which brand identity to use for this outreach campaign. The selected brand's voice, CTAs, and context will guide AI prompt generation.</div>
+            {loadingBrands ? (
+              <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading brands...
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {brands.map((brand: any) => (
+                  <button
+                    key={brand.id}
+                    onClick={() => setSelectedBrandId(brand.id)}
+                    className={`text-left p-4 rounded-lg border-2 transition-all ${
+                      selectedBrandId === brand.id
+                        ? "border-primary bg-primary/5 shadow-md"
+                        : "border-border bg-background hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {brand.logo_url ? (
+                        <img src={brand.logo_url} alt="" className="w-10 h-10 rounded-lg object-contain bg-muted p-1 shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <Building2 className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm truncate">{brand.brand_label || brand.company_name || "Unnamed Brand"}</div>
+                        {brand.company_name && brand.brand_label && (
+                          <div className="text-xs text-muted-foreground truncate">{brand.company_name}</div>
+                        )}
+                        {brand.industry && <div className="text-xs text-muted-foreground mt-0.5">{brand.industry}</div>}
+                        {brand.is_default && (
+                          <span className="inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium bg-primary/10 text-primary rounded">Default</span>
+                        )}
+                      </div>
+                    </div>
+                    {brand.primary_brand_color && (
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: brand.primary_brand_color }} />
+                        <span className="text-[10px] text-muted-foreground">{brand.primary_brand_color}</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ════════════════ Step 3: AI Prep ════════════════ */}
+        {active === 3 && (
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              Initialize AI to prepare a batch prompt. Start from your saved default and enrich with the selected leads/project context.
+              {isMultiBrand && selectedBrand && (
+                <span className="ml-1 font-medium text-foreground">Using brand: {selectedBrand?.brand_label || selectedBrand?.company_name}</span>
+              )}
+            </div>
+            {/* Sender Identity Override */}
+            <div className="border border-border rounded-md p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-xs font-medium">Sender Identity Override</label>
+                  <p className="text-[10px] text-muted-foreground">Use a different name and title instead of your profile for the AI voice.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSenderOverrideEnabled(!senderOverrideEnabled)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                    senderOverrideEnabled ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    senderOverrideEnabled ? "translate-x-4" : "translate-x-0"
+                  }`} />
+                </button>
+              </div>
+              {senderOverrideEnabled && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-medium text-muted-foreground">Name</label>
+                    <Input
+                      className="mt-0.5 h-8 text-sm"
+                      value={senderOverrideName}
+                      onChange={(e) => setSenderOverrideName(e.target.value)}
+                      placeholder="e.g., Jane Smith"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-medium text-muted-foreground">Title / Position</label>
+                    <Input
+                      className="mt-0.5 h-8 text-sm"
+                      value={senderOverrideTitle}
+                      onChange={(e) => setSenderOverrideTitle(e.target.value)}
+                      placeholder="e.g., VP of Partnerships"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
             <div>
-              <label className="text-xs font-medium">Default Prompt</label>
-              <Textarea className="mt-1" rows={6} value={defaultPrompt} onChange={(e) => setDefaultPrompt(e.target.value)} />
+              <label className="text-xs font-medium">Default Prompt {aiOverrideActive && <span className="text-muted-foreground">(overridden by AI)</span>}</label>
+              <Textarea className={`mt-1 ${aiOverrideActive ? "opacity-50 cursor-not-allowed" : ""}`} rows={6} value={defaultPrompt} onChange={(e) => setDefaultPrompt(e.target.value)} disabled={aiOverrideActive} />
             </div>
             <div className="flex items-center gap-2">
-              <Button size="sm" onClick={generateBatchPrompt} disabled={loadingPrompt}>Generate Batch Prompt</Button>
-              <span className="text-xs text-muted-foreground">We will compose a simple batch prompt referencing your selection.</span>
+              <Button
+                size="sm"
+                onClick={aiGeneratePrompt}
+                disabled={aiGenerating}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {aiGenerating ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+                ) : (
+                  <><Sparkles className="w-4 h-4 mr-2" /> AI Generate Prompt</>
+                )}
+              </Button>
+              <Button size="sm" variant="secondary" onClick={generateBatchPrompt} disabled={loadingPrompt}>Use Template</Button>
+              <span className="text-xs text-muted-foreground">AI uses your brand identity & list context.</span>
             </div>
             <div>
               <label className="text-xs font-medium">Batch Prompt Override</label>
@@ -322,6 +920,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
                 <span className="text-[11px] text-muted-foreground">Saves this override as the pool-level AI prompt/strategy.</span>
               </div>
             </div>
+
             <div>
               <label className="text-xs font-medium">Meeting Link Override</label>
               <Input className="mt-1" value={meetingLinkOverride} onChange={(e) => setMeetingLinkOverride(e.target.value)} placeholder="Optional: e.g., https://calendar.link/..." />
@@ -329,33 +928,549 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
           </div>
         )}
 
-        {active === 3 && (
-          <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">Select your signature and resource buttons to include. Saving updates your profile settings.</div>
-            <div>
-              <label className="text-xs font-medium">Signature HTML</label>
-              <Textarea className="mt-1" rows={6} value={signatureHtml} onChange={(e) => setSignatureHtml(e.target.value)} />
-              <div className="mt-2 flex gap-2">
-                <Button size="sm" onClick={saveSignature} disabled={savingSignature}>Save Signature</Button>
+        {active === 4 && (
+          <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="text-sm text-muted-foreground">Design your email signature using the visual builder below. Changes are saved automatically when you click Save in the builder.</div>
+            <SignatureBuilder brandId={selectedBrandId || undefined} />
+          </div>
+        )}
+
+        {/* ════════════════ Step 6: Choose Template ════════════════ */}
+        {active === 6 && (
+          <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="text-sm text-muted-foreground">Choose how your outreach emails will look. Each template styles the body text, resource buttons, and signature differently while keeping your brand identity.</div>
+            <div className="flex gap-6 flex-1 min-h-0">
+              {/* Left Column: Template Cards + Color Picker */}
+              <div className="w-[340px] shrink-0 flex flex-col gap-4 overflow-y-auto pr-1">
+                <label className="text-xs font-medium tracking-wide uppercase">Select a Template</label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {OUTREACH_TEMPLATES.map((t) => {
+                    const isSelected = selectedTemplate === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setSelectedTemplate(t.id)}
+                        className={`
+                          relative text-left p-3 rounded-xl border-2 transition-all duration-200
+                          hover:shadow-md hover:border-primary/40
+                          ${isSelected
+                            ? 'border-primary bg-primary/5 shadow-md ring-2 ring-primary/20'
+                            : 'border-border bg-card hover:bg-muted/30'
+                          }
+                        `}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                          </div>
+                        )}
+                        <div className="space-y-1">
+                          <h4 className={`font-bold text-xs ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                            {t.name}
+                          </h4>
+                          <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                            {t.description}
+                          </p>
+                          <div className="flex flex-wrap gap-0.5 pt-0.5">
+                            {t.style.split(' • ').map((tag) => (
+                              <span
+                                key={tag}
+                                className={`text-[9px] px-1 py-0.5 rounded-full font-medium ${
+                                  isSelected
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'bg-muted text-muted-foreground'
+                                }`}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Theme Color Override */}
+                <div className="space-y-3 pt-3 border-t border-border">
+                  <label className="text-xs font-medium tracking-wide uppercase">Theme Colors</label>
+
+                  {/* Accent / Secondary Button Color */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-muted-foreground w-14 shrink-0">Accent</span>
+                      {["#F54029", "#2563eb", "#8b5cf6", "#ec4899", "#f97316"].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setThemeColorOverride(themeColorOverride === c ? "" : c)}
+                          className={`w-5 h-5 rounded-full border-2 transition-all ${themeColorOverride === c ? 'border-foreground scale-110 ring-2 ring-primary/30' : 'border-transparent hover:scale-105'}`}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                      <div className="relative w-5 h-5">
+                        <input type="color" value={themeColorOverride || "#F54029"} onChange={(e) => setThemeColorOverride(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                        <div className="w-5 h-5 rounded-full border-2 border-dashed border-muted-foreground flex items-center justify-center hover:border-foreground transition-colors cursor-pointer">
+                          <Plus className="w-2.5 h-2.5 text-muted-foreground" />
+                        </div>
+                      </div>
+                      {themeColorOverride && (
+                        <>
+                          <div className="w-3 h-3 rounded" style={{ backgroundColor: themeColorOverride }} />
+                          <span className="text-[10px] font-mono text-muted-foreground">{themeColorOverride}</span>
+                          <button type="button" onClick={() => setThemeColorOverride("")} className="text-[10px] text-muted-foreground hover:text-foreground">✕</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Primary Button Color */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-muted-foreground w-14 shrink-0">Buttons</span>
+                      {["#10b981", "#2563eb", "#8b5cf6", "#f59e0b", "#0ea5e9"].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setSecondaryColorOverride(secondaryColorOverride === c ? "" : c)}
+                          className={`w-5 h-5 rounded-full border-2 transition-all ${secondaryColorOverride === c ? 'border-foreground scale-110 ring-2 ring-primary/30' : 'border-transparent hover:scale-105'}`}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                      <div className="relative w-5 h-5">
+                        <input type="color" value={secondaryColorOverride || "#10b981"} onChange={(e) => setSecondaryColorOverride(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                        <div className="w-5 h-5 rounded-full border-2 border-dashed border-muted-foreground flex items-center justify-center hover:border-foreground transition-colors cursor-pointer">
+                          <Plus className="w-2.5 h-2.5 text-muted-foreground" />
+                        </div>
+                      </div>
+                      {secondaryColorOverride && (
+                        <>
+                          <div className="w-3 h-3 rounded" style={{ backgroundColor: secondaryColorOverride }} />
+                          <span className="text-[10px] font-mono text-muted-foreground">{secondaryColorOverride}</span>
+                          <button type="button" onClick={() => setSecondaryColorOverride("")} className="text-[10px] text-muted-foreground hover:text-foreground">✕</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Template Upgrades */}
+                <div className="space-y-3 pt-3 border-t border-border">
+                  <label className="text-xs font-medium tracking-wide uppercase">Template Upgrades</label>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-foreground uppercase">Background</label>
+                      <select className="w-full text-xs p-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary" value={bgTexture} onChange={e => setBgTexture(e.target.value)}>
+                        <option value="none">None</option><option value="dots">Dots</option><option value="grid">Grid</option><option value="lines">Lines</option><option value="waves">Waves</option><option value="crosshatch">Crosshatch</option>
+                      </select>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-foreground uppercase">Card Style</label>
+                      <select className="w-full text-xs p-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary" value={cardStyle} onChange={e => setCardStyle(e.target.value)}>
+                        <option value="flat">Flat</option><option value="shadow">Shadow</option><option value="glass">Glass Effect</option><option value="neo">Neumorphism</option><option value="bordered">Bordered</option><option value="elegant">Elegant</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-foreground uppercase">Border Accent</label>
+                      <select className="w-full text-xs p-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary" value={borderAccent} onChange={e => setBorderAccent(e.target.value)}>
+                        <option value="none">None</option><option value="top">Top Focus</option><option value="left">Left Border</option><option value="all">Full Border</option><option value="gradientTop">Gradient Top</option><option value="softShadow">Hover Glow</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-foreground uppercase">Dividers</label>
+                      <select className="w-full text-xs p-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary" value={dividerStyle} onChange={e => setDividerStyle(e.target.value)}>
+                        <option value="none">None</option><option value="thin">Thin Line</option><option value="thick">Thick Line</option><option value="dashed">Dashed Fade</option><option value="gradient">Gradient Glow</option><option value="dots">Dots Array</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-2 text-xs mt-2 pt-2 cursor-pointer border-t border-border/50">
+                    <Checkbox checked={showResources} onCheckedChange={(v) => setShowResources(!!v)} />
+                    Show Resource Links Area
+                  </label>
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium">Resources JSON</label>
-              <Textarea className="mt-1" rows={6} value={JSON.stringify(resources, null, 2)} onChange={(e) => {
-                try { setResources(JSON.parse(e.target.value)); } catch {}
-              }} />
-              <div className="mt-2 flex gap-2">
-                <Button size="sm" onClick={saveResources} disabled={savingResources}>Save Resources</Button>
+
+              {/* Right Column: Live Preview (full height) */}
+              <div className="flex-1 flex flex-col gap-2 min-w-0">
+                <label className="text-xs font-medium tracking-wide uppercase">Live Preview</label>
+                <div className="border border-border rounded-lg overflow-hidden bg-white flex-1 min-h-[780px]">
+                  {loadingTemplatePreview ? (
+                    <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Rendering preview...
+                    </div>
+                  ) : templatePreviewHtml ? (
+                    <iframe
+                      srcDoc={templatePreviewHtml}
+                      title="Template Preview"
+                      className="w-full h-full border-0"
+                      sandbox="allow-same-origin"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                      Select a template to see a preview
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {active === 4 && (
+        {/* ════════════════ Step 5: Resources ════════════════ */}
+        {active === 5 && (
+          <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="text-sm text-muted-foreground">Configure your outreach resource buttons. These appear at the bottom of every outreach email, giving recipients quick access to your key links.</div>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium tracking-wide uppercase">Resource Buttons</label>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs gap-1"
+                onClick={() => {
+                  const newId = `res_${Date.now()}`;
+                  setResources([...resources, { id: newId, label: "New Button", href: "https://", type: "secondary", enabled: true, icon: "none" }]);
+                }}
+              >
+                <Plus className="w-3 h-3" /> Add Button
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {resources.map((res: any, idx: number) => (
+                <div key={res.id || idx} className={`flex items-center gap-2 border border-border rounded-md p-3 bg-background/60 ${!res.enabled ? 'opacity-50' : ''}`}>
+                  <GripVertical className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+                  <div className="flex-1 grid grid-cols-3 gap-2">
+                    <Input
+                      value={res.label}
+                      onChange={(e) => {
+                        const updated = [...resources];
+                        updated[idx] = { ...updated[idx], label: e.target.value };
+                        setResources(updated);
+                      }}
+                      placeholder="Button label"
+                      className="h-8 text-sm"
+                    />
+                    <Input
+                      value={res.href}
+                      onChange={(e) => {
+                        const updated = [...resources];
+                        updated[idx] = { ...updated[idx], href: e.target.value };
+                        setResources(updated);
+                      }}
+                      placeholder="https://..."
+                      className="h-8 text-sm font-mono"
+                    />
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Toggle dropdown for this row
+                          const el = document.getElementById(`icon-picker-${idx}`);
+                          if (el) el.classList.toggle("hidden");
+                        }}
+                        className="h-8 text-xs rounded-md border border-border bg-background px-2 flex items-center gap-1.5 min-w-[120px] hover:bg-muted transition-colors"
+                      >
+                        {res.icon && res.icon !== "none" ? (
+                          <>
+                            <img src={resolveIconUrl(res.icon) || ""} alt="" className="w-3.5 h-3.5 dark:invert" style={{ filter: "brightness(0) invert(1)" }} />
+                            <span className="truncate">{iconKeyToLabel(res.icon)}</span>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">No icon</span>
+                        )}
+                      </button>
+                      <div
+                        id={`icon-picker-${idx}`}
+                        className="hidden absolute top-9 left-0 z-50 w-[280px] max-h-[320px] overflow-y-auto rounded-lg border border-border bg-background shadow-xl p-2"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...resources];
+                            updated[idx] = { ...updated[idx], icon: "none" };
+                            setResources(updated);
+                            document.getElementById(`icon-picker-${idx}`)?.classList.add("hidden");
+                          }}
+                          className={`w-full text-left px-2 py-1.5 rounded text-xs hover:bg-muted flex items-center gap-2 ${(!res.icon || res.icon === "none") ? 'bg-primary/10 text-primary' : ''}`}
+                        >
+                          <span className="w-4 h-4 flex items-center justify-center text-muted-foreground">—</span>
+                          No icon
+                        </button>
+                        {ICON_CATEGORIES.map((cat) => {
+                          const visibleKeys = cat.keys.filter(k => getIconOptionsForTemplate(selectedTemplate).includes(k));
+                          if (visibleKeys.length === 0) return null;
+                          return (
+                            <div key={cat.label}>
+                              <div className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold px-2 pt-2 pb-0.5">{cat.label}</div>
+                              <div className="grid grid-cols-4 gap-0.5">
+                                {visibleKeys.map((iconKey) => {
+                                  const path = resolveIconUrl(iconKey);
+                                  const isActive = res.icon === iconKey;
+                                  return (
+                                    <button
+                                      key={iconKey}
+                                      type="button"
+                                      title={iconKeyToLabel(iconKey)}
+                                      onClick={() => {
+                                        const updated = [...resources];
+                                        updated[idx] = { ...updated[idx], icon: iconKey };
+                                        setResources(updated);
+                                        document.getElementById(`icon-picker-${idx}`)?.classList.add("hidden");
+                                      }}
+                                      className={`flex flex-col items-center justify-center p-1.5 rounded hover:bg-muted transition-colors ${
+                                        isActive ? 'bg-primary/10 ring-1 ring-primary' : ''
+                                      }`}
+                                    >
+                                      {path && <img src={path} alt="" className="w-4 h-4 dark:invert" style={{ filter: "brightness(0) invert(1)" }} />}
+                                      <span className="text-[8px] text-muted-foreground mt-0.5 truncate w-full text-center">{iconKeyToLabel(iconKey).split(' ')[0]}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={res.type === "primary" ? "default" : "secondary"}
+                    className="h-8 text-[10px] px-2 shrink-0"
+                    onClick={() => {
+                      const updated = [...resources];
+                      updated[idx] = { ...updated[idx], type: res.type === "primary" ? "secondary" : "primary" };
+                      setResources(updated);
+                    }}
+                  >
+                    {res.type === "primary" ? "Primary" : "Secondary"}
+                  </Button>
+                  <Checkbox
+                    checked={res.enabled !== false}
+                    onCheckedChange={(v) => {
+                      const updated = [...resources];
+                      updated[idx] = { ...updated[idx], enabled: !!v };
+                      setResources(updated);
+                    }}
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-destructive shrink-0"
+                    onClick={() => setResources(resources.filter((_: any, i: number) => i !== idx))}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ))}
+              {resources.length === 0 && (
+                <p className="text-muted-foreground text-xs italic py-2">No resource buttons. Click "Add Button" to create one.</p>
+              )}
+            </div>
+            {/* Template-Styled Preview */}
+            {resources.filter((r: any) => r.enabled !== false).length > 0 && (() => {
+              const styles = getTemplatePreviewStyles(selectedTemplate);
+              const templateMeta = OUTREACH_TEMPLATES.find((t) => t.id === selectedTemplate);
+              return (
+                <div className="p-4 rounded-md border border-dashed border-border bg-muted/30">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Preview — {templateMeta?.name || "Minimal"} Style</p>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{templateMeta?.style?.split(' • ')[0]}</span>
+                  </div>
+                  <div className="p-4 rounded-lg bg-white border border-border">
+                    <div className={styles.wrapper}>
+                      {resources.filter((r: any) => r.enabled !== false).map((res: any) => {
+                        const btnStyle = res.type === "primary" ? styles.primary : styles.secondary;
+                        const isPrimary = res.type === "primary";
+                        const themeHex = (themeColorOverride || (selectedBrand || brandInfo)?.primary_brand_color || "#7c3aed").replace("#", "");
+                        const iconPath = res.icon && res.icon !== "none" ? resolveIconUrl(res.icon, "", isPrimary ? "ffffff" : themeHex) : null;
+                        return (
+                          <span key={res.id} style={btnStyle}>
+                            {iconPath && (
+                              <img
+                                src={iconPath}
+                                alt=""
+                                style={{
+                                  width: 14,
+                                  height: 14,
+                                  display: "inline-block",
+                                  verticalAlign: "middle",
+                                  marginRight: 6,
+                                }}
+                              />
+                            )}
+                            {res.label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+            <div className="flex gap-2">
+              <Button size="sm" onClick={saveResources} disabled={savingResources}>
+                {savingResources ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Saving...</> : "Save Resources"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ════════════════ Step 7: Review & Send ════════════════ */}
+        {active === 7 && (
           <div className="space-y-4">
-            <div className="text-sm">Ready to send personalized emails.</div>
-            <div className="text-xs text-muted-foreground">Leads selected: {leadIds.length}</div>
-            <label className="flex items-center gap-2 text-sm"><Checkbox checked={testMode} onCheckedChange={(v) => setTestMode(!!v)} /> Test mode (send to your email instead of contacts)</label>
+            <div className="text-sm">Ready to send personalized outreach.</div>
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div className="p-3 rounded-md bg-muted/30 border border-border">
+                <div className="text-muted-foreground mb-1">Leads selected</div>
+                <div className="text-lg font-bold">{leadIds.length}</div>
+              </div>
+              <div className="p-3 rounded-md bg-muted/30 border border-border">
+                <div className="text-muted-foreground mb-1">Channels</div>
+                <div className="font-medium">{[useEmail && "Email", useSms && "SMS", usePhone && "Phone"].filter(Boolean).join(", ") || "None"}</div>
+              </div>
+              {isMultiBrand && selectedBrand && (
+                <div className="p-3 rounded-md bg-muted/30 border border-border col-span-2">
+                  <div className="text-muted-foreground mb-1">Brand</div>
+                  <div className="font-medium">{selectedBrand?.brand_label || selectedBrand?.company_name || "Default"}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Sender Selection */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium tracking-wide uppercase">Sending From</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSenderMode("company")}
+                  className={`flex items-start gap-3 p-3 rounded-md border text-left transition-all ${
+                    senderMode === "company"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                      : "border-border bg-background/60 hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <Building2 className={`w-5 h-5 mt-0.5 shrink-0 ${senderMode === "company" ? "text-primary" : "text-muted-foreground"}`} />
+                  <div>
+                    <div className="text-sm font-medium">Company Email</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      {emailConfigs.find((c: any) => c.purpose === "OUTREACH" && c.verification_status === "VERIFIED")?.from_email
+                        || emailConfigs.find((c: any) => c.purpose === "GENERAL" && c.verification_status === "VERIFIED")?.from_email
+                        || "Team email config required"}
+                    </div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSenderMode("personal")}
+                  className={`flex items-start gap-3 p-3 rounded-md border text-left transition-all ${
+                    senderMode === "personal"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                      : "border-border bg-background/60 hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <User className={`w-5 h-5 mt-0.5 shrink-0 ${senderMode === "personal" ? "text-primary" : "text-muted-foreground"}`} />
+                  <div>
+                    <div className="text-sm font-medium">Personal Email</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      {session?.user?.email || "Your account email"}
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={testMode} onCheckedChange={(v) => setTestMode(!!v)} />
+              Test mode (send to custom recipients instead of contacts)
+            </label>
+            {testMode && (
+              <div className="space-y-2 pl-6 border-l-2 border-primary/30 ml-1">
+                <label className="text-xs font-medium">Test Email Recipients</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    className="flex-1"
+                    value={testEmailRecipients}
+                    onChange={(e) => setTestEmailRecipients(e.target.value)}
+                    placeholder="email@example.com, another@example.com"
+                  />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="shrink-0 text-xs h-9"
+                    onClick={() => {
+                      const myEmail = session?.user?.email || "";
+                      if (!myEmail) { toast.error("No account email found"); return; }
+                      const existing = testEmailRecipients.trim();
+                      if (existing.includes(myEmail)) return;
+                      setTestEmailRecipients(existing ? `${existing}, ${myEmail}` : myEmail);
+                    }}
+                  >
+                    + Self
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">Separate multiple emails with commas. Test emails will be sent to these addresses instead of the actual leads.</p>
+
+                {/* Lead Reference Selector */}
+                <div className="mt-3">
+                  <label className="text-xs font-medium">Reference Lead</label>
+                  <p className="text-[10px] text-muted-foreground mb-2">Select which lead to use as context for the AI-generated test email.</p>
+                  <div className="max-h-[200px] overflow-y-auto border border-border rounded-md divide-y divide-border">
+                    {(leadData || []).filter((l: any) => l.email).length > 0 ? (leadData || []).filter((l: any) => l.email).slice(0, 50).map((lead: any) => (
+                      <button
+                        key={lead.id}
+                        type="button"
+                        onClick={() => setTestLeadId(lead.id)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors ${
+                          testLeadId === lead.id
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-muted/50"
+                        }`}
+                      >
+                        {testLeadId === lead.id ? (
+                          <CheckCircle2 className="w-4 h-4 shrink-0 text-primary" />
+                        ) : (
+                          <div className="w-4 h-4 shrink-0 rounded-full border border-muted-foreground/40" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">
+                            {[lead.firstName, lead.lastName].filter(Boolean).join(" ") || "Unknown"}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground truncate">
+                            {[lead.company, lead.email].filter(Boolean).join(" · ")}
+                          </div>
+                        </div>
+                      </button>
+                    )) : (
+                      // Fallback: show IDs if details not loaded
+                      leadIds.slice(0, 20).map((id) => (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => setTestLeadId(id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors ${
+                            testLeadId === id
+                              ? "bg-primary/10 text-primary"
+                              : "hover:bg-muted/50"
+                          }`}
+                        >
+                          {testLeadId === id ? (
+                            <CheckCircle2 className="w-4 h-4 shrink-0 text-primary" />
+                          ) : (
+                            <div className="w-4 h-4 shrink-0 rounded-full border border-muted-foreground/40" />
+                          )}
+                          <div className="text-xs font-mono truncate">{id}</div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             <div>
               <label className="text-xs font-medium">Batch Prompt Override</label>
               <Textarea className="mt-1" rows={6} value={promptOverride} onChange={(e) => setPromptOverride(e.target.value)} />
@@ -367,14 +1482,37 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, initialPr
           </div>
         )}
 
-        <DialogFooter className="mt-4 flex items-center justify-between">
+        <DialogFooter className="mt-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <Button variant="secondary" onClick={onClose}>Close</Button>
+            {active >= 2 && (
+              <Button variant="outline" size="sm" onClick={saveDraft} disabled={savingDraft} className="text-xs">
+                {savingDraft ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <FileTextIcon className="w-3 h-3 mr-1" />}
+                Save Draft
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {active > 1 && <Button variant="secondary" onClick={prev}>Back</Button>}
             {active < totalSteps && <Button onClick={next}>Next</Button>}
-            {active === totalSteps && <Button onClick={sendOutreach} disabled={!canSend}>Send</Button>}
+            {active === totalSteps && testMode && (
+              <Button
+                variant="secondary"
+                onClick={() => sendOutreach()}
+                disabled={!canSend || (testMode && !testEmailRecipients.trim())}
+                className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+              >
+                Send Test
+              </Button>
+            )}
+            {active === totalSteps && (
+              <Button
+                onClick={() => sendOutreach(false)}
+                disabled={!canSend}
+              >
+                Launch Campaign
+              </Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>

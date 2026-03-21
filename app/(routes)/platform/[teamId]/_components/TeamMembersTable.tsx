@@ -4,7 +4,9 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import { MoreHorizontal, Shield, User, Trash, Search, Plus, KeyRound, Ban, CheckCircle, Fingerprint, UserPlus } from "lucide-react";
+import { MoreHorizontal, Shield, User, Trash, Search, Plus, KeyRound, Ban, CheckCircle, Fingerprint, UserPlus, Building2, Layers } from "lucide-react";
+import { UserModulesModal } from "./UserModulesModal";
+import { AssignDepartmentModal } from "./AssignDepartmentModal";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,9 +82,11 @@ type Props = {
     isSuperAdmin?: boolean;
     isGlobalAdmin?: boolean;
     ownerId?: string | null;
+    hasDepartments?: boolean;
+    departmentMap?: Record<string, string>;
 };
 
-const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdmin, ownerId }: Props) => {
+const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdmin, ownerId, hasDepartments = false, departmentMap = {} }: Props) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -101,6 +105,10 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState("MEMBER");
     const [inviteLoading, setInviteLoading] = useState(false);
+
+    // Module & Department Assignment State
+    const [moduleMember, setModuleMember] = useState<Member | null>(null);
+    const [deptMember, setDeptMember] = useState<Member | null>(null);
 
     const canInvite = ["ADMIN", "OWNER", "PLATFORM_ADMIN", "SUPER_ADMIN", "PLATFORM ADMIN"].includes((members as any)?._currentUserRole || "") || isSuperAdmin || isGlobalAdmin;
 
@@ -447,6 +455,15 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                                     <Badge variant={member.team_role === "PLATFORM_ADMIN" ? "destructive" : member.team_role === "OWNER" ? "default" : member.team_role === "ADMIN" ? "secondary" : "outline"}>
                                         {member.team_role || "MEMBER"}
                                     </Badge>
+                                    {(() => {
+                                        const deptName = departmentMap[(member as any).department_id] || departmentMap[(member as any).team_id];
+                                        return deptName ? (
+                                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-400 border-blue-500/30">
+                                                <Building2 className="w-3 h-3 mr-1" />
+                                                {deptName}
+                                            </Badge>
+                                        ) : null;
+                                    })()}
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" disabled={isLoading}>
@@ -463,6 +480,16 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                                                 </DropdownMenuItem>
                                             )}
 
+                                            {/* Assign to Department */}
+                                            <DropdownMenuItem onClick={() => setDeptMember(member)}>
+                                                <Building2 className="w-4 h-4 mr-2" /> Assign Department
+                                            </DropdownMenuItem>
+                                            {/* Configure Modules — only available when no departments are set up */}
+                                            {!hasDepartments && (
+                                                <DropdownMenuItem onClick={() => setModuleMember(member)}>
+                                                    <Layers className="w-4 h-4 mr-2" /> Configure Modules
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem className="text-red-600" onClick={() => handleRemove(member.id)}>
                                                 <Trash className="w-4 h-4 mr-2" /> Remove from Company
@@ -493,6 +520,28 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                     )}
                 </div>
             </CardContent>
+
+            {/* User Modules Modal — only when no departments */}
+            {moduleMember && !hasDepartments && (
+                <UserModulesModal
+                    isOpen={!!moduleMember}
+                    onClose={() => setModuleMember(null)}
+                    userId={moduleMember.id}
+                    userName={moduleMember.name || moduleMember.email}
+                    departmentAllowedModules={[]}
+                />
+            )}
+
+            {/* Assign Department Modal */}
+            {deptMember && (
+                <AssignDepartmentModal
+                    isOpen={!!deptMember}
+                    onClose={() => setDeptMember(null)}
+                    userId={deptMember.id}
+                    userName={deptMember.name || deptMember.email}
+                    teamId={teamId}
+                />
+            )}
         </Card >
     );
 };

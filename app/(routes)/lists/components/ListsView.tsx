@@ -110,6 +110,8 @@ export default function ListsView() {
     });
     const [wizardOpen, setWizardOpen] = useState(false);
     const [wizardLeadIds, setWizardLeadIds] = useState<string[]>([]);
+    const [wizardLeadData, setWizardLeadData] = useState<any[]>([]);
+    const [wizardPool, setWizardPool] = useState<LeadPool | null>(null);
     const [loadingOutreach, setLoadingOutreach] = useState<string | null>(null);
     const [assignModalPool, setAssignModalPool] = useState<LeadPool | null>(null);
     const [poolToDelete, setPoolToDelete] = useState<{ id: string, name: string } | null>(null);
@@ -190,8 +192,12 @@ export default function ListsView() {
 
             if (!res.ok) throw new Error(await res.text());
             const j = await res.json();
-            const ids: string[] = Array.isArray(j?.leads) ? (j.leads as any[]).filter(l => !!l.email).map(l => l.id) : [];
+            const allLeads: any[] = Array.isArray(j?.leads) ? j.leads : [];
+            const withEmail = allLeads.filter((l: any) => !!l.email);
+            const ids = withEmail.map((l: any) => l.id);
             setWizardLeadIds(ids);
+            setWizardLeadData(withEmail);
+            setWizardPool(data?.pools?.find(p => p.id === poolId) || null);
             setWizardOpen(true);
         } catch (e) {
             alert("An error occurred while loading outreach leads");
@@ -225,7 +231,7 @@ export default function ListsView() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0 overflow-hidden">
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
                     <div className="relative w-full md:w-64">
@@ -396,11 +402,11 @@ export default function ListsView() {
                                             </p>
                                         )}
                                     </CardContent>
-                                    <CardFooter className="pt-3 border-t border-white/5 bg-muted/5 flex gap-2">
+                                    <CardFooter className="pt-3 border-t border-white/5 bg-muted/5 flex gap-2 flex-wrap">
                                         <Button
                                             variant="default"
                                             size="sm"
-                                            className="flex-1 text-xs font-bold uppercase tracking-wider h-8 bg-indigo-600 hover:bg-indigo-700"
+                                            className="text-xs font-bold uppercase tracking-wider h-8 bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap"
                                             onClick={() => router.push(`/crm/accounts/lists/${pool.id}`)}
                                         >
                                             Work List
@@ -409,7 +415,7 @@ export default function ListsView() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="flex-1 text-xs font-bold uppercase tracking-wider h-8 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                                                    className="text-xs font-bold uppercase tracking-wider h-8 border-blue-500/30 text-blue-400 hover:bg-blue-500/10 whitespace-nowrap"
                                                 onClick={() => router.push(`/crm/leads/jobs/${pool.latestJob!.id}`)}
                                             >
                                                 <Bot className="w-3.5 h-3.5 mr-1" /> View Job
@@ -418,7 +424,7 @@ export default function ListsView() {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            className="flex-1 text-xs font-bold uppercase tracking-wider h-8 border-white/10 hover:bg-white/5"
+                                            className="text-xs font-bold uppercase tracking-wider h-8 border-white/10 hover:bg-white/5 whitespace-nowrap"
                                             onClick={() => startFirstContact(pool.id)}
                                             disabled={loadingOutreach === pool.id}
                                         >
@@ -465,8 +471,15 @@ export default function ListsView() {
 
             <FirstContactWizard
                 isOpen={!!wizardOpen}
-                onClose={() => setWizardOpen(false)}
+                onClose={() => { setWizardOpen(false); setWizardPool(null); setWizardLeadData([]); }}
                 leadIds={wizardLeadIds}
+                leadData={wizardLeadData}
+                listContext={wizardPool ? {
+                    name: wizardPool.name,
+                    description: wizardPool.description,
+                    contactsCount: wizardPool.contactsCount,
+                    icpConfig: wizardPool.icpConfig,
+                } : undefined}
             />
 
             <AlertDialog open={!!poolToDelete} onOpenChange={(open) => !open && setPoolToDelete(null)}>

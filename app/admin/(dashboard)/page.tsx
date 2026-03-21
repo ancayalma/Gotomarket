@@ -84,6 +84,12 @@ export default async function AdminDashboardPage({
   const role = (teamInfo.teamRole || '').toUpperCase();
   const isSuperAdmin = teamInfo.isGlobalAdmin || ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN'].includes(role);
 
+  // Build department lookup map for personnel cards
+  const departmentMap: Record<string, string> = {};
+  for (const dept of departments) {
+      departmentMap[dept.id] = dept.name;
+  }
+
   return (
     <Container
       title="Company Directory"
@@ -138,6 +144,8 @@ export default async function AdminDashboardPage({
               isSuperAdmin={isSuperAdmin}
               isGlobalAdmin={teamInfo.isGlobalAdmin}
               ownerId={team?.owner_id}
+              hasDepartments={departments.length > 0}
+              departmentMap={departmentMap}
             />
           </div>
         </TabsContent>

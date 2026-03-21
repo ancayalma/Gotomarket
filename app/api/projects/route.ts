@@ -97,8 +97,8 @@ export async function POST(req: Request) {
 
     // INHERITANCE: If fields are empty, pull from team brand identity
     if (teamId) {
-        const teamBrand = await (prismadb as any).teamBrandIdentity.findUnique({
-            where: { team_id: teamId }
+        const teamBrand = await (prismadb as any).teamBrandIdentity.findFirst({
+            where: { team_id: teamId, is_default: true }
         });
         if (teamBrand) {
             if (finalIndustries.length === 0 && teamBrand.industry) {
