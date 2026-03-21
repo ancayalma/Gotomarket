@@ -13,7 +13,7 @@ import {
 import * as React from "react";
 import type { ResourceLink } from "./OutreachTemplate";
 import type { TemplateOptions } from "@/lib/outreach/outreach-styles";
-import { getBackgroundTexture, getBorderAccent, getCardStyle } from "@/lib/outreach/outreach-styles";
+import { getBackgroundTexture, getBorderAccent, getCardStyle, getDividerStyle } from "@/lib/outreach/outreach-styles";
 
 /**
  * OutreachExecutiveTemplate
@@ -64,6 +64,7 @@ export const OutreachExecutiveTemplate: React.FC<
   const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
   const cardStyleCss = getCardStyle(templateOptions?.cardStyle);
   const showResources = templateOptions?.showResources !== false;
+  const dividerCss = getDividerStyle(templateOptions?.dividerStyle, ACCENT);
 
   const paragraphs = bodyText
     .split("\n")
@@ -103,14 +104,12 @@ export const OutreachExecutiveTemplate: React.FC<
           fontFamily: FONT,
           lineHeight: 1.9,
           color: PRIMARY,
-          maxWidth: "720px",
-          margin: "0 auto",
-          padding: "0",
+          padding: "40px 20px",
           backgroundColor: "#fafaf8",
           ...bgTexture,
         }}
       >
-        <Container style={{ maxWidth: "720px", ...borderAccent, ...cardStyleCss }}>
+        <Container style={{ maxWidth: "720px", margin: "0 auto", ...cardStyleCss, ...borderAccent }}>
           {/* Thin accent top line */}
           <div style={{ height: "3px", backgroundColor: ACCENT }} />
 
@@ -148,10 +147,11 @@ export const OutreachExecutiveTemplate: React.FC<
           {showResources && resourceButtons.length > 0 && (
             <Section style={{ padding: "0 40px 28px" }}>
               <Hr
-                style={{
-                  borderTop: `1px solid ${ACCENT}55`,
-                  margin: "0 0 20px 0",
-                }}
+                style={
+                  templateOptions?.dividerStyle
+                    ? dividerCss
+                    : { borderTop: `1px solid ${ACCENT}55`, margin: "0 0 20px 0" }
+                }
               />
               <div style={{ textAlign: "center" }}>
                 {resourceButtons.map((r) => {

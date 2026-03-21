@@ -8,6 +8,7 @@ import {
   Preview,
   Section,
   Text,
+  Hr,
 } from "@react-email/components";
 import * as React from "react";
 import type { ResourceLink } from "./OutreachTemplate";
@@ -71,6 +72,7 @@ export const OutreachBoldTemplate: React.FC<
   const bgTexture = getBackgroundTexture(templateOptions?.backgroundTexture, ACCENT);
   const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
   const cardStyleCss = getCardStyle(templateOptions?.cardStyle);
+  const dividerCss = getDividerStyle(templateOptions?.dividerStyle, ACCENT);
   const showResources = templateOptions?.showResources !== false;
 
   const lines = bodyText
@@ -115,14 +117,12 @@ export const OutreachBoldTemplate: React.FC<
           fontFamily: FONT,
           lineHeight: 1.7,
           color: PRIMARY,
-          maxWidth: "720px",
-          margin: "0 auto",
-          padding: "0",
+          padding: "40px 20px",
           backgroundColor: "#f1f5f9",
           ...bgTexture,
         }}
       >
-        <Container style={{ maxWidth: "720px", ...borderAccent, ...cardStyleCss }}>
+        <Container style={{ maxWidth: "720px", margin: "0 auto", ...cardStyleCss, ...borderAccent }}>
           {/* Gradient Hero Header */}
           <Section
             style={{
@@ -201,6 +201,10 @@ export const OutreachBoldTemplate: React.FC<
               </Text>
             ))}
           </Section>
+
+          {templateOptions?.dividerStyle && templateOptions.dividerStyle !== "none" && (
+            <Hr style={dividerCss} />
+          )}
 
           {/* Resources - Stacked Full-Width CTAs */}
           {showResources && resourceButtons.length > 0 && (

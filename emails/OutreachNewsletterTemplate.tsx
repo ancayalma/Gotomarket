@@ -15,7 +15,7 @@ import {
 import * as React from "react";
 import type { ResourceLink } from "./OutreachTemplate";
 import type { TemplateOptions } from "@/lib/outreach/outreach-styles";
-import { getBackgroundTexture, getBorderAccent, getCardStyle } from "@/lib/outreach/outreach-styles";
+import { getBackgroundTexture, getBorderAccent, getCardStyle, getDividerStyle } from "@/lib/outreach/outreach-styles";
 
 /**
  * OutreachNewsletterTemplate
@@ -66,6 +66,7 @@ export const OutreachNewsletterTemplate: React.FC<
   const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
   const cardStyleCss = getCardStyle(templateOptions?.cardStyle);
   const showResources = templateOptions?.showResources !== false;
+  const dividerCss = getDividerStyle(templateOptions?.dividerStyle, ACCENT);
 
   const paragraphs = bodyText
     .split("\n")
@@ -105,14 +106,12 @@ export const OutreachNewsletterTemplate: React.FC<
           fontFamily: FONT,
           lineHeight: 1.8,
           color: PRIMARY,
-          maxWidth: "720px",
-          margin: "0 auto",
-          padding: "0",
+          padding: "40px 20px",
           backgroundColor: "#ffffff",
           ...bgTexture,
         }}
       >
-        <Container style={{ maxWidth: "720px", ...borderAccent, ...cardStyleCss }}>
+        <Container style={{ maxWidth: "720px", margin: "0 auto", ...cardStyleCss, ...borderAccent }}>
           {/* Masthead */}
           <Section
             style={{

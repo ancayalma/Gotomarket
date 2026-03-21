@@ -18,6 +18,14 @@ export interface TemplateOptions {
   dividerStyle?: DividerStyle;
 }
 
+function hexToRgba(hex: string, alpha: number): string {
+  const c = hex.replace("#", "");
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  return `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${alpha})`;
+}
+
 // ── Background Textures ──
 export function getBackgroundTexture(
   type: BackgroundTexture | undefined,
@@ -26,38 +34,25 @@ export function getBackgroundTexture(
   switch (type) {
     case "dots":
       return {
-        backgroundImage: `radial-gradient(${accentColor}15 1px, transparent 1px)`,
-        backgroundSize: "20px 20px",
+        backgroundImage: `radial-gradient(${hexToRgba(accentColor, 0.35)} 1.5px, transparent 1.5px)`,
+        backgroundSize: "18px 18px",
       };
     case "lines":
       return {
-        backgroundImage: `repeating-linear-gradient(0deg, ${accentColor}08, ${accentColor}08 1px, transparent 1px, transparent 24px)`,
+        backgroundImage: `repeating-linear-gradient(0deg, ${hexToRgba(accentColor, 0.18)}, ${hexToRgba(accentColor, 0.18)} 1px, transparent 1px, transparent 20px)`,
       };
     case "grid":
       return {
-        backgroundImage: `
-          linear-gradient(${accentColor}08 1px, transparent 1px),
-          linear-gradient(90deg, ${accentColor}08 1px, transparent 1px)
-        `.trim(),
-        backgroundSize: "24px 24px",
+        backgroundImage: `linear-gradient(${hexToRgba(accentColor, 0.2)} 1px, transparent 1px), linear-gradient(90deg, ${hexToRgba(accentColor, 0.2)} 1px, transparent 1px)`,
+        backgroundSize: "22px 22px",
       };
     case "noise":
       return {
-        backgroundImage: `
-          radial-gradient(circle at 20% 35%, ${accentColor}08 0%, transparent 50%),
-          radial-gradient(circle at 75% 44%, ${accentColor}06 0%, transparent 50%),
-          radial-gradient(circle at 46% 80%, ${accentColor}04 0%, transparent 40%)
-        `.trim(),
+        backgroundImage: `radial-gradient(circle at 20% 35%, ${hexToRgba(accentColor, 0.12)} 0%, transparent 50%), radial-gradient(circle at 75% 44%, ${hexToRgba(accentColor, 0.09)} 0%, transparent 50%), radial-gradient(circle at 46% 80%, ${hexToRgba(accentColor, 0.06)} 0%, transparent 40%)`,
       };
     case "diagonal":
       return {
-        backgroundImage: `repeating-linear-gradient(
-          45deg,
-          transparent,
-          transparent 10px,
-          ${accentColor}06 10px,
-          ${accentColor}06 11px
-        )`,
+        backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${hexToRgba(accentColor, 0.15)} 10px, ${hexToRgba(accentColor, 0.15)} 12px)`,
       };
     default:
       return {};
@@ -81,7 +76,7 @@ export function getBorderAccent(
     case "gradient-top":
       return {
         borderTop: "none",
-        backgroundImage: `linear-gradient(${accentColor}, ${accentColor}), linear-gradient(to right, ${accentColor}, ${accentColor}88, ${accentColor})`,
+        backgroundImage: `linear-gradient(${accentColor}, ${accentColor}), linear-gradient(to right, ${accentColor}, ${hexToRgba(accentColor, 0.5)}, ${accentColor})`,
         backgroundSize: "100% 3px",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "top",
@@ -89,8 +84,8 @@ export function getBorderAccent(
       };
     case "bottom-glow":
       return {
-        boxShadow: `0 4px 20px ${accentColor}20`,
-        borderBottom: `2px solid ${accentColor}30`,
+        boxShadow: `0 4px 20px ${hexToRgba(accentColor, 0.12)}`,
+        borderBottom: `2px solid ${hexToRgba(accentColor, 0.19)}`,
       };
     default:
       return {};
@@ -146,7 +141,7 @@ export function getDividerStyle(
       };
     case "dotted":
       return {
-        borderTop: `2px dotted ${accentColor}40`,
+        borderTop: `2px dotted ${hexToRgba(accentColor, 0.25)}`,
         margin: "16px 0",
       };
     default:
