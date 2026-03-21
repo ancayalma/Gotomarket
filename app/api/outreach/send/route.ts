@@ -163,8 +163,10 @@ export async function POST(req: Request) {
     const candidateLeads: any[] = [];
     const clientData = body.leadData || body.inlineLeads || [];
     if (candidateIds.length > 0 && Array.isArray(clientData) && clientData.length > 0) {
+      systemLogger.info(`[OUTREACH_SEND] Resolving ${candidateIds.length} candidate IDs from ${clientData.length} leadData entries`);
       for (const cid of candidateIds) {
         const match = clientData.find((ld: any) => ld.id === cid);
+        systemLogger.info(`[OUTREACH_SEND] Candidate ID "${cid}" -> match: ${match ? `firstName="${match.firstName}", lastName="${match.lastName}", email="${match.email}"` : "NO MATCH"}`);
         if (match && match.email) {
           candidateLeads.push({
             id: cid,
@@ -180,6 +182,7 @@ export async function POST(req: Request) {
         }
       }
     }
+
 
     let leads: any[] = [...dbLeads, ...candidateLeads];
 
@@ -307,6 +310,9 @@ export async function POST(req: Request) {
       // Build LLM prompt
       const contactName = [lead.firstName, lead.lastName].filter(Boolean).join(" ").trim();
       const basePrompt = promptOverride || user.outreach_prompt_default || null;
+
+      systemLogger.info(`[OUTREACH_SEND] Lead data for AI prompt: id=${lead.id}, contactName="${contactName}", firstName="${lead.firstName}", lastName="${lead.lastName}", email=${lead.email}, company="${lead.company}"`);
+
 
       // Research the lead's company for personalization
       let companyResearch: string | null = null;
