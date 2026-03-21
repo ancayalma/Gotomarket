@@ -67,7 +67,7 @@ export async function GET(req: Request) {
                     subject: subject,
                     html: html,
                     text: item.body_text || "",
-                });
+                }, "OUTREACH");
 
                 const messageId = `outreach_${item.id}_${Date.now()}`;
 

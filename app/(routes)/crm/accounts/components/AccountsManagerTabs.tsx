@@ -66,9 +66,9 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
         : navCards;
 
     return (
-        <div className="w-full h-full flex flex-col p-4 md:p-6">
+        <div className="w-full h-full flex flex-col p-4 md:p-6 min-w-0 overflow-hidden">
             {/* Navigation Cards Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3 flex-shrink-0 pb-4 pt-4 -mt-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 flex-shrink-0 pb-4 pt-4 -mt-2 w-full">
                 {visibleCards.map((card) => {
                     let variant: "info" | "violet" | "warning" | "default" = "default";
                     if (card.id === "accounts") variant = "info";
@@ -128,8 +128,8 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
             </div>
 
             {/* Tab Content */}
-            <Tabs value={activeTab} className="w-full relative flex flex-col flex-1">
-                <TabsContent value="accounts" className="flex-1 mt-0">
+            <Tabs value={activeTab} className="w-full relative flex flex-col flex-1 min-w-0">
+                <TabsContent value="accounts" className="flex-1 mt-0 w-full min-w-0">
                     <AccountsView crmData={crmData} data={accounts} />
                 </TabsContent>
                 {!isMember && (

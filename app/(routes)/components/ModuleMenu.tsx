@@ -56,7 +56,7 @@ type Props = {
 // ─── Sidebar Animation Variants ──────────────────────────
 const sidebarVariants = {
   expanded: {
-    width: "11.25rem",
+    width: "13rem",
     transition: { type: "spring", stiffness: 200, damping: 25 } as const,
   },
   collapsed: {
@@ -146,11 +146,11 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
   ];
 
   const platformSubItems: SubMenuItemType[] = [
-    { label: "Team Management", href: "/partners" },
-    { label: "System Keys", href: "/partners/ai-system-config" },
-    { label: "Model Pricing", href: "/partners/ai-pricing" },
-    { label: "System Email", href: "/partners/email-system-config" },
-    { label: "Manage Plans", href: "/partners/plans" },
+    { label: "Company Management", href: "/platform" },
+    { label: "System Keys", href: "/platform/ai-system-config" },
+    { label: "Model Pricing", href: "/platform/ai-pricing" },
+    { label: "System Email", href: "/platform/email-system-config" },
+    { label: "Manage Plans", href: "/platform/plans" },
   ];
 
   // ─── Hydration ───────────────────────────
@@ -242,7 +242,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
               <ExpandableMenuItem
                 href="/crm/opportunities"
                 icon={Target}
-                title="Deals"
+                title="Opportunities"
                 isOpen={open}
                 isActive={isCrmOpps}
                 items={oppsSubItems}
@@ -458,7 +458,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
                   <HubLabel label="Platform" isOpen={open} isDouble />
 
                   <ExpandableMenuItem
-                    href="/partners"
+                    href="/platform"
                     icon={Globe}
                     title="Platform"
                     isOpen={open}
@@ -496,7 +496,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
           <MenuItem href="/admin" icon={Wrench} title={dict.ModuleMenu.settings} isOpen={false} isActive={isAdmin} isMobile />
         )}
         {isPartnerAdmin && (
-          <MenuItem href="/partners" icon={Globe} title="Platform" isOpen={false} isActive={isPartner} isMobile />
+          <MenuItem href="/platform" icon={Globe} title="Platform" isOpen={false} isActive={isPartner} isMobile />
         )}
       </div>
     </>

@@ -11,9 +11,7 @@ export const getAccounts = async () => {
   if (!teamInfo?.teamId) return [];
 
   const baseWhere: any = {};
-  if (!teamInfo?.isGlobalAdmin) {
-    baseWhere.team_id = teamInfo?.teamId;
-  }
+  baseWhere.team_id = teamInfo?.teamId;
 
   // Account-specific filters (Removed hardcoded filters)
   const accountWhere = {

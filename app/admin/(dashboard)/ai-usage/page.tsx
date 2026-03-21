@@ -5,9 +5,9 @@ import { prismadbChat } from "@/lib/prisma-chat";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Card, Title, Subtitle, Legend } from "@tremor/react";
-import { ModelDistributionChart } from "@/app/(routes)/partners/_components/ModelDistributionChart";
+import { ModelDistributionChart } from "@/app/(routes)/platform/_components/ModelDistributionChart";
 import Container from "@/app/(routes)/components/ui/Container";
-import { AiUsageCharts } from "@/app/(routes)/partners/_components/AiUsageCharts";
+import { AiUsageCharts } from "@/app/(routes)/platform/_components/AiUsageCharts";
 import { getTeamLeadGenCredits } from "@/lib/scraper/credits";
 
 // Type wrapper for prisma-chat

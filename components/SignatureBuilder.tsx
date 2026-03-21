@@ -104,7 +104,8 @@ interface SignatureData {
 }
 
 interface SignatureBuilderProps {
-  hasAccess: boolean;
+  hasAccess?: boolean;
+  brandId?: string; // When provided, load/save from TeamBrandIdentity instead of user profile
 }
 
 // --- Constants ---
@@ -211,7 +212,8 @@ const ensureAbsoluteUrl = (url: string, platform?: string) => {
 
 // --- Component ---
 
-const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
+const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, brandId }) => {
+  const signatureApiUrl = brandId ? `/api/profile/signature?brandId=${brandId}` : "/api/profile/signature";
   // State
   const [data, setData] = useState<SignatureData>({
     firstName: "",
@@ -269,7 +271,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("/api/profile/signature", { method: "GET" });
+        const res = await fetch(signatureApiUrl, { method: "GET" });
         if (!res.ok) return;
         const json = await res.json();
         const meta = json?.signature_meta;
@@ -334,7 +336,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
     };
 
     fetchProfile();
-  }, [hasAccess]);
+  }, [hasAccess, brandId, signatureApiUrl]);
 
   // Handler: Input Change
   const startUpdate = (field: keyof SignatureData, value: any) => {
@@ -1102,7 +1104,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess }) => {
         meta: sanitizedData
       };
 
-      const res = await fetch("/api/profile/signature", {
+      const res = await fetch(signatureApiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

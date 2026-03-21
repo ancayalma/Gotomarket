@@ -35,11 +35,17 @@ export async function verifyEmailIdentity(email: string, creds?: SESCredentials)
         await client.send(command);
         return true;
     } catch (error: any) {
-        console.error("[SES_VERIFY_INIT]", error);
-        // If already exists, we might get a conflict, which is fine, we just want to ensure it's there.
-        if (error.name === "AlreadyExistsException") {
+        // If already exists, we just want to ensure it's there — not an error.
+        if (
+            error.name === "AlreadyExistsException" ||
+            error.Code === "AlreadyExistsException" ||
+            error.__type?.includes("AlreadyExistsException") ||
+            error.message?.includes("already exist")
+        ) {
+            console.log(`[SES_VERIFY] Identity ${email} already exists, treating as success.`);
             return true;
         }
+        console.error("[SES_VERIFY_INIT]", error);
         throw new Error(`Failed to initiate verification: ${error.message}`);
     }
 }

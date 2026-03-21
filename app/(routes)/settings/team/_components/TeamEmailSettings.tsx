@@ -100,7 +100,7 @@ export function TeamEmailSettings({ teamId }: TeamEmailSettingsProps) {
             <CardHeader>
                 <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
                     <Mail className="w-5 h-5 text-primary" />
-                    Team Email Settings (Bring Your Own Email)
+                    Company Email Settings (Bring Your Own Email)
                 </CardTitle>
                 <CardDescription>
                     Configure your own email service (AWS SES, Resend, SMTP, etc.) to handle client outreach.

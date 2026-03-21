@@ -85,7 +85,27 @@ const SideBar = async () => {
     return process(items);
   };
 
-  const activeNavStructure = deduplicateStructure(rawStructure);
+  // Migrate any DB-stored /partners hrefs to /platform
+  const migratePartnersToPlatform = (items: NavItem[]): NavItem[] => {
+    return items.map(item => {
+      const migrated = { ...item };
+      if (migrated.href?.startsWith('/partners')) {
+        migrated.href = migrated.href.replace('/partners', '/platform');
+      }
+      if (migrated.label === 'Team Management') {
+        migrated.label = 'Company Management';
+      }
+      if (migrated.label === 'Deals') {
+        migrated.label = 'Opportunities';
+      }
+      if (migrated.children) {
+        migrated.children = migratePartnersToPlatform(migrated.children);
+      }
+      return migrated;
+    });
+  };
+
+  const activeNavStructure = deduplicateStructure(migratePartnersToPlatform(rawStructure));
 
   const ensurePlatformMenu = (items: NavItem[]) => {
     if (!isPartnerAdmin) return;
@@ -98,14 +118,14 @@ const SideBar = async () => {
           type: "item",
           label: "Platform",
           iconName: "Globe",
-          href: "/partners",
+          href: "/platform",
           permissions: { minRole: "PLATFORM_ADMIN" },
           children: [
-            { id: "sub_platform_team", type: "item", label: "Team Management", href: "/partners" },
-            { id: "sub_platform_keys", type: "item", label: "System Keys", href: "/partners/ai-system-config" },
-            { id: "sub_platform_pricing", type: "item", label: "Model Pricing", href: "/partners/ai-pricing" },
-            { id: "sub_platform_email", type: "item", label: "System Email", href: "/partners/email-system-config" },
-            { id: "sub_platform_plans", type: "item", label: "Manage Plans", href: "/partners/plans" }
+            { id: "sub_platform_team", type: "item", label: "Company Management", href: "/platform" },
+            { id: "sub_platform_keys", type: "item", label: "System Keys", href: "/platform/ai-system-config" },
+            { id: "sub_platform_pricing", type: "item", label: "Model Pricing", href: "/platform/ai-pricing" },
+            { id: "sub_platform_email", type: "item", label: "System Email", href: "/platform/email-system-config" },
+            { id: "sub_platform_plans", type: "item", label: "Manage Plans", href: "/platform/plans" }
           ]
         });
       }

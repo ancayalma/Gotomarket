@@ -55,7 +55,7 @@ type Props = {
 
 const sidebarVariants = {
     expanded: {
-        width: "12.5rem",
+        width: "13rem",
         transition: { type: "spring", stiffness: 200, damping: 25 } as const,
     },
     collapsed: {
@@ -475,8 +475,8 @@ const DynamicModuleMenu = ({
                                 })}
 
                                 {/* Always show settings link if Admin */}
-                                {isPartnerAdmin && !navStructure.some(i => i.href === "/partners") && (
-                                    <MenuItem href="/partners" icon={Globe} title="Platform" isOpen={false} isActive={pathname.includes("/partners")} isMobile />
+                                {isPartnerAdmin && !navStructure.some(i => i.href === "/platform") && (
+                                    <MenuItem href="/platform" icon={Globe} title="Platform" isOpen={false} isActive={pathname.includes("/platform")} isMobile />
                                 )}
                             </div>
                         </div>

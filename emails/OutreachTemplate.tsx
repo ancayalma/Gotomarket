@@ -2,6 +2,7 @@ import {
   Body,
   Container,
   Head,
+  Hr,
   Html,
   Img,
   Link,
@@ -9,6 +10,8 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import type { TemplateOptions } from "@/lib/outreach/outreach-styles";
+import { getBackgroundTexture, getBorderAccent, getCardStyle, getDividerStyle } from "@/lib/outreach/outreach-styles";
 import * as React from "react";
 
 /**
@@ -28,6 +31,7 @@ export type ResourceLink = {
   label: string;
   href: string;
   type?: "primary" | "secondary";
+  icon?: string;
   iconUrl?: string;
   enabled?: boolean;
 };
@@ -39,7 +43,8 @@ interface OutreachTemplateProps {
   signatureHtml?: string; // sanitized HTML fragment appended
   trackingPixelUrl?: string; // 1x1 tracking pixel URL
   brand?: {
-    accentColor?: string; // default #F54029 (TUC red)
+    accentColor?: string; // default #F54029 (TUC red) — used for secondary buttons
+    secondaryColor?: string; // default #10b981 (green) — used for primary buttons
     primaryText?: string; // default #1f2937
     fontFamily?: string; // default system stack
     logoUrl?: string;
@@ -47,6 +52,7 @@ interface OutreachTemplateProps {
   };
   // Optional: sometimes we want to include a hero icon
   heroIconUrl?: string;
+  templateOptions?: TemplateOptions;
 }
 
 const DEFAULTS = {
@@ -64,10 +70,19 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
   trackingPixelUrl,
   brand,
   heroIconUrl,
+  templateOptions,
 }) => {
   const ACCENT = brand?.accentColor || DEFAULTS.ACCENT;
   const PRIMARY = brand?.primaryText || DEFAULTS.PRIMARY;
   const FONT = brand?.fontFamily || DEFAULTS.FONT;
+
+  const SECONDARY = brand?.secondaryColor || "#10b981";
+
+  const bgTexture = getBackgroundTexture(templateOptions?.backgroundTexture, ACCENT);
+  const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
+  const cardStyle = getCardStyle(templateOptions?.cardStyle);
+  const dividerCss = getDividerStyle(templateOptions?.dividerStyle, ACCENT);
+  const showResources = templateOptions?.showResources !== false;
 
   const paragraphs = bodyText
     .split("\n")
@@ -81,17 +96,18 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
     display: "inline-block",
     textDecoration: "none",
     borderRadius: "8px",
-    fontSize: "14px",
+    fontSize: "13px",
     fontWeight: 700,
-    padding: "12px 20px",
-    margin: "8px 8px 8px 0",
+    padding: "10px 16px",
+    margin: "6px 6px 6px 0",
+    textAlign: "center" as const,
   };
   const btnPrimary: React.CSSProperties = {
     ...btnBase,
     color: "#ffffff",
-    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-    boxShadow: "0 2px 8px rgba(16,185,129,0.25)",
-    border: "2px solid #10b981",
+    background: `linear-gradient(135deg, ${SECONDARY} 0%, ${SECONDARY}dd 100%)`,
+    boxShadow: `0 2px 8px ${SECONDARY}40`,
+    border: `2px solid ${SECONDARY}`,
   };
   const btnSecondary: React.CSSProperties = {
     ...btnBase,
@@ -106,20 +122,23 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
 
   return (
     <Html>
-      <Head />
+      <Head>
+        <meta charSet="utf-8" />
+      </Head>
       <Preview>{subjectPreview}</Preview>
       <Body
         style={{
           fontFamily: FONT,
           lineHeight: 1.8,
           color: PRIMARY,
-          maxWidth: "640px",
+          maxWidth: "720px",
           margin: "0 auto",
           padding: "20px",
           backgroundColor: "#ffffff",
+          ...bgTexture,
         }}
       >
-        <Container>
+        <Container style={{ maxWidth: "720px", ...borderAccent, ...cardStyle }}>
           {/* Optional hero/logo */}
           {brand?.logoUrl && (
             <Section style={{ textAlign: "center", marginBottom: 16 }}>
@@ -157,8 +176,13 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
             ))}
           </Section>
 
+          {/* Divider before resources */}
+          {showResources && resourceButtons.length > 0 && templateOptions?.dividerStyle && templateOptions.dividerStyle !== "none" && (
+            <Hr style={dividerCss} />
+          )}
+
           {/* Resources */}
-          {resourceButtons.length > 0 && (
+          {showResources && resourceButtons.length > 0 && (
             <Section
               style={{
                 margin: "28px 0 20px 0",
@@ -177,29 +201,31 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                   margin: "0 0 12px 0",
+                  textAlign: "center",
                 }}
               >
-                Resources
+                ✨ Quick Links
               </Text>
-              <div>
+              <div style={{ textAlign: "center" }}>
                 {resourceButtons.map((r) => {
                   const style = r.type === "primary" ? btnPrimary : btnSecondary;
+                  const isPrimary = r.type === "primary";
                   return (
                     <Link key={r.id || r.href} href={r.href} style={style}>
-                      {r.iconUrl ? (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                          <Img
-                            src={r.iconUrl}
-                            alt=""
-                            width="20"
-                            height="20"
-                            style={{ display: "inline-block", verticalAlign: "middle" }}
-                          />
-                          {r.label}
-                        </span>
-                      ) : (
-                        r.label
+                      {r.iconUrl && (
+                        <Img
+                          src={r.iconUrl}
+                          alt=""
+                          width="14"
+                          height="14"
+                          style={{
+                            display: "inline-block",
+                            verticalAlign: "middle",
+                            marginRight: "6px",
+                          }}
+                        />
                       )}
+                      {r.label}
                     </Link>
                   );
                 })}

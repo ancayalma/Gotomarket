@@ -43,8 +43,8 @@ export async function POST(req: Request) {
         // Fetch brand identity for location context (replaces hardcoded "Santa Fe")
         let brandLocation = "";
         if (currentUser?.team_id) {
-            const brand = await (prismadb as any).teamBrandIdentity.findUnique({
-                where: { team_id: currentUser.team_id },
+            const brand = await (prismadb as any).teamBrandIdentity.findFirst({
+                where: { team_id: currentUser.team_id, is_default: true },
                 select: { location: true, company_name: true }
             });
             brandLocation = brand?.location || "";

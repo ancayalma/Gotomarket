@@ -129,7 +129,7 @@ export default function UtilityBar() {
                     "w-full bg-background/80 backdrop-blur-md border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out",
                     isMinimized ? "h-0 opacity-0 overflow-hidden pointer-events-none" : "h-12 opacity-100"
                 )}>
-                    <div className="max-w-screen-2xl mx-auto h-full flex items-center justify-between px-4">
+                <div className="h-full grid grid-cols-[auto_1fr_auto] items-center px-2">
                         <div className="flex items-center gap-2">
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -144,13 +144,13 @@ export default function UtilityBar() {
                                 </TooltipTrigger>
                                 <TooltipContent side="top">Minimize Utility Bar</TooltipContent>
                             </Tooltip>
-                            <div className="h-4 w-px bg-border mx-2" />
+                            <div className="h-4 w-px bg-border mx-1" />
                             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hidden sm:inline">
                                 Utility Bar
                             </span>
                         </div>
 
-                        <div className="flex items-center gap-1 sm:gap-4">
+                        <div className="flex items-center justify-center gap-1 sm:gap-2">
                             {/* LeadGen Credits Widget */}
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -355,8 +355,9 @@ export default function UtilityBar() {
                                 <TooltipContent side="top">Personal objective tracker.</TooltipContent>
                             </Tooltip>
 
-                            <div className="h-4 w-px bg-border mx-1 hidden lg:block" />
+                        </div>
 
+                        <div className="flex items-center justify-end gap-1 sm:gap-2">
                             {/* Learn Button */}
                             {activeTab && (
                                 <Tooltip>
@@ -406,6 +407,7 @@ export default function UtilityBar() {
                                     <TooltipContent side="top">Operational intelligence briefing.</TooltipContent>
                                 </Tooltip>
                             )}
+
 
                             <div className="h-4 w-px bg-border mx-1 hidden lg:block" />
 

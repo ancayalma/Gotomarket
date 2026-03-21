@@ -92,31 +92,41 @@ export default async function AppLayout({
   let needsBrandSetup = false;
   let userTeamId = "";
   let mustChangePassword = false;
+  let sesEmailVerified = true; // Default to true to avoid gate flash for unauthenticated edge cases
+  let isPlatformAdmin = false;
   
   if (session?.user?.id) {
       const fullUser = await prismadb.users.findUnique({
           where: { id: session.user.id },
-          select: { team_id: true, team_role: true, is_admin: true, mustChangePassword: true, assigned_role: { select: { name: true } } }
+          select: { team_id: true, team_role: true, is_admin: true, mustChangePassword: true, sesEmailVerified: true, assigned_role: { select: { name: true } } }
       });
       if (fullUser?.team_id) {
           userTeamId = fullUser.team_id;
           const role = (fullUser.team_role || '').trim().toUpperCase();
           const pRole = (fullUser.assigned_role?.name || '').trim().toUpperCase();
           const isSuperAdmin = fullUser.is_admin === true || ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN', 'ADMIN'].includes(role) || pRole === 'SUPERADMIN';
+          isPlatformAdmin = isSuperAdmin;
           if (isSuperAdmin) {
-              const brandIdentity = await prismadb.teamBrandIdentity.findUnique({
-                  where: { team_id: userTeamId }
+              // Check if ANY brand has been set up (not just the default)
+              const anySetupBrand = await prismadb.teamBrandIdentity.findFirst({
+                  where: { team_id: userTeamId, OR: [{ setup_completed: true }, { company_name: { not: "" } }] }
               });
-              if (!brandIdentity || !brandIdentity.setup_completed) {
+              if (!anySetupBrand) {
                   needsBrandSetup = true;
               }
           }
       }
       mustChangePassword = fullUser?.mustChangePassword === true;
+      sesEmailVerified = fullUser?.sesEmailVerified === true;
   }
 
   if (user?.userStatus === "INACTIVE") {
     return redirect("/inactive");
+  }
+
+  // Redirect to email verification page if not verified (platform admins bypass)
+  if (!mustChangePassword && !sesEmailVerified && !isPlatformAdmin) {
+    return redirect("/verify-email");
   }
 
   return (

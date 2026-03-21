@@ -9,6 +9,11 @@ interface PromptBuilderParams {
     email?: string | null;
     phone?: string | null;
   };
+  sender?: {
+    name?: string | null;
+    title?: string | null;
+    company?: string | null;
+  };
   companyResearch?: string | null;
   meetingLink?: string | null;
   channel: "EMAIL" | "SMS" | "FOLLOWUP";
@@ -18,6 +23,7 @@ interface PromptBuilderParams {
 export function buildOutreachPrompt({
   basePrompt,
   contact,
+  sender,
   companyResearch,
   meetingLink,
   channel,
@@ -56,22 +62,12 @@ ${ctas}
   // 2. Compute Defaults based on Channel if no basePrompt is provided
   let fallbackBase = "";
 
+  const senderName = sender?.name || "the sender";
+  const senderTitle = sender?.title || "";
+  const senderCompany = sender?.company || brandName;
+
   if (channel === "EMAIL") {
-    fallbackBase = `
-You are a professional business development specialist writing a highly personalized outreach email for ${brandName}.
-Use any available company research to tailor the message.
-
-${brandBlock}
-
-Requirements:
-- Output JSON ONLY with keys "subject" and "body".
-- "body" MUST be plain text (no HTML), 250–300 words.
-- Style: sophisticated, narrative, insight-driven; open with a hook referencing their company/thesis if possible.
-- Personalization: connect our offerings to their focus.
-- Use first-person voice ("I").
-- Avoid headings like "Founder note:" or similar.
-- End with a confident, single Call to Action.
-`.trim();
+    fallbackBase = `\r\nYou are ghostwriting a personalized outreach email ON BEHALF of ${senderName}${senderTitle ? ` (${senderTitle})` : ""} from ${senderCompany}.\r\nWrite entirely in first person (I/me) as ${senderName}. Never refer to ${senderName} in third person.\r\nUse any available company research to tailor the message to the recipient.\r\n\r\n${brandBlock}\r\n\r\nRequirements:\r\n- Output JSON ONLY with keys "subject" and "body".\r\n- "body" MUST be plain text (no HTML), 250\u2013300 words.\r\n- MUST start with a proper greeting addressing the recipient by their first name (e.g., "Hi {firstName}," or "Dear {firstName},"). Never skip the greeting.\r\n- MUST end with an appropriate professional sign-off. Choose a sign-off that fits the tone of the email (e.g., Sincerely, Regards, Warm regards, Best, Cheers, Looking forward). Follow the sign-off with the sender's name: ${senderName}${senderTitle ? ` and their title: ${senderTitle}` : ""}.\r\n- Style: sophisticated, narrative, insight-driven; after the greeting, open with a hook referencing their company/thesis if possible.\r\n- Personalization: connect our offerings to their focus using the company research provided.\r\n- Use first-person voice ("I") throughout. Write as ${senderName}.\r\n- Avoid headings like "Founder note:" or similar.\r\n- End the body (before sign-off) with a confident, single Call to Action.\r\n`.trim();
 
   } else if (channel === "SMS") {
     fallbackBase = `
@@ -123,5 +119,12 @@ ${companyResearch && companyResearch.trim().length > 0 ? companyResearch : "N/A"
 Meeting preference/link (for CTA): ${meetingLink || "N/A"}
 `.trim();
 
-  return [promptBase, contactBlock, companyBlock, meetingBlock].filter(Boolean).join("\\n\\n");
+  const senderBlock = sender?.name ? `
+Sender Identity (write as this person):
+- Name: ${sender.name}
+${sender.title ? `- Title: ${sender.title}` : ""}
+- Company: ${sender.company || brandName}
+`.trim() : "";
+
+  return [promptBase, senderBlock, contactBlock, companyBlock, meetingBlock].filter(Boolean).join("\\n\\n");
 }

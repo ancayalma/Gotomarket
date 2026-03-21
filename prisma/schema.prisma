@@ -557,6 +557,23 @@ model crm_Outreach_AB_Variant {
   @@index([campaign_id])
 }
 
+model crm_Outreach_Drafts {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user_id   String   @db.ObjectId
+  pool_id   String   @db.ObjectId
+  name      String   @default("Untitled Draft")
+  state     Json     // full wizard state snapshot
+  createdAt DateTime @default(now()) @db.Date
+  updatedAt DateTime @updatedAt @db.Date
+
+  owner Users          @relation(name: "OutreachDraftsOwner", fields: [user_id], references: [id], onDelete: Cascade)
+  pool  crm_Lead_Pools @relation(name: "OutreachDraftsPool", fields: [pool_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, pool_id])
+  @@index([user_id])
+  @@index([pool_id])
+}
+
 model crm_Opportunities_Sales_Stages {
   id                                 String              @id @default(auto()) @map("_id") @db.ObjectId
   v                                  Int                 @map("__v")
@@ -1122,6 +1139,7 @@ model Users {
   userStatus           ActiveStatus             @default(PENDING)
   userLanguage         Language                 @default(en)
   mustChangePassword   Boolean                  @default(false)
+  sesEmailVerified     Boolean                  @default(false)
   termsAccepted        Boolean                  @default(false)
   termsAcceptedAt      DateTime?                @db.Date
   tasksComment         tasksComments[]
@@ -1153,6 +1171,7 @@ model Users {
   lead_activities      crm_Lead_Activities[]    @relation(name: "LeadActivitiesToUser")
   system_activities    SystemActivity[]         @relation(name: "UserSystemActivities")
   outreach_campaigns   crm_Outreach_Campaigns[] @relation(name: "OutreachCampaignsUser")
+  outreach_drafts      crm_Outreach_Drafts[]    @relation(name: "OutreachDraftsOwner")
   project_memberships  ProjectMember[]          @relation(name: "ProjectMemberUser")
 
   // Outreach, signature, resources, and prompt settings
@@ -1256,7 +1275,7 @@ model Team {
   // Organization-wide settings (only set on ORGANIZATION type)
   signature_theme Json? // { html: string, primaryColor: string, logoUrl: string }
 
-  brand_identity TeamBrandIdentity?
+  brand_identities TeamBrandIdentity[]
 
   // Relations
   members           Users[]          @relation(name: "TeamMembers")
@@ -1288,7 +1307,7 @@ model Team {
   message_portals    crm_Message_Portal[]     @relation(name: "PortalTeam")
 
   ai_config      TeamAiConfig?
-  email_config   TeamEmailConfig?
+  email_configs  TeamEmailConfig[]
   sms_config     TeamSmsConfig?
   custom_roles   CustomRole[]
   captcha_config TeamCaptchaConfig?
@@ -1297,6 +1316,9 @@ model Team {
 
   // Custom Feature Overrides for this team
   module_overrides String[]
+
+  // Department-level module whitelist (set by company admin, cascades to members)
+  allowed_modules  String[]
 
   // Dynamic Schema Engine
   custom_objects CustomObjectDefinition[]
@@ -1346,8 +1368,12 @@ model Team {
 
 model TeamBrandIdentity {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
-  team_id String @unique @db.ObjectId
+  team_id String @db.ObjectId
   team    Team   @relation(fields: [team_id], references: [id], onDelete: Cascade)
+
+  // ── Multi-Brand Support ──
+  brand_label String  @default("Default Brand") // Human-readable label for this brand
+  is_default  Boolean @default(true) // Primary brand (used by non-enterprise teams)
 
   // ── Core Information ──
   company_name        String?
@@ -1394,6 +1420,22 @@ model TeamBrandIdentity {
   follow_up_cadence          String? // Default days between follow-ups
   business_hours             String? // When to send outreach (e.g. "9am-5pm EST")
   preferred_channel_priority String[] // Ranked: EMAIL, SMS, PHONE
+
+  // ── AI Generation Settings ──
+  grammar_accuracy       Int     @default(80)    // 0-100: 0=casual, 100=perfect grammar
+  avoid_em_dashes        Boolean @default(true)  // EM dashes are an AI writing tell
+  emoji_frequency        Int     @default(5)     // 0-100: 0=none, 100=heavy
+  emoji_allowed_in       String[] // Where emojis are allowed: "posts", "replies", "emails", "sms"
+  require_verified_account Boolean @default(false)  // Safety: only engage verified accounts
+
+  // ── Ecosystem ──
+  subsidiaries           String[] // Child companies / sub-brands
+  partner_categories     String[] // e.g. Web3 Protocols, Payment Processors, Hardware Vendors
+
+  // ── Per-Brand Signature & Resources ──
+  signature_html String? // HTML signature for this brand
+  signature_meta Json?   // SignatureBuilder meta (template, social links, etc.)
+  resource_links Json?   // Array of resource button objects for email footers
 
   // ── Setup completion tracking ──
   setup_completed Boolean @default(false)
@@ -1706,7 +1748,8 @@ enum EmailProvider {
 
 model TeamEmailConfig {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
-  team_id String @unique @db.ObjectId
+  team_id String @db.ObjectId
+  purpose String @default("GENERAL") // "GENERAL" | "OUTREACH" | "INBOUND"
 
   provider EmailProvider @default(PLATFORM_SES)
 
@@ -1752,6 +1795,8 @@ model TeamEmailConfig {
   updatedAt DateTime @updatedAt @db.Date
 
   assigned_team Team @relation(fields: [team_id], references: [id])
+
+  @@unique([team_id, purpose])
 }
 
 model systemServices {
@@ -2036,6 +2081,7 @@ model crm_Lead_Pools {
   candidates         crm_Lead_Candidates[]
   lead_maps          crm_Lead_Pools_Leads[]
   outreach_campaigns crm_Outreach_Campaigns[] @relation(name: "OutreachCampaignsPools")
+  outreach_drafts    crm_Outreach_Drafts[]    @relation(name: "OutreachDraftsPool")
   assigned_user      Users?                   @relation(name: "LeadPoolsAssignedUser", fields: [user], references: [id], onDelete: Cascade)
 
   team_id       String? @db.ObjectId

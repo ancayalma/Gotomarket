@@ -90,8 +90,8 @@ export async function POST(req: Request) {
 
     let brandIdentity = null;
     if (user.team_id) {
-        brandIdentity = await prismadb.teamBrandIdentity.findUnique({
-            where: { team_id: user.team_id }
+        brandIdentity = await prismadb.teamBrandIdentity.findFirst({
+            where: { team_id: user.team_id, is_default: true }
         });
     }
 

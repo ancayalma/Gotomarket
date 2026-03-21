@@ -1,0 +1,239 @@
+import {
+  Body,
+  Container,
+  Head,
+  Html,
+  Img,
+  Link,
+  Preview,
+  Section,
+  Text,
+  Hr,
+} from "@react-email/components";
+import * as React from "react";
+import type { ResourceLink } from "./OutreachTemplate";
+import type { TemplateOptions } from "@/lib/outreach/outreach-styles";
+import { getBackgroundTexture, getBorderAccent, getCardStyle } from "@/lib/outreach/outreach-styles";
+
+/**
+ * OutreachExecutiveTemplate
+ * Serif typography, thin gold accent lines, understated elegance.
+ * Designed for C-suite and high-touch outreach.
+ */
+
+interface OutreachExecutiveTemplateProps {
+  subjectPreview?: string;
+  bodyText: string;
+  resources?: ResourceLink[];
+  signatureHtml?: string;
+  trackingPixelUrl?: string;
+  brand?: {
+    accentColor?: string;
+    primaryText?: string;
+    fontFamily?: string;
+    logoUrl?: string;
+    logoAlt?: string;
+  };
+  heroIconUrl?: string;
+  templateOptions?: TemplateOptions;
+}
+
+const DEFAULTS = {
+  ACCENT: "#b8860b",
+  PRIMARY: "#1a1a1a",
+  FONT: "Georgia, 'Times New Roman', Times, serif",
+};
+
+export const OutreachExecutiveTemplate: React.FC<
+  Readonly<OutreachExecutiveTemplateProps>
+> = ({
+  subjectPreview = "New partnership opportunity",
+  bodyText,
+  resources = [],
+  signatureHtml,
+  trackingPixelUrl,
+  brand,
+  heroIconUrl,
+  templateOptions,
+}) => {
+  const ACCENT = brand?.accentColor || DEFAULTS.ACCENT;
+  const PRIMARY = brand?.primaryText || DEFAULTS.PRIMARY;
+  const FONT = brand?.fontFamily || DEFAULTS.FONT;
+
+  const bgTexture = getBackgroundTexture(templateOptions?.backgroundTexture, ACCENT);
+  const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
+  const cardStyleCss = getCardStyle(templateOptions?.cardStyle);
+  const showResources = templateOptions?.showResources !== false;
+
+  const paragraphs = bodyText
+    .split("\n")
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const resourceButtons = (resources || []).filter((r) => r.enabled !== false);
+
+  const linkStyle: React.CSSProperties = {
+    display: "inline-block",
+    textDecoration: "none",
+    fontSize: "13px",
+    fontWeight: 600,
+    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+    padding: "10px 20px",
+    margin: "6px 6px 6px 0",
+    color: ACCENT,
+    border: `1.5px solid ${ACCENT}`,
+    borderRadius: "4px",
+    letterSpacing: "0.5px",
+    textTransform: "uppercase" as const,
+  };
+
+  const linkStylePrimary: React.CSSProperties = {
+    ...linkStyle,
+    color: "#ffffff",
+    backgroundColor: ACCENT,
+    border: `1.5px solid ${ACCENT}`,
+  };
+
+  return (
+    <Html>
+      <Head />
+      <Preview>{subjectPreview}</Preview>
+      <Body
+        style={{
+          fontFamily: FONT,
+          lineHeight: 1.9,
+          color: PRIMARY,
+          maxWidth: "720px",
+          margin: "0 auto",
+          padding: "0",
+          backgroundColor: "#fafaf8",
+          ...bgTexture,
+        }}
+      >
+        <Container style={{ maxWidth: "720px", ...borderAccent, ...cardStyleCss }}>
+          {/* Thin accent top line */}
+          <div style={{ height: "3px", backgroundColor: ACCENT }} />
+
+          {/* Header with logo */}
+          {(brand?.logoUrl || heroIconUrl) && (
+            <Section style={{ padding: "28px 40px 8px", textAlign: "center" }}>
+              <Img
+                src={brand?.logoUrl || heroIconUrl || ""}
+                alt={brand?.logoAlt || "Logo"}
+                width="48"
+                height="48"
+                style={{ display: "inline-block" }}
+              />
+            </Section>
+          )}
+
+          {/* Body */}
+          <Section style={{ padding: "28px 40px" }}>
+            {paragraphs.map((p, idx) => (
+              <Text
+                key={idx}
+                style={{
+                  margin: "0 0 18px 0",
+                  fontSize: "16px",
+                  lineHeight: "1.9",
+                  color: PRIMARY,
+                }}
+              >
+                {p}
+              </Text>
+            ))}
+          </Section>
+
+          {/* Resources */}
+          {showResources && resourceButtons.length > 0 && (
+            <Section style={{ padding: "0 40px 28px" }}>
+              <Hr
+                style={{
+                  borderTop: `1px solid ${ACCENT}55`,
+                  margin: "0 0 20px 0",
+                }}
+              />
+              <div style={{ textAlign: "center" }}>
+                {resourceButtons.map((r) => {
+                  const isPrimary = r.type === "primary";
+                  return (
+                  <Link
+                    key={r.id || r.href}
+                    href={r.href}
+                    style={isPrimary ? linkStylePrimary : linkStyle}
+                  >
+                    {r.iconUrl && (
+                      <Img
+                        src={r.iconUrl}
+                        alt=""
+                        width="14"
+                        height="14"
+                        style={{
+                          display: "inline-block",
+                          verticalAlign: "middle",
+                          marginRight: "6px",
+                        }}
+                      />
+                    )}
+                    {r.label}
+                  </Link>
+                  );
+                })}
+              </div>
+            </Section>
+          )}
+
+          {/* Signature */}
+          {signatureHtml && (
+            <Section style={{ padding: "0 40px 16px" }}>
+              <Hr
+                style={{
+                  borderTop: `1px solid #e5e5e5`,
+                  margin: "0 0 16px 0",
+                }}
+              />
+              <div
+                dangerouslySetInnerHTML={{ __html: signatureHtml }}
+              />
+            </Section>
+          )}
+
+          {/* Footer */}
+          <Section
+            style={{
+              padding: "16px 40px",
+              borderTop: `1px solid #e5e5e5`,
+            }}
+          >
+            <Text
+              style={{
+                color: "#9ca3af",
+                fontSize: "11px",
+                fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                fontStyle: "italic",
+              }}
+            >
+              To unsubscribe from future emails, please reply with
+              &quot;UNSUBSCRIBE&quot; in the subject line.
+            </Text>
+          </Section>
+
+          {/* Thin accent bottom line */}
+          <div style={{ height: "3px", backgroundColor: ACCENT }} />
+
+          {trackingPixelUrl && (
+            <Img
+              src={trackingPixelUrl}
+              alt=""
+              width="1"
+              height="1"
+              style={{ display: "none", width: "1px", height: "1px" }}
+            />
+          )}
+        </Container>
+      </Body>
+    </Html>
+  );
+};
+
+export default OutreachExecutiveTemplate;

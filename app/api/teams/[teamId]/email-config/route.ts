@@ -7,49 +7,87 @@ import { logActivityInternal } from "@/actions/audit";
 import { encryptSecret, decryptSecret } from "@/lib/encryption";
 import { systemLogger } from "@/lib/logger";
 
+const VALID_PURPOSES = ["GENERAL", "OUTREACH", "INBOUND"] as const;
+
+function maskConfig(config: any) {
+    return {
+        ...config,
+        aws_access_key_id: config.aws_access_key_id ? "HasValue" : null,
+        aws_secret_access_key: config.aws_secret_access_key ? "HasValue" : null,
+        resend_api_key: config.resend_api_key ? "HasValue" : null,
+        sendgrid_api_key: config.sendgrid_api_key ? "HasValue" : null,
+        mailgun_api_key: config.mailgun_api_key ? "HasValue" : null,
+        postmark_api_token: config.postmark_api_token ? "HasValue" : null,
+        smtp_password: config.smtp_password ? "HasValue" : null,
+    };
+}
+
 export async function GET(req: Request, props: { params: Promise<{ teamId: string }> }) {
     const params = await props.params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const config = await prismadb.teamEmailConfig.findUnique({
+    const url = new URL(req.url);
+    const purpose = url.searchParams.get("purpose")?.toUpperCase();
+
+    // If a specific purpose is requested, return single config
+    if (purpose && VALID_PURPOSES.includes(purpose as any)) {
+        const config = await prismadb.teamEmailConfig.findUnique({
+            where: { team_id_purpose: { team_id: params.teamId, purpose } }
+        });
+
+        if (!config) return NextResponse.json(null);
+
+        // Proactively check SES verification status
+        if ((config.provider === "AWS_SES" || config.provider === "PLATFORM_SES") && config.verification_status === "PENDING") {
+            const creds = config.provider === "AWS_SES" && config.aws_access_key_id && config.aws_secret_access_key
+                ? { accessKeyId: config.aws_access_key_id, secretAccessKey: decryptSecret(config.aws_secret_access_key) || config.aws_secret_access_key, region: config.aws_region }
+                : undefined;
+
+            const currentStatus = await getIdentityVerificationStatus(config.from_email, creds);
+            if (currentStatus !== "PENDING") {
+                const updated = await prismadb.teamEmailConfig.update({
+                    where: { id: config.id },
+                    data: { verification_status: currentStatus }
+                });
+                return NextResponse.json(maskConfig(updated));
+            }
+        }
+
+        return NextResponse.json(maskConfig(config));
+    }
+
+    // No purpose specified — return all configs for the team
+    const configs = await prismadb.teamEmailConfig.findMany({
         where: { team_id: params.teamId }
     });
 
-    if (!config) {
-        return NextResponse.json(null);
-    }
+    // Proactively check pending SES configs
+    const results = [];
+    for (const config of configs) {
+        if ((config.provider === "AWS_SES" || config.provider === "PLATFORM_SES") && config.verification_status === "PENDING") {
+            try {
+                const creds = config.provider === "AWS_SES" && config.aws_access_key_id && config.aws_secret_access_key
+                    ? { accessKeyId: config.aws_access_key_id, secretAccessKey: decryptSecret(config.aws_secret_access_key) || config.aws_secret_access_key, region: config.aws_region }
+                    : undefined;
 
-    // Proactively check status if it was pending
-    if ((config.provider === "AWS_SES" || config.provider === "PLATFORM_SES") && config.verification_status === "PENDING") {
-        // PLATFORM_SES uses system env credentials (no team-level keys)
-        const creds = config.provider === "AWS_SES" && config.aws_access_key_id && config.aws_secret_access_key
-            ? { accessKeyId: config.aws_access_key_id, secretAccessKey: decryptSecret(config.aws_secret_access_key) || config.aws_secret_access_key, region: config.aws_region }
-            : undefined; // undefined = fallback to system env
-
-        const currentStatus = await getIdentityVerificationStatus(config.from_email, creds);
-
-        if (currentStatus !== "PENDING") {
-            const updated = await prismadb.teamEmailConfig.update({
-                where: { id: config.id },
-                data: { verification_status: currentStatus }
-            });
-            return NextResponse.json({
-                ...updated,
-                aws_access_key_id: updated.aws_access_key_id ? "HasValue" : null,
-                aws_secret_access_key: updated.aws_secret_access_key ? "HasValue" : null,
-                resend_api_key: updated.resend_api_key ? "HasValue" : null
-            });
+                const currentStatus = await getIdentityVerificationStatus(config.from_email, creds);
+                if (currentStatus !== "PENDING") {
+                    const updated = await prismadb.teamEmailConfig.update({
+                        where: { id: config.id },
+                        data: { verification_status: currentStatus }
+                    });
+                    results.push(maskConfig(updated));
+                    continue;
+                }
+            } catch (err) {
+                // Non-fatal — just return current status
+            }
         }
+        results.push(maskConfig(config));
     }
 
-    // Mask sensitive data before returning
-    return NextResponse.json({
-        ...config,
-        aws_access_key_id: config.aws_access_key_id ? "HasValue" : null,
-        aws_secret_access_key: config.aws_secret_access_key ? "HasValue" : null,
-        resend_api_key: config.resend_api_key ? "HasValue" : null
-    });
+    return NextResponse.json(results);
 }
 
 export async function POST(req: Request, props: { params: Promise<{ teamId: string }> }) {
@@ -59,6 +97,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
 
     const body = await req.json();
     const {
+        purpose = "GENERAL",
         provider = "AWS_SES",
         from_email,
         from_name,
@@ -77,46 +116,41 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
         smtp_password
     } = body;
 
+    const normalizedPurpose = (purpose || "GENERAL").toUpperCase();
+    if (!VALID_PURPOSES.includes(normalizedPurpose as any)) {
+        return NextResponse.json({ error: "Invalid purpose. Must be GENERAL, OUTREACH, or INBOUND." }, { status: 400 });
+    }
+
     if (!from_email) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
     try {
-        // Fetch existing config to merge keys if not provided
+        // Fetch existing config for this purpose to merge keys if not provided
         const existingConfig = await prismadb.teamEmailConfig.findUnique({
-            where: { team_id: params.teamId }
+            where: { team_id_purpose: { team_id: params.teamId, purpose: normalizedPurpose } }
         });
 
         const finalAwsKey = aws_access_key_id || existingConfig?.aws_access_key_id;
         const finalAwsSecret = aws_secret_access_key || existingConfig?.aws_secret_access_key;
         const finalResendKey = resend_api_key || existingConfig?.resend_api_key;
-
-
-
-        // Verification Logic
         const finalSendgridKey = sendgrid_api_key || existingConfig?.sendgrid_api_key;
         const finalMailgunKey = mailgun_api_key || existingConfig?.mailgun_api_key;
         const finalPostmarkToken = postmark_api_token || existingConfig?.postmark_api_token;
         const finalSmtpPassword = smtp_password || existingConfig?.smtp_password;
 
-
-
         let verificationStatus = "PENDING";
 
         // Verification Logic
         if (provider === "PLATFORM_SES") {
-            // Use the platform's own SES credentials (from env vars)
             const triggerVerification = !existingConfig || existingConfig.from_email !== from_email || existingConfig.provider !== "PLATFORM_SES";
-
             if (triggerVerification) {
-                await verifyEmailIdentity(from_email); // no creds = uses system env
+                await verifyEmailIdentity(from_email);
             } else {
-                const status = await getIdentityVerificationStatus(from_email); // no creds = uses system env
+                const status = await getIdentityVerificationStatus(from_email);
                 if (status === "SUCCESS") verificationStatus = "VERIFIED";
             }
         } else if (provider === "AWS_SES") {
             if (!finalAwsKey || !finalAwsSecret) return NextResponse.json({ error: "AWS Credentials required" }, { status: 400 });
-
             const triggerVerification = !existingConfig || existingConfig.from_email !== from_email || existingConfig.provider !== "AWS_SES";
-
             if (triggerVerification) {
                 await verifyEmailIdentity(from_email, { accessKeyId: finalAwsKey, secretAccessKey: finalAwsSecret, region: aws_region || "us-east-1" });
             } else {
@@ -139,11 +173,10 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             if (!smtp_host || !smtp_port || !smtp_user || !finalSmtpPassword) return NextResponse.json({ error: "SMTP Config required" }, { status: 400 });
             verificationStatus = "VERIFIED";
         } else if (provider === "GOOGLE_GMAIL") {
-            // Google OAuth connections are verified by the authentication flow itself
             verificationStatus = "VERIFIED";
         }
 
-        // Save Config - Using separate update/create for better MongoDB reliability
+        // Save Config
         let config;
 
         const updateData = {
@@ -166,7 +199,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             verification_status: verificationStatus,
         };
 
-        systemLogger.error(`[EmailConfig] Saving for team ${params.teamId}`, { provider, from_email, isNew: !existingConfig });
+        systemLogger.error(`[EmailConfig] Saving for team ${params.teamId} (purpose: ${normalizedPurpose})`, { provider, from_email, isNew: !existingConfig });
 
         if (existingConfig) {
             config = await prismadb.teamEmailConfig.update({
@@ -177,6 +210,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             config = await prismadb.teamEmailConfig.create({
                 data: {
                     team_id: params.teamId,
+                    purpose: normalizedPurpose,
                     provider,
                     from_email,
                     from_name,
@@ -198,12 +232,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             });
         }
 
-        return NextResponse.json({
-            ...config,
-            aws_access_key_id: config.aws_access_key_id ? "HasValue" : null,
-            aws_secret_access_key: config.aws_secret_access_key ? "HasValue" : null,
-            resend_api_key: config.resend_api_key ? "HasValue" : null
-        });
+        return NextResponse.json(maskConfig(config));
     } catch (error: any) {
         console.error("Email Config Error Details:", {
             error: error.message,
@@ -211,7 +240,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             teamId: params.teamId
         });
 
-        await logActivityInternal(session.user.id, "UPDATE", "TeamEmailConfig", `Updated email config for team ${params.teamId} (provider: ${provider})`, params.teamId);
+        await logActivityInternal(session.user.id, "UPDATE", "TeamEmailConfig", `Updated email config for team ${params.teamId} (provider: ${provider}, purpose: ${normalizedPurpose})`, params.teamId);
         return NextResponse.json({ error: error.message || "Failed to set config" }, { status: 500 });
     }
 }
@@ -221,8 +250,11 @@ export async function DELETE(req: Request, props: { params: Promise<{ teamId: st
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const url = new URL(req.url);
+    const purpose = (url.searchParams.get("purpose") || "GENERAL").toUpperCase();
+
     const config = await prismadb.teamEmailConfig.findUnique({
-        where: { team_id: params.teamId }
+        where: { team_id_purpose: { team_id: params.teamId, purpose } }
     });
 
     if (!config) {
@@ -231,7 +263,6 @@ export async function DELETE(req: Request, props: { params: Promise<{ teamId: st
 
     try {
         if (config.provider === "PLATFORM_SES") {
-            // Use system env credentials
             await deleteEmailIdentity(config.from_email);
         } else if (config.provider === "AWS_SES" && config.aws_access_key_id && config.aws_secret_access_key) {
             await deleteEmailIdentity(config.from_email, {
@@ -248,6 +279,6 @@ export async function DELETE(req: Request, props: { params: Promise<{ teamId: st
         where: { id: config.id }
     });
 
-    await logActivityInternal(session.user.id, "DELETE", "TeamEmailConfig", `Deleted email config for team ${params.teamId} (provider: ${config.provider})`, params.teamId);
+    await logActivityInternal(session.user.id, "DELETE", "TeamEmailConfig", `Deleted email config for team ${params.teamId} (provider: ${config.provider}, purpose: ${purpose})`, params.teamId);
     return new NextResponse(null, { status: 204 });
 }

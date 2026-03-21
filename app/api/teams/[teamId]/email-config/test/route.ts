@@ -12,15 +12,17 @@ export async function POST(
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
-        const { to } = await req.json();
+        const { to, purpose } = await req.json();
         if (!to) return NextResponse.json({ error: "Recipient email required" }, { status: 400 });
+
+        const emailPurpose = (purpose || "GENERAL").toUpperCase() as "GENERAL" | "OUTREACH" | "INBOUND";
 
         await sendTeamEmail(params.teamId, {
             to,
-            subject: "BasaltCRM Test Email",
-            text: "This is a test email from your BasaltCRM team configuration.",
-            html: "<h1>BasaltCRM Test Email</h1><p>Congratulations! Your team email configuration is working correctly.</p><p>Sent via BasaltCRM Team Mailer.</p>",
-        });
+            subject: `BasaltCRM Test Email (${emailPurpose})`,
+            text: `This is a test email from your BasaltCRM ${emailPurpose.toLowerCase()} email configuration.`,
+            html: `<h1>BasaltCRM Test Email</h1><p>Congratulations! Your <strong>${emailPurpose}</strong> email configuration is working correctly.</p><p>Sent via BasaltCRM Team Mailer.</p>`,
+        }, emailPurpose);
 
         return NextResponse.json({ success: true, message: "Test email sent successfully" });
     } catch (error: any) {

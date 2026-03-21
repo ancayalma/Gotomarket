@@ -13,6 +13,7 @@ import InviteUserEmail from "@/emails/InviteUser";
 import sendEmail from "@/lib/sendmail";
 import { render } from "@react-email/render";
 import { systemLogger } from "@/lib/logger";
+import { verifyEmailIdentity } from "@/lib/aws/ses-verify";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
   // SOC2 CC6.1 / A1.2: Check resource quotas before allowing invitation
   if (teamInfo?.teamId) {
     const { checkTeamQuota } = await import("@/lib/quota-service");
-    const quota = await checkTeamQuota(teamInfo.teamId, "USERS");
+    const quota = await checkTeamQuota(teamInfo.teamId, "USERS", teamInfo.userId);
     if (!quota.allowed) {
       return NextResponse.json({ error: quota.message }, { status: 403 });
     }
@@ -117,6 +118,15 @@ export async function POST(req: Request) {
         });
 
         console.log("Invitation email sent successfully via Unified Relay");
+
+        // Auto-trigger SES email verification for the new user's email
+        try {
+            await verifyEmailIdentity(user.email);
+            console.log(`[SES_VERIFY] Auto-triggered verification for invited user: ${user.email}`);
+        } catch (sesError) {
+            // Non-blocking — verification can be re-triggered from the post-login modal
+            systemLogger.error(`[SES_VERIFY] Failed to auto-trigger for ${user.email}:`, sesError);
+        }
 
         await logActivity(
           "Invited User",
