@@ -785,6 +785,18 @@
   }
 }
 
+/* ========================================
+   Theme-Aware Icon Inversion
+   All themes are dark except super-nova.
+   Black SVGs rendered via <img> need inversion in dark themes.
+   ======================================== */
+.theme-icon {
+  filter: brightness(0) invert(1);
+}
+[data-theme='super-nova'] .theme-icon {
+  filter: none;
+}
+
 @layer base {
   * {
     @apply border-border;

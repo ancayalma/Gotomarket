@@ -131,14 +131,12 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
           fontFamily: FONT,
           lineHeight: 1.8,
           color: PRIMARY,
-          maxWidth: "720px",
-          margin: "0 auto",
-          padding: "20px",
+          padding: "40px 20px",
           backgroundColor: "#ffffff",
           ...bgTexture,
         }}
       >
-        <Container style={{ maxWidth: "720px", ...borderAccent, ...cardStyle }}>
+        <Container style={{ maxWidth: "720px", margin: "0 auto", ...cardStyle, ...borderAccent }}>
           {/* Optional hero/logo */}
           {brand?.logoUrl && (
             <Section style={{ textAlign: "center", marginBottom: 16 }}>

@@ -496,7 +496,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
               ...((selectedBrand || brandInfo)?.logo_url ? { logoUrl: (selectedBrand || brandInfo).logo_url } : {}),
             },
             resources: resources.filter((r: any) => r.enabled !== false),
-            templateOptions: { bgTexture, borderAccent, cardStyle, dividerStyle, showResources },
+            templateOptions: { backgroundTexture: bgTexture, borderAccent, cardStyle, dividerStyle, showResources },
           },
         }),
       });
@@ -675,7 +675,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
           templateId: selectedTemplate,
           themeColorOverride: themeColorOverride || undefined,
           secondaryColorOverride: secondaryColorOverride || undefined,
-          templateOptions: { bgTexture, borderAccent, cardStyle, dividerStyle, showResources },
+          templateOptions: { backgroundTexture: bgTexture, borderAccent, cardStyle, dividerStyle, showResources },
           senderOverride: senderOverrideEnabled && senderOverrideName?.trim()
             ? { name: senderOverrideName.trim(), title: senderOverrideTitle?.trim() || undefined }
             : undefined,
@@ -1063,28 +1063,28 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                     <div className="space-y-1">
                       <label className="text-[10px] text-muted-foreground uppercase">Background</label>
                       <select className="w-full text-xs p-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary" value={bgTexture} onChange={e => setBgTexture(e.target.value)}>
-                        <option value="none">None</option><option value="dots">Dots</option><option value="grid">Grid</option><option value="lines">Lines</option><option value="waves">Waves</option><option value="crosshatch">Crosshatch</option>
+                        <option value="none">None</option><option value="dots">Dots</option><option value="grid">Grid</option><option value="lines">Lines</option><option value="noise">Noise</option><option value="diagonal">Diagonal</option>
                       </select>
                     </div>
                     
                     <div className="space-y-1">
                       <label className="text-[10px] text-muted-foreground uppercase">Card Style</label>
                       <select className="w-full text-xs p-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary" value={cardStyle} onChange={e => setCardStyle(e.target.value)}>
-                        <option value="flat">Flat</option><option value="shadow">Shadow</option><option value="glass">Glass Effect</option><option value="neo">Neumorphism</option><option value="bordered">Bordered</option><option value="elegant">Elegant</option>
+                        <option value="flat">Flat</option><option value="elevated">Elevated</option><option value="glass">Glass Effect</option><option value="bordered">Bordered</option>
                       </select>
                     </div>
 
                     <div className="space-y-1">
                       <label className="text-[10px] text-muted-foreground uppercase">Border Accent</label>
                       <select className="w-full text-xs p-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary" value={borderAccent} onChange={e => setBorderAccent(e.target.value)}>
-                        <option value="none">None</option><option value="top">Top Focus</option><option value="left">Left Border</option><option value="all">Full Border</option><option value="gradientTop">Gradient Top</option><option value="softShadow">Hover Glow</option>
+                        <option value="none">None</option><option value="top">Top Focus</option><option value="left">Left Border</option><option value="gradient-top">Gradient Top</option><option value="bottom-glow">Hover Glow</option>
                       </select>
                     </div>
 
                     <div className="space-y-1">
                       <label className="text-[10px] text-muted-foreground uppercase">Dividers</label>
                       <select className="w-full text-xs p-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary" value={dividerStyle} onChange={e => setDividerStyle(e.target.value)}>
-                        <option value="none">None</option><option value="thin">Thin Line</option><option value="thick">Thick Line</option><option value="dashed">Dashed Fade</option><option value="gradient">Gradient Glow</option><option value="dots">Dots Array</option>
+                        <option value="none">None</option><option value="thin">Thin Line</option><option value="accent">Accent Line</option><option value="gradient">Gradient Glow</option><option value="dotted">Dots Array</option>
                       </select>
                     </div>
                   </div>
@@ -1177,7 +1177,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                       >
                         {res.icon && res.icon !== "none" ? (
                           <>
-                            <img src={resolveIconUrl(res.icon) || ""} alt="" className="w-3.5 h-3.5 dark:invert" style={{ filter: "brightness(0) invert(1)" }} />
+                            <img src={resolveIconUrl(res.icon) || ""} alt="" className="w-3.5 h-3.5 theme-icon" />
                             <span className="truncate">{iconKeyToLabel(res.icon)}</span>
                           </>
                         ) : (
@@ -1226,7 +1226,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                                         isActive ? 'bg-primary/10 ring-1 ring-primary' : ''
                                       }`}
                                     >
-                                      {path && <img src={path} alt="" className="w-4 h-4 dark:invert" style={{ filter: "brightness(0) invert(1)" }} />}
+                                      {path && <img src={path} alt="" className="w-4 h-4 theme-icon" />}
                                       <span className="text-[8px] text-muted-foreground mt-0.5 truncate w-full text-center">{iconKeyToLabel(iconKey).split(' ')[0]}</span>
                                     </button>
                                   );

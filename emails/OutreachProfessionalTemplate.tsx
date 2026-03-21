@@ -102,14 +102,12 @@ export const OutreachProfessionalTemplate: React.FC<
           fontFamily: FONT,
           lineHeight: 1.7,
           color: PRIMARY,
-          maxWidth: "720px",
-          margin: "0 auto",
-          padding: "0",
+          padding: "40px 20px",
           backgroundColor: "#f8fafc",
           ...bgTexture,
         }}
       >
-        <Container style={{ maxWidth: "720px", ...borderAccent, ...cardStyleCss }}>
+        <Container style={{ maxWidth: "720px", margin: "0 auto", ...cardStyleCss, ...borderAccent }}>
           {/* Branded Header Bar */}
           <Section
             style={{
@@ -181,11 +179,15 @@ export const OutreachProfessionalTemplate: React.FC<
               }}
             >
               <Hr
-                style={{
-                  borderTop: `2px solid ${ACCENT}`,
-                  margin: "0 0 16px 0",
-                  width: "48px",
-                }}
+                style={
+                  templateOptions?.dividerStyle && templateOptions.dividerStyle !== "none"
+                    ? dividerCss
+                    : {
+                        borderTop: `2px solid ${ACCENT}`,
+                        margin: "0 0 16px 0",
+                        width: "48px",
+                      }
+                }
               />
               <Text
                 style={{

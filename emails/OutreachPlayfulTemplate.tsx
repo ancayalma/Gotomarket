@@ -8,11 +8,12 @@ import {
   Preview,
   Section,
   Text,
+  Hr,
 } from "@react-email/components";
 import * as React from "react";
 import type { ResourceLink } from "./OutreachTemplate";
 import type { TemplateOptions } from "@/lib/outreach/outreach-styles";
-import { getBackgroundTexture, getBorderAccent, getCardStyle } from "@/lib/outreach/outreach-styles";
+import { getBackgroundTexture, getBorderAccent, getCardStyle, getDividerStyle } from "@/lib/outreach/outreach-styles";
 
 /**
  * OutreachPlayfulTemplate
@@ -71,6 +72,7 @@ export const OutreachPlayfulTemplate: React.FC<
   const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
   const cardStyleCss = getCardStyle(templateOptions?.cardStyle);
   const showResources = templateOptions?.showResources !== false;
+  const dividerCss = getDividerStyle(templateOptions?.dividerStyle, ACCENT);
 
   const paragraphs = bodyText
     .split("\n")
@@ -109,14 +111,12 @@ export const OutreachPlayfulTemplate: React.FC<
           fontFamily: FONT,
           lineHeight: 1.75,
           color: PRIMARY,
-          maxWidth: "720px",
-          margin: "0 auto",
-          padding: "16px",
+          padding: "40px 20px",
           backgroundColor: "#faf5ff",
           ...bgTexture,
         }}
       >
-        <Container style={{ maxWidth: "720px", ...borderAccent, ...cardStyleCss }}>
+        <Container style={{ maxWidth: "720px", margin: "0 auto", ...cardStyleCss, ...borderAccent }}>
           {/* Rounded Header Card */}
           <Section
             style={{
@@ -167,6 +167,10 @@ export const OutreachPlayfulTemplate: React.FC<
               </Text>
             ))}
           </Section>
+
+          {templateOptions?.dividerStyle && templateOptions.dividerStyle !== "none" && (
+            <Hr style={dividerCss} />
+          )}
 
           {/* Resources Card */}
           {showResources && resourceButtons.length > 0 && (
