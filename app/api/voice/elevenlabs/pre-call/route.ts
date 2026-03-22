@@ -66,8 +66,10 @@ export async function POST(req: Request) {
         orderBy: { updatedAt: 'desc' },
       });
 
-      let campaignInstruction = "";
-      if (recentOutreach && recentOutreach.campaign) {
+      let campaignInstruction = lead.voice_prompt_override || "";
+      
+      // If no lead-specific override exists, fall back to the active campaign prompt
+      if (recentOutreach && recentOutreach.campaign && !lead.voice_prompt_override) {
          // Load the campaign
          const campaignParams = await prisma.crm_Outreach_Campaigns.findUnique({
             where: { id: recentOutreach.campaign },

@@ -986,7 +986,7 @@ export default function CustomCCP({
                 id="elevenLabsAgentIdInput"
                 placeholder="SIP Num/Agent ID (e.g. +1720...)" 
                 className="h-8 text-xs font-mono"
-                defaultValue={process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || ""}
+                defaultValue={process.env.NEXT_PUBLIC_ELEVENLABS_AGENT || ""}
               />
               <Button
                 onClick={async () => {

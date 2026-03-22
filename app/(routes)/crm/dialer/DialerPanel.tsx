@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-hot-toast';
-import CustomCCP from '@/components/voice/CustomCCP';
+
 import PromptGeneratorPanel from '../prompt/PromptGeneratorPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -67,29 +67,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
     return () => clearInterval(mockInterval);
   }, [running, results, processTranscriptStream]);
 
-  // Gating: require an "email_sent" activity for the lead before enabling calls
-  const [gateOkSingle, setGateOkSingle] = useState<boolean>(false);
-  const [gateCheckingSingle, setGateCheckingSingle] = useState<boolean>(false);
-
   const parsedList = useMemo(() => parseList(listRaw), [listRaw]);
-
-  // Check gate for the single leadId when it changes
-  useEffect(() => {
-    const lid = singleLeadId.trim();
-    if (!lid) {
-      setGateOkSingle(false);
-      return;
-    }
-    setGateCheckingSingle(true);
-    fetch(`/api/crm/leads/${encodeURIComponent(lid)}/activities`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Gate check failed"))))
-      .then((d) => {
-        const ok = Array.isArray(d?.activities) && d.activities.some((a: any) => a?.type === "email_sent");
-        setGateOkSingle(!!ok);
-      })
-      .catch(() => setGateOkSingle(false))
-      .finally(() => setGateCheckingSingle(false));
-  }, [singleLeadId]);
 
   const runSingle = useCallback(async () => {
     try {
@@ -100,66 +78,29 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
         throw new Error('Invalid phone (E.164 required, e.g. +15551234567)');
       }
 
-      // Gated dialing: require a leadId and verify "email_sent" activity exists
-      if (!leadId) {
-        throw new Error('Lead ID is required. Calls are gated until an outreach email has been sent for the lead.');
-      }
-      if (!gateOkSingle) {
-        throw new Error('Call gated: outreach email has not been sent for this lead yet.');
-      }
-
-      // Ensure agent starts listening BEFORE dial by invoking BasaltECHO Engage Start
-      // includeAgent=true will launch the agent into the meeting; route also handles PSTN via SMA when configured.
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      let walletOverride = '';
-      try {
-        // Optional wallet forwarding to include prompt in agent config if available (stored by Prompt push)
-        walletOverride = (localStorage.getItem('basaltecho:wallet') || '').toLowerCase();
-        if (walletOverride) headers['x-wallet'] = walletOverride;
-      } catch { }
-      // Silent credit check prior to start
-      try {
-        await fetch('/api/basaltecho/credits', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ walletOverride: walletOverride || undefined }),
-        });
-      } catch { }
-      // Auto-start BasaltECHO session when dialing
-      try {
-        await fetch('/api/basaltecho/control', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ command: 'start', payload: { leadId }, walletOverride: walletOverride || undefined }),
-        });
-        // Open BasaltECHO Console to surface credit approval modal on user gesture (Dial Now)
-        try {
-          const vhBase = String(process.env.NEXT_PUBLIC_BASALTECHO_BASE_URL || '').trim();
-          if (vhBase) {
-            const win = window.open(`${vhBase}/console`, '_blank', 'noopener,noreferrer');
-            if (!win) {
-              toast('Enable popups to approve credits');
-            }
-          }
-        } catch { }
-      } catch { }
-      const res = await fetch('/api/voice/engage/start', {
+      // Trigger direct ElevenLabs SIP outbound call via AWS Chime SMA
+      const res = await fetch('/api/voice/elevenlabs/outbound', {
         method: 'POST',
-        headers,
-        body: JSON.stringify({ phone, includeAgent: true, leadId }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          destination: phone,
+          agentId: process.env.NEXT_PUBLIC_ELEVENLABS_AGENT,
+          leadId,
+        }),
       });
+
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(j?.error || 'Engage start failed');
+        throw new Error(j?.error?.message || j?.error || 'Outbound call failed');
       }
 
-      setResults((prev) => [{ phone, leadId, ok: true, transactionId: String(j?.call?.transactionId || 'engage'), error: undefined }, ...prev].slice(0, 100));
-      toast.success(`Agent started and engage initiated for ${phone}`);
+      setResults((prev) => [{ phone, leadId, ok: true, transactionId: String(j?.result?.TransactionId || 'outbound'), error: undefined }, ...prev].slice(0, 100));
+      toast.success(`ElevenLabs Agent dispatched to ${phone}`);
     } catch (e: any) {
       setResults((prev) => [{ phone: singlePhone.trim(), leadId: singleLeadId.trim() || undefined, ok: false, error: e?.message || String(e) }, ...prev].slice(0, 100));
       toast.error(e?.message || 'Failed to start');
     }
-  }, [singlePhone, singleLeadId, gateOkSingle]);
+  }, [singlePhone, singleLeadId]);
 
   const stopRun = useCallback(() => {
     stopRef.current = true;
@@ -183,61 +124,22 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
         if (!isE164(num)) {
           throw new Error(`Invalid E.164: ${num}`);
         }
-        // Gated dialing: require leadId and confirm "email_sent" activity exists
-        if (!leadId) {
-          throw new Error('Lead ID required for gated calls');
-        }
-        {
-          const gateRes = await fetch(`/api/crm/leads/${encodeURIComponent(leadId)}/activities`);
-          if (!gateRes.ok) throw new Error('Gate check failed');
-          const d = await gateRes.json();
-          const okGate = Array.isArray(d?.activities) && d.activities.some((a: any) => a?.type === 'email_sent');
-          if (!okGate) throw new Error('Call gated: outreach email not sent for this lead');
-        }
-
-        // Start agent listening before dial for each entry
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        let walletOverride = '';
-        try {
-          walletOverride = (localStorage.getItem('basaltecho:wallet') || '').toLowerCase();
-          if (walletOverride) headers['x-wallet'] = walletOverride;
-        } catch { }
-        // Silent credit check prior to start
-        try {
-          await fetch('/api/basaltecho/credits', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ walletOverride: walletOverride || undefined }),
-          });
-        } catch { }
-        // Auto-start BasaltECHO session when dialing list entries
-        try {
-          await fetch('/api/basaltecho/control', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command: 'start', payload: { leadId }, walletOverride: walletOverride || undefined }),
-          });
-          // Open BasaltECHO Console to surface credit approval modal on user gesture (Run list)
-          try {
-            const vhBase = String(process.env.NEXT_PUBLIC_BASALTECHO_BASE_URL || '').trim();
-            if (vhBase) {
-              const win = window.open(`${vhBase}/console`, '_blank', 'noopener,noreferrer');
-              if (!win) {
-                toast('Enable popups to approve credits');
-              }
-            }
-          } catch { }
-        } catch { }
-        const res = await fetch('/api/voice/engage/start', {
+        // Trigger direct ElevenLabs SIP outbound call via AWS Chime SMA
+        const res = await fetch('/api/voice/elevenlabs/outbound', {
           method: 'POST',
-          headers,
-          body: JSON.stringify({ phone: num, includeAgent: true, leadId }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            destination: num,
+            agentId: process.env.NEXT_PUBLIC_ELEVENLABS_AGENT,
+            leadId,
+          }),
         });
+
         const j = await res.json().catch(() => ({}));
         if (!res.ok) {
-          throw new Error(j?.error || 'Engage start failed');
+          throw new Error(j?.error?.message || j?.error || 'Outbound call failed');
         }
-        setResults((prev) => [{ phone: num, leadId, ok: true, transactionId: String(j?.call?.transactionId || 'engage'), error: undefined }, ...prev].slice(0, 100));
+        setResults((prev) => [{ phone: num, leadId, ok: true, transactionId: String(j?.result?.TransactionId || 'outbound'), error: undefined }, ...prev].slice(0, 100));
       } catch (e: any) {
         setResults((prev) => [{ phone, leadId, ok: false, error: e?.message || String(e) }, ...prev].slice(0, 100));
       }
@@ -273,17 +175,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
 
   const FullLayout = () => (
     <div className="w-full px-1 py-2 space-y-4">
-      {/* Connect CCP Softphone */}
-      <section className="rounded-md border bg-card p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm font-semibold">Connect Softphone</div>
-        </div>
-        <CustomCCP
-          theme="dark" // Assuming dark theme is standard
-          title="Connect Softphone"
-          subtitle="Custom CCP (Streams invisible provider)"
-        />
-      </section>
+
 
       {/* Single Dial */}
       <section className="rounded-md border bg-card p-4">
@@ -309,7 +201,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
             />
           </div>
           <div className="flex items-end">
-            <Button className="w-full" onClick={runSingle} disabled={!singlePhone.trim() || !singleLeadId.trim() || gateCheckingSingle || !gateOkSingle}>
+            <Button className="w-full" onClick={runSingle} disabled={!singlePhone.trim()}>
               Dial Now
             </Button>
           </div>
@@ -405,7 +297,15 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
       {!isCompact && (
         <section className="rounded-md border bg-card p-4">
           <h3 className="text-sm font-semibold mb-2">Prompt Generator</h3>
-          <PromptGeneratorPanel embedded={true} showSoftphone={false} />
+          <PromptGeneratorPanel 
+            embedded={true} 
+            showSoftphone={false} 
+            onPushToDialer={(targetLeadId, targetPhone) => {
+              setSingleLeadId(targetLeadId);
+              setSinglePhone(targetPhone);
+              setActiveTab("dial");
+            }}
+          />
         </section>
       )}
     </div>
@@ -522,7 +422,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
               <Button
                 onClick={runSingle}
                 className="relative overflow-hidden w-full h-12 bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black uppercase tracking-[0.3em] text-[11px] gap-2 shadow-[0_8px_25px_-5px_rgba(16,185,129,0.4)] transition-all duration-500 hover:shadow-[0_12px_35px_-5px_rgba(16,185,129,0.5)] active:scale-95 border-none group"
-                disabled={!singlePhone.trim() || !gateOkSingle}
+                disabled={!singlePhone.trim()}
               >
                 <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg]" /> <Phone className="h-4 w-4 relative z-10" /> <span className="relative z-10">Voice Start</span>
               </Button>
@@ -568,11 +468,18 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0 p-4 h-full overflow-y-auto flex-1 min-h-0">
-            {/* Embedded Prompt Gen but scaled down? Or just hidden if too complex */}
             <div className="text-[10px] text-muted-foreground mb-4 opacity-70">
               Configure agent prompts and settings. call scripts.
             </div>
-            <PromptGeneratorPanel embedded={true} showSoftphone={false} />
+            <PromptGeneratorPanel 
+              embedded={true} 
+              showSoftphone={false} 
+              onPushToDialer={(targetLeadId, targetPhone) => {
+                setSingleLeadId(targetLeadId);
+                setSinglePhone(targetPhone);
+                setActiveTab("dial");
+              }}
+            />
           </TabsContent>
         </div>
       </Tabs>
