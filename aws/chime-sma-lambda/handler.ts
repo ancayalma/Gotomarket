@@ -82,7 +82,7 @@ export const handler = async (event: any) => {
       const legA = participants.find(p => p?.ParticipantTag === "LEG-A");
       // Headers and attributes can surface in different fields depending on region/runtime
       const rawHeaders = (event?.CallDetails?.SipHeaders || event?.ActionData?.Parameters?.SipHeaders || event?.CallDetails?.ReceivedHeaders || {}) as Record<string, string>;
-      const attrs = (event?.CallDetails?.Attributes || {}) as Record<string, string>;
+      const attrs = (event?.CallDetails?.Attributes || event?.ActionData?.Parameters?.Arguments || event?.CallDetails?.TransactionAttributes || event?.ActionData?.IntentResult?.SessionAttributes || {}) as Record<string, string>;
       const getVal = (obj: Record<string, string>, k: string) => obj?.[k] || obj?.[k.toLowerCase()] || obj?.[k.toUpperCase()];
       const fetchAny = (k: string) => getVal(rawHeaders, k) || getVal(attrs, k);
 
@@ -161,7 +161,7 @@ export const handler = async (event: any) => {
       const participants = (event?.CallDetails?.Participants || []) as any[];
       const legA = participants.find(p => p?.ParticipantTag === "LEG-A") || participants[0];
       const rawHeaders = (event?.CallDetails?.SipHeaders || event?.ActionData?.Parameters?.SipHeaders || event?.CallDetails?.ReceivedHeaders || {}) as Record<string, string>;
-      const attrs = (event?.CallDetails?.Attributes || {}) as Record<string, string>;
+      const attrs = (event?.CallDetails?.Attributes || event?.ActionData?.Parameters?.Arguments || event?.CallDetails?.TransactionAttributes || event?.ActionData?.IntentResult?.SessionAttributes || {}) as Record<string, string>;
       const getVal = (obj: Record<string, string>, k: string) => obj?.[k] || obj?.[k.toLowerCase()] || obj?.[k.toUpperCase()];
       const fetchAny = (k: string) => getVal(rawHeaders, k) || getVal(attrs, k);
       const meetingId = fetchAny("X-Meeting-Id") || fetchAny("X_MEETING_ID") || fetchAny("x-meeting-id") || fetchAny("MeetingId") || fetchAny("MEETING_ID");
