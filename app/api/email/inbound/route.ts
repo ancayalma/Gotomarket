@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     try {
         await prismadb.crm_Email_Thread.create({
             data: {
-                team_id: "system",
+                team_id: "600000000000000000000000",
                 direction: "INBOUND",
                 from_email: "debug@sns.amazonaws.com",
                 to_email: "system@crm.basalthq.com",
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
       // Create Email Thread entry
       await prismadb.crm_Email_Thread.create({
         data: {
-          team_id: campaignRecord?.team_id || "system", // Fallback if no match
+          team_id: campaignRecord?.team_id || "600000000000000000000000", // Fallback if no match
           user: campaignRecord?.user || undefined,
           lead: matchedOutreachItem?.lead || undefined,
           campaign: matchedOutreachItem?.campaign || undefined,
