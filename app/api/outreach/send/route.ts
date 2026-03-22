@@ -12,6 +12,7 @@ import { z } from "zod";
 import { sendViaGmail } from "@/lib/gmail";
 import React from "react";
 import { ensureContactForLead } from "@/actions/crm/lead-conversions";
+import { ensureLeadAndAccountForCandidate } from "@/actions/crm/ensure-pipeline";
 import { claimOnboardingBonus } from "@/actions/crm/onboarding-bonus";
 import { systemLogger } from "@/lib/logger";
 import { researchCompany } from "@/lib/outreach/company-research";
@@ -54,6 +55,14 @@ type RequestBody = {
   secondaryColorOverride?: string;
   leadData?: Array<{ id: string; firstName?: string; lastName?: string; company?: string; jobTitle?: string; email?: string }>;
   templateOptions?: import("@/lib/outreach/outreach-styles").TemplateOptions;
+  campaignId?: string;  // Links sent emails to a crm_Outreach_Campaigns record
+  poolId?: string;      // Source pool for pipeline provisioning
+  followupConfig?: {
+    enabled: boolean;
+    delayHours: number;
+    maxCount: number;
+    prompt?: string;
+  };
 };
 
 
@@ -119,6 +128,12 @@ export async function POST(req: Request) {
     }
 
     const isAdmin = !!(user.is_admin || user.is_account_admin);
+
+    // ── Campaign ID from the wizard (auto-creation removed — wizard handles this) ────
+    let campaignId = body.campaignId || undefined;
+    // NOTE: Auto-campaign creation was removed here because the wizard now always
+    // creates the campaign via POST /api/campaigns BEFORE calling this route.
+    // Keeping auto-creation caused double campaigns and double emails_sent counts.
 
     // Fetch Team Brand Identity
     let brandIdentity = null;
@@ -207,8 +222,9 @@ export async function POST(req: Request) {
       return new NextResponse("AI model not configured", { status: 500 });
     }
 
-    // Base URL for links/pixel
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+    // Base URL for links/pixel — use production URL when running locally so pixels are reachable
+    const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+    const baseUrl = rawBaseUrl.includes("localhost") ? "https://crm.basalthq.com" : rawBaseUrl;
 
     // User resources/signature (defaults)
     let resources: ResourceLink[] = DEFAULT_RESOURCES;
@@ -307,6 +323,10 @@ export async function POST(req: Request) {
         .slice(2)}`;
       const trackingPixelUrl = baseUrl ? `${baseUrl}/api/outreach/open/${encodeURIComponent(token)}.png` : undefined;
 
+      // Generate unsubscribe token (separate from tracking token)
+      const unsubToken = (globalThis.crypto?.randomUUID && globalThis.crypto.randomUUID()) || `unsub_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const unsubscribeUrl = baseUrl && !testMode ? `${baseUrl}/api/outreach/unsubscribe/${encodeURIComponent(unsubToken)}` : undefined;
+
       // Build LLM prompt
       const contactName = [lead.firstName, lead.lastName].filter(Boolean).join(" ").trim();
       const basePrompt = promptOverride || user.outreach_prompt_default || null;
@@ -328,6 +348,16 @@ export async function POST(req: Request) {
       const senderName = body.senderOverride?.name || (user as any).name || session.user.name || "the sender";
       const senderTitle = body.senderOverride?.title || "";
       const senderCompany = brandIdentity?.company_name || "";
+
+      // Detect sender-recipient overlap (same name, shared last name, or same company)
+      // to inject disambiguation into the system instruction
+      const senderLower = senderName.toLowerCase().trim();
+      const contactLower = contactName.toLowerCase().trim();
+      const recipientFirst = (lead.firstName || "").trim();
+      const senderOverlap =
+        senderLower === contactLower || // exact name match
+        (lead.lastName && senderLower.includes(lead.lastName.toLowerCase())) || // shared last name
+        (lead.company && senderCompany && lead.company.toLowerCase() === senderCompany.toLowerCase()); // same company
 
       const userPrompt = buildOutreachPrompt({
         basePrompt,
@@ -354,6 +384,12 @@ export async function POST(req: Request) {
 
       // Only call AI if no pre-generated content provided
       if (!preGeneratedSubject || !preGeneratedBody) {
+        // Build system instruction, adding disambiguation when sender/recipient overlap
+        let sysInstr = systemInstruction(senderName, senderTitle);
+        if (senderOverlap && recipientFirst) {
+          sysInstr += ` IMPORTANT: The recipient's name is "${recipientFirst}" (${contactName}). Even if the sender and recipient share the same name or company, you MUST address the greeting to "${recipientFirst}" — do NOT use the sender's name in the greeting.`;
+        }
+
         try {
           const { object, usage } = await generateObject({
             model,
@@ -362,7 +398,7 @@ export async function POST(req: Request) {
               body: z.string(),
             }),
             messages: [
-              { role: "system", content: systemInstruction(senderName, senderTitle) },
+              { role: "system", content: sysInstr },
               { role: "user", content: userPrompt },
             ],
           });
@@ -384,7 +420,7 @@ export async function POST(req: Request) {
           try {
             const { text: rawText, usage: retryUsage } = await generateText({
               model,
-              system: systemInstruction(senderName, senderTitle) + " Return ONLY valid JSON, no markdown fences, no explanations.",
+              system: sysInstr + " Return ONLY valid JSON, no markdown fences, no explanations.",
               prompt: userPrompt,
             });
 
@@ -451,6 +487,7 @@ export async function POST(req: Request) {
           trackingPixelUrl,
           brand: brandProps,
           templateOptions: body.templateOptions || undefined,
+          unsubscribeUrl,
         });
       } else {
         html = await render(
@@ -462,6 +499,7 @@ export async function POST(req: Request) {
             trackingPixelUrl,
             brand: brandProps,
             templateOptions: body.templateOptions || undefined,
+            unsubscribeUrl,
           }),
         );
       }
@@ -518,8 +556,56 @@ export async function POST(req: Request) {
             }
           }
 
-          // Persist outreach fields (only for real leads with valid ObjectIDs)
+          // ─── Pipeline provisioning for pool candidates ─────────────────
           const isRealLead = /^[a-f0-9]{24}$/i.test(lead.id);
+          if (!isRealLead && !testMode) {
+            // Pool candidate: create Lead → Account → Contact
+            const pipelineResult = await ensureLeadAndAccountForCandidate(
+              {
+                email: lead.email,
+                firstName: lead.firstName,
+                lastName: lead.lastName,
+                company: lead.company,
+                jobTitle: lead.jobTitle,
+              },
+              session.user.id,
+              user.team_id!,
+              body.campaignId,
+              body.poolId
+            );
+
+            // Create outreach item linked to campaign
+            if (body.campaignId && pipelineResult) {
+              await prismadb.crm_Outreach_Items.create({
+                data: {
+                  campaign: body.campaignId,
+                  lead: pipelineResult.leadId,
+                  channel: "EMAIL",
+                  status: "SENT",
+                  subject,
+                  body_text: bodyText,
+                  body_html: html,
+                  message_id: messageId || undefined,
+                  tracking_token: token,
+                  sentAt: new Date(),
+                  candidate_email: lead.email,
+                  candidate_name: contactName,
+                  candidate_company: lead.company || undefined,
+                  candidate_job_title: lead.jobTitle || undefined,
+                  account_id: pipelineResult.accountId,
+                  contact_id: pipelineResult.contactId,
+                },
+              });
+
+              // Increment campaign stats
+              await prismadb.crm_Outreach_Campaigns.update({
+                where: { id: body.campaignId },
+                data: { emails_sent: { increment: 1 } },
+              }).catch(() => { });
+            }
+          }
+
+          // ─── Persist outreach fields for existing leads ────────────────
           if (isRealLead) {
             try {
               const updateData: any = {
@@ -558,6 +644,31 @@ export async function POST(req: Request) {
                   } as any,
                 },
               });
+
+              // Create outreach item for campaign contact tracking
+              if (campaignId) {
+                try {
+                  await prismadb.crm_Outreach_Items.create({
+                    data: {
+                      campaign: campaignId,
+                      lead: /^[a-f0-9]{24}$/i.test(lead.id) ? lead.id : undefined,
+                      channel: "EMAIL",
+                      status: "SENT",
+                      subject: subject || null,
+                      body_text: bodyText || null,
+                      message_id: messageId || null,
+                      tracking_token: token,
+                      sentAt: new Date(),
+                      candidate_email: toEmail,
+                      candidate_name: [lead.firstName, lead.lastName].filter(Boolean).join(" ") || null,
+                      candidate_company: lead.company || null,
+                      candidate_job_title: lead.jobTitle || null,
+                    } as any,
+                  });
+                } catch (itemErr: any) {
+                  systemLogger.warn(`[OUTREACH_SEND] Failed to create outreach item for lead ${lead.id}: ${itemErr?.message}`);
+                }
+              }
             } catch (updateErr: any) {
               systemLogger.warn(`[OUTREACH_SEND] Post-send update failed for lead ${lead.id}: ${updateErr?.message || "record not found"}`);
             }
@@ -580,6 +691,23 @@ export async function POST(req: Request) {
       errors: results.filter((r) => r.status === "error").length,
       results,
     };
+
+    // Update campaign emails_sent counter — use actual count for accuracy (idempotent)
+    if (campaignId && summary.sent > 0 && !testMode) {
+      try {
+        const { prismadbCrm } = await import("@/lib/prisma-crm");
+        // Count all SENT outreach items for this campaign — always accurate
+        const sentCount = await (prismadbCrm as any).crm_Outreach_Items.count({
+          where: { campaign: campaignId, status: "SENT" },
+        });
+        await (prismadbCrm as any).crm_Outreach_Campaigns.update({
+          where: { id: campaignId },
+          data: { emails_sent: sentCount },
+        });
+      } catch (e: any) {
+        systemLogger.warn(`[OUTREACH_SEND] Failed to update campaign emails_sent: ${e?.message}`);
+      }
+    }
 
     // Gamification: award bonus credits for first outreach email (fire-and-forget)
     if (summary.sent > 0 && !testMode) {

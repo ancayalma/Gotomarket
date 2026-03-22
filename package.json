@@ -24,6 +24,7 @@
     "@ai-sdk/mistral": "^2.0.27",
     "@ai-sdk/openai": "^2.0.89",
     "@ai-sdk/react": "^3.0.118",
+    "@aws-sdk/client-bedrock-runtime": "^3.1014.0",
     "@aws-sdk/client-chime-sdk-meetings": "^3.962.0",
     "@aws-sdk/client-chime-sdk-voice": "^3.962.0",
     "@aws-sdk/client-connect": "^3.962.0",

@@ -418,6 +418,15 @@ model crm_Outreach_Campaigns {
   meeting_link      String?
   campaign_branding Json? // Snapshot/Override of TeamBrandIdentity for this specific campaign
 
+  // Follow-up automation config
+  followup_enabled       Boolean  @default(true)
+  followup_delay_hours   Int      @default(72)  // User-configurable wait before auto-followup
+  followup_max_count     Int      @default(2)   // Max follow-ups per contact
+  followup_prompt        String?                // Custom follow-up prompt override
+
+  // Campaign collateral (pricing sheets, agreements, etc.)
+  document_ids           String[] @db.ObjectId
+
   // Channels enabled
   channels OutreachChannelType[] @default([EMAIL])
 
@@ -492,8 +501,9 @@ model crm_Outreach_Items {
   linkedin_action      String? // "connect", "message", "inmail"
 
   // Tracking
-  message_id     String?
-  tracking_token String?
+  message_id       String?
+  tracking_token   String?
+  unsubscribe_token String?
 
   // Timestamps
   createdAt   DateTime? @default(now()) @db.Date
@@ -502,6 +512,26 @@ model crm_Outreach_Items {
   openedAt    DateTime? @db.Date
   clickedAt   DateTime? @db.Date
   repliedAt   DateTime? @db.Date
+
+  // Reply tracking & sentiment
+  reply_snippet     String?
+  reply_sentiment   String?   // POSITIVE, NEGATIVE, NEUTRAL
+  reply_analyzed_at DateTime? @db.Date
+
+  // Follow-up tracking
+  followup_count    Int       @default(0)
+  next_followup_at  DateTime? @db.Date
+  unsubscribed_at   DateTime? @db.Date
+
+  // Candidate data (for pool contacts not yet in crm_Leads)
+  candidate_email     String?
+  candidate_name      String?
+  candidate_company   String?
+  candidate_job_title String?
+
+  // Cross-module links
+  account_id String? @db.ObjectId
+  contact_id String? @db.ObjectId
 
   // Error tracking
   error_message String?
@@ -2252,6 +2282,9 @@ enum OutreachStatus {
   OPENED
   MEETING_LINK_CLICKED
   MEETING_BOOKED
+  REPLIED_POSITIVE
+  REPLIED_NEGATIVE
+  UNSUBSCRIBED
   CLOSED
   CONVERTED
 }
@@ -4574,6 +4607,57 @@ model VectorEmbedding {
   @@index([knowledgeSignalId])
 }
 
+// =============================================================================
+// POST-EMAIL PIPELINE: Agentic Actions Audit + Document RAG
+// =============================================================================
+
+// Audit log for AI-proposed and executed actions in the deal pipeline
+model crm_Agentic_Actions {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  campaign_id    String?   @db.ObjectId
+  opportunity_id String?   @db.ObjectId
+  contact_id     String?   @db.ObjectId
+  account_id     String?   @db.ObjectId
+  outreach_item_id String? @db.ObjectId
+
+  action_type    String    // SEND_QUOTE, ATTACH_DOC, GENERATE_CONTRACT,
+                           // CREATE_INVOICE, APPROVE_ENTITLEMENT, SEND_FOLLOWUP,
+                           // MOVE_STAGE, ESCALATE_HUMAN, DRAFT_RESPONSE
+  status         String    @default("PROPOSED") // PROPOSED, APPROVED, EXECUTED, REJECTED
+  payload        Json      // Action parameters
+  result         Json?     // Execution outcome
+  reasoning      String?   // AI's explanation for proposing this action
+
+  requires_human Boolean   @default(false)
+  approved_by    String?   @db.ObjectId
+  approved_at    DateTime? @db.Date
+  executed_at    DateTime? @db.Date
+  rejected_at    DateTime? @db.Date
+
+  createdAt      DateTime  @default(now()) @db.Date
+  team_id        String?   @db.ObjectId
+
+  @@index([campaign_id])
+  @@index([opportunity_id])
+  @@index([team_id])
+  @@index([status])
+}
+
+// Chunked document storage for RAG (semantic search over campaign collateral)
+model crm_Document_Chunks {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  document_id String   @db.ObjectId
+  chunk_index Int
+  content     String   // Extracted text chunk (~500 tokens)
+  embedding   Float[]  // Vector embedding for semantic search
+  metadata    Json?    // Page number, section header, source range
+  createdAt   DateTime @default(now()) @db.Date
+  team_id     String?  @db.ObjectId
+
+  @@index([document_id])
+  @@index([team_id])
+}
+
 // -----------------------------------------------------------------------------
 // APIM (API Management) Models - Phase 1
 // -----------------------------------------------------------------------------
@@ -4671,4 +4755,51 @@ model SandboxDeployLog {
 
   @@index([sandbox_id])
   @@index([entity_type])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CRON JOB REGISTRY — Per-team/user managed scheduled tasks
+// ═══════════════════════════════════════════════════════════════════
+
+enum CronJobStatus {
+  ACTIVE     // Running on schedule
+  PAUSED     // Temporarily disabled
+  COMPLETED  // Finished (e.g., campaign ended)
+  FAILED     // Too many consecutive errors
+}
+
+model crm_Cron_Jobs {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  team_id        String        @db.ObjectId
+  user_id        String        @db.ObjectId  // Creator/owner
+  campaign_id    String?       @db.ObjectId  // Linked campaign (for follow-up jobs)
+
+  job_type       String        // AUTO_FOLLOWUP, EMAIL_SYNC, DEAL_AGENT_CHECK, CUSTOM
+  label          String?       // Human-readable name, e.g. "Follow-up: Enterprise Q3 Campaign"
+  status         CronJobStatus @default(ACTIVE)
+
+  // Schedule
+  interval_ms    Int           @default(3600000) // Default 1 hour
+  cron_expression String?      // Optional cron string for display ("0 */1 * * *")
+
+  // Execution tracking
+  last_run_at    DateTime?     @db.Date
+  next_run_at    DateTime?     @db.Date
+  run_count      Int           @default(0)
+  error_count    Int           @default(0)
+  last_error     String?
+  last_result    Json?         // Summary of last execution
+
+  // Limits (for future per-team quotas)
+  max_runs       Int?          // Optional: stop after N runs
+  expires_at     DateTime?     @db.Date // Optional: auto-pause after date
+
+  createdAt      DateTime      @default(now()) @db.Date
+  updatedAt      DateTime      @updatedAt     @db.Date
+
+  @@index([team_id])
+  @@index([status])
+  @@index([job_type])
+  @@index([campaign_id])
+  @@index([next_run_at])
 }

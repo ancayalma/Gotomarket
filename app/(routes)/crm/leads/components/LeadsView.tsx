@@ -212,19 +212,11 @@ export default function LeadsView({ data, crmData }: Props) {
       />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={allSelected}
-              onCheckedChange={toggleAll}
-            />
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mr-2 hidden sm:inline">Select Current Page</span>
-          </div>
           <EnhancedDateFilter
             onFilterChange={setDateRange}
             storageKey="crm-leads-view-date-filter"
             initialType="all-time"
           />
-          <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hidden sm:inline">Total Selected: {selectedIds.length}</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-2">
@@ -262,9 +254,6 @@ export default function LeadsView({ data, crmData }: Props) {
             <table className="min-w-full text-sm">
               <thead className="bg-white/5">
                 <tr>
-                  <th className="p-3 w-[50px] text-center">
-                    <Switch checked={allSelected} onCheckedChange={toggleAll} />
-                  </th>
                   <th className="p-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider cursor-pointer hover:text-white" onClick={() => handleSort('lastName')}>
                     <div className="flex items-center gap-1">
                       Lead
@@ -305,13 +294,6 @@ export default function LeadsView({ data, crmData }: Props) {
                   const stageKey = (lead as any).pipeline_stage as PipelineStage | undefined;
                   return (
                     <tr key={lead.id} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="p-3 text-center">
-                        <Switch
-                          checked={!!selected[lead.id]}
-                          onCheckedChange={(c) => toggleOne(lead.id, c)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </td>
                       <td className="p-3">
                         <div className="font-medium text-white">{name || 'Lead'}</div>
                         <div className="text-[10px] text-muted-foreground uppercase">{lead.jobTitle || 'No Title'}</div>

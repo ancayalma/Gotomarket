@@ -142,7 +142,8 @@ export async function POST(req: Request, { params }: Params) {
     let meetingLink = meetingLinkOverride || lead.outreach_meeting_link || user.meeting_link || null;
 
     // Tracking pixel token (new token for follow-up send)
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+    const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+    const baseUrl = rawBaseUrl.includes("localhost") ? "https://crm.basalthq.com" : rawBaseUrl;
     const token =
       (globalThis.crypto?.randomUUID && globalThis.crypto.randomUUID()) ||
       `${Date.now()}_${Math.random().toString(36).slice(2)}`;
