@@ -10,6 +10,21 @@ export async function POST(req: Request) {
   try {
     // SNS posts data as text/plain or application/json
     const rawBody = await req.text();
+
+    try {
+        await prismadb.crm_Email_Thread.create({
+            data: {
+                team_id: "system",
+                direction: "INBOUND",
+                from_email: "debug@sns.amazonaws.com",
+                to_email: "system@crm.basalthq.com",
+                subject: "SNS DEBUG PAYLOAD",
+                body_text: rawBody,
+                receivedAt: new Date(),
+            } as any
+        });
+    } catch(e) {}
+
     let body;
     try {
       body = JSON.parse(rawBody);
