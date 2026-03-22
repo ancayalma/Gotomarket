@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 async function processVoiceCampaigns(req: Request) {
   // 1. Authenticate Cron (Uses ?token= CRON_SECRET or Header)
   const authResponse = requireCronAuth(req);
-  if (authResponse) return authResponse;
+  if (authResponse instanceof Response) return authResponse;
 
   systemLogger.info("[CRON_VOICE] Starting voice campaign processor...");
 
