@@ -149,6 +149,7 @@ export async function POST(req: Request) {
             key_value_props,     // Value propositions for this campaign
             followupConfig,      // { enabled, delayHours, maxCount, prompt }
             brandId,             // Specific brand identity selected in the wizard
+            voiceConfig,         // { agentId, startTime, concurrency } for ElevenLabs Voice
         } = body;
 
         // Resolve name from either field
@@ -226,6 +227,11 @@ export async function POST(req: Request) {
                 followup_delay_hours: followupConfig?.delayHours ?? 72,
                 followup_max_count: followupConfig?.maxCount ?? 2,
                 followup_prompt: followupConfig?.prompt || null,
+                // Voice configuration
+                voice_agent_id: voiceConfig?.agentId || null,
+                voice_start_time: voiceConfig?.startTime ? new Date(voiceConfig.startTime) : null,
+                voice_concurrency_limit: voiceConfig?.concurrency || 2,
+                voice_prompt: voiceConfig?.prompt || null,
             },
         });
 
@@ -242,7 +248,24 @@ export async function POST(req: Request) {
                 });
                 systemLogger.info(`[CAMPAIGN_POST] Registered follow-up CRON job for campaign ${campaign.id}`);
             } catch (cronErr: any) {
-                systemLogger.warn(`[CAMPAIGN_POST] Failed to register CRON job: ${cronErr?.message}`);
+                systemLogger.warn(`[CAMPAIGN_POST] Failed to register follow-up CRON job: ${cronErr?.message}`);
+            }
+        }
+
+        // Register CRON job for Voice Batching if PHONE channel is used
+        if (channels?.includes("PHONE") && user?.team_id) {
+            try {
+                await registerCronJob({
+                    teamId: user.team_id,
+                    userId: session.user.id,
+                    jobType: "VOICE_BATCH",
+                    label: `Voice Dispatch: ${campaignName}`,
+                    campaignId: campaign.id,
+                    intervalMs: 60000, // Voice batcher runs every minute globally, but we set to 1m for UI representation
+                });
+                systemLogger.info(`[CAMPAIGN_POST] Registered voice batch CRON job for campaign ${campaign.id}`);
+            } catch (cronErr: any) {
+                systemLogger.warn(`[CAMPAIGN_POST] Failed to register voice CRON job: ${cronErr?.message}`);
             }
         }
 

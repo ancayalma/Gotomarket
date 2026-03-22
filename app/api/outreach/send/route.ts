@@ -517,6 +517,13 @@ export async function POST(req: Request) {
           let messageId: string | null = null;
           const senderMode = body.senderMode || "company";
 
+          // Dynamically construct the Reply-To address to use the SES inbound subdomain.
+          // e.g. john@basalthq.com -> john@reply.basalthq.com
+          const inboundDomain = process.env.SES_INBOUND_DOMAIN || "reply.basalthq.com";
+          const userEmailPrefix = session.user.email?.split('@')?.[0] || "sales";
+          const resolvedSenderName = senderName || session.user.name || "Outreach";
+          const replyToAddress = `"${resolvedSenderName}" <${userEmailPrefix}@${inboundDomain}>`;
+
           if (senderMode === "personal") {
             // Personal mode: send via Amazon SES using the user's identity
             await sendSystemEmail({
@@ -524,7 +531,8 @@ export async function POST(req: Request) {
               subject,
               text,
               html,
-              from: `"${senderName || session.user.name || 'Outreach'}" <${session.user.email || process.env.SES_FROM_ADDRESS || 'noreply@basalthq.com'}>`,
+              from: `"${resolvedSenderName}" <${session.user.email || process.env.SES_FROM_ADDRESS || 'noreply@basalthq.com'}>`,
+              replyTo: replyToAddress,
             });
             messageId = `ses_personal_${Date.now()}`;
           } else {
@@ -536,6 +544,7 @@ export async function POST(req: Request) {
                 text,
                 html,
                 senderId: session.user.id,
+                replyTo: replyToAddress,
               }, "OUTREACH");
               messageId = `team_sent_${Date.now()}`;
             } catch (teamErr: any) {
@@ -548,6 +557,7 @@ export async function POST(req: Request) {
                   text,
                   html,
                   from: process.env.SES_FROM_ADDRESS || 'noreply@basalthq.com',
+                  replyTo: replyToAddress,
                 });
                 messageId = `test_system_sent_${Date.now()}`;
               } else {

@@ -86,6 +86,34 @@ export const handler = async (event: any) => {
       const getVal = (obj: Record<string, string>, k: string) => obj?.[k] || obj?.[k.toLowerCase()] || obj?.[k.toUpperCase()];
       const fetchAny = (k: string) => getVal(rawHeaders, k) || getVal(attrs, k);
 
+      // --- ELEVENLABS SIP ROUTING ---
+      // If the CRM initiates an AI call, we route the PSTN leg to ElevenLabs SIP!
+      const elevenLabsAgentId = fetchAny("X-Elevenlabs-Agent-Id") || fetchAny("X_ELEVENLABS_AGENT_ID") || fetchAny("x-elevenlabs-agent-id");
+      const leadId = fetchAny("X-Lead-Id") || fetchAny("X_LEAD_ID") || fetchAny("x-lead-id");
+      const callerId = getEnv("CHIME_SOURCE_PHONE") || getEnv("CHIME_SMA_PHONE_NUMBER");
+      
+      if (elevenLabsAgentId && legA) {
+          const leadPhoneNumber = legA.To || legA.PhoneNumber || callerId;
+          console.log(`[SMA_ELEVENLABS_BRIDGE] Routing outbound call directly to ElevenLabs SIP Trunk for Agent: ${elevenLabsAgentId}, Spoofing CallerId: ${leadPhoneNumber}`);
+          return {
+            SchemaVersion: "1.0",
+            Actions: [
+              { Type: "Speak", Parameters: { Text: "Connecting your A.I. assistant.", Engine: "neural", LanguageCode: "en-US", VoiceId: "Joanna" } },
+              {
+                Type: "CallAndBridge",
+                Parameters: {
+                  Endpoints: [{ Uri: `sip:${elevenLabsAgentId}@sip.rtc.elevenlabs.io:5060;transport=tcp` }],
+                  // We spoof the Caller ID as the Lead's actual phone number.
+                  // This tricks ElevenLabs into thinking the Lead called them, so the Pre-Call Webhook receives the Lead's phone number as `caller_id`.
+                  CallerIdNumber: leadPhoneNumber, 
+                  CallTimeoutSeconds: 60,
+                },
+              }
+            ]
+          };
+      }
+
+      // --- STANDARD MEETING ROUTING ---
       const meetingId = fetchAny("X-Meeting-Id") || fetchAny("X_MEETING_ID") || fetchAny("x-meeting-id") || fetchAny("MeetingId") || fetchAny("MEETING_ID");
       const attendeeId = fetchAny("X-Attendee-Id") || fetchAny("X_ATTENDEE_ID") || fetchAny("x-attendee-id") || fetchAny("AttendeeId") || fetchAny("ATTENDEE_ID");
       const joinToken = fetchAny("X-Join-Token") || fetchAny("X_JOIN_TOKEN") || fetchAny("x-join-token") || fetchAny("JoinToken") || fetchAny("JOIN_TOKEN");
@@ -112,7 +140,7 @@ export const handler = async (event: any) => {
       console.error("[SMA_NEW_OUTBOUND_PARSE_HEADERS_ERROR]", e);
     }
 
-    // Fallback to CallAndBridge if meeting headers are not present
+    // Fallback to basic CallAndBridge if meeting headers are not present
     const bridgeUri = getEnv("CHIME_BRIDGE_ENDPOINT_URI");
     const callerId = getEnv("CHIME_SOURCE_PHONE") || getEnv("CHIME_SMA_PHONE_NUMBER");
     const actions = bridgeUri

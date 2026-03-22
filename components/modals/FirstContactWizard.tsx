@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "react-hot-toast";
 import { Sparkles, Loader2, Plus, Trash2, GripVertical, ExternalLink, Building2, Mail, User, CheckCircle2, LayoutTemplate, Check, FileText as FileTextIcon, Phone, MessageSquare } from "lucide-react";
 import { OUTREACH_TEMPLATES, type OutreachTemplateId } from "@/lib/outreach/outreach-template-meta";
@@ -182,8 +183,13 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
 
   // Step 1: Channels selection
   const [useEmail, setUseEmail] = useState(true);
-  const [usePhone, setUsePhone] = useState(false);
+  const [useElevenLabs, setUseElevenLabs] = useState(false);
   const [useSms, setUseSms] = useState(false);
+
+  // ElevenLabs Voice Scheduling Config
+  const [voiceAgentId, setVoiceAgentId] = useState(process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || "");
+  const [voiceStartTime, setVoiceStartTime] = useState<string>("");
+  const [voiceConcurrency, setVoiceConcurrency] = useState<number>(2);
 
   // Step 2: Brand selection (multi-brand)
   const [brands, setBrands] = useState<any[]>([]);
@@ -194,6 +200,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
   // Step 3: AI prep
   const [defaultPrompt, setDefaultPrompt] = useState("");
   const [promptOverride, setPromptOverride] = useState("");
+  const [voicePromptOverride, setVoicePromptOverride] = useState("");
   const [meetingLinkOverride, setMeetingLinkOverride] = useState("");
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -235,8 +242,8 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
   const [testLeadId, setTestLeadId] = useState<string | null>(null);
   const { data: session } = useSession();
   const canSend = useMemo(() => {
-    return isOpen && leadIds && leadIds.length > 0 && (useEmail || useSms || usePhone);
-  }, [isOpen, leadIds, useEmail, useSms, usePhone]);
+    return isOpen && leadIds && leadIds.length > 0 && (useEmail || useSms || useElevenLabs);
+  }, [isOpen, leadIds, useEmail, useSms, useElevenLabs]);
 
   // Draft persistence
   const [hasDraft, setHasDraft] = useState(false);
@@ -282,9 +289,10 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
     try {
       const state = {
         active,
-        useEmail, usePhone, useSms,
+        useEmail, useElevenLabs, useSms,
+        voiceAgentId, voiceStartTime, voiceConcurrency,
         selectedBrandId,
-        promptOverride, meetingLinkOverride,
+        promptOverride, voicePromptOverride, meetingLinkOverride,
         aiOverrideActive, senderOverrideEnabled, senderOverrideName, senderOverrideTitle,
         selectedTemplate, themeColorOverride, secondaryColorOverride,
         bgTexture, borderAccent, cardStyle, dividerStyle, showResources,
@@ -320,12 +328,18 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
       const data = await res.json();
       if (!data.draft?.state) { toast.error("No draft found"); return; }
       const s = data.draft.state;
-      if (s.active) setActive(s.active);
-      if (s.useEmail !== undefined) setUseEmail(s.useEmail);
-      if (s.usePhone !== undefined) setUsePhone(s.usePhone);
-      if (s.useSms !== undefined) setUseSms(s.useSms);
+      if (data.draft.state) {
+          if (data.draft.state.active) setActive(data.draft.state.active);
+          if (data.draft.state.useEmail !== undefined) setUseEmail(data.draft.state.useEmail);
+          if (data.draft.state.useElevenLabs !== undefined) setUseElevenLabs(data.draft.state.useElevenLabs);
+          if (data.draft.state.useSms !== undefined) setUseSms(data.draft.state.useSms);
+          if (data.draft.state.voiceAgentId) setVoiceAgentId(data.draft.state.voiceAgentId);
+          if (data.draft.state.voiceStartTime) setVoiceStartTime(data.draft.state.voiceStartTime);
+          if (data.draft.state.voiceConcurrency) setVoiceConcurrency(data.draft.state.voiceConcurrency);
+      }
       if (s.selectedBrandId) setSelectedBrandId(s.selectedBrandId);
       if (s.promptOverride) setPromptOverride(s.promptOverride);
+      if (s.voicePromptOverride) setVoicePromptOverride(s.voicePromptOverride);
       if (s.meetingLinkOverride) setMeetingLinkOverride(s.meetingLinkOverride);
       if (s.aiOverrideActive !== undefined) setAiOverrideActive(s.aiOverrideActive);
       if (s.senderOverrideEnabled !== undefined) setSenderOverrideEnabled(s.senderOverrideEnabled);
@@ -716,7 +730,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
               channels: [
                 ...(useEmail ? ["EMAIL"] : []),
                 ...(useSms ? ["SMS"] : []),
-                ...(usePhone ? ["PHONE"] : []),
+                ...(useElevenLabs ? ["PHONE"] : []),
               ],
               leadIds: sendLeadIds,
               poolId: poolId || undefined,
@@ -724,6 +738,12 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
               promptOverride: promptOverride?.trim() || undefined,
               signatureHtml: undefined, // Signature is handled per-email in the send route
               meetingLink: meetingLinkOverride?.trim() || undefined,
+              voiceConfig: useElevenLabs ? {
+                agentId: voiceAgentId?.trim() || undefined,
+                startTime: voiceStartTime ? new Date(voiceStartTime).toISOString() : undefined,
+                concurrency: voiceConcurrency,
+                prompt: voicePromptOverride?.trim() || undefined,
+              } : undefined,
               followupConfig: followupEnabled ? {
                 enabled: true,
                 delayHours: followupDelayDays * 24,
@@ -742,7 +762,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
 
         // Step 2: Fire-and-forget the actual sends with campaignId attached
         const sendPayload = { ...emailPayload, campaignId: newCampaignId };
-        if (useEmail) {
+        if (useEmail || useElevenLabs) {
           fetch("/api/outreach/send", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -760,15 +780,8 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
             }),
           }).catch((e) => console.error("[OUTREACH] SMS send error:", e));
         }
-        if (usePhone) {
-          for (const id of leadIds) {
-            fetch("/api/outreach/call/initiate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ leadId: id }),
-            }).catch(() => {});
-          }
-        }
+        // ElevenLabs Voice scheduling is now handled by the /api/outreach/send backend endpoint 
+        // as part of the overall campaign creation payload when `useVoice: true`.
 
         // Step 3: Close and redirect — campaign already exists in DB
         toast.success(`Campaign launched! Sending to ${sendLeadIds.length} lead${sendLeadIds.length !== 1 ? "s" : ""} in the background...`);
@@ -778,11 +791,11 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
       }
 
       // ── Test send: await response for feedback with progress ──
-      const totalChannels = [useEmail, useSms, usePhone].filter(Boolean).length;
+      const totalChannels = [useEmail, useSms, useElevenLabs].filter(Boolean).length;
       setTestSending(true);
       setTestProgress({ sent: 0, total: totalChannels, errors: 0 });
 
-      const emailReq = useEmail ? fetch("/api/outreach/send", {
+      const emailReq = (useEmail || useElevenLabs) ? fetch("/api/outreach/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(emailPayload),
@@ -798,18 +811,8 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         })
       }) : null;
 
+      // Voice test sending is unsupported directly from the frontend; tests should use email/sms.
       const phoneReqs: Promise<Response | null>[] = [];
-      if (usePhone) {
-        for (const id of leadIds) {
-          phoneReqs.push(
-            fetch("/api/outreach/call/initiate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ leadId: id })
-            }).catch(() => null as any)
-          );
-        }
-      }
 
       // Track progress as each request completes
       let completedCount = 0;
@@ -838,13 +841,16 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
       const phoneStartIdx = (useEmail ? 1 : 0) + (useSms ? 1 : 0);
       let callsInitiated = 0;
       let callsErrors = 0;
-      if (usePhone) {
-        for (let i = phoneStartIdx; i < responses.length; i++) {
-          const res = responses[i];
-          if (res && res.ok) callsInitiated += 1; else callsErrors += 1;
+      if (useElevenLabs) {
+        // Since we bundle the voice payload in /api/outreach/send, this logic is deprecated for tests.
+        // We will just read the voice stats from the main payload if present.
+        const voiceStats = payloads[0]?.voice;
+        if (voiceStats) {
+          callsInitiated = voiceStats.queued || 0;
+          callsErrors = voiceStats.errors || 0;
         }
       }
-      const phoneSummary = usePhone ? `Calls initiated=${callsInitiated}${callsErrors ? ", errors=" + callsErrors : ""}` : null;
+      const phoneSummary = useElevenLabs ? `Voice queued=${callsInitiated}${callsErrors ? ", errors=" + callsErrors : ""}` : null;
 
       if (emailSummary || smsSummary || phoneSummary) {
         toast.success([emailSummary, smsSummary, phoneSummary].filter(Boolean).join("; "));
@@ -936,38 +942,38 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                 )}
               </button>
 
-              {/* Phone Card */}
+              {/* Voice Card */}
               <button
                 type="button"
-                onClick={() => setUsePhone(!usePhone)}
+                onClick={() => setUseElevenLabs(!useElevenLabs)}
                 className={`group relative flex flex-col items-center text-center p-8 rounded-2xl border-2 transition-all duration-300 cursor-pointer select-none ${
-                  usePhone
+                  useElevenLabs
                     ? "border-emerald-500/60 bg-emerald-500/5 shadow-lg shadow-emerald-500/10"
                     : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/20"
                 }`}
               >
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300 ${
-                  usePhone
+                  useElevenLabs
                     ? "bg-emerald-500/15 text-emerald-500 scale-110"
                     : "bg-muted text-muted-foreground group-hover:text-foreground group-hover:bg-muted/80"
                 }`}>
                   <Phone className="w-8 h-8" />
                 </div>
                 <h3 className={`text-lg font-bold mb-1 transition-colors ${
-                  usePhone ? "text-emerald-500" : "text-foreground"
-                }`}>Phone</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">Calls will be queued and initiated from the Leads Workspace — no auto-dial</p>
+                  useElevenLabs ? "text-emerald-500" : "text-foreground"
+                }`}>AI Voice</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">ElevenLabs AI agents will call your leads directly via AWS Chime</p>
 
                 {/* Toggle Switch */}
                 <div className={`mt-5 w-14 h-8 rounded-full relative transition-colors duration-300 ${
-                  usePhone ? "bg-emerald-500" : "bg-muted-foreground/20"
+                  useElevenLabs ? "bg-emerald-500" : "bg-muted-foreground/20"
                 }`}>
                   <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${
-                    usePhone ? "left-7" : "left-1"
+                    useElevenLabs ? "left-7" : "left-1"
                   }`} />
                 </div>
 
-                {usePhone && (
+                {useElevenLabs && (
                   <div className="absolute inset-0 rounded-2xl ring-1 ring-emerald-500/30 pointer-events-none" />
                 )}
               </button>
@@ -1009,12 +1015,69 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
               </button>
             </div>
 
+            {/* AI Voice Configuration Panel */}
+            {useElevenLabs && (
+              <div className="mt-6 p-5 border border-emerald-500/30 bg-emerald-500/5 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-2 text-emerald-600 mb-2">
+                  <Phone className="w-4 h-4" />
+                  <h4 className="font-semibold text-sm">Batch Voice Configuration</h4>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-foreground">ElevenLabs Agent ID</label>
+                    <p className="text-[10px] text-muted-foreground mb-1">Leave blank to use the default environment variable.</p>
+                    <Input 
+                      placeholder="e.g. agent_6801kmbbcxymfq3" 
+                      value={voiceAgentId}
+                      onChange={(e) => setVoiceAgentId(e.target.value)}
+                      className="h-9 bg-background/50 border-emerald-500/20 focus-visible:ring-emerald-500/50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs font-medium text-foreground">Schedule Start Time (Optional)</label>
+                    <p className="text-[10px] text-muted-foreground mb-1">Leave blank to start the voice campaign immediately.</p>
+                    <Input 
+                      type="datetime-local" 
+                      value={voiceStartTime}
+                      onChange={(e) => setVoiceStartTime(e.target.value)}
+                      className="h-9 bg-background/50 border-emerald-500/20 focus-visible:ring-emerald-500/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <div className="flex justify-between items-end mb-1">
+                    <div>
+                      <label className="text-xs font-medium text-foreground">Concurrency Rate Limit</label>
+                      <p className="text-[10px] text-muted-foreground">How many calls should the AI dispatch per minute?</p>
+                    </div>
+                    <span className="text-sm font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">{voiceConcurrency} calls / min</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="20" 
+                    value={voiceConcurrency}
+                    onChange={(e) => setVoiceConcurrency(parseInt(e.target.value))}
+                    className="w-full accent-emerald-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
+                    <span>1 (Safest)</span>
+                    <span>10+ (Enterprise SIP Trunks Only)</span>
+                    <span>20 (Max)</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Active channels summary */}
-            {(useEmail || usePhone || useSms) && (
+            {(useEmail || useElevenLabs || useSms) && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                 <span>
-                  Active: {[useEmail && "Email", usePhone && "Phone", useSms && "SMS"].filter(Boolean).join(", ")}
+                  Active: {[useEmail && "Email", useElevenLabs && "AI Voice", useSms && "SMS"].filter(Boolean).join(", ")}
                   {" "}&middot; {leadIds.length} lead{leadIds.length !== 1 ? "s" : ""} selected
                 </span>
               </div>
@@ -1083,78 +1146,152 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                 <span className="ml-1 font-medium text-foreground">Using brand: {selectedBrand?.brand_label || selectedBrand?.company_name}</span>
               )}
             </div>
-            {/* Sender Identity Override */}
-            <div className="border border-border rounded-md p-3 space-y-3">
-              <div className="flex items-center justify-between">
+            {useElevenLabs ? (
+              <Tabs defaultValue={useEmail || useSms ? "text" : "voice"} className="w-full">
+                <TabsList className="mb-4 w-full grid grid-cols-2">
+                  <TabsTrigger value="text" disabled={!(useEmail || useSms)}>Text Prep (Email / SMS)</TabsTrigger>
+                  <TabsTrigger value="voice">Voice Prep (ElevenLabs)</TabsTrigger>
+                </TabsList>
+                <TabsContent value="text" className="space-y-4 mt-0">
+                  <div className="border border-border rounded-md p-3 space-y-3 bg-card/50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-xs font-medium">Sender Identity Override</label>
+                        <p className="text-[10px] text-muted-foreground">Use a different name and title instead of your profile.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSenderOverrideEnabled(!senderOverrideEnabled)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                          senderOverrideEnabled ? "bg-primary" : "bg-muted"
+                        }`}
+                      >
+                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          senderOverrideEnabled ? "translate-x-4" : "translate-x-0"
+                        }`} />
+                      </button>
+                    </div>
+                    {senderOverrideEnabled && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-medium text-muted-foreground">Name</label>
+                          <Input className="mt-0.5 h-8 text-sm" value={senderOverrideName} onChange={(e) => setSenderOverrideName(e.target.value)} placeholder="e.g., Jane Smith" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-medium text-muted-foreground">Title / Position</label>
+                          <Input className="mt-0.5 h-8 text-sm" value={senderOverrideTitle} onChange={(e) => setSenderOverrideTitle(e.target.value)} placeholder="e.g., VP of Partnerships" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium">Default Prompt {aiOverrideActive && <span className="text-muted-foreground">(overridden by AI)</span>}</label>
+                    <Textarea className={`mt-1 ${aiOverrideActive ? "opacity-50 cursor-not-allowed" : ""}`} rows={6} value={defaultPrompt} onChange={(e) => setDefaultPrompt(e.target.value)} disabled={aiOverrideActive} />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button size="sm" onClick={aiGeneratePrompt} disabled={aiGenerating} className="bg-purple-600 hover:bg-purple-700 text-white">
+                      {aiGenerating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4 mr-2" /> AI Generate Prompt</>}
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={generateBatchPrompt} disabled={loadingPrompt}>Use Template</Button>
+                    <span className="text-xs text-muted-foreground">AI uses your brand identity & list context.</span>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium">Batch Prompt Override</label>
+                    <Textarea className="mt-1" rows={6} value={promptOverride} onChange={(e) => setPromptOverride(e.target.value)} placeholder="Optional: override prompt used when generating emails for this batch" />
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => savePoolPrompt()} disabled={!poolId || !(promptOverride?.trim()?.length)}>Save as Pool Prompt</Button>
+                      <span className="text-[11px] text-muted-foreground">Saves this override as the pool-level AI prompt/strategy.</span>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="voice" className="space-y-4 mt-0">
+                  <div className="p-4 border border-emerald-500/30 bg-emerald-500/5 rounded-xl space-y-4">
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 mb-1">
+                        <Phone className="w-4 h-4" /> AI Voice Custom Instructions
+                      </label>
+                      <p className="text-[11px] text-muted-foreground mb-3">
+                        These instructions will be sent as `campaign_instruction` to your ElevenLabs agent dynamically right before the call starts.
+                      </p>
+                      <Textarea 
+                        className="font-mono text-xs h-32 bg-background/50 border-emerald-500/20 focus-visible:ring-emerald-500/50" 
+                        value={voicePromptOverride} 
+                        onChange={(e) => setVoicePromptOverride(e.target.value)} 
+                        placeholder={'Example: "You are calling to follow up on a recent email we sent about {{campaign_context}}. Your ultimate goal is to schedule a meeting. Do not talk for more than 15 seconds at a time."'} 
+                      />
+                    </div>
+                    
+                    <div className="bg-background/80 rounded-lg p-3 border border-border">
+                      <p className="text-xs font-medium mb-1.5 flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-amber-500" /> Available System Variables</p>
+                      <ul className="text-[10px] space-y-1 text-muted-foreground mb-3 font-mono">
+                        <li><span className="text-foreground font-semibold">{"{{"}agent_name{"}}"}</span> — Your AI's Name</li>
+                        <li><span className="text-foreground font-semibold">{"{{"}lead_first_name{"}}"}</span> — Prospect's First Name</li>
+                        <li><span className="text-foreground font-semibold">{"{{"}lead_last_name{"}}"}</span> — Prospect's Last Name</li>
+                        <li><span className="text-foreground font-semibold">{"{{"}company_name{"}}"}</span> — Your Company Name</li>
+                        <li><span className="text-foreground font-semibold">{"{{"}campaign_context{"}}"}</span> — The contextual reason for this call</li>
+                        <li><span className="text-foreground font-semibold">{"{{"}business_facts{"}}"}</span> — Key CRM details about the lead</li>
+                      </ul>
+                      <p className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 italic font-medium">To use dynamic variables, your ElevenLabs Agent's First Message or System Prompt must include `{"{{"}campaign_instruction{"}}"}`.</p>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            ) : (
+              <div className="space-y-4">
+                {/* Fallback to original text-only block if voice is disabled */}
+                <div className="border border-border rounded-md p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-medium">Sender Identity Override</label>
+                      <p className="text-[10px] text-muted-foreground">Use a different name and title instead of your profile.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSenderOverrideEnabled(!senderOverrideEnabled)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                        senderOverrideEnabled ? "bg-primary" : "bg-muted"
+                      }`}
+                    >
+                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        senderOverrideEnabled ? "translate-x-4" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+                  {senderOverrideEnabled && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground">Name</label>
+                        <Input className="mt-0.5 h-8 text-sm" value={senderOverrideName} onChange={(e) => setSenderOverrideName(e.target.value)} placeholder="e.g., Jane Smith" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground">Title / Position</label>
+                        <Input className="mt-0.5 h-8 text-sm" value={senderOverrideTitle} onChange={(e) => setSenderOverrideTitle(e.target.value)} placeholder="e.g., VP of Partnerships" />
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div>
-                  <label className="text-xs font-medium">Sender Identity Override</label>
-                  <p className="text-[10px] text-muted-foreground">Use a different name and title instead of your profile for the AI voice.</p>
+                  <label className="text-xs font-medium">Default Prompt {aiOverrideActive && <span className="text-muted-foreground">(overridden by AI)</span>}</label>
+                  <Textarea className={`mt-1 ${aiOverrideActive ? "opacity-50 cursor-not-allowed" : ""}`} rows={6} value={defaultPrompt} onChange={(e) => setDefaultPrompt(e.target.value)} disabled={aiOverrideActive} />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSenderOverrideEnabled(!senderOverrideEnabled)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                    senderOverrideEnabled ? "bg-primary" : "bg-muted"
-                  }`}
-                >
-                  <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    senderOverrideEnabled ? "translate-x-4" : "translate-x-0"
-                  }`} />
-                </button>
-              </div>
-              {senderOverrideEnabled && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground">Name</label>
-                    <Input
-                      className="mt-0.5 h-8 text-sm"
-                      value={senderOverrideName}
-                      onChange={(e) => setSenderOverrideName(e.target.value)}
-                      placeholder="e.g., Jane Smith"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground">Title / Position</label>
-                    <Input
-                      className="mt-0.5 h-8 text-sm"
-                      value={senderOverrideTitle}
-                      onChange={(e) => setSenderOverrideTitle(e.target.value)}
-                      placeholder="e.g., VP of Partnerships"
-                    />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button size="sm" onClick={aiGeneratePrompt} disabled={aiGenerating} className="bg-purple-600 hover:bg-purple-700 text-white">
+                    {aiGenerating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4 mr-2" /> AI Generate Prompt</>}
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={generateBatchPrompt} disabled={loadingPrompt}>Use Template</Button>
+                  <span className="text-xs text-muted-foreground">AI uses your brand identity & list context.</span>
+                </div>
+                <div>
+                  <label className="text-xs font-medium">Batch Prompt Override</label>
+                  <Textarea className="mt-1" rows={8} value={promptOverride} onChange={(e) => setPromptOverride(e.target.value)} placeholder="Optional: override prompt used when generating emails for this batch" />
+                  <div className="mt-2 flex items-center gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => savePoolPrompt()} disabled={!poolId || !(promptOverride?.trim()?.length)}>Save as Pool Prompt</Button>
+                    <span className="text-[11px] text-muted-foreground">Saves this override as the pool-level AI prompt/strategy.</span>
                   </div>
                 </div>
-              )}
-            </div>
-            <div>
-              <label className="text-xs font-medium">Default Prompt {aiOverrideActive && <span className="text-muted-foreground">(overridden by AI)</span>}</label>
-              <Textarea className={`mt-1 ${aiOverrideActive ? "opacity-50 cursor-not-allowed" : ""}`} rows={6} value={defaultPrompt} onChange={(e) => setDefaultPrompt(e.target.value)} disabled={aiOverrideActive} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={aiGeneratePrompt}
-                disabled={aiGenerating}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                {aiGenerating ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
-                ) : (
-                  <><Sparkles className="w-4 h-4 mr-2" /> AI Generate Prompt</>
-                )}
-              </Button>
-              <Button size="sm" variant="secondary" onClick={generateBatchPrompt} disabled={loadingPrompt}>Use Template</Button>
-              <span className="text-xs text-muted-foreground">AI uses your brand identity & list context.</span>
-            </div>
-            <div>
-              <label className="text-xs font-medium">Batch Prompt Override</label>
-              <Textarea className="mt-1" rows={8} value={promptOverride} onChange={(e) => setPromptOverride(e.target.value)} placeholder="Optional: override prompt used when generating emails for this batch" />
-              <div className="mt-2 flex items-center gap-2">
-                <Button size="sm" variant="secondary" onClick={() => savePoolPrompt()} disabled={!poolId || !(promptOverride?.trim()?.length)}>
-                  Save as Pool Prompt
-                </Button>
-                <span className="text-[11px] text-muted-foreground">Saves this override as the pool-level AI prompt/strategy.</span>
               </div>
-            </div>
+            )}
 
             <div>
               <label className="text-xs font-medium">Meeting Link Override</label>
@@ -1681,7 +1818,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
               </div>
               <div className="p-3 rounded-md bg-muted/30 border border-border">
                 <div className="text-muted-foreground mb-1">Channels</div>
-                <div className="font-medium">{[useEmail && "Email", useSms && "SMS", usePhone && "Phone"].filter(Boolean).join(", ") || "None"}</div>
+                <div className="font-medium">{[useEmail && "Email", useSms && "SMS", useElevenLabs && "AI Voice"].filter(Boolean).join(", ") || "None"}</div>
               </div>
               {isMultiBrand && selectedBrand && (
                 <div className="p-3 rounded-md bg-muted/30 border border-border col-span-2">
