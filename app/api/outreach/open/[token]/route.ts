@@ -43,6 +43,30 @@ export async function GET(
             metadata: {} as any,
           },
         });
+
+        // Update outreach item + campaign stats
+        const outreachItem = await prismadb.crm_Outreach_Items.findFirst({
+          where: { tracking_token: token },
+          select: { id: true, campaign: true, openedAt: true },
+        });
+
+        if (outreachItem && !outreachItem.openedAt) {
+          await prismadb.crm_Outreach_Items.update({
+            where: { id: outreachItem.id },
+            data: {
+              status: "OPENED" as any,
+              openedAt: new Date(),
+            },
+          }).catch(() => { });
+
+          // Increment campaign open count
+          if (outreachItem.campaign) {
+            await prismadb.crm_Outreach_Campaigns.update({
+              where: { id: outreachItem.campaign },
+              data: { emails_opened: { increment: 1 } },
+            }).catch(() => { });
+          }
+        }
       }
     }
 

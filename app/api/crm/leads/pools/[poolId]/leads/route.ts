@@ -246,3 +246,213 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+
+// POST /api/crm/leads/pools/[poolId]/leads
+// Manually add a contact to a pool by creating a crm_Lead_Candidates + crm_Contact_Candidates record.
+export async function POST(req: Request, context: { params: Promise<{ poolId: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+
+    const { poolId } = await context.params;
+    if (!poolId) return new NextResponse("Missing poolId", { status: 400 });
+
+    const body = await req.json();
+    const { companyName, firstName, lastName, email, phone, jobTitle } = body;
+
+    if (!lastName && !companyName) {
+      return new NextResponse("Name or company is required", { status: 400 });
+    }
+
+    // Permission check
+    const teamInfo = await getCurrentUserTeamId();
+    const pool = await (prismadbCrm as any).crm_Lead_Pools.findUnique({
+      where: { id: poolId },
+      select: { user: true, team_id: true, assigned_members: true },
+    });
+
+    if (!pool) return new NextResponse("Pool not found", { status: 404 });
+
+    const isOwner = pool.user === session.user.id;
+    const isTeamAdmin = teamInfo?.isAdmin;
+    const isTeamMatch = pool.team_id === teamInfo?.teamId;
+    const isAssigned = Array.isArray(pool.assigned_members) && pool.assigned_members.includes(session.user.id);
+
+    if (!(isOwner || (isTeamAdmin && isTeamMatch) || isAssigned)) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    // Create the candidate (company-level record)
+    const candidate = await (prismadbCrm as any).crm_Lead_Candidates.create({
+      data: {
+        pool: poolId,
+        companyName: companyName || `${firstName || ""} ${lastName || ""}`.trim(),
+        status: "NEW",
+        freshnessAt: new Date(),
+        provenance: { source: "manual", addedBy: session.user.id },
+      },
+    });
+
+    // Create the contact (person-level record)
+    const fullName = [firstName, lastName].filter(Boolean).join(" ");
+    await (prismadbCrm as any).crm_Contact_Candidates.create({
+      data: {
+        leadCandidate: candidate.id,
+        fullName: fullName || companyName || "Contact",
+        email: email || null,
+        phone: phone || null,
+        title: jobTitle || null,
+        confidence: 100,
+        status: "NEW",
+      },
+    });
+
+    return NextResponse.json({ id: candidate.id, message: "Contact added to pool" }, { status: 201 });
+  } catch (error) {
+    systemLogger.error("[POOL_LEADS_POST]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+// DELETE /api/crm/leads/pools/[poolId]/leads?leadId=xxx
+// Removes a lead from this pool WITHOUT deleting them from the CRM.
+export async function DELETE(req: Request, context: { params: Promise<{ poolId: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+
+    const { poolId } = await context.params;
+    if (!poolId) return new NextResponse("Missing poolId", { status: 400 });
+
+    const { searchParams } = new URL(req.url);
+    const leadId = searchParams.get("leadId");
+    if (!leadId) return new NextResponse("Missing leadId", { status: 400 });
+
+    // Permission check — same as GET
+    const teamInfo = await getCurrentUserTeamId();
+    const pool = await (prismadbCrm as any).crm_Lead_Pools.findUnique({
+      where: { id: poolId },
+      select: { user: true, team_id: true, assigned_members: true },
+    });
+
+    if (!pool) return new NextResponse("Pool not found", { status: 404 });
+
+    const isOwner = pool.user === session.user.id;
+    const isTeamAdmin = teamInfo?.isAdmin;
+    const isTeamMatch = pool.team_id === teamInfo?.teamId;
+    const isAssigned = Array.isArray(pool.assigned_members) && pool.assigned_members.includes(session.user.id);
+
+    if (!(isOwner || (isTeamAdmin && isTeamMatch) || isAssigned)) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    // The leadId can be:
+    // 1. A real crm_Leads ID → remove from crm_Lead_Pools_Leads
+    // 2. A composite "candidateId_contactId" → remove the candidate
+    // 3. An account ID or contact ID from converted candidates
+
+    let removed = false;
+
+    // Strategy 1: Try removing from pool-leads association (legacy crm_Leads)
+    try {
+      const poolLeadLink = await (prismadbCrm as any).crm_Lead_Pools_Leads.findFirst({
+        where: { pool: poolId, lead: leadId },
+      });
+      systemLogger.info("[POOL_LEADS_DELETE] Strategy 1 (pool-leads link):", { found: !!poolLeadLink });
+      if (poolLeadLink) {
+        await (prismadbCrm as any).crm_Lead_Pools_Leads.delete({
+          where: { id: poolLeadLink.id },
+        });
+        removed = true;
+      }
+    } catch (e: any) {
+      systemLogger.error("[POOL_LEADS_DELETE] Strategy 1 error:", e?.message);
+    }
+
+    // Strategy 2: Try removing candidate directly (composite ID or direct candidate ID)
+    if (!removed) {
+      const candidateId = leadId.includes("_") ? leadId.split("_")[0] : leadId;
+      try {
+        const candidate = await (prismadbCrm as any).crm_Lead_Candidates.findFirst({
+          where: { id: candidateId, pool: poolId },
+        });
+        systemLogger.info("[POOL_LEADS_DELETE] Strategy 2 (direct candidate):", { candidateId, found: !!candidate });
+        if (candidate) {
+          // Must delete child crm_Contact_Candidates first (required relation)
+          await (prismadbCrm as any).crm_Contact_Candidates.deleteMany({
+            where: { leadCandidate: candidateId },
+          });
+          await (prismadbCrm as any).crm_Lead_Candidates.delete({
+            where: { id: candidateId },
+          });
+          removed = true;
+        }
+      } catch (e: any) {
+        systemLogger.error("[POOL_LEADS_DELETE] Strategy 2 error:", e?.message);
+      }
+    }
+
+    // Strategy 3: leadId is a crm_Contacts ID from a converted account
+    // Trace: contact ID → accountsIDs → find candidate with that accountsIDs
+    if (!removed) {
+      try {
+        // Look up the contact's parent account (accountsIDs is the FK field)
+        const contact = await (prismadbCrm as any).crm_Contacts.findUnique({
+          where: { id: leadId },
+          select: { accountsIDs: true, account: true },
+        });
+        systemLogger.info("[POOL_LEADS_DELETE] Strategy 3 (contact lookup):", { contact });
+        const accountId = contact?.accountsIDs || contact?.account || null;
+
+        if (accountId) {
+          const candidate = await (prismadbCrm as any).crm_Lead_Candidates.findFirst({
+            where: { pool: poolId, accountsIDs: accountId },
+          });
+          systemLogger.info("[POOL_LEADS_DELETE] Strategy 3 (candidate via account):", { accountId, found: !!candidate });
+          if (candidate) {
+            await (prismadbCrm as any).crm_Contact_Candidates.deleteMany({
+              where: { leadCandidate: candidate.id },
+            });
+            await (prismadbCrm as any).crm_Lead_Candidates.delete({
+              where: { id: candidate.id },
+            });
+            removed = true;
+          }
+        }
+      } catch (e: any) {
+        systemLogger.error("[POOL_LEADS_DELETE] Strategy 3 error:", e?.message);
+      }
+    }
+
+    // Strategy 4: leadId might be an account ID directly (no-contact converted accounts)
+    if (!removed) {
+      try {
+        const candidate = await (prismadbCrm as any).crm_Lead_Candidates.findFirst({
+          where: { pool: poolId, accountsIDs: leadId },
+        });
+        systemLogger.info("[POOL_LEADS_DELETE] Strategy 4 (direct account ID):", { found: !!candidate });
+        if (candidate) {
+          await (prismadbCrm as any).crm_Contact_Candidates.deleteMany({
+            where: { leadCandidate: candidate.id },
+          });
+          await (prismadbCrm as any).crm_Lead_Candidates.delete({
+            where: { id: candidate.id },
+          });
+          removed = true;
+        }
+      } catch (e: any) {
+        systemLogger.error("[POOL_LEADS_DELETE] Strategy 4 error:", e?.message);
+      }
+    }
+
+    if (!removed) {
+      systemLogger.warn("[POOL_LEADS_DELETE] No match found for leadId:", { leadId, poolId });
+      return new NextResponse("Lead not found in this pool", { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Removed from pool" }, { status: 200 });
+  } catch (error) {
+    systemLogger.error("[POOL_LEADS_DELETE]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}

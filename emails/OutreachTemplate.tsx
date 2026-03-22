@@ -53,6 +53,7 @@ interface OutreachTemplateProps {
   // Optional: sometimes we want to include a hero icon
   heroIconUrl?: string;
   templateOptions?: TemplateOptions;
+  unsubscribeUrl?: string; // Token-based unsubscribe link
 }
 
 const DEFAULTS = {
@@ -71,6 +72,7 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
   brand,
   heroIconUrl,
   templateOptions,
+  unsubscribeUrl,
 }) => {
   const ACCENT = brand?.accentColor || DEFAULTS.ACCENT;
   const PRIMARY = brand?.primaryText || DEFAULTS.PRIMARY;
@@ -244,7 +246,13 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
           {/* CAN-SPAM footer */}
           <Section style={{ marginTop: "16px", borderTop: "1px solid #e5e7eb", paddingTop: "12px" }}>
             <Text style={{ color: "#6b7280", fontSize: "12px" }}>{footerText}</Text>
-            {/* Optional company address block can be appended by caller if desired */}
+            {unsubscribeUrl && (
+              <Text style={{ color: "#9ca3af", fontSize: "11px", marginTop: "8px" }}>
+                <Link href={unsubscribeUrl} style={{ color: "#9ca3af", textDecoration: "underline" }}>
+                  Unsubscribe from future emails
+                </Link>
+              </Text>
+            )}
           </Section>
 
           {/* Tracking pixel */}

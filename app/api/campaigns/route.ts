@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbCrm as prisma } from "@/lib/prisma-crm";
+import { registerCronJob } from "@/lib/cron-scheduler";
+import { systemLogger } from "@/lib/logger";
 import { OutreachItemStatus } from "@prisma/client";
 
 // PUT - Update an existing sequence (used for draft auto-save)
@@ -145,6 +147,8 @@ export async function POST(req: Request) {
             target_geos,         // ICP geographies
             target_titles,       // ICP job titles
             key_value_props,     // Value propositions for this campaign
+            followupConfig,      // { enabled, delayHours, maxCount, prompt }
+            brandId,             // Specific brand identity selected in the wizard
         } = body;
 
         // Resolve name from either field
@@ -163,12 +167,16 @@ export async function POST(req: Request) {
             select: { team_id: true, name: true },
         });
 
-        // Always fetch brand identity for the team
+        // Fetch brand identity — use specific brandId from wizard, or fall back to default
         let defaultBranding: any = null;
         if (user?.team_id) {
-            const teamBrand = await prisma.teamBrandIdentity.findFirst({
-                where: { team_id: user.team_id, is_default: true }
-            });
+            const teamBrand = brandId
+                ? await prisma.teamBrandIdentity.findFirst({
+                    where: { id: brandId, team_id: user.team_id }
+                })
+                : await prisma.teamBrandIdentity.findFirst({
+                    where: { team_id: user.team_id, is_default: true }
+                });
             if (teamBrand) {
                 const { id, team_id, setup_completed, createdAt, updatedAt, ...brandProps } = teamBrand;
                 defaultBranding = {
@@ -213,41 +221,68 @@ export async function POST(req: Request) {
                 sms_delivered: 0,
                 calls_initiated: 0,
                 meetings_booked: 0,
+                // Follow-up automation config
+                followup_enabled: followupConfig?.enabled ?? true,
+                followup_delay_hours: followupConfig?.delayHours ?? 72,
+                followup_max_count: followupConfig?.maxCount ?? 2,
+                followup_prompt: followupConfig?.prompt || null,
             },
         });
 
-        // If leads were provided, create outreach items
-        if (leadIds && leadIds.length > 0) {
-            const outreachItems = [];
-            for (const leadId of leadIds) {
-                for (const channel of (channels || ["EMAIL"])) {
-                    outreachItems.push({
-                        campaign: campaign.id,
-                        lead: leadId,
-                        channel,
-                        status: OutreachItemStatus.PENDING,
-                        retry_count: 0,
-                    });
-                }
+        // Register CRON job for auto follow-ups if enabled
+        if (followupConfig?.enabled && user?.team_id) {
+            try {
+                await registerCronJob({
+                    teamId: user.team_id,
+                    userId: session.user.id,
+                    jobType: "AUTO_FOLLOWUP",
+                    label: `Follow-up: ${campaignName}`,
+                    campaignId: campaign.id,
+                    intervalMs: 3600000, // Check every hour
+                });
+                systemLogger.info(`[CAMPAIGN_POST] Registered follow-up CRON job for campaign ${campaign.id}`);
+            } catch (cronErr: any) {
+                systemLogger.warn(`[CAMPAIGN_POST] Failed to register CRON job: ${cronErr?.message}`);
             }
+        }
 
-            // Batch create outreach items
-            await prisma.crm_Outreach_Items.createMany({
-                data: outreachItems,
-            });
+        // If leads were provided, create outreach items (only for valid ObjectId leads)
+        if (leadIds && leadIds.length > 0) {
+            // Filter: only valid 24-char hex ObjectIDs can be stored in the `lead` field
+            const validLeadIds = leadIds.filter((id: string) => /^[a-f0-9]{24}$/i.test(id));
 
-            // Log activity
-            await prisma.crm_Lead_Activities.createMany({
-                data: leadIds.map((leadId: string) => ({
-                    lead: leadId,
-                    user: session.user.id,
-                    type: "CAMPAIGN_CREATED",
-                    metadata: {
-                        campaignId: campaign.id,
-                        campaignName,
-                    },
-                })),
-            });
+            if (validLeadIds.length > 0) {
+                const outreachItems = [];
+                for (const leadId of validLeadIds) {
+                    for (const channel of (channels || ["EMAIL"])) {
+                        outreachItems.push({
+                            campaign: campaign.id,
+                            lead: leadId,
+                            channel,
+                            status: OutreachItemStatus.PENDING,
+                            retry_count: 0,
+                        });
+                    }
+                }
+
+                // Batch create outreach items
+                await prisma.crm_Outreach_Items.createMany({
+                    data: outreachItems,
+                });
+
+                // Log activity
+                await prisma.crm_Lead_Activities.createMany({
+                    data: validLeadIds.map((leadId: string) => ({
+                        lead: leadId,
+                        user: session.user.id,
+                        type: "CAMPAIGN_CREATED",
+                        metadata: {
+                            campaignId: campaign.id,
+                            campaignName,
+                        },
+                    })),
+                });
+            }
         }
 
         return NextResponse.json({
@@ -336,7 +371,7 @@ export async function GET(req: Request) {
             },
         });
 
-        return NextResponse.json(campaigns);
+        return NextResponse.json({ campaigns });
     } catch (error: any) {
         console.error("Error fetching campaigns:", error);
         return NextResponse.json(

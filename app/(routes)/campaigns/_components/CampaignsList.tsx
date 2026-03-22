@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import useSWR from "swr";
 import fetcher from "@/lib/fetcher";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import {
     Plus,
     Search,
@@ -131,11 +132,12 @@ export default function CampaignsList() {
         to: undefined,
     });
 
-    const { data: campaigns, error, isLoading, mutate } = useSWR<Campaign[]>(
+    const { data, error, isLoading, mutate } = useSWR<{ campaigns: Campaign[] }>(
         "/api/campaigns",
         fetcher,
-        { revalidateOnFocus: false, dedupingInterval: 30000 }
+        { revalidateOnFocus: true, dedupingInterval: 5000, refreshInterval: 10000 }
     );
+    const campaigns = data?.campaigns || [];
 
     const filteredCampaigns = (campaigns || []).filter((c) => {
         const matchesSearch =
@@ -356,6 +358,29 @@ export default function CampaignsList() {
                                                     <Zap className="w-4 h-4 mr-2" />
                                                     Launch LeadGen Wizard
                                                 </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation();
+                                                        if (!confirm(`Delete "${campaign.name}"? This will reset all leads and cancel CRON jobs.`)) return;
+                                                        try {
+                                                            const res = await fetch(`/api/campaigns/${campaign.id}`, { method: "DELETE" });
+                                                            if (res.ok) {
+                                                                toast.success("Campaign deleted");
+                                                                mutate();
+                                                            } else {
+                                                                const err = await res.json();
+                                                                toast.error(err.message || "Delete failed");
+                                                            }
+                                                        } catch {
+                                                            toast.error("Failed to delete campaign");
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    Delete Campaign
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
@@ -404,6 +429,24 @@ export default function CampaignsList() {
                                             <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Meetings</div>
                                         </div>
                                     </div>
+
+                                    {/* Send Progress Bar */}
+                                    {campaign.total_leads > 0 && (
+                                        <div className="pt-2">
+                                            <div className="flex items-center justify-between text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-1">
+                                                <span>Send Progress</span>
+                                                <span className="font-mono text-primary">
+                                                    {campaign.emails_sent}/{campaign.total_leads}
+                                                </span>
+                                            </div>
+                                            <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-700"
+                                                    style={{ width: `${Math.min(100, (campaign.emails_sent / campaign.total_leads) * 100)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Linked Pool */}
                                     {campaign.assigned_pool && (

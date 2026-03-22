@@ -36,6 +36,7 @@ export interface OutreachRenderProps {
   };
   heroIconUrl?: string;
   templateOptions?: TemplateOptions;
+  unsubscribeUrl?: string;
 }
 
 /**

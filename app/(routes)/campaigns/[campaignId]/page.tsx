@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import fetcher from "@/lib/fetcher";
+import toast from "react-hot-toast";
 import {
     ArrowLeft,
     Mail,
@@ -24,6 +25,12 @@ import {
     Package,
     FlaskConical,
     Linkedin,
+    Trash2,
+    Clock,
+    AlertTriangle,
+    Play,
+    Pause,
+    XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +45,7 @@ import {
 } from "@/components/ui/card";
 import ABTestingPanel from "@/app/(routes)/crm/leads/components/ABTestingPanel";
 import LinkedInSequencePanel from "@/app/(routes)/crm/leads/components/LinkedInSequencePanel";
+import { CampaignContactTracker } from "@/app/(routes)/crm/leads/components/CampaignContactTracker";
 
 type CampaignDetail = {
     id: string;
@@ -102,12 +110,59 @@ export default function CampaignDetailPage() {
     const router = useRouter();
     const campaignId = params.campaignId as string;
     const [activeTab, setActiveTab] = useState("overview");
+    const [deleting, setDeleting] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
     const { data: campaign, error, isLoading, mutate } = useSWR<CampaignDetail>(
         campaignId ? `/api/campaigns/${campaignId}` : null,
         fetcher,
-        { revalidateOnFocus: false }
+        { revalidateOnFocus: true, refreshInterval: 10000 }
     );
+
+    // Fetch CRON jobs when on that tab
+    const { data: cronData, mutate: mutateCron } = useSWR(
+        activeTab === "cron" ? `/api/cron/jobs?campaignId=${campaignId}` : null,
+        fetcher,
+        { refreshInterval: 15000 }
+    );
+    const cronJobs = (cronData as any)?.jobs?.filter?.((j: any) => j.campaign_id === campaignId) || [];
+
+    async function handleDelete() {
+        setDeleting(true);
+        try {
+            const res = await fetch(`/api/campaigns/${campaignId}`, { method: "DELETE" });
+            if (res.ok) {
+                const data = await res.json();
+                toast.success(`Campaign deleted. ${data.cleaned?.leadsReset || 0} leads reset, ${data.cleaned?.cronJobsCancelled || 0} CRON jobs cancelled.`);
+                router.push("/campaigns");
+            } else {
+                const err = await res.json();
+                toast.error(err.message || "Delete failed");
+            }
+        } catch (e: any) {
+            toast.error(e?.message || "Delete failed");
+        }
+        setDeleting(false);
+        setConfirmDelete(false);
+    }
+
+    async function toggleCronJob(jobId: string, action: "pause" | "resume" | "cancel") {
+        try {
+            const res = await fetch("/api/cron/jobs", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ jobId, action }),
+            });
+            if (res.ok) {
+                toast.success(`Job ${action}d`);
+                mutateCron();
+            } else {
+                toast.error(`Failed to ${action} job`);
+            }
+        } catch {
+            toast.error(`Failed to ${action} job`);
+        }
+    }
 
     if (isLoading) {
         return (
@@ -214,6 +269,15 @@ export default function CampaignDetailPage() {
                             <Send className="w-4 h-4" />
                             Outreach
                         </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2 border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                            onClick={() => setConfirmDelete(true)}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                        </Button>
                     </div>
                 </div>
 
@@ -239,6 +303,27 @@ export default function CampaignDetailPage() {
                         </div>
                     ))}
                 </div>
+
+                {/* Email Send Progress Bar */}
+                {campaign.status === "ACTIVE" && campaign.total_leads > 0 && (
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground font-bold uppercase tracking-wider">Send Progress</span>
+                            <span className="font-mono font-bold text-primary">
+                                {campaign.emails_sent} / {campaign.total_leads}
+                                <span className="text-muted-foreground ml-1">
+                                    ({campaign.total_leads > 0 ? Math.round((campaign.emails_sent / campaign.total_leads) * 100) : 0}%)
+                                </span>
+                            </span>
+                        </div>
+                        <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-700"
+                                style={{ width: `${campaign.total_leads > 0 ? Math.min(100, (campaign.emails_sent / campaign.total_leads) * 100) : 0}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
 
                 <Separator className="bg-white/5" />
 
@@ -268,6 +353,10 @@ export default function CampaignDetailPage() {
                         <TabsTrigger value="linkedin" className="gap-2 rounded-lg text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                             <Linkedin className="w-3.5 h-3.5" />
                             LinkedIn
+                        </TabsTrigger>
+                        <TabsTrigger value="cron" className="gap-2 rounded-lg text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <Clock className="w-3.5 h-3.5" />
+                            CRON Jobs
                         </TabsTrigger>
                     </TabsList>
 
@@ -443,21 +532,7 @@ export default function CampaignDetailPage() {
 
                     {/* Outreach Tab */}
                     <TabsContent value="outreach" className="mt-6">
-                        <div className="text-center py-12 bg-card/50 backdrop-blur-sm rounded-xl border border-white/5 space-y-4">
-                            <Mail className="w-10 h-10 text-muted-foreground/40 mx-auto" />
-                            <h3 className="font-bold">Outreach Items ({campaign.outreach_items?.length || 0})</h3>
-                            {(campaign.outreach_items?.length || 0) > 0 ? (
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                    {Object.entries(itemCounts).map(([status, count]) => (
-                                        <Badge key={status} variant="outline" className="text-xs border-white/10">
-                                            {status}: {count}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-muted-foreground">No outreach items yet. First scrape accounts into a list, then start outreach.</p>
-                            )}
-                        </div>
+                        <CampaignContactTracker campaignId={campaignId} onRefresh={() => mutate()} />
                     </TabsContent>
 
                     {/* Analytics Tab */}
@@ -545,7 +620,157 @@ export default function CampaignDetailPage() {
                     <TabsContent value="linkedin" className="mt-6">
                         <LinkedInSequencePanel campaignId={campaignId} />
                     </TabsContent>
+
+                    {/* CRON Jobs Tab */}
+                    <TabsContent value="cron" className="mt-6">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold flex items-center gap-2">
+                                    <Clock className="w-5 h-5 text-primary" />
+                                    Scheduled Jobs
+                                </h3>
+                                <Badge variant="outline">{cronJobs.length} jobs</Badge>
+                            </div>
+
+                            {cronJobs.length === 0 ? (
+                                <div className="text-center py-12 bg-card/50 backdrop-blur-sm rounded-xl border border-white/5">
+                                    <Clock className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+                                    <h3 className="font-bold">No CRON Jobs</h3>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        CRON jobs (like auto follow-ups) will appear here when configured.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {cronJobs.map((job: any) => (
+                                        <div
+                                            key={job.id}
+                                            className={`border rounded-lg p-4 transition-all ${
+                                                job.status === "ACTIVE"
+                                                    ? "border-emerald-500/30 bg-emerald-500/5"
+                                                    : job.status === "PAUSED"
+                                                        ? "border-amber-500/30 bg-amber-500/5"
+                                                        : "border-white/5 bg-card/50"
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-medium text-sm">{job.label || job.job_type}</span>
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-[10px] font-bold uppercase ${
+                                                                job.status === "ACTIVE"
+                                                                    ? "border-emerald-500/30 text-emerald-400"
+                                                                    : job.status === "PAUSED"
+                                                                        ? "border-amber-500/30 text-amber-400"
+                                                                        : "border-white/10 text-muted-foreground"
+                                                            }`}
+                                                        >
+                                                            {job.status}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="flex gap-4 text-xs text-muted-foreground">
+                                                        <span>Type: <span className="text-white">{job.job_type}</span></span>
+                                                        <span>Interval: <span className="text-white">{Math.round((job.interval_ms || 3600000) / 60000)}m</span></span>
+                                                        <span>Runs: <span className="text-white">{job.run_count}</span></span>
+                                                        {job.error_count > 0 && (
+                                                            <span className="text-red-400">Errors: {job.error_count}</span>
+                                                        )}
+                                                        {job.last_run_at && (
+                                                            <span>Last: <span className="text-white">{new Date(job.last_run_at).toLocaleString()}</span></span>
+                                                        )}
+                                                    </div>
+                                                    {job.last_error && (
+                                                        <p className="text-xs text-red-400 mt-1">
+                                                            <AlertTriangle className="w-3 h-3 inline mr-1" />
+                                                            {job.last_error}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    {job.status === "ACTIVE" && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                                                            onClick={() => toggleCronJob(job.id, "pause")}
+                                                        >
+                                                            <Pause className="w-3 h-3 mr-1" /> Pause
+                                                        </Button>
+                                                    )}
+                                                    {job.status === "PAUSED" && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                                                            onClick={() => toggleCronJob(job.id, "resume")}
+                                                        >
+                                                            <Play className="w-3 h-3 mr-1" /> Resume
+                                                        </Button>
+                                                    )}
+                                                    {job.status !== "COMPLETED" && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                                            onClick={() => toggleCronJob(job.id, "cancel")}
+                                                        >
+                                                            <XCircle className="w-3 h-3 mr-1" /> Cancel
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </TabsContent>
                 </Tabs>
+
+                {/* Delete Confirmation Overlay */}
+                {confirmDelete && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                        <div className="bg-card border border-white/10 rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                                    <AlertTriangle className="w-5 h-5 text-red-400" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg">Delete Campaign</h3>
+                                    <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+                                </div>
+                            </div>
+                            <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 space-y-1">
+                                <p className="text-sm">This will:</p>
+                                <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-0.5">
+                                    <li>Delete all outreach items for this campaign</li>
+                                    <li>Reset all leads back to <span className="text-white font-bold">IDLE</span> status</li>
+                                    <li>Cancel all CRON jobs linked to this campaign</li>
+                                    <li>Permanently delete the campaign record</li>
+                                </ul>
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                                <Button variant="outline" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDelete}
+                                    disabled={deleting}
+                                    className="gap-2"
+                                >
+                                    {deleting ? (
+                                        <><Loader2 className="w-4 h-4 animate-spin" /> Deleting...</>
+                                    ) : (
+                                        <><Trash2 className="w-4 h-4" /> Delete Campaign</>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -2,13 +2,14 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-hot-toast";
-import { Sparkles, Loader2, Plus, Trash2, GripVertical, ExternalLink, Building2, Mail, User, CheckCircle2, LayoutTemplate, Check, FileText as FileTextIcon } from "lucide-react";
+import { Sparkles, Loader2, Plus, Trash2, GripVertical, ExternalLink, Building2, Mail, User, CheckCircle2, LayoutTemplate, Check, FileText as FileTextIcon, Phone, MessageSquare } from "lucide-react";
 import { OUTREACH_TEMPLATES, type OutreachTemplateId } from "@/lib/outreach/outreach-template-meta";
 import { ICON_CATEGORIES, ICON_KEYS, resolveIconUrl } from "@/lib/outreach/outreach-icons";
 
@@ -172,11 +173,12 @@ export type FirstContactWizardProps = {
   };
 };
 
-const STEP_LABELS = ["Channels", "Brand", "AI Prep", "Signature", "Resources", "Template", "Review & Send"];
+const STEP_LABELS = ["Channels", "Brand", "AI Prep", "Signature", "Resources", "Template", "Follow-Up", "Review & Send"];
 
 export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData, initialPrompt, poolId, listContext }: FirstContactWizardProps) {
+  const router = useRouter();
   const [active, setActive] = useState(1);
-  const totalSteps = 7;
+  const totalSteps = 8;
 
   // Step 1: Channels selection
   const [useEmail, setUseEmail] = useState(true);
@@ -217,8 +219,15 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
   // Step 6: Resources
   const [resources, setResources] = useState<any[]>([]);
   const [savingResources, setSavingResources] = useState(false);
+  const [signatureSource, setSignatureSource] = useState<"user" | "brand">("user");
 
-  // Step 7: Review & Send
+  // Step 7: Follow-Up Config
+  const [followupEnabled, setFollowupEnabled] = useState(true);
+  const [followupDelayDays, setFollowupDelayDays] = useState(3);
+  const [followupMaxCount, setFollowupMaxCount] = useState(2);
+  const [followupPrompt, setFollowupPrompt] = useState("");
+
+  // Step 8: Review & Send
   const [testMode, setTestMode] = useState(false);
   const [testEmailRecipients, setTestEmailRecipients] = useState("");
   const [senderMode, setSenderMode] = useState<"company" | "personal">("company");
@@ -642,12 +651,18 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
     }
   }
 
+  const [launching, setLaunching] = useState(false);
+  const [testSending, setTestSending] = useState(false);
+  const [testProgress, setTestProgress] = useState({ sent: 0, total: 0, errors: 0 });
+
   async function sendOutreach(forceTestMode?: boolean) {
     const isTest = forceTestMode !== undefined ? forceTestMode : testMode;
     if (!canSend) {
       toast.error("Select at least one lead and channel (Email/SMS/Phone)");
       return;
     }
+    if (launching) return; // Prevent double-clicks
+    if (!isTest) setLaunching(true);
     try {
       const testEmailValue = isTest && testEmailRecipients.trim() ? testEmailRecipients.trim() : undefined;
       // In test mode, only send for the selected test lead (not all leads)
@@ -656,30 +671,121 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
       const testLeadData = isTest && testLeadId && leadData
         ? leadData.filter((l: any) => l.email).find((l: any) => l.id === testLeadId)
         : undefined;
+
+      const emailPayload = {
+        leadIds: sendLeadIds,
+        leadData: (leadData || []).filter((l: any) => l.email).map((l: any) => ({
+          id: l.id, firstName: l.firstName, lastName: l.lastName,
+          company: l.company, jobTitle: l.jobTitle, email: l.email,
+        })),
+        test: isTest,
+        testEmail: testEmailValue,
+        inlineLeads: testLeadData ? [testLeadData] : undefined,
+        promptOverride: promptOverride?.trim() || undefined,
+        meetingLinkOverride: meetingLinkOverride?.trim() || undefined,
+        brandId: selectedBrandId || undefined,
+        poolId: poolId || undefined,
+        senderMode,
+        templateId: selectedTemplate,
+        themeColorOverride: themeColorOverride || undefined,
+        secondaryColorOverride: secondaryColorOverride || undefined,
+        templateOptions: { backgroundTexture: bgTexture, borderAccent, cardStyle, dividerStyle, showResources },
+        senderOverride: senderOverrideEnabled && senderOverrideName?.trim()
+          ? { name: senderOverrideName.trim(), title: senderOverrideTitle?.trim() || undefined }
+          : undefined,
+        followupConfig: followupEnabled ? {
+          enabled: true,
+          delayHours: followupDelayDays * 24,
+          maxCount: followupMaxCount,
+          prompt: followupPrompt?.trim() || undefined,
+        } : undefined,
+      };
+
+      // ── Real (non-test) send: create campaign first, then fire-and-forget emails ──
+      if (!isTest) {
+        // Step 1: Create the campaign record (awaited — must exist before redirect)
+        let newCampaignId: string | undefined;
+        try {
+          const campaignRes = await fetch("/api/campaigns", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: `${listContext?.name || "Outreach"} — ${new Date().toLocaleDateString()}`,
+              description: listContext?.description || undefined,
+              status: "ACTIVE",
+              channels: [
+                ...(useEmail ? ["EMAIL"] : []),
+                ...(useSms ? ["SMS"] : []),
+                ...(usePhone ? ["PHONE"] : []),
+              ],
+              leadIds: sendLeadIds,
+              poolId: poolId || undefined,
+              brandId: selectedBrandId || undefined,
+              promptOverride: promptOverride?.trim() || undefined,
+              signatureHtml: undefined, // Signature is handled per-email in the send route
+              meetingLink: meetingLinkOverride?.trim() || undefined,
+              followupConfig: followupEnabled ? {
+                enabled: true,
+                delayHours: followupDelayDays * 24,
+                maxCount: followupMaxCount,
+                prompt: followupPrompt?.trim() || undefined,
+              } : { enabled: false },
+            }),
+          });
+          if (campaignRes.ok) {
+            const campaignData = await campaignRes.json();
+            newCampaignId = campaignData.id;
+          }
+        } catch (e) {
+          console.error("[OUTREACH] Campaign creation error:", e);
+        }
+
+        // Step 2: Fire-and-forget the actual sends with campaignId attached
+        const sendPayload = { ...emailPayload, campaignId: newCampaignId };
+        if (useEmail) {
+          fetch("/api/outreach/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(sendPayload),
+          }).catch((e) => console.error("[OUTREACH] Email send error:", e));
+        }
+        if (useSms) {
+          fetch("/api/outreach/sms", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              leadIds: sendLeadIds,
+              test: false,
+              promptOverride: promptOverride?.trim() || undefined,
+            }),
+          }).catch((e) => console.error("[OUTREACH] SMS send error:", e));
+        }
+        if (usePhone) {
+          for (const id of leadIds) {
+            fetch("/api/outreach/call/initiate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ leadId: id }),
+            }).catch(() => {});
+          }
+        }
+
+        // Step 3: Close and redirect — campaign already exists in DB
+        toast.success(`Campaign launched! Sending to ${sendLeadIds.length} lead${sendLeadIds.length !== 1 ? "s" : ""} in the background...`);
+        onClose();
+        router.push("/campaigns");
+        return;
+      }
+
+      // ── Test send: await response for feedback with progress ──
+      const totalChannels = [useEmail, useSms, usePhone].filter(Boolean).length;
+      setTestSending(true);
+      setTestProgress({ sent: 0, total: totalChannels, errors: 0 });
+
       const emailReq = useEmail ? fetch("/api/outreach/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          leadIds: sendLeadIds,
-          leadData: (leadData || []).filter((l: any) => l.email).map((l: any) => ({
-            id: l.id, firstName: l.firstName, lastName: l.lastName,
-            company: l.company, jobTitle: l.jobTitle, email: l.email,
-          })),
-          test: isTest,
-          testEmail: testEmailValue,
-          inlineLeads: testLeadData ? [testLeadData] : undefined,
-          promptOverride: promptOverride?.trim() || undefined,
-          meetingLinkOverride: meetingLinkOverride?.trim() || undefined,
-          brandId: selectedBrandId || undefined,
-          senderMode,
-          templateId: selectedTemplate,
-          themeColorOverride: themeColorOverride || undefined,
-          secondaryColorOverride: secondaryColorOverride || undefined,
-          templateOptions: { backgroundTexture: bgTexture, borderAccent, cardStyle, dividerStyle, showResources },
-          senderOverride: senderOverrideEnabled && senderOverrideName?.trim()
-            ? { name: senderOverrideName.trim(), title: senderOverrideTitle?.trim() || undefined }
-            : undefined,
-        })
+        body: JSON.stringify(emailPayload),
       }) : null;
 
       const smsReq = useSms ? fetch("/api/outreach/sms", {
@@ -692,7 +798,6 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         })
       }) : null;
 
-      // Initiate phone calls one-by-one (non-blocking)
       const phoneReqs: Promise<Response | null>[] = [];
       if (usePhone) {
         for (const id of leadIds) {
@@ -706,11 +811,23 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         }
       }
 
-      const responses = await Promise.all([
-        emailReq,
-        smsReq,
-        ...(phoneReqs.length ? phoneReqs : [])
-      ].filter(Boolean) as Promise<Response>[]);
+      // Track progress as each request completes
+      let completedCount = 0;
+      let errorCount = 0;
+      const trackPromise = (p: Promise<Response>) => p.then((r) => {
+        completedCount++;
+        if (!r || !r.ok) errorCount++;
+        setTestProgress({ sent: completedCount, total: totalChannels, errors: errorCount });
+        return r;
+      }).catch((e) => {
+        completedCount++;
+        errorCount++;
+        setTestProgress({ sent: completedCount, total: totalChannels, errors: errorCount });
+        throw e;
+      });
+
+      const promises = [emailReq, smsReq, ...(phoneReqs.length ? phoneReqs : [])].filter(Boolean) as Promise<Response>[];
+      const responses = await Promise.all(promises.map(trackPromise));
 
       const payloads = await Promise.all(responses.map((r) => r.json().catch(() => null)));
 
@@ -729,13 +846,8 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
       }
       const phoneSummary = usePhone ? `Calls initiated=${callsInitiated}${callsErrors ? ", errors=" + callsErrors : ""}` : null;
 
-      const okAll = responses.every((r) => r && r.ok);
-      if (okAll || (emailSummary || smsSummary || phoneSummary)) {
+      if (emailSummary || smsSummary || phoneSummary) {
         toast.success([emailSummary, smsSummary, phoneSummary].filter(Boolean).join("; "));
-        // Only close the modal for real sends, not test sends
-        if (!isTest) {
-          onClose();
-        }
       } else {
         const firstError = responses.find((r) => !r || !r.ok);
         const idx = firstError ? responses.indexOf(firstError) : -1;
@@ -744,6 +856,9 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
       }
     } catch (e: any) {
       toast.error(e?.message || "Failed to send outreach");
+    } finally {
+      setLaunching(false);
+      setTestSending(false);
     }
   }
 
@@ -751,19 +866,20 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
     <Dialog open={isOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className={`${
         active === 4 || active === 5 || active === 6
-          ? "sm:max-w-[90vw] lg:max-w-7xl"
-          : active === 7
-            ? "sm:max-w-3xl"
-            : "sm:max-w-2xl"
-      } transition-all duration-300 max-h-[98vh] flex flex-col`}>
-        <DialogHeader>
+          ? "sm:max-w-[92vw] lg:max-w-7xl"
+          : "sm:max-w-4xl lg:max-w-5xl"
+      } transition-all duration-300 max-h-[92vh] h-[92vh] flex flex-col`}>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Initiate First Contact</DialogTitle>
           <StepHeader step={active} total={totalSteps} labels={STEP_LABELS} />
         </DialogHeader>
 
+        {/* Scrollable step content area */}
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+
         {/* ════════════════ Step 1: Channel Selection ════════════════ */}
         {active === 1 && (
-          <div className="space-y-4">
+          <div className="space-y-5 py-2">
             {/* Load Draft Banner */}
             {hasDraft && fallbackPoolId && draftMeta && (
               <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
@@ -778,12 +894,131 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                 </Button>
               </div>
             )}
-            <div className="text-sm text-muted-foreground">Select channels to use for this batch. Email and SMS send immediately; Phone is ready to initiate from the Leads Workspace and will not auto-dial.</div>
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2"><Checkbox checked={useEmail} onCheckedChange={(v) => setUseEmail(!!v)} /> Email</label>
-              <label className="flex items-center gap-2"><Checkbox checked={usePhone} onCheckedChange={(v) => setUsePhone(!!v)} /> Phone <span className="ml-2 text-[10px]">calls will be initiated</span></label>
-              <label className="flex items-center gap-2"><Checkbox checked={useSms} onCheckedChange={(v) => setUseSms(!!v)} /> SMS</label>
+
+            <p className="text-sm text-muted-foreground">Choose which outreach channels to activate for this campaign. Toggle any combination below.</p>
+
+            {/* Channel Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Email Card */}
+              <button
+                type="button"
+                onClick={() => setUseEmail(!useEmail)}
+                className={`group relative flex flex-col items-center text-center p-8 rounded-2xl border-2 transition-all duration-300 cursor-pointer select-none ${
+                  useEmail
+                    ? "border-blue-500/60 bg-blue-500/5 shadow-lg shadow-blue-500/10"
+                    : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/20"
+                }`}
+              >
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300 ${
+                  useEmail
+                    ? "bg-blue-500/15 text-blue-500 scale-110"
+                    : "bg-muted text-muted-foreground group-hover:text-foreground group-hover:bg-muted/80"
+                }`}>
+                  <Mail className="w-8 h-8" />
+                </div>
+                <h3 className={`text-lg font-bold mb-1 transition-colors ${
+                  useEmail ? "text-blue-500" : "text-foreground"
+                }`}>Email</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">AI-generated personalized emails sent directly to each lead's inbox</p>
+
+                {/* Toggle Switch */}
+                <div className={`mt-5 w-14 h-8 rounded-full relative transition-colors duration-300 ${
+                  useEmail ? "bg-blue-500" : "bg-muted-foreground/20"
+                }`}>
+                  <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${
+                    useEmail ? "left-7" : "left-1"
+                  }`} />
+                </div>
+
+                {/* Active glow ring */}
+                {useEmail && (
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-blue-500/30 pointer-events-none" />
+                )}
+              </button>
+
+              {/* Phone Card */}
+              <button
+                type="button"
+                onClick={() => setUsePhone(!usePhone)}
+                className={`group relative flex flex-col items-center text-center p-8 rounded-2xl border-2 transition-all duration-300 cursor-pointer select-none ${
+                  usePhone
+                    ? "border-emerald-500/60 bg-emerald-500/5 shadow-lg shadow-emerald-500/10"
+                    : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/20"
+                }`}
+              >
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300 ${
+                  usePhone
+                    ? "bg-emerald-500/15 text-emerald-500 scale-110"
+                    : "bg-muted text-muted-foreground group-hover:text-foreground group-hover:bg-muted/80"
+                }`}>
+                  <Phone className="w-8 h-8" />
+                </div>
+                <h3 className={`text-lg font-bold mb-1 transition-colors ${
+                  usePhone ? "text-emerald-500" : "text-foreground"
+                }`}>Phone</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">Calls will be queued and initiated from the Leads Workspace — no auto-dial</p>
+
+                {/* Toggle Switch */}
+                <div className={`mt-5 w-14 h-8 rounded-full relative transition-colors duration-300 ${
+                  usePhone ? "bg-emerald-500" : "bg-muted-foreground/20"
+                }`}>
+                  <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${
+                    usePhone ? "left-7" : "left-1"
+                  }`} />
+                </div>
+
+                {usePhone && (
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-emerald-500/30 pointer-events-none" />
+                )}
+              </button>
+
+              {/* SMS Card */}
+              <button
+                type="button"
+                onClick={() => setUseSms(!useSms)}
+                className={`group relative flex flex-col items-center text-center p-8 rounded-2xl border-2 transition-all duration-300 cursor-pointer select-none ${
+                  useSms
+                    ? "border-violet-500/60 bg-violet-500/5 shadow-lg shadow-violet-500/10"
+                    : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/20"
+                }`}
+              >
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300 ${
+                  useSms
+                    ? "bg-violet-500/15 text-violet-500 scale-110"
+                    : "bg-muted text-muted-foreground group-hover:text-foreground group-hover:bg-muted/80"
+                }`}>
+                  <MessageSquare className="w-8 h-8" />
+                </div>
+                <h3 className={`text-lg font-bold mb-1 transition-colors ${
+                  useSms ? "text-violet-500" : "text-foreground"
+                }`}>SMS</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">Send text message outreach to leads with valid phone numbers</p>
+
+                {/* Toggle Switch */}
+                <div className={`mt-5 w-14 h-8 rounded-full relative transition-colors duration-300 ${
+                  useSms ? "bg-violet-500" : "bg-muted-foreground/20"
+                }`}>
+                  <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${
+                    useSms ? "left-7" : "left-1"
+                  }`} />
+                </div>
+
+                {useSms && (
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-violet-500/30 pointer-events-none" />
+                )}
+              </button>
             </div>
+
+            {/* Active channels summary */}
+            {(useEmail || usePhone || useSms) && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                <span>
+                  Active: {[useEmail && "Email", usePhone && "Phone", useSms && "SMS"].filter(Boolean).join(", ")}
+                  {" "}&middot; {leadIds.length} lead{leadIds.length !== 1 ? "s" : ""} selected
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -931,7 +1166,39 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         {active === 4 && (
           <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
             <div className="text-sm text-muted-foreground">Design your email signature using the visual builder below. Changes are saved automatically when you click Save in the builder.</div>
-            <SignatureBuilder brandId={selectedBrandId || undefined} />
+
+            {/* Signature source toggle */}
+            <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/50 w-fit">
+              <button
+                type="button"
+                onClick={() => setSignatureSource("user")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  signatureSource === "user"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                My Signature
+              </button>
+              <button
+                type="button"
+                onClick={() => setSignatureSource("brand")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  signatureSource === "brand"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                Brand Signature
+              </button>
+            </div>
+
+            <SignatureBuilder
+              key={signatureSource === "brand" ? `brand-${selectedBrandId}` : "user"}
+              brandId={signatureSource === "brand" ? (selectedBrandId || undefined) : undefined}
+            />
           </div>
         )}
 
@@ -1321,8 +1588,90 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
           </div>
         )}
 
-        {/* ════════════════ Step 7: Review & Send ════════════════ */}
+        {/* ════════════════ Step 7: Follow-Up Configuration ════════════════ */}
         {active === 7 && (
+          <div className="space-y-5">
+            <div className="text-sm text-muted-foreground">
+              Configure automatic follow-ups for contacts who don&apos;t respond.
+            </div>
+
+            {/* Enable Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+              <div>
+                <p className="text-sm font-medium">Enable Auto Follow-Ups</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Automatically send follow-up emails to contacts who haven&apos;t replied
+                </p>
+              </div>
+              <Checkbox
+                checked={followupEnabled}
+                onCheckedChange={(v) => setFollowupEnabled(!!v)}
+              />
+            </div>
+
+            {followupEnabled && (
+              <div className="space-y-4 pl-1">
+                {/* Delay */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium">Days Before First Follow-Up</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={30}
+                      className="mt-1"
+                      value={followupDelayDays}
+                      onChange={(e) => setFollowupDelayDays(Math.max(1, parseInt(e.target.value) || 3))}
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Wait this many days after sending before the first follow-up
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium">Maximum Follow-Ups</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={10}
+                      className="mt-1"
+                      value={followupMaxCount}
+                      onChange={(e) => setFollowupMaxCount(Math.max(1, parseInt(e.target.value) || 2))}
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Stop after this many follow-ups per contact
+                    </p>
+                  </div>
+                </div>
+
+                {/* Custom Follow-Up Prompt */}
+                <div>
+                  <label className="text-xs font-medium">Follow-Up Prompt (optional)</label>
+                  <Textarea
+                    className="mt-1"
+                    rows={3}
+                    value={followupPrompt}
+                    onChange={(e) => setFollowupPrompt(e.target.value)}
+                    placeholder="Leave empty to use the original campaign prompt with a follow-up context injection..."
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Customize how follow-up emails are generated. If empty, the AI will reference the original email.
+                  </p>
+                </div>
+
+                {/* Summary */}
+                <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-xs">
+                  <Sparkles className="w-3.5 h-3.5 inline mr-1 text-primary" />
+                  <span className="font-medium">Schedule:</span> Follow-ups will check <span className="font-semibold">every hour</span>, sending to contacts who haven&apos;t replied after{" "}
+                  <span className="font-semibold">{followupDelayDays} day{followupDelayDays > 1 ? "s" : ""}</span>, up to{" "}
+                  <span className="font-semibold">{followupMaxCount} time{followupMaxCount > 1 ? "s" : ""}</span> per contact.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ════════════════ Step 8: Review & Send ════════════════ */}
+        {active === 8 && (
           <div className="space-y-4">
             <div className="text-sm">Ready to send personalized outreach.</div>
             <div className="grid grid-cols-2 gap-4 text-xs">
@@ -1482,6 +1831,8 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
           </div>
         )}
 
+        </div>{/* end scrollable wrapper */}
+
         <DialogFooter className="mt-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <Button variant="secondary" onClick={onClose}>Close</Button>
@@ -1496,21 +1847,44 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
             {active > 1 && <Button variant="secondary" onClick={prev}>Back</Button>}
             {active < totalSteps && <Button onClick={next}>Next</Button>}
             {active === totalSteps && testMode && (
-              <Button
-                variant="secondary"
-                onClick={() => sendOutreach()}
-                disabled={!canSend || (testMode && !testEmailRecipients.trim())}
-                className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-              >
-                Send Test
-              </Button>
+              <div className="flex items-center gap-3">
+                {/* Test Send Progress Bar */}
+                {testSending && (
+                  <div className="flex items-center gap-2 min-w-[160px]">
+                    <div className="flex-1 h-2.5 rounded-full bg-muted/50 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
+                        style={{ width: `${testProgress.total > 0 ? (testProgress.sent / testProgress.total) * 100 : 0}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-mono text-amber-400 tabular-nums whitespace-nowrap">
+                      {testProgress.sent}/{testProgress.total}
+                    </span>
+                  </div>
+                )}
+                <Button
+                  variant="secondary"
+                  onClick={() => sendOutreach()}
+                  disabled={!canSend || (testMode && !testEmailRecipients.trim()) || testSending}
+                  className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                >
+                  {testSending ? (
+                    <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Sending...</>
+                  ) : "Send Test"}
+                </Button>
+              </div>
             )}
             {active === totalSteps && (
               <Button
                 onClick={() => sendOutreach(false)}
-                disabled={!canSend}
+                disabled={!canSend || launching}
+                className={launching ? "bg-gradient-to-r from-emerald-600 to-teal-600 animate-pulse" : ""}
               >
-                Launch Campaign
+                {launching ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Launching Campaign...</>
+                ) : (
+                  "Launch Campaign"
+                )}
               </Button>
             )}
           </div>

@@ -358,7 +358,7 @@ export default function ListsView() {
                                             <div className="space-y-1">
                                                 <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{pool.name}</CardTitle>
                                                 <CardDescription className="line-clamp-1 text-xs">
-                                                    {pool.description || "No description provided."}
+                                                    {pool.description || pool.latestJob?.queryTemplates?.[0] || "No description provided."}
                                                 </CardDescription>
                                             </div>
                                             <DropdownMenu>
@@ -396,7 +396,7 @@ export default function ListsView() {
                                                 </Badge>
                                             )}
                                         </div>
-                                        {pool.latestJob?.queryTemplates?.[0] && (
+                                        {pool.description && pool.latestJob?.queryTemplates?.[0] && (
                                             <p className="text-[10px] text-muted-foreground mt-3 italic line-clamp-2">
                                                 "{pool.latestJob.queryTemplates[0]}"
                                             </p>
@@ -474,9 +474,10 @@ export default function ListsView() {
                 onClose={() => { setWizardOpen(false); setWizardPool(null); setWizardLeadData([]); }}
                 leadIds={wizardLeadIds}
                 leadData={wizardLeadData}
+                poolId={wizardPool?.id}
                 listContext={wizardPool ? {
                     name: wizardPool.name,
-                    description: wizardPool.description,
+                    description: wizardPool.description || wizardPool.latestJob?.queryTemplates?.[0] || undefined,
                     contactsCount: wizardPool.contactsCount,
                     icpConfig: wizardPool.icpConfig,
                 } : undefined}

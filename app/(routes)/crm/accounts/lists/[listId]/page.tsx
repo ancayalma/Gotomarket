@@ -7,7 +7,8 @@ import fetcher from "@/lib/fetcher";
 import Heading from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Loader2, Trash2, Search, ArrowUpDown, CheckCircle2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Plus, Loader2, Trash2, Search, ArrowUpDown, CheckCircle2, UserPlus } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -96,6 +97,44 @@ export default function AccountListDetailsPage() {
     const [deleting, setDeleting] = useState<string | null>(null);
     const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
 
+    // Add Contact modal state
+    const [addContactOpen, setAddContactOpen] = useState(false);
+    const [addingContact, setAddingContact] = useState(false);
+    const [newContact, setNewContact] = useState({
+        companyName: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        jobTitle: "",
+    });
+
+    const resetNewContact = () => setNewContact({ companyName: "", firstName: "", lastName: "", email: "", phone: "", jobTitle: "" });
+
+    const onAddContact = async () => {
+        if (!newContact.lastName && !newContact.companyName) {
+            toast.error("Last name or company is required");
+            return;
+        }
+        setAddingContact(true);
+        try {
+            const res = await fetch(`/api/crm/leads/pools/${listId}/leads`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newContact),
+            });
+            if (!res.ok) throw new Error("Failed to add contact");
+            toast.success("Contact added to list");
+            resetNewContact();
+            setAddContactOpen(false);
+            mutate();
+        } catch {
+            toast.error("Failed to add contact");
+        } finally {
+            setAddingContact(false);
+        }
+    };
+
     const onSort = (key: keyof Lead) => {
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -174,13 +213,13 @@ export default function AccountListDetailsPage() {
     const onDeleteLead = async (leadId: string) => {
         setDeleting(leadId);
         try {
-            const res = await fetch(`/api/crm/leads/${leadId}`, {
+            const res = await fetch(`/api/crm/leads/pools/${listId}/leads?leadId=${encodeURIComponent(leadId)}`, {
                 method: "DELETE"
             });
 
-            if (!res.ok) throw new Error("Failed to delete contact");
+            if (!res.ok) throw new Error("Failed to remove contact from list");
 
-            toast.success("Contact removed");
+            toast.success("Contact removed from list");
             setLeadToDelete(null);
             mutate();
         } catch (error) {
@@ -252,9 +291,9 @@ export default function AccountListDetailsPage() {
                         <CheckCircle2 className="w-4 h-4 mr-2" />
                         Approval Center
                     </Button>
-                    <Button onClick={() => router.push("/crm/accounts?tab=wizard")}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Contacts
+                    <Button onClick={() => { resetNewContact(); setAddContactOpen(true); }}>
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Add Contact
                     </Button>
                 </div>
                 <Separator />
@@ -421,6 +460,84 @@ export default function AccountListDetailsPage() {
                         >
                             {deleting ? "Removing..." : "Remove Contact"}
                         </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Add Contact Modal */}
+            <AlertDialog open={addContactOpen} onOpenChange={(open) => { if (!open) setAddContactOpen(false); }}>
+                <AlertDialogContent className="bg-card border-white/10 shadow-2xl max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-xl font-bold">Add Contact to List</AlertDialogTitle>
+                        <AlertDialogDescription className="text-muted-foreground">
+                            Add a new contact directly to <span className="text-foreground font-semibold">{pool?.name}</span>.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-3 py-2">
+                        <div>
+                            <Label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Company</Label>
+                            <Input
+                                placeholder="Company name"
+                                value={newContact.companyName}
+                                onChange={(e) => setNewContact(prev => ({ ...prev, companyName: e.target.value }))}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">First Name</Label>
+                                <Input
+                                    placeholder="First name"
+                                    value={newContact.firstName}
+                                    onChange={(e) => setNewContact(prev => ({ ...prev, firstName: e.target.value }))}
+                                />
+                            </div>
+                            <div>
+                                <Label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Last Name *</Label>
+                                <Input
+                                    placeholder="Last name"
+                                    value={newContact.lastName}
+                                    onChange={(e) => setNewContact(prev => ({ ...prev, lastName: e.target.value }))}
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <Label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Email</Label>
+                            <Input
+                                type="email"
+                                placeholder="email@company.com"
+                                value={newContact.email}
+                                onChange={(e) => setNewContact(prev => ({ ...prev, email: e.target.value }))}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Phone</Label>
+                                <Input
+                                    placeholder="+1 555-0100"
+                                    value={newContact.phone}
+                                    onChange={(e) => setNewContact(prev => ({ ...prev, phone: e.target.value }))}
+                                />
+                            </div>
+                            <div>
+                                <Label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Job Title</Label>
+                                <Input
+                                    placeholder="CEO, Manager, etc."
+                                    value={newContact.jobTitle}
+                                    onChange={(e) => setNewContact(prev => ({ ...prev, jobTitle: e.target.value }))}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <AlertDialogFooter className="mt-2">
+                        <AlertDialogCancel className="border-white/10 hover:bg-white/5 uppercase tracking-widest text-[10px] font-bold">Cancel</AlertDialogCancel>
+                        <Button
+                            onClick={onAddContact}
+                            disabled={addingContact || (!newContact.lastName && !newContact.companyName)}
+                            className="uppercase tracking-widest text-[10px] font-bold shadow-lg"
+                        >
+                            {addingContact ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                            {addingContact ? "Adding..." : "Add Contact"}
+                        </Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

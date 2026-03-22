@@ -59,5 +59,13 @@ export async function register() {
         } catch (error) {
             // Quietly log error if DB isn't ready yet (common in dev boot)
         }
+
+        // ── Start built-in cron scheduler ────────────────────────────────
+        try {
+            const { startCronScheduler } = await import('@/lib/cron-scheduler');
+            startCronScheduler();
+        } catch (cronErr) {
+            console.warn('[INSTRUMENTATION] Failed to start cron scheduler:', cronErr);
+        }
     }
 }
