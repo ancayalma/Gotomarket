@@ -128,37 +128,37 @@ const MessagesRoute = async () => {
             };
         });
 
-        // 3. Fetch API-originated messages (v1 messages endpoint)
+        // 3. Get all leads/contacts for this team — include names for display (used for API and SES messages)
+        const [teamLeads, teamContacts] = await Promise.all([
+            prismadb.crm_Leads.findMany({
+                where: { team_id: teamId || undefined },
+                select: { id: true, firstName: true, lastName: true, email: true },
+            }),
+            prismadb.crm_Contacts.findMany({
+                where: { team_id: teamId || undefined },
+                select: { id: true, first_name: true, last_name: true, email: true },
+            }),
+        ]);
+
+        const teamLeadIds = teamLeads.map((l: any) => l.id);
+        const teamContactIds = teamContacts.map((c: any) => c.id);
+
+        // Build lookup maps for resolving IDs → display names
+        const contactMap = new Map<string, { name: string; email: string }>();
+        teamContacts.forEach((c: any) => {
+            const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || c.email || "Unknown Contact";
+            contactMap.set(c.id, { name, email: c.email || "" });
+        });
+
+        const leadMap = new Map<string, { name: string; email: string }>();
+        teamLeads.forEach((l: any) => {
+            const name = [l.firstName, l.lastName].filter(Boolean).join(" ") || l.email || "Unknown Lead";
+            leadMap.set(l.id, { name, email: l.email || "" });
+        });
+
+        // 3.5. Fetch API-originated messages (v1 messages endpoint)
         let apiMessages: any[] = [];
         try {
-            // Get all leads/contacts for this team — include names for display
-            const [teamLeads, teamContacts] = await Promise.all([
-                prismadb.crm_Leads.findMany({
-                    where: { team_id: teamId || undefined },
-                    select: { id: true, firstName: true, lastName: true, email: true },
-                }),
-                prismadb.crm_Contacts.findMany({
-                    where: { team_id: teamId || undefined },
-                    select: { id: true, first_name: true, last_name: true, email: true },
-                }),
-            ]);
-
-            const teamLeadIds = teamLeads.map((l: any) => l.id);
-            const teamContactIds = teamContacts.map((c: any) => c.id);
-
-            // Build lookup maps for resolving IDs → display names
-            const contactMap = new Map<string, { name: string; email: string }>();
-            teamContacts.forEach((c: any) => {
-                const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || c.email || "Unknown Contact";
-                contactMap.set(c.id, { name, email: c.email || "" });
-            });
-
-            const leadMap = new Map<string, { name: string; email: string }>();
-            teamLeads.forEach((l: any) => {
-                const name = [l.firstName, l.lastName].filter(Boolean).join(" ") || l.email || "Unknown Lead";
-                leadMap.set(l.id, { name, email: l.email || "" });
-            });
-
             const rawApiMessages = await prismadb.crm_Lead_Activities.findMany({
                 where: {
                     type: { in: ["API_MESSAGE", "EMAIL", "SMS", "NOTE"] },
@@ -266,7 +266,90 @@ const MessagesRoute = async () => {
             apiMessages = [];
         }
 
-        messages = [...messages, ...mappedEmails, ...apiMessages].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 100);
+        // 4. Fetch SES Full Inbox Threads (crm_Email_Thread)
+        let emailThreads: any[] = [];
+        try {
+            const rawThreads = await prismadb.crm_Email_Thread.findMany({
+                where: {
+                    OR: [
+                        { team_id: teamId || undefined },
+                        { user: session.user.id },
+                    ]
+                },
+                orderBy: { createdAt: "desc" },
+                take: 100,
+            });
+
+            // Group by lead ID or email address
+            const sesThreadMap = new Map<string, any[]>();
+            
+            rawThreads.forEach((thread: any) => {
+                const isOutbound = thread.direction === "OUTBOUND";
+                const clientName = thread.from_name || thread.from_email || "Customer";
+                const clientEmail = isOutbound ? thread.to_email : thread.from_email;
+
+                // Try to map to CRM contact/lead if exists
+                let resolvedName = clientName;
+                if (thread.lead && leadMap.has(thread.lead)) {
+                    resolvedName = leadMap.get(thread.lead)!.name;
+                }
+
+                const msg = {
+                    id: thread.id,
+                    subject: thread.subject || thread.thread_subject || "(No Subject)",
+                    body: thread.body_text || thread.body_html || "",
+                    createdAt: thread.receivedAt || thread.createdAt,
+                    is_read: true, // Auto read for now
+                    is_important: thread.sentiment === "POSITIVE" || thread.sentiment === "URGENT",
+                    labels: ["email", thread.direction?.toLowerCase() || "inbound"],
+                    from_user_id: isOutbound ? session.user.id : `ext-${thread.from_email}`,
+                    to_user_id: isOutbound ? `ext-${thread.to_email}` : session.user.id,
+                    from_user: isOutbound
+                        ? { id: session.user.id, name: session.user.name || session.user.email, email: session.user.email }
+                        : { id: `ext-${thread.from_email}`, name: resolvedName, email: thread.from_email },
+                    to_user: isOutbound
+                        ? { id: `ext-${thread.to_email}`, name: resolvedName, email: thread.to_email }
+                        : { id: session.user.id, name: session.user.name || session.user.email, email: session.user.email },
+                    recipients: isOutbound ? [] : [{ recipient_id: session.user.id, is_read: true }],
+                    status: "SENT",
+                    direction: thread.direction,
+                    senderName: isOutbound ? (session.user.name || "You") : resolvedName,
+                    _apiMeta: { // Use same thread UI
+                        channel: "EMAIL",
+                        direction: thread.direction,
+                        leadId: thread.lead,
+                        clientName: resolvedName,
+                        clientEmail: clientEmail,
+                        outreachItem: thread.outreach_item
+                    }
+                };
+
+                const key = msg._apiMeta?.leadId ? `lead:${msg._apiMeta.leadId}` : `email:${clientEmail}`;
+                if (!sesThreadMap.has(key)) sesThreadMap.set(key, []);
+                sesThreadMap.get(key)!.push(msg);
+            });
+
+            Array.from(sesThreadMap.entries()).forEach(([key, threadMsgs]) => {
+                threadMsgs.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                const latest = threadMsgs[threadMsgs.length - 1];
+                const firstInbound = threadMsgs.find((m: any) => m._apiMeta?.direction === "INBOUND");
+                const clientInfo = firstInbound || threadMsgs[0];
+
+                emailThreads.push({
+                    ...latest,
+                    from_user: { id: `ses-thread-${key}`, name: clientInfo._apiMeta?.clientName || "Customer", email: clientInfo._apiMeta?.clientEmail || "" },
+                    from_user_id: clientInfo.from_user_id,
+                    to_user: { id: session.user.id, name: session.user.name || session.user.email, email: session.user.email },
+                    to_user_id: session.user.id,
+                    body: latest.body || "(No message body)",
+                    _thread: threadMsgs,
+                });
+            });
+        } catch (e) {
+            console.error("Failed to fetch SES threads", e);
+        }
+
+        messages = [...messages, ...mappedEmails, ...apiMessages, ...emailThreads].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 100);
 
     } catch (e) {
         console.error("Failed to fetch messages", e);
