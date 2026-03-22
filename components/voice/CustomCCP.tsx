@@ -972,12 +972,55 @@ export default function CustomCCP({
             {/* Dial Button */}
             <Button
               onClick={() => dialNumber(displayNumber)}
-              className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 rounded-lg"
+              className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 rounded-lg mb-2"
               disabled={!displayNumber}
             >
               <Phone className="h-5 w-5 mr-2" />
-              Call Now
+              Call Now (Browser)
             </Button>
+            
+            {/* ElevenLabs Dial Button */}
+            <div className="flex flex-col gap-2 mt-4 p-3 rounded-lg border border-purple-500/30 bg-purple-500/5">
+              <div className="text-[10px] uppercase font-semibold text-purple-600 tracking-wider">ElevenLabs Outbound AI</div>
+              <Input 
+                id="elevenLabsAgentIdInput"
+                placeholder="SIP Num/Agent ID (e.g. +1720...)" 
+                className="h-8 text-xs font-mono"
+                defaultValue={process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || ""}
+              />
+              <Button
+                onClick={async () => {
+                  try {
+                    const elAgentId = (document.getElementById("elevenLabsAgentIdInput") as HTMLInputElement)?.value;
+                    if (!elAgentId) throw new Error("Please enter an ElevenLabs Agent ID");
+                    if (!displayNumber) throw new Error("Please enter a phone number to dial above");
+                    
+                    const res = await fetch("/api/voice/elevenlabs/outbound", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ 
+                        destination: displayNumber, 
+                        agentId: elAgentId,
+                        leadId: leadId
+                      })
+                    });
+                    
+                    if (!res.ok) {
+                      const errorTxt = await res.text();
+                      throw new Error(errorTxt || "Request failed");
+                    }
+                    alert("ElevenLabs AI has been deployed to the target number!");
+                  } catch (e: any) {
+                    alert(e.message);
+                  }
+                }}
+                className="w-full h-10 text-sm font-semibold bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-600/20 rounded-lg text-white"
+                disabled={!displayNumber}
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                Dispatch AI to Lead
+              </Button>
+            </div>
           </div>
 
           <div className="mt-2 text-[10px] text-center text-muted-foreground/60">

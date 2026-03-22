@@ -47,6 +47,89 @@ import ABTestingPanel from "@/app/(routes)/crm/leads/components/ABTestingPanel";
 import LinkedInSequencePanel from "@/app/(routes)/crm/leads/components/LinkedInSequencePanel";
 import { CampaignContactTracker } from "@/app/(routes)/crm/leads/components/CampaignContactTracker";
 
+function CronJobCard({ job, toggleCronJob }: any) {
+    return (
+        <div
+            className={`border rounded-lg p-4 transition-all ${
+                job.status === "ACTIVE"
+                    ? "border-emerald-500/30 bg-emerald-500/5"
+                    : job.status === "PAUSED"
+                        ? "border-amber-500/30 bg-amber-500/5"
+                        : "border-white/5 bg-card/50"
+            }`}
+        >
+            <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{job.label || job.job_type}</span>
+                        <Badge
+                            variant="outline"
+                            className={`text-[10px] font-bold uppercase ${
+                                job.status === "ACTIVE"
+                                    ? "border-emerald-500/30 text-emerald-400"
+                                    : job.status === "PAUSED"
+                                        ? "border-amber-500/30 text-amber-400"
+                                        : "border-white/10 text-muted-foreground"
+                            }`}
+                        >
+                            {job.status}
+                        </Badge>
+                    </div>
+                    <div className="flex gap-4 text-xs text-muted-foreground">
+                        <span>Type: <span className="text-white">{job.job_type}</span></span>
+                        <span>Interval: <span className="text-white">{Math.round((job.interval_ms || 3600000) / 60000)}m</span></span>
+                        <span>Runs: <span className="text-white">{job.run_count}</span></span>
+                        {job.error_count > 0 && (
+                            <span className="text-red-400">Errors: {job.error_count}</span>
+                        )}
+                        {job.last_run_at && (
+                            <span>Last: <span className="text-white">{new Date(job.last_run_at).toLocaleString()}</span></span>
+                        )}
+                    </div>
+                    {job.last_error && (
+                        <p className="text-xs text-red-400 mt-1">
+                            <AlertTriangle className="w-3 h-3 inline mr-1" />
+                            {job.last_error}
+                        </p>
+                    )}
+                </div>
+                <div className="flex gap-1">
+                    {job.status === "ACTIVE" && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                            onClick={() => toggleCronJob(job.id, "pause")}
+                        >
+                            <Pause className="w-3 h-3 mr-1" /> Pause
+                        </Button>
+                    )}
+                    {job.status === "PAUSED" && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                            onClick={() => toggleCronJob(job.id, "resume")}
+                        >
+                            <Play className="w-3 h-3 mr-1" /> Resume
+                        </Button>
+                    )}
+                    {job.status !== "COMPLETED" && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
+                            onClick={() => toggleCronJob(job.id, "cancel")}
+                        >
+                            <XCircle className="w-3 h-3 mr-1" /> Cancel
+                        </Button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 type CampaignDetail = {
     id: string;
     name: string;
@@ -126,6 +209,8 @@ export default function CampaignDetailPage() {
         { refreshInterval: 15000 }
     );
     const cronJobs = (cronData as any)?.jobs?.filter?.((j: any) => j.campaign_id === campaignId) || [];
+    const emailJobs = cronJobs.filter((j: any) => j.job_type === "AUTO_FOLLOWUP");
+    const voiceJobs = cronJobs.filter((j: any) => j.job_type === "VOICE_BATCH");
 
     async function handleDelete() {
         setDeleting(true);
@@ -623,109 +708,57 @@ export default function CampaignDetailPage() {
 
                     {/* CRON Jobs Tab */}
                     <TabsContent value="cron" className="mt-6">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold flex items-center gap-2">
-                                    <Clock className="w-5 h-5 text-primary" />
-                                    Scheduled Jobs
-                                </h3>
-                                <Badge variant="outline">{cronJobs.length} jobs</Badge>
+                        <Tabs defaultValue="email" className="w-full">
+                            <div className="flex items-center justify-between mb-4">
+                                <TabsList className="bg-background/50 border border-primary/10 rounded-xl p-1">
+                                    <TabsTrigger value="email" className="gap-2 rounded-lg text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                                        <Mail className="w-3.5 h-3.5" />
+                                        Email Follow-ups
+                                    </TabsTrigger>
+                                    <TabsTrigger value="voice" className="gap-2 rounded-lg text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                                        <Phone className="w-3.5 h-3.5" />
+                                        Voice Batches
+                                    </TabsTrigger>
+                                </TabsList>
+                                <Badge variant="outline" className="hidden sm:inline-flex">{cronJobs.length} total jobs</Badge>
                             </div>
 
-                            {cronJobs.length === 0 ? (
-                                <div className="text-center py-12 bg-card/50 backdrop-blur-sm rounded-xl border border-white/5">
-                                    <Clock className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                                    <h3 className="font-bold">No CRON Jobs</h3>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                        CRON jobs (like auto follow-ups) will appear here when configured.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {cronJobs.map((job: any) => (
-                                        <div
-                                            key={job.id}
-                                            className={`border rounded-lg p-4 transition-all ${
-                                                job.status === "ACTIVE"
-                                                    ? "border-emerald-500/30 bg-emerald-500/5"
-                                                    : job.status === "PAUSED"
-                                                        ? "border-amber-500/30 bg-amber-500/5"
-                                                        : "border-white/5 bg-card/50"
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-medium text-sm">{job.label || job.job_type}</span>
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={`text-[10px] font-bold uppercase ${
-                                                                job.status === "ACTIVE"
-                                                                    ? "border-emerald-500/30 text-emerald-400"
-                                                                    : job.status === "PAUSED"
-                                                                        ? "border-amber-500/30 text-amber-400"
-                                                                        : "border-white/10 text-muted-foreground"
-                                                            }`}
-                                                        >
-                                                            {job.status}
-                                                        </Badge>
-                                                    </div>
-                                                    <div className="flex gap-4 text-xs text-muted-foreground">
-                                                        <span>Type: <span className="text-white">{job.job_type}</span></span>
-                                                        <span>Interval: <span className="text-white">{Math.round((job.interval_ms || 3600000) / 60000)}m</span></span>
-                                                        <span>Runs: <span className="text-white">{job.run_count}</span></span>
-                                                        {job.error_count > 0 && (
-                                                            <span className="text-red-400">Errors: {job.error_count}</span>
-                                                        )}
-                                                        {job.last_run_at && (
-                                                            <span>Last: <span className="text-white">{new Date(job.last_run_at).toLocaleString()}</span></span>
-                                                        )}
-                                                    </div>
-                                                    {job.last_error && (
-                                                        <p className="text-xs text-red-400 mt-1">
-                                                            <AlertTriangle className="w-3 h-3 inline mr-1" />
-                                                            {job.last_error}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <div className="flex gap-1">
-                                                    {job.status === "ACTIVE" && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="h-7 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
-                                                            onClick={() => toggleCronJob(job.id, "pause")}
-                                                        >
-                                                            <Pause className="w-3 h-3 mr-1" /> Pause
-                                                        </Button>
-                                                    )}
-                                                    {job.status === "PAUSED" && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="h-7 text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
-                                                            onClick={() => toggleCronJob(job.id, "resume")}
-                                                        >
-                                                            <Play className="w-3 h-3 mr-1" /> Resume
-                                                        </Button>
-                                                    )}
-                                                    {job.status !== "COMPLETED" && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="h-7 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
-                                                            onClick={() => toggleCronJob(job.id, "cancel")}
-                                                        >
-                                                            <XCircle className="w-3 h-3 mr-1" /> Cancel
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                            <TabsContent value="email" className="mt-0">
+                                {emailJobs.length === 0 ? (
+                                    <div className="text-center py-12 bg-card/50 backdrop-blur-sm rounded-xl border border-white/5">
+                                        <Mail className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+                                        <h3 className="font-bold">No Email CRON Jobs</h3>
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            Auto follow-up email jobs will appear here when configured.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {emailJobs.map((job: any) => (
+                                            <CronJobCard key={job.id} job={job} toggleCronJob={toggleCronJob} />
+                                        ))}
+                                    </div>
+                                )}
+                            </TabsContent>
+
+                            <TabsContent value="voice" className="mt-0">
+                                {voiceJobs.length === 0 ? (
+                                    <div className="text-center py-12 bg-card/50 backdrop-blur-sm rounded-xl border border-white/5">
+                                        <Phone className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+                                        <h3 className="font-bold">No Voice CRON Jobs</h3>
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            Voice batching jobs will appear here when an AI Voice payload is configured.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {voiceJobs.map((job: any) => (
+                                            <CronJobCard key={job.id} job={job} toggleCronJob={toggleCronJob} />
+                                        ))}
+                                    </div>
+                                )}
+                            </TabsContent>
+                        </Tabs>
                     </TabsContent>
                 </Tabs>
 

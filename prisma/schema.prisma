@@ -427,6 +427,12 @@ model crm_Outreach_Campaigns {
   // Campaign collateral (pricing sheets, agreements, etc.)
   document_ids           String[] @db.ObjectId
 
+  // Voice AI Scheduling Config
+  voice_agent_id          String?
+  voice_start_time        DateTime? @db.Date
+  voice_concurrency_limit Int       @default(1)
+  voice_prompt            String?
+
   // Channels enabled
   channels OutreachChannelType[] @default([EMAIL])
 
