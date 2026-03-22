@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from 'react-hot-toast';
 import CustomCCP from '@/components/voice/CustomCCP';
+
 import { usePermission } from '@/components/providers/permissions-provider';
 import { useSession } from 'next-auth/react';
 import { Shield } from 'lucide-react';
@@ -88,7 +89,7 @@ function buildPrompt(opts: {
   ].filter(Boolean).join('\n');
 }
 
-export default function PromptGeneratorPanel({ embedded = false, showSoftphone = true }: { embedded?: boolean; showSoftphone?: boolean }) {
+export default function PromptGeneratorPanel({ embedded = false, showSoftphone = true, onPushToDialer }: { embedded?: boolean; showSoftphone?: boolean; onPushToDialer?: (leadId: string, phone: string) => void }) {
   const [projectName, setProjectName] = useState('');
   const [projectContext, setProjectContext] = useState('');
   const [projectNotes, setProjectNotes] = useState('');
@@ -104,8 +105,64 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
   const [wallet, setWallet] = useState('');
   const [prompt, setPrompt] = useState('');
 
+  // Auto-fill state
+  const [brands, setBrands] = useState<any[]>([]);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [selectedBrandId, setSelectedBrandId] = useState('');
+  const [selectedLeadId, setSelectedLeadId] = useState('');
+
   const { hasAccess, isSuperAdmin } = usePermission();
   const { data: session } = useSession();
+
+  useEffect(() => {
+    fetch('/api/admin/brand').then(r => r.json()).then(data => {
+      // Admin brand API returns { brands: [] } for multi-brand or a single { id: ... } object for standard plans
+      if (data?.brands) setBrands(data.brands);
+      else if (data?.id) setBrands([data]);
+      else setBrands([]);
+    }).catch(() => {});
+
+    fetch('/api/crm/leads?limit=50').then(r => r.json()).then(data => {
+      if (Array.isArray(data)) setLeads(data);
+      else if (data?.leads) setLeads(data.leads);
+      else if (data?.items) setLeads(data.items);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (selectedBrandId) {
+      const b = brands.find(x => x.id === selectedBrandId);
+      if (b) {
+        // Fix: brand_label defaults to "Default Brand" in the schema, overriding company_name
+        const bLabel = b.brand_label || '';
+        const name = (bLabel && bLabel !== 'Default Brand') ? bLabel : (b.company_name || 'Default Brand');
+        setProjectName(name);
+
+        // Fix: brand_voice defaults to "Visionary" and is a single word, not a context block
+        const contextParts = [];
+        if (b.mission_statement) contextParts.push(`Mission: ${b.mission_statement}`);
+        if (b.core_philosophy) contextParts.push(`Philosophy: ${b.core_philosophy}`);
+        if (b.tagline) contextParts.push(`Tagline: ${b.tagline}`);
+        if (b.company_name && contextParts.length === 0) contextParts.push(`Company: ${b.company_name}`);
+        
+        const contextStr = contextParts.join('\n');
+        setProjectContext(contextStr || b.description || b.brand_voice || '');
+      }
+    }
+  }, [selectedBrandId, brands]);
+
+  useEffect(() => {
+    if (selectedLeadId) {
+      const l = leads.find(x => x.id === selectedLeadId);
+      if (l) {
+        setLeadName(`${l.firstName || ''} ${l.lastName || ''}`.trim());
+        setLeadTitle(l.jobTitle || '');
+        setLeadCompany(l.company || '');
+        setLeadEmail(l.email || '');
+        setLeadPhone(l.phone || '');
+      }
+    }
+  }, [selectedLeadId, leads]);
 
   const generated = useMemo(
     () =>
@@ -139,6 +196,8 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
     ],
   );
 
+  const [aiGenerating, setAiGenerating] = useState(false);
+
   async function handleGenerate() {
     try {
       setPrompt(generated);
@@ -148,26 +207,48 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
     }
   }
 
-  async function handlePushToBasaltECHO() {
+  async function handleAIGenerate() {
     try {
-      const w = (wallet || '').trim().toLowerCase();
-      if (!w) {
-        toast.error('Enter wallet address to push to BasaltECHO');
+      setAiGenerating(true);
+      const res = await fetch('/api/ai/generate-voice-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectName, projectContext, projectNotes,
+          leadName, leadTitle, leadCompany, leadEmail, leadPhone,
+          roleKey, customRoleName, roleNotes, language
+        })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setPrompt(data.prompt);
+      toast.success('AI Prompt generated successfully');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to generate AI prompt');
+    } finally {
+      setAiGenerating(false);
+    }
+  }
+
+  async function handleSaveToLead() {
+    try {
+      if (!selectedLeadId) {
+        toast.error('Please select a Lead first to save custom prompts.');
         return;
       }
-      const body = { prompt: prompt || generated, meta: { projectName, leadCompany, roleKey, language } };
-      const res = await fetch('/api/crm/prompt/push', {
+      const body = { prompt: prompt || generated };
+      const res = await fetch(`/api/crm/leads/${selectedLeadId}/voice-prompt`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-wallet': w },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!res.ok) {
         const t = await res.text().catch(() => '');
-        throw new Error(t || `BasaltECHO push failed (${res.status})`);
+        throw new Error(t || `Failed to save prompt (${res.status})`);
       }
-      toast.success('Prompt pushed to BasaltECHO');
+      toast.success('Prompt saved to Lead profile');
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to push prompt');
+      toast.error(e?.message || 'Failed to save prompt');
     }
   }
 
@@ -190,10 +271,43 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
         <>
           <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-4 px-4 mb-2">Prompt Generator</h1>
           <p className="text-sm text-muted-foreground">
-            Build a comprehensive System Prompt using lead and project context. Choose a role preset or define your own, then generate and push to BasaltECHO.
+            Build a comprehensive System Prompt using lead and project context. Choose a role preset or define your own, then generate and push to the Lead Pipeline.
           </p>
         </>
       )}
+
+      {/* Brand and Lead Auto-Fill Selectors */}
+      <section className="rounded-md border bg-card p-4">
+        <h2 className="text-lg font-semibold mb-2">Auto-fill Context</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium mb-1.5 block">Select Brand Identity</label>
+            <Select value={selectedBrandId} onValueChange={setSelectedBrandId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a Brand" />
+              </SelectTrigger>
+              <SelectContent>
+                {brands.map(b => (
+                  <SelectItem key={b.id} value={b.id}>{b.brand_label || 'Unnamed Brand'}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs font-medium mb-1.5 block">Select Target Lead</label>
+            <Select value={selectedLeadId} onValueChange={setSelectedLeadId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a Lead to patch" />
+              </SelectTrigger>
+              <SelectContent>
+                {leads.map(l => (
+                  <SelectItem key={l.id} value={l.id}>{l.firstName} {l.lastName} {l.company ? `(${l.company})` : ''}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </section>
 
       {/* Context inputs */}
       <section className="rounded-md border bg-card p-4">
@@ -287,23 +401,20 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
       {/* Actions */}
       <section className="rounded-md border bg-card p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
-          {hasAccess('ai_lab.actions.generate') && (
-            <Button onClick={handleGenerate} className="w-full sm:w-auto">Generate Prompt</Button>
-          )}
-
-          <div className="flex items-center gap-2 flex-1 w-full sm:w-auto min-w-[200px]">
-            <span className="text-xs font-medium whitespace-nowrap">Wallet</span>
-            <Input
-              value={wallet}
-              onChange={(e) => setWallet(e.target.value)}
-              placeholder="0x..."
-              className="flex-1 min-w-0"
-            />
+          <div className="flex gap-2 w-full sm:w-auto flex-col sm:flex-row">
+            <Button onClick={handleGenerate} variant="secondary" className="w-full sm:w-auto">Use Form Info</Button>
+            <Button onClick={handleAIGenerate} disabled={aiGenerating} className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white">
+              {aiGenerating ? "Generating..." : "AI Generate Strategy"}
+            </Button>
           </div>
 
-          {hasAccess('ai_lab.actions.push_basaltecho') && (
-            <Button variant="outline" onClick={handlePushToBasaltECHO} className="w-full sm:w-auto">
-              Push to BasaltECHO
+          <Button variant="outline" onClick={handleSaveToLead} className="w-full sm:w-auto">
+            Save to Lead Profile
+          </Button>
+
+          {onPushToDialer && selectedLeadId && leadPhone && (
+            <Button onClick={() => onPushToDialer(selectedLeadId, leadPhone)} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white">
+              Push to active Dialer
             </Button>
           )}
         </div>

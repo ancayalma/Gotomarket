@@ -1023,28 +1023,15 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                   <h4 className="font-semibold text-sm">Batch Voice Configuration</h4>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-medium text-foreground">ElevenLabs Agent ID</label>
-                    <p className="text-[10px] text-muted-foreground mb-1">Leave blank to use the default environment variable.</p>
-                    <Input 
-                      placeholder="e.g. agent_6801kmbbcxymfq3" 
-                      value={voiceAgentId}
-                      onChange={(e) => setVoiceAgentId(e.target.value)}
-                      className="h-9 bg-background/50 border-emerald-500/20 focus-visible:ring-emerald-500/50"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="text-xs font-medium text-foreground">Schedule Start Time (Optional)</label>
-                    <p className="text-[10px] text-muted-foreground mb-1">Leave blank to start the voice campaign immediately.</p>
-                    <Input 
-                      type="datetime-local" 
-                      value={voiceStartTime}
-                      onChange={(e) => setVoiceStartTime(e.target.value)}
-                      className="h-9 bg-background/50 border-emerald-500/20 focus-visible:ring-emerald-500/50"
-                    />
-                  </div>
+                <div className="mb-4">
+                  <label className="text-xs font-medium text-foreground">Schedule Start Time (Optional)</label>
+                  <p className="text-[10px] text-muted-foreground mb-1">Leave blank to start the voice campaign immediately.</p>
+                  <Input 
+                    type="datetime-local" 
+                    value={voiceStartTime}
+                    onChange={(e) => setVoiceStartTime(e.target.value)}
+                    className="h-9 bg-background/50 border-emerald-500/20 focus-visible:ring-emerald-500/50"
+                  />
                 </div>
 
                 <div className="pt-2">

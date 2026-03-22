@@ -156,6 +156,7 @@ model crm_Leads {
   call_transcript_url String?
   aws_eum_session_id  String?
   opt_out             Boolean?  @default(false)
+  voice_prompt_override String?
 
   lead_pool_maps         crm_Lead_Pools_Leads[]
   contact_candidate_maps crm_Contact_Candidate_Leads[]
