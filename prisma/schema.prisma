@@ -434,6 +434,7 @@ model crm_Outreach_Campaigns {
   total_leads     Int @default(0)
   emails_sent     Int @default(0)
   emails_opened   Int @default(0)
+  emails_replied  Int @default(0)
   sms_sent        Int @default(0)
   sms_delivered   Int @default(0)
   calls_initiated Int @default(0)
@@ -4802,4 +4803,42 @@ model crm_Cron_Jobs {
   @@index([job_type])
   @@index([campaign_id])
   @@index([next_run_at])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INBOX & EMAIL THREADING — Full email synchronization
+// ═══════════════════════════════════════════════════════════════════
+
+model crm_Email_Thread {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  team_id       String   @db.ObjectId
+  user          String?  @db.ObjectId  // CRM user who sent the original
+  lead          String?  @db.ObjectId  // Lead this thread is about
+  campaign      String?  @db.ObjectId  // Campaign this belongs to
+  outreach_item String?  @db.ObjectId
+
+  // Thread metadata
+  thread_subject String?
+  message_id     String?  // Original outbound Message-ID or inbound Message-ID
+  direction      String   // "OUTBOUND" or "INBOUND"
+
+  // Email content
+  from_email  String
+  from_name   String?
+  to_email    String
+  subject     String?
+  body_text   String?
+  body_html   String?
+
+  // Reply analysis
+  sentiment     String?  // POSITIVE, NEGATIVE, NEUTRAL
+  is_auto_reply Boolean  @default(false)
+
+  createdAt     DateTime  @default(now()) @db.Date
+  receivedAt    DateTime? @db.Date
+
+  @@index([team_id])
+  @@index([lead])
+  @@index([message_id])
+  @@index([outreach_item])
 }

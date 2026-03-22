@@ -175,6 +175,7 @@ export function InternalMessagesComponent({
     const [searchQuery, setSearchQuery] = React.useState("");
     const [activeNav, setActiveNav] = React.useState<"inbox" | "sent" | "drafts" | "archive" | "trash" | "submissions" | "notifications">("inbox");
     const [isConvertingToLead, setIsConvertingToLead] = React.useState(false);
+    const [isConvertingEmail, setIsConvertingEmail] = React.useState(false);
     const [isDeletingSubmission, setIsDeletingSubmission] = React.useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
     const [submissionToDelete, setSubmissionToDelete] = React.useState<string | null>(null);
@@ -348,6 +349,33 @@ export function InternalMessagesComponent({
             toast.error("Failed to convert to lead");
         } finally {
             setIsConvertingToLead(false);
+        }
+    };
+
+    // Convert unknown email sender to lead or contact
+    const handleConvertMessage = async (type: "contact" | "lead") => {
+        if (!selectedMessageId || !selectedMessage) return;
+        setIsConvertingEmail(true);
+        try {
+            const res = await fetch("/api/email/inbound/convert", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    threadId: selectedMessage.id, // the SES email thread ID
+                    type,
+                    email: selectedMessage._apiMeta?.clientEmail,
+                    name: selectedMessage._apiMeta?.clientName
+                }),
+            });
+
+            if (!res.ok) throw new Error("Failed to convert message");
+            toast.success(`${type === 'contact' ? 'Contact' : 'Lead'} created successfully!`);
+            // Optimistically update the UI if possible, or just refresh
+            router.refresh();
+        } catch(error) {
+            toast.error(`Failed to create ${type}`);
+        } finally {
+            setIsConvertingEmail(false);
         }
     };
 
@@ -1597,8 +1625,19 @@ export function InternalMessagesComponent({
                             <>
                                 <div className="flex items-center gap-2 p-4 border-b">
                                     <div className="flex-1">
-                                        <h3 className="font-semibold">{selectedMessage.subject || "(No Subject)"}</h3>
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="font-semibold">{selectedMessage.subject || "(No Subject)"}</h3>
+                                            
+                                        </div>
                                     </div>
+                                    
+                                    {isApiMessage(selectedMessage) && selectedMessage._apiMeta?.channel === "EMAIL" && !selectedMessage._apiMeta?.contactId && !selectedMessage._apiMeta?.leadId && (
+                                        <div className="flex items-center gap-2 mr-2 border-r bg-muted/20 pr-4">
+                                            <Button size="sm" variant="outline" onClick={() => handleConvertMessage("contact")} disabled={isConvertingEmail} className="h-8 text-xs gap-1"><Users2 className="w-3.5 h-3.5"/> Create Contact</Button>
+                                            <Button size="sm" variant="outline" onClick={() => handleConvertMessage("lead")} disabled={isConvertingEmail} className="h-8 text-xs gap-1"><UserPlus className="w-3.5 h-3.5"/> Create Lead</Button>
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center gap-1">
                                         {getStatus(selectedMessage).isTrash ? (
                                             <>
