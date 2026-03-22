@@ -45,6 +45,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [status, setStatus] = useState<'available' | 'break' | 'offline'>('available');
   const [callActive, setCallActive] = useState<boolean>(false);
+  const [activeTransactionId, setActiveTransactionId] = useState<string | null>(null);
 
   const [results, setResults] = useState<{ phone: string; leadId?: string; ok: boolean; transactionId?: string; error?: string }[]>([]);
   const stopRef = useRef<boolean>(false);
@@ -78,6 +79,8 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
         throw new Error('Invalid phone (E.164 required, e.g. +15551234567)');
       }
 
+      setCallActive(true);
+
       // Trigger direct ElevenLabs SIP outbound call via AWS Chime SMA
       const res = await fetch('/api/voice/elevenlabs/outbound', {
         method: 'POST',
@@ -94,13 +97,40 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
         throw new Error(j?.error?.message || j?.error || 'Outbound call failed');
       }
 
-      setResults((prev) => [{ phone, leadId, ok: true, transactionId: String(j?.result?.TransactionId || 'outbound'), error: undefined }, ...prev].slice(0, 100));
+      const txId = String(j?.result?.TransactionId || 'outbound');
+      setActiveTransactionId(txId);
+      
+      setResults((prev) => [{ phone, leadId, ok: true, transactionId: txId, error: undefined }, ...prev].slice(0, 100));
       toast.success(`ElevenLabs Agent dispatched to ${phone}`);
     } catch (e: any) {
+      setCallActive(false);
       setResults((prev) => [{ phone: singlePhone.trim(), leadId: singleLeadId.trim() || undefined, ok: false, error: e?.message || String(e) }, ...prev].slice(0, 100));
       toast.error(e?.message || 'Failed to start');
     }
   }, [singlePhone, singleLeadId]);
+
+  const hangupSingle = useCallback(async () => {
+    try {
+      if (!activeTransactionId) {
+        setCallActive(false);
+        return;
+      }
+      
+      const res = await fetch('/api/voice/elevenlabs/hangup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId: activeTransactionId }),
+      });
+      
+      if (!res.ok) throw new Error("Failed to drop call");
+      toast.success("Call ended");
+    } catch (e: any) {
+      toast.error("Failed to hangup: " + e.message);
+    } finally {
+      setCallActive(false);
+      setActiveTransactionId(null);
+    }
+  }, [activeTransactionId]);
 
   const stopRun = useCallback(() => {
     stopRef.current = true;
@@ -201,9 +231,15 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
             />
           </div>
           <div className="flex items-end">
-            <Button className="w-full" onClick={runSingle} disabled={!singlePhone.trim()}>
-              Dial Now
-            </Button>
+            {!callActive ? (
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={runSingle} disabled={!singlePhone.trim()}>
+                Voice Start
+              </Button>
+            ) : (
+              <Button className="w-full bg-red-600 hover:bg-red-700 text-white" onClick={hangupSingle}>
+                Hangup
+              </Button>
+            )}
           </div>
         </div>
       </section>

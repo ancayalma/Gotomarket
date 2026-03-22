@@ -55,24 +55,24 @@ function getEnv(name, required) {
  * Adjust actions to match your SMA feature set/region.
  */
 var handler = function (event) { return __awaiter(void 0, void 0, void 0, function () {
-    var type, meetingRes, meeting, speak, bridgeUri, callerId, actions, e_1, participants, legA, rawHeaders_1, attrs_1, getVal_1, fetchAny, elevenLabsAgentId, callerId_1, meetingId, attendeeId, joinToken, bridgeUri, callerId, actions, participants, legA, rawHeaders_2, attrs_2, getVal_2, fetchAny, meetingId, joinToken, last;
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
-    return __generator(this, function (_r) {
-        switch (_r.label) {
+    var type, meetingRes, meeting, speak, bridgeUri, callerId, actions, e_1, participants, legA, rawHeaders_1, attrs_1, getVal_1, fetchAny, elevenLabsAgentId, leadId, callerId_1, leadPhoneNumber, meetingId, attendeeId, joinToken, bridgeUri, callerId, actions, participants, legA, rawHeaders_2, attrs_2, getVal_2, fetchAny, meetingId, joinToken, last;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0;
+    return __generator(this, function (_1) {
+        switch (_1.label) {
             case 0:
                 console.log("[SMA_EVENT]", JSON.stringify(event));
                 type = event === null || event === void 0 ? void 0 : event.InvocationEventType;
                 if (!(type === "NEW_INBOUND_CALL")) return [3 /*break*/, 5];
-                _r.label = 1;
+                _1.label = 1;
             case 1:
-                _r.trys.push([1, 4, , 5]);
+                _1.trys.push([1, 4, , 5]);
                 return [4 /*yield*/, chime.send(new client_chime_sdk_meetings_1.CreateMeetingCommand({
                         ClientRequestToken: "".concat(Date.now(), "_").concat(Math.floor(Math.random() * 1e9)),
                         MediaRegion: MEETING_REGION,
                         ExternalMeetingId: "sma-".concat(Date.now()),
                     }))];
             case 2:
-                meetingRes = _r.sent();
+                meetingRes = _1.sent();
                 meeting = meetingRes.Meeting;
                 if (!(meeting === null || meeting === void 0 ? void 0 : meeting.MeetingId)) {
                     return [2 /*return*/, { SchemaVersion: "1.0", Actions: [{ Type: "Hangup" }] }];
@@ -84,7 +84,7 @@ var handler = function (event) { return __awaiter(void 0, void 0, void 0, functi
                     }))];
             case 3:
                 // Create a dummy attendee for server-side correlation (optional)
-                _r.sent();
+                _1.sent();
                 speak = {
                     Type: "Speak",
                     Parameters: {
@@ -111,7 +111,7 @@ var handler = function (event) { return __awaiter(void 0, void 0, void 0, functi
                     : [speak];
                 return [2 /*return*/, { SchemaVersion: "1.0", Actions: actions }];
             case 4:
-                e_1 = _r.sent();
+                e_1 = _1.sent();
                 console.error("[SMA_NEW_INBOUND_ERROR]", e_1);
                 return [2 /*return*/, { SchemaVersion: "1.0", Actions: [{ Type: "Hangup" }] }];
             case 5:
@@ -122,13 +122,15 @@ var handler = function (event) { return __awaiter(void 0, void 0, void 0, functi
                         participants = (((_a = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _a === void 0 ? void 0 : _a.Participants) || []);
                         legA = participants.find(function (p) { return (p === null || p === void 0 ? void 0 : p.ParticipantTag) === "LEG-A"; });
                         rawHeaders_1 = (((_b = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _b === void 0 ? void 0 : _b.SipHeaders) || ((_d = (_c = event === null || event === void 0 ? void 0 : event.ActionData) === null || _c === void 0 ? void 0 : _c.Parameters) === null || _d === void 0 ? void 0 : _d.SipHeaders) || ((_e = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _e === void 0 ? void 0 : _e.ReceivedHeaders) || {});
-                        attrs_1 = (((_f = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _f === void 0 ? void 0 : _f.Attributes) || {});
+                        attrs_1 = (((_f = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _f === void 0 ? void 0 : _f.Attributes) || ((_h = (_g = event === null || event === void 0 ? void 0 : event.ActionData) === null || _g === void 0 ? void 0 : _g.Parameters) === null || _h === void 0 ? void 0 : _h.Arguments) || ((_j = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _j === void 0 ? void 0 : _j.TransactionAttributes) || ((_l = (_k = event === null || event === void 0 ? void 0 : event.ActionData) === null || _k === void 0 ? void 0 : _k.IntentResult) === null || _l === void 0 ? void 0 : _l.SessionAttributes) || {});
                         getVal_1 = function (obj, k) { return (obj === null || obj === void 0 ? void 0 : obj[k]) || (obj === null || obj === void 0 ? void 0 : obj[k.toLowerCase()]) || (obj === null || obj === void 0 ? void 0 : obj[k.toUpperCase()]); };
                         fetchAny = function (k) { return getVal_1(rawHeaders_1, k) || getVal_1(attrs_1, k); };
                         elevenLabsAgentId = fetchAny("X-Elevenlabs-Agent-Id") || fetchAny("X_ELEVENLABS_AGENT_ID") || fetchAny("x-elevenlabs-agent-id");
+                        leadId = fetchAny("X-Lead-Id") || fetchAny("X_LEAD_ID") || fetchAny("x-lead-id");
                         callerId_1 = getEnv("CHIME_SOURCE_PHONE") || getEnv("CHIME_SMA_PHONE_NUMBER");
                         if (elevenLabsAgentId && legA) {
-                            console.log("[SMA_ELEVENLABS_BRIDGE] Routing outbound call directly to ElevenLabs Agent: ".concat(elevenLabsAgentId));
+                            leadPhoneNumber = legA.To || legA.PhoneNumber || callerId_1;
+                            console.log("[SMA_ELEVENLABS_BRIDGE] Routing outbound call directly to ElevenLabs SIP Trunk for Agent: ".concat(elevenLabsAgentId, ", Spoofing CallerId: ").concat(leadPhoneNumber));
                             return [2 /*return*/, {
                                     SchemaVersion: "1.0",
                                     Actions: [
@@ -136,8 +138,10 @@ var handler = function (event) { return __awaiter(void 0, void 0, void 0, functi
                                         {
                                             Type: "CallAndBridge",
                                             Parameters: {
-                                                Endpoints: [{ Uri: "sip:".concat(elevenLabsAgentId, "@sip.elevenlabs.app") }],
-                                                CallerIdNumber: callerId_1,
+                                                Endpoints: [{ Uri: "sip:".concat(elevenLabsAgentId, "@sip.rtc.elevenlabs.io:5060;transport=tcp") }],
+                                                // We spoof the Caller ID as the Lead's actual phone number.
+                                                // This tricks ElevenLabs into thinking the Lead called them, so the Pre-Call Webhook receives the Lead's phone number as `caller_id`.
+                                                CallerIdNumber: leadPhoneNumber,
                                                 CallTimeoutSeconds: 60,
                                             },
                                         }
@@ -184,10 +188,10 @@ var handler = function (event) { return __awaiter(void 0, void 0, void 0, functi
                 }
                 if (type === "CALL_ANSWERED") {
                     try {
-                        participants = (((_g = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _g === void 0 ? void 0 : _g.Participants) || []);
+                        participants = (((_m = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _m === void 0 ? void 0 : _m.Participants) || []);
                         legA = participants.find(function (p) { return (p === null || p === void 0 ? void 0 : p.ParticipantTag) === "LEG-A"; }) || participants[0];
-                        rawHeaders_2 = (((_h = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _h === void 0 ? void 0 : _h.SipHeaders) || ((_k = (_j = event === null || event === void 0 ? void 0 : event.ActionData) === null || _j === void 0 ? void 0 : _j.Parameters) === null || _k === void 0 ? void 0 : _k.SipHeaders) || ((_l = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _l === void 0 ? void 0 : _l.ReceivedHeaders) || {});
-                        attrs_2 = (((_m = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _m === void 0 ? void 0 : _m.Attributes) || {});
+                        rawHeaders_2 = (((_o = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _o === void 0 ? void 0 : _o.SipHeaders) || ((_q = (_p = event === null || event === void 0 ? void 0 : event.ActionData) === null || _p === void 0 ? void 0 : _p.Parameters) === null || _q === void 0 ? void 0 : _q.SipHeaders) || ((_r = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _r === void 0 ? void 0 : _r.ReceivedHeaders) || {});
+                        attrs_2 = (((_s = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _s === void 0 ? void 0 : _s.Attributes) || ((_u = (_t = event === null || event === void 0 ? void 0 : event.ActionData) === null || _t === void 0 ? void 0 : _t.Parameters) === null || _u === void 0 ? void 0 : _u.Arguments) || ((_v = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _v === void 0 ? void 0 : _v.TransactionAttributes) || ((_x = (_w = event === null || event === void 0 ? void 0 : event.ActionData) === null || _w === void 0 ? void 0 : _w.IntentResult) === null || _x === void 0 ? void 0 : _x.SessionAttributes) || {});
                         getVal_2 = function (obj, k) { return (obj === null || obj === void 0 ? void 0 : obj[k]) || (obj === null || obj === void 0 ? void 0 : obj[k.toLowerCase()]) || (obj === null || obj === void 0 ? void 0 : obj[k.toUpperCase()]); };
                         fetchAny = function (k) { return getVal_2(rawHeaders_2, k) || getVal_2(attrs_2, k); };
                         meetingId = fetchAny("X-Meeting-Id") || fetchAny("X_MEETING_ID") || fetchAny("x-meeting-id") || fetchAny("MeetingId") || fetchAny("MEETING_ID");
@@ -216,11 +220,11 @@ var handler = function (event) { return __awaiter(void 0, void 0, void 0, functi
                     return [2 /*return*/, { SchemaVersion: "1.0", Actions: [] }];
                 }
                 if (type === "ACTION_SUCCESS") {
-                    last = (_o = event === null || event === void 0 ? void 0 : event.ActionData) === null || _o === void 0 ? void 0 : _o.Type;
+                    last = (_y = event === null || event === void 0 ? void 0 : event.ActionData) === null || _y === void 0 ? void 0 : _y.Type;
                     console.log("[SMA_ACTION_SUCCESS]", {
-                        participants: (_p = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _p === void 0 ? void 0 : _p.Participants,
+                        participants: (_z = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _z === void 0 ? void 0 : _z.Participants,
                         lastActionType: last,
-                        callId: (_q = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _q === void 0 ? void 0 : _q.CallId,
+                        callId: (_0 = event === null || event === void 0 ? void 0 : event.CallDetails) === null || _0 === void 0 ? void 0 : _0.CallId,
                     });
                     // If we just joined the Chime meeting, do NOT speak; keep the bridge active with no-op
                     if (String(last) === "JoinChimeMeeting") {
