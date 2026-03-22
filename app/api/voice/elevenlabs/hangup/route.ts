@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     const cmd = new UpdateSipMediaApplicationCallCommand({
       SipMediaApplicationId: smaId,
       TransactionId: body.transactionId,
-      ArgumentsMap: {
+      Arguments: {
         Action: "Hangup"
       }
     });
