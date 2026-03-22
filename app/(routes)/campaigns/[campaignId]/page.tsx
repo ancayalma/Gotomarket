@@ -234,7 +234,7 @@ export default function CampaignDetailPage() {
                                 <span>{new Date(campaign.createdAt).toLocaleDateString()}</span>
                             )}
                             <span className="flex items-center gap-1">
-                                {campaign.channels.map((ch) => (
+                                {(campaign.channels || []).map((ch) => (
                                     <Badge key={ch} variant="outline" className="text-[9px] font-bold border-white/10 gap-0.5 h-5 px-1.5">
                                         {ch === "EMAIL" && <Mail className="w-2.5 h-2.5" />}
                                         {ch === "SMS" && <MessageSquare className="w-2.5 h-2.5" />}
