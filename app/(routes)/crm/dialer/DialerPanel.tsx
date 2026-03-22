@@ -303,7 +303,6 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
             onPushToDialer={(targetLeadId, targetPhone) => {
               setSingleLeadId(targetLeadId);
               setSinglePhone(targetPhone);
-              setActiveTab("dial");
             }}
           />
         </section>
@@ -477,7 +476,6 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
               onPushToDialer={(targetLeadId, targetPhone) => {
                 setSingleLeadId(targetLeadId);
                 setSinglePhone(targetPhone);
-                setActiveTab("dial");
               }}
             />
           </TabsContent>
