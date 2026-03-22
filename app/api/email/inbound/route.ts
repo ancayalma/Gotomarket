@@ -20,11 +20,16 @@ export async function POST(req: Request) {
     // 1. Handle SNS Subscription Confirmation
     if (body.Type === "SubscriptionConfirmation") {
       const { SubscribeURL } = body;
-      systemLogger.info(`[SES_INBOUND] Confirming SNS Subscription...`);
+      systemLogger.info(`[SES_INBOUND] Confirming SNS Subscription: ${SubscribeURL}`);
       if (SubscribeURL) {
-        // Fetch the URL to confirm
-        await fetch(SubscribeURL);
-        systemLogger.info(`[SES_INBOUND] SNS Subscription confirmed.`);
+        try {
+            // Fetch the URL to confirm, and ensure Vercel/NextJS doesn't cache it
+            const res = await fetch(SubscribeURL, { cache: "no-store", method: "GET" });
+            const resText = await res.text();
+            systemLogger.info(`[SES_INBOUND] SNS Subscription confirmation response: ${res.status} ${resText}`);
+        } catch (fetchErr) {
+            systemLogger.error(`[SES_INBOUND] SNS Subscription confirmation fetch failed:`, fetchErr);
+        }
       }
       return new NextResponse("OK", { status: 200 });
     }
