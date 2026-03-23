@@ -4393,6 +4393,15 @@ model Tenant_Integrations {
   discord_enabled Boolean @default(false)
   discord_webhook String?
 
+  // Twilio Voice (Outbound Dialing via ElevenLabs + Twilio)
+  twilio_enabled      Boolean @default(false)
+  twilio_account_sid  String?
+  twilio_auth_token   String?
+  twilio_phone_number String? // E.164, e.g. "+18444848234"
+  voice_agent_name    String? // AI agent display name, e.g. "Sarah"
+  elevenlabs_api_key  String? // Tenant's own ElevenLabs API key (optional, overrides platform key)
+  elevenlabs_agent_id String? // Tenant's own ElevenLabs agent ID (optional, overrides platform agent)
+
   updatedAt DateTime @updatedAt
 }
 

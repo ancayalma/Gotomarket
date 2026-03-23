@@ -3,13 +3,10 @@ import { requireCronAuth } from "@/lib/api-auth-guard";
 import { prismadbCrm as prisma } from "@/lib/prisma-crm";
 import { systemLogger } from "@/lib/logger";
 
-// Ensure Node.js runtime for AWS SDK compatibility
+// Ensure Node.js runtime for Prisma compatibility
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const preferredRegion = 'auto';
-
-// We must initialize the Chime API client to initiate the calls
-import { ChimeSDKVoiceClient, CreateSipMediaApplicationCallCommand } from "@aws-sdk/client-chime-sdk-voice";
 
 function isE164(num: string) {
   return /^\+[1-9]\d{1,14}$/.test(num);
@@ -73,21 +70,20 @@ async function processVoiceCampaigns(req: Request) {
       return NextResponse.json({ message: "No active voice campaigns to process at this time." });
     }
 
-    const smaId = process.env.CHIME_SMA_APPLICATION_ID || process.env.CHIME_SMA_ID;
-    const defaultFrom = process.env.CHIME_SOURCE_PHONE || process.env.CHIME_FROM_PHONE_NUMBER;
-    const region = process.env.CHIME_VOICE_REGION || process.env.AWS_REGION || "us-west-2";
+    // ElevenLabs API key for native Twilio outbound
+    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+    const agentPhoneNumberId = process.env.ELEVENLABS_AGENT_PHONE_NUMBER_ID;
 
-    if (!smaId || !defaultFrom) {
-      systemLogger.error("[CRON_VOICE] Missing AWS Chime configuration variables");
-      return new NextResponse("Configuration Error", { status: 500 });
+    if (!ELEVENLABS_API_KEY) {
+      systemLogger.error("[CRON_VOICE] Missing ELEVENLABS_API_KEY");
+      return new NextResponse("Configuration Error: ELEVENLABS_API_KEY required", { status: 500 });
     }
 
-    const client = new ChimeSDKVoiceClient({ region });
     let totalProcessed = 0;
 
-    // 3. Process each campaign individually
+    // 4. Process each campaign individually
     for (const campaign of activeVoiceCampaigns) {
-      const agentId = campaign.voice_agent_id || process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
+      const agentId = campaign.voice_agent_id || process.env.NEXT_PUBLIC_ELEVENLABS_AGENT;
       if (!agentId) {
         systemLogger.warn(`[CRON_VOICE] Campaign ${campaign.id} skipped: No ElevenLabs Agent ID configured.`);
         continue;
@@ -135,31 +131,38 @@ async function processVoiceCampaigns(req: Request) {
             data: { status: "SENDING", sentAt: new Date() }
           });
 
-          // Trigger Chime API
-          const sipHeaders: Record<string, string> = {
-            "X-Elevenlabs-Agent-Id": agentId,
-            "x-elevenlabs-agent-id": agentId,
-            "X-Lead-Id": String(lead.id),
-            "x-lead-id": String(lead.id)
+          // Trigger ElevenLabs native Twilio outbound call
+          const payload: Record<string, any> = {
+            agent_id: agentId,
+            to_number: lead.phone.trim(),
           };
 
-          const argumentsMap: Record<string, string> = {
-            "X-Elevenlabs-Agent-Id": agentId,
-            "LeadId": String(lead.id)
+          if (agentPhoneNumberId) {
+            payload.agent_phone_number_id = agentPhoneNumberId;
+          }
+
+          // Pass lead context
+          payload.custom_llm_extra_body = {
+            leadId: String(lead.id),
           };
 
-          const cmd = new CreateSipMediaApplicationCallCommand({
-            SipMediaApplicationId: smaId,
-            FromPhoneNumber: defaultFrom,
-            ToPhoneNumber: lead.phone.trim(),
-            SipHeaders: sipHeaders,
-            ArgumentsMap: argumentsMap,
+          const res = await fetch("https://api.elevenlabs.io/v1/convai/twilio/outbound_call", {
+            method: "POST",
+            headers: {
+              "xi-api-key": ELEVENLABS_API_KEY,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
           });
 
-          await client.send(cmd);
+          if (!res.ok) {
+            const errText = await res.text().catch(() => "");
+            throw new Error(`ElevenLabs API ${res.status}: ${errText}`);
+          }
+
           totalProcessed++;
 
-          // Transition to SENT status indicating successful handoff to Chime
+          // Transition to SENT status indicating successful handoff
           await prisma.crm_Outreach_Items.update({
             where: { id: item.id },
             data: { status: "SENT" }
@@ -172,7 +175,7 @@ async function processVoiceCampaigns(req: Request) {
               user: campaign.user,
               type: "call_outbound",
               metadata: {
-                message: "Batched AI Voice Call initiated",
+                message: "Batched AI Voice Call initiated via Twilio",
                 agentId: agentId,
                 campaign: campaign.id
               } as any
@@ -183,7 +186,7 @@ async function processVoiceCampaigns(req: Request) {
            systemLogger.error(`[CRON_VOICE] Error initiating call for Lead ${item.lead}:`, callErr);
            await prisma.crm_Outreach_Items.update({
               where: { id: item.id },
-              data: { status: "FAILED", error_message: callErr?.message || "AWS Chime SDK Error" }
+              data: { status: "FAILED", error_message: callErr?.message || "ElevenLabs/Twilio Error" }
            });
         }
       }
