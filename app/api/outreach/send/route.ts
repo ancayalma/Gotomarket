@@ -519,7 +519,17 @@ export async function POST(req: Request) {
 
           // Dynamically construct the Reply-To address to use the SES inbound subdomain.
           // e.g. john@basalthq.com -> john@reply.basalthq.com
-          const inboundDomain = process.env.SES_INBOUND_DOMAIN || "reply.basalthq.com";
+          // Check for team's custom reply domain first, fall back to platform default
+          let inboundDomain = process.env.SES_INBOUND_DOMAIN || "reply.basalthq.com";
+          try {
+            const teamReplyConfig = await prismadb.teamEmailConfig.findUnique({
+              where: { team_id_purpose: { team_id: user.team_id!, purpose: "INBOUND" } },
+              select: { reply_domain: true, reply_domain_status: true },
+            });
+            if (teamReplyConfig?.reply_domain && teamReplyConfig.reply_domain_status === "VERIFIED") {
+              inboundDomain = teamReplyConfig.reply_domain;
+            }
+          } catch { /* use default */ }
           const userEmailPrefix = session.user.email?.split('@')?.[0] || "sales";
           const resolvedSenderName = senderName || session.user.name || "Outreach";
           const replyToAddress = `"${resolvedSenderName}" <${userEmailPrefix}@${inboundDomain}>`;
@@ -533,12 +543,11 @@ export async function POST(req: Request) {
               html,
               from: `"${resolvedSenderName}" <${session.user.email || process.env.SES_FROM_ADDRESS || 'noreply@basalthq.com'}>`,
               replyTo: replyToAddress,
-            });
-            messageId = `ses_personal_${Date.now()}`;
+            }).then(id => { messageId = id || `ses_personal_${Date.now()}`; });
           } else {
             // Company mode: use team email config
             try {
-              await sendTeamEmail(user.team_id, {
+              const teamMsgId = await sendTeamEmail(user.team_id, {
                 to: toEmail,
                 subject,
                 text,
@@ -546,12 +555,12 @@ export async function POST(req: Request) {
                 senderId: session.user.id,
                 replyTo: replyToAddress,
               }, "OUTREACH");
-              messageId = `team_sent_${Date.now()}`;
+              messageId = teamMsgId || `team_sent_${Date.now()}`;
             } catch (teamErr: any) {
               // Team email not configured — for test mode, fall back to system email
               if (testMode) {
                 systemLogger.warn("[OUTREACH_SEND] Team email failed in test mode, falling back to system email:", teamErr?.message);
-                await sendSystemEmail({
+                const fallbackMsgId = await sendSystemEmail({
                   to: toEmail,
                   subject,
                   text,
@@ -559,7 +568,7 @@ export async function POST(req: Request) {
                   from: process.env.SES_FROM_ADDRESS || 'noreply@basalthq.com',
                   replyTo: replyToAddress,
                 });
-                messageId = `test_system_sent_${Date.now()}`;
+                messageId = fallbackMsgId || `test_system_sent_${Date.now()}`;
               } else {
                 throw teamErr; // Re-throw for real sends — they must use configured email
               }

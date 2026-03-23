@@ -22,7 +22,7 @@ interface EmailOptions {
     senderId?: string; // Required for GOOGLE_GMAIL provider
 }
 
-export async function sendTeamEmail(teamId: string, options: EmailOptions, purpose: "GENERAL" | "OUTREACH" | "INBOUND" = "GENERAL") {
+export async function sendTeamEmail(teamId: string, options: EmailOptions, purpose: "GENERAL" | "OUTREACH" | "INBOUND" = "GENERAL"): Promise<string | null> {
     // 1. Fetch Config for the requested purpose, fallback to GENERAL
     let config = await prismadb.teamEmailConfig.findUnique({
         where: { team_id_purpose: { team_id: teamId, purpose } }
@@ -48,12 +48,12 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions, purpo
     // 3a. PLATFORM_SES (uses the platform's own SES credentials)
     if (config.provider === "PLATFORM_SES") {
         try {
-            await sendSystemEmail({
+            const msgId = await sendSystemEmail({
                 ...options,
                 from: options.from || fromAddress,
             });
-            console.log(`[TeamEmail] Sent via PLATFORM_SES (Team: ${teamId}, From: ${config.from_email})`);
-            return;
+            console.log(`[TeamEmail] Sent via PLATFORM_SES (Team: ${teamId}, From: ${config.from_email}, MsgId: ${msgId})`);
+            return msgId;
         } catch (error) {
             console.error("[TeamEmail] PLATFORM_SES Send Failed:", error);
             throw error;
@@ -81,7 +81,7 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions, purpo
         } as any);
 
         try {
-            await transporter.sendMail({
+            const result = await transporter.sendMail({
                 from: options.from || fromAddress,
                 to: options.to,
                 subject: options.subject,
@@ -90,8 +90,9 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions, purpo
                 replyTo: options.replyTo,
                 attachments: options.attachments,
             });
-            console.log(`[TeamEmail] Sent via AWS SES (Team: ${teamId})`);
-            return;
+            const msgId = result.messageId || null;
+            console.log(`[TeamEmail] Sent via AWS SES (Team: ${teamId}, MsgId: ${msgId})`);
+            return msgId;
         } catch (error) {
             console.error("[TeamEmail] AWS SES Send Failed:", error);
             throw error;
@@ -127,7 +128,7 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions, purpo
             }
 
             console.log(`[TeamEmail] Sent via Resend (Team: ${teamId}, ID: ${data?.id})`);
-            return;
+            return data?.id || null;
         } catch (error) {
             console.error("[TeamEmail] Resend Send Failed:", error);
             throw error;
@@ -155,7 +156,7 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions, purpo
             }
 
             console.log(`[TeamEmail] Sent via Google Gmail OAuth (User: ${options.senderId}, Team: ${teamId})`);
-            return;
+            return messageId || null;
         } catch (error) {
             console.error("[TeamEmail] Google Gmail Send Failed:", error);
             throw error;
@@ -163,5 +164,5 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions, purpo
     }
 
     // Fallback if provider unknown
-    return sendSystemEmail(options);
+    return await sendSystemEmail(options);
 }
