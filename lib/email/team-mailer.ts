@@ -90,7 +90,7 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions, purpo
                 replyTo: options.replyTo,
                 attachments: options.attachments,
             });
-            const msgId = result.messageId || null;
+            const msgId = result.messageId?.replace(/[<>]/g, "").trim() || null;
             console.log(`[TeamEmail] Sent via AWS SES (Team: ${teamId}, MsgId: ${msgId})`);
             return msgId;
         } catch (error) {

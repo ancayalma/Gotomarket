@@ -425,6 +425,11 @@ model crm_Outreach_Campaigns {
   followup_max_count     Int      @default(2)   // Max follow-ups per contact
   followup_prompt        String?                // Custom follow-up prompt override
 
+  // Auto-reply AI config
+  auto_reply_enabled     Boolean  @default(false)
+  auto_reply_max_count   Int      @default(3)   // Max auto-replies per lead thread
+  auto_reply_prompt      String?                // Custom reply prompt override
+
   // Campaign collateral (pricing sheets, agreements, etc.)
   document_ids           String[] @db.ObjectId
 
@@ -528,6 +533,7 @@ model crm_Outreach_Items {
 
   // Follow-up tracking
   followup_count    Int       @default(0)
+  auto_reply_count  Int       @default(0)
   next_followup_at  DateTime? @db.Date
   unsubscribed_at   DateTime? @db.Date
 

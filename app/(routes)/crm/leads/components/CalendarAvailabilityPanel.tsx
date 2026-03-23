@@ -71,17 +71,18 @@ export default function CalendarAvailabilityPanel() {
   const [gmailConnected, setGmailConnected] = useState<boolean | null>(null);
   const [gmailEmail, setGmailEmail] = useState<string | undefined>(undefined);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // Load Gmail status
+  // Load Google connection status
   useEffect(() => {
     (async () => {
       setStatusLoading(true);
       try {
-        const res = await fetch('/api/gmail/status');
+        const res = await fetch('/api/google/status');
         if (res.ok) {
           const j = await res.json();
           setGmailConnected(!!j.connected);
-          setGmailEmail(j.emailAddress || undefined);
+          setGmailEmail(j.provider ? `${j.provider} account` : undefined);
         } else {
           setGmailConnected(false);
         }
@@ -93,27 +94,37 @@ export default function CalendarAvailabilityPanel() {
     })();
   }, []);
 
-  // Load calendar list
+  // Load calendar list + saved preferences
   useEffect(() => {
     (async () => {
       setLoadingCalendars(true);
       try {
-        const res = await fetch('/api/calendar/list');
-        if (!res.ok) {
-          const t = await res.text();
-          toast.error(`Failed to load calendars: ${t}`);
-          return;
+        const [calRes, prefRes] = await Promise.all([
+          fetch('/api/calendar/list'),
+          fetch('/api/calendar/preferences', { cache: 'no-store' }),
+        ]);
+        let list: CalendarItem[] = [];
+        if (calRes.ok) {
+          const j = await calRes.json().catch(() => ({}));
+          list = Array.isArray(j?.calendars) ? j.calendars : [];
+          setCalendars(list);
         }
-        const j = await res.json();
-        const list: CalendarItem[] = Array.isArray(j?.calendars) ? j.calendars : [];
-        setCalendars(list);
-        // Default selected: primary if present, otherwise just first calendar
-        const prim = list.filter((c) => c.primary);
-        if (prim.length > 0) {
-          setSelectedCalendarIds(prim.map((c) => c.id));
-        } else if (list.length > 0) {
-          // Fix: Ensure we select the first calendar if no primary is found to avoid "Select at least one" error
-          setSelectedCalendarIds([list[0].id]);
+        // Load saved preferences
+        let savedIds: string[] = [];
+        if (prefRes.ok) {
+          const jp = await prefRes.json().catch(() => ({}));
+          savedIds = Array.isArray(jp?.selectedIds) ? jp.selectedIds : [];
+        }
+        if (savedIds.length > 0) {
+          setSelectedCalendarIds(savedIds);
+        } else {
+          // Default selected: primary if present, otherwise first calendar
+          const prim = list.filter((c) => c.primary);
+          if (prim.length > 0) {
+            setSelectedCalendarIds(prim.map((c) => c.id));
+          } else if (list.length > 0) {
+            setSelectedCalendarIds([list[0].id]);
+          }
         }
       } catch (e: any) {
         toast.error(`Failed to load calendars: ${e?.message || e}`);
@@ -126,11 +137,11 @@ export default function CalendarAvailabilityPanel() {
   const refreshStatus = async () => {
     setStatusLoading(true);
     try {
-      const res = await fetch('/api/gmail/status');
+      const res = await fetch('/api/google/status');
       if (res.ok) {
         const j = await res.json();
         setGmailConnected(!!j.connected);
-        setGmailEmail(j.emailAddress || undefined);
+        setGmailEmail(j.provider ? `${j.provider} account` : undefined);
       } else {
         setGmailConnected(false);
       }
@@ -138,6 +149,27 @@ export default function CalendarAvailabilityPanel() {
       setGmailConnected(false);
     } finally {
       setStatusLoading(false);
+    }
+  };
+
+  const savePreferences = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/calendar/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selectedIds: selectedCalendarIds }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        toast.error(`Failed to save: ${txt}`);
+        return;
+      }
+      toast.success('Availability settings saved');
+    } catch (e: any) {
+      toast.error(`Save error: ${e?.message || e}`);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -189,7 +221,7 @@ export default function CalendarAvailabilityPanel() {
   const connectionLabel = useMemo(() => {
     if (statusLoading) return 'Checking…';
     if (gmailConnected === true) return `Connected${gmailEmail ? ` (${gmailEmail})` : ''}`;
-    if (gmailConnected === false) return 'Not Connected';
+    if (gmailConnected === false) return 'Not Connected — Connect via the Integrations tab';
     return 'Unknown';
   }, [statusLoading, gmailConnected, gmailEmail]);
 
@@ -200,7 +232,7 @@ export default function CalendarAvailabilityPanel() {
         <div>
           <h3 className="text-lg font-semibold">Availability Calendar</h3>
           <div className="text-sm text-muted-foreground">
-            Gmail Status: <span className={gmailConnected ? 'text-green-600' : 'text-red-600'}>{connectionLabel}</span>
+            Google Calendar: <span className={gmailConnected ? 'text-green-600' : 'text-red-600'}>{connectionLabel}</span>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
@@ -231,9 +263,14 @@ export default function CalendarAvailabilityPanel() {
         <div className="border rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold">Calendars</h4>
-            <Button onClick={fetchAvailability} disabled={loadingAvail || loadingCalendars}>
-              {loadingAvail ? 'Loading…' : 'Load Availability'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={savePreferences} disabled={saving || loadingCalendars} variant="outline">
+                {saving ? 'Saving…' : 'Save'}
+              </Button>
+              <Button onClick={fetchAvailability} disabled={loadingAvail || loadingCalendars}>
+                {loadingAvail ? 'Loading…' : 'Load Availability'}
+              </Button>
+            </div>
           </div>
 
           {loadingCalendars ? (

@@ -139,6 +139,7 @@ type CampaignDetail = {
     total_leads: number;
     emails_sent: number;
     emails_opened: number;
+    emails_replied?: number;
     sms_sent: number;
     sms_delivered: number;
     calls_initiated: number;
@@ -148,6 +149,9 @@ type CampaignDetail = {
     signature_html?: string | null;
     campaign_branding?: any;
     resource_links?: any;
+    auto_reply_enabled?: boolean;
+    auto_reply_max_count?: number;
+    auto_reply_prompt?: string | null;
     createdAt?: string;
     updatedAt?: string;
     assigned_user?: {
@@ -170,6 +174,7 @@ type CampaignDetail = {
         channel: string;
     }[];
 };
+
 
 const getStatusColor = (status: string) => {
     switch (status) {
@@ -195,6 +200,7 @@ export default function CampaignDetailPage() {
     const [activeTab, setActiveTab] = useState("overview");
     const [deleting, setDeleting] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [autoReplyLoading, setAutoReplyLoading] = useState(false);
 
     const { data: campaign, error, isLoading, mutate } = useSWR<CampaignDetail>(
         campaignId ? `/api/campaigns/${campaignId}` : null,
@@ -247,6 +253,33 @@ export default function CampaignDetailPage() {
         } catch {
             toast.error(`Failed to ${action} job`);
         }
+    }
+
+    async function toggleAutoReply(enable: boolean) {
+        setAutoReplyLoading(true);
+        try {
+            const res = await fetch(`/api/campaigns/${campaignId}/auto-reply`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ enabled: enable }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                mutate();
+                if (enable && data.backfill_triggered > 0) {
+                    toast.success(`Auto-reply enabled. Processing ${data.backfill_triggered} existing replies...`);
+                } else if (enable) {
+                    toast.success("Auto-reply enabled. Future replies will be handled by AI.");
+                } else {
+                    toast.success("Auto-reply disabled.");
+                }
+            } else {
+                toast.error("Failed to update auto-reply settings");
+            }
+        } catch {
+            toast.error("Failed to update auto-reply settings");
+        }
+        setAutoReplyLoading(false);
     }
 
     if (isLoading) {
@@ -580,6 +613,63 @@ export default function CampaignDetailPage() {
                                             <a href={campaign.meeting_link} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline block mt-0.5 truncate">
                                                 {campaign.meeting_link}
                                             </a>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* AI Auto-Reply */}
+                            <Card className="border-white/5 bg-card/50 backdrop-blur-sm md:col-span-2">
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                                            <Zap className="w-4 h-4 text-primary" />
+                                            AI Auto-Reply
+                                        </CardTitle>
+                                        <Button
+                                            size="sm"
+                                            variant={campaign.auto_reply_enabled ? "default" : "outline"}
+                                            className={`gap-2 h-8 text-xs ${
+                                                campaign.auto_reply_enabled
+                                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                    : "border-white/10 hover:bg-white/5"
+                                            }`}
+                                            onClick={() => toggleAutoReply(!campaign.auto_reply_enabled)}
+                                            disabled={autoReplyLoading}
+                                        >
+                                            {autoReplyLoading ? (
+                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                            ) : campaign.auto_reply_enabled ? (
+                                                <CheckCircle2 className="w-3 h-3" />
+                                            ) : (
+                                                <Zap className="w-3 h-3" />
+                                            )}
+                                            {campaign.auto_reply_enabled ? "Enabled" : "Enable"}
+                                        </Button>
+                                    </div>
+                                    <CardDescription className="text-xs">
+                                        When enabled, the AI will autonomously respond to lead replies using this campaign&apos;s context and brand identity.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-2.5 h-2.5 rounded-full ${campaign.auto_reply_enabled ? "bg-emerald-500 animate-pulse" : "bg-zinc-600"}`} />
+                                        <span className="text-sm">
+                                            {campaign.auto_reply_enabled
+                                                ? "AI is actively monitoring and replying to inbound emails"
+                                                : "AI auto-reply is disabled for this campaign"}
+                                        </span>
+                                    </div>
+                                    {campaign.auto_reply_enabled && (
+                                        <div className="grid grid-cols-2 gap-3 pt-2">
+                                            <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/10 p-3">
+                                                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Replies Received</span>
+                                                <div className="text-xl font-black text-emerald-400 mt-1">{campaign.emails_replied || 0}</div>
+                                            </div>
+                                            <div className="rounded-lg bg-indigo-500/5 border border-indigo-500/10 p-3">
+                                                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Max Replies / Thread</span>
+                                                <div className="text-xl font-black text-indigo-400 mt-1">{campaign.auto_reply_max_count ?? 3}</div>
+                                            </div>
                                         </div>
                                     )}
                                 </CardContent>
