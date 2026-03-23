@@ -1827,6 +1827,13 @@ model TeamEmailConfig {
   domain_status             String? // "PENDING_APPROVAL" | "DNS_PENDING" | "VERIFIED" | "FAILED"
   domain_requested_at       DateTime? @db.Date
 
+  // Reply Domain (for outreach reply-to routing)
+  reply_domain             String?   // e.g. "reply.acmecorp.com"
+  reply_domain_status      String?   // "PENDING_MX" | "PENDING_SNS" | "VERIFIED" | "FAILED"
+  reply_sns_topic_arn      String?   // ARN of the SNS topic created for this domain
+  reply_receipt_rule       String?   // Name of the SES receipt rule created
+  reply_domain_verified_at DateTime? @db.Date
+
   verification_status String @default("PENDING") // PENDING, VERIFIED, FAILED
 
   createdAt DateTime @default(now()) @db.Date

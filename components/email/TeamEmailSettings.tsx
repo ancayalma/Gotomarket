@@ -620,6 +620,186 @@ function PurposeConfigForm({
     );
 }
 
+// ─── Reply Domain Panel ────────────────────────────────────────────────────
+function ReplyDomainPanel({ teamId }: { teamId: string }) {
+    const [domain, setDomain] = useState("");
+    const [status, setStatus] = useState<string | null>(null);
+    const [mxRecord, setMxRecord] = useState<{ type: string; name: string; value: string; priority: number } | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [fetched, setFetched] = useState(false);
+
+    // Fetch existing reply domain config
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await fetch(`/api/teams/${teamId}/email-config/reply-domain`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.domain) {
+                        setDomain(data.domain);
+                        setStatus(data.status);
+                        setMxRecord(data.mxRecord || null);
+                    }
+                }
+            } catch { /* ignore */ }
+            setFetched(true);
+        })();
+    }, [teamId]);
+
+    const handleSetup = async () => {
+        if (!domain || !domain.includes(".")) {
+            toast.error("Enter a valid reply domain (e.g. reply.yourcompany.com)");
+            return;
+        }
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/teams/${teamId}/email-config/reply-domain`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ domain }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            setStatus(data.status);
+            setMxRecord(data.mxRecord || null);
+            toast.success(data.message || "Reply domain configured!");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to set up reply domain");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRemove = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/teams/${teamId}/email-config/reply-domain`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to remove");
+            setDomain("");
+            setStatus(null);
+            setMxRecord(null);
+            toast.success("Reply domain removed.");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to remove reply domain");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCheckStatus = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/teams/${teamId}/email-config/reply-domain`);
+            if (res.ok) {
+                const data = await res.json();
+                setStatus(data.status);
+                setMxRecord(data.mxRecord || null);
+                if (data.status === "VERIFIED") {
+                    toast.success("Reply domain verified!");
+                } else {
+                    toast("Domain not yet verified. Ensure MX record is configured.", { icon: "⏳" });
+                }
+            }
+        } catch { /* ignore */ }
+        setLoading(false);
+    };
+
+    if (!fetched) return null;
+
+    return (
+        <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
+            <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-cyan-400" />
+                    Custom Reply Domain
+                </CardTitle>
+                <CardDescription className="text-xs">
+                    Route campaign reply-to addresses through your own branded subdomain instead of the platform default.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex gap-2 items-end">
+                    <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs">Reply Domain</Label>
+                        <Input
+                            placeholder="reply.yourcompany.com"
+                            value={domain}
+                            onChange={(e) => setDomain(e.target.value)}
+                            disabled={loading || status === "VERIFIED"}
+                            className="bg-black/20 border-white/10"
+                        />
+                    </div>
+                    {!status ? (
+                        <Button
+                            onClick={handleSetup}
+                            disabled={loading || !domain}
+                            className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                        >
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Globe className="w-4 h-4 mr-1" />}
+                            Set Up
+                        </Button>
+                    ) : status === "VERIFIED" ? (
+                        <Badge className="h-9 px-3 bg-green-500/20 text-green-400 border-green-500/30">
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
+                        </Badge>
+                    ) : (
+                        <Button variant="outline" onClick={handleCheckStatus} disabled={loading} className="border-cyan-500/30 text-cyan-400">
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Check Status"}
+                        </Button>
+                    )}
+                </div>
+
+                {/* MX Record Instructions */}
+                {mxRecord && status !== "VERIFIED" && (
+                    <div className="p-3 rounded-md bg-blue-500/5 border border-blue-500/15 space-y-2">
+                        <p className="text-xs font-semibold text-blue-400">Add this MX record to your DNS:</p>
+                        <div className="flex items-center gap-2 text-[11px] font-mono bg-black/30 p-2 rounded">
+                            <span className="text-muted-foreground">MX</span>
+                            <span className="text-blue-300">{mxRecord.name}</span>
+                            <span className="text-muted-foreground">→</span>
+                            <span className="text-green-300">{mxRecord.value}</span>
+                            <span className="text-amber-300 ml-1">Priority: {mxRecord.priority}</span>
+                            <button
+                                className="ml-auto text-muted-foreground hover:text-white"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(`${mxRecord.name} MX ${mxRecord.priority} ${mxRecord.value}`);
+                                    toast.success("Copied!");
+                                }}
+                            >
+                                <Copy className="w-3 h-3" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Verified state with remove option */}
+                {status === "VERIFIED" && (
+                    <div className="flex items-center justify-between p-3 rounded-md bg-green-500/5 border border-green-500/15">
+                        <p className="text-xs text-green-400">
+                            Outreach replies will be routed through <strong>{domain}</strong>
+                        </p>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-xs"
+                            onClick={handleRemove}
+                            disabled={loading}
+                        >
+                            Remove
+                        </Button>
+                    </div>
+                )}
+
+                {status === "PENDING_MX" && (
+                    <p className="text-[11px] text-amber-400/80">
+                        ⏳ Waiting for MX record to propagate. This can take up to 72 hours. Click &quot;Check Status&quot; to verify.
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────
 export function TeamEmailSettings({ teamId, planSlug, title }: TeamEmailSettingsProps & { title?: string }) {
     const [configs, setConfigs] = useState<Record<EmailPurpose, EmailConfig | null>>({
@@ -684,13 +864,18 @@ export function TeamEmailSettings({ teamId, planSlug, title }: TeamEmailSettings
 
                     {(["GENERAL", "OUTREACH", "INBOUND"] as EmailPurpose[]).map((p) => (
                         <TabsContent key={p} value={p}>
-                            <PurposeConfigForm
-                                teamId={teamId}
-                                purpose={p}
-                                config={configs[p]}
-                                planSlug={planSlug}
-                                onRefresh={fetchAllConfigs}
-                            />
+                            <div className="space-y-6">
+                                <PurposeConfigForm
+                                    teamId={teamId}
+                                    purpose={p}
+                                    config={configs[p]}
+                                    planSlug={planSlug}
+                                    onRefresh={fetchAllConfigs}
+                                />
+                                {p === "INBOUND" && (
+                                    <ReplyDomainPanel teamId={teamId} />
+                                )}
+                            </div>
                         </TabsContent>
                     ))}
                 </Tabs>
@@ -698,3 +883,4 @@ export function TeamEmailSettings({ teamId, planSlug, title }: TeamEmailSettings
         </Card>
     );
 }
+

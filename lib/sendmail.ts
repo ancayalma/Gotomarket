@@ -20,7 +20,7 @@ interface EmailOptions {
 
 export default async function sendEmail(
   emailOptions: EmailOptions
-): Promise<void> {
+): Promise<string | null> {
 
   let transporter;
 
@@ -76,7 +76,9 @@ export default async function sendEmail(
       ...emailOptions,
       from: fromAddress
     });
-    console.log(`[Email Success] To: ${emailOptions.to}, From: ${fromAddress}, MessageId: ${result.messageId}`);
+    const realMessageId = result.messageId || null;
+    console.log(`[Email Success] To: ${emailOptions.to}, From: ${fromAddress}, MessageId: ${realMessageId}`);
+    return realMessageId;
   } catch (error: any | Error) {
     console.error(`[Email Error] Failed to send to ${emailOptions.to}:`, error);
     throw error; // Rethrow to let the API know it failed
