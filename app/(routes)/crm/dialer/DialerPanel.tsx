@@ -10,7 +10,7 @@ import PromptGeneratorPanel from '../prompt/PromptGeneratorPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useVaruniLink } from '@/app/hooks/use-varuni-link';
-import { Zap, Shield, XCircle, Phone } from 'lucide-react';
+import { Zap, Shield, XCircle, Phone, Save, Loader2 } from 'lucide-react';
 
 function isE164(num: string) {
   return /^\+[1-9]\d{1,14}$/.test(num);
@@ -45,13 +45,41 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [status, setStatus] = useState<'available' | 'break' | 'offline'>('available');
   const [callActive, setCallActive] = useState<boolean>(false);
-  const [activeTransactionId, setActiveTransactionId] = useState<string | null>(null);
+  const [activeCallSid, setActiveCallSid] = useState<string | null>(null);
 
   const [results, setResults] = useState<{ phone: string; leadId?: string; ok: boolean; transactionId?: string; error?: string }[]>([]);
   const stopRef = useRef<boolean>(false);
+  const [agentName, setAgentName] = useState<string>('');
+  const [savingAgentName, setSavingAgentName] = useState(false);
 
   // VaruniLink Integration
   const { activeBattlecards, processTranscriptStream, dismissBattlecard } = useVaruniLink(null);
+
+  // Load saved agent name on mount
+  useEffect(() => {
+    fetch('/api/admin/integration-settings')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.voice_agent_name) setAgentName(d.voice_agent_name); })
+      .catch(() => {});
+  }, []);
+
+  // ── Call Status Polling — detect when remote party hangs up ──
+  useEffect(() => {
+    if (!callActive || !activeCallSid) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/voice/elevenlabs/call-status?callSid=${activeCallSid}`);
+        const data = await res.json();
+        const ended = ['completed', 'busy', 'no-answer', 'canceled', 'failed'].includes(data?.status);
+        if (ended) {
+          setCallActive(false);
+          setActiveCallSid(null);
+          toast.success('Call ended');
+        }
+      } catch { /* ignore poll errors */ }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [callActive, activeCallSid]);
 
   // Simulate transcript stream for demo purposes when running
   useEffect(() => {
@@ -81,7 +109,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
 
       setCallActive(true);
 
-      // Trigger direct ElevenLabs SIP outbound call via AWS Chime SMA
+      // Trigger outbound call via ElevenLabs native Twilio integration
       const res = await fetch('/api/voice/elevenlabs/outbound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,14 +122,15 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
 
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(j?.error?.message || j?.error || 'Outbound call failed');
+        throw new Error(j?.error || 'Outbound call failed');
       }
 
-      const txId = String(j?.result?.TransactionId || 'outbound');
-      setActiveTransactionId(txId);
+      const callSid = j?.callSid || null;
+
+      setActiveCallSid(callSid);
       
-      setResults((prev) => [{ phone, leadId, ok: true, transactionId: txId, error: undefined }, ...prev].slice(0, 100));
-      toast.success(`ElevenLabs Agent dispatched to ${phone}`);
+      setResults((prev) => [{ phone, leadId, ok: true, transactionId: callSid || 'outbound', error: undefined }, ...prev].slice(0, 100));
+      toast.success(`Agent dispatched to ${phone}`);
     } catch (e: any) {
       setCallActive(false);
       setResults((prev) => [{ phone: singlePhone.trim(), leadId: singleLeadId.trim() || undefined, ok: false, error: e?.message || String(e) }, ...prev].slice(0, 100));
@@ -111,7 +140,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
 
   const hangupSingle = useCallback(async () => {
     try {
-      if (!activeTransactionId) {
+      if (!activeCallSid) {
         setCallActive(false);
         return;
       }
@@ -119,7 +148,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
       const res = await fetch('/api/voice/elevenlabs/hangup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactionId: activeTransactionId }),
+        body: JSON.stringify({ callSid: activeCallSid }),
       });
       
       if (!res.ok) throw new Error("Failed to drop call");
@@ -128,9 +157,9 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
       toast.error("Failed to hangup: " + e.message);
     } finally {
       setCallActive(false);
-      setActiveTransactionId(null);
+      setActiveCallSid(null);
     }
-  }, [activeTransactionId]);
+  }, [activeCallSid]);
 
   const stopRun = useCallback(() => {
     stopRef.current = true;
@@ -154,7 +183,7 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
         if (!isE164(num)) {
           throw new Error(`Invalid E.164: ${num}`);
         }
-        // Trigger direct ElevenLabs SIP outbound call via AWS Chime SMA
+        // Trigger outbound call via ElevenLabs native Twilio integration
         const res = await fetch('/api/voice/elevenlabs/outbound', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -167,9 +196,9 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
 
         const j = await res.json().catch(() => ({}));
         if (!res.ok) {
-          throw new Error(j?.error?.message || j?.error || 'Outbound call failed');
+          throw new Error(j?.error || 'Outbound call failed');
         }
-        setResults((prev) => [{ phone: num, leadId, ok: true, transactionId: String(j?.result?.TransactionId || 'outbound'), error: undefined }, ...prev].slice(0, 100));
+        setResults((prev) => [{ phone: num, leadId, ok: true, transactionId: String(j?.callSid || 'outbound'), error: undefined }, ...prev].slice(0, 100));
       } catch (e: any) {
         setResults((prev) => [{ phone, leadId, ok: false, error: e?.message || String(e) }, ...prev].slice(0, 100));
       }
@@ -454,13 +483,26 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
                 ))}
               </div>
 
-              <Button
-                onClick={runSingle}
-                className="relative overflow-hidden w-full h-12 bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black uppercase tracking-[0.3em] text-[11px] gap-2 shadow-[0_8px_25px_-5px_rgba(16,185,129,0.4)] transition-all duration-500 hover:shadow-[0_12px_35px_-5px_rgba(16,185,129,0.5)] active:scale-95 border-none group"
-                disabled={!singlePhone.trim()}
-              >
-                <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg]" /> <Phone className="h-4 w-4 relative z-10" /> <span className="relative z-10">Voice Start</span>
-              </Button>
+              {!callActive ? (
+                <Button
+                  onClick={runSingle}
+                  className="relative overflow-hidden w-full h-12 bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black uppercase tracking-[0.3em] text-[11px] gap-2 shadow-[0_8px_25px_-5px_rgba(16,185,129,0.4)] transition-all duration-500 hover:shadow-[0_12px_35px_-5px_rgba(16,185,129,0.5)] active:scale-95 border-none group"
+                  disabled={!singlePhone.trim()}
+                >
+                  <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg]" /> 
+                  <Phone className="h-4 w-4 relative z-10" /> 
+                  <span className="relative z-10">Voice Start</span>
+                </Button>
+              ) : (
+                <Button
+                  onClick={hangupSingle}
+                  className="relative overflow-hidden w-full h-12 bg-gradient-to-br from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-black uppercase tracking-[0.3em] text-[11px] gap-2 shadow-[0_8px_25px_-5px_rgba(220,38,38,0.4)] transition-all duration-500 hover:shadow-[0_12px_35px_-5px_rgba(220,38,38,0.5)] active:scale-95 border-none group animate-pulse"
+                >
+                  <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg]" /> 
+                  <XCircle className="h-4 w-4 relative z-10" /> 
+                  <span className="relative z-10">Hangup</span>
+                </Button>
+              )}
             </div>
           </TabsContent>
 
@@ -503,9 +545,50 @@ export default function DialerPanel({ isCompact = false }: { isCompact?: boolean
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0 p-4 h-full overflow-y-auto flex-1 min-h-0">
-            <div className="text-[10px] text-muted-foreground mb-4 opacity-70">
-              Configure agent prompts and settings. call scripts.
+            <div className="text-[10px] text-muted-foreground mb-3 opacity-70">
+              Configure your AI agent and call settings.
             </div>
+
+            {/* Agent Name Config */}
+            <div className="space-y-2 p-3 mb-3 rounded-lg border border-emerald-500/10 bg-emerald-500/[0.02]">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">AI Agent Name</label>
+              <div className="flex gap-2">
+                <Input
+                  id="config-agent-name"
+                  value={agentName}
+                  onChange={(e) => setAgentName(e.target.value)}
+                  placeholder="e.g. Darlene, Sarah, Alex"
+                  className="h-8 bg-black/30 border-emerald-500/20 text-sm flex-1"
+                />
+                <Button
+                  size="sm"
+                  className="h-8 bg-emerald-600 hover:bg-emerald-700 text-[10px] font-bold gap-1 px-3"
+                  disabled={savingAgentName}
+                  onClick={async () => {
+                    setSavingAgentName(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append('voice_agent_name', agentName);
+                      const res = await fetch('/api/admin/save-agent-name', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ voice_agent_name: agentName }),
+                      });
+                      if (!res.ok) throw new Error('Failed');
+                      toast.success(`Agent name set to "${agentName}"`);
+                    } catch {
+                      toast.error('Failed to save agent name');
+                    }
+                    setSavingAgentName(false);
+                  }}
+                >
+                  {savingAgentName ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                  Save
+                </Button>
+              </div>
+              <p className="text-[9px] text-muted-foreground/50">The name the AI agent uses to introduce itself on calls.</p>
+            </div>
+
             <PromptGeneratorPanel 
               embedded={true} 
               showSoftphone={false} 

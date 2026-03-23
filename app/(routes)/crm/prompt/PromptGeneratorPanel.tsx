@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from 'react-hot-toast';
-import CustomCCP from '@/components/voice/CustomCCP';
 
 import { usePermission } from '@/components/providers/permissions-provider';
 import { useSession } from 'next-auth/react';
@@ -432,13 +431,12 @@ export default function PromptGeneratorPanel({ embedded = false, showSoftphone =
 
       {showSoftphone && (
         <>
-          {/* Connect CCP Softphone (optional visibility) */}
+          {/* Softphone note — outbound is now via Dialer + Twilio */}
           <section className="rounded-md border bg-card p-4">
             <h2 className="text-sm font-semibold mb-2">Softphone</h2>
-            <CustomCCP title="Connect Softphone" subtitle="Custom CCP (theme-aligned)" dialerLeft />
-            <div className="microtext text-muted-foreground mt-2">
-              This uses the unified Custom CCP. The Prompt Generator works independently of the dialing backend.
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Voice dialing is available via the Dialer panel. Configure your Twilio credentials in Admin → Integrations.
+            </p>
           </section>
         </>
       )}

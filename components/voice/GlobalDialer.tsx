@@ -86,14 +86,11 @@ export default function GlobalDialer() {
                 return;
             }
 
-            // Trigger standard engage start
-            // Note: This API typically triggers the backend. 
-            // Ideally, the global softphone should handle this via Streams if active.
-            // For now, consistent with DialerPanel 'Single Dial' behavior.
-            const res = await fetch("/api/voice/engage/start", {
+            // Trigger outbound call via ElevenLabs native Twilio integration
+            const res = await fetch("/api/voice/elevenlabs/outbound", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone, includeAgent: true }),
+                body: JSON.stringify({ destination: phone }),
             });
 
             const j = await res.json().catch(() => ({}));
@@ -101,8 +98,6 @@ export default function GlobalDialer() {
                 throw new Error(j?.error || "Dial failed");
             }
             toast.success(`Dialing ${phone}...`);
-            // Optionally hide pad after dial?
-            // setShowPad(false); 
         } catch (e: any) {
             toast.error(e?.message || "Failed to dial");
         } finally {

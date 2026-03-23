@@ -1,104 +1,239 @@
 import { NextResponse } from "next/server";
 
-// Ensure Node.js runtime for AWS SDK compatibility
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const preferredRegion = 'auto';
 
-import { ChimeSDKVoiceClient, CreateSipMediaApplicationCallCommand } from "@aws-sdk/client-chime-sdk-voice";
-import { requireApiAuth, requireAdminAuth } from "@/lib/api-auth-guard";
+import { requireApiAuth } from "@/lib/api-auth-guard";
+import { prismadb } from "@/lib/prisma";
 import { systemLogger } from "@/lib/logger";
+import { isE164 } from "@/lib/twilio/twilio-voice";
 
 /**
  * POST /api/voice/elevenlabs/outbound
- * Body: { destination: string; agentId: string; from?: string }
- * - destination: E.164 phone number (e.g., "+17203703285")
- * - agentId: ElevenLabs Agent ID
- * - from: optional E.164 to override the default FromPhoneNumber (env)
  * 
- * Initiates an outbound call using Amazon Chime SDK, passing the agent ID 
- * in SIP Headers to tell the Chime SMA Lambda to CallAndBridge directly 
- * to the ElevenLabs SIP endpoint.
+ * Initiates an outbound call using the ElevenLabs Conversational AI native
+ * Twilio integration. ElevenLabs orchestrates Twilio behind the scenes.
+ * Looks up lead data and passes dynamic variables inline so the AI agent
+ * can personalize the first message without needing a pre-call webhook.
+ * 
+ * Body: { destination: string; agentId?: string; leadId?: string }
  */
 
 type Body = {
   destination: string;
-  agentId: string;
-  from?: string;
+  agentId?: string;
   leadId?: string;
 };
 
-function isE164(num: string) {
-  return /^\+[1-9]\d{1,14}$/.test(num);
-}
-
 export async function POST(req: Request) {
-  // ── Auth guard ──
   const session = await requireApiAuth();
   if (session instanceof Response) return session;
 
   try {
     const body = (await req.json()) as Body;
 
-    if (!body || !body.destination || !isE164(body.destination)) {
-      return new NextResponse("Invalid destination (must be E.164)", { status: 400 });
+    if (!body?.destination || !isE164(body.destination)) {
+      return NextResponse.json({ ok: false, error: "Invalid destination (must be E.164)" }, { status: 400 });
     }
 
-    if (!body.agentId) {
-      return new NextResponse("Missing ElevenLabs Agent ID", { status: 400 });
+    // Resolve ElevenLabs credentials + team config in one pass
+    let resolvedAgentId = body.agentId || process.env.NEXT_PUBLIC_ELEVENLABS_AGENT || "";
+    let resolvedApiKey = process.env.ELEVENLABS_API_KEY || "";
+    let agentPhoneNumberId = process.env.ELEVENLABS_AGENT_PHONE_NUMBER_ID || "";
+    let brandName = "Basalt CRM";
+    let brandContext = "";
+    let agentDisplayName = "Darlene"; // Default, overridden by DB
+
+    try {
+      const { getCurrentUserTeamId } = await import("@/lib/team-utils");
+      const teamInfo = await getCurrentUserTeamId();
+      if (teamInfo?.teamId) {
+        // Single integration lookup for all fields
+        const integration = await prismadb.tenant_Integrations.findUnique({
+          where: { tenant_id: teamInfo.teamId },
+          select: { elevenlabs_api_key: true, elevenlabs_agent_id: true, voice_agent_name: true },
+        });
+        if (integration?.elevenlabs_api_key) resolvedApiKey = integration.elevenlabs_api_key;
+        if (integration?.elevenlabs_agent_id) resolvedAgentId = integration.elevenlabs_agent_id;
+        if (integration?.voice_agent_name) agentDisplayName = integration.voice_agent_name;
+
+        // Brand info
+        const brand = await prismadb.brands.findFirst({
+          where: { team_id: teamInfo.teamId },
+          select: { brand_label: true, company_name: true, mission_statement: true, core_philosophy: true, tagline: true, description: true, brand_voice: true },
+          orderBy: { updatedAt: "desc" },
+        });
+        if (brand) {
+          const label = brand.brand_label || "";
+          brandName = (label && label !== "Default Brand") ? label : (brand.company_name || brandName);
+          const parts = [];
+          if (brand.tagline) parts.push(`Tagline: ${brand.tagline}`);
+          if (brand.mission_statement) parts.push(`Mission: ${brand.mission_statement}`);
+          if (brand.core_philosophy) parts.push(`Philosophy: ${brand.core_philosophy}`);
+          if (brand.description) parts.push(`About: ${brand.description}`);
+          if (brand.brand_voice && brand.brand_voice !== "Visionary") parts.push(`Tone: ${brand.brand_voice}`);
+          brandContext = parts.join("\n");
+        }
+      }
+    } catch { /* use defaults */ }
+
+    if (!resolvedAgentId) {
+      return NextResponse.json({ ok: false, error: "Missing ElevenLabs Agent ID" }, { status: 400 });
+    }
+    if (!resolvedApiKey) {
+      return NextResponse.json({ ok: false, error: "Missing ELEVENLABS_API_KEY" }, { status: 500 });
     }
 
-    const smaId = process.env.CHIME_SMA_APPLICATION_ID || process.env.CHIME_SMA_ID;
-    const defaultFrom = process.env.CHIME_SOURCE_PHONE || process.env.CHIME_FROM_PHONE_NUMBER;
-    const region = process.env.CHIME_VOICE_REGION || process.env.AWS_REGION || "us-west-2";
-
-    if (!smaId) return new NextResponse("Missing CHIME_SMA_APPLICATION_ID in env", { status: 500 });
-    
-    const fromNumber = body.from?.trim() || defaultFrom?.trim();
-    if (!fromNumber || !isE164(fromNumber)) {
-      return new NextResponse("Invalid or missing FromPhoneNumber (set CHIME_SOURCE_PHONE or pass body.from)", { status: 400 });
-    }
-
-    const client = new ChimeSDKVoiceClient({ region });
-
-    const sipHeaders: Record<string, string> = {
-      // Pass the Agent ID back to the SMA Lambda so it knows to bridge to ElevenLabs
-      "X-Elevenlabs-Agent-Id": body.agentId,
-      "x-elevenlabs-agent-id": body.agentId, 
+    let dynamicVars: Record<string, string> = {
+      lead_first_name: "there",
+      lead_last_name: "",
+      company_name: brandName,
+      company_context: brandContext,
+      campaign_context: "a general inquiry",
+      business_facts: "",
+      agent_name: agentDisplayName,
+      campaign_instruction: "",
     };
 
-    const argumentsMap: Record<string, string> = {
-      "X-Elevenlabs-Agent-Id": body.agentId,
-    };
+    // ── Look up lead + recent activity + campaign prompt ──
+    try {
+      let lead: any = null;
+      if (body.leadId) {
+        lead = await prismadb.crm_Leads.findUnique({
+          where: { id: body.leadId },
+          select: {
+            id: true, firstName: true, lastName: true, company: true, jobTitle: true,
+            phone: true, lead_source: true, campaign: true, description: true,
+            pipeline_stage: true, voice_prompt_override: true, email: true,
+          },
+        });
+      }
+      if (!lead) {
+        lead = await prismadb.crm_Leads.findFirst({
+          where: {
+            OR: [
+              { phone: body.destination },
+              { phone: body.destination.replace(/^\+1/, "") },
+            ]
+          },
+          orderBy: { updatedAt: "desc" },
+          select: {
+            id: true, firstName: true, lastName: true, company: true, jobTitle: true,
+            phone: true, lead_source: true, campaign: true, description: true,
+            pipeline_stage: true, voice_prompt_override: true, email: true,
+          },
+        });
+      }
+      if (lead) {
+        // Build business facts
+        const facts = [];
+        if (lead.company) facts.push(`Lead Company: ${lead.company}`);
+        if (lead.jobTitle) facts.push(`Title: ${lead.jobTitle}`);
+        if (lead.lead_source) facts.push(`Source: ${lead.lead_source}`);
+        if (lead.pipeline_stage) facts.push(`Pipeline Stage: ${lead.pipeline_stage}`);
+        if (lead.email) facts.push(`Email: ${lead.email}`);
 
-    if (body.leadId) {
-      sipHeaders["X-Lead-Id"] = String(body.leadId);
-      sipHeaders["x-lead-id"] = String(body.leadId);
-      argumentsMap["LeadId"] = String(body.leadId);
+        // Fetch recent activities for context
+        try {
+          const activities = await prismadb.crm_Lead_Activities.findMany({
+            where: { lead: lead.id },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            select: { type: true, metadata: true, createdAt: true },
+          });
+          if (activities.length > 0) {
+            const actSummary = activities.map((a: any) => {
+              const date = new Date(a.createdAt).toLocaleDateString();
+              const meta = typeof a.metadata === "object" && a.metadata ? (a.metadata as any).message || "" : "";
+              return `${date}: ${a.type}${meta ? ` — ${meta}` : ""}`;
+            }).join("; ");
+            facts.push(`Recent Activity: ${actSummary}`);
+          }
+        } catch { /* skip activities */ }
+
+        // Load campaign voice prompt if available
+        let campaignInstruction = lead.voice_prompt_override || "";
+        if (!campaignInstruction) {
+          try {
+            const outreachItem = await prismadb.crm_Outreach_Items.findFirst({
+              where: { lead: lead.id, channel: "PHONE" },
+              orderBy: { updatedAt: "desc" },
+            });
+            if (outreachItem?.campaign) {
+              const camp = await prismadb.crm_Outreach_Campaigns.findUnique({
+                where: { id: outreachItem.campaign },
+                select: { voice_prompt: true, name: true },
+              });
+              if (camp?.voice_prompt) campaignInstruction = camp.voice_prompt;
+            }
+          } catch { /* skip campaign */ }
+        }
+
+        dynamicVars = {
+          lead_first_name: lead.firstName || "there",
+          lead_last_name: lead.lastName || "",
+          company_name: brandName,
+          company_context: brandContext,
+          campaign_context: lead.campaign || lead.description || "a recent inquiry",
+          business_facts: facts.join("\n"),
+          agent_name: agentDisplayName,
+          campaign_instruction: campaignInstruction || "Your goal is to build rapport, qualify the lead's needs, and schedule a follow-up.",
+        };
+        systemLogger.info(`[ELEVENLABS_OUTBOUND] Matched lead ${lead.id} — ${lead.firstName} ${lead.lastName}`);
+      }
+    } catch (lookupErr: any) {
+      systemLogger.warn("[ELEVENLABS_OUTBOUND] Lead lookup failed, using defaults:", lookupErr?.message);
     }
 
-    const cmd = new CreateSipMediaApplicationCallCommand({
-      SipMediaApplicationId: smaId,
-      FromPhoneNumber: fromNumber,
-      ToPhoneNumber: body.destination.trim(),
-      SipHeaders: sipHeaders,
-      ArgumentsMap: argumentsMap,
+    // ── Build ElevenLabs payload ──
+    const elevenlabsPayload: Record<string, any> = {
+      agent_id: resolvedAgentId,
+      to_number: body.destination,
+      conversation_initiation_client_data: {
+        dynamic_variables: dynamicVars,
+      },
+    };
+
+    if (agentPhoneNumberId) {
+      elevenlabsPayload.agent_phone_number_id = agentPhoneNumberId;
+    }
+
+    const res = await fetch("https://api.elevenlabs.io/v1/convai/twilio/outbound_call", {
+      method: "POST",
+      headers: {
+        "xi-api-key": resolvedApiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(elevenlabsPayload),
     });
 
-    const res = await client.send(cmd);
+    const responseText = await res.text();
+    let data: any = {};
+    try { data = JSON.parse(responseText); } catch { data = { raw: responseText }; }
+
+    if (!res.ok) {
+      systemLogger.error(`[ELEVENLABS_OUTBOUND] Failed: ${res.status}`, responseText);
+      return NextResponse.json({
+        ok: false,
+        error: data?.detail || data?.message || `ElevenLabs API returned ${res.status}`,
+      }, { status: res.status });
+    }
+
+    const callSid = data?.call_sid || data?.callSid || data?.sid || null;
     
-    systemLogger.info(`[ELEVENLABS_OUTBOUND] Triggered outbound call to ${body.destination} for Agent ${body.agentId}`);
-    
-    return NextResponse.json({ ok: true, result: res }, { status: 200 });
+    systemLogger.info(`[ELEVENLABS_OUTBOUND] Initiated call to ${body.destination} via Twilio. CallSid: ${callSid}`);
+
+    return NextResponse.json({
+      ok: true,
+      callSid,
+      result: data,
+    }, { status: 200 });
   } catch (e: any) {
     systemLogger.error("[ELEVENLABS_OUTBOUND_ERROR]", e);
     return NextResponse.json({
       ok: false,
-      error: {
-        name: e?.name,
-        message: e?.message,
-        code: (e as any)?.code,
-      },
+      error: e?.message || "Outbound call failed",
     }, { status: 500 });
   }
 }
+

@@ -44,6 +44,15 @@ export async function saveIntegrationSettings(data: FormData) {
         const woocommerceConsumerKey = data.get("woocommerce_consumer_key") as string;
         const woocommerceConsumerSecret = data.get("woocommerce_consumer_secret") as string;
 
+        // Extract Twilio Settings
+        const twilioEnabled = data.get("twilio_enabled") === "on";
+        const twilioAccountSid = data.get("twilio_account_sid") as string;
+        const twilioAuthToken = data.get("twilio_auth_token") as string;
+        const twilioPhoneNumber = data.get("twilio_phone_number") as string;
+        const voiceAgentName = data.get("voice_agent_name") as string;
+        const elevenlabsApiKey = data.get("elevenlabs_api_key") as string;
+        const elevenlabsAgentId = data.get("elevenlabs_agent_id") as string;
+
         // Validate
         if (surgeEnabled && (!surgeApiKey || !surgeMerchantId)) {
             return { error: "Surge API Key and ID are required when enabled." };
@@ -69,6 +78,13 @@ export async function saveIntegrationSettings(data: FormData) {
                 woocommerce_store_url: woocommerceStoreUrl || undefined,
                 woocommerce_consumer_key: woocommerceConsumerKey || undefined,
                 woocommerce_consumer_secret: woocommerceConsumerSecret || undefined,
+                twilio_enabled: twilioEnabled,
+                twilio_account_sid: twilioAccountSid || undefined,
+                twilio_auth_token: twilioAuthToken || undefined,
+                twilio_phone_number: twilioPhoneNumber || undefined,
+                voice_agent_name: voiceAgentName || undefined,
+                elevenlabs_api_key: elevenlabsApiKey || undefined,
+                elevenlabs_agent_id: elevenlabsAgentId || undefined,
                 preferred_chain: "BASE"
             },
             update: {
@@ -85,6 +101,13 @@ export async function saveIntegrationSettings(data: FormData) {
                 woocommerce_store_url: woocommerceStoreUrl || undefined,
                 woocommerce_consumer_key: woocommerceConsumerKey || undefined,
                 woocommerce_consumer_secret: woocommerceConsumerSecret || undefined,
+                twilio_enabled: twilioEnabled,
+                twilio_account_sid: twilioAccountSid || undefined,
+                twilio_auth_token: twilioAuthToken || undefined,
+                twilio_phone_number: twilioPhoneNumber || undefined,
+                voice_agent_name: voiceAgentName || undefined,
+                elevenlabs_api_key: elevenlabsApiKey || undefined,
+                elevenlabs_agent_id: elevenlabsAgentId || undefined,
             }
         });
 

@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import CustomCCP from "@/components/voice/CustomCCP";
 
 /**
  * AzureSalesAgentPanel (Prompt Generator)
@@ -291,14 +290,9 @@ You are a senior SDR on a live sales call for BasaltCRM.
 
   return (
     <div className="rounded border bg-card p-2">
-      <CustomCCP
-        title="Engage AI Softphone"
-        subtitle="Dialer left; agent settings right"
-        dialerLeft
-        leadId={leadId}
-        contactId={contactId}
-        autoStartBasaltECHO
-      />
+      <div className="rounded border bg-muted/30 p-3 mb-3">
+        <p className="text-xs text-muted-foreground">Voice dialing is available via the Dialer panel. Configure Twilio credentials in Admin → Integrations.</p>
+      </div>
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs font-semibold">Agent Prompt (for external Azure Realtime)</div>
         <div className="text-[11px]">

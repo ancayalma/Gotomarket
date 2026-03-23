@@ -8,6 +8,7 @@ import { SurgeSettingsForm } from "./_components/SurgeSettingsForm";
 import { MercurySettingsForm } from "./_components/MercurySettingsForm";
 import { CloudflareSettingsForm } from "./_components/CloudflareSettingsForm";
 import { ShopifySettingsForm, WooCommerceSettingsForm } from "./_components/ECommerceSettingsForm";
+import { TwilioSettingsForm } from "./_components/TwilioSettingsForm";
 import { LearnLink } from "@/components/ui/LearnLink";
 import Container from "@/app/(routes)/components/ui/Container";
 
@@ -82,6 +83,20 @@ export default async function IntegrationsSettingsPage() {
                         teamId={teamInfo.teamId}
                         initialConfig={captchaConfig}
                     />
+                </div>
+            </div>
+
+            {/* Voice & Telephony */}
+            <div className="pt-2 border-t border-primary/10">
+                <div className="flex items-center gap-3 mb-4 pt-4">
+                    <h3 className="text-xl font-semibold tracking-tight">Voice & Telephony</h3>
+                    <span className="text-[10px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                        Outbound Dialing
+                    </span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4 -mt-2">Connect your Twilio number for AI-powered outbound calling via ElevenLabs agents.</p>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+                    <TwilioSettingsForm initialData={integration} />
                 </div>
             </div>
 

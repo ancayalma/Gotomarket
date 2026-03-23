@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import CustomCCP from "@/components/voice/CustomCCP";
 
 /**
  * AzureCoachPanel
@@ -115,7 +114,9 @@ You are an on-call sales coach.
 
   return (
     <div className="rounded border bg-card p-2">
-      <CustomCCP title="Engage AI Softphone" subtitle="Dialer left; agent settings right" dialerLeft />
+      <div className="rounded border bg-muted/30 p-3 mb-3">
+        <p className="text-xs text-muted-foreground">Voice dialing is available via the Dialer panel.</p>
+      </div>
       <div className="text-xs font-semibold mb-2">AI Coach (Azure Realtime)</div>
       <div className="flex items-center gap-2 mb-2">
         <Button onClick={start} disabled={active || connecting}>{connecting ? "Connecting…" : (active ? "Active" : "Start Coach")}</Button>
