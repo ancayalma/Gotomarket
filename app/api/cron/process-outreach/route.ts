@@ -62,14 +62,14 @@ export async function GET(req: Request) {
                 const html = item.body_html || item.body_text || "";
 
                 // Send via Team-aware mailer (Strict enforcement of BYO Email)
-                await sendTeamEmail(item.assigned_campaign.team_id as string, {
+                const realMessageId = await sendTeamEmail(item.assigned_campaign.team_id as string, {
                     to: item.assigned_lead.email as string,
                     subject: subject,
                     html: html,
                     text: item.body_text || "",
                 }, "OUTREACH");
 
-                const messageId = `outreach_${item.id}_${Date.now()}`;
+                const messageId = realMessageId?.replace(/[<>]/g, "").trim() || `outreach_${item.id}_${Date.now()}`;
 
                 // Update Status: SENT
                 await prismadb.crm_Outreach_Items.update({

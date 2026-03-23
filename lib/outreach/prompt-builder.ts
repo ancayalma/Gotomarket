@@ -16,8 +16,12 @@ interface PromptBuilderParams {
   };
   companyResearch?: string | null;
   meetingLink?: string | null;
-  channel: "EMAIL" | "SMS" | "FOLLOWUP";
+  channel: "EMAIL" | "SMS" | "FOLLOWUP" | "REPLY";
   brandIdentity: Partial<TeamBrandIdentity> | null;
+  inboundMessage?: string | null;
+  conversationHistory?: string[] | null;
+  availableDocuments?: { name: string; type?: string }[] | null;
+  availableResources?: { label: string; url: string }[] | null;
 }
 
 export function buildOutreachPrompt({
@@ -28,6 +32,10 @@ export function buildOutreachPrompt({
   meetingLink,
   channel,
   brandIdentity,
+  inboundMessage,
+  conversationHistory,
+  availableDocuments,
+  availableResources,
 }: PromptBuilderParams) {
 
   // 1. Resolve Brand Identity Text Block
@@ -97,6 +105,26 @@ Requirements:
 - Do not make the prospect feel guilty.
 - End with a low-friction CTA.
 `.trim();
+  } else if (channel === "REPLY") {
+    fallbackBase = `
+You are writing a reply to an inbound email from a lead. You are responding ON BEHALF of ${senderName}${senderTitle ? ` (${senderTitle})` : ""} from ${senderCompany}.
+Write entirely in first person (I/me) as ${senderName}. Never refer to ${senderName} in third person.
+
+${brandBlock}
+
+Requirements:
+- Output JSON ONLY with keys "subject" and "body".
+- "body" MUST be plain text (no HTML), 150-250 words.
+- Respond DIRECTLY to the lead's message — address their specific questions, interest, or objections.
+- Be warm, professional, and helpful. Show genuine engagement with what they said.
+- If they expressed interest, acknowledge it and move toward the next step (meeting, demo, etc.).
+- If they had objections or questions, address them honestly using the brand context.
+- End with a clear, low-friction CTA (preferably linking to a meeting/calendar).
+- Do NOT re-introduce yourself or the company at length — they already know from the original outreach.
+- Keep it conversational and concise. Match the lead's energy level.
+- Start with a greeting addressing them by first name.
+- Sign off as ${senderName}.
+`.trim();
   }
 
   // 3. Assemble The Final Prompt
@@ -126,5 +154,29 @@ ${sender.title ? `- Title: ${sender.title}` : ""}
 - Company: ${sender.company || brandName}
 `.trim() : "";
 
-  return [promptBase, senderBlock, contactBlock, companyBlock, meetingBlock].filter(Boolean).join("\\n\\n");
+  // Inbound message context (for REPLY channel)
+  const inboundBlock = inboundMessage ? `
+Lead's inbound message (respond to this):
+"""${inboundMessage}"""
+`.trim() : "";
+
+  // Conversation history (for REPLY channel)
+  const historyBlock = conversationHistory?.length ? `
+Previous conversation (most recent first):
+${conversationHistory.map((m: string, i: number) => `[${i + 1}] ${m}`).join("\n")}
+`.trim() : "";
+
+  // Available documents (for attachment decisions)
+  const docsBlock = availableDocuments?.length ? `
+Available campaign documents (you may suggest attaching these when relevant):
+${availableDocuments.map((d) => `- ${d.name}${d.type ? ` (${d.type})` : ""}`).join("\n")}
+`.trim() : "";
+
+  // Available resources (buttons/links the email template includes)
+  const resourcesBlock = availableResources?.length ? `
+Resources included in the email template (you can reference these in your message):
+${availableResources.map((r) => `- ${r.label}: ${r.url}`).join("\n")}
+`.trim() : "";
+
+  return [promptBase, senderBlock, contactBlock, companyBlock, meetingBlock, inboundBlock, historyBlock, docsBlock, resourcesBlock].filter(Boolean).join("\\n\\n");
 }

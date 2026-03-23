@@ -76,7 +76,7 @@ export default async function sendEmail(
       ...emailOptions,
       from: fromAddress
     });
-    const realMessageId = result.messageId || null;
+    const realMessageId = result.messageId?.replace(/[<>]/g, "").trim() || null;
     console.log(`[Email Success] To: ${emailOptions.to}, From: ${fromAddress}, MessageId: ${realMessageId}`);
     return realMessageId;
   } catch (error: any | Error) {

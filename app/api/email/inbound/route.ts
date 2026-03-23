@@ -5,62 +5,42 @@ import { systemLogger } from "@/lib/logger";
 /**
  * POST /api/email/inbound
  * Webhook for AWS SES Inbound Email via Amazon SNS.
- * Debug mode: stores diagnostic trace in crm_Email_Thread body_text.
  */
 export async function POST(req: Request) {
-  const debugLog: string[] = [];
-  const log = (msg: string) => { debugLog.push(`[${new Date().toISOString()}] ${msg}`); };
-
   try {
     const rawBody = await req.text();
-    log(`Received webhook. Body length: ${rawBody.length}`);
     
     let body;
     try {
       body = JSON.parse(rawBody);
     } catch {
-      log(`FATAL: Invalid JSON body: ${rawBody.substring(0, 300)}`);
-      await saveDebugLog(debugLog, rawBody.substring(0, 500));
       return new NextResponse("Invalid JSON", { status: 400 });
     }
 
-    log(`Parsed body. Type: ${body.Type}, TopicArn: ${body.TopicArn}`);
-
     // 1. Handle SNS Subscription Confirmation
     if (body.Type === "SubscriptionConfirmation") {
-      log(`SubscriptionConfirmation received. SubscribeURL: ${body.SubscribeURL}`);
+      systemLogger.info(`[SES_INBOUND] Confirming SNS Subscription`);
       if (body.SubscribeURL) {
         try {
-          const res = await fetch(body.SubscribeURL, { cache: "no-store", method: "GET" });
-          log(`Confirmation response: ${res.status}`);
-        } catch (fetchErr: any) {
-          log(`Confirmation fetch failed: ${fetchErr.message}`);
+          await fetch(body.SubscribeURL, { cache: "no-store", method: "GET" });
+        } catch (fetchErr) {
+          systemLogger.error(`[SES_INBOUND] SNS confirmation failed:`, fetchErr);
         }
       }
-      await saveDebugLog(debugLog, "SNS Subscription Confirmation");
       return new NextResponse("OK", { status: 200 });
     }
 
     // 2. Handle Notification (Actual Email)
     if (body.Type === "Notification") {
-      log(`Processing Notification. SNS Subject: ${body.Subject}, SNS MessageId: ${body.MessageId}`);
-      
       let emailMessage;
       try {
         emailMessage = JSON.parse(body.Message);
       } catch {
-        log(`FATAL: Could not parse body.Message as JSON. Raw (300 chars): ${body.Message?.substring(0, 300)}`);
-        await saveDebugLog(debugLog, "Parse failure");
+        systemLogger.warn("[SES_INBOUND] Could not parse Notification Message JSON.");
         return new NextResponse("Invalid SES Message", { status: 400 });
       }
 
-      log(`notificationType: ${emailMessage.notificationType}`);
-      log(`receipt.action: ${JSON.stringify(emailMessage.receipt?.action)}`);
-      log(`mail keys: ${Object.keys(emailMessage.mail || {}).join(", ")}`);
-
       if (emailMessage.notificationType !== "Received") {
-        log(`Ignoring non-Received notification: ${emailMessage.notificationType}`);
-        await saveDebugLog(debugLog, `Ignored: ${emailMessage.notificationType}`);
         return new NextResponse("Ignored", { status: 200 });
       }
 
@@ -73,89 +53,60 @@ export async function POST(req: Request) {
       const subject = commonHeaders.subject || "(No Subject)";
       const inboundMessageId = mail?.messageId;
 
-      log(`From: ${fromAddress}`);
-      log(`To: ${JSON.stringify(toAddresses)}`);
-      log(`Subject: ${subject}`);
-      log(`SES MessageId: ${inboundMessageId}`);
-      log(`Headers count: ${headers.length}`);
-      
-      // Log ALL headers
-      for (const h of headers) {
-        log(`  Header: ${h.name} = ${String(h.value).substring(0, 200)}`);
-      }
-
       // Extract In-Reply-To and References
       const inReplyToHeader = headers.find((h: any) => h.name.toLowerCase() === "in-reply-to")?.value;
       const referencesHeader = headers.find((h: any) => h.name.toLowerCase() === "references")?.value;
       
-      const cleanMessageId = (id?: string) => id?.replace(/[<>]/g, "").trim();
-      const inReplyTo = cleanMessageId(inReplyToHeader);
+      // Normalize message IDs — strip angle brackets for comparison
+      const normalizeId = (id?: string) => id?.replace(/[<>]/g, "").trim();
+      const inReplyTo = normalizeId(inReplyToHeader);
       
-      log(`In-Reply-To raw: "${inReplyToHeader}"`);
-      log(`In-Reply-To cleaned: "${inReplyTo}"`);
-      log(`References raw: "${referencesHeader}"`);
-
       let matchedOutreachItem = null;
 
-      // Match via In-Reply-To
+      // Match via In-Reply-To — try both normalized and raw formats
       if (inReplyTo) {
+        // First try without angle brackets (normalized)
         matchedOutreachItem = await prismadb.crm_Outreach_Items.findFirst({
           where: { message_id: inReplyTo },
-          select: { id: true, campaign: true, lead: true, message_id: true },
+          select: { id: true, campaign: true, lead: true },
         });
-        log(`Lookup by In-Reply-To "${inReplyTo}": ${matchedOutreachItem ? `MATCHED (item: ${matchedOutreachItem.id}, stored: ${matchedOutreachItem.message_id})` : "NO MATCH"}`);
         
-        // Also try with angle brackets
+        // Also try with angle brackets (some providers store them that way)
         if (!matchedOutreachItem && inReplyToHeader) {
-          const rawId = inReplyToHeader.trim();
           matchedOutreachItem = await prismadb.crm_Outreach_Items.findFirst({
-            where: { message_id: rawId },
-            select: { id: true, campaign: true, lead: true, message_id: true },
+            where: { message_id: inReplyToHeader.trim() },
+            select: { id: true, campaign: true, lead: true },
           });
-          log(`Retry with raw In-Reply-To "${rawId}": ${matchedOutreachItem ? "MATCHED" : "NO MATCH"}`);
         }
       }
 
-      // Match via References
+      // Fallback: match via References header
       if (!matchedOutreachItem && referencesHeader) {
-        const refs = referencesHeader.split(/\s+/).map(cleanMessageId).filter(Boolean);
-        log(`Trying References with ${refs.length} refs: ${JSON.stringify(refs.slice(0, 5))}`);
-        if (refs.length > 0) {
+        const refs = referencesHeader.split(/\s+/).filter(Boolean);
+        // Build an array with both raw and normalized versions
+        const allRefs = refs.flatMap((r: string) => [normalizeId(r), r.trim()]).filter(Boolean) as string[];
+        if (allRefs.length > 0) {
           matchedOutreachItem = await prismadb.crm_Outreach_Items.findFirst({
-            where: { message_id: { in: refs as string[] } },
-            select: { id: true, campaign: true, lead: true, message_id: true },
+            where: { message_id: { in: allRefs } },
+            select: { id: true, campaign: true, lead: true },
           });
-          log(`References lookup: ${matchedOutreachItem ? `MATCHED (item: ${matchedOutreachItem.id})` : "NO MATCH"}`);
         }
       }
 
-      // If no match, log recent outreach items for comparison
-      if (!matchedOutreachItem) {
-        const recentItems = await prismadb.crm_Outreach_Items.findMany({
-          orderBy: { sentAt: "desc" },
-          take: 3,
-          select: { id: true, message_id: true, sentAt: true, to_email: true },
-        });
-        log(`NO MATCH FOUND. Recent outreach items for comparison:`);
-        for (const item of recentItems) {
-          log(`  item ${item.id}: message_id="${item.message_id}" to=${item.to_email} sent=${item.sentAt}`);
-        }
-      }
+      // Parse email body from raw MIME content
+      const bodyText = parseEmailBody(emailMessage.content);
 
       // Fetch campaign context
-      let campaignRecord = null;
+      let campaignRecord: any = null;
       if (matchedOutreachItem?.campaign) {
         campaignRecord = await prismadb.crm_Outreach_Campaigns.findUnique({
           where: { id: matchedOutreachItem.campaign },
-          select: { user: true, team_id: true }
+          select: { user: true, team_id: true, auto_reply_enabled: true }
         });
       }
 
-      log(`Campaign record: ${campaignRecord ? `team=${campaignRecord.team_id}` : "none"}`);
-
-      // Create Email Thread entry — debug log stored in body_text
-      const bodyContent = emailMessage.content || "Empty or requires S3 fetch";
-      await prismadb.crm_Email_Thread.create({
+      // Create Email Thread entry
+      const newThread = await prismadb.crm_Email_Thread.create({
         data: {
           team_id: campaignRecord?.team_id || "600000000000000000000000",
           user: campaignRecord?.user || undefined,
@@ -168,61 +119,159 @@ export async function POST(req: Request) {
           from_email: fromAddress,
           to_email: toAddresses.join(", "),
           subject: subject,
-          body_text: `--- DEBUG LOG ---\n${debugLog.join("\n")}\n--- END DEBUG ---\n\n${bodyContent}`,
+          body_text: bodyText,
           receivedAt: new Date(),
         } as any,
       });
 
-      log(`Created crm_Email_Thread`);
-
       if (matchedOutreachItem) {
+        // Update Outreach Item Status
         await prismadb.crm_Outreach_Items.update({
           where: { id: matchedOutreachItem.id },
           data: {
             status: "REPLIED" as any,
             repliedAt: new Date(),
-            reply_snippet: subject
+            reply_snippet: bodyText.substring(0, 200),
           },
         });
 
+        // Increment Campaign emails_replied
         if (matchedOutreachItem.campaign) {
           await prismadb.crm_Outreach_Campaigns.update({
             where: { id: matchedOutreachItem.campaign },
             data: { emails_replied: { increment: 1 } },
           }).catch(() => {});
         }
+        systemLogger.info(`[SES_INBOUND] ✅ Matched reply from ${fromAddress} to outreach item ${matchedOutreachItem.id}`);
+
+        // Trigger AI auto-reply if enabled (fire-and-forget)
+        if (campaignRecord?.auto_reply_enabled) {
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://crm.basalthq.com";
+          fetch(`${appUrl}/api/outreach/reply`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              outreachItemId: matchedOutreachItem.id,
+              inboundThreadId: newThread.id,
+              campaignId: matchedOutreachItem.campaign,
+            }),
+          }).catch((err) => {
+            systemLogger.error("[SES_INBOUND] Auto-reply trigger failed:", err);
+          });
+        }
+      } else {
+        systemLogger.info(`[SES_INBOUND] Received email from ${fromAddress}, no outreach match (In-Reply-To: ${inReplyTo})`);
       }
 
       return new NextResponse("OK", { status: 200 });
     }
 
-    log(`Unknown SNS message type: ${body.Type}`);
-    await saveDebugLog(debugLog, `Unknown type: ${body.Type}`);
     return new NextResponse("OK", { status: 200 });
 
-  } catch (error: any) {
-    log(`FATAL ERROR: ${error.message}\n${error.stack}`);
-    try { await saveDebugLog(debugLog, `CRASH: ${error.message}`); } catch { /* last resort */ }
+  } catch (error) {
     systemLogger.error("[SES_INBOUND_ERROR]", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
-/** Save debug log to crm_Email_Thread as a diagnostic entry */
-async function saveDebugLog(debugLog: string[], context: string) {
+/**
+ * Parse the actual reply body from raw MIME email content.
+ * Extracts text/plain (preferred) or text/html, decodes base64/quoted-printable.
+ * Strips the quoted original message (everything after "On ... wrote:").
+ */
+function parseEmailBody(rawContent?: string): string {
+  if (!rawContent) return "(No content)";
+
   try {
-    await prismadb.crm_Email_Thread.create({
-      data: {
-        team_id: "600000000000000000000000",
-        thread_subject: `[SES_DEBUG] ${context}`,
-        message_id: `debug_${Date.now()}`,
-        direction: "INBOUND",
-        from_email: "system@debug",
-        to_email: "debug",
-        subject: `[SES_DEBUG] ${context}`,
-        body_text: debugLog.join("\n"),
-        receivedAt: new Date(),
-      } as any,
-    });
-  } catch { /* silently fail */ }
+    // Try to extract text/plain part from multipart MIME
+    const textPlainMatch = rawContent.match(
+      /Content-Type:\s*text\/plain[^\r\n]*\r?\n(?:Content-Transfer-Encoding:\s*(base64|quoted-printable|7bit|8bit)\r?\n)?(?:\r?\n)([\s\S]*?)(?:\r?\n--|\r?\n\r?\n--)/i
+    );
+
+    if (textPlainMatch) {
+      const encoding = textPlainMatch[1]?.toLowerCase();
+      let content = textPlainMatch[2];
+
+      if (encoding === "base64") {
+        try {
+          content = Buffer.from(content.replace(/\s/g, ""), "base64").toString("utf-8");
+        } catch { /* use raw */ }
+      } else if (encoding === "quoted-printable") {
+        content = decodeQuotedPrintable(content);
+      }
+
+      // Strip quoted original message
+      return stripQuotedReply(content).trim() || content.trim();
+    }
+
+    // Try to extract text/html and strip tags
+    const textHtmlMatch = rawContent.match(
+      /Content-Type:\s*text\/html[^\r\n]*\r?\n(?:Content-Transfer-Encoding:\s*(base64|quoted-printable|7bit|8bit)\r?\n)?(?:\r?\n)([\s\S]*?)(?:\r?\n--|\r?\n\r?\n--)/i
+    );
+
+    if (textHtmlMatch) {
+      const encoding = textHtmlMatch[1]?.toLowerCase();
+      let content = textHtmlMatch[2];
+
+      if (encoding === "base64") {
+        try {
+          content = Buffer.from(content.replace(/\s/g, ""), "base64").toString("utf-8");
+        } catch { /* use raw */ }
+      } else if (encoding === "quoted-printable") {
+        content = decodeQuotedPrintable(content);
+      }
+
+      // Strip HTML tags but preserve some structure
+      const text = content
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/div>/gi, "\n")
+        .replace(/<\/p>/gi, "\n\n")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+
+      return stripQuotedReply(text).trim() || text.trim();
+    }
+
+    // If not multipart, just return a cleaned version
+    return rawContent.substring(0, 2000);
+  } catch {
+    return rawContent.substring(0, 2000);
+  }
+}
+
+/** Decode quoted-printable encoding */
+function decodeQuotedPrintable(text: string): string {
+  return text
+    .replace(/=\r?\n/g, "") // soft line breaks
+    .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
+/** Strip the quoted/forwarded original message from a reply */
+function stripQuotedReply(text: string): string {
+  // Gmail: "On Mon, Mar 23, 2026 at 11:41 AM ... wrote:"
+  const gmailPattern = /\r?\nOn\s+.+wrote:\s*\r?\n/i;
+  // Outlook: "From: ... Sent: ... To: ... Subject: ..."
+  const outlookPattern = /\r?\n_{3,}\r?\n/;
+  // Generic: lines starting with ">"
+  const quoteLinePattern = /^>.*$/gm;
+
+  let stripped = text;
+
+  // Cut at Gmail-style quote
+  const gmailIdx = stripped.search(gmailPattern);
+  if (gmailIdx > 0) stripped = stripped.substring(0, gmailIdx);
+
+  // Cut at Outlook-style separator
+  const outlookIdx = stripped.search(outlookPattern);
+  if (outlookIdx > 0) stripped = stripped.substring(0, outlookIdx);
+
+  // Remove remaining ">" quoted lines
+  stripped = stripped.replace(quoteLinePattern, "").trim();
+
+  return stripped;
 }

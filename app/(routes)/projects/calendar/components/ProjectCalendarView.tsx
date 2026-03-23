@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import useSWR, { mutate } from "swr";
 import fetcher from "@/lib/fetcher";
 import { Button } from "@/components/ui/button";
@@ -130,6 +130,12 @@ interface TaskEvent {
     opportunityId?: string;
     accountId?: string;
     contactId?: string;
+    // Google Calendar event properties
+    isGoogleEvent?: boolean;
+    googleColor?: { background: string; foreground: string };
+    googleLink?: string;
+    googleMeetLink?: string;
+    location?: string;
 }
 
 const StatusDot = ({ priority, size = "md" }: { priority?: string, size?: "sm" | "md" | "lg" }) => {
@@ -370,6 +376,63 @@ export default function ProjectCalendarView({ userId }: Props) {
     const [isPulseEnabled, setIsPulseEnabled] = useState(false);
     const { data: pulseData, mutate: mutatePulse } = useSWR(isPulseEnabled ? "/api/calendar/pulse" : null, fetcher, { refreshInterval: 300000 });
 
+    // Google Calendar Sync State
+    const [googleEvents, setGoogleEvents] = useState<TaskEvent[]>([]);
+    const [isGoogleSynced, setIsGoogleSynced] = useState(false);
+    const [syncLoading, setSyncLoading] = useState(false);
+
+    const syncGoogleCalendar = useCallback(async (targetMonth?: Date) => {
+        setSyncLoading(true);
+        try {
+            const month = targetMonth || currentMonth;
+            const start = startOfMonth(month);
+            const end = endOfMonth(month);
+            // Extend range to cover padded days
+            const rangeStart = new Date(start);
+            rangeStart.setDate(rangeStart.getDate() - 7);
+            const rangeEnd = new Date(end);
+            rangeEnd.setDate(rangeEnd.getDate() + 7);
+
+            const url = `/api/calendar/events?start=${encodeURIComponent(rangeStart.toISOString())}&end=${encodeURIComponent(rangeEnd.toISOString())}`;
+            const res = await fetch(url);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    toast.error("Google Calendar not connected. Connect via Profile → Integrations.");
+                    return;
+                }
+                throw new Error(await res.text());
+            }
+            const data = await res.json();
+            const gEvents: TaskEvent[] = (data.events || []).map((ev: any) => ({
+                id: `gcal_${ev.id}`,
+                title: ev.summary || "(No Title)",
+                dueDateAt: new Date(ev.startISO),
+                priority: "normal",
+                taskStatus: "GOOGLE_EVENT",
+                isGoogleEvent: true,
+                googleColor: ev.color || undefined,
+                googleLink: ev.htmlLink || undefined,
+                googleMeetLink: ev.hangoutLink || undefined,
+                location: ev.location || undefined,
+                projectTitle: ev.calendarSummary || undefined,
+            }));
+            setGoogleEvents(gEvents);
+            setIsGoogleSynced(true);
+            toast.success(`Synced ${gEvents.length} calendar events`);
+        } catch (e: any) {
+            toast.error(`Calendar sync failed: ${e?.message || e}`);
+        } finally {
+            setSyncLoading(false);
+        }
+    }, [currentMonth]);
+
+    // Re-sync when month changes (if already synced)
+    useEffect(() => {
+        if (isGoogleSynced) {
+            syncGoogleCalendar(currentMonth);
+        }
+    }, [currentMonth]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // Drag-and-Drop Sensors
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -415,10 +478,10 @@ export default function ProjectCalendarView({ userId }: Props) {
     const users = userResponse?.members || [];
     const boards = boardsData?.data || [];
 
-    // Transform tasks into events
+    // Transform tasks into events + merge Google Calendar events
     const events = useMemo(() => {
         const tasks = tasksData?.tasks || [];
-        return tasks
+        const crmEvents: TaskEvent[] = tasks
             .filter((t: any) => t.dueDateAt && t.taskStatus?.toUpperCase() !== "COMPLETE")
             .map((t: any) => ({
                 id: t.id,
@@ -435,7 +498,8 @@ export default function ProjectCalendarView({ userId }: Props) {
                 accountId: t.accountId,
                 contactId: t.contactId,
             }));
-    }, [tasksData]);
+        return [...crmEvents, ...googleEvents];
+    }, [tasksData, googleEvents]);
 
     const todayTasks = useMemo(() => {
         const today = new Date();
@@ -781,13 +845,14 @@ export default function ProjectCalendarView({ userId }: Props) {
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <button
-                                            onClick={() => setIsPulseEnabled(true)}
-                                            className="flex items-center gap-2 group/pulse p-1 px-2 rounded-xl hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20 shadow-sm"
+                                            onClick={() => { setIsPulseEnabled(true); syncGoogleCalendar(); }}
+                                            disabled={syncLoading}
+                                            className="flex items-center gap-2 group/pulse p-1 px-2 rounded-xl hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20 shadow-sm disabled:opacity-50"
                                         >
                                             <div className="p-1.5 rounded-lg bg-primary/5 group-hover/pulse:bg-primary/20 transition-colors">
-                                                <Zap className="h-3.5 w-3.5 text-primary opacity-40 group-hover/pulse:opacity-100 transition-opacity" />
+                                                <Zap className={cn("h-3.5 w-3.5 text-primary opacity-40 group-hover/pulse:opacity-100 transition-opacity", syncLoading && "animate-spin")} />
                                             </div>
-                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 group-hover/pulse:text-primary transition-colors">Start Sync</span>
+                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 group-hover/pulse:text-primary transition-colors">{syncLoading ? 'Syncing...' : 'Start Sync'}</span>
                                         </button>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" className="w-56 p-3 border-primary/20 bg-background/95 backdrop-blur-xl rounded-xl">
@@ -964,37 +1029,76 @@ export default function ProjectCalendarView({ userId }: Props) {
                                             </div>
                                         ) : (
                                             getEventsForDay(quickAddDate || new Date()).map((event) => (
-                                                <div key={event.id} className="group relative p-4 rounded-2xl bg-muted/10 border border-border/30 hover:border-primary/20 hover:bg-muted/20 transition-all">
+                                                <div key={event.id} className={cn("group relative p-4 rounded-2xl border hover:bg-muted/20 transition-all", event.isGoogleEvent ? "bg-primary/5 border-primary/20" : "bg-muted/10 border-border/30 hover:border-primary/20")}>
                                                     <div className="flex items-start justify-between gap-4 mb-3">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <StatusDot priority={event.priority} size="sm" />
-                                                                <Link href={`/projects/tasks/viewtask/${event.id}`} className="text-sm font-bold truncate hover:text-primary transition-colors">
-                                                                    {event.title}
-                                                                </Link>
+                                                                {event.isGoogleEvent ? (
+                                                                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: event.googleColor?.background || '#4285f4' }} />
+                                                                ) : (
+                                                                    <StatusDot priority={event.priority} size="sm" />
+                                                                )}
+                                                                {event.isGoogleEvent ? (
+                                                                    event.googleLink ? (
+                                                                        <a href={event.googleLink} target="_blank" rel="noreferrer" className="text-sm font-bold truncate hover:text-primary transition-colors">
+                                                                            {event.title}
+                                                                        </a>
+                                                                    ) : (
+                                                                        <span className="text-sm font-bold truncate">{event.title}</span>
+                                                                    )
+                                                                ) : (
+                                                                    <Link href={`/projects/tasks/viewtask/${event.id}`} className="text-sm font-bold truncate hover:text-primary transition-colors">
+                                                                        {event.title}
+                                                                    </Link>
+                                                                )}
                                                             </div>
                                                             <div className="flex items-center gap-2">
-                                                                <Badge variant={getPriorityBadgeVariant(event.priority) as any} className="text-[8px] h-4 px-1 border-0">
-                                                                    {event.priority}
-                                                                </Badge>
-                                                                {event.projectTitle && (
-                                                                    <span className="text-[10px] text-muted-foreground truncate">
-                                                                        in {event.projectTitle}
-                                                                    </span>
-                                                                )}
-                                                                {(event.leadId || event.opportunityId) && (
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        className="h-5 px-1.5 text-[8px] font-black uppercase tracking-widest border-amber-500/30 hover:bg-amber-500/10 text-amber-600 rounded-md gap-1"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleRecordPrep(event);
-                                                                        }}
-                                                                    >
-                                                                        <Zap className="h-2.5 w-2.5 fill-amber-500/20" />
-                                                                        Prep for Mission
-                                                                    </Button>
+                                                                {event.isGoogleEvent ? (
+                                                                    <>
+                                                                        <Badge variant="outline" className="text-[8px] h-4 px-1 border-primary/30 text-primary">
+                                                                            Calendar
+                                                                        </Badge>
+                                                                        {event.projectTitle && (
+                                                                            <span className="text-[10px] text-muted-foreground truncate">
+                                                                                {event.projectTitle}
+                                                                            </span>
+                                                                        )}
+                                                                        {event.location && (
+                                                                            <span className="text-[10px] text-muted-foreground truncate">
+                                                                                📍 {event.location}
+                                                                            </span>
+                                                                        )}
+                                                                        {event.googleMeetLink && (
+                                                                            <a href={event.googleMeetLink} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline">
+                                                                                Join Meet
+                                                                            </a>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Badge variant={getPriorityBadgeVariant(event.priority || "") as any} className="text-[8px] h-4 px-1 border-0">
+                                                                            {event.priority}
+                                                                        </Badge>
+                                                                        {event.projectTitle && (
+                                                                            <span className="text-[10px] text-muted-foreground truncate">
+                                                                                in {event.projectTitle}
+                                                                            </span>
+                                                                        )}
+                                                                        {(event.leadId || event.opportunityId) && (
+                                                                            <Button
+                                                                                variant="outline"
+                                                                                size="sm"
+                                                                                className="h-5 px-1.5 text-[8px] font-black uppercase tracking-widest border-amber-500/30 hover:bg-amber-500/10 text-amber-600 rounded-md gap-1"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleRecordPrep(event);
+                                                                                }}
+                                                                            >
+                                                                                <Zap className="h-2.5 w-2.5 fill-amber-500/20" />
+                                                                                Prep for Mission
+                                                                            </Button>
+                                                                        )}
+                                                                    </>
                                                                 )}
                                                             </div>
                                                         </div>
