@@ -27,7 +27,10 @@ import {
   User as UserIcon,
   Share2,
   GripVertical,
-  Shield
+  Shield,
+  ClipboardPaste,
+  Wand2,
+  AlertCircle
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
@@ -85,6 +88,7 @@ interface SignatureData {
   phone: string;
   email: string;
   website: string;
+  websiteDisplayText: string;
   profileImage: string;
   companyLogoUrl: string;
   companyTagline: string;
@@ -223,6 +227,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     phone: "",
     email: "",
     website: "theutilitycompany.co",
+    websiteDisplayText: "",
     profileImage: "",
     companyLogoUrl: "https://storage.googleapis.com/tgl_cdn/images/Medallions/TUC.png",
     companyTagline: "Simple Choices. Complex Outcomes.",
@@ -245,6 +250,12 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
   const [syncing, setSyncing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState("design");
+
+  // Import existing signature state
+  const [importedRawHtml, setImportedRawHtml] = useState("");
+  const [useImportedHtml, setUseImportedHtml] = useState(false);
+  const [pasteBuffer, setPasteBuffer] = useState("");
+  const [importParsedFields, setImportParsedFields] = useState<string[]>([]);
 
   // Visibility configuration
   const VISIBLE_FIELDS: Record<string, string[]> = {
@@ -329,6 +340,13 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
             contactFieldsOrder: meta.contactFieldsOrder || ["phone", "email", "website"],
             showSeparator: meta.showSeparator !== undefined ? meta.showSeparator : true,
           }));
+
+          // Restore imported signature state if previously saved
+          if (meta.importedRawHtml) {
+            setImportedRawHtml(meta.importedRawHtml);
+            setUseImportedHtml(!!meta.useImportedHtml);
+            setPasteBuffer(meta.importedRawHtml);
+          }
         }
       } catch (error) {
         console.error("Failed to parse signature meta:", error);
@@ -399,6 +417,12 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
 
   // Handler: Image Upload
   const handleImageUpload = async (file: File, field: "profileImage" | "companyLogoUrl") => {
+    // Client-side size check: 2MB max
+    const MAX_FILE_SIZE = 2 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum is 2MB.`);
+      return;
+    }
     setUploading(true);
     try {
       // SPECIAL HANDLING FOR COMPANY LOGO:
@@ -503,9 +527,259 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     }));
   };
 
+  // --- Import / Parse Logic ---
+
+  const parseSignatureHtml = (html: string): { fields: Partial<SignatureData>; matched: string[] } => {
+    const matched: string[] = [];
+    const fields: Partial<SignatureData> = {};
+
+    try {
+      const div = document.createElement("div");
+      div.innerHTML = html;
+
+      // Extract email from mailto: links
+      const mailtoLinks = div.querySelectorAll('a[href^="mailto:"]');
+      if (mailtoLinks.length > 0) {
+        const email = (mailtoLinks[0] as HTMLAnchorElement).href.replace("mailto:", "").split("?")[0].trim();
+        if (email && email.includes("@")) {
+          fields.email = email;
+          matched.push("email");
+        }
+      }
+
+      // Extract phone from tel: links
+      const telLinks = div.querySelectorAll('a[href^="tel:"]');
+      if (telLinks.length > 0) {
+        const phone = (telLinks[0] as HTMLAnchorElement).href.replace("tel:", "").trim();
+        if (phone) {
+          fields.phone = phone.replace(/[^\d+]/g, "");
+          matched.push("phone");
+        }
+      }
+      // Fallback: regex for phone patterns in text
+      if (!fields.phone) {
+        const phoneRegex = /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/;
+        const textContent = div.textContent || "";
+        const phoneMatch = textContent.match(phoneRegex);
+        if (phoneMatch) {
+          fields.phone = phoneMatch[0].replace(/[^\d]/g, "");
+          matched.push("phone");
+        }
+      }
+
+      // Extract name from first large/bold heading
+      const headings = div.querySelectorAll("h1, h2, h3, h4, strong, b");
+      for (let i = 0; i < headings.length; i++) {
+        const text = (headings[i].textContent || "").trim();
+        if (text.length > 1 && text.length < 60 && text.split(/\s+/).length <= 5 && !text.includes("@")) {
+          const parts = text.split(/\s+/);
+          if (parts.length >= 2) {
+            fields.firstName = parts[0];
+            fields.lastName = parts.slice(1).join(" ");
+            matched.push("name");
+          } else if (parts.length === 1) {
+            fields.firstName = parts[0];
+            matched.push("firstName");
+          }
+          break;
+        }
+      }
+
+      // Extract title: look for text near the name — typically the first <p>, <div>, or <td> after the name heading
+      // that contains typical job-title-like text (short, no @ sign, etc.)
+      const allTextElements = div.querySelectorAll("p, div, td, span");
+      for (let i = 0; i < allTextElements.length; i++) {
+        const el = allTextElements[i];
+        const text = (el.textContent || "").trim();
+        // Skip if it's the name element, or contains email/phone/URL patterns
+        if (
+          text.length >= 2 && text.length <= 80 &&
+          !text.includes("@") &&
+          !text.match(/^\+?\d/) &&
+          !text.match(/^https?:\/\//) &&
+          !text.match(/^www\./) &&
+          text !== `${fields.firstName || ""} ${fields.lastName || ""}`.trim() &&
+          el.children.length === 0 // leaf node
+        ) {
+          // Heuristic: if text looks like a title (short, not a sentence)
+          if (text.split(/\s+/).length <= 8 && !text.endsWith(".")) {
+            fields.title = text;
+            matched.push("title");
+            break;
+          }
+        }
+      }
+
+      // Extract profile image: find first <img> > 40px that isn't a social/icon image
+      const allImages = div.querySelectorAll("img");
+      for (let i = 0; i < allImages.length; i++) {
+        const img = allImages[i] as HTMLImageElement;
+        const src = img.getAttribute("src") || "";
+        const width = parseInt(img.getAttribute("width") || "0", 10);
+        const height = parseInt(img.getAttribute("height") || "0", 10);
+        // Skip small icons and social media icons
+        if (
+          src &&
+          (width > 40 || height > 40 || (!width && !height)) &&
+          !src.includes("icons8") &&
+          !src.includes("icon") &&
+          !src.includes("Social") &&
+          !src.includes("linkedin") &&
+          !src.includes("twitter") &&
+          !src.includes("facebook") &&
+          !src.includes("instagram")
+        ) {
+          if (!fields.profileImage) {
+            fields.profileImage = src;
+            matched.push("profileImage");
+          } else if (!fields.companyLogoUrl) {
+            fields.companyLogoUrl = src;
+            matched.push("companyLogoUrl");
+          }
+        }
+      }
+
+      // Extract social links from <a> tags
+      const socialDomains: Record<string, SocialPlatform> = {
+        "linkedin.com": "linkedin",
+        "twitter.com": "twitter",
+        "x.com": "twitter",
+        "facebook.com": "facebook",
+        "instagram.com": "instagram",
+        "medium.com": "medium",
+        "patreon.com": "patreon",
+        "discord.com": "discord",
+        "discord.gg": "discord",
+        "github.com": "github",
+        "youtube.com": "youtube",
+      };
+
+      const parsedSocials: SocialLink[] = [...DEFAULT_SOCIAL_LINKS];
+      const allLinks = div.querySelectorAll("a");
+      let websiteCandidate = "";
+      for (let i = 0; i < allLinks.length; i++) {
+        const href = (allLinks[i] as HTMLAnchorElement).href || "";
+        if (!href || href.startsWith("mailto:") || href.startsWith("tel:")) continue;
+
+        let matchedSocial = false;
+        for (const [domain, platform] of Object.entries(socialDomains)) {
+          if (href.includes(domain)) {
+            const existing = parsedSocials.find(s => s.platform === platform);
+            if (existing && !existing.url) {
+              existing.url = href;
+              existing.active = true;
+              matchedSocial = true;
+              matched.push(`social:${platform}`);
+            }
+            break;
+          }
+        }
+
+        // If not a social link, could be a website
+        if (!matchedSocial && !websiteCandidate && href.startsWith("http") && !href.includes("icons8")) {
+          websiteCandidate = href;
+        }
+      }
+
+      if (parsedSocials.some(s => s.active)) {
+        fields.socialLinks = parsedSocials;
+        matched.push("socialLinks");
+      }
+
+      if (websiteCandidate && !fields.email) {
+        // Only set website if we haven't already identified it
+        try {
+          const url = new URL(websiteCandidate);
+          fields.website = url.hostname.replace("www.", "");
+          matched.push("website");
+        } catch {}
+      }
+
+      // Extract accent color from inline styles
+      const colorRegex = /(?:color|background-color)\s*:\s*(#[0-9a-fA-F]{3,8})/g;
+      const colorCounts: Record<string, number> = {};
+      let match;
+      while ((match = colorRegex.exec(html)) !== null) {
+        const color = match[1].toLowerCase();
+        // Skip common blacks/whites/grays
+        if (!["#000", "#000000", "#fff", "#ffffff", "#333", "#334155", "#555", "#666", "#888", "#999", "#ccc", "#ddd", "#eee"].includes(color)) {
+          colorCounts[color] = (colorCounts[color] || 0) + 1;
+        }
+      }
+      const topColor = Object.entries(colorCounts).sort((a, b) => b[1] - a[1])[0];
+      if (topColor) {
+        fields.accentColor = topColor[0].length === 4
+          ? `#${topColor[0][1]}${topColor[0][1]}${topColor[0][2]}${topColor[0][2]}${topColor[0][3]}${topColor[0][3]}`
+          : topColor[0];
+        matched.push("accentColor");
+      }
+    } catch (e) {
+      console.error("Failed to parse signature HTML:", e);
+    }
+
+    return { fields, matched };
+  };
+
+  const handleImportSignature = () => {
+    if (!pasteBuffer.trim()) {
+      toast.error("Paste your existing signature HTML first.");
+      return;
+    }
+
+    // Store the raw HTML
+    setImportedRawHtml(pasteBuffer.trim());
+    setUseImportedHtml(true);
+
+    // Parse and auto-fill matching fields
+    const { fields, matched } = parseSignatureHtml(pasteBuffer.trim());
+
+    if (Object.keys(fields).length > 0) {
+      setData(prev => {
+        const updated = { ...prev };
+        // Only set fields that are currently empty or match what we parsed
+        if (fields.firstName && !prev.firstName) updated.firstName = fields.firstName;
+        if (fields.lastName && !prev.lastName) updated.lastName = fields.lastName;
+        if (fields.title && !prev.title) updated.title = fields.title;
+        if (fields.email && !prev.email) updated.email = fields.email;
+        if (fields.phone && !prev.phone) updated.phone = fields.phone;
+        if (fields.website && prev.website === "theutilitycompany.co") updated.website = fields.website;
+        if (fields.profileImage && !prev.profileImage) updated.profileImage = fields.profileImage;
+        if (fields.companyLogoUrl && prev.companyLogoUrl === "https://storage.googleapis.com/tgl_cdn/images/Medallions/TUC.png") updated.companyLogoUrl = fields.companyLogoUrl;
+        if (fields.accentColor) updated.accentColor = fields.accentColor;
+        if (fields.socialLinks) {
+          updated.socialLinks = fields.socialLinks.map(parsedLink => {
+            const existingLink = prev.socialLinks.find(s => s.platform === parsedLink.platform);
+            if (parsedLink.active && parsedLink.url) return parsedLink;
+            return existingLink || parsedLink;
+          });
+        }
+        return updated;
+      });
+    }
+
+    setImportParsedFields(matched);
+    toast.success(
+      matched.length > 0
+        ? `Signature imported! Auto-filled ${matched.length} field${matched.length !== 1 ? "s" : ""}: ${matched.filter(m => !m.startsWith("social:")).join(", ")}`
+        : "Signature imported as raw HTML. No fields could be auto-detected."
+    );
+  };
+
+  const handleClearImport = () => {
+    setImportedRawHtml("");
+    setUseImportedHtml(false);
+    setPasteBuffer("");
+    setImportParsedFields([]);
+    toast.success("Import cleared. Builder mode restored.");
+  };
+
   // --- Generator ---
 
   const generateHTML = () => {
+    // If using imported HTML, return it directly
+    if (useImportedHtml && importedRawHtml) {
+      return importedRawHtml;
+    }
     const {
       firstName, lastName, title, department, phone, email, website,
       profileImage, companyLogoUrl, companyTagline, accentColor,
@@ -524,6 +798,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     };
     const formattedPhone = formatPhoneNumber(phone);
     const telHref = phone ? `tel:${phone}` : '';
+    const displayWebsite = data.websiteDisplayText?.trim() || website;
 
     const renderContactIcon = (name: string, marginRight: number = 10) => {
       const src = getIconUrl(name, accentColor);
@@ -672,7 +947,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                             <td width="${contactIconSize + 10}" style="padding-bottom: 6px; vertical-align: middle; line-height: 1;">
                                ${renderContactIcon('globe', 10)}
                             </td>
-                            <td style="padding-bottom: 6px; vertical-align: middle;"><a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${website}</a></td>
+                            <td style="padding-bottom: 6px; vertical-align: middle;"><a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${displayWebsite}</a></td>
                           </tr>`;
         return '';
       }).join('')}
@@ -716,7 +991,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                 ${data.contactFieldsOrder.map(f => {
         if (f === 'phone' && phone) return `<div style="margin-bottom: 2px; line-height: 1;">${renderContactIcon('phone', 10)} ${formattedPhone}</div>`;
         if (f === 'email' && email) return `<div style="margin-bottom: 2px; line-height: 1;">${renderContactIcon('mail', 10)} <a href="mailto:${email}" style="color:inherit; text-decoration:none;">${email}</a></div>`;
-        if (f === 'website' && website) return `<div style="margin-bottom: 2px; line-height: 1;">${renderContactIcon('globe', 10)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color:inherit; text-decoration:none;">${website}</a></div>`;
+        if (f === 'website' && website) return `<div style="margin-bottom: 2px; line-height: 1;">${renderContactIcon('globe', 10)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color:inherit; text-decoration:none;">${displayWebsite}</a></div>`;
         return '';
       }).join('')}
               </div>
@@ -749,7 +1024,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                  <div style="font-size: 12px; line-height: 1.6;">
                     ${phone ? `<div style="margin-bottom: 4px; line-height: 1;">${renderContactIcon('phone', 6)} ${formattedPhone}</div>` : ''}
                     ${email ? `<div style="margin-bottom: 4px; line-height: 1;">${renderContactIcon('mail', 6)} <a href="mailto:${email}" style="color: inherit; text-decoration: none;">${email}</a></div>` : ''}
-                    ${website ? `<div style="margin-bottom: 4px; line-height: 1;">${renderContactIcon('globe', 6)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${website}</a></div>` : ''}
+                    ${website ? `<div style="margin-bottom: 4px; line-height: 1;">${renderContactIcon('globe', 6)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${displayWebsite}</a></div>` : ''}
                  </div>
                  ${socialHtml}
                  ${medallionsHtml}
@@ -777,7 +1052,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                 ${data.contactFieldsOrder.map(f => {
         if (f === 'phone' && phone) return `<tr><td style="padding: 2px 8px; font-size: 13px; color: rgba(${textRgb}, 0.8); line-height: 1;">${renderContactIcon('phone', 10)} ${formattedPhone}</td></tr>`;
         if (f === 'email' && email) return `<tr><td style="padding: 2px 8px; font-size: 13px; color: rgba(${textRgb}, 0.8); line-height: 1;">${renderContactIcon('mail', 10)} <a href="mailto:${email}" style="color: inherit; text-decoration: none;">${email}</a></td></tr>`;
-        if (f === 'website' && website) return `<tr><td style="padding: 2px 8px; font-size: 13px; color: rgba(${textRgb}, 0.8); line-height: 1;">${renderContactIcon('globe', 10)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${website}</a></td></tr>`;
+        if (f === 'website' && website) return `<tr><td style="padding: 2px 8px; font-size: 13px; color: rgba(${textRgb}, 0.8); line-height: 1;">${renderContactIcon('globe', 10)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${displayWebsite}</a></td></tr>`;
         return '';
       }).join('')}
               </table>
@@ -814,7 +1089,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                 ${data.contactFieldsOrder.map(f => {
         if (f === 'phone' && phone) return `<div style="display: flex; align-items: center; gap: 6px; line-height: 1;">${renderContactIcon('phone', 10)} ${formattedPhone}</div>`;
         if (f === 'email' && email) return `<div style="display: flex; align-items: center; gap: 6px; line-height: 1;">${renderContactIcon('mail', 10)} <a href="mailto:${email}" style="color: inherit; text-decoration: none;">${email}</a></div>`;
-        if (f === 'website' && website) return `<div style="display: flex; align-items: center; gap: 6px; line-height: 1;">${renderContactIcon('globe', 10)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${website}</a></div>`;
+        if (f === 'website' && website) return `<div style="display: flex; align-items: center; gap: 6px; line-height: 1;">${renderContactIcon('globe', 10)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${displayWebsite}</a></div>`;
         return '';
       }).join('')}
               </div>
@@ -843,7 +1118,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                    ${data.contactFieldsOrder.map(f => {
         if (f === 'phone' && phone) return `<tr><td style="padding-right: 12px; font-size: 13px; color: rgba(${textRgb}, 0.8); line-height: 1;">${renderContactIcon('phone', 10)} ${formattedPhone}</td></tr>`;
         if (f === 'email' && email) return `<tr><td style="padding-right: 12px; font-size: 13px; color: rgba(${textRgb}, 0.8); line-height: 1;">${renderContactIcon('mail', 10)} <a href="mailto:${email}" style="color: inherit; text-decoration: none;">${email}</a></td></tr>`;
-        if (f === 'website' && website) return `<tr><td style="padding-top: 4px; font-size: 13px; color: rgba(${textRgb}, 0.8); line-height: 1;">${renderContactIcon('globe', 10)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${website}</a></td></tr>`;
+        if (f === 'website' && website) return `<tr><td style="padding-top: 4px; font-size: 13px; color: rgba(${textRgb}, 0.8); line-height: 1;">${renderContactIcon('globe', 10)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${displayWebsite}</a></td></tr>`;
         return '';
       }).join('')}
                 </table>
@@ -904,7 +1179,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                  ${data.contactFieldsOrder.map(f => {
         if (f === 'phone' && phone) return `<span style="display: flex; align-items: center; gap: 6px;">${renderContactIcon('phone', 10)} ${formattedPhone}</span>`;
         if (f === 'email' && email) return `<span style="display: flex; align-items: center; gap: 6px;">${renderContactIcon('mail', 10)} <a href="mailto:${email}" style="color:inherit; text-decoration:none;">${email}</a></span>`;
-        if (f === 'website' && website) return `<span style="display: flex; align-items: center; gap: 6px;">${renderContactIcon('globe', 10)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color:inherit; text-decoration:none;">${website}</a></span>`;
+        if (f === 'website' && website) return `<span style="display: flex; align-items: center; gap: 6px;">${renderContactIcon('globe', 10)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color:inherit; text-decoration:none;">${displayWebsite}</a></span>`;
         return '';
       }).join('')}
               </div>
@@ -929,7 +1204,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
               ${data.contactFieldsOrder.map(f => {
         if (f === 'phone' && phone) return `<a href="${telHref}" style="color:inherit; text-decoration:none; display: flex; align-items: center; gap: 4px;">${renderContactIcon('phone', 0)} ${formattedPhone}</a>`;
         if (f === 'email' && email) return `<a href="mailto:${email}" style="color:inherit; text-decoration:none; display: flex; align-items: center; gap: 4px;">${renderContactIcon('mail', 0)} ${email}</a>`;
-        if (f === 'website' && website) return `<a href="${ensureAbsoluteUrl(website, 'website')}" style="color:inherit; text-decoration:none; display: flex; align-items: center; gap: 4px;">${renderContactIcon('globe', 0)} ${website}</a>`;
+        if (f === 'website' && website) return `<a href="${ensureAbsoluteUrl(website, 'website')}" style="color:inherit; text-decoration:none; display: flex; align-items: center; gap: 4px;">${renderContactIcon('globe', 0)} ${displayWebsite}</a>`;
         return '';
       }).join('')}
            </div>
@@ -960,7 +1235,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
             ${data.contactFieldsOrder.map(f => {
         if (f === 'phone' && phone) return `<div style="line-height: 1; margin-bottom: 4px;">${renderContactIcon('phone', 8)} phone: <span style="color: #a5d6ff;">"${formattedPhone}"</span>,</div>`;
         if (f === 'email' && email) return `<div style="line-height: 1; margin-bottom: 4px;">${renderContactIcon('mail', 8)} email: <span style="color: #a5d6ff;">"${email}"</span>,</div>`;
-        if (f === 'website' && website) return `<div style="line-height: 1; margin-bottom: 4px;">${renderContactIcon('globe', 8)} web: <span style="color: #a5d6ff;">"<a href="${ensureAbsoluteUrl(website, 'website')}" style="color:inherit;text-decoration:none;">${website}</a>"</span>,</div>`;
+        if (f === 'website' && website) return `<div style="line-height: 1; margin-bottom: 4px;">${renderContactIcon('globe', 8)} web: <span style="color: #a5d6ff;">"<a href="${ensureAbsoluteUrl(website, 'website')}" style="color:inherit;text-decoration:none;">${displayWebsite}</a>"</span>,</div>`;
         return '';
       }).join('')}
           </div>
@@ -997,7 +1272,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
             ${data.contactFieldsOrder.map(f => {
         if (f === 'phone' && phone) return `<span style="display: flex; align-items: center; gap: 4px; line-height: 1;">${renderContactIcon('phone', 0)} ${formattedPhone}</span>`;
         if (f === 'email' && email) return `<span style="display: flex; align-items: center; gap: 4px; line-height: 1;">${renderContactIcon('mail', 0)} <a href="mailto:${email}" style="color: inherit; text-decoration: none;">${email}</a></span>`;
-        if (f === 'website' && website) return `<span style="display: flex; align-items: center; gap: 4px; line-height: 1;">${renderContactIcon('globe', 0)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${website}</a></span>`;
+        if (f === 'website' && website) return `<span style="display: flex; align-items: center; gap: 4px; line-height: 1;">${renderContactIcon('globe', 0)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="color: inherit; text-decoration: none;">${displayWebsite}</a></span>`;
         return '';
       }).join('')}
           </div>
@@ -1034,7 +1309,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
       <div style="margin-top: 12px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 12px; line-height: 1;">
         ${data.contactFieldsOrder.map(f => {
         if (f === 'email' && email) return `<span style="display: flex; align-items: center; gap: 4px; line-height: 1;">${renderContactIcon('mail', 0)} <a href="mailto:${email}" style="text-decoration:none; color:${textColor};">${email}</a></span>`;
-        if (f === 'website' && website) return `<span style="display: flex; align-items: center; gap: 4px; line-height: 1;">${renderContactIcon('globe', 0)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="text-decoration:none; color:${textColor};">${website}</a></span>`;
+        if (f === 'website' && website) return `<span style="display: flex; align-items: center; gap: 4px; line-height: 1;">${renderContactIcon('globe', 0)} <a href="${ensureAbsoluteUrl(website, 'website')}" style="text-decoration:none; color:${textColor};">${displayWebsite}</a></span>`;
         return '';
       }).join('')}
       </div>
@@ -1061,7 +1336,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
               ${email ? `<td style="padding: 2px 0;"><div style="display: flex; align-items: center; gap: 4px; line-height: 1;">${renderContactIcon('mail', 0)} <b>Email:</b> <a href="mailto:${email}" style="color:inherit; text-decoration:none;">${email}</a></div></td>` : ''}
             </tr>
             <tr>
-              ${website ? `<td style="padding: 2px 0;"><div style="display: flex; align-items: center; gap: 4px; line-height: 1;">${renderContactIcon('globe', 0)} <b>Web:</b> <a href="${ensureAbsoluteUrl(website, 'website')}" style="color:inherit; text-decoration:none;">${website}</a></div></td>` : ''}
+              ${website ? `<td style="padding: 2px 0;"><div style="display: flex; align-items: center; gap: 4px; line-height: 1;">${renderContactIcon('globe', 0)} <b>Web:</b> <a href="${ensureAbsoluteUrl(website, 'website')}" style="color:inherit; text-decoration:none;">${displayWebsite}</a></div></td>` : ''}
               ${department ? `<td style="padding: 2px 0;"><b>Dept:</b> ${displayDepartment}</td>` : ''}
             </tr>
           </table>
@@ -1096,7 +1371,10 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
         medallions: data.medallions.map(m => ({
           ...m,
           linkUrl: ensureAbsoluteUrl(m.linkUrl)
-        }))
+        })),
+        // Persist imported signature state
+        importedRawHtml: importedRawHtml || undefined,
+        useImportedHtml: useImportedHtml || undefined,
       };
 
       const payload = {
@@ -1211,11 +1489,12 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
       {/* Editor Column */}
       <div className="xl:col-span-7 space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="design"><Palette className="w-4 h-4 mr-2" /> Style</TabsTrigger>
             <TabsTrigger value="content"><UserIcon className="w-4 h-4 mr-2" /> Info</TabsTrigger>
             <TabsTrigger value="images"><ImageIcon className="w-4 h-4 mr-2" /> Images</TabsTrigger>
             <TabsTrigger value="social"><Share2 className="w-4 h-4 mr-2" /> Social</TabsTrigger>
+            <TabsTrigger value="import" className={importedRawHtml ? "text-emerald-500" : ""}><ClipboardPaste className="w-4 h-4 mr-2" /> Import</TabsTrigger>
           </TabsList>
 
           <div className="mt-6 space-y-4">
@@ -1262,7 +1541,12 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                                     <Label className="capitalize">{field}</Label>
                                     {field === "phone" && <Input type="tel" value={data.phone} onChange={(e) => startUpdate("phone", e.target.value)} placeholder="+1 555 000 0000" />}
                                     {field === "email" && <Input type="email" value={data.email} onChange={(e) => startUpdate("email", e.target.value)} placeholder="jane@company.com" />}
-                                    {field === "website" && <Input value={data.website} onChange={(e) => startUpdate("website", e.target.value)} placeholder="company.com" />}
+                                    {field === "website" && (
+                                      <div className="space-y-2">
+                                        <Input value={data.website} onChange={(e) => startUpdate("website", e.target.value)} placeholder="surge.basalthq.com (actual URL)" />
+                                        <Input value={data.websiteDisplayText} onChange={(e) => startUpdate("websiteDisplayText", e.target.value)} placeholder="Display text (e.g. basalthq.com) — leave blank to use URL" className="text-xs h-8" />
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               )}
@@ -1632,6 +1916,109 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                       )}
                     </Droppable>
                   </DragDropContext>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="import" className="space-y-4 animate-in fade-in-50">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Import Existing Signature</CardTitle>
+                  <CardDescription>Paste your existing HTML email signature below. We'll parse it, auto-fill matching fields, and let you use it directly.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {/* Status Banner */}
+                  {importedRawHtml && (
+                    <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+                      useImportedHtml
+                        ? "border-emerald-500/30 bg-emerald-500/5"
+                        : "border-amber-500/30 bg-amber-500/5"
+                    }`}>
+                      {useImportedHtml ? (
+                        <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">
+                          {useImportedHtml
+                            ? "Using imported signature"
+                            : "Imported HTML stored — builder mode active"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {importParsedFields.length > 0
+                            ? `Auto-filled: ${importParsedFields.filter(m => !m.startsWith("social:")).join(", ")}`
+                            : "No fields were auto-detected"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setUseImportedHtml(!useImportedHtml)}
+                          className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                            useImportedHtml ? "bg-emerald-500" : "bg-muted"
+                          }`}
+                          title={useImportedHtml ? "Switch to builder mode" : "Switch to imported HTML"}
+                        >
+                          <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                            useImportedHtml ? "translate-x-5" : "translate-x-0"
+                          }`} />
+                        </button>
+                        <span className="text-xs font-medium whitespace-nowrap">
+                          {useImportedHtml ? "Imported" : "Builder"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Paste Area */}
+                  <div className="space-y-2">
+                    <Label>Paste HTML Signature</Label>
+                    <Textarea
+                      value={pasteBuffer}
+                      onChange={(e) => setPasteBuffer(e.target.value)}
+                      placeholder={'Paste your existing email signature HTML here...\n\nYou can get this from:\n• Gmail: Settings → General → Signature (select all + copy)\n• Outlook: Settings → Mail → Compose → Email signature\n• Any email client: View source of your signature'}
+                      className="min-h-[200px] font-mono text-xs"
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-3">
+                    <Button
+                      onClick={handleImportSignature}
+                      disabled={!pasteBuffer.trim()}
+                      className="gap-2"
+                    >
+                      <Wand2 className="w-4 h-4" />
+                      Parse & Import
+                    </Button>
+
+                    {importedRawHtml && (
+                      <Button
+                        variant="destructive"
+                        onClick={handleClearImport}
+                        className="gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Clear Import
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Live Preview of pasted HTML (before or after import) */}
+                  {(pasteBuffer.trim() || importedRawHtml) && (
+                    <div className="space-y-2">
+                      <Separator />
+                      <Label className="text-sm">Imported Signature Preview</Label>
+                      <div className="rounded-lg border bg-white p-6 min-h-[120px] overflow-hidden">
+                        <div
+                          dangerouslySetInnerHTML={{ __html: importedRawHtml || pasteBuffer }}
+                          className="w-full"
+                        />
+                        <div className="absolute inset-0 z-10 pointer-events-none" />
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

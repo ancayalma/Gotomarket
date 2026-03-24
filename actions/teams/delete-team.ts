@@ -135,11 +135,17 @@ export const deleteTeam = async (teamId: string) => {
         // Quest → QuestProgress
         await safeOp("quest-progress", () => db.questProgress.deleteMany({ where: { quest: { team_id: teamId } } }));
 
-        // crm_Subscriptions children
-        // crm_BillingInvoice may reference subscriptions - clear those
-
-        // -- Now delete all direct children in parallel --
+        // -- Now delete all direct children --
         const tf = { where: { team_id: teamId } };
+
+        // crm_Subscriptions children — crm_BillingInvoice references subscriptions
+        // Delete billing invoices before subscriptions (sequential)
+        // crm_BillingInvoice also uses tenant_id, NOT team_id
+        await safeOp("billing-invoices", () => db.crm_BillingInvoice.deleteMany({ where: { tenant_id: teamId } }));
+        // crm_Subscriptions uses tenant_id, NOT team_id
+        await safeOp("subscriptions", () => db.crm_Subscriptions.deleteMany({ where: { tenant_id: teamId } }));
+
+        // Delete remaining direct children in parallel
         await Promise.all([
             safeOp("custom-roles", () => db.customRole.deleteMany(tf)),
             safeOp("brand-ids", () => db.teamBrandIdentity.deleteMany(tf)),
@@ -156,11 +162,9 @@ export const deleteTeam = async (teamId: string) => {
             safeOp("portals", () => db.crm_Message_Portal.deleteMany(tf)),
             safeOp("products", () => db.crm_Products.deleteMany(tf)),
             safeOp("quotes", () => db.crm_Quotes.deleteMany(tf)),
-            safeOp("subs", () => db.crm_Subscriptions.deleteMany(tf)),
-            safeOp("billing", () => db.crm_BillingInvoice.deleteMany(tf)),
             safeOp("workflows", () => db.crm_Workflow.deleteMany(tf)),
             safeOp("widgets", () => db.crm_CustomWidget.deleteMany(tf)),
-            safeOp("ai-logs", () => db.crm_AiUsageLog.deleteMany(tf)),
+            safeOp("ai-logs", () => db.crm_AiUsageLog.deleteMany({ where: { tenant_id: teamId } })),
             safeOp("api-keys", () => db.crm_ApiKeys.deleteMany({ where: { tenant_id: teamId } })),
             safeOp("boards", () => db.boards.deleteMany(tf)),
             safeOp("invoices", () => db.invoices.deleteMany(tf)),
@@ -186,7 +190,7 @@ export const deleteTeam = async (teamId: string) => {
             safeOp("email-config", () => db.teamEmailConfig.deleteMany(tf)),
             safeOp("sms-config", () => db.teamSmsConfig.deleteMany(tf)),
             safeOp("captcha", () => db.teamCaptchaConfig.deleteMany(tf)),
-            safeOp("integrations", () => db.tenant_Integrations.deleteMany(tf)),
+            safeOp("integrations", () => db.tenant_Integrations.deleteMany({ where: { tenant_id: teamId } })),
             safeOp("sys-activity", () => db.systemActivity.deleteMany(tf)),
             safeOp("quests", () => db.quest.deleteMany(tf)),
             safeOp("sandboxes", () => db.sandbox.deleteMany(tf)),

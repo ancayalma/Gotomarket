@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '4mb',
+    },
+  },
   // TypeScript errors will now fail the build (safety net removed)
   // typescript: { ignoreBuildErrors: true },
   poweredByHeader: false,

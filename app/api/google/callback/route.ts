@@ -51,7 +51,7 @@ export async function GET(req: Request) {
 
     if (!session?.user?.id || session.user.id !== userId) {
       systemLogger.error("[GOOGLE_OAUTH_CALLBACK] Session mismatch", { sessionUser: session?.user?.id, stateUser: userId });
-      const redirectErr = `${origin}/en/crm/leads?google=error_session_mismatch`;
+      const redirectErr = `${origin}/profile?tab=integration&google=error_session_mismatch`;
       return NextResponse.redirect(redirectErr, { status: 302 });
     }
 
@@ -88,13 +88,13 @@ export async function GET(req: Request) {
       // Fail gracefully so user still gets connected
     }
 
-    // Redirect back to CRM Leads page indicating success
-    const redirectOk = `${origin}/en/crm/leads?google=connected`;
+    // Redirect back to Profile → Integrations tab indicating success
+    const redirectOk = `${origin}/profile?tab=integration&google=connected`;
     return NextResponse.redirect(redirectOk, { status: 302 });
   } catch (e: any) {
 
     systemLogger.error("[GOOGLE_OAUTH_CALLBACK]", e?.message || e);
-    const redirectErr = `${origin}/en/crm/leads?google=error`;
+    const redirectErr = `${origin}/profile?tab=integration&google=error`;
     return NextResponse.redirect(redirectErr, { status: 302 });
   }
 }
