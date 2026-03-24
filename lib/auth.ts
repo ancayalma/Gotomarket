@@ -114,8 +114,8 @@ export const authOptions: NextAuthOptions = {
           const mfaCode = (credentials as any).mfaCode;
           const mfaToken = (credentials as any).mfaToken;
 
-          // 1. Check TOTP 6-digit code
-          if (userAny.mfaMethod === "TOTP" && mfaCode) {
+          // 1. Check TOTP 6-digit code (accept if user has TOTP configured, regardless of primary method)
+          if (mfaCode && userAny.mfaSecret) {
             const { verifyTotpToken } = await import("./mfa-utils");
             const isValid = await verifyTotpToken(mfaCode, userAny.mfaSecret || "");
             if (!isValid) throw new Error("Invalid verification code");
@@ -134,9 +134,15 @@ export const authOptions: NextAuthOptions = {
               throw new Error("MFA verification expired. Please try again.");
             }
           }
-          // 3. Initiate MFA Challenge
+          // 3. Initiate MFA Challenge — signal primary method + available methods
           else {
-            throw new Error(`MFA_REQUIRED:${userAny.mfaMethod}`);
+            const authenticatorCount = await prismadb.authenticator.count({ where: { userId: user.id } });
+            const availableMethods: string[] = [];
+            if (userAny.mfaSecret) availableMethods.push("TOTP");
+            if (authenticatorCount > 0) availableMethods.push("WEBAUTHN");
+            // Default to TOTP if available, else WEBAUTHN
+            const primaryMethod = availableMethods.includes("TOTP") ? "TOTP" : availableMethods[0] || userAny.mfaMethod;
+            throw new Error(`MFA_REQUIRED:${primaryMethod}:${availableMethods.join(",")}`);
           }
         }
 

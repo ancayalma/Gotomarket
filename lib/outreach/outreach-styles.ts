@@ -16,6 +16,9 @@ export interface TemplateOptions {
   showResources?: boolean;
   cardStyle?: CardStyle;
   dividerStyle?: DividerStyle;
+  bannerImageUrl?: string;
+  bannerHeight?: number;
+  bannerPositionY?: number; // 0-100, vertical object-position percentage (50 = center)
 }
 
 function hexToRgba(hex: string, alpha: number): string {

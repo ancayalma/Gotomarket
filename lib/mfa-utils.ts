@@ -67,8 +67,11 @@ export const sendMfaSms = async (phone: string, code: string) => {
 // ─── WebAuthn (Fingerprint / Biometrics) ─────────────────────────────────────
 
 const rpName = process.env.NEXT_PUBLIC_APP_NAME || "Basalt CRM";
-const rpID = process.env.NEXT_PUBLIC_AUTH_DOMAIN || "localhost";
 const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+// Auto-derive rpID from the origin hostname (e.g. "crm.basalthq.com" or "localhost")
+const rpID = process.env.NEXT_PUBLIC_AUTH_DOMAIN || (() => {
+    try { return new URL(origin).hostname; } catch { return "localhost"; }
+})();
 
 export const getWebAuthnRegistrationOptions = async (userId: string, email: string) => {
     const userBytes = Buffer.from(userId);
@@ -91,7 +94,7 @@ export const getWebAuthnRegistrationOptions = async (userId: string, email: stri
         authenticatorSelection: {
             residentKey: 'preferred',
             userVerification: 'preferred',
-            authenticatorAttachment: 'platform',
+            // No authenticatorAttachment — allow both platform (biometrics) and cross-platform (USB keys)
         },
     });
 };

@@ -91,7 +91,6 @@ interface SignatureData {
   websiteDisplayText: string;
   profileImage: string;
   companyLogoUrl: string;
-  headerImageUrl: string;
   companyTagline: string;
   accentColor: string;
   template: "professional" | "modern" | "minimalist" | "elegant" | "creative" | "banner" | "corporate" | "compact" | "tech" | "classic" | "social" | "dense";
@@ -106,7 +105,6 @@ interface SignatureData {
   contactIconSize: number;
   contactFieldsOrder: ("phone" | "email" | "website")[];
   showSeparator: boolean;
-  headerImageHeight: number;
 }
 
 interface SignatureBuilderProps {
@@ -238,7 +236,6 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     websiteDisplayText: "",
     profileImage: "",
     companyLogoUrl: "https://storage.googleapis.com/tgl_cdn/images/Medallions/TUC.png",
-    headerImageUrl: "",
     companyTagline: "Simple Choices. Complex Outcomes.",
     accentColor: DEFAULT_COLOR,
     template: "professional",
@@ -253,7 +250,6 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     contactIconSize: 15,
     contactFieldsOrder: ["phone", "email", "website"],
     showSeparator: true,
-    headerImageHeight: 120,
   });
 
   const [saving, setSaving] = useState(false);
@@ -426,7 +422,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
   };
 
   // Handler: Image Upload
-  const handleImageUpload = async (file: File, field: "profileImage" | "companyLogoUrl" | "headerImageUrl") => {
+  const handleImageUpload = async (file: File, field: "profileImage" | "companyLogoUrl") => {
     // Client-side size check: 2MB max
     const MAX_FILE_SIZE = 2 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
@@ -438,7 +434,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
       // SPECIAL HANDLING FOR COMPANY LOGO:
       // Upload RAW to preserve transparency perfectly for all formats (PNG, WebP, GIF, etc).
       // This fixes the issue where logos were getting black backgrounds or artifacts.
-      if (field === "companyLogoUrl" || field === "headerImageUrl") {
+      if (field === "companyLogoUrl") {
         const formData = new FormData();
         formData.append("file", file); // Upload raw file
 
@@ -447,7 +443,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
 
         if (res.ok && json?.document?.document_file_url) {
           startUpdate(field, json.document.document_file_url);
-          toast.success(field === "headerImageUrl" ? "Header image uploaded!" : "Logo uploaded!");
+          toast.success("Logo uploaded!");
           return json.document.document_file_url;
         } else {
           throw new Error(json?.error || "Upload failed");
@@ -792,7 +788,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     }
     const {
       firstName, lastName, title, department, phone, email, website,
-      profileImage, companyLogoUrl, headerImageUrl, companyTagline, accentColor,
+      profileImage, companyLogoUrl, companyTagline, accentColor,
       template, socialLinks, textColor, backgroundColor, highlightLastName, transparentBackground, medallions, imageShape, contactIconSize
     } = data;
 
@@ -841,22 +837,10 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     const displayTitle = title.replace(/\n/g, '<br/>');
     const displayDepartment = department.replace(/\n/g, '<br/>');
 
-    // Social-media-style banner header — wide cover image at top, templates render content below
-    const bannerHeight = data.headerImageHeight || 120;
-    const headerHtml = headerImageUrl ? `
-      <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; border-collapse: collapse; margin-bottom: 0;">
-        <tr>
-          <td style="padding: 0;">
-            <img src="${headerImageUrl}" style="display: block; width: 100%; max-width: 600px; height: ${bannerHeight}px; object-fit: cover; border-radius: 8px 8px 0 0;" alt="Banner" />
-          </td>
-        </tr>
-      </table>
-    ` : '';
-
     // Wrapper style for background color
     const bgColorStyle = transparentBackground ? 'background-color: transparent;' : `background-color: ${backgroundColor};`;
     const wrapperStyle = `${bgColorStyle} padding: 20px;`;
-    const wrapperStart = `<div style="${wrapperStyle}">${headerHtml}`;
+    const wrapperStart = `<div style="${wrapperStyle}">`;
     const wrapperEnd = `</div>`;
 
     // Social Icons HTML
@@ -1653,68 +1637,6 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                               </div>
                             </div>
                           )}
-
-                          {/* Header / Banner Image — social-media-style cover photo */}
-                          <div className="space-y-3 pt-2">
-                            <div>
-                              <Label>Header / Banner Image</Label>
-                              <p className="text-xs text-muted-foreground">Add a social-media-style cover photo above your signature. Profile photo will overlap it automatically.</p>
-                            </div>
-                            <div className="flex items-start gap-6">
-                              <div className="shrink-0">
-                                <div className="w-40 h-20 rounded bg-muted border-2 border-dashed border-gray-600 flex items-center justify-center overflow-hidden relative group">
-                                  {data.headerImageUrl ? (
-                                    <img src={data.headerImageUrl} alt="Header" className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className="flex flex-col items-center gap-1">
-                                      <ImageIcon className="w-5 h-5 text-muted-foreground" />
-                                      <span className="text-[10px] text-muted-foreground">Cover Photo</span>
-                                    </div>
-                                  )}
-                                  <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                    <Upload className="w-5 h-5 text-white" />
-                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) handleImageUpload(file, "headerImageUrl");
-                                    }} disabled={uploading} />
-                                  </label>
-                                </div>
-                              </div>
-                              <div className="flex-1 space-y-2">
-                                <Input value={data.headerImageUrl} onChange={(e) => startUpdate("headerImageUrl", e.target.value)} placeholder="https://... or upload" />
-                                {data.headerImageUrl && (
-                                  <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => startUpdate("headerImageUrl", "")}>
-                                    <Trash2 className="w-3 h-3 mr-1" /> Remove
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Banner Height Slider — only visible when header image is set */}
-                            {data.headerImageUrl && (
-                              <div className="space-y-2 pt-2">
-                                <div className="flex items-center justify-between">
-                                  <Label className="text-sm">Banner Height</Label>
-                                  <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
-                                    {data.headerImageHeight}px
-                                  </span>
-                                </div>
-                                <input
-                                  type="range"
-                                  min="60"
-                                  max="200"
-                                  step="5"
-                                  value={data.headerImageHeight}
-                                  onChange={(e) => startUpdate("headerImageHeight", Number(e.target.value))}
-                                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                                />
-                                <div className="flex justify-between text-[10px] text-muted-foreground uppercase tracking-widest font-semibold px-1">
-                                  <span>Compact</span>
-                                  <span>Tall</span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
                         </div>
                       )}
 

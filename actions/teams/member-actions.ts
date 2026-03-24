@@ -16,14 +16,14 @@ export const updateMemberRole = async (userId: string, role: string) => {
         const targetUser = await prismadb.users.findUnique({ where: { id: userId } });
         if (!targetUser) return { error: "User not found" };
 
-        if ((currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
+        const isPlatformAdmin = currentUser.isGlobalAdmin || currentUser.teamRole === "PLATFORM_ADMIN";
+        if (!isPlatformAdmin && (currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
             return { error: "Unauthorized: You do not have permission to modify this user." };
         }
 
-        // Security Check for PLATFORM_ADMIN
+        // Security Check: Only existing Platform Admins / Global Admins can assign PLATFORM_ADMIN
         if (role === "PLATFORM_ADMIN") {
-            const isAuthorized = false;
-            if (!isAuthorized) {
+            if (!isPlatformAdmin) {
                 return { error: "Unauthorized: Only Platform Admins can assign this role." };
             }
         }
@@ -48,7 +48,8 @@ export const removeMember = async (userId: string) => {
         const targetUser = await prismadb.users.findUnique({ where: { id: userId } });
         if (!targetUser) return { error: "User not found" };
 
-        if ((currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
+        const isPlatformAdmin = currentUser.isGlobalAdmin || currentUser.teamRole === "PLATFORM_ADMIN";
+        if (!isPlatformAdmin && (currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
             return { error: "Unauthorized: You do not have permission to modify this user." };
         }
 
@@ -101,7 +102,8 @@ export const addMember = async (teamId: string, userId: string, role: string = "
         const currentUser = await getCurrentUserTeamId();
         if (!currentUser?.userId) return { error: "Unauthorized" };
 
-        if ((currentUser.teamId !== teamId || !currentUser.isAdmin)) {
+        const isPlatformAdmin = currentUser.isGlobalAdmin || currentUser.teamRole === "PLATFORM_ADMIN";
+        if (!isPlatformAdmin && (currentUser.teamId !== teamId || !currentUser.isAdmin)) {
             return { error: "Unauthorized: Admin privileges required for this team." };
         }
 
@@ -169,7 +171,8 @@ export const toggleUserStatus = async (userId: string, status: "ACTIVE" | "INACT
         const targetUser = await prismadb.users.findUnique({ where: { id: userId } });
         if (!targetUser) return { error: "User not found" };
 
-        if ((currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
+        const isPlatformAdmin = currentUser.isGlobalAdmin || currentUser.teamRole === "PLATFORM_ADMIN";
+        if (!isPlatformAdmin && (currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
             return { error: "Unauthorized: You do not have permission to modify this user." };
         }
 
