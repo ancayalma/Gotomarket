@@ -150,8 +150,8 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
               />
             </Section>
           )}
-          {/* Optional hero/logo */}
-          {brand?.logoUrl && (
+          {/* Optional hero/logo — hidden when banner image is used */}
+          {!templateOptions?.bannerImageUrl && brand?.logoUrl && (
             <Section style={{ textAlign: "center", marginBottom: 16 }}>
               <Img
                 src={brand.logoUrl}
@@ -163,7 +163,7 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
             </Section>
           )}
 
-          {heroIconUrl && (
+          {!templateOptions?.bannerImageUrl && heroIconUrl && (
             <Section style={{ textAlign: "center", marginBottom: 16 }}>
               <Img
                 src={heroIconUrl}

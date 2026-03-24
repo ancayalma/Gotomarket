@@ -121,20 +121,22 @@ export const OutreachExecutiveTemplate: React.FC<
               />
             </Section>
           )}
-          {/* Thin accent top line */}
-          <div style={{ height: "3px", backgroundColor: ACCENT }} />
-
-          {/* Header with logo */}
-          {(brand?.logoUrl || heroIconUrl) && (
-            <Section style={{ padding: "28px 40px 8px", textAlign: "center" }}>
-              <Img
-                src={brand?.logoUrl || heroIconUrl || ""}
-                alt={brand?.logoAlt || "Logo"}
-                width="48"
-                height="48"
-                style={{ display: "inline-block" }}
-              />
-            </Section>
+          {/* Thin accent top line + logo — hidden when banner image is used */}
+          {!templateOptions?.bannerImageUrl && (
+            <>
+              <div style={{ height: "3px", backgroundColor: ACCENT }} />
+              {(brand?.logoUrl || heroIconUrl) && (
+                <Section style={{ padding: "28px 40px 8px", textAlign: "center" }}>
+                  <Img
+                    src={brand?.logoUrl || heroIconUrl || ""}
+                    alt={brand?.logoAlt || "Logo"}
+                    width="48"
+                    height="48"
+                    style={{ display: "inline-block" }}
+                  />
+                </Section>
+              )}
+            </>
           )}
 
           {/* Body */}

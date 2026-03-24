@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     // SOC2 CC6.1 / A1.2: Check storage quotas before allowing upload
     if (teamId) {
       const { checkTeamQuota } = await import("@/lib/quota-service");
-      const quota = await checkTeamQuota(teamId, "STORAGE");
+      const quota = await checkTeamQuota(teamId, "STORAGE", session.user.id);
       if (!quota.allowed) {
         return NextResponse.json({ error: quota.message }, { status: 403 });
       }
@@ -123,8 +123,11 @@ export async function POST(req: NextRequest) {
 
     const blobClient = containerClient.getBlockBlobClient(key);
     systemLogger.error("[GENERIC_UPLOAD_POST] Uploading blob", { key, type: file.type, size: buffer.length });
+    // Images must be public-read for email rendering (banners, logos, signatures)
+    const isImage = file.type?.startsWith("image/");
     await blobClient.uploadData(buffer, {
       blobHTTPHeaders: { blobContentType: file.type || "application/octet-stream" },
+      publicAccess: isImage,
     });
     const fileUrl = blobClient.url;
     systemLogger.error("[GENERIC_UPLOAD_POST] Uploaded blob URL:", fileUrl);

@@ -66,7 +66,7 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
         : navCards;
 
     return (
-        <div className="w-full h-full flex flex-col p-4 md:p-6 min-w-0 overflow-hidden">
+        <div className="w-full h-full flex flex-col p-4 md:p-6 min-w-0 overflow-y-auto overflow-x-hidden">
             {/* Navigation Cards Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 flex-shrink-0 pb-4 pt-4 -mt-2 w-full">
                 {visibleCards.map((card) => {
