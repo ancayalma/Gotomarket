@@ -49,9 +49,10 @@ type Props = {
     departments?: any[];
     apiKeys?: any[];
     apiLogs?: any[];
+    isExemptTeam?: boolean;
 };
 
-const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendData, ownerInfo, roleCounts, customRoles, departments, apiKeys, apiLogs }: Props) => {
+const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendData, ownerInfo, roleCounts, customRoles, departments, apiKeys, apiLogs, isExemptTeam = false }: Props) => {
     const [activeTab, setActiveTab] = useState("overview");
 
     const isOrgAdmin = currentUserInfo?.isGlobalAdmin || (
@@ -62,16 +63,16 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
     const cards = [
         {
             id: "overview",
-            title: "Settings",
-            description: "Team profile",
+            title: "Company Profile",
+            description: "Identity & config",
             icon: LayoutDashboard,
             color: "from-blue-500/20 to-indigo-500/20",
             iconColor: "text-blue-500",
         },
         {
             id: "members",
-            title: "Members",
-            description: "User directory",
+            title: isExemptTeam ? "Platform Admins" : "Personnel",
+            description: isExemptTeam ? "Super admin access" : "Company directory",
             icon: Users,
             color: "from-emerald-500/20 to-green-500/20",
             iconColor: "text-emerald-500",
@@ -128,7 +129,7 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
             cards.push({
                 id: "modules",
                 title: "Tier Modules",
-                description: "Team Overrides",
+                description: "Company Overrides",
                 icon: Package,
                 color: "from-amber-500/20 to-orange-500/20",
                 iconColor: "text-amber-500",
@@ -285,6 +286,7 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
                         isSuperAdmin={isOrgAdmin}
                         isGlobalAdmin={currentUserInfo?.isGlobalAdmin}
                         ownerId={team.owner_id}
+                        isExemptTeam={isExemptTeam}
                     />
                 )}
                 {activeTab === "roles" && isOrgAdmin && roleCounts && (

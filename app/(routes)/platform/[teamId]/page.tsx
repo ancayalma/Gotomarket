@@ -33,6 +33,10 @@ const TeamDetailsPage = async ({ params }: { params: Promise<{ teamId: string }>
     const isTeamSuperAdmin = currentUserInfo?.teamId === team?.id && ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM'].includes(role);
     const canManageTeam = currentUserInfo?.isGlobalAdmin || isTeamSuperAdmin;
 
+    // Detect if this is the platform exempt team
+    const INTERNAL_SLUGS = ["basalt", "basalthq", "ledger1"];
+    const isExemptTeam = team ? INTERNAL_SLUGS.includes(team.slug?.toLowerCase()) : false;
+
     if (canManageTeam && team) {
         const [resend_key, owner, roleCountsData, customRolesData, departmentsData, keysData, logsData] = await Promise.all([
             prismadb.systemServices.findFirst({
@@ -114,6 +118,38 @@ const TeamDetailsPage = async ({ params }: { params: Promise<{ teamId: string }>
         return notFound();
     }
 
+    // For exempt team: filter to PLATFORM_ADMIN only (managed from admin for everything else)
+    // For non-exempt teams: load ALL members including department-scoped users for full management
+    let enrichedMembers = team.members || [];
+
+    if (isExemptTeam) {
+        // Only show platform admins — PLATFORM_ADMIN role always takes precedence
+        enrichedMembers = enrichedMembers.filter((m: any) =>
+            m.team_role === 'PLATFORM_ADMIN' || m.team_role === 'SYSADM'
+        );
+    } else if (canManageTeam) {
+        // For non-exempt teams: fetch full member list including department members
+        const allMembers = await prismadb.users.findMany({
+            where: {
+                OR: [
+                    { team_id: team.id },
+                    { assigned_team: { parent_id: team.id } }
+                ]
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+                team_role: true,
+                department_id: true,
+                userStatus: true,
+            },
+            orderBy: { created_on: "desc" },
+        });
+        enrichedMembers = allMembers;
+    }
+
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
             <div className="flex items-center space-x-4 mb-4">
@@ -125,7 +161,7 @@ const TeamDetailsPage = async ({ params }: { params: Promise<{ teamId: string }>
             </div>
 
             <TeamDetailsView
-                team={team}
+                team={{ ...team, members: enrichedMembers }}
                 availablePlans={plans}
                 currentUserInfo={currentUserInfo}
                 systemResendData={systemResendData}
@@ -135,6 +171,7 @@ const TeamDetailsPage = async ({ params }: { params: Promise<{ teamId: string }>
                 departments={departments}
                 apiKeys={apiKeys}
                 apiLogs={apiLogs}
+                isExemptTeam={isExemptTeam}
             />
         </div>
     );

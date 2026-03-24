@@ -45,6 +45,14 @@ export async function assignToDepartment(data: AssignToDepartmentInput): Promise
 
         const actorContext = buildUserContext(actor as any);
 
+        // If removing from department (null), require at least SUPER_ADMIN or platform admin
+        if (data.departmentId === null) {
+            const canRemove = actorContext.is_admin || actorContext.team_role === 'SUPER_ADMIN' || actorContext.team_role === 'PLATFORM_ADMIN';
+            if (!canRemove) {
+                return { success: false, error: "You don't have permission to remove users from departments" };
+            }
+        }
+
         // If assigning to a department, check permission
         if (data.departmentId && !canAssignToDepartment(actorContext, data.departmentId)) {
             return { success: false, error: "You don't have permission to assign users to this department" };

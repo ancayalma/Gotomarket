@@ -43,7 +43,7 @@ const SYSTEM_ROLES = [
     {
         key: "OWNER",
         name: "Owner",
-        description: "Full platform access for this team",
+        description: "Full platform access for this company",
         icon: Shield,
         color: "from-amber-500/20 to-yellow-500/20",
         iconColor: "text-amber-400",
@@ -380,7 +380,7 @@ const TeamRolesView = ({ teamId, roleCounts, customRoles }: Props) => {
             {/* Info */}
             <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
                 <p className="text-sm text-muted-foreground">
-                    <strong>Platform Management:</strong> Configure roles and module access for this partner team.
+                    <strong>Platform Management:</strong> Configure roles and module access for this company.
                     Changes take effect immediately.
                 </p>
             </div>

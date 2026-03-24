@@ -17,9 +17,9 @@ export default function IdleSessionTimeout() {
     const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
     const warningTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    const handleLogout = useCallback(() => {
-        const baseUrl = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://crm.basalthq.com");
-        signOut({ callbackUrl: `${baseUrl}/sign-in?idle=true` });
+    const handleLogout = useCallback(async () => {
+        await signOut({ redirect: false });
+        window.location.href = `/sign-in?idle=true`;
     }, []);
 
     const resetTimer = useCallback(() => {

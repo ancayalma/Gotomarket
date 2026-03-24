@@ -96,9 +96,10 @@ function formatTokens(n: number) {
 interface PlanSelectorProps {
     subscription: any;
     teamId: string;
+    isPlatformAdmin?: boolean;
 }
 
-export function PlanSelector({ subscription, teamId }: PlanSelectorProps) {
+export function PlanSelector({ subscription, teamId, isPlatformAdmin = false }: PlanSelectorProps) {
     const [isAnnual, setIsAnnual] = useState(false);
     const [loading, setLoading] = useState<string | null>(null);
     const [tokenBalance, setTokenBalance] = useState<number | null>(null);
@@ -108,7 +109,7 @@ export function PlanSelector({ subscription, teamId }: PlanSelectorProps) {
     const INTERNAL_SLUGS = ["basalt", "basalthq", "ledger1"];
     const teamSlug = subscription?.team?.slug?.toLowerCase() || "";
     const isInternalTeam = INTERNAL_SLUGS.includes(teamSlug);
-    const isExempt = currentPlan === "PLATFORM_ADMIN" || currentPlan === "EXEMPT" || (isInternalTeam && subscription?.last_charge_status === "SYSTEM_FREE_TIER");
+    const isExempt = isPlatformAdmin || currentPlan === "PLATFORM_ADMIN" || currentPlan === "EXEMPT" || (isInternalTeam && subscription?.last_charge_status === "SYSTEM_FREE_TIER");
     const surgeAvailable = process.env.NEXT_PUBLIC_SURGE_BILLING_ENABLED === "true";
 
     useEffect(() => {
