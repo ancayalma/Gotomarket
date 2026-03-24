@@ -67,7 +67,7 @@ export const sendMfaSms = async (phone: string, code: string) => {
 // ─── WebAuthn (Fingerprint / Biometrics) ─────────────────────────────────────
 
 const rpName = process.env.NEXT_PUBLIC_APP_NAME || "Basalt CRM";
-const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const origin = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
 // Auto-derive rpID from the origin hostname (e.g. "crm.basalthq.com" or "localhost")
 const rpID = process.env.NEXT_PUBLIC_AUTH_DOMAIN || (() => {
     try { return new URL(origin).hostname; } catch { return "localhost"; }

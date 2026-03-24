@@ -4,6 +4,7 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '4mb',
     },
+    routeHandlerBodySizeLimit: '4mb',
   },
   // TypeScript errors will now fail the build (safety net removed)
   // typescript: { ignoreBuildErrors: true },
