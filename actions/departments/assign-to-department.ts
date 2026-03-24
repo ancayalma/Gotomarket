@@ -63,11 +63,13 @@ export async function assignToDepartment(data: AssignToDepartmentInput): Promise
             return { success: false, error: `You cannot assign the ${data.role} role` };
         }
 
-        // Verify target user exists and is in the same org
+        // Verify target user exists
+        // Platform admins can manage users across any team
+        const isPlatformLevel = actorContext.is_admin || actorContext.team_role === 'PLATFORM_ADMIN';
         const targetUser = await prismadb.users.findFirst({
             where: {
                 id: data.userId,
-                team_id: actor.team_id,
+                ...(isPlatformLevel ? {} : { team_id: actor.team_id }),
             },
         });
 
@@ -75,13 +77,16 @@ export async function assignToDepartment(data: AssignToDepartmentInput): Promise
             return { success: false, error: "User not found in your organization" };
         }
 
-        // If assigning to a department, verify it exists and belongs to the same org
+        // Determine the team context for department validation
+        const managedTeamId = targetUser.team_id || actor.team_id;
+
+        // If assigning to a department, verify it exists and belongs to the managed team's org
         if (data.departmentId) {
             const department = await prismadb.team.findFirst({
                 where: {
                     id: data.departmentId,
                     team_type: "DEPARTMENT",
-                    parent_id: actor.team_id,
+                    parent_id: managedTeamId,
                 },
             });
 
@@ -91,9 +96,22 @@ export async function assignToDepartment(data: AssignToDepartmentInput): Promise
         }
 
         // Build update data
-        const updateData: { department_id?: string | null; team_role?: string; is_admin?: boolean; is_account_admin?: boolean } = {
+        const updateData: { department_id?: string | null; team_id?: string | null; team_role?: string; is_admin?: boolean; is_account_admin?: boolean } = {
             department_id: data.departmentId,
         };
+
+        // If removing from department, also check if user's team_id points to a department
+        // and reassign back to parent company
+        if (data.departmentId === null && targetUser.team_id) {
+            const currentTeam = await prismadb.team.findUnique({
+                where: { id: targetUser.team_id },
+                select: { team_type: true, parent_id: true },
+            });
+            // If their team_id points to a DEPARTMENT, move them back to the parent org
+            if (currentTeam?.team_type === 'DEPARTMENT' && currentTeam.parent_id) {
+                updateData.team_id = currentTeam.parent_id;
+            }
+        }
 
         if (data.role) {
             updateData.team_role = data.role;
@@ -111,6 +129,10 @@ export async function assignToDepartment(data: AssignToDepartmentInput): Promise
 
         revalidatePath("/partners");
         revalidatePath(`/partners/${actor.team_id}`);
+        // Also revalidate the platform path for the managed team
+        if (managedTeamId) {
+            revalidatePath(`/platform/${managedTeamId}`);
+        }
 
         return { success: true };
     } catch (error) {
