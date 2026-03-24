@@ -83,9 +83,9 @@ export const getWebAuthnRegistrationOptions = async (userId: string, email: stri
         userID: userBytes,
         userName: email,
         attestationType: 'none',
+        // v13: excludeCredentials expects { id: Base64URLString, transports? }[]
         excludeCredentials: userAuthenticators.map((auth: any) => ({
             id: auth.credentialID,
-            type: 'public-key',
             transports: auth.transports as any,
         })),
         authenticatorSelection: {
@@ -104,16 +104,19 @@ export const verifyWebAuthnRegistration = async (body: any, currentOptions: any)
         expectedRPID: rpID,
     });
 
+    // v13: registrationInfo.credential is a WebAuthnCredential { id, publicKey, counter }
     if (verification.verified && verification.registrationInfo) {
-        const { credentialID, credentialPublicKey, counter } = verification.registrationInfo;
+        const { credential } = verification.registrationInfo;
 
         return {
             verified: true,
             authenticator: {
-                credentialID: Buffer.from(credentialID).toString('base64url'),
-                publicKey: Buffer.from(credentialPublicKey).toString('base64url'),
-                counter,
-                transports: body.response.transports || [],
+                // credential.id is already a Base64URLString
+                credentialID: credential.id,
+                // credential.publicKey is Uint8Array — encode to base64url for DB storage
+                publicKey: Buffer.from(credential.publicKey).toString('base64url'),
+                counter: credential.counter,
+                transports: body.response?.transports || [],
             },
         };
     }
@@ -128,9 +131,9 @@ export const getWebAuthnAuthenticationOptions = async (userId: string) => {
 
     return await generateAuthenticationOptions({
         rpID,
+        // v13: allowCredentials expects { id: Base64URLString, transports? }[]
         allowCredentials: userAuthenticators.map((auth: any) => ({
             id: auth.credentialID,
-            type: 'public-key',
             transports: auth.transports as any,
         })),
         userVerification: 'preferred',
@@ -143,12 +146,15 @@ export const verifyWebAuthnAuthentication = async (body: any, currentOptions: an
         expectedChallenge: currentOptions.challenge,
         expectedOrigin: origin,
         expectedRPID: rpID,
-        credential: { // SimpleWebAuthn v13 uses 'credential'
+        // v13: credential is WebAuthnCredential { id, publicKey: Uint8Array, counter }
+        credential: {
             id: auth.credentialID,
             publicKey: Buffer.from(auth.publicKey, 'base64url'),
             counter: auth.counter,
+            transports: auth.transports,
         },
     });
 
     return verification;
 };
+
