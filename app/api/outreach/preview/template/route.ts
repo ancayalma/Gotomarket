@@ -72,6 +72,16 @@ export async function POST(req: Request) {
             } catch { }
         }
 
+        // Fetch the user's saved signature from their profile
+        let userSignature: string | undefined;
+        try {
+            const user = await prismadb.users.findUnique({
+                where: { id: session.user.id },
+                select: { signature_html: true },
+            });
+            if (user?.signature_html) userSignature = user.signature_html as string;
+        } catch { }
+
         const baseUrl = process.env.NEXTAUTH_URL || "";
 
         const brandColorHex = (body.props?.brand?.accentColor || brandColor || "#1f2937").replace("#", "");
@@ -93,7 +103,7 @@ export async function POST(req: Request) {
             subjectPreview: body.props?.subjectPreview || "Exploring Partnership Opportunities",
             bodyText: body.props?.bodyText || DEFAULT_PREVIEW_BODY,
             resources: resolvedResources,
-            signatureHtml: body.props?.signatureHtml || brandSignature || DEFAULT_SIGNATURE,
+            signatureHtml: body.props?.signatureHtml || brandSignature || userSignature || DEFAULT_SIGNATURE,
             brand: {
                 accentColor: body.props?.brand?.accentColor || brandColor,
                 secondaryColor: body.props?.brand?.secondaryColor || undefined,

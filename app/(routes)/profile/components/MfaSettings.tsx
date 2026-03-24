@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,11 +17,27 @@ interface MfaSettingsProps {
 
 export function MfaSettings({ user }: MfaSettingsProps) {
     const { toast } = useToast();
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [mfaData, setMfaData] = useState<any>(null);
     const [setupStep, setSetupStep] = useState<"idle" | "totp" | "sms" | "webauthn">("idle");
     const [totpCode, setTotpCode] = useState("");
-    const [isMfaEnabled, setIsMfaEnabled] = useState(user.mfaEnabled);
+    const [isMfaEnabled, setIsMfaEnabled] = useState(user.mfaEnabled ?? false);
+    const [mfaMethod, setMfaMethod] = useState<string>(user.mfaMethod ?? "NONE");
+
+    // Fetch fresh MFA status on mount to handle cases where server prop is stale
+    useEffect(() => {
+        const fetchStatus = async () => {
+            try {
+                const res = await axios.get("/api/user/mfa/status");
+                setIsMfaEnabled(res.data.mfaEnabled);
+                setMfaMethod(res.data.mfaMethod || "NONE");
+            } catch {
+                // Fall back to server-provided value
+            }
+        };
+        fetchStatus();
+    }, []);
 
     const fetchMfaSetup = async (type: string) => {
         setLoading(true);
@@ -32,13 +49,15 @@ export function MfaSettings({ user }: MfaSettingsProps) {
             } else if (type === "webauthn") {
                 const res = await axios.get("/api/user/mfa/webauthn/register-options");
                 const options = res.data;
-                const attResp = await startRegistration(options);
+                const attResp = await startRegistration({ optionsJSON: options });
                 await axios.post("/api/user/mfa/webauthn/register-verify", {
                     body: attResp,
                     currentOptions: options
                 });
                 toast({ title: "Success", description: "Biometric authentication registered successfully." });
                 setIsMfaEnabled(true);
+                setMfaMethod("WEBAUTHN");
+                router.refresh();
             }
         } catch (error: any) {
             toast({
@@ -61,8 +80,10 @@ export function MfaSettings({ user }: MfaSettingsProps) {
             });
             toast({ title: "MFA Enabled", description: "TOTP Authentication is now active." });
             setIsMfaEnabled(true);
+            setMfaMethod("TOTP");
             setSetupStep("idle");
             setTotpCode("");
+            router.refresh();
         } catch (error: any) {
             toast({
                 variant: "destructive",
@@ -80,6 +101,8 @@ export function MfaSettings({ user }: MfaSettingsProps) {
             await axios.post("/api/user/mfa/disable");
             toast({ title: "MFA Disabled", description: "Your account is now less secure." });
             setIsMfaEnabled(false);
+            setMfaMethod("NONE");
+            router.refresh();
         } catch (error) {
             toast({ variant: "destructive", title: "Error", description: "Failed to disable MFA." });
         } finally {
@@ -101,8 +124,13 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                         </div>
                     </div>
                     {isMfaEnabled ? (
-                        <div className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-semibold flex items-center">
-                            <CheckCircle2 className="h-3 w-3 mr-1" /> Protected
+                        <div className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Protected
+                            {mfaMethod && mfaMethod !== "NONE" && (
+                                <span className="text-emerald-500/60 ml-1">
+                                    ({mfaMethod === "TOTP" ? "Authenticator" : mfaMethod === "WEBAUTHN" ? "Passkey" : mfaMethod})
+                                </span>
+                            )}
                         </div>
                     ) : (
                         <Badge variant="destructive" className="bg-red-500/10 text-red-400 border-red-500/20 px-3 py-1">
@@ -192,7 +220,38 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                 ) : null}
 
                 {isMfaEnabled && setupStep === "idle" && (
-                    <div className="mt-8 pt-6 border-t border-white/5">
+                    <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
+                        {/* Reset MFA */}
+                        <div className="flex items-center justify-between p-4 bg-amber-500/5 rounded-xl border border-amber-500/10">
+                            <div>
+                                <h4 className="text-sm font-bold text-amber-400 uppercase tracking-widest">Reset Method</h4>
+                                <p className="text-xs text-muted-foreground mt-1">Switch to a different authentication method or regenerate your current one.</p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                                onClick={async () => {
+                                    setLoading(true);
+                                    try {
+                                        await axios.post("/api/user/mfa/disable");
+                                        setIsMfaEnabled(false);
+                                        setMfaMethod("NONE");
+                                        toast({ title: "MFA Reset", description: "Choose a new authentication method below." });
+                                        // Keep setupStep as idle — the method cards will now show since isMfaEnabled is false
+                                    } catch {
+                                        toast({ variant: "destructive", title: "Error", description: "Failed to reset MFA." });
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}
+                                disabled={loading}
+                            >
+                                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                Reset MFA
+                            </Button>
+                        </div>
+                        {/* Disable MFA */}
                         <div className="flex items-center justify-between p-4 bg-red-500/5 rounded-xl border border-red-500/10">
                             <div>
                                 <h4 className="text-sm font-bold text-red-400 uppercase tracking-widest">Danger Zone</h4>

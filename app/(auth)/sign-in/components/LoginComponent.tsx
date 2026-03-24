@@ -210,7 +210,8 @@ export function LoginComponent() {
       const options = res.data;
 
       // 2. Trigger browser biometric prompt
-      const asseResp = await startAuthentication(options);
+      // v13: startAuthentication expects { optionsJSON }
+      const asseResp = await startAuthentication({ optionsJSON: options });
 
       // 3. Verify with backend
       const verifyRes = await axios.post("/api/auth/mfa/webauthn/auth-verify", {
