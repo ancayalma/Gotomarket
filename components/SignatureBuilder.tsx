@@ -1971,32 +1971,85 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                     </div>
                   )}
 
-                  {/* Paste Area */}
+                  {/* Paste Area — captures rich text HTML from clipboard */}
                   <div className="space-y-2">
-                    <Label>Paste HTML Signature</Label>
-                    <Textarea
-                      value={pasteBuffer}
-                      onChange={(e) => setPasteBuffer(e.target.value)}
-                      placeholder={'Paste your existing email signature HTML here...\n\nYou can get this from:\n• Gmail: Settings → General → Signature (select all + copy)\n• Outlook: Settings → Mail → Compose → Email signature\n• Any email client: View source of your signature'}
-                      className="min-h-[200px] font-mono text-xs"
+                    <Label>Paste Your Signature</Label>
+                    <p className="text-xs text-muted-foreground">Copy your signature from Gmail, Outlook, or any email client and paste it below. We'll capture the formatting automatically.</p>
+                    <div
+                      contentEditable
+                      suppressContentEditableWarning
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        // Capture the rich HTML from the clipboard
+                        const clipboardHtml = e.clipboardData?.getData('text/html') || '';
+                        const clipboardText = e.clipboardData?.getData('text/plain') || '';
+                        
+                        const capturedHtml = clipboardHtml.trim() || clipboardText.trim();
+                        if (!capturedHtml) {
+                          toast.error("Nothing in your clipboard to paste.");
+                          return;
+                        }
+                        
+                        // Store the captured HTML
+                        setPasteBuffer(capturedHtml);
+                        
+                        // Show it in the contenteditable
+                        const target = e.currentTarget;
+                        target.innerHTML = capturedHtml;
+                        
+                        // Auto-import immediately
+                        setImportedRawHtml(capturedHtml);
+                        setUseImportedHtml(true);
+
+                        // Parse and auto-fill matching fields
+                        const { fields, matched } = parseSignatureHtml(capturedHtml);
+                        if (Object.keys(fields).length > 0) {
+                          setData(prev => {
+                            const updated = { ...prev };
+                            if (fields.firstName && !prev.firstName) updated.firstName = fields.firstName;
+                            if (fields.lastName && !prev.lastName) updated.lastName = fields.lastName;
+                            if (fields.title && !prev.title) updated.title = fields.title;
+                            if (fields.email && !prev.email) updated.email = fields.email;
+                            if (fields.phone && !prev.phone) updated.phone = fields.phone;
+                            if (fields.website && prev.website === "theutilitycompany.co") updated.website = fields.website;
+                            if (fields.profileImage && !prev.profileImage) updated.profileImage = fields.profileImage;
+                            if (fields.companyLogoUrl && prev.companyLogoUrl === "https://storage.googleapis.com/tgl_cdn/images/Medallions/TUC.png") updated.companyLogoUrl = fields.companyLogoUrl;
+                            if (fields.accentColor) updated.accentColor = fields.accentColor;
+                            if (fields.socialLinks) {
+                              updated.socialLinks = fields.socialLinks.map(parsedLink => {
+                                const existingLink = prev.socialLinks.find(s => s.platform === parsedLink.platform);
+                                if (parsedLink.active && parsedLink.url) return parsedLink;
+                                return existingLink || parsedLink;
+                              });
+                            }
+                            return updated;
+                          });
+                        }
+                        setImportParsedFields(matched);
+                        toast.success(
+                          matched.length > 0
+                            ? `Signature imported! Auto-filled: ${matched.filter(m => !m.startsWith("social:")).join(", ")}`
+                            : "Signature imported as-is. No fields could be auto-detected."
+                        );
+                      }}
+                      className="min-h-[160px] rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/10 p-4 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-colors cursor-text overflow-auto text-sm"
+                      role="textbox"
+                      aria-label="Paste signature here"
+                      dangerouslySetInnerHTML={{ __html: pasteBuffer || '<span class="text-muted-foreground text-xs pointer-events-none select-none">Click here, then Ctrl+V / ⌘+V to paste your email signature...</span>' }}
                     />
                   </div>
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-3">
-                    <Button
-                      onClick={handleImportSignature}
-                      disabled={!pasteBuffer.trim()}
-                      className="gap-2"
-                    >
-                      <Wand2 className="w-4 h-4" />
-                      Parse & Import
-                    </Button>
-
                     {importedRawHtml && (
                       <Button
                         variant="destructive"
-                        onClick={handleClearImport}
+                        onClick={() => {
+                          handleClearImport();
+                          // Clear the contenteditable
+                          const el = document.querySelector('[contenteditable]');
+                          if (el) el.innerHTML = '<span class="text-muted-foreground text-xs pointer-events-none select-none">Click here, then Ctrl+V / ⌘+V to paste your email signature...</span>';
+                        }}
                         className="gap-2"
                       >
                         <Trash2 className="w-4 h-4" />
