@@ -53,7 +53,7 @@ const AvatarDropdown = ({ avatar, userId, name, email }: Props) => {
               src={
                 signedUrl
                   ? signedUrl
-                  : `${process.env.NEXT_PUBLIC_APP_URL}/images/nouser.png`
+                  : `/images/nouser.png`
               }
             />
             <AvatarFallback className="bg-primary text-white">
