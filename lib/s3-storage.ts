@@ -42,13 +42,17 @@ export function getBlobServiceClient() {
                     return {
                         uploadData: async (buffer: Buffer | ArrayBuffer, options?: any) => {
                             const contentType = options?.blobHTTPHeaders?.blobContentType || "application/octet-stream";
-                            await s3Client.send(new PutObjectCommand({
+                            const putParams: any = {
                                 Bucket: s3BucketName,
                                 Key: key,
                                 Body: buffer instanceof ArrayBuffer ? Buffer.from(buffer) : buffer,
                                 ContentType: contentType,
-                                // ACL: "public-read" // REMOVED FOR SOC2 COMPLIANCE
-                            }));
+                            };
+                            // Allow public-read for assets that must be served in emails (logos, banners)
+                            if (options?.publicAccess) {
+                                putParams.ACL = "public-read";
+                            }
+                            await s3Client.send(new PutObjectCommand(putParams));
                         },
                         deleteIfExists: async () => {
                             try {

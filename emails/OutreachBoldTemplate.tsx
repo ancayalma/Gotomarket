@@ -134,30 +134,32 @@ export const OutreachBoldTemplate: React.FC<
               />
             </Section>
           )}
-          {/* Gradient Hero Header */}
-          <Section
-            style={{
-              background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT_DARK} 100%)`,
-              padding: "40px 32px 36px",
-              textAlign: "center",
-              borderRadius: "0 0 16px 16px",
-            }}
-          >
-            {(brand?.logoUrl || heroIconUrl) && (
-              <Img
-                src={brand?.logoUrl || heroIconUrl || ""}
-                alt={brand?.logoAlt || "Logo"}
-                width="56"
-                height="56"
-                style={{
-                  display: "inline-block",
-                  borderRadius: "12px",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  padding: "4px",
-                }}
-              />
-            )}
-          </Section>
+          {/* Gradient Hero Header — hidden when banner image is used */}
+          {!templateOptions?.bannerImageUrl && (
+            <Section
+              style={{
+                background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT_DARK} 100%)`,
+                padding: "40px 32px 36px",
+                textAlign: "center",
+                borderRadius: "0 0 16px 16px",
+              }}
+            >
+              {(brand?.logoUrl || heroIconUrl) && (
+                <Img
+                  src={brand?.logoUrl || heroIconUrl || ""}
+                  alt={brand?.logoAlt || "Logo"}
+                  width="56"
+                  height="56"
+                  style={{
+                    display: "inline-block",
+                    borderRadius: "12px",
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    padding: "4px",
+                  }}
+                />
+              )}
+            </Section>
+          )}
 
           {/* Body Card */}
           <Section

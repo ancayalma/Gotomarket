@@ -77,6 +77,8 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource, us
                 break;
             }
             case "STORAGE": {
+                // -1 = unlimited storage
+                if (plan.max_storage === -1) break;
                 const docs = await prismadb.documents.aggregate({
                     where: { team_id: teamId },
                     _sum: { size: true }

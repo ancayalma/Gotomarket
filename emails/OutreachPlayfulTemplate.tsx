@@ -128,31 +128,33 @@ export const OutreachPlayfulTemplate: React.FC<
               />
             </Section>
           )}
-          {/* Rounded Header Card */}
-          <Section
-            style={{
-              background: `linear-gradient(135deg, ${hexToRgba(ACCENT, 0.15)} 0%, ${hexToRgba(ACCENT, 0.05)} 100%)`,
-              padding: "24px 32px",
-              borderRadius: "20px",
-              textAlign: "center",
-              marginBottom: "16px",
-              border: `1px solid ${hexToRgba(ACCENT, 0.15)}`,
-            }}
-          >
-            {(brand?.logoUrl || heroIconUrl) && (
-              <Img
-                src={brand?.logoUrl || heroIconUrl || ""}
-                alt={brand?.logoAlt || "Logo"}
-                width="52"
-                height="52"
-                style={{
-                  display: "inline-block",
-                  borderRadius: "14px",
-                  boxShadow: `0 4px 12px ${hexToRgba(ACCENT, 0.2)}`,
-                }}
-              />
-            )}
-          </Section>
+          {/* Rounded Header Card — hidden when banner image is used */}
+          {!templateOptions?.bannerImageUrl && (
+            <Section
+              style={{
+                background: `linear-gradient(135deg, ${hexToRgba(ACCENT, 0.15)} 0%, ${hexToRgba(ACCENT, 0.05)} 100%)`,
+                padding: "24px 32px",
+                borderRadius: "20px",
+                textAlign: "center",
+                marginBottom: "16px",
+                border: `1px solid ${hexToRgba(ACCENT, 0.15)}`,
+              }}
+            >
+              {(brand?.logoUrl || heroIconUrl) && (
+                <Img
+                  src={brand?.logoUrl || heroIconUrl || ""}
+                  alt={brand?.logoAlt || "Logo"}
+                  width="52"
+                  height="52"
+                  style={{
+                    display: "inline-block",
+                    borderRadius: "14px",
+                    boxShadow: `0 4px 12px ${hexToRgba(ACCENT, 0.2)}`,
+                  }}
+                />
+              )}
+            </Section>
+          )}
 
           {/* Body Card */}
           <Section

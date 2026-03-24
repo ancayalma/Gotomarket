@@ -123,27 +123,29 @@ export const OutreachNewsletterTemplate: React.FC<
               />
             </Section>
           )}
-          {/* Masthead */}
-          <Section
-            style={{
-              padding: "24px 32px",
-              borderBottom: `3px solid ${ACCENT}`,
-              textAlign: "center",
-            }}
-          >
-            {(brand?.logoUrl || heroIconUrl) && (
-              <Img
-                src={brand?.logoUrl || heroIconUrl || ""}
-                alt={brand?.logoAlt || "Logo"}
-                width="44"
-                height="44"
-                style={{
-                  display: "inline-block",
-                  marginBottom: "8px",
-                }}
-              />
-            )}
-          </Section>
+          {/* Masthead — hidden when banner image is used */}
+          {!templateOptions?.bannerImageUrl && (
+            <Section
+              style={{
+                padding: "24px 32px",
+                borderBottom: `3px solid ${ACCENT}`,
+                textAlign: "center",
+              }}
+            >
+              {(brand?.logoUrl || heroIconUrl) && (
+                <Img
+                  src={brand?.logoUrl || heroIconUrl || ""}
+                  alt={brand?.logoAlt || "Logo"}
+                  width="44"
+                  height="44"
+                  style={{
+                    display: "inline-block",
+                    marginBottom: "8px",
+                  }}
+                />
+              )}
+            </Section>
+          )}
 
           {/* Body */}
           <Section style={{ padding: "32px 32px 16px" }}>

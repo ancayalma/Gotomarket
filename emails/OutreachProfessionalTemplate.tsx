@@ -119,39 +119,41 @@ export const OutreachProfessionalTemplate: React.FC<
               />
             </Section>
           )}
-          {/* Branded Header Bar */}
-          <Section
-            style={{
-              backgroundColor: ACCENT,
-              padding: "16px 32px",
-              borderRadius: "0 0 8px 8px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              {brand?.logoUrl && (
-                <Img
-                  src={brand.logoUrl}
-                  alt={brand.logoAlt || "Logo"}
-                  width="40"
-                  height="40"
-                  style={{
-                    display: "inline-block",
-                    borderRadius: "8px",
-                    backgroundColor: "rgba(255,255,255,0.15)",
-                  }}
-                />
-              )}
-              {heroIconUrl && !brand?.logoUrl && (
-                <Img
-                  src={heroIconUrl}
-                  alt="Icon"
-                  width="36"
-                  height="36"
-                  style={{ display: "inline-block" }}
-                />
-              )}
-            </div>
-          </Section>
+          {/* Branded Header Bar — hidden when banner image is used */}
+          {!templateOptions?.bannerImageUrl && (
+            <Section
+              style={{
+                backgroundColor: ACCENT,
+                padding: "16px 32px",
+                borderRadius: "0 0 8px 8px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                {brand?.logoUrl && (
+                  <Img
+                    src={brand.logoUrl}
+                    alt={brand.logoAlt || "Logo"}
+                    width="40"
+                    height="40"
+                    style={{
+                      display: "inline-block",
+                      borderRadius: "8px",
+                      backgroundColor: "rgba(255,255,255,0.15)",
+                    }}
+                  />
+                )}
+                {heroIconUrl && !brand?.logoUrl && (
+                  <Img
+                    src={heroIconUrl}
+                    alt="Icon"
+                    width="36"
+                    height="36"
+                    style={{ display: "inline-block" }}
+                  />
+                )}
+              </div>
+            </Section>
+          )}
 
           {/* Body Card */}
           <Section
