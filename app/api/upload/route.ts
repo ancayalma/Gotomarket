@@ -11,7 +11,7 @@ import { systemLogger } from "@/lib/logger";
 // Generic Azure Blob upload endpoint used by Invoice FileInput and other generic uploads.
 // Accepts multipart/form-data with field "file".
 
-// Increase Next.js body size limit from default 1MB to 2MB
+// Body size limit is set in next.config.js
 export const maxDuration = 30; // Allow up to 30s for large uploads
 export const dynamic = "force-dynamic";
 
