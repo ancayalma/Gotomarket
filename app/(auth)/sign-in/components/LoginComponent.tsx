@@ -60,6 +60,7 @@ export function LoginComponent() {
   const [email, setEmail] = useState("");
   const [mfaStep, setMfaStep] = useState<"login" | "verify">("login");
   const [mfaMethod, setMfaMethod] = useState<string | null>(null);
+  const [availableMfaMethods, setAvailableMfaMethods] = useState<string[]>([]);
   const [mfaCode, setMfaCode] = useState("");
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
@@ -163,14 +164,17 @@ export function LoginComponent() {
       if (status?.error) {
         const msg = status.error as string;
 
-        // Catch MFA Required signal
+        // Catch MFA Required signal — format: MFA_REQUIRED:PRIMARY_METHOD:AVAILABLE_METHODS
         if (msg.startsWith("MFA_REQUIRED:")) {
-          const method = msg.split(":")[1];
-          setMfaMethod(method);
+          const parts = msg.split(":");
+          const primaryMethod = parts[1];
+          const available = parts[2] ? parts[2].split(",") : [primaryMethod];
+          setAvailableMfaMethods(available);
+          setMfaMethod(primaryMethod);
           setMfaStep("verify");
 
-          // If it's WebAuthn, we can auto-trigger the biometric prompt
-          if (method === "WEBAUTHN") {
+          // Only auto-trigger WebAuthn if it's the SOLE method (no TOTP fallback)
+          if (primaryMethod === "WEBAUTHN" && available.length === 1) {
             triggerWebAuthn(normalizedEmail);
           }
           return;
@@ -469,12 +473,36 @@ export function LoginComponent() {
                 </Button>
               )}
 
+              {/* Method switcher */}
+              {availableMfaMethods.length > 1 && (
+                <Button
+                  variant="outline"
+                  className="w-full text-xs gap-2 border-white/10 hover:bg-white/5"
+                  onClick={() => {
+                    const altMethod = mfaMethod === "TOTP" ? "WEBAUTHN" : "TOTP";
+                    setMfaMethod(altMethod);
+                    setMfaCode("");
+                    if (altMethod === "WEBAUTHN") {
+                      triggerWebAuthn(email);
+                    }
+                  }}
+                  disabled={isLoading}
+                >
+                  {mfaMethod === "TOTP" ? (
+                    <><Fingerprint className="h-4 w-4" /> Use Passkey Instead</>
+                  ) : (
+                    <><Smartphone className="h-4 w-4" /> Use Authenticator Instead</>
+                  )}
+                </Button>
+              )}
+
               <Button
                 variant="ghost"
                 className="w-full text-xs text-gray-500 hover:text-white"
                 onClick={() => {
                   setMfaStep("login");
                   setMfaCode("");
+                  setAvailableMfaMethods([]);
                 }}
               >
                 Back to credentials

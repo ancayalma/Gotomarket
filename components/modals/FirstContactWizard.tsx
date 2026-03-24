@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "react-hot-toast";
-import { Sparkles, Loader2, Plus, Trash2, GripVertical, ExternalLink, Building2, Mail, User, CheckCircle2, LayoutTemplate, Check, FileText as FileTextIcon, Phone, MessageSquare } from "lucide-react";
+import { Sparkles, Loader2, Plus, Trash2, GripVertical, ExternalLink, Building2, Mail, User, CheckCircle2, LayoutTemplate, Check, FileText as FileTextIcon, Phone, MessageSquare, Upload } from "lucide-react";
 import { OUTREACH_TEMPLATES, type OutreachTemplateId } from "@/lib/outreach/outreach-template-meta";
 import { ICON_CATEGORIES, ICON_KEYS, resolveIconUrl } from "@/lib/outreach/outreach-icons";
 
@@ -218,6 +218,10 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
   const [cardStyle, setCardStyle] = useState<string>("flat");
   const [dividerStyle, setDividerStyle] = useState<string>("thin");
   const [showResources, setShowResources] = useState<boolean>(true);
+  const [bannerImageUrl, setBannerImageUrl] = useState<string>("");
+  const [bannerHeight, setBannerHeight] = useState<number>(120);
+  const [bannerPositionY, setBannerPositionY] = useState<number>(50);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [templatePreviewHtml, setTemplatePreviewHtml] = useState<string>("");
   const [loadingTemplatePreview, setLoadingTemplatePreview] = useState(false);
   const [themeColorOverride, setThemeColorOverride] = useState<string>(""); // empty = use brand default
@@ -519,7 +523,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
               ...((selectedBrand || brandInfo)?.logo_url ? { logoUrl: (selectedBrand || brandInfo).logo_url } : {}),
             },
             resources: resources.filter((r: any) => r.enabled !== false),
-            templateOptions: { backgroundTexture: bgTexture, borderAccent, cardStyle, dividerStyle, showResources },
+            templateOptions: { backgroundTexture: bgTexture, borderAccent, cardStyle, dividerStyle, showResources, ...(bannerImageUrl ? { bannerImageUrl, bannerHeight, bannerPositionY } : {}) },
           },
         }),
       });
@@ -539,7 +543,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
     if (active === 6) {
       generateTemplatePreview(selectedTemplate);
     }
-  }, [selectedTemplate, active, themeColorOverride, secondaryColorOverride, bgTexture, borderAccent, cardStyle, dividerStyle, showResources]);
+  }, [selectedTemplate, active, themeColorOverride, secondaryColorOverride, bgTexture, borderAccent, cardStyle, dividerStyle, showResources, bannerImageUrl, bannerHeight, bannerPositionY]);
 
   function next() {
     let nextStep = active + 1;
@@ -703,7 +707,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         templateId: selectedTemplate,
         themeColorOverride: themeColorOverride || undefined,
         secondaryColorOverride: secondaryColorOverride || undefined,
-        templateOptions: { backgroundTexture: bgTexture, borderAccent, cardStyle, dividerStyle, showResources },
+        templateOptions: { backgroundTexture: bgTexture, borderAccent, cardStyle, dividerStyle, showResources, ...(bannerImageUrl ? { bannerImageUrl, bannerHeight, bannerPositionY } : {}) },
         senderOverride: senderOverrideEnabled && senderOverrideName?.trim()
           ? { name: senderOverrideName.trim(), title: senderOverrideTitle?.trim() || undefined }
           : undefined,
@@ -1484,6 +1488,88 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                     <Checkbox checked={showResources} onCheckedChange={(v) => setShowResources(!!v)} />
                     Show Resource Links Area
                   </label>
+                </div>
+
+                {/* Banner Image */}
+                <div className="space-y-3 pt-3 border-t border-border">
+                  <label className="text-xs font-medium tracking-wide uppercase">Banner Image</label>
+                  <p className="text-[10px] text-muted-foreground -mt-1">Full-width cover image at the top of the email — like a social media banner.</p>
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-32 h-14 rounded border-2 border-dashed border-border bg-muted flex items-center justify-center overflow-hidden group shrink-0">
+                      {bannerImageUrl ? (
+                        <img src={bannerImageUrl} alt="Banner" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">No banner</span>
+                      )}
+                      <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        <Upload className="w-4 h-4 text-white" />
+                        <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) { toast.error("Max file size is 2MB"); return; }
+                          setUploadingBanner(true);
+                          try {
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            const res = await fetch("/api/upload", { method: "POST", body: formData });
+                            const json = await res.json();
+                            if (res.ok && json?.document?.document_file_url) {
+                              setBannerImageUrl(json.document.document_file_url);
+                              toast.success("Banner uploaded!");
+                            } else { throw new Error(json?.error || "Upload failed"); }
+                          } catch (err: any) { toast.error(err.message || "Upload failed"); }
+                          finally { setUploadingBanner(false); }
+                        }} disabled={uploadingBanner} />
+                      </label>
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <input
+                        type="text"
+                        value={bannerImageUrl}
+                        onChange={(e) => setBannerImageUrl(e.target.value)}
+                        placeholder="https://... or upload"
+                        className="w-full text-xs p-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                      {bannerImageUrl && (
+                        <button type="button" onClick={() => setBannerImageUrl("")} className="text-[10px] text-destructive hover:underline">Remove banner</button>
+                      )}
+                    </div>
+                  </div>
+                  {bannerImageUrl && (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] text-muted-foreground uppercase">Height</label>
+                        <span className="text-[10px] font-mono text-primary">{bannerHeight}px</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="60"
+                        max="200"
+                        step="5"
+                        value={bannerHeight}
+                        onChange={(e) => setBannerHeight(Number(e.target.value))}
+                        className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                      />
+                      <div className="flex items-center justify-between mt-2">
+                        <label className="text-[10px] text-muted-foreground uppercase">Position</label>
+                        <span className="text-[10px] font-mono text-primary">{bannerPositionY}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value={bannerPositionY}
+                        onChange={(e) => setBannerPositionY(Number(e.target.value))}
+                        className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                      />
+                      <div className="flex justify-between text-[9px] text-muted-foreground">
+                        <span>Top</span>
+                        <span>Center</span>
+                        <span>Bottom</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

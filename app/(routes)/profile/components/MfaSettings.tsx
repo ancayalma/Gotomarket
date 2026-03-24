@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Smartphone, Fingerprint, Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
+import { Shield, Smartphone, Fingerprint, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
@@ -20,20 +20,23 @@ export function MfaSettings({ user }: MfaSettingsProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [mfaData, setMfaData] = useState<any>(null);
-    const [setupStep, setSetupStep] = useState<"idle" | "totp" | "sms" | "webauthn">("idle");
+    const [setupStep, setSetupStep] = useState<"idle" | "totp">("idle");
     const [totpCode, setTotpCode] = useState("");
-    const [isMfaEnabled, setIsMfaEnabled] = useState(user.mfaEnabled ?? false);
-    const [mfaMethod, setMfaMethod] = useState<string>(user.mfaMethod ?? "NONE");
+    const [isTotpActive, setIsTotpActive] = useState(false);
+    const [isWebauthnActive, setIsWebauthnActive] = useState(false);
 
-    // Fetch fresh MFA status on mount to handle cases where server prop is stale
+    const isMfaEnabled = isTotpActive || isWebauthnActive;
+
+    // Fetch fresh MFA status on mount
     useEffect(() => {
         const fetchStatus = async () => {
             try {
                 const res = await axios.get("/api/user/mfa/status");
-                setIsMfaEnabled(res.data.mfaEnabled);
-                setMfaMethod(res.data.mfaMethod || "NONE");
+                setIsTotpActive(res.data.totpConfigured ?? false);
+                setIsWebauthnActive(res.data.webauthnConfigured ?? false);
             } catch {
-                // Fall back to server-provided value
+                setIsTotpActive(user.mfaMethod === "TOTP" && user.mfaEnabled);
+                setIsWebauthnActive(user.mfaMethod === "WEBAUTHN" && user.mfaEnabled);
             }
         };
         fetchStatus();
@@ -54,16 +57,16 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                     body: attResp,
                     currentOptions: options
                 });
-                toast({ title: "Success", description: "Biometric authentication registered successfully." });
-                setIsMfaEnabled(true);
-                setMfaMethod("WEBAUTHN");
+                toast({ title: "Success", description: "Passkey registered successfully." });
+                setIsWebauthnActive(true);
                 router.refresh();
             }
         } catch (error: any) {
+            console.error("[MFA Setup Error]", error);
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: error.response?.data?.error || "Failed to initiate MFA setup."
+                description: error?.response?.data?.error || error?.message || "Failed to initiate MFA setup."
             });
         } finally {
             setLoading(false);
@@ -76,15 +79,14 @@ export function MfaSettings({ user }: MfaSettingsProps) {
         try {
             await axios.post("/api/user/mfa/verify", {
                 code: totpCode,
-                secret: mfaData.secret
+                secret: mfaData?.secret,
             });
-            toast({ title: "MFA Enabled", description: "TOTP Authentication is now active." });
-            setIsMfaEnabled(true);
-            setMfaMethod("TOTP");
+            toast({ title: "Verified!", description: "Authenticator app configured successfully." });
+            setIsTotpActive(true);
             setSetupStep("idle");
             setTotpCode("");
             router.refresh();
-        } catch (error: any) {
+        } catch {
             toast({
                 variant: "destructive",
                 title: "Invalid Code",
@@ -95,15 +97,34 @@ export function MfaSettings({ user }: MfaSettingsProps) {
         }
     };
 
-    const disableMfa = async () => {
+    const resetMethod = async (method: "totp" | "webauthn") => {
         setLoading(true);
         try {
-            await axios.post("/api/user/mfa/disable");
-            toast({ title: "MFA Disabled", description: "Your account is now less secure." });
-            setIsMfaEnabled(false);
-            setMfaMethod("NONE");
+            await axios.post("/api/user/mfa/disable", { method });
+            if (method === "totp") {
+                setIsTotpActive(false);
+                toast({ title: "Authenticator Reset", description: "You can set it up again anytime." });
+            } else {
+                setIsWebauthnActive(false);
+                toast({ title: "Passkey Reset", description: "You can register a new passkey anytime." });
+            }
             router.refresh();
-        } catch (error) {
+        } catch {
+            toast({ variant: "destructive", title: "Error", description: "Failed to reset method." });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const disableAll = async () => {
+        setLoading(true);
+        try {
+            await axios.post("/api/user/mfa/disable", { method: "all" });
+            toast({ title: "MFA Disabled", description: "All authentication methods have been removed." });
+            setIsTotpActive(false);
+            setIsWebauthnActive(false);
+            router.refresh();
+        } catch {
             toast({ variant: "destructive", title: "Error", description: "Failed to disable MFA." });
         } finally {
             setLoading(false);
@@ -126,11 +147,6 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                     {isMfaEnabled ? (
                         <div className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" /> Protected
-                            {mfaMethod && mfaMethod !== "NONE" && (
-                                <span className="text-emerald-500/60 ml-1">
-                                    ({mfaMethod === "TOTP" ? "Authenticator" : mfaMethod === "WEBAUTHN" ? "Passkey" : mfaMethod})
-                                </span>
-                            )}
                         </div>
                     ) : (
                         <Badge variant="destructive" className="bg-red-500/10 text-red-400 border-red-500/20 px-3 py-1">
@@ -144,19 +160,36 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                 {setupStep === "idle" ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* TOTP Option */}
-                        <div className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors group">
+                        <div className={`p-4 rounded-xl border transition-colors group ${isTotpActive ? "border-emerald-500/20 bg-emerald-500/5" : "border-white/5 bg-white/5 hover:bg-white/10"}`}>
                             <div className="flex items-start justify-between mb-4">
                                 <div className="p-2 bg-blue-500/10 rounded-lg group-hover:scale-110 transition-transform">
                                     <Smartphone className="h-6 w-6 text-blue-400" />
                                 </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => fetchMfaSetup("totp")}
-                                    disabled={loading}
-                                >
-                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Setup App"}
-                                </Button>
+                                {isTotpActive ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                                            <CheckCircle2 className="h-3 w-3" /> Active
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 text-xs h-7 px-2"
+                                            onClick={() => resetMethod("totp")}
+                                            disabled={loading}
+                                        >
+                                            Reset
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => fetchMfaSetup("totp")}
+                                        disabled={loading}
+                                    >
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Setup App"}
+                                    </Button>
+                                )}
                             </div>
                             <h4 className="font-bold text-lg mb-1">Authenticator App</h4>
                             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -165,19 +198,36 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                         </div>
 
                         {/* WebAuthn Option */}
-                        <div className="p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors group">
+                        <div className={`p-4 rounded-xl border transition-colors group ${isWebauthnActive ? "border-emerald-500/20 bg-emerald-500/5" : "border-white/5 bg-white/5 hover:bg-white/10"}`}>
                             <div className="flex items-start justify-between mb-4">
                                 <div className="p-2 bg-emerald-500/10 rounded-lg group-hover:scale-110 transition-transform">
                                     <Fingerprint className="h-6 w-6 text-emerald-400" />
                                 </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => fetchMfaSetup("webauthn")}
-                                    disabled={loading}
-                                >
-                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Register"}
-                                </Button>
+                                {isWebauthnActive ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                                            <CheckCircle2 className="h-3 w-3" /> Active
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 text-xs h-7 px-2"
+                                            onClick={() => resetMethod("webauthn")}
+                                            disabled={loading}
+                                        >
+                                            Reset
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => fetchMfaSetup("webauthn")}
+                                        disabled={loading}
+                                    >
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Register"}
+                                    </Button>
+                                )}
                             </div>
                             <h4 className="font-bold text-lg mb-1">Biometrics / Passkey</h4>
                             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -220,45 +270,14 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                 ) : null}
 
                 {isMfaEnabled && setupStep === "idle" && (
-                    <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
-                        {/* Reset MFA */}
-                        <div className="flex items-center justify-between p-4 bg-amber-500/5 rounded-xl border border-amber-500/10">
-                            <div>
-                                <h4 className="text-sm font-bold text-amber-400 uppercase tracking-widest">Reset Method</h4>
-                                <p className="text-xs text-muted-foreground mt-1">Switch to a different authentication method or regenerate your current one.</p>
-                            </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
-                                onClick={async () => {
-                                    setLoading(true);
-                                    try {
-                                        await axios.post("/api/user/mfa/disable");
-                                        setIsMfaEnabled(false);
-                                        setMfaMethod("NONE");
-                                        toast({ title: "MFA Reset", description: "Choose a new authentication method below." });
-                                        // Keep setupStep as idle — the method cards will now show since isMfaEnabled is false
-                                    } catch {
-                                        toast({ variant: "destructive", title: "Error", description: "Failed to reset MFA." });
-                                    } finally {
-                                        setLoading(false);
-                                    }
-                                }}
-                                disabled={loading}
-                            >
-                                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                Reset MFA
-                            </Button>
-                        </div>
-                        {/* Disable MFA */}
+                    <div className="mt-8 pt-6 border-t border-white/5">
                         <div className="flex items-center justify-between p-4 bg-red-500/5 rounded-xl border border-red-500/10">
                             <div>
                                 <h4 className="text-sm font-bold text-red-400 uppercase tracking-widest">Danger Zone</h4>
-                                <p className="text-xs text-muted-foreground mt-1">Disabling MFA will make your account significantly easier to compromise.</p>
+                                <p className="text-xs text-muted-foreground mt-1">Disable all MFA methods. Your account will be significantly less secure.</p>
                             </div>
-                            <Button variant="destructive" size="sm" onClick={disableMfa} disabled={loading}>
-                                Disable MFA
+                            <Button variant="destructive" size="sm" onClick={disableAll} disabled={loading}>
+                                Disable All MFA
                             </Button>
                         </div>
                     </div>
