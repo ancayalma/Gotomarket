@@ -10,9 +10,12 @@ export const deleteTeam = async (teamId: string) => {
         const currentUser = await getCurrentUserTeamId();
         if (!currentUser?.userId) return { error: "Unauthorized" };
 
-        // Only Global Admins or Team Owners (specifically looking at business rules) should delete
-        if ((currentUser.teamId !== teamId || currentUser.teamRole !== "OWNER")) {
-            return { error: "Unauthorized: You do not have permission to delete this team." };
+        // Global admins (platform super admins) can delete any team
+        // Team owners can delete their own team
+        const isGlobalAdmin = currentUser.isGlobalAdmin;
+        const isTeamOwner = currentUser.teamId === teamId && currentUser.teamRole === "OWNER";
+        if (!isGlobalAdmin && !isTeamOwner) {
+            return { error: "Unauthorized: You do not have permission to delete this company." };
         }
 
         // 1. Dissociate members first (Optional if Cascade/SetNull is handled by DB, but safe to do explicit)
@@ -33,6 +36,7 @@ export const deleteTeam = async (teamId: string) => {
 
         // 3. Revalidate
         revalidatePath("/partners");
+        revalidatePath("/platform");
 
         return { success: true };
     } catch (error) {
