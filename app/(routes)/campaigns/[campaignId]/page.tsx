@@ -31,6 +31,7 @@ import {
     Play,
     Pause,
     XCircle,
+    RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -201,6 +202,7 @@ export default function CampaignDetailPage() {
     const [deleting, setDeleting] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [autoReplyLoading, setAutoReplyLoading] = useState(false);
+    const [backfillLoading, setBackfillLoading] = useState(false);
 
     const { data: campaign, error, isLoading, mutate } = useSWR<CampaignDetail>(
         campaignId ? `/api/campaigns/${campaignId}` : null,
@@ -280,6 +282,30 @@ export default function CampaignDetailPage() {
             toast.error("Failed to update auto-reply settings");
         }
         setAutoReplyLoading(false);
+    }
+
+    async function backfillReplies() {
+        setBackfillLoading(true);
+        try {
+            const res = await fetch(`/api/campaigns/${campaignId}/auto-reply`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ backfill_only: true }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.backfill_triggered > 0) {
+                    toast.success(`Scanning ${data.backfill_triggered} unreplied threads...`);
+                } else {
+                    toast.success("No unreplied threads found. All caught up!");
+                }
+            } else {
+                toast.error("Failed to scan replies");
+            }
+        } catch {
+            toast.error("Failed to scan replies");
+        }
+        setBackfillLoading(false);
     }
 
     if (isLoading) {
@@ -670,6 +696,27 @@ export default function CampaignDetailPage() {
                                                 <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Max Replies / Thread</span>
                                                 <div className="text-xl font-black text-indigo-400 mt-1">{campaign.auto_reply_max_count ?? 3}</div>
                                             </div>
+                                        </div>
+                                    )}
+                                    {campaign.auto_reply_enabled && (
+                                        <div className="pt-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="w-full gap-2 border-white/10 hover:bg-white/5 text-xs"
+                                                onClick={backfillReplies}
+                                                disabled={backfillLoading}
+                                            >
+                                                {backfillLoading ? (
+                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                ) : (
+                                                    <RefreshCw className="w-3 h-3" />
+                                                )}
+                                                Scan Existing Replies
+                                            </Button>
+                                            <p className="text-[10px] text-muted-foreground mt-1 text-center">
+                                                Scans for unreplied inbound threads and triggers AI responses
+                                            </p>
                                         </div>
                                     )}
                                 </CardContent>

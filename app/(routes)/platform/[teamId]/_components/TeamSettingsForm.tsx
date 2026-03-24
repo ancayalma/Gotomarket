@@ -65,7 +65,7 @@ const TeamStatusCard = ({ teamId, currentStatus, currentReason }: { teamId: stri
                 <div className="flex justify-between items-center">
                     <div>
                         <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Access Control</CardTitle>
-                        <CardDescription className="text-[11px]">Control team access and activation status.</CardDescription>
+                        <CardDescription className="text-[11px]">Control company access and activation status.</CardDescription>
                     </div>
                     <Badge variant={status === "ACTIVE" ? "default" : status === "PENDING" ? "secondary" : "destructive"} className="uppercase tracking-wider text-[9px] h-5 px-2">
                         {status || "UNKNOWN"}
@@ -162,7 +162,7 @@ const TeamSettingsForm = ({ team, availablePlans = [] }: Props) => {
             if (res.error) {
                 toast.error(res.error);
             } else {
-                toast.success("Team settings saved!");
+                toast.success("Company settings saved!");
                 router.refresh();
             }
         } catch (error) {
@@ -195,16 +195,16 @@ const TeamSettingsForm = ({ team, availablePlans = [] }: Props) => {
             <Card className="bg-zinc-900/40 border border-[#27272a] overflow-hidden">
                 <CardHeader className="py-4 px-6 border-b border-white/5">
                     <div>
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Team Profile</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Company Profile</CardTitle>
                         <CardDescription className="text-[11px]">
-                            Update core team details and subscription plan.
+                            Update core company details and subscription plan.
                         </CardDescription>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-6 pt-6 pb-6 px-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest pl-1">Team Name</label>
+                            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest pl-1">Company Name</label>
                             <Input
                                 value={formData.name}
                                 className="h-9 bg-zinc-900/50 border-white/5 text-sm"
@@ -276,7 +276,7 @@ const TeamSettingsForm = ({ team, availablePlans = [] }: Props) => {
                             <div>
                                 <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Danger Zone</CardTitle>
                                 <CardDescription className="text-[10px] text-red-500/60 leading-relaxed uppercase tracking-wide">
-                                    Permanently delete team and all associated data records.
+                                    Permanently delete company and all associated data records.
                                 </CardDescription>
                             </div>
                             <AlertModal
@@ -284,14 +284,14 @@ const TeamSettingsForm = ({ team, availablePlans = [] }: Props) => {
                                 onClose={() => setOpen(false)}
                                 onConfirm={handleDelete}
                                 loading={isLoading}
-                                title="Are you sure you want to delete this team?"
-                                description="This action cannot be undone. This will permanently delete the team and remove all data."
+                                title="Are you sure you want to delete this company?"
+                                description="This action cannot be undone. This will permanently delete the company and remove all data."
                             />
                         </div>
                     </CardHeader>
                     <div className="px-6 pb-6 mt-auto">
                         <Button variant="destructive" size="sm" className="w-full h-8 text-[10px] font-bold uppercase tracking-wider" onClick={() => setOpen(true)} disabled={isLoading}>
-                            Delete Team
+                            Delete Company
                         </Button>
                     </div>
                 </Card>

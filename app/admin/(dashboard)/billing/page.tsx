@@ -47,6 +47,7 @@ export default async function AdminBillingPage() {
                 aiUsageSummary={aiUsageData.summary}
                 subscription={subscription}
                 teamId={teamInfo.teamId}
+                isPlatformAdmin={!!teamInfo.isPlatformAdmin}
             />
         </Container>
     );

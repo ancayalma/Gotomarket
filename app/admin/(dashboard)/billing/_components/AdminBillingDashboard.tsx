@@ -67,6 +67,7 @@ interface AdminBillingDashboardProps {
     aiUsageSummary: any[];
     subscription: any;
     teamId: string;
+    isPlatformAdmin?: boolean;
 }
 
 export function AdminBillingDashboard({
@@ -75,7 +76,7 @@ export function AdminBillingDashboard({
     aiUsageSummary,
     subscription,
     teamId,
-
+    isPlatformAdmin = false,
 }: AdminBillingDashboardProps) {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -108,7 +109,7 @@ export function AdminBillingDashboard({
     const INTERNAL_SLUGS = ["basalt", "basalthq", "ledger1"];
     const teamSlug = subscription?.team?.slug?.toLowerCase() || "";
     const isInternalTeam = INTERNAL_SLUGS.includes(teamSlug);
-    const isExempt = isInternalTeam && (subscription?.plan_name === "PLATFORM_ADMIN" || subscription?.last_charge_status === "SYSTEM_FREE_TIER");
+    const isExempt = isPlatformAdmin || (isInternalTeam && (subscription?.plan_name === "PLATFORM_ADMIN" || subscription?.last_charge_status === "SYSTEM_FREE_TIER"));
     const isFree = !subscription || (!isExempt && (!subscription.plan_name || subscription.amount === 0));
     const displayPlanName = isExempt ? "Platform Admin (Exempt)" : isFree ? "Free" : subscription.plan_name;
     const displayAmount = isExempt || isFree ? "0.00" : subscription?.amount?.toFixed(2);
@@ -302,7 +303,7 @@ export function AdminBillingDashboard({
 
                 {/* Plans & Pricing Tab */}
                 <TabsContent value="plans" className="mt-4">
-                    <PlanSelector subscription={subscription} teamId={teamId} />
+                    <PlanSelector subscription={subscription} teamId={teamId} isPlatformAdmin={isPlatformAdmin} />
                 </TabsContent>
 
                 {/* Subscription Tab */}

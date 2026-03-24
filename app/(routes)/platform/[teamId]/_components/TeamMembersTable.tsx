@@ -47,7 +47,7 @@ const BASE_ROLES: RoleOption[] = [
     {
         value: "ADMIN",
         label: "Admin",
-        description: "Full access to manage team settings and members.",
+        description: "Full access to manage company settings and members.",
         icon: Shield,
     },
     {
@@ -84,9 +84,10 @@ type Props = {
     ownerId?: string | null;
     hasDepartments?: boolean;
     departmentMap?: Record<string, string>;
+    isExemptTeam?: boolean;
 };
 
-const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdmin, ownerId, hasDepartments = false, departmentMap = {} }: Props) => {
+const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdmin, ownerId, hasDepartments = false, departmentMap = {}, isExemptTeam = false }: Props) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -204,7 +205,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
     };
 
     const handleRemove = async (userId: string) => {
-        if (!confirm("Are you sure? This will remove the user from the team.")) return;
+        if (!confirm("Are you sure? This will remove the user from the company.")) return;
         try {
             setIsLoading(true);
             const res = await removeMember(userId);
@@ -255,12 +256,13 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Personnel</CardTitle>
+                    <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{isExemptTeam ? "Platform Admins" : "Personnel"}</CardTitle>
                     <CardDescription>
-                        Manage company personnel.
+                        {isExemptTeam ? "Users with platform-level administrative access. Full team management is in the Admin module." : "Manage company personnel."}
                     </CardDescription>
                 </div>
 
+                {!isExemptTeam && (
                 <div className="flex items-center gap-2">
                     <Dialog open={addOpen} onOpenChange={setAddOpen}>
                         <DialogTrigger asChild>
@@ -271,9 +273,9 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Add Team Member</DialogTitle>
+                                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Add Personnel</DialogTitle>
                                 <DialogDescription>
-                                    Search for existing system users to add to this team.
+                                    Search for existing system users to add to this company.
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
@@ -298,7 +300,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                                                 </div>
                                             </div>
                                             {user.team_id ? (
-                                                <Badge variant="secondary" className="text-xs">In Team</Badge>
+                                                <Badge variant="secondary" className="text-xs">In Company</Badge>
                                             ) : (
                                                 <Button size="sm" variant="ghost" onClick={() => handleAdd(user.id)}>Add</Button>
                                             )}
@@ -353,7 +355,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                                             <SelectValue placeholder="Select role" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="ADMIN">Admin — Full access to manage team settings</SelectItem>
+                                            <SelectItem value="ADMIN">Admin — Full access to manage company settings</SelectItem>
                                             <SelectItem value="MEMBER">Member — Standard access to assigned features</SelectItem>
                                             <SelectItem value="VIEWER">Viewer — Read-only access</SelectItem>
                                         </SelectContent>
@@ -372,6 +374,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                         </DialogContent>
                     </Dialog>
                 </div>
+                )}
 
             </CardHeader>
 

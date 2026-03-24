@@ -51,9 +51,14 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
         const ses = new SES({ region: SES_REGION, credentials });
         const sns = new SNSClient({ region: SES_REGION, credentials });
 
-        // 1. Verify the reply domain in SES
+        // 1. Verify the reply domain in SES + generate DKIM tokens
         systemLogger.info(`[REPLY_DOMAIN] Verifying domain: ${rawDomain}`);
-        await ses.verifyDomainIdentity({ Domain: rawDomain });
+        const [verifyResult, dkimResult] = await Promise.all([
+            ses.verifyDomainIdentity({ Domain: rawDomain }),
+            ses.verifyDomainDkim({ Domain: rawDomain }),
+        ]);
+        const verificationToken = verifyResult.VerificationToken;
+        const dkimTokens = dkimResult.DkimTokens || [];
 
         // 2. Create SNS topic for this team's reply domain
         const topicName = `crm-reply-${params.teamId.substring(0, 12)}-${rawDomain.replace(/\./g, "-")}`;
@@ -98,6 +103,8 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             reply_domain_status: "PENDING_MX",
             reply_sns_topic_arn: topicArn,
             reply_receipt_rule: ruleName,
+            reply_dkim_tokens: dkimTokens,
+            reply_verification_token: verificationToken || null,
         };
 
         if (existingConfig) {
@@ -130,7 +137,17 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
                 value: `inbound-smtp.${SES_REGION}.amazonaws.com`,
                 priority: 10,
             },
-            message: `Reply domain ${rawDomain} is set up. Add the MX record to your DNS to start receiving replies.`,
+            dkimRecords: dkimTokens.map((token: string) => ({
+                type: "CNAME",
+                name: `${token}._domainkey.${rawDomain}`,
+                value: `${token}.dkim.amazonses.com`,
+            })),
+            verificationRecord: verificationToken ? {
+                type: "TXT",
+                name: `_amazonses.${rawDomain}`,
+                value: verificationToken,
+            } : undefined,
+            message: `Reply domain ${rawDomain} is set up. Add the DNS records below to complete verification.`,
         });
 
     } catch (error: any) {
@@ -183,16 +200,31 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
         }
     }
 
+    // Build DNS records for display
+    const dkimTokens = Array.isArray((config as any).reply_dkim_tokens) ? (config as any).reply_dkim_tokens as string[] : [];
+    const verificationToken = (config as any).reply_verification_token as string | undefined;
+    const isNotVerified = config.reply_domain_status !== "VERIFIED";
+
     return NextResponse.json({
         domain: config.reply_domain,
         status: config.reply_domain_status,
         topicArn: config.reply_sns_topic_arn,
         verifiedAt: config.reply_domain_verified_at,
-        mxRecord: config.reply_domain_status !== "VERIFIED" ? {
+        mxRecord: isNotVerified ? {
             type: "MX",
             name: config.reply_domain,
             value: `inbound-smtp.${SES_REGION}.amazonaws.com`,
             priority: 10,
+        } : undefined,
+        dkimRecords: isNotVerified && dkimTokens.length > 0 ? dkimTokens.map((token: string) => ({
+            type: "CNAME",
+            name: `${token}._domainkey.${config.reply_domain}`,
+            value: `${token}.dkim.amazonses.com`,
+        })) : undefined,
+        verificationRecord: isNotVerified && verificationToken ? {
+            type: "TXT",
+            name: `_amazonses.${config.reply_domain}`,
+            value: verificationToken,
         } : undefined,
     });
 }

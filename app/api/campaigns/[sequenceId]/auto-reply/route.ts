@@ -23,7 +23,7 @@ export async function POST(
 
         const { sequenceId } = await params;
         const body = await req.json();
-        const { enabled, max_count, prompt } = body;
+        const { enabled, max_count, prompt, backfill_only } = body;
 
         // Verify campaign exists
         const campaign = await prismadb.crm_Outreach_Campaigns.findUnique({
@@ -35,30 +35,45 @@ export async function POST(
             return NextResponse.json({ message: "Campaign not found" }, { status: 404 });
         }
 
-        // Update auto-reply settings
-        const updateData: any = {};
-        if (typeof enabled === "boolean") updateData.auto_reply_enabled = enabled;
-        if (typeof max_count === "number") updateData.auto_reply_max_count = max_count;
-        if (typeof prompt === "string") updateData.auto_reply_prompt = prompt || null;
+        // If backfill_only, skip toggle — just run the scan
+        const shouldBackfill = backfill_only
+            ? !!campaign.auto_reply_enabled
+            : (enabled && !campaign.auto_reply_enabled);
 
-        await prismadb.crm_Outreach_Campaigns.update({
-            where: { id: sequenceId },
-            data: updateData,
-        });
+        if (!backfill_only) {
+            // Update auto-reply settings
+            const updateData: any = {};
+            if (typeof enabled === "boolean") updateData.auto_reply_enabled = enabled;
+            if (typeof max_count === "number") updateData.auto_reply_max_count = max_count;
+            if (typeof prompt === "string") updateData.auto_reply_prompt = prompt || null;
+
+            if (Object.keys(updateData).length > 0) {
+                await prismadb.crm_Outreach_Campaigns.update({
+                    where: { id: sequenceId },
+                    data: updateData,
+                });
+            }
+        }
 
         let backfillCount = 0;
 
-        // When enabling, scan for existing unanswered inbound threads and trigger auto-replies
-        if (enabled && !campaign.auto_reply_enabled) {
+        // Scan for existing unanswered inbound threads and trigger auto-replies
+        if (shouldBackfill) {
             // Find outreach items with REPLIED status that haven't been auto-replied yet
+            // auto_reply_count may be null/undefined (never set) or 0 — handle both
             const repliedItems = await prismadb.crm_Outreach_Items.findMany({
                 where: {
                     campaign: sequenceId,
                     status: "REPLIED",
-                    auto_reply_count: 0,
-                },
+                    OR: [
+                        { auto_reply_count: { equals: 0 } },
+                        { auto_reply_count: null },
+                    ],
+                } as any,
                 select: { id: true },
             });
+
+            systemLogger.info(`[AUTO_REPLY_BACKFILL] Found ${repliedItems.length} unreplied items for campaign ${sequenceId}`);
 
             if (repliedItems.length > 0) {
                 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://crm.basalthq.com";

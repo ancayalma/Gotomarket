@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Shield, UserMinus, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { removeMember } from "@/actions/teams/member-actions";
+import { removeFromDepartment } from "@/actions/departments/assign-to-department";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -49,12 +49,12 @@ export function ViewDepartmentMembersModal({
     const handleRemoveMember = async (userId: string) => {
         setIsLoading(userId);
         try {
-            const result = await removeMember(userId);
+            const result = await removeFromDepartment(userId);
             if (result.success) {
                 toast.success("Member removed from department");
                 router.refresh();
             } else {
-                toast.error(result.error || "Failed to remove member");
+                toast.error(result.error || "Failed to remove member from department");
             }
         } catch (error) {
             toast.error("An error occurred");
