@@ -1997,9 +1997,9 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                         const target = e.currentTarget;
                         target.innerHTML = capturedHtml;
                         
-                        // Auto-import immediately
+                        // Auto-import immediately — store raw HTML but keep builder mode active so fields are editable
                         setImportedRawHtml(capturedHtml);
-                        setUseImportedHtml(true);
+                        setUseImportedHtml(false);
 
                         // Parse and auto-fill matching fields
                         const { fields, matched } = parseSignatureHtml(capturedHtml);
