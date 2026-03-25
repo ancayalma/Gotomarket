@@ -40,11 +40,11 @@ export default function LeadGenWizardPage() {
   const [currentAiField, setCurrentAiField] = useState<keyof WizardState | null>(null);
 
   // Fetch campaigns for selector
-  const { data: campaignsData } = useSWR<{ id: string; name: string; status: string }[]>("/api/campaigns", fetcher, {
+  const { data: campaignsData } = useSWR<{ campaigns: { id: string; name: string; status: string }[] }>("/api/campaigns", fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 30000,
   });
-  const activeCampaigns = (campaignsData || []).filter(c => c.status !== "ARCHIVED" && c.status !== "COMPLETED");
+  const activeCampaigns = (campaignsData?.campaigns || []).filter(c => c.status !== "ARCHIVED" && c.status !== "COMPLETED");
 
   // Fetch brand identity for ICP pre-fill
   const { data: brandData } = useSWR("/api/admin/brand", fetcher, {

@@ -169,6 +169,7 @@ export async function POST(req: Request) {
           company: true,
           jobTitle: true,
           email: true,
+          additional_emails: true,
           assigned_to: true,
           outreach_meeting_link: true,
           outreach_status: true,
@@ -200,6 +201,7 @@ export async function POST(req: Request) {
             company: match.company || '',
             jobTitle: match.jobTitle || '',
             email: match.email,
+            additional_emails: (match as any).additional_emails || [],
             assigned_to: null,
             outreach_meeting_link: null,
             outreach_status: 'IDLE',
@@ -215,9 +217,45 @@ export async function POST(req: Request) {
       return NextResponse.json({ sent: 0, skipped: 0, errors: 0, results: [], message: `No leads found. Requested ${body.leadIds.length} IDs. isAdmin=${isAdmin}` });
     }
 
+    // Move test mode declaration early so we can evaluate target emails
+    const testMode = !!body.test;
+    const testEmailOverride = body.testEmail?.trim();
+
+    // Flatten leads into recipients
+    const recipients: any[] = [];
+    for (const lead of leads) {
+        if (testMode) {
+            // In test mode, we overrides destination emails. We just create ONE recipient per lead.
+            const testEmails = (body.testEmail?.trim() || "")
+                .split(",")
+                .map((e: string) => e.trim())
+                .filter((e: string) => e.length > 0 && e.includes("@"));
+            const targetEmails = testEmails.length > 0 ? testEmails : [process.env.TEST_EMAIL || session.user.email || ""].filter(Boolean);
+            
+            for (const te of targetEmails) {
+                recipients.push({ ...lead, targetEmail: te, isPrimary: true, isTestRecipient: true });
+            }
+        } else {
+            if (lead.email) {
+                recipients.push({ ...lead, targetEmail: lead.email, isPrimary: true });
+            }
+            if (lead.additional_emails && Array.isArray(lead.additional_emails)) {
+                for (const addr of lead.additional_emails) {
+                    if (addr && typeof addr === 'string' && addr.includes("@")) {
+                        recipients.push({ ...lead, targetEmail: addr, isPrimary: false });
+                    }
+                }
+            }
+        }
+    }
+
+    if (recipients.length === 0) {
+        return NextResponse.json({ sent: 0, skipped: 0, errors: 0, results: [], message: `No valid recipient emails found for requested leads.` });
+    }
+
     // A subtle compliance: skip contacts with unsubscribed email if we can match them
     // (Best effort, optional)
-    const leadEmails = leads.map((l: any) => l.email).filter(Boolean) as string[];
+    const leadEmails = recipients.map((r: any) => r.targetEmail).filter(Boolean) as string[];
     const unsubscribedContacts = await prismadb.crm_Contacts.findMany({
       where: { email: { in: leadEmails } },
       select: { email: true, email_unsubscribed: true },
@@ -277,8 +315,6 @@ export async function POST(req: Request) {
       } catch { }
     }
 
-    const testMode = !!body.test;
-    const testEmailOverride = body.testEmail?.trim();
     const meetingLinkOverride = body.meetingLinkOverride?.trim();
     const promptOverride = body.promptOverride?.trim();
 
@@ -296,27 +332,15 @@ export async function POST(req: Request) {
       messageId?: string;
     }> = [];
 
-    for (const lead of leads) {
+    const ensuredPipelineIds = new Map<string, any>();
+
+    for (const recipient of recipients) {
+      const lead = recipient;
+      const targetEmail = recipient.targetEmail;
+
       // Basic validation
-      let toEmails: string[] = [];
-      if (testMode) {
-        // Parse comma-separated test emails — send to ALL of them
-        const testEmails = (testEmailOverride || "")
-          .split(",")
-          .map((e: string) => e.trim())
-          .filter((e: string) => e.length > 0 && e.includes("@"));
-        if (testEmails.length > 0) {
-          toEmails = testEmails;
-        } else {
-          toEmails = [process.env.TEST_EMAIL || session.user.email || ""].filter(Boolean);
-        }
-      } else {
-        toEmails = [lead.email || ""].filter(Boolean);
-      }
-      if (toEmails.length === 0) {
-        results.push({ leadId: lead.id, status: "skipped", reason: "No lead email" });
-        continue;
-      }
+      let toEmails: string[] = [targetEmail];
+      
       // Check if any of the target emails are unsubscribed
       const unsubscribedTargetEmails = toEmails.filter(email => unsubSet.has(email.toLowerCase()));
       if (unsubscribedTargetEmails.length > 0) {
@@ -605,21 +629,28 @@ export async function POST(req: Request) {
 
           // ─── Pipeline provisioning for pool candidates ─────────────────
           const isRealLead = /^[a-f0-9]{24}$/i.test(lead.id);
+          let pipelineResult: any = null;
+
           if (!isRealLead && !testMode) {
             // Pool candidate: create Lead → Account → Contact
-            const pipelineResult = await ensureLeadAndAccountForCandidate(
-              {
-                email: lead.email,
-                firstName: lead.firstName,
-                lastName: lead.lastName,
-                company: lead.company,
-                jobTitle: lead.jobTitle,
-              },
-              session.user.id,
-              user.team_id!,
-              body.campaignId,
-              body.poolId
-            );
+            if (!ensuredPipelineIds.has(lead.id)) {
+                pipelineResult = await ensureLeadAndAccountForCandidate(
+                  {
+                    email: lead.email, // Use primary email to construct the pipeline entity
+                    firstName: lead.firstName,
+                    lastName: lead.lastName,
+                    company: lead.company,
+                    jobTitle: lead.jobTitle,
+                  },
+                  session.user.id,
+                  user.team_id!,
+                  body.campaignId,
+                  body.poolId
+                );
+                ensuredPipelineIds.set(lead.id, pipelineResult);
+            } else {
+                pipelineResult = ensuredPipelineIds.get(lead.id);
+            }
 
             // Create outreach item linked to campaign
             if (body.campaignId && pipelineResult) {
@@ -635,7 +666,7 @@ export async function POST(req: Request) {
                   message_id: messageId || undefined,
                   tracking_token: token,
                   sentAt: new Date(),
-                  candidate_email: lead.email,
+                  candidate_email: targetEmail,
                   candidate_name: contactName,
                   candidate_company: lead.company || undefined,
                   candidate_job_title: lead.jobTitle || undefined,
