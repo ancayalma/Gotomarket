@@ -144,7 +144,7 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
     const emailSynonyms = [...COLS.email, ...COLS.additionalEmails];
     for (const rk of Object.keys(row)) {
         const lk = rk.toLowerCase();
-        if (emailSynonyms.includes(lk)) {
+        if (emailSynonyms.includes(lk) || lk.includes("email")) {
             const val = row[rk];
             if (val && typeof val === "string") {
                 if (!usedCols.includes(lk)) usedCols.push(lk);

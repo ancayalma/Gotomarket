@@ -280,9 +280,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       poolId: targetPoolId,
-      stats: {
-        accounts: { created: createdAccountsCount, updated: updatedAccountsCount },
-        contacts: { created: createdContactsCount, updated: updatedContactsCount }
+      created: {
+        candidates: createdAccountsCount,
+        contacts: createdContactsCount,
+      },
+      updated: {
+        candidates: updatedAccountsCount,
+        contacts: updatedContactsCount,
       }
     });
 

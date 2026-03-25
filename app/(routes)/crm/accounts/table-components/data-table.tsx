@@ -32,6 +32,7 @@ import { PanelTopClose, PanelTopOpen } from "lucide-react";
 import { AccountCard } from "./account-card";
 import { Account } from "../table-data/schema";
 import { useIsMobile } from "@/hooks/use-is-mobile";
+import { AccountDetailsModal } from "./account-details-modal";
 
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { useTableSettings } from "@/hooks/use-table-settings";
@@ -63,6 +64,9 @@ export function AccountDataTable<TData, TValue>({
     setViewMode,
   } = useTableSettings("crm-accounts-table-settings", isMobile);
 
+  const viewMode = savedViewMode as ViewMode;
+
+  const [selectedAccount, setSelectedAccount] = React.useState<Account | null>(null);
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -73,7 +77,7 @@ export function AccountDataTable<TData, TValue>({
     to: undefined
   });
 
-  const viewMode = savedViewMode as ViewMode;
+
 
   const filteredData = React.useMemo(() => {
     if (!dateRange.from && !dateRange.to) return data;
@@ -168,7 +172,7 @@ export function AccountDataTable<TData, TValue>({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
-                    <AccountCard key={row.id} row={row as unknown as Row<Account>} />
+                    <AccountCard key={row.id} row={row as unknown as Row<Account>} onClick={(acc) => setSelectedAccount(acc)} />
                   ))
                 ) : (
                   <div className="col-span-full text-center py-8 text-muted-foreground">
@@ -221,6 +225,8 @@ export function AccountDataTable<TData, TValue>({
                         <TableRow
                           key={row.id}
                           data-state={row.getIsSelected() && "selected"}
+                          onClick={() => setSelectedAccount(row.original as unknown as Account)}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
                         >
                           {row.getVisibleCells().map((cell) => (
                             <TableCell
@@ -254,6 +260,11 @@ export function AccountDataTable<TData, TValue>({
           )}
         </>
       )}
+
+      <AccountDetailsModal 
+        account={selectedAccount} 
+        onClose={() => setSelectedAccount(null)} 
+      />
     </div>
   );
 }

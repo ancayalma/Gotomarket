@@ -27,7 +27,10 @@ export const SWRSessionProvider = ({ children }: { children: React.ReactNode }) 
     const saveCache = useCallback(() => {
         if (!cacheMapRef.current || !cacheKeyRef.current || persistenceDisabled) return;
         try {
-            const appCache = JSON.stringify(Array.from(cacheMapRef.current.entries()));
+            const entries = Array.from(cacheMapRef.current.entries());
+            // Keep only the most recent 100 entries to prevent QuotaExceededError (5MB limit)
+            const limitedEntries = entries.slice(-100);
+            const appCache = JSON.stringify(limitedEntries);
             sessionStorage.setItem(cacheKeyRef.current, appCache);
         } catch (e: any) {
             console.warn('[CRM] Failed to save SWR cache to sessionStorage:', e);
