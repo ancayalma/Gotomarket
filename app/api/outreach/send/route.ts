@@ -46,6 +46,7 @@ type RequestBody = {
   meetingLinkOverride?: string;
   brandId?: string;
   senderMode?: "company" | "personal";
+  signatureSource?: "user" | "brand";
   senderOverride?: { name?: string; title?: string } | null; // Override sender identity for AI ghostwriting
   // Pre-generated content to skip AI regeneration (for test sends using preview)
   preGeneratedSubject?: string;
@@ -297,7 +298,7 @@ export async function POST(req: Request) {
           where: { id: body.brandId },
           select: { signature_html: true, resource_links: true, logo_url: true, company_name: true, primary_brand_color: true },
         });
-        if (brand?.signature_html) {
+        if (brand?.signature_html && body.signatureSource !== "user") {
           signatureHtml = brand.signature_html;
         }
         if (brand?.resource_links && Array.isArray(brand.resource_links)) {

@@ -518,6 +518,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         body: JSON.stringify({
           templateId,
           brandId: selectedBrandId || undefined,
+          signatureSource,
           baseUrl: typeof window !== "undefined" ? window.location.origin : "",
           props: {
             brand: {
@@ -708,6 +709,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         brandId: selectedBrandId || undefined,
         poolId: poolId || undefined,
         senderMode,
+        signatureSource,
         templateId: selectedTemplate,
         themeColorOverride: themeColorOverride || undefined,
         secondaryColorOverride: secondaryColorOverride || undefined,
@@ -2039,14 +2041,6 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                 </div>
               </div>
             )}
-            <div>
-              <label className="text-xs font-medium">Batch Prompt Override</label>
-              <Textarea className="mt-1" rows={6} value={promptOverride} onChange={(e) => setPromptOverride(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-xs font-medium">Meeting Link Override</label>
-              <Input className="mt-1" value={meetingLinkOverride} onChange={(e) => setMeetingLinkOverride(e.target.value)} />
-            </div>
           </div>
         )}
 

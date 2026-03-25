@@ -86,6 +86,11 @@ export async function POST(req: Request) {
         const reqUrl = new URL(req.url);
         const baseUrl = body.baseUrl || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || reqUrl.origin;
 
+        const signatureSource = body.signatureSource || "brand";
+        const finalSignature = signatureSource === "user" 
+            ? (userSignature || brandSignature || DEFAULT_SIGNATURE)
+            : (brandSignature || userSignature || DEFAULT_SIGNATURE);
+
         const brandColorHex = (body.props?.brand?.accentColor || brandColor || "#1f2937").replace("#", "");
 
         // Resolve icon names to self-hosted SVG URLs
@@ -123,7 +128,7 @@ export async function POST(req: Request) {
             subjectPreview: body.props?.subjectPreview || "Exploring Partnership Opportunities",
             bodyText: body.props?.bodyText || DEFAULT_PREVIEW_BODY,
             resources: resolvedResources,
-            signatureHtml: body.props?.signatureHtml || brandSignature || userSignature || DEFAULT_SIGNATURE,
+            signatureHtml: body.props?.signatureHtml || finalSignature,
             brand: {
                 accentColor: body.props?.brand?.accentColor || brandColor,
                 secondaryColor: body.props?.brand?.secondaryColor || undefined,
