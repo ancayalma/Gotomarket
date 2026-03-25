@@ -69,11 +69,14 @@ export function LoginComponent() {
   const dashboardPath = `/dashboard`;
   const searchParams = useSearchParams();
 
+  const hasToastedLogout = React.useRef(false);
+
   useEffect(() => {
-    if (searchParams.get("loggedOut")) {
+    if (searchParams.get("loggedOut") && !hasToastedLogout.current) {
       toast({
         description: "You have been logged out.",
       });
+      hasToastedLogout.current = true;
     }
   }, [searchParams, toast]);
 
@@ -445,18 +448,19 @@ export function LoginComponent() {
             <div className="space-y-4">
               {mfaMethod === "TOTP" ? (
                 <>
-                  <Input
-                    placeholder="000 000"
-                    className="block text-center text-2xl font-mono h-14 bg-white/5 border-white/10"
-                    style={{ letterSpacing: '0.5em', textIndent: '0.5em' }}
-                    maxLength={6}
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    aria-label="Verification code"
-                    value={mfaCode}
-                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
-                    autoFocus
-                  />
+                  <div className="w-full">
+                    <Input
+                      placeholder="000 000"
+                      className="block text-center text-3xl font-mono h-16 bg-white/5 border-white/10 tracking-widest"
+                      maxLength={6}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      aria-label="Verification code"
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                      autoFocus
+                    />
+                  </div>
                   <Button
                     className="w-full h-12"
                     onClick={handleMfaVerify}
@@ -486,9 +490,7 @@ export function LoginComponent() {
                     const altMethod = mfaMethod === "TOTP" ? "WEBAUTHN" : "TOTP";
                     setMfaMethod(altMethod);
                     setMfaCode("");
-                    if (altMethod === "WEBAUTHN") {
-                      triggerWebAuthn(email);
-                    }
+                    // useEffect will catch the method change and trigger logic if needed
                   }}
                   disabled={isLoading}
                 >
