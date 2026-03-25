@@ -100,31 +100,37 @@ export const getWebAuthnRegistrationOptions = async (userId: string, email: stri
 };
 
 export const verifyWebAuthnRegistration = async (body: any, currentOptions: any) => {
-    const verification: any = await verifyRegistrationResponse({
-        response: body,
-        expectedChallenge: currentOptions.challenge,
-        expectedOrigin: origin,
-        expectedRPID: rpID,
-    });
+    try {
+        const verification: any = await verifyRegistrationResponse({
+            response: body,
+            expectedChallenge: currentOptions.challenge,
+            expectedOrigin: origin,
+            expectedRPID: rpID,
+            requireUserVerification: false,
+        });
 
-    // v13: registrationInfo.credential is a WebAuthnCredential { id, publicKey, counter }
-    if (verification.verified && verification.registrationInfo) {
-        const { credential } = verification.registrationInfo;
+        // v13: registrationInfo.credential is a WebAuthnCredential { id, publicKey, counter }
+        if (verification.verified && verification.registrationInfo) {
+            const { credential } = verification.registrationInfo;
 
-        return {
-            verified: true,
-            authenticator: {
-                // credential.id is already a Base64URLString
-                credentialID: credential.id,
-                // credential.publicKey is Uint8Array — encode to base64url for DB storage
-                publicKey: Buffer.from(credential.publicKey).toString('base64url'),
-                counter: credential.counter,
-                transports: body.response?.transports || [],
-            },
-        };
+            return {
+                verified: true,
+                authenticator: {
+                    // credential.id is already a Base64URLString
+                    credentialID: credential.id,
+                    // credential.publicKey is Uint8Array — encode to base64url for DB storage
+                    publicKey: Buffer.from(credential.publicKey).toString('base64url'),
+                    counter: credential.counter,
+                    transports: body.response?.transports || [],
+                },
+            };
+        }
+
+        return { verified: false };
+    } catch (error: any) {
+        console.error("[WebAuthn Registration Error]", error.message);
+        return { verified: false, error: error.message };
     }
-
-    return { verified: false };
 };
 
 export const getWebAuthnAuthenticationOptions = async (userId: string) => {
@@ -144,20 +150,26 @@ export const getWebAuthnAuthenticationOptions = async (userId: string) => {
 };
 
 export const verifyWebAuthnAuthentication = async (body: any, currentOptions: any, auth: any) => {
-    const verification: any = await verifyAuthenticationResponse({
-        response: body,
-        expectedChallenge: currentOptions.challenge,
-        expectedOrigin: origin,
-        expectedRPID: rpID,
-        // v13: credential is WebAuthnCredential { id, publicKey: Uint8Array, counter }
-        credential: {
-            id: auth.credentialID,
-            publicKey: Buffer.from(auth.publicKey, 'base64url'),
-            counter: auth.counter,
-            transports: auth.transports,
-        },
-    });
+    try {
+        const verification: any = await verifyAuthenticationResponse({
+            response: body,
+            expectedChallenge: currentOptions.challenge,
+            expectedOrigin: origin,
+            expectedRPID: rpID,
+            // v13: credential is WebAuthnCredential { id, publicKey: Uint8Array, counter }
+            credential: {
+                id: auth.credentialID,
+                publicKey: new Uint8Array(Buffer.from(auth.publicKey, 'base64url')),
+                counter: auth.counter,
+                transports: auth.transports,
+            },
+            requireUserVerification: false,
+        });
 
-    return verification;
+        return verification;
+    } catch (error: any) {
+        console.error("[WebAuthn Authentication Error]", error.message);
+        return { verified: false, error: error.message };
+    }
 };
 

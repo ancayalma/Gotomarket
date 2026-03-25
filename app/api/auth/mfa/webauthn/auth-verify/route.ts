@@ -47,5 +47,5 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, mfaToken });
     }
 
-    return NextResponse.json({ error: "WebAuthn verification failed" }, { status: 400 });
+    return NextResponse.json({ error: verification.error || "WebAuthn verification failed" }, { status: 400 });
 }
