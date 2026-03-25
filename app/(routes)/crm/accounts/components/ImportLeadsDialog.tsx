@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
@@ -226,7 +226,7 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
                 <DialogTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400">
                   Import Intelligence
                 </DialogTitle>
-                <p className="text-zinc-500 text-sm mt-1">Transform your lists into actionable pipeline with AI-powered normalization.</p>
+                <DialogDescription className="text-zinc-500 text-sm mt-1">Transform your lists into actionable pipeline with AI-powered normalization.</DialogDescription>
               </div>
             </div>
           </DialogHeader>

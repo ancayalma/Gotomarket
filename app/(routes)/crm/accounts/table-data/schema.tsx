@@ -16,6 +16,7 @@ export const accountSchema = z.object({
     )
     .optional(),
   email: z.string().nullable().optional(),
+  additional_emails: z.array(z.string()).nullable().optional(),
   status: z.string().nullable().optional(),
   type: z.string().nullable().optional(),
 });

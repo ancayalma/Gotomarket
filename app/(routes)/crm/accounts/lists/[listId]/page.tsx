@@ -31,6 +31,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ListLeadDetailsModal } from "./components/list-lead-details-modal";
 
 type Lead = {
     id: string;
@@ -94,6 +95,7 @@ export default function AccountListDetailsPage() {
         mutateLeads();
     };
 
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
     const [deleting, setDeleting] = useState<string | null>(null);
     const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
 
@@ -355,11 +357,15 @@ export default function AccountListDetailsPage() {
                                     const uniquePhones = Array.from(new Set(contacts.map(c => c.phone).filter(Boolean)));
 
                                     return (
-                                    <TableRow key={lead.id} className="group hover:bg-muted/30 transition-colors align-top">
+                                    <TableRow 
+                                        key={lead.id} 
+                                        className="group hover:bg-muted/30 transition-colors align-top cursor-pointer"
+                                        onClick={() => setSelectedLead(lead)}
+                                    >
                                         <TableCell className="font-semibold text-primary">
                                             {lead.accountId ? (
                                                 <button
-                                                    onClick={() => router.push(`/crm/accounts/${lead.accountId}`)}
+                                                    onClick={(e) => { e.stopPropagation(); router.push(`/crm/accounts/${lead.accountId}`); }}
                                                     className="hover:underline text-left transition-colors"
                                                 >
                                                     {lead.company || lead.lastName}
@@ -368,12 +374,15 @@ export default function AccountListDetailsPage() {
                                                 <span>{lead.company || lead.lastName}</span>
                                             )}
                                         </TableCell>
-                                        <TableCell className="font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                                        <TableCell className="font-medium text-muted-foreground group-hover:text-foreground transition-colors max-w-[200px]">
                                             {uniqueEmails.length > 0 ? (
-                                                <div className="flex flex-col gap-0.5">
-                                                    {uniqueEmails.map((email, i) => (
-                                                        <span key={i} className="text-sm">{email}</span>
-                                                    ))}
+                                                <div className="flex items-center gap-2 truncate">
+                                                    <span className="truncate text-sm">{uniqueEmails[0]}</span>
+                                                    {uniqueEmails.length > 1 && (
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 shrink-0">
+                                                            +{uniqueEmails.length - 1}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             ) : "—"}
                                         </TableCell>
@@ -541,6 +550,12 @@ export default function AccountListDetailsPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <ListLeadDetailsModal 
+                lead={selectedLead} 
+                onClose={() => setSelectedLead(null)} 
+                getStatusStyles={getStatusStyles} 
+            />
         </div>
     );
 }

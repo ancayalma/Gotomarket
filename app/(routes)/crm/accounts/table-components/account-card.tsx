@@ -14,13 +14,14 @@ import { Account } from "../table-data/schema";
 
 interface AccountCardProps {
     row: Row<Account>;
+    onClick?: (account: Account) => void;
 }
 
-export function AccountCard({ row }: AccountCardProps) {
+export function AccountCard({ row, onClick }: AccountCardProps) {
     const account = row.original;
 
     return (
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => onClick?.(account)}>
             <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between space-y-0">
                 <div className="space-y-1">
                     <div className="font-semibold flex items-center gap-2">

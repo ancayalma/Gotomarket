@@ -66,7 +66,23 @@ export const columns: ColumnDef<Account>[] = [
       <DataTableColumnHeader column={column} title="E-mail" />
     ),
 
-    cell: ({ row }) => <div className="truncate">{row.getValue("email")}</div>,
+    cell: ({ row }) => {
+      const email = row.getValue("email") as string;
+      const additionalEmails = row.original.additional_emails || [];
+      const primaryEmail = email || (additionalEmails.length > 0 ? additionalEmails[0] : "");
+      const remainingCount = additionalEmails.length - (email && additionalEmails.includes(email) ? 1 : (email ? 0 : 1));
+
+      return (
+        <div className="flex items-center gap-2 truncate">
+          <span className="truncate">{primaryEmail}</span>
+          {remainingCount > 0 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 shrink-0">
+              +{remainingCount}
+            </span>
+          )}
+        </div>
+      );
+    },
     enableSorting: true,
     enableHiding: true,
     size: 200,

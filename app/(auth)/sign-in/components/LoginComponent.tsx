@@ -77,6 +77,11 @@ export function LoginComponent() {
         description: "You have been logged out.",
       });
       hasToastedLogout.current = true;
+      
+      // Clean up the URL to prevent any re-triggers if the component remounts natively
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete("loggedOut");
+      window.history.replaceState({}, document.title, newUrl.toString());
     }
   }, [searchParams, toast]);
 
@@ -448,14 +453,29 @@ export function LoginComponent() {
             <div className="space-y-4">
               {mfaMethod === "TOTP" ? (
                 <>
-                  <div className="w-full">
-                    <Input
-                      placeholder="000 000"
-                      className="block text-center text-3xl font-mono h-16 bg-white/5 border-white/10 tracking-widest"
+                  <div className="relative w-full max-w-[280px] mx-auto h-16">
+                    {/* Visual 6-Box Layout */}
+                    <div className="absolute inset-0 flex justify-between pointer-events-none">
+                      {[...Array(6)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`w-10 h-16 flex items-center justify-center text-3xl font-mono rounded-md border ${
+                            mfaCode.length === i 
+                               ? 'border-primary ring-1 ring-primary focus:bg-white/10' 
+                               : 'border-white/20 bg-white/5'
+                          }`}
+                        >
+                          {mfaCode[i] || ""}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Invisible Native Input for seamless autofill, touch, and typing */}
+                    <input
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-text z-10"
                       maxLength={6}
                       inputMode="numeric"
                       autoComplete="one-time-code"
-                      aria-label="Verification code"
                       value={mfaCode}
                       onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
                       autoFocus
