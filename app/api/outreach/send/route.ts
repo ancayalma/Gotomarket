@@ -15,7 +15,7 @@ import { ensureContactForLead } from "@/actions/crm/lead-conversions";
 import { ensureLeadAndAccountForCandidate } from "@/actions/crm/ensure-pipeline";
 import { claimOnboardingBonus } from "@/actions/crm/onboarding-bonus";
 import { systemLogger } from "@/lib/logger";
-import { getBlobServiceClient } from "@/lib/s3-storage";
+
 import { researchCompany } from "@/lib/outreach/company-research";
 import { renderOutreachTemplate } from "@/lib/outreach/outreach-templates";
 import { resolveIconUrl, inferIconFromResource } from "@/lib/outreach/outreach-icons";
@@ -476,23 +476,6 @@ export async function POST(req: Request) {
         logoAlt: brandCompanyName || "Logo",
       };
 
-      // Resolve bannerImageUrl to a presigned URL if it's an S3 URL
-      let resolvedTemplateOptions = body.templateOptions || undefined;
-      if (resolvedTemplateOptions?.bannerImageUrl) {
-        const bannerUrl = resolvedTemplateOptions.bannerImageUrl;
-        if (bannerUrl.includes(".s3.") || bannerUrl.includes("cloud.ovh.us")) {
-          try {
-            const s3 = getBlobServiceClient();
-            const bucketName = process.env.S3_BUCKET_NAME || "basaltcrm";
-            const urlObj = new URL(bannerUrl);
-            const pathParts = urlObj.pathname.split("/").filter(Boolean);
-            const key = pathParts[0] === bucketName ? pathParts.slice(1).join("/") : pathParts.join("/");
-            const signedUrl = await s3.getPresignedUrl(key, 604800); // 7 days
-            resolvedTemplateOptions = { ...resolvedTemplateOptions, bannerImageUrl: signedUrl };
-          } catch (e) { systemLogger.error("[OUTREACH_SEND] Failed to sign banner URL:", e); }
-        }
-      }
-
       let html: string;
       if (preGeneratedHtml) {
         html = preGeneratedHtml;
@@ -504,7 +487,7 @@ export async function POST(req: Request) {
           signatureHtml,
           trackingPixelUrl,
           brand: brandProps,
-          templateOptions: resolvedTemplateOptions,
+          templateOptions: body.templateOptions || undefined,
           unsubscribeUrl,
         });
       } else {
