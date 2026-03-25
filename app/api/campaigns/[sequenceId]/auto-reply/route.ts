@@ -59,53 +59,57 @@ export async function POST(
 
         // Scan for existing unanswered inbound threads and trigger auto-replies
         if (shouldBackfill) {
-            // Find outreach items with REPLIED status that haven't been auto-replied yet
-            // auto_reply_count may be null/undefined (never set) or 0 — handle both
-            const repliedItems = await prismadb.crm_Outreach_Items.findMany({
-                where: {
-                    campaign: sequenceId,
-                    status: "REPLIED",
-                    OR: [
-                        { auto_reply_count: { equals: 0 } },
-                        { auto_reply_count: null },
-                    ],
-                } as any,
-                select: { id: true },
-            });
-
-            systemLogger.info(`[AUTO_REPLY_BACKFILL] Found ${repliedItems.length} unreplied items for campaign ${sequenceId}`);
-
-            if (repliedItems.length > 0) {
-                const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://crm.basalthq.com";
-
-                // For each unreplied item, find the latest inbound thread and trigger auto-reply
-                for (const item of repliedItems) {
-                    const latestInbound = await prismadb.crm_Email_Thread.findFirst({
-                        where: {
-                            outreach_item: item.id,
-                            direction: "INBOUND",
+            try {
+                // Find outreach items that have been replied to but never auto-replied
+                // Use NOT > 0 to catch both null and 0 values
+                const repliedItems = await prismadb.crm_Outreach_Items.findMany({
+                    where: {
+                        campaign: sequenceId,
+                        status: "REPLIED" as any,
+                        NOT: {
+                            auto_reply_count: { gt: 0 },
                         },
-                        orderBy: { createdAt: "desc" },
-                        select: { id: true },
-                    });
+                    },
+                    select: { id: true },
+                });
 
-                    if (latestInbound) {
-                        // Fire auto-reply (fire-and-forget)
-                        fetch(`${appUrl}/api/outreach/reply`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                outreachItemId: item.id,
-                                inboundThreadId: latestInbound.id,
-                                campaignId: sequenceId,
-                            }),
-                        }).catch((err) => {
-                            systemLogger.error(`[AUTO_REPLY_BACKFILL] Failed for item ${item.id}:`, err);
+                systemLogger.info(`[AUTO_REPLY_BACKFILL] Found ${repliedItems.length} unreplied items for campaign ${sequenceId}`);
+
+                if (repliedItems.length > 0) {
+                    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://crm.basalthq.com";
+
+                    // For each unreplied item, find the latest inbound thread and trigger auto-reply
+                    for (const item of repliedItems) {
+                        const latestInbound = await prismadb.crm_Email_Thread.findFirst({
+                            where: {
+                                outreach_item: item.id,
+                                direction: "INBOUND",
+                            },
+                            orderBy: { createdAt: "desc" },
+                            select: { id: true },
                         });
 
-                        backfillCount++;
+                        if (latestInbound) {
+                            // Fire auto-reply (fire-and-forget)
+                            fetch(`${appUrl}/api/outreach/reply`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    outreachItemId: item.id,
+                                    inboundThreadId: latestInbound.id,
+                                    campaignId: sequenceId,
+                                }),
+                            }).catch((err) => {
+                                systemLogger.error(`[AUTO_REPLY_BACKFILL] Failed for item ${item.id}:`, err);
+                            });
+
+                            backfillCount++;
+                        }
                     }
                 }
+            } catch (backfillErr: any) {
+                systemLogger.error(`[AUTO_REPLY_BACKFILL] Scan failed for campaign ${sequenceId}:`, backfillErr);
+                // Don't fail the whole request — the toggle itself succeeded
             }
         }
 
