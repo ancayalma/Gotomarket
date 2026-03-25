@@ -242,10 +242,11 @@ export function LoginComponent() {
         }
       }
     } catch (error: any) {
+      const serverMsg = error?.response?.data?.error;
       toast({
         variant: "destructive",
         title: "Authentication Failed",
-        description: "Biometric verification failed. Please use your authenticator app code instead."
+        description: serverMsg || "Biometric verification failed. Please use your authenticator app code instead."
       });
       setMfaMethod("TOTP"); // Fallback to TOTP if WebAuthn fails
     } finally {
@@ -311,10 +312,12 @@ export function LoginComponent() {
 
   return (
     <Card className="shadow-lg my-5 w-full max-w-md sm:max-w-lg mx-auto bg-transparent border-border/40 backdrop-blur-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Login</CardTitle>
-        <CardDescription className="text-gray-300">Click here to login with: </CardDescription>
-      </CardHeader>
+      {mfaStep === "login" && (
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Login</CardTitle>
+          <CardDescription className="text-gray-300">Click here to login with: </CardDescription>
+        </CardHeader>
+      )}
       <CardContent className="grid gap-4">
         {mfaStep === "login" ? (
           <>
@@ -444,7 +447,7 @@ export function LoginComponent() {
                 <>
                   <Input
                     placeholder="000 000"
-                    className="text-center text-2xl font-mono tracking-[0.5em] h-14 bg-white/5 border-white/10"
+                    className="text-center text-2xl font-mono tracking-[0.5em] pl-[0.5em] h-14 bg-white/5 border-white/10"
                     maxLength={6}
                     inputMode="numeric"
                     autoComplete="one-time-code"
@@ -511,59 +514,62 @@ export function LoginComponent() {
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col gap-3 pt-2 pb-4">
-        <Link href="/register" className="w-full">
-          <Button variant="outline" className="w-full h-10 text-sm font-medium border-white/10 hover:border-primary/50 hover:bg-primary/5 transition-colors">
-            Need an account? <span className="text-primary ml-1 font-semibold">Register</span>
-          </Button>
-        </Link>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button variant="ghost" className="w-full h-9 text-xs text-muted-foreground hover:text-primary transition-colors">
-              <KeyRound className="w-3.5 h-3.5 mr-1.5" />
-              Forgot your password?
+
+      {mfaStep === "login" && (
+        <CardFooter className="flex flex-col gap-3 pt-2 pb-4">
+          <Link href="/register" className="w-full">
+            <Button variant="outline" className="w-full h-10 text-sm font-medium border-white/10 hover:border-primary/50 hover:bg-primary/5 transition-colors">
+              Need an account? <span className="text-primary ml-1 font-semibold">Register</span>
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Password Reset</DialogTitle>
-              <DialogDescription className="p-5">
-                Enter your email address and we will send new password to your
-                e-mail.
-              </DialogDescription>
-            </DialogHeader>
-            {isLoading ? (
-              <LoadingComponent />
-            ) : (
-              <div className="flex px-2 space-x-5 py-5">
-                <Input
-                  id="reset-email"
-                  name="reset-email"
-                  type="email"
-                  autoComplete="email"
-                  inputMode="email"
-                  placeholder="name@domain.com"
-                  aria-label="Email for password reset"
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                <Button
-                  disabled={email === ""}
-                  onClick={() => {
-                    onPasswordReset(email);
-                  }}
-                >
-                  Reset
-                </Button>
-              </div>
-            )}
+          </Link>
+          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button variant={"destructive"} className="w-full mt-5">
-                Cancel
+              <Button variant="ghost" className="w-full h-9 text-xs text-muted-foreground hover:text-primary transition-colors">
+                <KeyRound className="w-3.5 h-3.5 mr-1.5" />
+                Forgot your password?
               </Button>
             </DialogTrigger>
-          </DialogContent>
-        </Dialog>
-      </CardFooter>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">Password Reset</DialogTitle>
+                <DialogDescription className="p-5">
+                  Enter your email address and we will send new password to your
+                  e-mail.
+                </DialogDescription>
+              </DialogHeader>
+              {isLoading ? (
+                <LoadingComponent />
+              ) : (
+                <div className="flex px-2 space-x-5 py-5">
+                  <Input
+                    id="reset-email"
+                    name="reset-email"
+                    type="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    placeholder="name@domain.com"
+                    aria-label="Email for password reset"
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <Button
+                    disabled={email === ""}
+                    onClick={() => {
+                      onPasswordReset(email);
+                    }}
+                  >
+                    Reset
+                  </Button>
+                </div>
+              )}
+              <DialogTrigger asChild>
+                <Button variant={"destructive"} className="w-full mt-5">
+                  Cancel
+                </Button>
+              </DialogTrigger>
+            </DialogContent>
+          </Dialog>
+        </CardFooter>
+      )}
     </Card>
   );
 }
