@@ -587,19 +587,32 @@ export async function POST(req: Request) {
           const resolvedSenderName = senderName || session.user.name || "Outreach";
           const replyToAddress = `"${resolvedSenderName}" <${userEmailPrefix}@${inboundDomain}>`;
 
+          // Track the actual sender email for inbound routing
+          let actualSenderEmail = session.user.email || '';
+
           if (senderMode === "personal") {
             // Personal mode: send via Amazon SES using the user's identity
+            actualSenderEmail = session.user.email || process.env.SES_FROM_ADDRESS || 'noreply@basalthq.com';
             await sendSystemEmail({
               to: toEmail,
               subject,
               text,
               html,
-              from: `"${resolvedSenderName}" <${session.user.email || process.env.SES_FROM_ADDRESS || 'noreply@basalthq.com'}>`,
+              from: `"${resolvedSenderName}" <${actualSenderEmail}>`,
               replyTo: replyToAddress,
             }).then(id => { messageId = id || `ses_personal_${Date.now()}`; });
           } else {
             // Company mode: use team email config
             try {
+              // Resolve the team's outbound email for tracking
+              try {
+                const teamOutbound = await prismadb.teamEmailConfig.findUnique({
+                  where: { team_id_purpose: { team_id: user.team_id!, purpose: "OUTREACH" } },
+                  select: { smtp_user: true },
+                });
+                if (teamOutbound?.smtp_user) actualSenderEmail = teamOutbound.smtp_user;
+              } catch { /* keep session email */ }
+
               const teamMsgId = await sendTeamEmail(user.team_id, {
                 to: toEmail,
                 subject,
@@ -613,12 +626,13 @@ export async function POST(req: Request) {
               // Team email not configured — for test mode, fall back to system email
               if (testMode) {
                 systemLogger.warn("[OUTREACH_SEND] Team email failed in test mode, falling back to system email:", teamErr?.message);
+                actualSenderEmail = process.env.SES_FROM_ADDRESS || 'noreply@basalthq.com';
                 const fallbackMsgId = await sendSystemEmail({
                   to: toEmail,
                   subject,
                   text,
                   html,
-                  from: process.env.SES_FROM_ADDRESS || 'noreply@basalthq.com',
+                  from: actualSenderEmail,
                   replyTo: replyToAddress,
                 });
                 messageId = fallbackMsgId || `test_system_sent_${Date.now()}`;
@@ -673,6 +687,7 @@ export async function POST(req: Request) {
                   candidate_job_title: lead.jobTitle || undefined,
                   account_id: pipelineResult.accountId,
                   contact_id: pipelineResult.contactId,
+                  sender_email: actualSenderEmail,
                 },
               });
 
@@ -744,6 +759,7 @@ export async function POST(req: Request) {
                       candidate_name: [lead.firstName, lead.lastName].filter(Boolean).join(" ") || null,
                       candidate_company: lead.company || null,
                       candidate_job_title: lead.jobTitle || null,
+                      sender_email: actualSenderEmail,
                     } as any,
                   });
                 } catch (itemErr: any) {
@@ -778,6 +794,7 @@ export async function POST(req: Request) {
                     candidate_company: lead.company || null,
                     candidate_job_title: lead.jobTitle || null,
                     account_id: lead.id,
+                    sender_email: actualSenderEmail,
                   } as any,
                 }).catch((e: any) => systemLogger.warn(`[OUTREACH_SEND] Failed to create outreach item for account ${lead.id}: ${e?.message}`));
               }
