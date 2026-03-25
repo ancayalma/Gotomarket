@@ -82,9 +82,9 @@ export async function POST(req: Request) {
             if (user?.signature_html) userSignature = user.signature_html as string;
         } catch { }
 
-        // Derive absolute baseUrl for icon resolution — srcDoc iframes can't resolve relative paths
+        // Use client-provided baseUrl (window.location.origin) for absolute icon URLs
         const reqUrl = new URL(req.url);
-        const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || reqUrl.origin;
+        const baseUrl = body.baseUrl || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || reqUrl.origin;
 
         const brandColorHex = (body.props?.brand?.accentColor || brandColor || "#1f2937").replace("#", "");
 

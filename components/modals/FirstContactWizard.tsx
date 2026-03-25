@@ -1,4 +1,5 @@
 "use client";
+import { useSignedUrl } from "@/hooks/use-signed-url";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -222,6 +223,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
   const [bannerHeight, setBannerHeight] = useState<number>(120);
   const [bannerPositionY, setBannerPositionY] = useState<number>(50);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const { signedUrl: signedBannerUrl } = useSignedUrl(bannerImageUrl || null);
   const [templatePreviewHtml, setTemplatePreviewHtml] = useState<string>("");
   const [loadingTemplatePreview, setLoadingTemplatePreview] = useState(false);
   const [themeColorOverride, setThemeColorOverride] = useState<string>(""); // empty = use brand default
@@ -516,6 +518,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         body: JSON.stringify({
           templateId,
           brandId: selectedBrandId || undefined,
+          baseUrl: typeof window !== "undefined" ? window.location.origin : "",
           props: {
             brand: {
               accentColor: themeColorOverride || (selectedBrand || brandInfo)?.primary_brand_color || "#F54029",
@@ -1497,7 +1500,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                   <div className="flex items-center gap-3">
                     <div className="relative w-32 h-14 rounded border-2 border-dashed border-border bg-muted flex items-center justify-center overflow-hidden group shrink-0">
                       {bannerImageUrl ? (
-                        <img src={bannerImageUrl} alt="Banner" className="w-full h-full object-cover" />
+                        <img src={signedBannerUrl || bannerImageUrl} alt="Banner" className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-[10px] text-muted-foreground">No banner</span>
                       )}
