@@ -144,7 +144,9 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
             outreach_status: primaryLead?.outreach_status || "IDLE",
             pipeline_stage: primaryLead?.pipeline_stage || acc.type || "Lead",
             createdAt: acc.createdAt,
-            updatedAt: acc.updatedAt
+            updatedAt: acc.updatedAt,
+            accountEmail: acc.email || null,
+            accountAdditionalEmails: acc.additional_emails || [],
           });
         }
       } else {
@@ -166,7 +168,9 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
           outreach_status: primaryLead?.outreach_status || "IDLE",
           pipeline_stage: primaryLead?.pipeline_stage || acc.type || "Lead",
           createdAt: acc.createdAt,
-          updatedAt: acc.updatedAt
+          updatedAt: acc.updatedAt,
+          accountEmail: acc.email || null,
+          accountAdditionalEmails: acc.additional_emails || [],
         });
       }
     }
@@ -203,6 +207,8 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
             pipeline_stage: "Identify",
             createdAt: c.freshnessAt || new Date(),
             updatedAt: new Date(),
+            accountEmail: null,
+            accountAdditionalEmails: c.additional_emails || [],
           });
         }
       } else {
@@ -221,7 +227,7 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
           lastName: lastName as string,
           company: c.companyName || null,
           jobTitle: bestContact?.title || null,
-          email: null,
+          email: (c.additional_emails && c.additional_emails[0]) || null,
           phone: bestContact?.phone || null,
           description: c.description,
           lead_source: "POOL_CANDIDATE",
@@ -231,6 +237,8 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
           pipeline_stage: "Identify",
           createdAt: c.freshnessAt || new Date(),
           updatedAt: new Date(),
+          accountEmail: (c.additional_emails && c.additional_emails[0]) || null,
+          accountAdditionalEmails: c.additional_emails?.slice(1) || [],
         });
       }
     }

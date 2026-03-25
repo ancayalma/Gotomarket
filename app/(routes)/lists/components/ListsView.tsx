@@ -25,8 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import ImportLeadsDialog from "../../crm/accounts/components/ImportLeadsDialog";
-import ImportAccountsDialog from "../../crm/accounts/components/ImportAccountsDialog";
+import ImportIntelligenceWizard from "./ImportIntelligenceWizard";
 import FirstContactWizard from "@/components/modals/FirstContactWizard";
 import RestrictedAccessModal from "@/components/modals/RestrictedAccessModal";
 import Heading from "@/components/ui/heading";
@@ -115,6 +114,7 @@ export default function ListsView() {
     const [loadingOutreach, setLoadingOutreach] = useState<string | null>(null);
     const [assignModalPool, setAssignModalPool] = useState<LeadPool | null>(null);
     const [poolToDelete, setPoolToDelete] = useState<{ id: string, name: string } | null>(null);
+    const [deleteAccounts, setDeleteAccounts] = useState(false);
     const [restrictedPool, setRestrictedPool] = useState<string | null>(null);
 
     const [buttonSets, setButtonSets] = useState<Record<string, { sets: any[] }>>({});
@@ -209,10 +209,13 @@ export default function ListsView() {
     const onDeletePool = async (poolId: string) => {
         setDeleting(poolId);
         try {
-            const res = await fetch(`/api/crm/leads/pools?poolId=${poolId}`, { method: "DELETE" });
+            const params = new URLSearchParams({ poolId });
+            if (deleteAccounts) params.set("deleteAccounts", "true");
+            const res = await fetch(`/api/crm/leads/pools?${params.toString()}`, { method: "DELETE" });
             if (!res.ok) throw new Error("Failed to delete pool");
             mutate();
             setPoolToDelete(null);
+            setDeleteAccounts(false);
         } catch (error) {
             alert("Failed to delete pool");
         } finally {
@@ -251,8 +254,7 @@ export default function ListsView() {
                     />
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                    <ImportAccountsDialog onImportComplete={() => mutate()} />
-                    <ImportLeadsDialog pools={data?.pools ?? []} onCommitted={() => mutate()} />
+                    <ImportIntelligenceWizard pools={data?.pools ?? []} onCommitted={() => mutate()} />
                     <Button
                         onClick={() => router.push("/crm/accounts?tab=wizard")}
                         className="bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap"
@@ -483,7 +485,7 @@ export default function ListsView() {
                 } : undefined}
             />
 
-            <AlertDialog open={!!poolToDelete} onOpenChange={(open) => !open && setPoolToDelete(null)}>
+            <AlertDialog open={!!poolToDelete} onOpenChange={(open) => { if (!open) { setPoolToDelete(null); setDeleteAccounts(false); } }}>
                 <AlertDialogContent className="bg-card border-white/10 shadow-2xl">
                     <AlertDialogHeader>
                         <AlertDialogTitle className="text-xl font-bold">Delete Lead Pool</AlertDialogTitle>
@@ -492,13 +494,27 @@ export default function ListsView() {
                             This action cannot be undone and will remove all associated lead candidates.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter className="mt-4">
+                    <div className="py-2">
+                        <label className="flex items-start gap-3 p-3 rounded-xl border border-zinc-800/50 bg-zinc-900/30 cursor-pointer hover:border-red-500/30 transition-colors">
+                            <input
+                                type="checkbox"
+                                checked={deleteAccounts}
+                                onChange={(e) => setDeleteAccounts(e.target.checked)}
+                                className="mt-0.5 rounded border-zinc-600 bg-zinc-900 text-red-500 focus:ring-red-500/30"
+                            />
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-sm font-medium text-zinc-200">Also delete imported Accounts</span>
+                                <span className="text-xs text-zinc-500">Removes associated CRM accounts and contacts that were created from this list. This cannot be undone.</span>
+                            </div>
+                        </label>
+                    </div>
+                    <AlertDialogFooter className="mt-2">
                         <AlertDialogCancel className="border-white/10 hover:bg-white/5 uppercase tracking-widest text-[10px] font-bold">Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => poolToDelete && onDeletePool(poolToDelete.id)}
-                            className="bg-red-600 hover:bg-red-700 uppercase tracking-widest text-[10px] font-bold"
+                            className={`uppercase tracking-widest text-[10px] font-bold ${deleteAccounts ? 'bg-red-700 hover:bg-red-800 shadow-lg shadow-red-700/30' : 'bg-red-600 hover:bg-red-700'}`}
                         >
-                            {deleting ? "Deleting..." : "Delete Permanently"}
+                            {deleting ? "Deleting..." : deleteAccounts ? "Delete Everything" : "Delete Pool Only"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

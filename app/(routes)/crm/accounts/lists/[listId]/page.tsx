@@ -45,6 +45,8 @@ type Lead = {
     jobTitle: string;
     status: string;
     createdAt: string;
+    accountEmail?: string | null;
+    accountAdditionalEmails?: string[];
     // Populated by grouping logic for multi-contact display
     _allContacts?: Array<{
         id: string;
@@ -180,6 +182,14 @@ export default function AccountListDetailsPage() {
                 if (!existing.email && lead.email) existing.email = lead.email;
                 if (!existing.phone && lead.phone) existing.phone = lead.phone;
                 if (!existing.accountId && lead.accountId) existing.accountId = lead.accountId;
+                // Merge account-level emails
+                if (!existing.accountEmail && lead.accountEmail) existing.accountEmail = lead.accountEmail;
+                if (lead.accountAdditionalEmails?.length) {
+                    existing.accountAdditionalEmails = Array.from(new Set([
+                        ...(existing.accountAdditionalEmails || []),
+                        ...lead.accountAdditionalEmails,
+                    ]));
+                }
             } else {
                 groups.set(key, { ...lead });
             }
@@ -353,7 +363,11 @@ export default function AccountListDetailsPage() {
                                         jobTitle: lead.jobTitle,
                                         contactId: lead.contactId,
                                     }];
-                                    const uniqueEmails = Array.from(new Set(contacts.map(c => c.email).filter(Boolean)));
+                                    const contactEmails = contacts.map(c => c.email).filter(Boolean);
+                                    const acctEmails: string[] = [];
+                                    if (lead.accountEmail) acctEmails.push(lead.accountEmail);
+                                    if (lead.accountAdditionalEmails) acctEmails.push(...lead.accountAdditionalEmails);
+                                    const uniqueEmails = Array.from(new Set([...acctEmails, ...contactEmails]));
                                     const uniquePhones = Array.from(new Set(contacts.map(c => c.phone).filter(Boolean)));
 
                                     return (
