@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { systemLogger } from "@/lib/logger";
-
+import { analyzeReplySentiment } from "@/actions/crm/analyze-sentiment";
+import { ensureContactForLead } from "@/actions/crm/lead-conversions";
 /**
  * POST /api/email/inbound
  * Webhook for AWS SES Inbound Email via Amazon SNS.
@@ -68,14 +69,14 @@ export async function POST(req: Request) {
         // First try without angle brackets (normalized)
         matchedOutreachItem = await prismadb.crm_Outreach_Items.findFirst({
           where: { message_id: inReplyTo },
-          select: { id: true, campaign: true, lead: true },
+          select: { id: true, campaign: true, lead: true, account_id: true, subject: true },
         });
         
         // Also try with angle brackets (some providers store them that way)
         if (!matchedOutreachItem && inReplyToHeader) {
           matchedOutreachItem = await prismadb.crm_Outreach_Items.findFirst({
             where: { message_id: inReplyToHeader.trim() },
-            select: { id: true, campaign: true, lead: true },
+            select: { id: true, campaign: true, lead: true, account_id: true, subject: true },
           });
         }
       }
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
         if (allRefs.length > 0) {
           matchedOutreachItem = await prismadb.crm_Outreach_Items.findFirst({
             where: { message_id: { in: allRefs } },
-            select: { id: true, campaign: true, lead: true },
+            select: { id: true, campaign: true, lead: true, account_id: true, subject: true },
           });
         }
       }
@@ -105,12 +106,57 @@ export async function POST(req: Request) {
         });
       }
 
+      let finalLeadId = matchedOutreachItem?.lead || undefined;
+      let sentimentResult: any = null;
+
+      if (matchedOutreachItem) {
+        // Analyze Sentiment & Extract Contact Info (if Account sequence)
+        const isAccountOnly = !matchedOutreachItem.lead && matchedOutreachItem.account_id;
+        try {
+          sentimentResult = await analyzeReplySentiment(
+            bodyText,
+            {
+              originalSubject: matchedOutreachItem.subject || subject,
+              leadName: isAccountOnly ? "Account Contact" : undefined,
+            },
+            campaignRecord?.user || "sysadm"
+          );
+
+          if (isAccountOnly && sentimentResult?.extractedContact) {
+            const ext = sentimentResult.extractedContact;
+            // Create the new lead
+            const newLead = await prismadb.crm_Leads.create({
+              data: {
+                firstName: ext.firstName || "",
+                lastName: ext.lastName || "",
+                jobTitle: ext.jobTitle || "",
+                phone: ext.phone || "",
+                email: fromAddress,
+                accountsIDs: matchedOutreachItem.account_id,
+                team_id: campaignRecord?.team_id,
+                pipeline_stage: "Engage_Human" as any,
+                outreach_status: sentimentResult.sentiment === "POSITIVE" 
+                  ? "REPLIED_POSITIVE" 
+                  : sentimentResult.sentiment === "NEGATIVE" 
+                    ? "REPLIED_NEGATIVE" 
+                    : undefined,
+              } as any
+            });
+            finalLeadId = newLead.id;
+            await ensureContactForLead(newLead.id).catch(() => {});
+            systemLogger.info(`[SES_INBOUND] Created new lead ${newLead.id} for account ${matchedOutreachItem.account_id}`);
+          }
+        } catch (analyzerErr) {
+          systemLogger.error(`[SES_INBOUND] Sentiment analysis failed`, analyzerErr);
+        }
+      }
+
       // Create Email Thread entry
       const newThread = await prismadb.crm_Email_Thread.create({
         data: {
           team_id: campaignRecord?.team_id || "600000000000000000000000",
           user: campaignRecord?.user || undefined,
-          lead: matchedOutreachItem?.lead || undefined,
+          lead: finalLeadId,
           campaign: matchedOutreachItem?.campaign || undefined,
           outreach_item: matchedOutreachItem?.id || undefined,
           thread_subject: subject,
@@ -129,9 +175,12 @@ export async function POST(req: Request) {
         await prismadb.crm_Outreach_Items.update({
           where: { id: matchedOutreachItem.id },
           data: {
+            lead: finalLeadId,
             status: "REPLIED" as any,
             repliedAt: new Date(),
             reply_snippet: bodyText.substring(0, 200),
+            reply_sentiment: sentimentResult?.sentiment,
+            reply_analyzed_at: sentimentResult ? new Date() : undefined,
           },
         });
 

@@ -80,15 +80,18 @@ function stripHtml(html: string) {
 }
 
 // Compose the strict system instruction to force JSON output
-function systemInstruction(senderName?: string, senderTitle?: string) {
+function systemInstruction(senderName?: string, senderTitle?: string, recipientFirstName?: string) {
   const name = senderName || "the sender";
   const titlePart = senderTitle ? ` (${senderTitle})` : "";
+  const greetingInstruction = recipientFirstName
+    ? `The body MUST start with a proper greeting addressing the recipient by first name (e.g. 'Hi ${recipientFirstName},' or 'Dear ${recipientFirstName},').`
+    : `The body MUST start with a professional greeting. If the recipient's name is unknown, use a warm generic opening (e.g. 'Hi there,' or 'Hello,').`;
   return [
     `You are ghostwriting a personalized outreach email ON BEHALF of ${name}${titlePart}.`,
     `Write in first person (I/me) as ${name}. Never refer to ${name} in third person.`,
     "Return ONLY JSON with keys 'subject' and 'body'.",
     "The 'body' must be plain text (no HTML), 250–300 words.",
-    `The body MUST start with a proper greeting addressing the recipient by first name (e.g. 'Hi John,' or 'Dear Sarah,').`,
+    greetingInstruction,
     `The body MUST end with a professional sign-off that fits the email tone (e.g. Sincerely, Regards, Cheers, Looking forward) followed by the sender's name: ${name}.`,
     "Do not include headings or phrases like 'Founder note'.",
   ].join(" ");
@@ -178,11 +181,17 @@ export async function POST(req: Request) {
     // For candidate IDs, use client-supplied leadData or inlineLeads (pool candidates aren't in crm_Leads)
     const candidateLeads: any[] = [];
     const clientData = body.leadData || body.inlineLeads || [];
-    if (candidateIds.length > 0 && Array.isArray(clientData) && clientData.length > 0) {
-      systemLogger.info(`[OUTREACH_SEND] Resolving ${candidateIds.length} candidate IDs from ${clientData.length} leadData entries`);
-      for (const cid of candidateIds) {
+
+    // Also check for valid ObjectIDs that weren't found in crm_Leads (e.g. pool/account entries)
+    const foundDbIds = new Set(dbLeads.map((l: any) => l.id));
+    const missingObjectIds = validObjectIds.filter(id => !foundDbIds.has(id));
+    const allUnresolvedIds = [...candidateIds, ...missingObjectIds];
+
+    if (allUnresolvedIds.length > 0 && Array.isArray(clientData) && clientData.length > 0) {
+      systemLogger.info(`[OUTREACH_SEND] Resolving ${allUnresolvedIds.length} unresolved IDs (${candidateIds.length} candidates + ${missingObjectIds.length} missing DB leads) from ${clientData.length} leadData entries`);
+      for (const cid of allUnresolvedIds) {
         const match = clientData.find((ld: any) => ld.id === cid);
-        systemLogger.info(`[OUTREACH_SEND] Candidate ID "${cid}" -> match: ${match ? `firstName="${match.firstName}", lastName="${match.lastName}", email="${match.email}"` : "NO MATCH"}`);
+        systemLogger.info(`[OUTREACH_SEND] Unresolved ID "${cid}" -> match: ${match ? `firstName="${match.firstName}", lastName="${match.lastName}", email="${match.email}"` : "NO MATCH"}`);
         if (match && match.email) {
           candidateLeads.push({
             id: cid,
@@ -386,7 +395,7 @@ export async function POST(req: Request) {
       // Only call AI if no pre-generated content provided
       if (!preGeneratedSubject || !preGeneratedBody) {
         // Build system instruction, adding disambiguation when sender/recipient overlap
-        let sysInstr = systemInstruction(senderName, senderTitle);
+        let sysInstr = systemInstruction(senderName, senderTitle, recipientFirst || undefined);
         if (senderOverlap && recipientFirst) {
           sysInstr += ` IMPORTANT: The recipient's name is "${recipientFirst}" (${contactName}). Even if the sender and recipient share the same name or company, you MUST address the greeting to "${recipientFirst}" — do NOT use the sender's name in the greeting.`;
         }
@@ -476,6 +485,24 @@ export async function POST(req: Request) {
         logoAlt: brandCompanyName || "Logo",
       };
 
+      // Resolve bannerImageUrl to a presigned URL if it's a raw S3 URL
+      let resolvedTemplateOptions = body.templateOptions || undefined;
+      if (resolvedTemplateOptions?.bannerImageUrl) {
+        const bannerUrl = resolvedTemplateOptions.bannerImageUrl;
+        if (bannerUrl.includes(".s3.") || bannerUrl.includes("cloud.ovh.us")) {
+          try {
+            const { getBlobServiceClient } = await import("@/lib/s3-storage");
+            const s3 = getBlobServiceClient();
+            const bucketName = process.env.S3_BUCKET_NAME || "basaltcrm";
+            const urlObj = new URL(bannerUrl);
+            const pathParts = urlObj.pathname.split("/").filter(Boolean);
+            const key = pathParts[0] === bucketName ? pathParts.slice(1).join("/") : pathParts.join("/");
+            const signedUrl = await s3.getPresignedUrl(key, 604800); // 7 days
+            resolvedTemplateOptions = { ...resolvedTemplateOptions, bannerImageUrl: signedUrl };
+          } catch (e) { systemLogger.error("[OUTREACH_SEND] Failed to sign banner URL:", e); }
+        }
+      }
+
       let html: string;
       if (preGeneratedHtml) {
         html = preGeneratedHtml;
@@ -487,7 +514,7 @@ export async function POST(req: Request) {
           signatureHtml,
           trackingPixelUrl,
           brand: brandProps,
-          templateOptions: body.templateOptions || undefined,
+          templateOptions: resolvedTemplateOptions,
           unsubscribeUrl,
         });
       } else {
@@ -499,7 +526,7 @@ export async function POST(req: Request) {
             signatureHtml,
             trackingPixelUrl,
             brand: brandProps,
-            templateOptions: body.templateOptions || undefined,
+            templateOptions: resolvedTemplateOptions,
             unsubscribeUrl,
           }),
         );
@@ -625,8 +652,10 @@ export async function POST(req: Request) {
             }
           }
 
-          // ─── Persist outreach fields for existing leads ────────────────
-          if (isRealLead) {
+          // ─── Persist outreach fields for existing leads / accounts ────────────────
+          const isDbLead = foundDbIds.has(lead.id);
+          if (isDbLead) {
+            // Lead exists in crm_Leads — update outreach tracking fields
             try {
               const updateData: any = {
                 outreach_status: "SENT" as any,
@@ -671,7 +700,7 @@ export async function POST(req: Request) {
                   await prismadb.crm_Outreach_Items.create({
                     data: {
                       campaign: campaignId,
-                      lead: /^[a-f0-9]{24}$/i.test(lead.id) ? lead.id : undefined,
+                      lead: lead.id,
                       channel: "EMAIL",
                       status: "SENT",
                       subject: subject || null,
@@ -691,6 +720,37 @@ export async function POST(req: Request) {
               }
             } catch (updateErr: any) {
               systemLogger.warn(`[OUTREACH_SEND] Post-send update failed for lead ${lead.id}: ${updateErr?.message || "record not found"}`);
+            }
+          } else if (!testMode) {
+            // Entry came from crm_Accounts (or client data) — tag the account, skip for test sends
+            try {
+              await prismadb.crm_Accounts.update({
+                where: { id: lead.id },
+                data: { status: "Contacted" },
+              }).catch(() => { /* ID might not be an account either — that's OK */ });
+
+              // Create outreach item for campaign tracking (account-based)
+              if (campaignId) {
+                await prismadb.crm_Outreach_Items.create({
+                  data: {
+                    campaign: campaignId,
+                    channel: "EMAIL",
+                    status: "SENT",
+                    subject: subject || null,
+                    body_text: bodyText || null,
+                    message_id: messageId || null,
+                    tracking_token: token,
+                    sentAt: new Date(),
+                    candidate_email: toEmail,
+                    candidate_name: lead.company || lead.firstName || null,
+                    candidate_company: lead.company || null,
+                    candidate_job_title: lead.jobTitle || null,
+                    account_id: lead.id,
+                  } as any,
+                }).catch((e: any) => systemLogger.warn(`[OUTREACH_SEND] Failed to create outreach item for account ${lead.id}: ${e?.message}`));
+              }
+            } catch (acctErr: any) {
+              systemLogger.warn(`[OUTREACH_SEND] Post-send account update failed for ${lead.id}: ${acctErr?.message}`);
             }
           }
 
