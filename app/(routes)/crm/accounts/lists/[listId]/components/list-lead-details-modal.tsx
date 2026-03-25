@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Building2, Phone } from "lucide-react";
+import { Mail, Building2, Phone, Copy, Check, ExternalLink } from "lucide-react";
 import moment from "moment";
+import { toast } from "react-hot-toast";
 
 interface Props {
   lead: any | null;
@@ -22,7 +24,14 @@ export function ListLeadDetailsModal({ lead, onClose, getStatusStyles }: Props) 
       contactId: lead.contactId,
   }];
   
-  const uniqueEmails = Array.from(new Set(contacts.map((c: any) => c.email).filter(Boolean))) as string[];
+  // Merge contact-level emails with account-level emails from the linked crm_Accounts record
+  const contactEmails = contacts.map((c: any) => c.email).filter(Boolean) as string[];
+  const accountEmailsSet = new Set<string>();
+  if (lead.accountEmail) accountEmailsSet.add(lead.accountEmail);
+  if (lead.accountAdditionalEmails) lead.accountAdditionalEmails.forEach((e: string) => accountEmailsSet.add(e));
+  // Prioritize: account primary email first, then account additional, then contact emails
+  const allEmails = [...Array.from(accountEmailsSet), ...contactEmails];
+  const uniqueEmails = Array.from(new Set(allEmails));
   const uniquePhones = Array.from(new Set(contacts.map((c: any) => c.phone).filter(Boolean))) as string[];
 
   return (
@@ -54,10 +63,29 @@ export function ListLeadDetailsModal({ lead, onClose, getStatusStyles }: Props) 
                     <Mail className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5" />
                     <div className="flex flex-col gap-2 w-full min-w-0">
                       <div>
-                        <span className="text-xs font-medium text-zinc-400 block mb-1">Primary Email</span>
-                        <div className="text-sm font-semibold truncate text-zinc-200 bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded-lg inline-block">
-                          {uniqueEmails[0] || "No primary email"}
-                        </div>
+                        <span className="text-xs font-medium text-zinc-400 block mb-1">Primary Routing</span>
+                        {uniqueEmails[0] ? (
+                          <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5">
+                            <span className="text-sm font-semibold text-zinc-200 break-all flex-1">{uniqueEmails[0]}</span>
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(uniqueEmails[0]); toast.success("Copied!"); }}
+                              className="shrink-0 p-1 rounded hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors"
+                              title="Copy email"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                            <a
+                              href={`mailto:${uniqueEmails[0]}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="shrink-0 p-1 rounded hover:bg-zinc-800 text-zinc-500 hover:text-indigo-400 transition-colors"
+                              title="Send email"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-zinc-500 italic bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5">No primary email</div>
+                        )}
                       </div>
                       
                       {uniqueEmails.length > 1 && (
@@ -65,9 +93,24 @@ export function ListLeadDetailsModal({ lead, onClose, getStatusStyles }: Props) 
                            <span className="text-xs font-medium text-zinc-400 block mb-2">Additional Intelligence</span>
                            <div className="flex flex-col gap-1.5">
                              {uniqueEmails.slice(1).map((e, idx) => (
-                               <Badge variant="secondary" key={idx} className="font-normal text-xs bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border-indigo-500/20 justify-start px-2.5 py-1">
-                                 {e}
-                               </Badge>
+                               <div key={idx} className="flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-2.5 py-1">
+                                 <span className="text-xs text-indigo-300 break-all flex-1">{e}</span>
+                                 <button
+                                   onClick={() => { navigator.clipboard.writeText(e); toast.success("Copied!"); }}
+                                   className="shrink-0 p-0.5 rounded hover:bg-indigo-500/20 text-indigo-400/50 hover:text-indigo-300 transition-colors"
+                                   title="Copy email"
+                                 >
+                                   <Copy className="w-3 h-3" />
+                                 </button>
+                                 <a
+                                   href={`mailto:${e}`}
+                                   onClick={(ev) => ev.stopPropagation()}
+                                   className="shrink-0 p-0.5 rounded hover:bg-indigo-500/20 text-indigo-400/50 hover:text-indigo-300 transition-colors"
+                                   title="Send email"
+                                 >
+                                   <ExternalLink className="w-3 h-3" />
+                                 </a>
+                               </div>
                              ))}
                            </div>
                          </div>

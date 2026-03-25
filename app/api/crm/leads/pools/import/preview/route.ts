@@ -107,8 +107,66 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(arrayBuffer);
     const rows = await bufferToRows((file as any).name, buffer);
 
+    // Read user's column mapping from the wizard (Step 2)
+    const columnMapRaw = form.get("columnMap") as string | null;
+    const columnMap: Record<string, string> = columnMapRaw ? JSON.parse(columnMapRaw) : {};
+
+    // CRM field key → COLS synonym key mapping (what normalizeRow looks for)
+    const crmFieldToColsKey: Record<string, string> = {
+      companyName: "company",
+      domain: "domain",
+      homepageUrl: "homepage",
+      description: "description",
+      industry: "industry",
+      techStack: "techstack",
+      fullName: "name",
+      title: "title",
+      email: "email",
+      additionalEmails: "email2",
+      phone: "phone",
+      linkedinUrl: "linkedin",
+    };
+
+    // Remap row keys using the user's column mapping so normalizeRow can find them
+    const remapRow = (row: Record<string, any>): Record<string, any> => {
+      if (!Object.keys(columnMap).length) return row;
+      const remapped: Record<string, any> = {};
+      const mappedCsvHeaders = new Set<string>();
+      
+      // First pass: apply user mapping (csvHeader → crmField)
+      for (const [csvHeader, crmField] of Object.entries(columnMap)) {
+        const colsKey = crmFieldToColsKey[crmField];
+        if (colsKey) {
+          // Find the original value from the row (case-insensitive header match)
+          const originalKey = Object.keys(row).find(k => k.toLowerCase() === csvHeader.toLowerCase());
+          if (originalKey && row[originalKey] !== undefined && row[originalKey] !== "") {
+            // For additionalEmails, we may have multiple CSV columns mapped to the same CRM field
+            if (crmField === "additionalEmails") {
+              // Append to existing additional email values
+              const existing = remapped[colsKey] || "";
+              const val = String(row[originalKey]).trim();
+              remapped[colsKey] = existing ? `${existing};${val}` : val;
+            } else {
+              remapped[colsKey] = row[originalKey];
+            }
+            mappedCsvHeaders.add(originalKey);
+          }
+        }
+      }
+      
+      // Second pass: carry over unmapped columns with their original keys
+      for (const [key, val] of Object.entries(row)) {
+        if (!mappedCsvHeaders.has(key)) {
+          remapped[key] = val;
+        }
+      }
+      
+      return remapped;
+    };
+
     const usedColsSet = new Set<string>();
     const corruptRows: { index: number; errors: string[] }[] = [];
+    const combinedRows: any[] = [];
 
     // Detect duplicates within this import
     const seenCandidate = new Set<string>();
@@ -123,11 +181,15 @@ export async function POST(req: Request) {
     let dupContacts = 0;
 
     for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+      const row = remapRow(rows[i]);
       const { candidate, contacts, usedCols } = normalizeRow(row);
       usedCols.forEach((c) => usedColsSet.add(c));
 
       const rowErrors: string[] = [];
+
+      if (candidate || (contacts && contacts.length > 0)) {
+        combinedRows.push({ account: candidate, contacts: contacts || [] });
+      }
 
       // Candidate
       if (candidate) {
@@ -274,6 +336,8 @@ export async function POST(req: Request) {
       creates,
       updates,
       corruptRows,
+      preview: combinedRows.slice(0, 10),
+      fullPreview: combinedRows.slice(0, 5000),
     };
 
     return NextResponse.json(response, { status: 200 });

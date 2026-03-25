@@ -176,6 +176,32 @@ export async function DELETE(req: Request) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
+    // Cascade delete linked CRM accounts if requested
+    const shouldDeleteAccounts = searchParams.get("deleteAccounts") === "true";
+    if (shouldDeleteAccounts) {
+      // Find all candidates in this pool that have linked accounts
+      const candidatesWithAccounts = await (prismadb.crm_Lead_Candidates as any).findMany({
+        where: { pool: poolId, accountsIDs: { not: null } },
+        select: { accountsIDs: true },
+      });
+      const accountIds = candidatesWithAccounts
+        .map((c: any) => c.accountsIDs)
+        .filter(Boolean) as string[];
+
+      if (accountIds.length > 0) {
+        const uniqueAccountIds = Array.from(new Set(accountIds));
+        // Delete contacts linked to these accounts
+        await (prismadb.crm_Contacts as any).deleteMany({
+          where: { accountsIDs: { in: uniqueAccountIds } },
+        });
+        // Delete the accounts themselves
+        await (prismadb.crm_Accounts as any).deleteMany({
+          where: { id: { in: uniqueAccountIds } },
+        });
+        systemLogger.info("[LEADS_POOLS_DELETE] Cascade deleted accounts:", uniqueAccountIds.length);
+      }
+    }
+
     // Delete associated data
     await (prismadb.crm_Contact_Candidates as any).deleteMany({
       where: {

@@ -171,22 +171,30 @@ export async function POST(req: Request) {
       let accountId: string;
 
       if (existing) {
+        const allEmails = Array.from(new Set([...(existing.additional_emails || []), ...(cand.additional_emails || [])]));
+        const primaryEmail = existing.email || allEmails[0] || null;
+        const additionalEmails = allEmails.filter((e: string) => e !== primaryEmail);
         await (prismadb.crm_Accounts as any).update({
           where: { id: existing.id },
           data: {
             website: domain || existing.website,
-            additional_emails: { set: Array.from(new Set([...(existing.additional_emails || []), ...(cand.additional_emails || [])])) },
+            email: primaryEmail,
+            additional_emails: { set: additionalEmails },
             updatedBy: session.user.id,
           }
         });
         accountId = existing.id;
         updatedAccountsCount++;
       } else {
+        const candidateEmails = cand.additional_emails || [];
+        const primaryEmail = candidateEmails[0] || null;
+        const additionalEmails = candidateEmails.slice(1);
         const created = await (prismadb.crm_Accounts as any).create({
           data: {
             name,
             website: domain,
-            additional_emails: cand.additional_emails || [],
+            email: primaryEmail,
+            additional_emails: additionalEmails,
             status: "Active",
             v: 0,
             createdBy: session.user.id,
