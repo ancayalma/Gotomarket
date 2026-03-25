@@ -62,21 +62,21 @@ export async function POST(req: Request) {
       const normalizeId = (id?: string) => id?.replace(/[<>]/g, "").trim();
       const inReplyTo = normalizeId(inReplyToHeader);
       
-      let matchedOutreachItem = null;
+      let matchedOutreachItem: any = null;
 
       // Match via In-Reply-To — try both normalized and raw formats
       if (inReplyTo) {
         // First try without angle brackets (normalized)
         matchedOutreachItem = await prismadb.crm_Outreach_Items.findFirst({
           where: { message_id: inReplyTo },
-          select: { id: true, campaign: true, lead: true, account_id: true, subject: true },
+          select: { id: true, campaign: true, lead: true, account_id: true, subject: true, sender_email: true },
         });
         
         // Also try with angle brackets (some providers store them that way)
         if (!matchedOutreachItem && inReplyToHeader) {
           matchedOutreachItem = await prismadb.crm_Outreach_Items.findFirst({
             where: { message_id: inReplyToHeader.trim() },
-            select: { id: true, campaign: true, lead: true, account_id: true, subject: true },
+            select: { id: true, campaign: true, lead: true, account_id: true, subject: true, sender_email: true },
           });
         }
       }
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
         if (allRefs.length > 0) {
           matchedOutreachItem = await prismadb.crm_Outreach_Items.findFirst({
             where: { message_id: { in: allRefs } },
-            select: { id: true, campaign: true, lead: true, account_id: true, subject: true },
+            select: { id: true, campaign: true, lead: true, account_id: true, subject: true, sender_email: true },
           });
         }
       }
@@ -106,6 +106,18 @@ export async function POST(req: Request) {
         });
       }
 
+      // Resolve the correct user for routing: prefer sender_email lookup over campaign owner
+      let resolvedUserId = campaignRecord?.user || undefined;
+      if (matchedOutreachItem?.sender_email) {
+        try {
+          const senderUser = await prismadb.users.findFirst({
+            where: { email: matchedOutreachItem.sender_email },
+            select: { id: true },
+          });
+          if (senderUser) resolvedUserId = senderUser.id;
+        } catch { /* fall back to campaign owner */ }
+      }
+
       let finalLeadId = matchedOutreachItem?.lead || undefined;
       let sentimentResult: any = null;
 
@@ -119,7 +131,7 @@ export async function POST(req: Request) {
               originalSubject: matchedOutreachItem.subject || subject,
               leadName: isAccountOnly ? "Account Contact" : undefined,
             },
-            campaignRecord?.user || "sysadm"
+            resolvedUserId || "sysadm"
           );
 
           if (isAccountOnly && sentimentResult?.extractedContact) {
@@ -155,7 +167,7 @@ export async function POST(req: Request) {
       const newThread = await prismadb.crm_Email_Thread.create({
         data: {
           team_id: campaignRecord?.team_id || "600000000000000000000000",
-          user: campaignRecord?.user || undefined,
+          user: resolvedUserId,
           lead: finalLeadId,
           campaign: matchedOutreachItem?.campaign || undefined,
           outreach_item: matchedOutreachItem?.id || undefined,

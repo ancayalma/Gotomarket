@@ -441,7 +441,7 @@ export default function AccountListDetailsPage() {
                                                 variant="ghost"
                                                 size="icon"
                                                 className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                                                onClick={() => setLeadToDelete(lead)}
+                                                onClick={(e) => { e.stopPropagation(); setLeadToDelete(lead); }}
                                                 disabled={deleting === lead.id}
                                             >
                                                 {deleting === lead.id ? (

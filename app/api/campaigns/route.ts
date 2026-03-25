@@ -235,6 +235,11 @@ export async function POST(req: Request) {
             },
         });
 
+        // NOTE: Lead-level outreach_status is NOT reset here. The send route
+        // (POST /api/outreach/send) overwrites outreach_status to "SENT" for each
+        // lead as emails are dispatched. Old campaign data in crm_Outreach_Items
+        // remains untouched — each campaign tracks replies/opens via its own items.
+
         // Register CRON job for auto follow-ups if enabled
         if (followupConfig?.enabled && user?.team_id) {
             try {

@@ -551,6 +551,9 @@ model crm_Outreach_Items {
   error_message String?
   retry_count   Int     @default(0)
 
+  // Sender tracking (which email address was used to send this item)
+  sender_email  String?
+
   // Relations
   assigned_campaign crm_Outreach_Campaigns? @relation(fields: [campaign], references: [id])
   assigned_lead     crm_Leads?              @relation(name: "OutreachItemsLead", fields: [lead], references: [id])
