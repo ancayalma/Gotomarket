@@ -36,8 +36,8 @@ export async function POST(req: Request) {
             data: { counter: verification.authenticationInfo.newCounter },
         });
 
-        if (!process.env.NEXTAUTH_SECRET) throw new Error("Critical: NEXTAUTH_SECRET is not set");
-        const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
+        if (!process.env.JWT_SECRET) throw new Error("Critical: JWT_SECRET is not set");
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET);
         const mfaToken = await new SignJWT({ sub: user.id, mfaVerified: true })
             .setProtectedHeader({ alg: "HS256" })
             .setIssuedAt()

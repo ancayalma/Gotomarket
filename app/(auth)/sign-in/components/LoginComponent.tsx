@@ -447,7 +447,8 @@ export function LoginComponent() {
                 <>
                   <Input
                     placeholder="000 000"
-                    className="text-center text-2xl font-mono tracking-[0.5em] pl-[0.5em] h-14 bg-white/5 border-white/10"
+                    className="block text-center text-2xl font-mono h-14 bg-white/5 border-white/10"
+                    style={{ letterSpacing: '0.5em', textIndent: '0.5em' }}
                     maxLength={6}
                     inputMode="numeric"
                     autoComplete="one-time-code"
