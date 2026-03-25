@@ -275,9 +275,29 @@ export async function POST(req: Request) {
             const validLeadIds = leadIds.filter((id: string) => /^[a-f0-9]{24}$/i.test(id));
 
             if (validLeadIds.length > 0) {
+                // Fetch leads and accounts to get their primary and additional emails
+                const [dbLeads, dbAccounts] = await Promise.all([
+                    prisma.crm_Leads.findMany({
+                        where: { id: { in: validLeadIds } },
+                        select: { id: true, email: true, additional_emails: true }
+                    }),
+                    prisma.crm_Accounts.findMany({
+                        where: { id: { in: validLeadIds } },
+                        select: { id: true, email: true, additional_emails: true }
+                    })
+                ]);
+
+                const dbRecords = new Map<string, { email: string | null, additional_emails: string[] }>();
+                dbLeads.forEach((l: any) => dbRecords.set(l.id, { email: l.email, additional_emails: l.additional_emails || [] }));
+                // Accounts might overwrite leads if they share an ID (impossible for ObjectIDs, but safe)
+                dbAccounts.forEach((a: any) => dbRecords.set(a.id, { email: a.email, additional_emails: a.additional_emails || [] }));
+
                 const outreachItems = [];
                 for (const leadId of validLeadIds) {
+                    const record = dbRecords.get(leadId);
+                    
                     for (const channel of (channels || ["EMAIL"])) {
+                        // Create primary item
                         outreachItems.push({
                             campaign: campaign.id,
                             lead: leadId,
@@ -285,13 +305,30 @@ export async function POST(req: Request) {
                             status: OutreachItemStatus.PENDING,
                             retry_count: 0,
                         });
+
+                        // If the channel is EMAIL and we have additional emails, create dedicated items for them
+                        if (channel === "EMAIL" && record?.additional_emails && record.additional_emails.length > 0) {
+                            for (const extraEmail of record.additional_emails) {
+                                if (!extraEmail || !extraEmail.includes("@")) continue;
+                                outreachItems.push({
+                                    campaign: campaign.id,
+                                    lead: leadId, // Links back to the same lead/account
+                                    channel,
+                                    status: OutreachItemStatus.PENDING,
+                                    retry_count: 0,
+                                    candidate_email: extraEmail, // Specifies exactly which email to target
+                                });
+                            }
+                        }
                     }
                 }
 
                 // Batch create outreach items
-                await prisma.crm_Outreach_Items.createMany({
-                    data: outreachItems,
-                });
+                if (outreachItems.length > 0) {
+                    await prisma.crm_Outreach_Items.createMany({
+                        data: outreachItems,
+                    });
+                }
 
                 // Log activity
                 await prisma.crm_Lead_Activities.createMany({

@@ -698,6 +698,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         leadData: (leadData || []).filter((l: any) => l.email).map((l: any) => ({
           id: l.id, firstName: l.firstName, lastName: l.lastName,
           company: l.company, jobTitle: l.jobTitle, email: l.email,
+          additional_emails: l.additional_emails,
         })),
         test: isTest,
         testEmail: testEmailValue,
