@@ -123,11 +123,8 @@ export async function POST(req: NextRequest) {
 
     const blobClient = containerClient.getBlockBlobClient(key);
     systemLogger.error("[GENERIC_UPLOAD_POST] Uploading blob", { key, type: file.type, size: buffer.length });
-    // Images must be public-read for email rendering (banners, logos, signatures)
-    const isImage = file.type?.startsWith("image/");
     await blobClient.uploadData(buffer, {
       blobHTTPHeaders: { blobContentType: file.type || "application/octet-stream" },
-      publicAccess: isImage,
     });
     const fileUrl = blobClient.url;
     systemLogger.error("[GENERIC_UPLOAD_POST] Uploaded blob URL:", fileUrl);
