@@ -104,8 +104,8 @@ Contact: fullName, firstName, lastName, title, email, additionalEmails, phone, a
             service: "analysis",
             model: modelId,
             usage: {
-                promptTokens: usage?.promptTokens || 0,
-                completionTokens: usage?.completionTokens || 0,
+                promptTokens: (usage as any)?.promptTokens || 0,
+                completionTokens: (usage as any)?.completionTokens || 0,
             },
             description: `Import Intelligence analysis for ${totalRows} rows, ${headers.length} columns`,
         });
