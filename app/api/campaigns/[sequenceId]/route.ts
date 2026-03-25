@@ -48,6 +48,7 @@ export async function GET(
                         id: true,
                         status: true,
                         channel: true,
+                        auto_reply_count: true,
                     },
                 },
             },

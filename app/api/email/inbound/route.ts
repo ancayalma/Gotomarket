@@ -106,8 +106,13 @@ export async function POST(req: Request) {
         });
       }
 
-      // Resolve the correct user for routing: prefer sender_email lookup over campaign owner
+      // Resolve the correct user for routing:
+      // 1. sender_email on the outreach item (most reliable)
+      // 2. Parse the reply-to address prefix (e.g., mmilton@reply.basalthq.com → mmilton)
+      // 3. Fall back to campaign owner
       let resolvedUserId = campaignRecord?.user || undefined;
+
+      // Strategy 1: Look up user by sender_email on the outreach item
       if (matchedOutreachItem?.sender_email) {
         try {
           const senderUser = await prismadb.users.findFirst({
@@ -115,6 +120,27 @@ export async function POST(req: Request) {
             select: { id: true },
           });
           if (senderUser) resolvedUserId = senderUser.id;
+        } catch { /* fall back */ }
+      }
+
+      // Strategy 2: Parse the "To" address prefix to match a user
+      // e.g., mmilton@reply.basalthq.com → find user whose email starts with "mmilton@"
+      if (resolvedUserId === campaignRecord?.user && toAddresses.length > 0) {
+        try {
+          const replyToAddr = toAddresses.find((a: string) => a.includes("reply."));
+          if (replyToAddr) {
+            const prefix = replyToAddr.split("@")[0].toLowerCase(); // "mmilton"
+            if (prefix && prefix !== "sysadm") {
+              const matchedUser = await prismadb.users.findFirst({
+                where: {
+                  team_id: campaignRecord?.team_id,
+                  email: { startsWith: prefix + "@", mode: "insensitive" },
+                },
+                select: { id: true },
+              });
+              if (matchedUser) resolvedUserId = matchedUser.id;
+            }
+          }
         } catch { /* fall back to campaign owner */ }
       }
 
@@ -215,6 +241,7 @@ export async function POST(req: Request) {
               outreachItemId: matchedOutreachItem.id,
               inboundThreadId: newThread.id,
               campaignId: matchedOutreachItem.campaign,
+              sentiment: sentimentResult?.sentiment || "UNKNOWN",
             }),
           }).catch((err) => {
             systemLogger.error("[SES_INBOUND] Auto-reply trigger failed:", err);

@@ -343,6 +343,12 @@ export default function CampaignDetailPage() {
         {} as Record<string, number>
     );
 
+    // Total auto-replies sent across all outreach items
+    const autoRepliesSent = (campaign.outreach_items || []).reduce(
+        (sum, item) => sum + ((item as any).auto_reply_count || 0),
+        0
+    );
+
     return (
         <div className="flex flex-col h-full bg-background">
             <div className="p-4 md:p-6 lg:p-8 space-y-6">
@@ -506,6 +512,89 @@ export default function CampaignDetailPage() {
 
                     {/* Overview Tab */}
                     <TabsContent value="overview" className="mt-6 space-y-6">
+                        {/* AI Auto-Reply — Hero Section */}
+                        <Card className={`backdrop-blur-sm ${campaign.auto_reply_enabled ? "border-emerald-500/30 bg-emerald-500/5" : "border-indigo-500/20 bg-indigo-500/5"}`}>
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${campaign.auto_reply_enabled ? "bg-emerald-500/20" : "bg-indigo-500/20"}`}>
+                                            <Zap className={`w-5 h-5 ${campaign.auto_reply_enabled ? "text-emerald-400" : "text-indigo-400"}`} />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-base font-bold flex items-center gap-2">
+                                                AI Auto-Reply
+                                                {campaign.auto_reply_enabled && (
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                                )}
+                                            </CardTitle>
+                                            <CardDescription className="text-xs mt-0.5">
+                                                {campaign.auto_reply_enabled
+                                                    ? "AI is actively monitoring and replying to inbound emails"
+                                                    : "Enable to let AI autonomously respond to lead replies using campaign context"}
+                                            </CardDescription>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        size="lg"
+                                        variant={campaign.auto_reply_enabled ? "default" : "default"}
+                                        className={`gap-2 px-6 font-bold text-sm transition-all ${
+                                            campaign.auto_reply_enabled
+                                                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20"
+                                                : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/20"
+                                        }`}
+                                        onClick={() => toggleAutoReply(!campaign.auto_reply_enabled)}
+                                        disabled={autoReplyLoading}
+                                    >
+                                        {autoReplyLoading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : campaign.auto_reply_enabled ? (
+                                            <CheckCircle2 className="w-4 h-4" />
+                                        ) : (
+                                            <Zap className="w-4 h-4" />
+                                        )}
+                                        {campaign.auto_reply_enabled ? "Enabled — Click to Disable" : "Enable AI Auto-Reply"}
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            {campaign.auto_reply_enabled && (
+                                <CardContent className="space-y-3 pt-0">
+                                    <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+                                        <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/10 p-3">
+                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Replies Received</span>
+                                            <div className="text-xl font-black text-emerald-400 mt-1">{campaign.emails_replied || 0}</div>
+                                        </div>
+                                        <div className="rounded-lg bg-amber-500/5 border border-amber-500/10 p-3">
+                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Auto-Replies Sent</span>
+                                            <div className="text-xl font-black text-amber-400 mt-1">{autoRepliesSent}</div>
+                                        </div>
+                                        <div className="rounded-lg bg-indigo-500/5 border border-indigo-500/10 p-3">
+                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Max Replies / Thread</span>
+                                            <div className="text-xl font-black text-indigo-400 mt-1">{campaign.auto_reply_max_count ?? 3}</div>
+                                        </div>
+                                        <div className="rounded-lg bg-background/50 border border-white/5 p-3 md:col-span-2 flex items-center gap-3">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="gap-2 border-white/10 hover:bg-white/5 text-xs"
+                                                onClick={backfillReplies}
+                                                disabled={backfillLoading}
+                                            >
+                                                {backfillLoading ? (
+                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                ) : (
+                                                    <RefreshCw className="w-3 h-3" />
+                                                )}
+                                                Scan Existing Replies
+                                            </Button>
+                                            <p className="text-[10px] text-muted-foreground">
+                                                Process unreplied inbound threads with AI
+                                            </p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            )}
+                        </Card>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Campaign Brief */}
                             <Card className="border-white/5 bg-card/50 backdrop-blur-sm">
@@ -639,84 +728,6 @@ export default function CampaignDetailPage() {
                                             <a href={campaign.meeting_link} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline block mt-0.5 truncate">
                                                 {campaign.meeting_link}
                                             </a>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-
-                            {/* AI Auto-Reply */}
-                            <Card className="border-white/5 bg-card/50 backdrop-blur-sm md:col-span-2">
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                                            <Zap className="w-4 h-4 text-primary" />
-                                            AI Auto-Reply
-                                        </CardTitle>
-                                        <Button
-                                            size="sm"
-                                            variant={campaign.auto_reply_enabled ? "default" : "outline"}
-                                            className={`gap-2 h-8 text-xs ${
-                                                campaign.auto_reply_enabled
-                                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                                                    : "border-white/10 hover:bg-white/5"
-                                            }`}
-                                            onClick={() => toggleAutoReply(!campaign.auto_reply_enabled)}
-                                            disabled={autoReplyLoading}
-                                        >
-                                            {autoReplyLoading ? (
-                                                <Loader2 className="w-3 h-3 animate-spin" />
-                                            ) : campaign.auto_reply_enabled ? (
-                                                <CheckCircle2 className="w-3 h-3" />
-                                            ) : (
-                                                <Zap className="w-3 h-3" />
-                                            )}
-                                            {campaign.auto_reply_enabled ? "Enabled" : "Enable"}
-                                        </Button>
-                                    </div>
-                                    <CardDescription className="text-xs">
-                                        When enabled, the AI will autonomously respond to lead replies using this campaign&apos;s context and brand identity.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-2.5 h-2.5 rounded-full ${campaign.auto_reply_enabled ? "bg-emerald-500 animate-pulse" : "bg-zinc-600"}`} />
-                                        <span className="text-sm">
-                                            {campaign.auto_reply_enabled
-                                                ? "AI is actively monitoring and replying to inbound emails"
-                                                : "AI auto-reply is disabled for this campaign"}
-                                        </span>
-                                    </div>
-                                    {campaign.auto_reply_enabled && (
-                                        <div className="grid grid-cols-2 gap-3 pt-2">
-                                            <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/10 p-3">
-                                                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Replies Received</span>
-                                                <div className="text-xl font-black text-emerald-400 mt-1">{campaign.emails_replied || 0}</div>
-                                            </div>
-                                            <div className="rounded-lg bg-indigo-500/5 border border-indigo-500/10 p-3">
-                                                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Max Replies / Thread</span>
-                                                <div className="text-xl font-black text-indigo-400 mt-1">{campaign.auto_reply_max_count ?? 3}</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {campaign.auto_reply_enabled && (
-                                        <div className="pt-2">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="w-full gap-2 border-white/10 hover:bg-white/5 text-xs"
-                                                onClick={backfillReplies}
-                                                disabled={backfillLoading}
-                                            >
-                                                {backfillLoading ? (
-                                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                                ) : (
-                                                    <RefreshCw className="w-3 h-3" />
-                                                )}
-                                                Scan Existing Replies
-                                            </Button>
-                                            <p className="text-[10px] text-muted-foreground mt-1 text-center">
-                                                Scans for unreplied inbound threads and triggers AI responses
-                                            </p>
                                         </div>
                                     )}
                                 </CardContent>

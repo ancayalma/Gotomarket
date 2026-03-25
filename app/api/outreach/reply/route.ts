@@ -27,7 +27,7 @@ export const maxDuration = 60;
  */
 export async function POST(req: Request) {
     try {
-        const { outreachItemId, inboundThreadId, campaignId } = await req.json();
+        const { outreachItemId, inboundThreadId, campaignId, sentiment } = await req.json();
 
         if (!outreachItemId || !campaignId) {
             return NextResponse.json({ error: "Missing required IDs" }, { status: 400 });
@@ -232,7 +232,9 @@ The 'body' must be plain text (no HTML).
 IMPORTANT: The email template automatically includes the sender's signature and resource buttons — do NOT write them in the body. Just write the conversational reply text.
 If a meeting link is available and relevant, mention it naturally in the body (e.g., "Feel free to book a time here: [link]").
 If campaign documents are available and the lead is asking for materials/pricing/info, set attachDocuments to true.
-If the lead shows genuine buying interest (pricing questions, timeline discussions, demo requests), set leadQualified to true.`,
+If the lead shows genuine buying interest (pricing questions, timeline discussions, demo requests), set leadQualified to true.
+
+${sentiment === "NEGATIVE" ? `IMPORTANT — NEGATIVE SENTIMENT DETECTED: The lead has expressed disinterest or declined. Write a brief, gracious reply thanking them for their time. Do NOT pitch, push, or try to overcome objections. Simply acknowledge their decision, wish them well, and leave the door open in case their needs change in the future. Keep it to 2-3 sentences max. Set leadQualified to false and attachDocuments to false.` : sentiment === "NEUTRAL" ? `NOTE — NEUTRAL SENTIMENT: The lead's response is ambiguous or non-committal. Be helpful and conversational but not pushy. Ask a gentle clarifying question if appropriate.` : `The lead appears interested. Engage warmly and move the conversation forward.`}`,
                 },
                 { role: "user", content: replyPrompt },
             ],
