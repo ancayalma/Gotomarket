@@ -82,7 +82,9 @@ export async function POST(req: Request) {
             if (user?.signature_html) userSignature = user.signature_html as string;
         } catch { }
 
-        const baseUrl = process.env.NEXTAUTH_URL || "";
+        // Derive absolute baseUrl for icon resolution — srcDoc iframes can't resolve relative paths
+        const reqUrl = new URL(req.url);
+        const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || reqUrl.origin;
 
         const brandColorHex = (body.props?.brand?.accentColor || brandColor || "#1f2937").replace("#", "");
 
@@ -99,6 +101,24 @@ export async function POST(req: Request) {
             };
         });
 
+        // Resolve bannerImageUrl to a presigned URL if it's an S3 URL
+        let resolvedTemplateOptions = body.props?.templateOptions || undefined;
+        if (resolvedTemplateOptions?.bannerImageUrl) {
+            const bannerUrl = resolvedTemplateOptions.bannerImageUrl;
+            if (bannerUrl.includes(".s3.") || bannerUrl.includes("cloud.ovh.us")) {
+                try {
+                    const { getBlobServiceClient } = await import("@/lib/s3-storage");
+                    const s3 = getBlobServiceClient();
+                    const bucketName = process.env.S3_BUCKET_NAME || "basaltcrm";
+                    const urlObj = new URL(bannerUrl);
+                    const pathParts = urlObj.pathname.split("/").filter(Boolean);
+                    const key = pathParts[0] === bucketName ? pathParts.slice(1).join("/") : pathParts.join("/");
+                    const signedUrl = await s3.getPresignedUrl(key, 604800); // 7 days
+                    resolvedTemplateOptions = { ...resolvedTemplateOptions, bannerImageUrl: signedUrl };
+                } catch (e) { console.error("[TEMPLATE_PREVIEW] Failed to sign banner URL:", e); }
+            }
+        }
+
         const props: OutreachRenderProps = {
             subjectPreview: body.props?.subjectPreview || "Exploring Partnership Opportunities",
             bodyText: body.props?.bodyText || DEFAULT_PREVIEW_BODY,
@@ -111,7 +131,7 @@ export async function POST(req: Request) {
                 logoUrl: body.props?.brand?.logoUrl || brandLogoUrl,
                 logoAlt: body.props?.brand?.logoAlt || brandCompanyName || "Logo",
             },
-            templateOptions: body.props?.templateOptions || undefined,
+            templateOptions: resolvedTemplateOptions,
         };
 
         const html = await renderOutreachTemplate(templateId, props);
