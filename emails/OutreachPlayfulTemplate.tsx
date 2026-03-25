@@ -119,12 +119,12 @@ export const OutreachPlayfulTemplate: React.FC<
         <Container style={{ maxWidth: "720px", margin: "0 auto", ...cardStyleCss, ...borderAccent }}>
           {/* Banner image */}
           {templateOptions?.bannerImageUrl && (
-            <Section style={{ margin: 0, padding: 0 }}>
+            <Section style={{ margin: 0, padding: 0, marginBottom: "24px" }}>
               <Img
                 src={templateOptions.bannerImageUrl}
                 alt="Banner"
                 width="720"
-                style={{ display: "block", width: "100%", maxWidth: "720px", height: `${templateOptions.bannerHeight || 120}px`, objectFit: "cover" as const, objectPosition: `center ${templateOptions.bannerPositionY ?? 50}%` }}
+                style={{ display: "block", width: "100%", maxWidth: "720px", height: `${templateOptions.bannerHeight || 120}px`, objectFit: "cover" as const, objectPosition: `center ${templateOptions.bannerPositionY ?? 50}%`, borderRadius: "20px" }}
               />
             </Section>
           )}

@@ -7,6 +7,13 @@ export interface SentimentResult {
   sentiment: "POSITIVE" | "NEGATIVE" | "NEUTRAL";
   reasoning: string;
   suggestedAction: string;
+  extractedContact?: {
+    firstName?: string;
+    lastName?: string;
+    jobTitle?: string;
+    phone?: string;
+    email?: string;
+  };
 }
 
 /**
@@ -58,6 +65,10 @@ export async function analyzeReplySentiment(
       "- POSITIVE → 'CREATE_OPPORTUNITY' (move to sales pipeline)",
       "- NEGATIVE → 'TAG_FOR_REVIEW' (flag for human decision)",
       "- NEUTRAL → 'SCHEDULE_RECHECK' (check again later)",
+      "",
+      "Finally, attempt to extract the sender's contact information (first name, last name, job title, phone number, and email)",
+      "by looking at their email signature or how they signed off the email. If you cannot find this information,",
+      "leave the fields empty.",
     ].join("\n");
 
     const userPrompt = [
@@ -77,6 +88,13 @@ export async function analyzeReplySentiment(
         sentiment: z.enum(["POSITIVE", "NEGATIVE", "NEUTRAL"]),
         reasoning: z.string(),
         suggestedAction: z.string(),
+        extractedContact: z.object({
+          firstName: z.string().optional(),
+          lastName: z.string().optional(),
+          jobTitle: z.string().optional(),
+          phone: z.string().optional(),
+          email: z.string().optional(),
+        }).optional(),
       }),
       messages: [
         { role: "system", content: systemPrompt },
@@ -105,6 +123,7 @@ export async function analyzeReplySentiment(
       sentiment: object.sentiment,
       reasoning: object.reasoning,
       suggestedAction: object.suggestedAction,
+      extractedContact: object.extractedContact,
     };
   } catch (err: any) {
     systemLogger.error(`[SENTIMENT] Analysis failed: ${err?.message}`);

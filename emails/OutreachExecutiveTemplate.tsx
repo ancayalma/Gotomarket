@@ -112,7 +112,7 @@ export const OutreachExecutiveTemplate: React.FC<
         <Container style={{ maxWidth: "720px", margin: "0 auto", ...cardStyleCss, ...borderAccent }}>
           {/* Banner image */}
           {templateOptions?.bannerImageUrl && (
-            <Section style={{ margin: 0, padding: 0 }}>
+            <Section style={{ margin: 0, padding: 0, marginBottom: "24px" }}>
               <Img
                 src={templateOptions.bannerImageUrl}
                 alt="Banner"

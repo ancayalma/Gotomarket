@@ -841,7 +841,12 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
 
       const payloads = await Promise.all(responses.map((r) => r.json().catch(() => null)));
 
-      const emailSummary = responses[0] && useEmail ? `Email sent=${payloads[0]?.sent ?? 0}, skipped=${payloads[0]?.skipped ?? 0}, errors=${payloads[0]?.errors ?? 0}` : null;
+      const emailPayload0 = payloads[0];
+      const emailSummary = responses[0] && useEmail
+        ? (emailPayload0?.sent === 0 && emailPayload0?.message
+          ? `Email: ${emailPayload0.message}`
+          : `Email sent=${emailPayload0?.sent ?? 0}, skipped=${emailPayload0?.skipped ?? 0}, errors=${emailPayload0?.errors ?? 0}`)
+        : null;
       const smsIdx = useEmail ? 1 : 0;
       const smsSummary = responses[smsIdx] && useSms ? `SMS sent=${payloads[smsIdx]?.sent ?? 0}, skipped=${payloads[smsIdx]?.skipped ?? 0}, errors=${payloads[smsIdx]?.errors ?? 0}` : null;
 
