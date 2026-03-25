@@ -124,8 +124,8 @@ export const authOptions: NextAuthOptions = {
           else if (mfaToken) {
             const { jwtVerify } = await import("jose");
             try {
-              if (!process.env.NEXTAUTH_SECRET) throw new Error("Server misconfigured");
-              const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
+              if (!process.env.JWT_SECRET) throw new Error("Server misconfigured");
+              const secret = new TextEncoder().encode(process.env.JWT_SECRET);
               const { payload } = await jwtVerify(mfaToken, secret);
               if (payload.sub !== user.id || !payload.mfaVerified) {
                 throw new Error("Invalid MFA token");

@@ -252,7 +252,8 @@ export function MfaSettings({ user }: MfaSettingsProps) {
                         <div className="w-full max-w-[200px] mb-6">
                             <Input
                                 placeholder="000 000"
-                                className="text-center text-2xl font-mono tracking-[0.5em] h-12"
+                                className="block text-center text-2xl font-mono h-12"
+                                style={{ letterSpacing: '0.5em', textIndent: '0.5em' }}
                                 maxLength={6}
                                 value={totpCode}
                                 onChange={(e) => setTotpCode(e.target.value)}
