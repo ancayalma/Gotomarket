@@ -61,11 +61,113 @@ export async function GET(
             );
         }
 
+        // ── Self-correcting progress reconciliation ─────────────────────────
+        // Count actual sent items from outreach_items to fix stale counters
+        const items = campaign.outreach_items || [];
+        const sentStatuses = new Set(["SENT", "OPENED", "CLICKED", "REPLIED", "BOUNCED", "DELIVERED"]);
+        const actualSent = items.filter((i: any) => sentStatuses.has(i.status)).length;
+        const actualReplied = items.filter((i: any) => i.status === "REPLIED").length;
+
+        // Auto-patch if the cached counter is stale (lower than actual)
+        const needsPatch = actualSent > campaign.emails_sent || actualReplied > campaign.emails_replied;
+        if (needsPatch) {
+            const patchData: any = {};
+            if (actualSent > campaign.emails_sent) patchData.emails_sent = actualSent;
+            if (actualReplied > campaign.emails_replied) patchData.emails_replied = actualReplied;
+            
+            await prisma.crm_Outreach_Campaigns.update({
+                where: { id: sequenceId },
+                data: patchData,
+            }).catch(() => {}); // non-fatal
+
+            // Also update the response object
+            if (patchData.emails_sent) (campaign as any).emails_sent = patchData.emails_sent;
+            if (patchData.emails_replied) (campaign as any).emails_replied = patchData.emails_replied;
+        }
+
+        // If campaign was ACTIVE but all items are sent, auto-complete
+        if (campaign.status === "ACTIVE" && items.length > 0 && actualSent >= items.length) {
+            await prisma.crm_Outreach_Campaigns.update({
+                where: { id: sequenceId },
+                data: { status: "COMPLETED" as any },
+            }).catch(() => {});
+            (campaign as any).status = "COMPLETED";
+        }
+
         return NextResponse.json(campaign);
     } catch (error: any) {
         systemLogger.error("[CAMPAIGN_GET_BY_ID]", error);
         return NextResponse.json(
             { message: error.message || "Failed to fetch campaign" },
+            { status: 500 }
+        );
+    }
+}
+
+/**
+ * PATCH /api/campaigns/[sequenceId]
+ * Updates campaign status (stop, pause, resume).
+ * Body: { status: "PAUSED" | "ACTIVE" | "COMPLETED" }
+ */
+export async function PATCH(
+    req: Request,
+    { params }: { params: Promise<{ sequenceId: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) {
+            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        }
+
+        const { sequenceId } = await params;
+        const body = await req.json();
+        const { status } = body;
+
+        const validStatuses = ["DRAFT", "ACTIVE", "PAUSED", "COMPLETED", "ARCHIVED"];
+        if (!status || !validStatuses.includes(status)) {
+            return NextResponse.json(
+                { message: `Invalid status. Must be one of: ${validStatuses.join(", ")}` },
+                { status: 400 }
+            );
+        }
+
+        const campaign = await prisma.crm_Outreach_Campaigns.findUnique({
+            where: { id: sequenceId },
+            select: { id: true, status: true, user: true },
+        });
+
+        if (!campaign) {
+            return NextResponse.json({ message: "Campaign not found" }, { status: 404 });
+        }
+
+        const updated = await prisma.crm_Outreach_Campaigns.update({
+            where: { id: sequenceId },
+            data: { status: status as any },
+        });
+
+        systemLogger.info(`[CAMPAIGN_STATUS] Campaign ${sequenceId} status changed: ${campaign.status} → ${status} by user ${session.user.id}`);
+
+        // If pausing, also cancel any pending CRON jobs
+        if (status === "PAUSED") {
+            const cronResult = await prisma.crm_Cron_Jobs.updateMany({
+                where: {
+                    campaign_id: sequenceId,
+                    status: { not: "COMPLETED" as any },
+                },
+                data: { status: "PAUSED" as any },
+            });
+            systemLogger.info(`[CAMPAIGN_STATUS] Paused ${cronResult.count} cron jobs for campaign ${sequenceId}`);
+        }
+
+        return NextResponse.json({
+            status: "ok",
+            campaign_status: status,
+            previous_status: campaign.status,
+        });
+    } catch (error: any) {
+        systemLogger.error("[CAMPAIGN_STATUS_UPDATE]", error);
+        return NextResponse.json(
+            { message: error.message || "Failed to update campaign status" },
             { status: 500 }
         );
     }

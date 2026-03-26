@@ -203,6 +203,7 @@ export default function CampaignDetailPage() {
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [autoReplyLoading, setAutoReplyLoading] = useState(false);
     const [backfillLoading, setBackfillLoading] = useState(false);
+    const [statusLoading, setStatusLoading] = useState(false);
 
     const { data: campaign, error, isLoading, mutate } = useSWR<CampaignDetail>(
         campaignId ? `/api/campaigns/${campaignId}` : null,
@@ -282,6 +283,29 @@ export default function CampaignDetailPage() {
             toast.error("Failed to update auto-reply settings");
         }
         setAutoReplyLoading(false);
+    }
+
+    async function toggleCampaignStatus() {
+        if (!campaign) return;
+        const newStatus = campaign.status === "PAUSED" ? "ACTIVE" : "PAUSED";
+        setStatusLoading(true);
+        try {
+            const res = await fetch(`/api/campaigns/${campaignId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            if (res.ok) {
+                mutate();
+                toast.success(newStatus === "PAUSED" ? "Campaign stopped. Outreach will halt within the next batch." : "Campaign resumed.");
+            } else {
+                const err = await res.json();
+                toast.error(err.message || "Failed to update campaign status");
+            }
+        } catch {
+            toast.error("Failed to update campaign status");
+        }
+        setStatusLoading(false);
     }
 
     async function backfillReplies() {
@@ -396,6 +420,29 @@ export default function CampaignDetailPage() {
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        {/* Stop/Resume Button — prominent when campaign is actively sending */}
+                        {(campaign.status === "ACTIVE" && campaign.emails_sent < campaign.total_leads && campaign.total_leads > 0) && (
+                            <Button
+                                size="sm"
+                                className="gap-2 bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20 font-bold"
+                                onClick={toggleCampaignStatus}
+                                disabled={statusLoading}
+                            >
+                                {statusLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pause className="w-4 h-4" />}
+                                Stop Campaign
+                            </Button>
+                        )}
+                        {campaign.status === "PAUSED" && (
+                            <Button
+                                size="sm"
+                                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 font-bold"
+                                onClick={toggleCampaignStatus}
+                                disabled={statusLoading}
+                            >
+                                {statusLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                                Resume Campaign
+                            </Button>
+                        )}
                         <Button
                             size="sm"
                             variant="outline"
@@ -455,10 +502,18 @@ export default function CampaignDetailPage() {
                 </div>
 
                 {/* Email Send Progress Bar */}
-                {campaign.status === "ACTIVE" && campaign.total_leads > 0 && (
+                {(campaign.status === "ACTIVE" || campaign.status === "PAUSED") && campaign.total_leads > 0 && (
                     <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground font-bold uppercase tracking-wider">Send Progress</span>
+                            <span className="text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-2">
+                                Send Progress
+                                {campaign.status === "PAUSED" && (
+                                    <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider border-amber-500/30 text-amber-400">
+                                        <Pause className="w-2.5 h-2.5 mr-0.5" />
+                                        STOPPED
+                                    </Badge>
+                                )}
+                            </span>
                             <span className="font-mono font-bold text-primary">
                                 {campaign.emails_sent} / {campaign.total_leads}
                                 <span className="text-muted-foreground ml-1">
@@ -468,7 +523,11 @@ export default function CampaignDetailPage() {
                         </div>
                         <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden">
                             <div
-                                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-700"
+                                className={`h-full rounded-full transition-all duration-700 ${
+                                    campaign.status === "PAUSED"
+                                        ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                                        : "bg-gradient-to-r from-blue-500 to-indigo-500"
+                                }`}
                                 style={{ width: `${campaign.total_leads > 0 ? Math.min(100, (campaign.emails_sent / campaign.total_leads) * 100) : 0}%` }}
                             />
                         </div>

@@ -262,7 +262,7 @@ export function CampaignContactTracker({
                   <div className="flex items-center gap-3">
                     <div>
                       <p className="font-medium text-sm">
-                        {item.candidate_name || item.candidate_email || "Unknown"}
+                        {item.candidate_name || (item as any).account_name || item.candidate_email || "Unknown"}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {item.candidate_company && (
