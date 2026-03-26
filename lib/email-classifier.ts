@@ -34,7 +34,7 @@ const GENERIC_WORDS = [
     "webhook", "webhooks", "sandbox", "production", "live", "start",
     "begin", "go", "launch", "getstarted", "reachus", "contactus",
     "helpdesk", "supportdesk", "servicedesk", "assistance",
-    "nick", "nicki", "pda",
+    "pda",
 ];
 
 export type EmailClassification = {
@@ -74,17 +74,14 @@ export function classifyEmail(email: string): EmailClassification {
         return { type: "GENERIC" };
     }
 
-    // 4. Check for concatenated generic words
-    if (GENERIC_WORDS.some(word => {
-        if (word.length === 3) return prefix.endsWith(word);
-        if (word.length < 3) return false;
-        return prefix.startsWith(word) || prefix.endsWith(word);
-    })) {
-        return { type: "GENERIC" };
-    }
+    // 4. (Removed) Previously checked concatenated generic words via startsWith/endsWith,
+    //    but this caused too many false positives (e.g., "grace" matching "care").
+    //    Rules 1 and 3 already handle exact and discrete-part matching.
 
-    // 5. Pattern-based: Numbers without separators
-    if (/\d/.test(prefix) && !prefix.includes(".") && !prefix.includes("_") && !prefix.includes("-")) {
+    // 5. Pattern-based: Purely numeric prefixes (e.g., "12345@domain.com")
+    // Only reject if the prefix is ALL digits — names with trailing numbers
+    // (nonrek22, john2, mark99) are valid personal emails.
+    if (/^\d+$/.test(prefix)) {
         return { type: "GENERIC" };
     }
 

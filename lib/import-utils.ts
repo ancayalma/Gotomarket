@@ -447,7 +447,10 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
             discoveredContacts[existingIdx].contactDescription = contactDescription || undefined;
             discoveredContacts[existingIdx].tags = tags || undefined;
         } else if (fullName || finalPhone || linkedinUrl) {
-            const isNamed = targetEmail ? classifyEmail(targetEmail).type === "NAMED" : !!fullName;
+            // If we have an explicit name from the row, always treat as named contact.
+            // Email classification should only gate contact creation when the email is
+            // the SOLE source of identity (no name, no phone, no linkedin).
+            const isNamed = fullName ? true : (targetEmail ? classifyEmail(targetEmail).type === "NAMED" : false);
             if (isNamed) {
                 const cleanPhone = finalPhone.replace(/\D/g, "");
                 const isJunkPhone = JUNK_PHONES.includes(cleanPhone);
@@ -456,6 +459,8 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
                 if (targetEmail) contactKey = targetEmail;
                 else if (fullName && linkedinUrl) contactKey = `${fullName.toLowerCase()}|${linkedinUrl.toLowerCase()}`;
                 else if (fullName && finalCandidateKey) contactKey = `${fullName.toLowerCase()}|${finalCandidateKey}`;
+                else if (fullName && finalPhone) contactKey = `${fullName.toLowerCase()}|${finalPhone.replace(/\D/g, "")}`;
+                else if (fullName) contactKey = fullName.toLowerCase();
 
                 if (contactKey) {
                     discoveredContacts.push({

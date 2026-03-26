@@ -204,6 +204,7 @@ export default function CampaignDetailPage() {
     const [autoReplyLoading, setAutoReplyLoading] = useState(false);
     const [backfillLoading, setBackfillLoading] = useState(false);
     const [statusLoading, setStatusLoading] = useState(false);
+    const [repairLoading, setRepairLoading] = useState(false);
 
     const { data: campaign, error, isLoading, mutate } = useSWR<CampaignDetail>(
         campaignId ? `/api/campaigns/${campaignId}` : null,
@@ -238,6 +239,88 @@ export default function CampaignDetailPage() {
         }
         setDeleting(false);
         setConfirmDelete(false);
+    }
+
+    async function handleRepair() {
+        if (!campaign?.assigned_pool?.id) {
+            toast.error("No assigned list to repair from.");
+            return;
+        }
+        setRepairLoading(true);
+        const toastId = toast.loading("Fetching list logic...");
+        try {
+            // Fetch list leads
+            const res = await fetch(`/api/crm/leads/pools/${campaign.assigned_pool.id}/leads?mine=false`);
+            if (!res.ok) throw new Error("Failed to load list");
+            const poolData = await res.json();
+            const poolLeads = Array.isArray(poolData?.leads) ? poolData.leads : [];
+            const activeCandidates = Array.isArray(poolData?.candidates) ? poolData.candidates : [];
+            const allLeads = [...poolLeads, ...activeCandidates];
+
+            // Resolve emails logic matching the wizard
+            const validLeads = allLeads.map((l: any) => {
+                if (l.email) return l;
+                const fallback = l.accountEmail || (l.accountAdditionalEmails && l.accountAdditionalEmails.length > 0 ? l.accountAdditionalEmails[0] : null);
+                if (fallback) return { ...l, email: fallback };
+                return l;
+            }).filter((l: any) => !!l.email);
+
+            // Filter out leads already in campaign
+            const existingIds = new Set((campaign.outreach_items || []).map((i: any) => i.lead));
+            const missingLeads = validLeads.filter((l: any) => !existingIds.has(l.id));
+
+            if (missingLeads.length === 0) {
+                toast.success("No missing leads found. Campaign is up to date.", { id: toastId });
+                setRepairLoading(false);
+                return;
+            }
+
+            toast.loading(`Found ${missingLeads.length} missed leads. Dispatching...`, { id: toastId });
+
+            const sendPayload = {
+                leadIds: missingLeads.map((l: any) => l.id),
+                leadData: missingLeads.map((l: any) => ({
+                    id: l.id,
+                    firstName: l.firstName,
+                    lastName: l.lastName,
+                    company: l.company,
+                    jobTitle: l.jobTitle,
+                    email: l.email,
+                    additional_emails: l.additional_emails || l.accountAdditionalEmails || [],
+                })),
+                campaignId: campaign.id,
+                poolId: campaign.assigned_pool.id,
+                promptOverride: campaign.prompt_override || undefined,
+                templateId: "minimal", // Default to minimal
+                senderMode: "company",
+                signatureSource: "brand",
+            };
+
+            const sendRes = await fetch("/api/outreach/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(sendPayload),
+            });
+
+            if (sendRes.ok) {
+                toast.success(`Dispatched ${missingLeads.length} missed leads!`, { id: toastId });
+                // If the campaign was paused or completed, flip it back to active so tracking resumes
+                if (campaign.status === "COMPLETED" || campaign.status === "PAUSED") {
+                    await fetch(`/api/campaigns/${campaign.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ status: "ACTIVE" }),
+                    });
+                }
+                mutate();
+            } else {
+                const err = await sendRes.json();
+                toast.error(err.message || "Failed to dispatch repair emails", { id: toastId });
+            }
+        } catch (e: any) {
+            toast.error(e?.message || "Failed to repair campaign", { id: toastId });
+        }
+        setRepairLoading(false);
     }
 
     async function toggleCronJob(jobId: string, action: "pause" | "resume" | "cancel") {
@@ -479,6 +562,17 @@ export default function CampaignDetailPage() {
                         >
                             <Zap className="w-4 h-4" />
                             Scrape Accounts
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2 border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 font-medium"
+                            onClick={handleRepair}
+                            disabled={repairLoading || !campaign.assigned_pool}
+                            title={!campaign.assigned_pool ? "No associated list to repair from" : "Send outreach to leads in the list that were previously skipped"}
+                        >
+                            {repairLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                            Repair Skipped Leads
                         </Button>
                         <Button
                             size="sm"
