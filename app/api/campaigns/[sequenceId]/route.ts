@@ -62,31 +62,77 @@ export async function GET(
         }
 
         // ── Self-correcting progress reconciliation ─────────────────────────
-        // Count actual sent items from outreach_items to fix stale counters
-        const items = campaign.outreach_items || [];
+        let items = campaign.outreach_items || [];
+
+        // Step 1: Delete duplicate empty shells from campaign wizard creation.
+        // The wizard pre-creates PENDING items with only lead+channel,
+        // then the send route creates NEW fully-populated items with candidate_email.
+        // The empty shells are duplicates that show as "Unknown".
+        const emptyShells = items.filter((i: any) =>
+            !i.candidate_email && !i.sentAt && (i.status === "PENDING" || i.status === "SKIPPED")
+        );
+        if (emptyShells.length > 0) {
+            const emptyIds = emptyShells.map((i: any) => i.id);
+            await prisma.crm_Outreach_Items.deleteMany({
+                where: { id: { in: emptyIds } },
+            }).catch(() => {});
+            // Remove from local list
+            items = items.filter((i: any) => !emptyIds.includes(i.id));
+            (campaign as any).outreach_items = items;
+        }
+
+        // Step 2: Count actual statuses
         const sentStatuses = new Set(["SENT", "OPENED", "CLICKED", "REPLIED", "BOUNCED", "DELIVERED"]);
+        const nonPendingStatuses = new Set(["SENT", "OPENED", "CLICKED", "REPLIED", "BOUNCED", "DELIVERED", "FAILED", "SKIPPED"]);
         const actualSent = items.filter((i: any) => sentStatuses.has(i.status)).length;
         const actualReplied = items.filter((i: any) => i.status === "REPLIED").length;
+        const actualPending = items.filter((i: any) => i.status === "PENDING" || i.status === "RESEARCHING" || i.status === "READY").length;
+        const actualProcessed = items.filter((i: any) => nonPendingStatuses.has(i.status)).length;
 
-        // Auto-patch if the cached counter is stale (lower than actual)
-        const needsPatch = actualSent > campaign.emails_sent || actualReplied > campaign.emails_replied;
-        if (needsPatch) {
-            const patchData: any = {};
-            if (actualSent > campaign.emails_sent) patchData.emails_sent = actualSent;
-            if (actualReplied > campaign.emails_replied) patchData.emails_replied = actualReplied;
-            
+        // Step 3: Reconcile campaign counters
+        const patchData: any = {};
+        if (items.length > 0 && campaign.total_leads !== items.length) {
+            patchData.total_leads = items.length;
+        }
+        if (actualSent > campaign.emails_sent) patchData.emails_sent = actualSent;
+        if (actualReplied > campaign.emails_replied) patchData.emails_replied = actualReplied;
+
+        if (Object.keys(patchData).length > 0) {
             await prisma.crm_Outreach_Campaigns.update({
                 where: { id: sequenceId },
                 data: patchData,
-            }).catch(() => {}); // non-fatal
+            }).catch(() => {});
 
-            // Also update the response object
+            if (patchData.total_leads) (campaign as any).total_leads = patchData.total_leads;
             if (patchData.emails_sent) (campaign as any).emails_sent = patchData.emails_sent;
             if (patchData.emails_replied) (campaign as any).emails_replied = patchData.emails_replied;
         }
 
-        // If campaign was ACTIVE but all items are sent, auto-complete
-        if (campaign.status === "ACTIVE" && items.length > 0 && actualSent >= items.length) {
+        // Step 4: Mark remaining legitimate PENDING items as SKIPPED when campaign is done
+        const campaignIsDone = campaign.status === "COMPLETED" || campaign.status === "PAUSED";
+        const sendingIsStale = actualPending > 0 && actualProcessed > 0 && actualSent >= (items.length - actualPending);
+        if (actualPending > 0 && (campaignIsDone || sendingIsStale)) {
+            const pendingIds = items
+                .filter((i: any) => i.status === "PENDING" || i.status === "RESEARCHING" || i.status === "READY")
+                .map((i: any) => i.id);
+            if (pendingIds.length > 0) {
+                await prisma.crm_Outreach_Items.updateMany({
+                    where: { id: { in: pendingIds } },
+                    data: {
+                        status: "SKIPPED" as any,
+                        error_message: "Skipped — campaign send completed or stopped before this item was processed.",
+                    },
+                }).catch(() => {});
+                for (const item of items) {
+                    if (pendingIds.includes((item as any).id)) {
+                        (item as any).status = "SKIPPED";
+                    }
+                }
+            }
+        }
+
+        // Step 5: Auto-complete ACTIVE campaign when all items are processed
+        if (campaign.status === "ACTIVE" && items.length > 0 && actualProcessed >= items.length) {
             await prisma.crm_Outreach_Campaigns.update({
                 where: { id: sequenceId },
                 data: { status: "COMPLETED" as any },

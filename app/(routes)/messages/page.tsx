@@ -294,6 +294,33 @@ const MessagesRoute = async () => {
                     resolvedName = leadMap.get(thread.lead)!.name;
                 }
 
+                // Resolve the actual destination user:
+                // For INBOUND, parse the to_email prefix (e.g., mmilton@reply.basalthq.com → mmilton)
+                // to find the correct team member, since the thread's user field may be stale
+                const threadUserId = thread.user;
+                let resolvedToUser: { id: string; name: string | null; email: string | null } = 
+                    { id: session.user.id, name: session.user.name || session.user.email || null, email: session.user.email || null };
+
+                if (!isOutbound && thread.to_email) {
+                    // Parse prefix from reply address (mmilton@reply.basalthq.com → mmilton)
+                    const toEmails = thread.to_email.split(",").map((e: string) => e.trim());
+                    const replyAddr = toEmails.find((e: string) => e.includes("reply.")) || toEmails[0];
+                    if (replyAddr) {
+                        const prefix = replyAddr.split("@")[0].toLowerCase();
+                        if (prefix && prefix !== "sysadm") {
+                            const matched = (teamMembers as any[]).find((u: any) => 
+                                u.email && u.email.toLowerCase().startsWith(prefix + "@")
+                            );
+                            if (matched) {
+                                resolvedToUser = matched;
+                            }
+                        }
+                    }
+                } else if (threadUserId && threadUserId !== session.user.id) {
+                    const found = (teamMembers as any[]).find((u: any) => u.id === threadUserId);
+                    if (found) resolvedToUser = found;
+                }
+
                 const msg = {
                     id: thread.id,
                     subject: thread.subject || thread.thread_subject || "(No Subject)",
@@ -302,18 +329,18 @@ const MessagesRoute = async () => {
                     is_read: true, // Auto read for now
                     is_important: thread.sentiment === "POSITIVE" || thread.sentiment === "URGENT",
                     labels: ["email", thread.direction?.toLowerCase() || "inbound"],
-                    from_user_id: isOutbound ? session.user.id : `ext-${thread.from_email}`,
-                    to_user_id: isOutbound ? `ext-${thread.to_email}` : session.user.id,
+                    from_user_id: isOutbound ? (threadUserId || session.user.id) : `ext-${thread.from_email}`,
+                    to_user_id: isOutbound ? `ext-${thread.to_email}` : (threadUserId || session.user.id),
                     from_user: isOutbound
-                        ? { id: session.user.id, name: session.user.name || session.user.email, email: session.user.email }
+                        ? { id: resolvedToUser.id, name: resolvedToUser.name || resolvedToUser.email, email: resolvedToUser.email || "" }
                         : { id: `ext-${thread.from_email}`, name: resolvedName, email: thread.from_email },
                     to_user: isOutbound
                         ? { id: `ext-${thread.to_email}`, name: resolvedName, email: thread.to_email }
-                        : { id: session.user.id, name: session.user.name || session.user.email, email: session.user.email },
-                    recipients: isOutbound ? [] : [{ recipient_id: session.user.id, is_read: true }],
+                        : { id: resolvedToUser.id, name: resolvedToUser.name || resolvedToUser.email, email: resolvedToUser.email || "" },
+                    recipients: threadUserId ? [{ recipient_id: threadUserId, is_read: true }] : [{ recipient_id: session.user.id, is_read: true }],
                     status: "SENT",
                     direction: thread.direction,
-                    senderName: isOutbound ? (session.user.name || "You") : resolvedName,
+                    senderName: isOutbound ? (resolvedToUser.name || "You") : resolvedName,
                     _apiMeta: { // Use same thread UI
                         channel: "EMAIL",
                         direction: thread.direction,

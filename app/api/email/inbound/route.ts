@@ -131,14 +131,43 @@ export async function POST(req: Request) {
           if (replyToAddr) {
             const prefix = replyToAddr.split("@")[0].toLowerCase(); // "mmilton"
             if (prefix && prefix !== "sysadm") {
-              const matchedUser = await prismadb.users.findFirst({
-                where: {
-                  team_id: campaignRecord?.team_id,
-                  email: { startsWith: prefix + "@", mode: "insensitive" },
-                },
-                select: { id: true },
-              });
-              if (matchedUser) resolvedUserId = matchedUser.id;
+              // 2a: Try team-scoped match
+              let matchedUser = campaignRecord?.team_id
+                ? await prismadb.users.findFirst({
+                    where: {
+                      team_id: campaignRecord.team_id,
+                      email: { startsWith: prefix + "@", mode: "insensitive" },
+                    },
+                    select: { id: true, name: true },
+                  })
+                : null;
+
+              // 2b: Fallback — global match without team_id scoping
+              if (!matchedUser) {
+                matchedUser = await prismadb.users.findFirst({
+                  where: {
+                    email: { startsWith: prefix + "@", mode: "insensitive" },
+                  },
+                  select: { id: true, name: true },
+                });
+              }
+
+              // 2c: Last resort — contains match (e.g., prefix "mmilton" in "michael.mmilton@...")
+              if (!matchedUser) {
+                matchedUser = await prismadb.users.findFirst({
+                  where: {
+                    email: { contains: prefix, mode: "insensitive" },
+                  },
+                  select: { id: true, name: true },
+                });
+              }
+
+              if (matchedUser) {
+                resolvedUserId = matchedUser.id;
+                systemLogger.info(`[SES_INBOUND] Resolved user from reply-to prefix "${prefix}": ${matchedUser.name} (${matchedUser.id})`);
+              } else {
+                systemLogger.warn(`[SES_INBOUND] Could not resolve user from reply-to prefix "${prefix}". Falling back to campaign owner.`);
+              }
             }
           }
         } catch { /* fall back to campaign owner */ }

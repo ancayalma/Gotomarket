@@ -187,8 +187,10 @@ export function CampaignContactTracker({
             (i) => i.pendingActions?.some((a) => a.status === "PROPOSED")
           )
         : items.filter((i) => {
-            const stage = getStageIndex(i);
-            return STAGES[stage]?.key === filter;
+            // Filter by raw DB status
+            if (filter === "pending") return i.status === "PENDING" || i.status === "RESEARCHING" || i.status === "READY";
+            if (filter === "failed") return i.status === "FAILED" || i.status === "BOUNCED";
+            return i.status.toLowerCase() === filter.toLowerCase();
           });
 
   return (
@@ -202,15 +204,27 @@ export function CampaignContactTracker({
         <div className="flex items-center gap-2">
           {/* Filter badges */}
           <div className="flex gap-1 flex-wrap">
-            {["all", "pending_approval", "sent", "opened", "replied", "opportunity"].map(
+            {[
+              { key: "all", label: "All" },
+              { key: "pending_approval", label: "⚠️ Pending Approval" },
+              { key: "pending", label: `Pending (${items.filter(i => ["PENDING","RESEARCHING","READY"].includes(i.status)).length})` },
+              { key: "sent", label: `Sent (${items.filter(i => i.status === "SENT" || i.status === "DELIVERED").length})` },
+              { key: "opened", label: `Opened (${items.filter(i => i.status === "OPENED" || i.status === "CLICKED").length})` },
+              { key: "replied", label: `Replied (${items.filter(i => i.status === "REPLIED").length})` },
+              { key: "failed", label: `Failed (${items.filter(i => i.status === "FAILED" || i.status === "BOUNCED").length})` },
+            ].map(
               (f) => (
                 <Badge
-                  key={f}
-                  variant={filter === f ? "default" : "outline"}
-                  className="cursor-pointer text-xs"
-                  onClick={() => setFilter(f)}
+                  key={f.key}
+                  variant={filter === f.key ? "default" : "outline"}
+                  className={`cursor-pointer text-xs ${
+                    f.key === "failed" && items.some(i => i.status === "FAILED" || i.status === "BOUNCED")
+                      ? "border-red-500/30 text-red-400"
+                      : ""
+                  }`}
+                  onClick={() => setFilter(f.key)}
                 >
-                  {f === "pending_approval" ? "⚠️ Pending" : f.charAt(0).toUpperCase() + f.slice(1)}
+                  {f.label}
                 </Badge>
               )
             )}
@@ -298,6 +312,16 @@ export function CampaignContactTracker({
                         <AlertCircle className="h-3 w-3 mr-1" /> Approval
                       </Badge>
                     )}
+                    {(item.status === "FAILED" || item.status === "BOUNCED") && (
+                      <Badge variant="destructive" className="text-xs">
+                        {item.status}
+                      </Badge>
+                    )}
+                    {item.status === "PENDING" && (
+                      <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">
+                        <Clock className="h-3 w-3 mr-1" /> Pending
+                      </Badge>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -376,6 +400,37 @@ export function CampaignContactTracker({
                 {/* Expanded Details */}
                 {isExpanded && (
                   <div className="mt-4 space-y-3 border-t pt-3">
+                    {/* Email Subject */}
+                    {item.subject && (
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Subject</p>
+                        <p className="text-sm font-semibold">{item.subject}</p>
+                      </div>
+                    )}
+
+                    {/* Email Body */}
+                    {((item as any).body_text || (item as any).body_html) && (
+                      <div className="bg-muted/30 rounded-md p-3 max-h-60 overflow-y-auto">
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Email Content</p>
+                        {(item as any).body_html ? (
+                          <div
+                            className="text-sm prose prose-sm prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ __html: (item as any).body_html }}
+                          />
+                        ) : (
+                          <p className="text-sm whitespace-pre-wrap">{(item as any).body_text}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Error Message (for FAILED/BOUNCED) */}
+                    {(item as any).error_message && (
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3">
+                        <p className="text-xs font-medium text-red-400 mb-1">Error</p>
+                        <p className="text-sm text-red-300">{(item as any).error_message}</p>
+                      </div>
+                    )}
+
                     {/* Reply Snippet */}
                     {item.reply_snippet && (
                       <div className="bg-muted/50 rounded-md p-3">
