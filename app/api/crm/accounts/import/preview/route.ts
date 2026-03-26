@@ -37,13 +37,35 @@ async function bufferToRows(fileName: string | undefined, buffer: Buffer): Promi
         const worksheet = workbook.getWorksheet(1);
         if (!worksheet) return [];
 
+        const resolveExcelCellValue = (val: any): string | number => {
+            if (val === null || val === undefined) return "";
+            if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") return typeof val === "boolean" ? String(val) : val;
+            if (val instanceof Date) return val.toISOString();
+            if (typeof val === "object") {
+                if ("text" in val && typeof val.text === "string") return val.text;
+                if ("richText" in val && Array.isArray(val.richText)) {
+                    return val.richText.map((part: any) => part?.text || "").join("");
+                }
+                if ("result" in val) {
+                    const r = val.result;
+                    if (r === null || r === undefined) return "";
+                    if (typeof r === "string" || typeof r === "number") return r;
+                    if (r instanceof Date) return r.toISOString();
+                    return String(r);
+                }
+                if ("error" in val) return "";
+                return String(val);
+            }
+            return String(val);
+        };
+
         const rows: Record<string, any>[] = [];
         const headers: string[] = [];
 
         const firstRow = worksheet.getRow(1);
         firstRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-            const val = cell.value;
-            headers[colNumber] = (val === null || val === undefined) ? "" : val.toString();
+            const val = resolveExcelCellValue(cell.value);
+            headers[colNumber] = val === "" ? "" : String(val);
         });
 
         worksheet.eachRow((row, rowNumber) => {
@@ -52,11 +74,7 @@ async function bufferToRows(fileName: string | undefined, buffer: Buffer): Promi
             row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                 const header = headers[colNumber];
                 if (header) {
-                    let val = cell.value;
-                    if (val && typeof val === 'object' && 'result' in (val as any)) {
-                        val = (val as any).result;
-                    }
-                    rowData[header] = val === null || val === undefined ? "" : val;
+                    rowData[header] = resolveExcelCellValue(cell.value);
                 }
             });
             rows.push(rowData);
