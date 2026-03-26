@@ -9,6 +9,7 @@ import { render } from "@react-email/render";
 import OutreachTemplate from "@/emails/OutreachTemplate";
 import React from "react";
 import { systemLogger } from "@/lib/logger";
+import { checkUsageQuota, recordUsage } from "@/lib/usage-quota";
 
 export const maxDuration = 60;
 
@@ -61,8 +62,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ status: "skipped", reason: "auto_reply_disabled" });
         }
 
-        if (!campaign.team_id) {
-            return NextResponse.json({ error: "No team on campaign" }, { status: 400 });
+
+
+
+        // ── Email Quota Enforcement (auto-replies count against email limit) ──
+        if (campaign.team_id) {
+            const quotaCheck = await checkUsageQuota(campaign.team_id, campaign.user, "email");
+            if (!quotaCheck.allowed) {
+                systemLogger.warn(`[AUTO_REPLY] Email quota exceeded for team ${campaign.team_id}, skipping reply`);
+                return NextResponse.json({ error: quotaCheck.message, skipped: true }, { status: 429 });
+            }
         }
 
         // ── Load outreach item ─────────────────────────────────────────────
@@ -78,6 +87,7 @@ export async function POST(req: Request) {
                 candidate_name: true,
                 candidate_company: true,
                 candidate_job_title: true,
+                sender_email: true,
             },
         });
 
@@ -303,18 +313,49 @@ ${sentiment === "NEGATIVE" ? `IMPORTANT — NEGATIVE SENTIMENT DETECTED: The lea
             }
         }
 
-        // ── Determine reply-to domain ──────────────────────────────────────
-        let replyToAddress = `sysadm@reply.basalthq.com`;
-        const emailConfig = await prismadb.teamEmailConfig.findFirst({
+        // ── Resolve original sender for From and Reply-To ────────────────
+        // The auto-reply MUST come from the same email that sent the original outreach
+        let senderFromEmail: string | null = null;
+        let senderFromName = senderName;
+
+        // Try sender_email on the outreach item first
+        if ((outreachItem as any).sender_email) {
+            senderFromEmail = (outreachItem as any).sender_email;
+        }
+
+        // Fall back to campaign user's email
+        if (!senderFromEmail && campaign.user) {
+            const senderUser = await prismadb.users.findUnique({
+                where: { id: campaign.user },
+                select: { email: true, name: true },
+            });
+            if (senderUser?.email) {
+                senderFromEmail = senderUser.email;
+                senderFromName = senderUser.name || senderFromName;
+            }
+        }
+
+        // Build reply-to using the sender's email prefix
+        const replyDomainConfig = await prismadb.teamEmailConfig.findFirst({
             where: { team_id: campaign.team_id },
             select: { reply_domain: true, reply_domain_status: true },
         });
-        if (emailConfig?.reply_domain && emailConfig.reply_domain_status === "VERIFIED") {
-            replyToAddress = `sysadm@${emailConfig.reply_domain}`;
-        }
+        const replyDomain = (replyDomainConfig?.reply_domain && replyDomainConfig.reply_domain_status === "VERIFIED")
+            ? replyDomainConfig.reply_domain
+            : "reply.basalthq.com";
+
+        // Use sender's email prefix for reply-to (e.g., mmilton@basalthq.com → mmilton@reply.basalthq.com)
+        const senderPrefix = senderFromEmail ? senderFromEmail.split("@")[0] : "sysadm";
+        const replyToAddress = `${senderPrefix}@${replyDomain}`;
+
+        // Build the from address override
+        const fromOverride = senderFromEmail
+            ? `"${senderFromName}" <${senderFromEmail}>`
+            : undefined;
 
         // ── Send the reply email ───────────────────────────────────────────
         const messageId = await sendTeamEmail(campaign.team_id, {
+            ...(fromOverride ? { from: fromOverride } : {}),
             to: contactEmail,
             subject: replySubject,
             html,

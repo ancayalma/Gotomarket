@@ -146,6 +146,56 @@ export function ListLeadDetailsModal({ lead, onClose, getStatusStyles }: Props) 
                   )}
                 </div>
               </div>
+
+              <div>
+                <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 italic">Company Profile</h4>
+                <div className="p-5 rounded-2xl border border-zinc-800/50 bg-zinc-900/50 space-y-3 hover:border-zinc-700 transition-colors">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-zinc-400">Location</span>
+                    <span className="text-zinc-300 font-medium text-right">
+                      {[lead.billing_city, lead.billing_state, lead.billing_country].filter(Boolean).join(", ") || "Unknown"}
+                    </span>
+                  </div>
+                  {lead.employees && (
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-zinc-800/50">
+                      <span className="text-zinc-400">Employees</span>
+                      <span className="font-medium text-zinc-300">{lead.employees}</span>
+                    </div>
+                  )}
+                  {lead.annual_revenue && (
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-zinc-800/50">
+                      <span className="text-zinc-400">Revenue</span>
+                      <span className="font-medium text-zinc-300">{lead.annual_revenue}</span>
+                    </div>
+                  )}
+                  {lead.vat && (
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-zinc-800/50">
+                      <span className="text-zinc-400">VAT / Tax ID</span>
+                      <span className="font-mono text-[10px] bg-zinc-950 px-2 py-1 rounded border border-zinc-800 text-zinc-500">
+                        {lead.vat}
+                      </span>
+                    </div>
+                  )}
+                  {(lead.description || lead.company_id) && (
+                    <div className="pt-2 border-t border-zinc-800/50 space-y-2">
+                      {lead.company_id && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-zinc-400">Corp ID</span>
+                          <span className="font-mono text-[10px] bg-zinc-950 px-2 py-1 rounded border border-zinc-800 text-zinc-500">{lead.company_id}</span>
+                        </div>
+                      )}
+                      {lead.description && (
+                         <div>
+                           <span className="text-zinc-400 text-xs block mb-1 font-medium">Intelligence Notes</span>
+                           <p className="text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed bg-zinc-950 p-3 rounded-lg border border-zinc-800/50 max-h-32 overflow-y-auto">
+                             {lead.description}
+                           </p>
+                         </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-6">

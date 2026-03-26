@@ -261,7 +261,7 @@ ADDITIONAL FIELD INSTRUCTIONS:
 
         await logAiUsage({
             teamId, userId: session.user.id || null, service: "general",
-            model: "brand-scraper",
+            model: model.modelId || "brand-scraper",
             usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
             description: `Brand scrape: ${url}`
         });

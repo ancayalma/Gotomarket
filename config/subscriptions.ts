@@ -1,50 +1,57 @@
 export const SUBSCRIPTION_PLANS = {
-    FREE: {
-        name: "Free",
-        slug: "FREE",
+    STARTER: {
+        name: "Starter",
+        slug: "STARTER",
         price: 0,
         features: ["crm", "projects", "dashboard", "contacts", "accounts", "opportunities", "leads", "tasks", "university"], // Essential CRM + Learn
         limits: {
-            max_users: 1,
+            max_users: 2,
             max_storage: 50, // MB
             credits: 500, // Monthly AI Credits (Text Gen)
             leadgen_credits: 100, // Aligned with LEADGEN_WIZARD.md
-            emails_per_month: 1000, // Bumped up for FREE
-            max_active_quests: 0, // Quests locked on FREE
+            emails_per_month: 1000,
+            sms_per_month: 0, // SMS locked on Starter
+            voice_minutes_per_month: 0, // Voice locked on Starter
+            max_active_quests: 0, // Quests locked on Starter
             ai_tokens: 500_000, // 500K AI tokens / month
         }
     },
-    INDIVIDUAL_BASIC: {
-        name: "Individual Basic",
-        slug: "INDIVIDUAL_BASIC",
-        price: 50,
+    GROWTH: {
+        name: "Growth",
+        slug: "GROWTH",
+        price: 29, // Per user/month
         features: [
             "crm", "projects", "dashboard", "contacts", "accounts", "opportunities", "leads",
             "tasks", "quotes", "products", "contracts", "university",
             "documents", "invoice", "reports", "ai_lab", "emails",
-            "personalized_signature", "custom_themes", "quests"
+            "personalized_signature", "custom_themes", "quests",
+            "outreach", "messages", "forms", "lists", "campaigns"
         ],
         limits: {
-            max_users: 2,
+            max_users: 5,
             max_storage: 5000,
             credits: 2000,
-            leadgen_credits: 1000, // Aligned with LEADGEN_WIZARD.md
+            leadgen_credits: 1000,
             emails_per_month: 5000,
+            sms_per_month: 0, // SMS not included in Growth
+            voice_minutes_per_month: 0, // Voice not included in Growth
             max_active_quests: 5,
             ai_tokens: 5_000_000, // 5M AI tokens / month
         }
     },
-    INDIVIDUAL_PRO: {
-        name: "Individual Pro",
-        slug: "INDIVIDUAL_PRO",
-        price: 150,
+    SCALE: {
+        name: "Scale",
+        slug: "SCALE",
+        price: 79, // Per user/month
         features: ["all", "personalized_signature", "custom_themes"],
         limits: {
-            max_users: 4,
+            max_users: 10,
             max_storage: 50000,
             credits: 10000,
-            leadgen_credits: 5000, // Aligned with LEADGEN_WIZARD.md
+            leadgen_credits: 5000,
             emails_per_month: 25000,
+            sms_per_month: 1000,
+            voice_minutes_per_month: 100,
             max_active_quests: 25,
             ai_tokens: 20_000_000, // 20M AI tokens / month
         }
@@ -60,6 +67,8 @@ export const SUBSCRIPTION_PLANS = {
             credits: -1,
             leadgen_credits: -1,
             emails_per_month: -1,
+            sms_per_month: -1,
+            voice_minutes_per_month: -1,
             max_active_quests: -1,
             ai_tokens: -1, // Unlimited
         }
@@ -75,11 +84,33 @@ export const SUBSCRIPTION_PLANS = {
             credits: -1,
             leadgen_credits: -1,
             emails_per_month: -1,
+            sms_per_month: -1,
+            voice_minutes_per_month: -1,
             max_active_quests: -1,
             ai_tokens: -1, // Unlimited
         }
     }
 };
+
+// ---------------------------------------------------------------------------
+// Legacy slug mapping (for backward compatibility during migration)
+// ---------------------------------------------------------------------------
+export const LEGACY_SLUG_MAP: Record<string, keyof typeof SUBSCRIPTION_PLANS> = {
+    "FREE": "STARTER",
+    "INDIVIDUAL_BASIC": "GROWTH",
+    "INDIVIDUAL_PRO": "SCALE",
+    "BASIC": "GROWTH",   // Stale slug from guard.ts
+    "PRO": "SCALE",      // Stale slug from guard.ts
+};
+
+/** Resolve a plan slug to a canonical key, handling legacy names */
+export function resolveSlug(slug: string | null | undefined): keyof typeof SUBSCRIPTION_PLANS {
+    if (!slug) return "STARTER";
+    const upper = slug.toUpperCase();
+    if (upper in SUBSCRIPTION_PLANS) return upper as keyof typeof SUBSCRIPTION_PLANS;
+    if (upper in LEGACY_SLUG_MAP) return LEGACY_SLUG_MAP[upper];
+    return "STARTER";
+}
 
 export type SubscriptionPlanType = keyof typeof SUBSCRIPTION_PLANS;
 
@@ -119,4 +150,3 @@ export function getAnnualMonthlyRate(planSlug: SubscriptionPlanType): number {
 export function getSurgePrice(price: number): number {
     return Math.round(price * (1 - SURGE_DISCOUNT_PERCENT / 100) * 100) / 100;
 }
-

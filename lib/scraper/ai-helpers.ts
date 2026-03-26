@@ -16,7 +16,7 @@ import { consumeAiTokens } from "@/lib/ai-tokens";
 export class LeadGenTokenTracker {
   private _prompt = 0;
   private _completion = 0;
-  constructor(public readonly teamId: string | null) {}
+  constructor(public readonly teamId: string | null, public readonly modelId?: string) {}
 
   /** Record tokens from a generateObject/generateText usage result */
   record(usage: any) {
@@ -35,7 +35,7 @@ export class LeadGenTokenTracker {
         teamId: this.teamId,
         userId: null,
         service: "leadgen",
-        model: "leadgen-helpers",
+        model: this.modelId || "leadgen-helpers",
         usage: { promptTokens: this._prompt, completionTokens: this._completion },
         description: `Lead gen helper functions: ${this.total} tokens`,
       });

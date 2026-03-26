@@ -1,4 +1,4 @@
-import { SUBSCRIPTION_PLANS, SubscriptionPlanType } from "@/config/subscriptions";
+import { SUBSCRIPTION_PLANS, SubscriptionPlanType, resolveSlug } from "@/config/subscriptions";
 
 // Define a type for the DB Plan partial we need
 type DBPlan = {
@@ -16,13 +16,13 @@ type TeamWithPlan = {
 }
 
 export const getSubscriptionPlan = (slug?: string) => {
-    const planSlug = (slug || "FREE") as SubscriptionPlanType;
-    return SUBSCRIPTION_PLANS[planSlug] || SUBSCRIPTION_PLANS.FREE;
+    const planSlug = resolveSlug(slug);
+    return SUBSCRIPTION_PLANS[planSlug] || SUBSCRIPTION_PLANS.STARTER;
 };
 
 export const checkLimit = (
     planSlug: string | undefined,
-    metric: keyof typeof SUBSCRIPTION_PLANS["FREE"]["limits"],
+    metric: keyof typeof SUBSCRIPTION_PLANS["STARTER"]["limits"],
     currentUsage: number
 ) => {
     const plan = getSubscriptionPlan(planSlug);
@@ -34,7 +34,7 @@ export const checkLimit = (
 
 export const checkTeamLimit = (
     team: TeamWithPlan,
-    metric: keyof typeof SUBSCRIPTION_PLANS["FREE"]["limits"],
+    metric: keyof typeof SUBSCRIPTION_PLANS["STARTER"]["limits"],
     currentUsage: number
 ) => {
     // 1. Check DB Plan
@@ -61,7 +61,7 @@ export const checkTeamLimit = (
     }
 
     // 2. Fallback to constant
-    return checkLimit(team.subscription_plan || "FREE", metric, currentUsage);
+    return checkLimit(team.subscription_plan || "STARTER", metric, currentUsage);
 }
 
 export const hasFeature = (
@@ -88,5 +88,5 @@ export const checkTeamFeature = (
     }
 
     // 2. Fallback to constant
-    return hasFeature(team.subscription_plan || "FREE", featureName);
+    return hasFeature(team.subscription_plan || "STARTER", featureName);
 }

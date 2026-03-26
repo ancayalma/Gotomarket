@@ -1302,6 +1302,9 @@ model Users {
 
   // Live Chat agent sessions
   chat_agent_sessions crm_Live_Chat_Session[] @relation(name: "ChatAgent")
+
+  // Usage Quota Allocations
+  usage_allocations TeamUserAllocation[]
 }
 
 model Team {
@@ -1411,6 +1414,9 @@ model Team {
 
   // Sandbox Environments
   sandboxes Sandbox[]
+
+  // Usage Tracking (Monthly Quotas)
+  usage_quotas TeamUsageQuota[]
 }
 
 model TeamBrandIdentity {
@@ -1675,6 +1681,10 @@ enum SubscriptionPlan {
   ENTERPRISE
   EXEMPT
   TESTING
+  // New canonical slugs (co-exist with legacy for migration)
+  STARTER
+  GROWTH
+  SCALE
 }
 
 enum TeamStatus {
@@ -1956,6 +1966,54 @@ model TeamAiConfig {
   // AI Token Balance (Monthly refill from plan, top-ups add to balance)
   ai_token_balance    Int       @default(0)
   ai_tokens_last_reset DateTime? @db.Date
+}
+
+// =============================================================================
+// TEAM USAGE QUOTAS — Monthly metering for email, SMS, voice
+// =============================================================================
+
+model TeamUsageQuota {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  team_id   String   @db.ObjectId
+
+  // Monthly usage counters (team-wide)
+  emails_used         Int @default(0)
+  sms_used            Int @default(0)
+  voice_minutes_used  Int @default(0)
+
+  // Period tracking (resets monthly)
+  period_start DateTime @db.Date
+
+  assigned_team Team @relation(fields: [team_id], references: [id], onDelete: Cascade)
+
+  // Per-user allocation overrides
+  user_allocations TeamUserAllocation[]
+
+  @@unique([team_id, period_start])
+  @@index([team_id])
+}
+
+model TeamUserAllocation {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  quota_id String @db.ObjectId
+  user_id  String @db.ObjectId
+
+  // Per-user soft caps (-1 = no limit within team pool, 0 = blocked)
+  email_limit          Int @default(-1)
+  sms_limit            Int @default(-1)
+  voice_minutes_limit  Int @default(-1)
+  ai_tokens_limit      Int @default(-1)
+
+  // Per-user usage counters (reset with quota period)
+  emails_used          Int @default(0)
+  sms_used             Int @default(0)
+  voice_minutes_used   Int @default(0)
+
+  quota TeamUsageQuota @relation(fields: [quota_id], references: [id], onDelete: Cascade)
+  user  Users          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([quota_id, user_id])
+  @@index([user_id])
 }
 
 // =============================================================================

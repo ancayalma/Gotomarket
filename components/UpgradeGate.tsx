@@ -60,7 +60,7 @@ export function UpgradeGate({
 
                 <p className="mt-8 text-[11px] font-black tracking-[0.2em] text-zinc-600 uppercase relative z-10 flex items-center gap-2">
                     <span className="w-4 h-[1px] bg-zinc-800"></span>
-                    Requires Individual Basic Plan or Higher
+                    Requires Growth Plan or Higher
                     <span className="w-4 h-[1px] bg-zinc-800"></span>
                 </p>
             </div>

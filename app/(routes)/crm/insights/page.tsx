@@ -4,6 +4,7 @@ import Container from "../../components/ui/Container";
 import SalesInsights from "../components/SalesInsights";
 import SuspenseLoading from "@/components/loadings/suspense";
 import { LearnLink } from "@/components/ui/LearnLink";
+import { UpgradeGate } from "@/components/UpgradeGate";
 
 const SalesInsightsPage = async () => {
     return (
@@ -11,6 +12,7 @@ const SalesInsightsPage = async () => {
             title="Sales Intelligence"
             description="Deep dive into your revenue performance, win rates, and sales pipeline health."
         >
+            <UpgradeGate featureId="insights" title="Sales Intelligence Locked" description="Advanced analytics and insights require a Growth plan or higher.">
             <LearnLink
                 tab="insights"
                 overviewTitle="Sales Intelligence Dashboard"
@@ -22,6 +24,7 @@ const SalesInsightsPage = async () => {
             <Suspense fallback={<SuspenseLoading />}>
                 <SalesInsights />
             </Suspense>
+            </UpgradeGate>
         </Container>
     );
 };

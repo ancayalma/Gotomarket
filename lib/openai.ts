@@ -8,6 +8,29 @@ import { prismadb } from "@/lib/prisma";
 import { decryptSecret } from "@/lib/encryption";
 import { consumeAiTokens } from "@/lib/ai-tokens";
 
+// ---------------------------------------------------------------------------
+// AI Service Type — formalizes the `service` label used in crm_AiUsageLog
+// ---------------------------------------------------------------------------
+export type AiService =
+    | "chat"           // Varuni general-purpose agent
+    | "email"          // Outreach email generation
+    | "email_reply"    // Auto-reply generation
+    | "email_preview"  // Email preview generation
+    | "sms"            // SMS body generation
+    | "sms_preview"    // SMS preview generation
+    | "sentiment"      // Inbound reply sentiment analysis
+    | "enrichment"     // LeadGen enrichment (scraper AI)
+    | "lead_scoring"   // AI lead scoring
+    | "synthesis"      // Synthesis layer
+    | "deal_agent"     // Deal agent
+    | "form_enhance"   // Form AI enhancement
+    | "prompt_compose" // Prompt composition
+    | "general"        // General completion
+    | "calendar"       // Calendar briefing
+    | "followup"       // Follow-up email generation
+    | "pool_analysis"  // Pool import analysis
+    | (string & {});   // Extensible for future services
+
 
 export function isReasoningModel(modelId: string | undefined | null): boolean {
     if (!modelId) return false;
@@ -147,7 +170,7 @@ export interface AiModelResponse {
     teamId: string | null;
 }
 
-export type AiService = "sms" | "email" | "chat" | "leadgen" | "voice" | "general" | "analysis";
+ 
 
 export async function getAiSdkModel(
     target: { userId?: string; teamId?: string } | string | "system",
@@ -315,10 +338,10 @@ export async function logAiUsage({
     // Model-aware token pricing (base cost + 50% markup)
     // Format: [inputCostPer1M, outputCostPer1M] (base, before markup)
     const MODEL_PRICING: Record<string, [number, number]> = {
-      'qwen3-next-80b':        [0.15,  1.20],   // Qwen3 Next 80B A3B
-      'qwen3-coder-30b':       [0.15,  0.60],   // Qwen3 Coder 30B
-      'qwen3-235b':            [0.75,  3.00],   // Qwen3 235B A22B
-      'qwen3-32b':             [0.30,  1.20],   // Qwen3 32B Dense
+      'qwen3-next-80b':        [0.20,  1.80],   // Qwen3 Next 80B (normalized)
+      'qwen3-coder-30b':       [0.20,  1.80],   // Qwen3 Coder 30B (normalized)
+      'qwen3-235b':            [0.20,  1.80],   // Qwen3 235B (normalized)
+      'qwen3-32b':             [0.20,  1.80],   // Qwen3 32B (normalized)
       'claude-haiku-4-5':      [1.00,  5.00],   // Claude Haiku 4.5
       'claude-3-5-haiku':      [1.00,  5.00],   // Claude 3.5 Haiku
       'claude-3-5-sonnet':     [3.00, 15.00],   // Claude 3.5 Sonnet

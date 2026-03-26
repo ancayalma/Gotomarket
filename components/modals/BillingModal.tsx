@@ -39,28 +39,28 @@ import { getMyTeamSubscription } from "@/actions/billing/get-my-subscription";
 
 const PLANS_CONFIG = [
     {
-        name: SUBSCRIPTION_PLANS.INDIVIDUAL_BASIC.name,
-        slug: SUBSCRIPTION_PLANS.INDIVIDUAL_BASIC.slug,
-        monthly: SUBSCRIPTION_PLANS.INDIVIDUAL_BASIC.price,
-        annual: SUBSCRIPTION_PLANS.INDIVIDUAL_BASIC.price * 12 * 0.8,
+        name: SUBSCRIPTION_PLANS.GROWTH.name,
+        slug: SUBSCRIPTION_PLANS.GROWTH.slug,
+        monthly: SUBSCRIPTION_PLANS.GROWTH.price,
+        annual: SUBSCRIPTION_PLANS.GROWTH.price * 12 * 0.8,
         features: [
             "5M AI Tokens / mo",
             "1,000 LeadGen Credits",
             "5,000 Emails / mo",
-            "2 User Licenses"
+            "5 User Licenses"
         ]
     },
     {
-        name: SUBSCRIPTION_PLANS.INDIVIDUAL_PRO.name,
-        slug: SUBSCRIPTION_PLANS.INDIVIDUAL_PRO.slug,
-        monthly: SUBSCRIPTION_PLANS.INDIVIDUAL_PRO.price,
-        annual: SUBSCRIPTION_PLANS.INDIVIDUAL_PRO.price * 12 * 0.8,
+        name: SUBSCRIPTION_PLANS.SCALE.name,
+        slug: SUBSCRIPTION_PLANS.SCALE.slug,
+        monthly: SUBSCRIPTION_PLANS.SCALE.price,
+        annual: SUBSCRIPTION_PLANS.SCALE.price * 12 * 0.8,
         features: [
             "20M AI Tokens / mo",
             "5,000 LeadGen Credits",
-            "Full Agentic Research",
-            "BasaltECHO AI Calling",
-            "4 User Licenses"
+            "1,000 SMS / mo",
+            "100 Voice Minutes / mo",
+            "10 User Licenses"
         ],
         popular: true
     },
@@ -79,7 +79,7 @@ const PLANS_CONFIG = [
     }
 ];
 
-const HIERARCHY = ["FREE", "INDIVIDUAL_BASIC", "INDIVIDUAL_PRO", "ENTERPRISE", "EXEMPT"];
+const HIERARCHY = ["STARTER", "GROWTH", "SCALE", "ENTERPRISE", "EXEMPT"];
 
 export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
     const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");

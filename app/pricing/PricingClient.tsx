@@ -17,52 +17,51 @@ export default function PricingClient() {
     const plans = {
         individual: [
             {
-                title: "Free",
+                title: "Starter",
                 price: "$0",
-                period: "/ month",
+                period: "/ user / month",
                 description: "Essential tools for small teams and startups.",
                 features: [
                     "Basic CRM & Project Management",
                     "LeadGen Credits: 100 / month",
-                    "Email Campaigns: 2,500 / month",
-                    "Basic AI Lead Discovery (1:1 Ratio)",
-                    "Max 100 Accounts Staging Capacity",
-                    "1 User License",
+                    "Email Campaigns: 500 / month",
+                    "1M AI Tokens / mo",
+                    "Max 100 Accounts Staging",
+                    "2 User Licenses",
                 ],
                 buttonText: "Start for Free",
                 buttonVariant: "outline" as const,
                 popular: false,
             },
             {
-                title: "Individual Basic",
-                price: billingCycle === "monthly" ? "$50" : "$480",
-                period: billingCycle === "monthly" ? "/ month" : "/ year",
+                title: "Growth",
+                price: billingCycle === "monthly" ? "$29" : "$279",
+                period: billingCycle === "monthly" ? "/ user / month" : "/ user / year",
                 description: "Standard CRM with enhanced lead enrichment.",
                 features: [
                     "LeadGen Credits: 1,000 / month",
-                    "Email Campaigns: 15,000 / month",
-                    "Standard AI Lead Enrichment",
-                    "Max 750 Accounts Staging Capacity",
-                    "Workflow Automation & Templates",
-                    "2 User Licenses",
+                    "Email Campaigns: 5,000 / month",
+                    "5M AI Tokens / mo",
+                    "Max 750 Accounts Staging",
+                    "Workflow & Contract Vault",
+                    "5 User Licenses",
                 ],
                 buttonText: "Start Basic",
                 buttonVariant: "outline" as const,
                 popular: false,
             },
             {
-                title: "Individual Pro",
-                price: billingCycle === "monthly" ? "$150" : "$1,440",
-                period: billingCycle === "monthly" ? "/ month" : "/ year",
+                title: "Scale",
+                price: billingCycle === "monthly" ? "$79" : "$759",
+                period: billingCycle === "monthly" ? "/ user / month" : "/ user / year",
                 description: "Power user features for maximum growth.",
                 features: [
                     "LeadGen Credits: 5,000 / month",
-                    "Email Campaigns: 50,000 / month",
-                    "Full Agentic & Deep Research",
-                    "Max 3,000 Accounts Staging Capacity",
-                    "BasaltECHO AI Calling (per-minute)",
-                    "Dedicated Support & Custom Reports",
-                    "4 User Licenses",
+                    "Email Campaigns: 20,000 / month",
+                    "20M AI Tokens / mo",
+                    "Max 3,000 Accounts Staging",
+                    "BasaltECHO AI Calling (50 min)",
+                    "10 User Licenses",
                 ],
                 buttonText: "Go Pro",
                 buttonVariant: "primary" as const,
@@ -446,31 +445,31 @@ function IndividualComparisonTable() {
         },
         {
             category: "Email Campaigns",
-            values: ["2,500 / month", "15,000 / month", "50,000 / month", "Unlimited"]
+            values: ["500 / month", "5,000 / month", "20,000 / month", "Unlimited"]
         },
         {
-            category: "AI Lead Enrichment",
-            values: ["Basic Discovery", "Standard Enrichment", "Advanced Agentic", "Full Bespoke"]
+            category: "AI Token Pool",
+            values: ["1M / month", "5M / month", "20M / month", "Custom"]
         },
         {
             category: "BasaltECHO AI Calling",
-            values: ["—", "—", "✓ (per-minute)", "Included/Custom"]
+            values: ["—", "—", "50 mins / mo", "Custom"]
         },
         {
             category: "Account Capacity",
             values: ["100 Leads", "750 Leads", "3,000 Leads", "Unlimited"]
         },
         {
-            category: "Workflow Automation",
-            values: ["—", "✓", "✓", "✓"]
+            category: "Premium Systems",
+            values: ["—", "Quotes & Contracts", "FlowState & Approvals", "Fully Custom"]
         },
         {
             category: "User Licenses",
-            values: ["1", "2", "4", "Custom"]
+            values: ["2", "5", "10", "Custom"]
         },
         {
             category: "Support Tier",
-            values: ["Community", "Priority Community", "Priority 24/7", "Dedicated White-glove"]
+            values: ["Community", "Standard", "Priority 24/7", "Dedicated White-glove"]
         },
     ];
 
@@ -481,11 +480,11 @@ function IndividualComparisonTable() {
                     <thead>
                         <tr className="border-b border-white/10">
                             <th className="text-left p-6 text-gray-400 font-medium">Feature</th>
-                            <th className="p-6 text-center font-bold">Free</th>
-                            <th className="p-6 text-center font-bold">Individual Basic</th>
+                            <th className="p-6 text-center font-bold">Starter</th>
+                            <th className="p-6 text-center font-bold">Growth</th>
                             <th className="p-6 text-center font-bold bg-primary/5 border-l border-r border-primary/30 relative">
                                 <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none"></div>
-                                <span className="relative text-primary">Individual Pro</span>
+                                <span className="relative text-primary">Scale</span>
                             </th>
                             <th className="p-6 text-center font-bold">Enterprise</th>
                         </tr>

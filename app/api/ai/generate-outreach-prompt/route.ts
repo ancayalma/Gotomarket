@@ -147,7 +147,7 @@ Write the AI prompt now.`;
             teamId,
             userId: session.user.id,
             service: "general",
-            model: "outreach-prompt-generator",
+            model: model.modelId || "outreach-prompt-generator",
             usage: {
                 promptTokens: (usage as any)?.promptTokens || 0,
                 completionTokens: (usage as any)?.completionTokens || 0,

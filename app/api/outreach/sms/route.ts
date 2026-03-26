@@ -8,6 +8,8 @@ import { z } from "zod";
 import { sendSmsEum } from "@/lib/aws/eum-sms";
 import { ensureContactForLead } from "@/actions/crm/lead-conversions";
 import { systemLogger } from "@/lib/logger";
+import { checkUsageQuota, recordUsage } from "@/lib/usage-quota";
+import { requireFeature } from "@/lib/require-feature";
 
 /**
  * POST /api/outreach/sms
@@ -85,8 +87,23 @@ export async function POST(req: Request) {
         },
       } as const,
     });
-    if (!user) return new NextResponse("User not found", { status: 404 });
+    if (!user || !user.team_id) return new NextResponse("User not found", { status: 404 });
     const isAdmin = !!(user.is_admin || user.is_account_admin);
+
+    // ── Feature Gate ── 
+    const hasSms = await requireFeature(user.team_id, "sms");
+    if (!hasSms) {
+      return NextResponse.json({ error: "SMS requires a Scale plan or higher" }, { status: 403 });
+    }
+
+    // ── SMS Quota Enforcement ──
+    const smsQuota = await checkUsageQuota(user.team_id, user.id, "sms", body.leadIds.length);
+    if (!smsQuota.allowed) {
+      return NextResponse.json(
+        { error: smsQuota.message, remaining: smsQuota.remaining, limit: smsQuota.limit },
+        { status: 429 }
+      );
+    }
 
     let brandIdentity = null;
     if (user.team_id) {

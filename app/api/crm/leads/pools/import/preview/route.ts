@@ -113,18 +113,69 @@ export async function POST(req: Request) {
 
     // CRM field key → COLS synonym key mapping (what normalizeRow looks for)
     const crmFieldToColsKey: Record<string, string> = {
+      // Account core
       companyName: "company",
       domain: "domain",
       homepageUrl: "homepage",
       description: "description",
       industry: "industry",
       techStack: "techstack",
+      accountType: "type",
+      accountStatus: "account status",
+      // Account size & financials
+      employeeCount: "employees",
+      revenue: "revenue",
+      vat: "vat",
+      companyId: "company id",
+      // Account communication
+      accountEmail: "company email",
+      accountPhone: "company phone",
+      fax: "fax",
+      // Billing address
+      billingStreet: "billing street",
+      billingCity: "billing city",
+      billingState: "billing state",
+      billingPostalCode: "billing zip",
+      billingCountry: "billing country",
+      // Shipping address
+      shippingStreet: "shipping street",
+      shippingCity: "shipping city",
+      shippingState: "shipping state",
+      shippingPostalCode: "shipping zip",
+      shippingCountry: "shipping country",
+      // Location
+      location: "location",
+      // Account social
+      accountLinkedin: "company linkedin",
+      accountTwitter: "company twitter",
+      accountFacebook: "company facebook",
+      accountInstagram: "company instagram",
+      // Contact name
       fullName: "name",
+      firstName: "first name",
+      lastName: "last name",
+      // Contact role
       title: "title",
+      department: "department",
+      // Contact communication
       email: "email",
       additionalEmails: "email2",
+      personalEmail: "personal email",
       phone: "phone",
+      additionalPhones: "phone2",
+      mobilePhone: "mobile",
+      officePhone: "office phone",
+      // Contact social
       linkedinUrl: "linkedin",
+      contactTwitter: "twitter",
+      contactFacebook: "facebook",
+      contactInstagram: "instagram",
+      contactSkype: "skype",
+      // Contact personal
+      birthday: "birthday",
+      contactWebsite: "personal website",
+      contactDescription: "contact notes",
+      tags: "tags",
     };
 
     // Remap row keys using the user's column mapping so normalizeRow can find them

@@ -147,6 +147,12 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
             updatedAt: acc.updatedAt,
             accountEmail: acc.email || null,
             accountAdditionalEmails: acc.additional_emails || [],
+            billing_city: acc.billing_city || null,
+            billing_state: acc.billing_state || null,
+            billing_country: acc.billing_country || null,
+            employees: acc.employees || null,
+            annual_revenue: acc.annual_revenue || null,
+            vat: acc.vat || null,
           });
         }
       } else {
@@ -171,6 +177,12 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
           updatedAt: acc.updatedAt,
           accountEmail: acc.email || null,
           accountAdditionalEmails: acc.additional_emails || [],
+          billing_city: acc.billing_city || null,
+          billing_state: acc.billing_state || null,
+          billing_country: acc.billing_country || null,
+          employees: acc.employees || null,
+          annual_revenue: acc.annual_revenue || null,
+          vat: acc.vat || null,
         });
       }
     }
