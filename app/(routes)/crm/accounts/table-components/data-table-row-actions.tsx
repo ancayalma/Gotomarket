@@ -144,7 +144,8 @@ export function DataTableRowActions<TData>({
           <DropdownMenuItem
             onClick={() => router.push(`/crm/accounts/${account?.id}`)}
           >
-            View
+            <Eye className="mr-2 w-4 h-4" />
+            View Details
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setUpdateOpen(true)}>
             Update
