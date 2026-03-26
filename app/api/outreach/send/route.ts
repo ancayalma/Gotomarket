@@ -777,6 +777,20 @@ export async function POST(req: Request) {
                 },
               });
 
+          // Save outreach status to CRM (Fire and forget DB update)
+          if (!testMode) {
+            let isLeadUpdated = false;
+            try {
+              // Try to update crm_Leads for proper tracking
+              await prismadb.crm_Leads.update({
+                where: { id: lead.id },
+                data: {
+                  outreach_status: "SENT",
+                  outreach_sent_at: new Date(),
+                },
+              });
+              isLeadUpdated = true;
+
               // Create outreach item for campaign contact tracking
               if (campaignId) {
                 try {
@@ -805,37 +819,39 @@ export async function POST(req: Request) {
             } catch (updateErr: any) {
               systemLogger.warn(`[OUTREACH_SEND] Post-send update failed for lead ${lead.id}: ${updateErr?.message || "record not found"}`);
             }
-          } else if (!testMode) {
-            // Entry came from crm_Accounts (or client data) — tag the account, skip for test sends
-            try {
-              await prismadb.crm_Accounts.update({
-                where: { id: lead.id },
-                data: { status: "Contacted" },
-              }).catch(() => { /* ID might not be an account either — that's OK */ });
 
-              // Create outreach item for campaign tracking (account-based)
-              if (campaignId) {
-                await prismadb.crm_Outreach_Items.create({
-                  data: {
-                    campaign: campaignId,
-                    channel: "EMAIL",
-                    status: "SENT",
-                    subject: subject || null,
-                    body_text: bodyText || null,
-                    message_id: messageId || null,
-                    tracking_token: token,
-                    sentAt: new Date(),
-                    candidate_email: toEmail,
-                    candidate_name: lead.company || lead.firstName || null,
-                    candidate_company: lead.company || null,
-                    candidate_job_title: lead.jobTitle || null,
-                    account_id: lead.id,
-                    sender_email: actualSenderEmail,
-                  } as any,
-                }).catch((e: any) => systemLogger.warn(`[OUTREACH_SEND] Failed to create outreach item for account ${lead.id}: ${e?.message}`));
+            // Fallback: If it's an Account (not a Lead), tag the account and track the outreach item
+            if (!isLeadUpdated) {
+              try {
+                await prismadb.crm_Accounts.update({
+                  where: { id: lead.id },
+                  data: { status: "Contacted" },
+                }).catch(() => { /* ID might not be an account either — that's OK */ });
+
+                // Create outreach item for campaign tracking (account-based)
+                if (campaignId) {
+                  await prismadb.crm_Outreach_Items.create({
+                    data: {
+                      campaign: campaignId,
+                      channel: "EMAIL",
+                      status: "SENT",
+                      subject: subject || null,
+                      body_text: bodyText || null,
+                      message_id: messageId || null,
+                      tracking_token: token,
+                      sentAt: new Date(),
+                      candidate_email: toEmail,
+                      candidate_name: lead.company || lead.firstName || null,
+                      candidate_company: lead.company || null,
+                      candidate_job_title: lead.jobTitle || null,
+                      account_id: lead.id,
+                      sender_email: actualSenderEmail,
+                    } as any,
+                  }).catch((e: any) => systemLogger.warn(`[OUTREACH_SEND] Failed to create outreach item for account ${lead.id}: ${e?.message}`));
+                }
+              } catch (acctErr: any) {
+                systemLogger.warn(`[OUTREACH_SEND] Post-send account update failed for ${lead.id}: ${acctErr?.message}`);
               }
-            } catch (acctErr: any) {
-              systemLogger.warn(`[OUTREACH_SEND] Post-send account update failed for ${lead.id}: ${acctErr?.message}`);
             }
           }
 
