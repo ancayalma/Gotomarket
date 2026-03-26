@@ -43,7 +43,7 @@ type RequestBody = {
   leadIds: string[];
   test?: boolean;
   testEmail?: string;
-  inlineLeads?: Array<{ id: string; firstName?: string; lastName?: string; company?: string; jobTitle?: string; email?: string }>;
+  inlineLeads?: Array<{ id: string; firstName?: string; lastName?: string; company?: string; jobTitle?: string; email?: string; additional_emails?: string[] }>;
   promptOverride?: string;
   meetingLinkOverride?: string;
   brandId?: string;
@@ -57,7 +57,7 @@ type RequestBody = {
   templateId?: string;
   themeColorOverride?: string;
   secondaryColorOverride?: string;
-  leadData?: Array<{ id: string; firstName?: string; lastName?: string; company?: string; jobTitle?: string; email?: string }>;
+  leadData?: Array<{ id: string; firstName?: string; lastName?: string; company?: string; jobTitle?: string; email?: string; additional_emails?: string[] }>;
   templateOptions?: import("@/lib/outreach/outreach-styles").TemplateOptions;
   campaignId?: string;  // Links sent emails to a crm_Outreach_Campaigns record
   poolId?: string;      // Source pool for pipeline provisioning
