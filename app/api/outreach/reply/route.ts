@@ -244,7 +244,7 @@ If a meeting link is available and relevant, mention it naturally in the body (e
 If campaign documents are available and the lead is asking for materials/pricing/info, set attachDocuments to true.
 If the lead shows genuine buying interest (pricing questions, timeline discussions, demo requests), set leadQualified to true.
 
-${sentiment === "NEGATIVE" ? `IMPORTANT — NEGATIVE SENTIMENT DETECTED: The lead has expressed disinterest or declined. Write a brief, gracious reply thanking them for their time. Do NOT pitch, push, or try to overcome objections. Simply acknowledge their decision, wish them well, and leave the door open in case their needs change in the future. Keep it to 2-3 sentences max. Set leadQualified to false and attachDocuments to false.` : sentiment === "NEUTRAL" ? `NOTE — NEUTRAL SENTIMENT: The lead's response is ambiguous or non-committal. Be helpful and conversational but not pushy. Ask a gentle clarifying question if appropriate.` : `The lead appears interested. Engage warmly and move the conversation forward.`}`,
+${sentiment === "NEGATIVE" ? `IMPORTANT — NEGATIVE SENTIMENT DETECTED: The lead has expressed disinterest or declined. Write a brief, gracious reply thanking them for their time. Do NOT pitch, push, or try to overcome objections. Simply acknowledge their decision, wish them well, and leave the door open in case their needs change in the future. Keep it to 2-3 sentences max. Set leadQualified to false and attachDocuments to false.` : sentiment === "NEUTRAL" ? `NOTE — NEUTRAL SENTIMENT: The lead's response is ambiguous or non-committal. Be helpful and conversational but not pushy. Ask a gentle clarifying question if appropriate. Set leadQualified to false — do NOT promote neutral replies to opportunities. Only set attachDocuments to true if they explicitly ask for materials.` : `The lead appears interested. Engage warmly and move the conversation forward.`}`,
                 },
                 { role: "user", content: replyPrompt },
             ],
@@ -413,8 +413,8 @@ ${sentiment === "NEGATIVE" ? `IMPORTANT — NEGATIVE SENTIMENT DETECTED: The lea
         }
 
         // ── Opportunity Promotion ──────────────────────────────────────────
-        // When the AI detects genuine buying signals, create an Opportunity
-        if (object.leadQualified && outreachItem.lead) {
+        // Only create opportunities for POSITIVE sentiment with AI-confirmed buying signals
+        if (object.leadQualified && sentiment === "POSITIVE" && outreachItem.lead) {
             try {
                 // Check if an opportunity already exists for this lead from this outreach campaign
                 const existingOpp = await prismadb.crm_Opportunities.findFirst({

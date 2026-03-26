@@ -29,6 +29,8 @@ export async function GET(_req: Request, { params }: Params) {
         lead: true,
         status: true,
         subject: true,
+        body_text: true,
+        body_html: true,
         candidate_email: true,
         candidate_name: true,
         candidate_company: true,
@@ -42,6 +44,8 @@ export async function GET(_req: Request, { params }: Params) {
         unsubscribed_at: true,
         account_id: true,
         contact_id: true,
+        error_message: true,
+        createdAt: true,
       },
     });
 

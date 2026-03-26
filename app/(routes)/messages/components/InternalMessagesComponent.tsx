@@ -1394,10 +1394,10 @@ export function InternalMessagesComponent({
                                                     <p className="text-xs text-muted-foreground truncate mt-0.5">
                                                         {(message.body || "").slice(0, 100)}
                                                     </p>
+                                                    <p className="text-[10px] text-muted-foreground/60 mt-1">
+                                                        {formatMessageDate(message.createdAt)} · {format(new Date(message.createdAt), "h:mm a")}
+                                                    </p>
                                                 </div>
-                                                <span className="text-xs text-muted-foreground flex-shrink-0">
-                                                    {formatMessageDate(message.createdAt)}
-                                                </span>
                                             </button>
                                         );
                                     })}

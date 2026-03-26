@@ -433,15 +433,43 @@ export default function CampaignDetailPage() {
                             </Button>
                         )}
                         {campaign.status === "PAUSED" && (
-                            <Button
-                                size="sm"
-                                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 font-bold"
-                                onClick={toggleCampaignStatus}
-                                disabled={statusLoading}
-                            >
-                                {statusLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                                Resume Campaign
-                            </Button>
+                            <>
+                                <Button
+                                    size="sm"
+                                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 font-bold"
+                                    onClick={toggleCampaignStatus}
+                                    disabled={statusLoading}
+                                >
+                                    {statusLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                                    Resume Campaign
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 font-bold"
+                                    onClick={async () => {
+                                        setStatusLoading(true);
+                                        try {
+                                            const res = await fetch(`/api/campaigns/${campaignId}`, {
+                                                method: "PATCH",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ status: "COMPLETED" }),
+                                            });
+                                            if (res.ok) {
+                                                mutate();
+                                                toast.success("Campaign marked as completed.");
+                                            } else {
+                                                const err = await res.json();
+                                                toast.error(err.message || "Failed to complete campaign");
+                                            }
+                                        } catch { toast.error("Failed to complete campaign"); }
+                                        setStatusLoading(false);
+                                    }}
+                                    disabled={statusLoading}
+                                >
+                                    {statusLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                                    Mark Complete
+                                </Button>
+                            </>
                         )}
                         <Button
                             size="sm"
@@ -771,16 +799,25 @@ export default function CampaignDetailPage() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
-                                    {Object.entries(itemCounts).length > 0 ? (
-                                        Object.entries(itemCounts).map(([status, count]) => (
-                                            <div key={status} className="flex items-center justify-between">
-                                                <span className="text-xs uppercase tracking-wider text-muted-foreground">{status}</span>
-                                                <Badge variant="outline" className="text-[10px] font-bold border-white/10">{count}</Badge>
+                                    {(() => {
+                                        const oi = campaign.outreach_items || [];
+                                        const groups = [
+                                            { label: "Pending", count: oi.filter((i: any) => ["PENDING","RESEARCHING","READY"].includes(i.status)).length, color: "text-amber-400" },
+                                            { label: "Sent", count: oi.filter((i: any) => i.status === "SENT" || i.status === "DELIVERED").length, color: "text-blue-400" },
+                                            { label: "Opened", count: oi.filter((i: any) => i.status === "OPENED" || i.status === "CLICKED").length, color: "text-purple-400" },
+                                            { label: "Replied", count: oi.filter((i: any) => i.status === "REPLIED").length, color: "text-emerald-400" },
+                                            { label: "Failed", count: oi.filter((i: any) => i.status === "FAILED" || i.status === "BOUNCED").length, color: "text-red-400" },
+                                            { label: "Skipped", count: oi.filter((i: any) => i.status === "SKIPPED").length, color: "text-gray-400" },
+                                        ].filter(g => g.count > 0);
+                                        return groups.length > 0 ? groups.map(g => (
+                                            <div key={g.label} className="flex items-center justify-between">
+                                                <span className={`text-xs uppercase tracking-wider font-medium ${g.color}`}>{g.label}</span>
+                                                <Badge variant="outline" className="text-[10px] font-bold border-white/10">{g.count}</Badge>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground">No outreach items yet. Launch the wizard to start.</p>
-                                    )}
+                                        )) : (
+                                            <p className="text-sm text-muted-foreground">No outreach items yet. Launch the wizard to start.</p>
+                                        );
+                                    })()}
                                     {campaign.meeting_link && (
                                         <div className="pt-3 mt-2 border-t border-white/5">
                                             <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Meeting Link</span>
