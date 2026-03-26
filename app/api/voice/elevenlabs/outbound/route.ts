@@ -7,6 +7,8 @@ import { requireApiAuth } from "@/lib/api-auth-guard";
 import { prismadb } from "@/lib/prisma";
 import { systemLogger } from "@/lib/logger";
 import { isE164 } from "@/lib/twilio/twilio-voice";
+import { checkUsageQuota, recordUsage } from "@/lib/usage-quota";
+import { requireFeature } from "@/lib/require-feature";
 
 /**
  * POST /api/voice/elevenlabs/outbound
@@ -31,6 +33,15 @@ export async function POST(req: Request) {
 
   try {
     const body = (await req.json()) as Body;
+
+    // ── Feature Gate ──
+    const teamId = (session as any).team_id || (session as any).user?.team_id;
+    if (teamId) {
+      const hasVoice = await requireFeature(teamId, "voice");
+      if (!hasVoice) {
+        return NextResponse.json({ error: "Voice dialing requires a Scale plan or higher" }, { status: 403 });
+      }
+    }
 
     if (!body?.destination || !isE164(body.destination)) {
       return NextResponse.json({ ok: false, error: "Invalid destination (must be E.164)" }, { status: 400 });
@@ -76,6 +87,21 @@ export async function POST(req: Request) {
         }
       }
     } catch { /* use defaults */ }
+
+    // ── Voice Quota Enforcement ──
+    try {
+      const { getCurrentUserTeamId } = await import("@/lib/team-utils");
+      const teamCheck = await getCurrentUserTeamId();
+      if (teamCheck?.teamId) {
+        const voiceQuota = await checkUsageQuota(teamCheck.teamId, session?.user?.id || null, "voice");
+        if (!voiceQuota.allowed) {
+          return NextResponse.json(
+            { ok: false, error: voiceQuota.message, remaining: voiceQuota.remaining, limit: voiceQuota.limit },
+            { status: 429 }
+          );
+        }
+      }
+    } catch { /* quota check failure should not block calls */ }
 
     if (!resolvedAgentId) {
       return NextResponse.json({ ok: false, error: "Missing ElevenLabs Agent ID" }, { status: 400 });

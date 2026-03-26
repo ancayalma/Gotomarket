@@ -19,6 +19,17 @@ export const accountSchema = z.object({
   additional_emails: z.array(z.string()).nullable().optional(),
   status: z.string().nullable().optional(),
   type: z.string().nullable().optional(),
+  // Location
+  billing_city: z.string().nullable().optional(),
+  billing_state: z.string().nullable().optional(),
+  billing_country: z.string().nullable().optional(),
+  // Finances
+  employees: z.string().nullable().optional(),
+  annual_revenue: z.string().nullable().optional(),
+  vat: z.string().nullable().optional(),
+  company_id: z.string().nullable().optional(),
+  // Notes / Social
+  description: z.string().nullable().optional(),
 });
 
 export type Account = z.infer<typeof accountSchema>;

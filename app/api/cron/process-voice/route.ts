@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireCronAuth } from "@/lib/api-auth-guard";
 import { prismadbCrm as prisma } from "@/lib/prisma-crm";
 import { systemLogger } from "@/lib/logger";
+import { checkUsageQuota, recordUsage } from "@/lib/usage-quota";
 
 // Ensure Node.js runtime for Prisma compatibility
 export const runtime = 'nodejs';
@@ -87,6 +88,20 @@ async function processVoiceCampaigns(req: Request) {
       if (!agentId) {
         systemLogger.warn(`[CRON_VOICE] Campaign ${campaign.id} skipped: No ElevenLabs Agent ID configured.`);
         continue;
+      }
+
+      // ── Voice Quota Enforcement (per campaign's team) ──
+      const campaignTeam = campaign.user ? await (await import("@/lib/prisma")).prismadb.users.findUnique({
+        where: { id: campaign.user },
+        select: { team_id: true },
+      }) : null;
+
+      if (campaignTeam?.team_id) {
+        const voiceQuota = await checkUsageQuota(campaignTeam.team_id, campaign.user, "voice");
+        if (!voiceQuota.allowed) {
+          systemLogger.warn(`[CRON_VOICE] Voice quota exceeded for team ${campaignTeam.team_id}, skipping campaign ${campaign.id}`);
+          continue;
+        }
       }
 
       // Concurrency functions as "Calls Per Minute Rate Limit" mapped from the UI Slider

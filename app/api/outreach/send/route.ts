@@ -15,6 +15,8 @@ import { ensureContactForLead } from "@/actions/crm/lead-conversions";
 import { ensureLeadAndAccountForCandidate } from "@/actions/crm/ensure-pipeline";
 import { claimOnboardingBonus } from "@/actions/crm/onboarding-bonus";
 import { systemLogger } from "@/lib/logger";
+import { checkUsageQuota, recordUsage } from "@/lib/usage-quota";
+
 
 import { researchCompany } from "@/lib/outreach/company-research";
 import { renderOutreachTemplate } from "@/lib/outreach/outreach-templates";
@@ -128,11 +130,23 @@ export async function POST(req: Request) {
       } as const,
     });
 
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+    if (!user || !user.team_id) {
+      return new NextResponse("User or team not found", { status: 404 });
+    }
+
+    // ── Email Quota Enforcement ──
+    if (!body.test) {
+      const quotaCheck = await checkUsageQuota(user.team_id, user.id, "email", body.leadIds.length);
+      if (!quotaCheck.allowed) {
+        return NextResponse.json(
+          { error: quotaCheck.message, remaining: quotaCheck.remaining, limit: quotaCheck.limit },
+          { status: 429 }
+        );
+      }
     }
 
     const isAdmin = !!(user.is_admin || user.is_account_admin);
+
 
     // ── Campaign ID from the wizard (auto-creation removed — wizard handles this) ────
     let campaignId = body.campaignId || undefined;

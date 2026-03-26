@@ -47,6 +47,12 @@ type Lead = {
     createdAt: string;
     accountEmail?: string | null;
     accountAdditionalEmails?: string[];
+    billing_city?: string | null;
+    billing_state?: string | null;
+    billing_country?: string | null;
+    employees?: string | null;
+    annual_revenue?: string | null;
+    vat?: string | null;
     // Populated by grouping logic for multi-contact display
     _allContacts?: Array<{
         id: string;

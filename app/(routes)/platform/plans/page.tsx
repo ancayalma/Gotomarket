@@ -6,7 +6,9 @@ import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Container from "@/app/(routes)/components/ui/Container";
 import PlansView from "./_components/PlansView";
+import { PlatformPlanBuilder } from "./_components/PlatformPlanBuilder";
 import { getPlans } from "@/actions/plans/plan-actions";
+import { getTeams } from "@/actions/teams/get-teams";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -30,14 +32,17 @@ const PlansPage = async () => {
         return redirect("/");
     }
 
-    const plans = await getPlans();
+    const [plans, teams] = await Promise.all([
+        getPlans(),
+        getTeams(),
+    ]);
 
     return (
         <Container
             title="Subscription Plans"
             description="Manage SaaS tiers, limits, and pricing."
         >
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-6">
                 <PartnersNavigation
                     availablePlans={plans as any}
                     showBackButton={true}
@@ -46,6 +51,11 @@ const PlansPage = async () => {
                     hideModelPricing={true}
                     hideManagePlans={true}
                 />
+
+                {/* Platform Plan Builder — edit limits + assign plans to teams */}
+                <PlatformPlanBuilder teams={teams as any} />
+
+                {/* Existing DB Plans View */}
                 <PlansView initialPlans={plans as any} />
             </div>
         </Container>
@@ -53,3 +63,4 @@ const PlansPage = async () => {
 };
 
 export default PlansPage;
+

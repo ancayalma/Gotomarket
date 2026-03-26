@@ -172,14 +172,48 @@ export async function POST(req: Request) {
 
       if (existing) {
         const allEmails = Array.from(new Set([...(existing.additional_emails || []), ...(cand.additional_emails || [])]));
-        const primaryEmail = existing.email || allEmails[0] || null;
+        const primaryEmail = existing.email || cand.accountEmail || allEmails[0] || null;
         const additionalEmails = allEmails.filter((e: string) => e !== primaryEmail);
+
+        // Compose billing address from components
+        const billingParts = [cand.billingStreet, cand.billingCity, cand.billingState, cand.billingPostalCode, cand.billingCountry].filter(Boolean);
+        const billingAddress = billingParts.length > 0 ? billingParts.join(', ') : undefined;
+        // Compose shipping address from components
+        const shippingParts = [cand.shippingStreet, cand.shippingCity, cand.shippingState, cand.shippingPostalCode, cand.shippingCountry].filter(Boolean);
+        const shippingAddress = shippingParts.length > 0 ? shippingParts.join(', ') : undefined;
+
         await (prismadb.crm_Accounts as any).update({
           where: { id: existing.id },
           data: {
             website: domain || existing.website,
             email: primaryEmail,
             additional_emails: { set: additionalEmails },
+            office_phone: cand.accountPhone || existing.office_phone,
+            fax: cand.fax || existing.fax,
+            billing_street: cand.billingStreet || existing.billing_street,
+            billing_city: cand.billingCity || existing.billing_city,
+            billing_state: cand.billingState || existing.billing_state,
+            billing_postal_code: cand.billingPostalCode || existing.billing_postal_code,
+            billing_country: cand.billingCountry || existing.billing_country,
+            shipping_street: cand.shippingStreet || existing.shipping_street,
+            shipping_city: cand.shippingCity || existing.shipping_city,
+            shipping_state: cand.shippingState || existing.shipping_state,
+            shipping_postal_code: cand.shippingPostalCode || existing.shipping_postal_code,
+            shipping_country: cand.shippingCountry || existing.shipping_country,
+            description: (() => {
+              const base = cand.description || existing.description || '';
+              const socials = [
+                cand.accountLinkedin && `LinkedIn: ${cand.accountLinkedin}`,
+                cand.accountTwitter && `Twitter: ${cand.accountTwitter}`,
+                cand.accountFacebook && `Facebook: ${cand.accountFacebook}`,
+                cand.accountInstagram && `Instagram: ${cand.accountInstagram}`,
+              ].filter(Boolean).join(' | ');
+              return socials ? (base ? `${base}\n${socials}` : socials) : base || undefined;
+            })(),
+            annual_revenue: cand.revenue || existing.annual_revenue,
+            employees: cand.employeeCount || existing.employees,
+            vat: cand.vat || existing.vat,
+            company_id: cand.companyId || existing.company_id,
             updatedBy: session.user.id,
           }
         });
@@ -187,15 +221,47 @@ export async function POST(req: Request) {
         updatedAccountsCount++;
       } else {
         const candidateEmails = cand.additional_emails || [];
-        const primaryEmail = candidateEmails[0] || null;
-        const additionalEmails = candidateEmails.slice(1);
+        const primaryEmail = cand.accountEmail || candidateEmails[0] || null;
+        const additionalEmails = cand.accountEmail ? candidateEmails : candidateEmails.slice(1);
+
         const created = await (prismadb.crm_Accounts as any).create({
           data: {
             name,
             website: domain,
             email: primaryEmail,
             additional_emails: additionalEmails,
-            status: "Active",
+            office_phone: cand.accountPhone || null,
+            fax: cand.fax || null,
+            type: cand.accountType || "Prospect",
+            status: cand.accountStatus || "Active",
+            // Billing address
+            billing_street: cand.billingStreet || null,
+            billing_city: cand.billingCity || null,
+            billing_state: cand.billingState || null,
+            billing_postal_code: cand.billingPostalCode || null,
+            billing_country: cand.billingCountry || null,
+            // Shipping address
+            shipping_street: cand.shippingStreet || null,
+            shipping_city: cand.shippingCity || null,
+            shipping_state: cand.shippingState || null,
+            shipping_postal_code: cand.shippingPostalCode || null,
+            shipping_country: cand.shippingCountry || null,
+            // Financials
+            annual_revenue: cand.revenue || null,
+            employees: cand.employeeCount || null,
+            vat: cand.vat || null,
+            company_id: cand.companyId || null,
+            // Social → stored in description (crm_Accounts has no social columns)
+            description: (() => {
+              const base = cand.description || '';
+              const socials = [
+                cand.accountLinkedin && `LinkedIn: ${cand.accountLinkedin}`,
+                cand.accountTwitter && `Twitter: ${cand.accountTwitter}`,
+                cand.accountFacebook && `Facebook: ${cand.accountFacebook}`,
+                cand.accountInstagram && `Instagram: ${cand.accountInstagram}`,
+              ].filter(Boolean).join(' | ');
+              return socials ? (base ? `${base}\n${socials}` : socials) : (base || null);
+            })(),
             v: 0,
             createdBy: session.user.id,
             team_id: teamId,
@@ -237,25 +303,45 @@ export async function POST(req: Request) {
         await (prismadb.crm_Contacts as any).update({
           where: { id: existing.id },
           data: {
-            position: con.title || existing.position,
+            position: [con.title, con.department].filter(Boolean).join(' — ') || existing.position,
             accountsIDs: linkedAccountId || existing.accountsIDs,
+            mobile_phone: con.mobilePhone || phone || existing.mobile_phone,
+            office_phone: con.officePhone || existing.office_phone,
+            personal_email: con.personalEmail || existing.personal_email,
+            social_linkedin: con.linkedinUrl || existing.social_linkedin,
+            social_twitter: con.contactTwitter || existing.social_twitter,
+            social_facebook: con.contactFacebook || existing.social_facebook,
+            social_instagram: con.contactInstagram || existing.social_instagram,
+            social_skype: con.contactSkype || existing.social_skype,
+            birthday: con.birthday || existing.birthday,
+            website: con.contactWebsite || existing.website,
+            description: con.contactDescription || existing.description,
             updatedBy: session.user.id,
           }
         });
         updatedContactsCount++;
       } else {
-        const names = con.fullName.split(" ");
-        const firstName = names[0];
-        const lastName = names.slice(1).join(" ") || "Contact";
+        const firstName = con.firstName || (con.fullName ? con.fullName.split(" ")[0] : "");
+        const lastName = con.lastName || (con.fullName ? con.fullName.split(" ").slice(1).join(" ") : "") || "Contact";
 
         await (prismadb.crm_Contacts as any).create({
           data: {
             first_name: firstName,
             last_name: lastName,
             email: email,
-            mobile_phone: phone,
-            position: con.title,
+            mobile_phone: con.mobilePhone || phone || null,
+            office_phone: con.officePhone || null,
+            personal_email: con.personalEmail || null,
+            position: [con.title, con.department].filter(Boolean).join(' — ') || null,
             accountsIDs: linkedAccountId,
+            social_linkedin: con.linkedinUrl || null,
+            social_twitter: con.contactTwitter || null,
+            social_facebook: con.contactFacebook || null,
+            social_instagram: con.contactInstagram || null,
+            social_skype: con.contactSkype || null,
+            birthday: con.birthday || null,
+            website: con.contactWebsite || null,
+            description: con.contactDescription || null,
             createdBy: session.user.id,
             team_id: teamId,
             v: 0

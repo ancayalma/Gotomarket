@@ -46,6 +46,8 @@ import { toast } from "sonner";
 import { BillingModal } from "@/components/modals/BillingModal";
 import { downloadInvoicePDF, downloadInvoicesSummaryPDF } from "@/lib/generate-invoice-pdf";
 import { PlanSelector } from "./PlanSelector";
+import { UsageMeters } from "./UsageMeters";
+import { UserAllocationManager } from "./UserAllocationManager";
 
 // Service icon/color mapping
 const SERVICE_META: Record<string, { icon: React.ElementType; color: string; label: string }> = {
@@ -298,6 +300,10 @@ export function AdminBillingDashboard({
                     <TabsTrigger value="echo" className="gap-2 data-[state=active]:bg-zinc-800">
                         <Radio className="w-4 h-4" />
                         BasaltECHO
+                    </TabsTrigger>
+                    <TabsTrigger value="usage-quotas" className="gap-2 data-[state=active]:bg-zinc-800">
+                        <TrendingUp className="w-4 h-4" />
+                        Usage Quotas
                     </TabsTrigger>
                 </TabsList>
 
@@ -587,6 +593,12 @@ export function AdminBillingDashboard({
                             )}
                         </CardContent>
                     </Card>
+                </TabsContent>
+
+                {/* Usage Quotas & Allocations Tab */}
+                <TabsContent value="usage-quotas" className="mt-4 space-y-6">
+                    <UsageMeters teamId={teamId} />
+                    <UserAllocationManager teamId={teamId} />
                 </TabsContent>
             </Tabs>
 

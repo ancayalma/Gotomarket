@@ -114,6 +114,34 @@ export default async function AiUsagePage() {
     let completionTokens = 0;
     let requestCount = 0;
     const modelUsage: Record<string, number> = {};
+    const serviceUsage: Record<string, number> = {};
+
+    function getCanonicalModelName(rawName: string) {
+        if (!rawName) return "Platform AI";
+        const lower = rawName.toLowerCase();
+        
+        // Exact legacy tool overrides -> map everything to Qwen3 since it's the exclusive default
+        if (
+            lower.includes("scraper") || 
+            lower.includes("generator") || 
+            lower.includes("helper") || 
+            lower.includes("synthesis") ||
+            lower.includes("leadgen") ||
+            lower === "openai" ||
+            lower === "unknown"
+        ) {
+            return "Qwen3 Next 80B";
+        }
+
+        // Provider/Model prefixes and variations
+        if (lower.includes("qwen3") || lower.includes("qwen")) return "Qwen3 Next 80B";
+        if (lower.includes("haiku")) return "Claude 3.5 Haiku";
+        if (lower.includes("sonnet")) return "Claude 3.5 Sonnet";
+        if (lower.includes("gpt-4")) return "GPT-4o";
+        if (lower.includes("gpt-3")) return "GPT-3.5 Turbo";
+
+        return rawName;
+    }
 
     const userUsage: Record<string, { name: string, email: string, totalTokens: number, promptTokens: number, completionTokens: number, requestCount: number }> = {};
     (teamMembers as any[]).forEach(u => {
@@ -132,8 +160,12 @@ export default async function AiUsagePage() {
         completionTokens += cTokens;
         requestCount += 1;
 
-        const modelName = msg.model || "Unknown Model";
+        const rawModelName = msg.model || "Unknown Model";
+        const modelName = getCanonicalModelName(rawModelName);
         modelUsage[modelName] = (modelUsage[modelName] || 0) + tokens;
+
+        // Chat messages are always attributed to the Chat service
+        serviceUsage["Chat"] = (serviceUsage["Chat"] || 0) + tokens;
 
         const userId = sessionUserMap.get(msg.session);
         if (userId && userUsage[userId]) {
@@ -152,8 +184,13 @@ export default async function AiUsagePage() {
         completionTokens += log.tokens_out;
         requestCount += 1;
 
-        const modelName = log.model_used || "Platform AI (Internal)";
+        const rawModelName = log.model_used || "Platform AI (Internal)";
+        const modelName = getCanonicalModelName(rawModelName);
         modelUsage[modelName] = (modelUsage[modelName] || 0) + tokens;
+
+        const rawService = log.service || "unknown";
+        const displayService = rawService.charAt(0).toUpperCase() + rawService.slice(1);
+        serviceUsage[displayService] = (serviceUsage[displayService] || 0) + tokens;
 
         if (log.user_id && userUsage[log.user_id]) {
             userUsage[log.user_id].totalTokens += tokens;
@@ -164,6 +201,10 @@ export default async function AiUsagePage() {
     });
 
     const modelChartData = Object.entries(modelUsage)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
+    const serviceChartData = Object.entries(serviceUsage)
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
@@ -211,7 +252,7 @@ export default async function AiUsagePage() {
                     </div>
 
                     {/* Main Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                         <div className="lg:col-span-2">
                             <AiUsageCharts
                                 chartData={chartData}
@@ -221,8 +262,13 @@ export default async function AiUsagePage() {
                         </div>
                         <ModelDistributionChart
                             data={modelChartData}
-                            title="Model Usage Breakdown"
+                            title="Model Usage"
                             subtitle="Active AI models for this team."
+                        />
+                        <ModelDistributionChart
+                            data={serviceChartData}
+                            title="Service Usage"
+                            subtitle="Tokens consumed by platform features."
                         />
                     </div>
 

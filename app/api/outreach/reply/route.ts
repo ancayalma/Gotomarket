@@ -9,6 +9,7 @@ import { render } from "@react-email/render";
 import OutreachTemplate from "@/emails/OutreachTemplate";
 import React from "react";
 import { systemLogger } from "@/lib/logger";
+import { checkUsageQuota, recordUsage } from "@/lib/usage-quota";
 
 export const maxDuration = 60;
 
@@ -61,8 +62,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ status: "skipped", reason: "auto_reply_disabled" });
         }
 
-        if (!campaign.team_id) {
-            return NextResponse.json({ error: "No team on campaign" }, { status: 400 });
+
+
+
+        // ── Email Quota Enforcement (auto-replies count against email limit) ──
+        if (campaign.team_id) {
+            const quotaCheck = await checkUsageQuota(campaign.team_id, campaign.user, "email");
+            if (!quotaCheck.allowed) {
+                systemLogger.warn(`[AUTO_REPLY] Email quota exceeded for team ${campaign.team_id}, skipping reply`);
+                return NextResponse.json({ error: quotaCheck.message, skipped: true }, { status: 429 });
+            }
         }
 
         // ── Load outreach item ─────────────────────────────────────────────

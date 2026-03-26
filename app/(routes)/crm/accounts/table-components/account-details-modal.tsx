@@ -119,6 +119,46 @@ export function AccountDetailsModal({ account, onClose }: Props) {
               </div>
 
               <div>
+                <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 italic">Company Profile</h4>
+                <div className="p-5 rounded-2xl border border-zinc-800/50 bg-zinc-900/50 space-y-3 hover:border-zinc-700 transition-colors">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-zinc-400">Location</span>
+                    <span className="text-zinc-300 font-medium text-right">
+                      {[account.billing_city, account.billing_state, account.billing_country].filter(Boolean).join(", ") || "Unknown"}
+                    </span>
+                  </div>
+                  {account.employees && (
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-zinc-800/50">
+                      <span className="text-zinc-400">Employees</span>
+                      <span className="font-medium text-zinc-300">{account.employees}</span>
+                    </div>
+                  )}
+                  {account.annual_revenue && (
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-zinc-800/50">
+                      <span className="text-zinc-400">Revenue</span>
+                      <span className="font-medium text-zinc-300">{account.annual_revenue}</span>
+                    </div>
+                  )}
+                  {account.vat && (
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-zinc-800/50">
+                      <span className="text-zinc-400">VAT / Tax ID</span>
+                      <span className="font-mono text-[10px] bg-zinc-950 px-2 py-1 rounded border border-zinc-800 text-zinc-500">
+                        {account.vat}
+                      </span>
+                    </div>
+                  )}
+                  {account.description && (
+                    <div className="pt-2 border-t border-zinc-800/50">
+                      <span className="text-zinc-400 text-sm block mb-1">Intelligence Notes</span>
+                      <p className="text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed bg-zinc-950 p-3 rounded-lg border border-zinc-800/50">
+                        {account.description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
                 <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 italic">System Footprint</h4>
                 <div className="p-5 rounded-2xl border border-zinc-800/50 bg-zinc-900/50 space-y-3 hover:border-zinc-700 transition-colors">
                   <div className="flex justify-between items-center text-sm">

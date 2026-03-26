@@ -6,6 +6,7 @@ import { getValidationRules } from "@/actions/crm/validation-rules";
 import { ValidationRulesClient } from "./components/ValidationRulesClient";
 import { Shield } from "lucide-react";
 import { LearnLink } from "@/components/ui/LearnLink";
+import { UpgradeGate } from "@/components/UpgradeGate";
 
 export const metadata = {
     title: "Guard Rules | CRM Settings",
@@ -24,6 +25,7 @@ export default async function ValidationRulesPage() {
 
     return (
         <div className="flex flex-col">
+            <UpgradeGate featureId="validation_rules" title="Guard Rules Locked" description="Formula-based validation rules require a Scale plan or higher.">
             <LearnLink
                 tab="validation-rules"
                 overviewTitle="Data Governance Guard"
@@ -54,6 +56,7 @@ export default async function ValidationRulesPage() {
                     <ValidationRulesClient rules={rules} teamId={teamId || ""} />
                 </Suspense>
             </div>
+            </UpgradeGate>
         </div>
     );
 }

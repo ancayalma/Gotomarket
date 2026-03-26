@@ -356,7 +356,7 @@ const DynamicModuleMenu = ({
 
                     {/* ─── Footer ─── */}
                     <div className="mt-auto px-2 pb-4 space-y-2">
-                        {(planSlug === "FREE" || planSlug === "INDIVIDUAL_BASIC") && (
+                        {(planSlug === "STARTER" || planSlug === "FREE" || planSlug === "GROWTH" || planSlug === "INDIVIDUAL_BASIC") && (
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}

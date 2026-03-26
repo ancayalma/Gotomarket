@@ -7,7 +7,7 @@ import { UpgradeGate } from '@/components/UpgradeGate';
 
 export default function Page() {
   return (
-    <UpgradeGate featureId="openai" title="AI Persona Lab Locked" description="Advanced AI Prompt engineering requires an upgraded Individual Basic plan or higher.">
+    <UpgradeGate featureId="openai" title="AI Persona Lab Locked" description="Advanced AI Prompt engineering requires a Growth plan or higher.">
       <div className="w-full h-full">
         <LearnLink
           tab="prompt"

@@ -6,6 +6,7 @@ import { ApprovalsClient } from "./components/ApprovalsClient";
 import { CheckCircle2 } from "lucide-react";
 import { Suspense } from "react";
 import { LearnLink } from "@/components/ui/LearnLink";
+import { UpgradeGate } from "@/components/UpgradeGate";
 
 export const metadata = {
     title: "Approval Chains | CRM",
@@ -27,6 +28,7 @@ export default async function ApprovalsPage() {
 
     return (
         <div className="flex flex-col h-full w-full">
+            <UpgradeGate featureId="approvals" title="Approval Chains Locked" description="Multi-tier approval workflows require a Scale plan or higher.">
             <LearnLink
                 tab="approvals"
                 overviewTitle="Approval Workflows"
@@ -62,6 +64,7 @@ export default async function ApprovalsPage() {
                     />
                 </Suspense>
             </div>
+            </UpgradeGate>
         </div>
     );
 }

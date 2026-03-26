@@ -9,28 +9,32 @@ interface ApiUsageQuotaProps {
 export function ApiUsageQuota({ currentPlan }: ApiUsageQuotaProps) {
     const plans = [
         {
-            name: "Free",
+            name: "Starter",
+            slug: "STARTER",
             price: "$0/mo",
             limits: "100 calls",
             features: "Basic API Access. One-touch CSV exports.",
             value: "Perfect for testing headless Next.js, very low volume."
         },
         {
-            name: "Basic",
-            price: "~$29/mo",
+            name: "Growth",
+            slug: "GROWTH",
+            price: "$29/user/mo",
             limits: "1,500 calls",
             features: "Surge API sync for Physical Products. Product Inventory syncing.",
             value: "Ideal for startups doing a moderate amount of product sales."
         },
         {
-            name: "Pro",
-            price: "~$99/mo",
+            name: "Scale",
+            slug: "SCALE",
+            price: "$79/user/mo",
             limits: "5,000 calls",
-            features: "Subscription Management Integration. Automates 'coaching' and service fulfillment.",
+            features: "Subscription Management Integration. Automates coaching and service fulfillment.",
             value: "Next.js Customer Portal headless access. Full ecosystem automation."
         },
         {
             name: "Enterprise",
+            slug: "ENTERPRISE",
             price: "Custom",
             limits: "Uncapped/Custom",
             features: "Priority Webhooks. SLA.",
@@ -74,9 +78,8 @@ export function ApiUsageQuota({ currentPlan }: ApiUsageQuotaProps) {
                     </thead>
                     <tbody className="divide-y divide-white/5">
                         {plans.map((plan) => {
-                            const isCurrent = (currentPlan || "FREE").toUpperCase() === plan.name.toUpperCase() 
-                                || (currentPlan.toUpperCase() === "INDIVIDUAL_BASIC" && plan.name === "Basic")
-                                || (currentPlan.toUpperCase() === "INDIVIDUAL_PRO" && plan.name === "Pro");
+                            const isCurrent = (currentPlan || "STARTER").toUpperCase() === (plan as any).slug?.toUpperCase()
+                                || (currentPlan || "STARTER").toUpperCase() === plan.name.toUpperCase();
                             return (
                                 <tr 
                                     key={plan.name} 

@@ -56,7 +56,7 @@ export default async function SalesCommandPage({
             <UpgradeGate
                 featureId="sales_command"
                 title="Sales Command Locked"
-                description="Advanced Pipeline Management and Command Centers require an upgraded Individual Basic plan or higher."
+                description="Advanced Pipeline Management and Command Centers require a Scale plan or higher."
             >
                 <div />
             </UpgradeGate>

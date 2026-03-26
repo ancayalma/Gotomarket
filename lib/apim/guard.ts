@@ -50,12 +50,14 @@ export async function validateApiKey(req: Request) {
 
         // ── Rate Limiting (Phase 2 Configuration) ──
         if (redis) {
-            // Determine tier limit
-            const plan = apiKeyRecord.team.subscription_plan || "FREE";
-            let callLimit = 100; // Free gets 100/mo
-            if (plan === "BASIC") callLimit = 1500;
-            if (plan === "PRO") callLimit = 5000;
-            if (plan === "ENTERPRISE") callLimit = 100000;
+            // Determine tier limit — resolve legacy slugs to canonical names
+            const { resolveSlug } = await import("@/config/subscriptions");
+            const rawPlan = apiKeyRecord.team.subscription_plan || "STARTER";
+            const plan = resolveSlug(rawPlan);
+            let callLimit = 100; // Starter gets 100/30d
+            if (plan === "GROWTH") callLimit = 1500;
+            if (plan === "SCALE") callLimit = 5000;
+            if (plan === "ENTERPRISE" || plan === "EXEMPT") callLimit = 100000;
 
             const ratelimit = new Ratelimit({
                 redis: redis,

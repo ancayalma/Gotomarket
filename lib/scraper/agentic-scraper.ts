@@ -610,6 +610,22 @@ async function dismissOverlays(page: any): Promise<void> {
         '.cc-btn.cc-dismiss',
         '.gdpr-accept',
         '.cookie-accept',
+        // Age-check / age-gate selectors
+        '[class*="age-gate"] button',
+        '[class*="agegate"] button',
+        '[class*="age-verify"] button',
+        '[class*="age-verification"] button',
+        '[class*="age-check"] button',
+        '[class*="age_check"] button',
+        '[id*="age-gate"] button',
+        '[id*="agegate"] button',
+        '[id*="age-verify"] button',
+        '[id*="age-verification"] button',
+        'button[class*="age-confirm"]',
+        'button[class*="enter-site"]',
+        'button[class*="age-yes"]',
+        'a[class*="enter-site"]',
+        'a[class*="age-confirm"]',
       ];
 
       for (const selector of dismissSelectors) {
@@ -625,6 +641,25 @@ async function dismissOverlays(page: any): Promise<void> {
         }
       }
 
+      // Text-based age-gate bypass: click buttons/anchors whose text matches age-confirm patterns
+      const ageGateTextPatterns = [
+        /^yes$/i, /^enter$/i, /^i am (over |of legal |)?(18|19|21)\+?/i,
+        /^i('m| am) (18|19|21)\s*(or older|\+|years)/i,
+        /^(yes,? )?i am of (legal )?age/i, /^confirm age/i,
+        /^i('m| am) old enough/i, /^verify( my)? age/i,
+        /^enter site$/i, /^continue$/i,
+      ];
+      try {
+        const allClickables = document.querySelectorAll('button, a[href], input[type="submit"], input[type="button"]');
+        for (const el of Array.from(allClickables)) {
+          const text = ((el as HTMLElement).textContent || (el as HTMLInputElement).value || '').trim();
+          if (text.length > 0 && text.length < 60 && ageGateTextPatterns.some(p => p.test(text))) {
+            (el as HTMLElement).click();
+            break; // Only click the first match
+          }
+        }
+      } catch (e) { /* ignore */ }
+
       // Remove overlay elements that might block content
       const overlaySelectors = [
         '[class*="cookie-banner"]',
@@ -632,6 +667,15 @@ async function dismissOverlays(page: any): Promise<void> {
         '[class*="gdpr"]',
         '[id*="cookie"]',
         '[class*="overlay"][style*="fixed"]',
+        // Age-gate overlays
+        '[class*="age-gate"]',
+        '[class*="agegate"]',
+        '[class*="age-verify"]',
+        '[class*="age-verification"]',
+        '[class*="age-check"]',
+        '[id*="age-gate"]',
+        '[id*="agegate"]',
+        '[id*="age-verify"]',
       ];
 
       for (const selector of overlaySelectors) {
@@ -1020,6 +1064,11 @@ export async function visitWebsiteForAgent(url: string, userId?: string, icp?: I
           'button[class*="cookie"]', 'a[id*="accept"]', '[aria-label*="accept"]',
           '[aria-label*="close"]', 'button[class*="close"]', '.cookie-banner button',
           '#cookie-consent button', '.gdpr button',
+          // Age-gate selectors
+          '[class*="age-gate"] button', '[class*="agegate"] button',
+          '[class*="age-verify"] button', '[id*="age-gate"] button',
+          'button[class*="age-confirm"]', 'button[class*="enter-site"]',
+          'a[class*="enter-site"]', 'a[class*="age-confirm"]',
         ];
         for (const sel of dismissSelectors) {
           try {
@@ -1027,6 +1076,23 @@ export async function visitWebsiteForAgent(url: string, userId?: string, icp?: I
             if (btn) { await btn.click(); break; }
           } catch { /* ignore */ }
         }
+        // Text-based age-gate bypass for inline visit
+        try {
+          await page.evaluate(() => {
+            const patterns = [
+              /^yes$/i, /^enter$/i, /^i am (over |of legal |)?(18|19|21)\+?/i,
+              /^(yes,? )?i am of (legal )?age/i, /^enter site$/i, /^continue$/i,
+            ];
+            const els = document.querySelectorAll('button, a[href], input[type="submit"]');
+            for (const el of Array.from(els)) {
+              const txt = ((el as HTMLElement).textContent || (el as HTMLInputElement).value || '').trim();
+              if (txt.length > 0 && txt.length < 60 && patterns.some(p => p.test(txt))) {
+                (el as HTMLElement).click();
+                break;
+              }
+            }
+          });
+        } catch { /* ignore */ }
       } catch { /* ignore overlay dismiss errors */ }
 
       const homeData = await extractPageData();
@@ -1735,6 +1801,139 @@ export async function executeToolCall(toolName: string, args: any, context: any)
             data: { score: Math.max(candidate.score || 0, adjustedScore) }
           });
         } catch { }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // CREATE crm_Accounts entry for every scraped company
+        // ═══════════════════════════════════════════════════════════════════
+        let crmAccountId: string | null = null;
+        try {
+          const { prismadb: mainDb } = await import("@/lib/prisma");
+          const teamId = context.teamId || null;
+
+          // De-duplicate by website domain within the same team
+          const existingCrmAccount = await (mainDb as any).crm_Accounts.findFirst({
+            where: {
+              AND: [
+                { OR: [
+                  { website: { contains: domain } },
+                  { website: { endsWith: domain } },
+                ] },
+                ...(teamId ? [{ team_id: teamId }] : []),
+              ]
+            },
+            select: { id: true }
+          });
+
+          if (existingCrmAccount) {
+            crmAccountId = existingCrmAccount.id;
+            console.log(`[SAVE_COMPANY] Reusing existing crm_Accounts entry for ${domain}: ${crmAccountId}`);
+          } else {
+            const newAccount = await (mainDb as any).crm_Accounts.create({
+              data: {
+                v: 0,
+                name: companyName,
+                website: `https://${domain}`,
+                description: description ? `${description}${industry ? `\nIndustry: ${industry}` : ''}` : undefined,
+                email: contactsWithEmails[0]?.email || null,
+                office_phone: augmentedContacts.find((c: any) => c.phone)?.phone || null,
+                status: "Active",
+                type: "Prospect",
+                ...(teamId ? { team_id: teamId } : {}),
+              }
+            });
+            crmAccountId = newAccount.id;
+            console.log(`[SAVE_COMPANY] Created new crm_Accounts entry for ${domain}: ${crmAccountId}`);
+          }
+
+          // Link the Lead Candidate to this account
+          if (crmAccountId) {
+            try {
+              await db.crm_Lead_Candidates.update({
+                where: { id: candidate.id },
+                data: { accountsIDs: crmAccountId }
+              });
+            } catch { /* non-fatal — candidate may not have accountsIDs field */ }
+          }
+
+          // ═══════════════════════════════════════════════════════════════
+          // CREATE crm_Contacts for decision-makers / identifiable POCs
+          // ═══════════════════════════════════════════════════════════════
+          if (crmAccountId) {
+            for (const contact of augmentedContacts) {
+              const cleaned = sanitizeContact({
+                name: contact.name,
+                email: contact.email,
+                phone: contact.phone,
+                title: contact.title,
+                linkedin: contact.linkedin,
+              }, { deprioritizeRoleEmails: true });
+              if (!cleaned || !cleaned.email) continue;
+
+              // Determine if this is a decision-maker / identifiable POC
+              const titleInfo = normalizeTitleAndPersona(cleaned.title);
+              const isDecisionMaker = titleInfo && (
+                titleInfo.persona === "TECH_DECISION_MAKER" ||
+                titleInfo.ladder === "C-SUITE" ||
+                titleInfo.ladder === "VP" ||
+                titleInfo.ladder === "DIRECTOR"
+              );
+              const safeName = normalizeName(cleaned.name || '') || '';
+              const hasRealName = safeName.trim().split(/\s+/).length >= 2;
+              const isIdentifiablePOC = isDecisionMaker || hasRealName;
+
+              if (!isIdentifiablePOC) continue;
+
+              // De-duplicate by email within the same team
+              const existingContact = await (mainDb as any).crm_Contacts.findFirst({
+                where: {
+                  email: cleaned.email,
+                  ...(teamId ? { team_id: teamId } : {}),
+                },
+                select: { id: true, accountsIDs: true }
+              });
+
+              if (existingContact) {
+                // Bind to account if not already bound
+                if (!existingContact.accountsIDs && crmAccountId) {
+                  try {
+                    await (mainDb as any).crm_Contacts.update({
+                      where: { id: existingContact.id },
+                      data: { assigned_accounts: { connect: { id: crmAccountId } } }
+                    });
+                  } catch { /* non-fatal */ }
+                }
+                continue;
+              }
+
+              // Split name into first/last
+              const nameParts = safeName.trim().split(/\s+/);
+              const firstName = nameParts.slice(0, -1).join(' ') || '';
+              const lastName = nameParts[nameParts.length - 1] || safeName || 'Unknown';
+
+              try {
+                await (mainDb as any).crm_Contacts.create({
+                  data: {
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: cleaned.email,
+                    office_phone: cleaned.phone || null,
+                    position: (titleInfo?.normalizedTitle ?? cleaned.title) || null,
+                    social_linkedin: cleaned.linkedin || null,
+                    type: "Prospect",
+                    description: `Scraped from ${domain} via Lead Gen AI`,
+                    assigned_accounts: { connect: { id: crmAccountId } },
+                    ...(teamId ? { assigned_team: { connect: { id: teamId } } } : {}),
+                  }
+                });
+                console.log(`[SAVE_COMPANY] Created crm_Contacts entry: ${cleaned.email} under account ${crmAccountId}`);
+              } catch (contactErr) {
+                console.warn(`[SAVE_COMPANY] Failed to create crm_Contacts for ${cleaned.email}:`, contactErr);
+              }
+            }
+          }
+        } catch (accountErr) {
+          console.warn(`[SAVE_COMPANY] crm_Accounts/Contacts creation error for ${domain}:`, accountErr);
+        }
         return {
           success: true,
           candidateId: candidate.id,
@@ -1848,7 +2047,7 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
   let contactsSaved = initialState?.contactsSaved || 0;
   let iterations = 0;
   const maxIterations = 50; // Prevent infinite loops
-  const context = { jobId, poolId, logs: [], icp, userId };
+  const context = { jobId, poolId, logs: [], icp, userId, teamId };
   let noProgressStreak = 0;
   let prevCompaniesSaved = 0;
   let prevContactsSaved = 0;

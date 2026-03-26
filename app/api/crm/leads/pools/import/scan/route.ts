@@ -11,26 +11,72 @@ import { COLS } from "@/lib/import-utils";
  */
 const CRM_FIELDS = {
   account: [
+    // ── Core ───────────────────────────────────────
     { key: "companyName", label: "Company / Account Name", required: true },
     { key: "domain", label: "Website / Domain" },
+    { key: "homepageUrl", label: "Homepage URL" },
     { key: "industry", label: "Industry / Sector" },
     { key: "description", label: "Description / Notes" },
-    { key: "homepageUrl", label: "Homepage URL" },
-    { key: "techStack", label: "Tech Stack" },
-    { key: "location", label: "Location / HQ" },
+    { key: "accountType", label: "Account Type" },
+    { key: "accountStatus", label: "Account Status" },
+    // ── Size & Financials ─────────────────────────
     { key: "employeeCount", label: "Employee Count" },
     { key: "revenue", label: "Revenue / ARR" },
+    { key: "vat", label: "VAT / Tax ID" },
+    { key: "companyId", label: "Company ID / EIN / Reg. No." },
+    // ── Communication ─────────────────────────────
+    { key: "accountEmail", label: "Account Email (General)" },
+    { key: "accountPhone", label: "Account Phone (Main)" },
+    { key: "fax", label: "Fax Number" },
+    // ── Billing Address ───────────────────────────
+    { key: "billingStreet", label: "Billing Street / Address Line" },
+    { key: "billingCity", label: "Billing City" },
+    { key: "billingState", label: "Billing State / Province" },
+    { key: "billingPostalCode", label: "Billing ZIP / Postal Code" },
+    { key: "billingCountry", label: "Billing Country" },
+    // ── Shipping Address ──────────────────────────
+    { key: "shippingStreet", label: "Shipping Street / Address Line" },
+    { key: "shippingCity", label: "Shipping City" },
+    { key: "shippingState", label: "Shipping State / Province" },
+    { key: "shippingPostalCode", label: "Shipping ZIP / Postal Code" },
+    { key: "shippingCountry", label: "Shipping Country" },
+    // ── General Location (one-column fallback) ────
+    { key: "location", label: "Location / HQ (Combined)" },
+    // ── Tech ──────────────────────────────────────
+    { key: "techStack", label: "Tech Stack" },
+    // ── Social / Web ──────────────────────────────
+    { key: "accountLinkedin", label: "Company LinkedIn" },
+    { key: "accountTwitter", label: "Company Twitter / X" },
+    { key: "accountFacebook", label: "Company Facebook" },
+    { key: "accountInstagram", label: "Company Instagram" },
   ],
   contact: [
+    // ── Name ──────────────────────────────────────
     { key: "fullName", label: "Full Name", required: true },
     { key: "firstName", label: "First Name" },
     { key: "lastName", label: "Last Name" },
+    // ── Role ──────────────────────────────────────
     { key: "title", label: "Job Title / Role" },
+    { key: "department", label: "Department" },
+    // ── Communication ─────────────────────────────
     { key: "email", label: "Email Address" },
     { key: "additionalEmails", label: "Additional Emails" },
+    { key: "personalEmail", label: "Personal Email" },
     { key: "phone", label: "Phone Number" },
     { key: "additionalPhones", label: "Additional Phones" },
+    { key: "mobilePhone", label: "Mobile Phone" },
+    { key: "officePhone", label: "Office / Direct Phone" },
+    // ── Social ────────────────────────────────────
     { key: "linkedinUrl", label: "LinkedIn URL" },
+    { key: "contactTwitter", label: "Twitter / X" },
+    { key: "contactFacebook", label: "Facebook" },
+    { key: "contactInstagram", label: "Instagram" },
+    { key: "contactSkype", label: "Skype" },
+    // ── Personal ──────────────────────────────────
+    { key: "birthday", label: "Birthday / DOB" },
+    { key: "contactWebsite", label: "Personal Website" },
+    { key: "contactDescription", label: "Contact Notes / Bio" },
+    { key: "tags", label: "Tags / Labels" },
   ],
 };
 
@@ -39,27 +85,71 @@ const CRM_FIELDS = {
  * with additional fuzzy matches.
  */
 const DETECTION_MAP: Record<string, string[]> = {
-  // Account fields
-  companyName: [...COLS.companyName, "company name", "account name", "business name", "merchant", "client", "client name", "firm", "entity"],
+  // ── Account Core ────────────────────────────────
+  companyName: [...COLS.companyName, "company name", "account name", "business name", "merchant", "client", "client name", "firm", "entity", "dba", "doing business as", "trade name"],
   domain: [...COLS.domain, "web", "company website", "company url", "company domain", "homepage"],
-  industry: [...COLS.industry, "category", "field", "niche", "market", "business type"],
-  description: [...COLS.description, "bio", "note", "info", "detail", "details"],
   homepageUrl: [...COLS.homepageUrl, "home page", "web page", "landing page"],
-  techStack: [...COLS.techStack, "tech", "tools", "software", "platform"],
-  location: ["location", "city", "state", "country", "region", "address", "hq", "headquarters", "geo", "geography"],
-  employeeCount: ["employees", "employee count", "headcount", "size", "company size", "team size", "staff"],
-  revenue: ["revenue", "arr", "annual revenue", "income", "sales volume", "annual sales"],
+  industry: [...COLS.industry, "category", "field", "niche", "market", "business type", "sic", "sic code", "naics", "naics code"],
+  description: [...COLS.description, "bio", "note", "info", "detail", "details", "company description", "account notes"],
+  accountType: ["type", "account type", "company type", "business category", "classification", "segment"],
+  accountStatus: ["account status", "status", "active", "customer status"],
+  // ── Size & Financials ───────────────────────────
+  employeeCount: ["employees", "employee count", "headcount", "size", "company size", "team size", "staff", "# employees", "num employees", "number of employees", "employee size"],
+  revenue: ["revenue", "arr", "annual revenue", "income", "sales volume", "annual sales", "turnover", "gross revenue", "total revenue"],
+  vat: ["vat", "vat number", "tax id", "tax number", "ein", "gst", "gst number", "abn", "tin"],
+  companyId: ["company id", "registration number", "reg no", "ein", "company number", "corp id", "business id", "registration", "company registration"],
+  // ── Account Communication ───────────────────────
+  accountEmail: ["company email", "account email", "general email", "main email", "office email", "corporate email", "business email"],
+  accountPhone: ["company phone", "account phone", "main phone", "office phone", "business phone", "corporate phone", "switchboard", "front desk"],
+  fax: ["fax", "fax number", "facsimile", "fax #"],
+  // ── Billing Address ─────────────────────────────
+  billingStreet: ["billing street", "billing address", "billing address line", "billing address 1", "billing addr", "bill street", "bill address", "billing line 1", "invoice address", "street address", "address 1", "address line 1", "street"],
+  billingCity: ["billing city", "bill city", "invoice city", "city"],
+  billingState: ["billing state", "billing province", "bill state", "billing region", "state", "province", "state/province", "state province", "region"],
+  billingPostalCode: ["billing zip", "billing postal code", "billing postcode", "billing zip code", "bill zip", "zip", "postal code", "postcode", "zip code", "zip/postal code"],
+  billingCountry: ["billing country", "bill country", "invoice country", "country", "nation"],
+  // ── Shipping Address ────────────────────────────
+  shippingStreet: ["shipping street", "shipping address", "shipping address 1", "shipping addr", "ship street", "ship address", "delivery address", "mailing address", "address 2", "address line 2"],
+  shippingCity: ["shipping city", "ship city", "delivery city", "mailing city"],
+  shippingState: ["shipping state", "shipping province", "ship state", "delivery state", "mailing state"],
+  shippingPostalCode: ["shipping zip", "shipping postal code", "shipping postcode", "ship zip", "delivery zip", "mailing zip"],
+  shippingCountry: ["shipping country", "ship country", "delivery country", "mailing country"],
+  // ── General Location ────────────────────────────
+  location: ["location", "hq", "headquarters", "geo", "geography", "office location", "hq location", "based in"],
+  // ── Tech ────────────────────────────────────────
+  techStack: [...COLS.techStack, "tech", "tools", "software", "platform", "crm", "erp", "marketing stack"],
+  // ── Account Social ──────────────────────────────
+  accountLinkedin: ["company linkedin", "account linkedin", "linkedin company", "linkedin page", "linkedin company url"],
+  accountTwitter: ["company twitter", "account twitter", "twitter company", "x company", "company x"],
+  accountFacebook: ["company facebook", "account facebook", "facebook page", "facebook company"],
+  accountInstagram: ["company instagram", "account instagram", "instagram company", "instagram page"],
 
-  // Contact fields
+  // ── Contact Name ────────────────────────────────
   fullName: [...COLS.fullName, "full name", "contact name", "representative", "rep", "poc", "point of contact", "decision maker"],
-  firstName: ["first name", "firstname", "first", "given name", "givenname", "fname"],
-  lastName: ["last name", "lastname", "last", "surname", "family name", "familyname", "lname"],
+  firstName: ["first name", "firstname", "first", "given name", "givenname", "fname", "f name"],
+  lastName: ["last name", "lastname", "last", "surname", "family name", "familyname", "lname", "l name"],
+  // ── Contact Role ────────────────────────────────
   title: [...COLS.title, "job title", "designation", "dept", "department", "function"],
+  department: ["department", "dept", "division", "team", "business unit", "unit", "group"],
+  // ── Contact Communication ───────────────────────
   email: [...COLS.email, "e-mail", "mail", "email address", "work email", "business email"],
   additionalEmails: [...COLS.additionalEmails, "alternate email", "personal email", "other email"],
+  personalEmail: ["personal email", "private email", "home email", "gmail", "yahoo email", "personal e-mail"],
   phone: [...COLS.phone, "tel", "telephone", "cell", "cellphone", "work phone", "contact number", "contact phone"],
-  additionalPhones: [...COLS.additionalPhones, "alternate phone", "fax", "home phone", "personal phone"],
-  linkedinUrl: [...COLS.linkedinUrl, "li url", "li profile", "linkedin"],
+  additionalPhones: [...COLS.additionalPhones, "alternate phone", "home phone", "personal phone"],
+  mobilePhone: ["mobile", "mobile phone", "cell phone", "cell", "cellphone", "mobile number", "cell number", "mobile #"],
+  officePhone: ["office phone", "direct phone", "direct line", "direct dial", "direct number", "desk phone", "extension", "ext", "work phone"],
+  // ── Contact Social ──────────────────────────────
+  linkedinUrl: [...COLS.linkedinUrl, "li url", "li profile", "linkedin", "linkedin profile url"],
+  contactTwitter: ["twitter", "twitter handle", "twitter url", "x handle", "x url", "x profile"],
+  contactFacebook: ["facebook", "facebook url", "facebook profile", "fb", "fb url"],
+  contactInstagram: ["instagram", "instagram handle", "instagram url", "ig", "ig handle"],
+  contactSkype: ["skype", "skype id", "skype name", "skype handle"],
+  // ── Contact Personal ────────────────────────────
+  birthday: ["birthday", "date of birth", "dob", "birth date", "birthdate"],
+  contactWebsite: ["personal website", "blog", "portfolio", "personal url", "personal site"],
+  contactDescription: ["contact notes", "contact bio", "contact description", "about contact", "person notes", "person bio"],
+  tags: ["tags", "labels", "categories", "keywords", "groups", "segments"],
 };
 
 type DetectedMapping = {

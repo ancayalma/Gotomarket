@@ -299,7 +299,7 @@ export default function ThemeStudioPage() {
                         Visual Studio Restricted
                     </h1>
                     <p className="text-muted-foreground max-w-lg mb-10 text-lg">
-                        Custom themes and the Visual Studio are exclusive to <strong>Individual Basic</strong> and <strong>Pro</strong> members.
+                        Custom themes and the Visual Studio are exclusive to <strong>Growth</strong> and <strong>Scale</strong> members.
                         FREE users are locked to the <span className="text-primary font-bold">Midnight Protocol</span> interface.
                     </p>
                     <div className="flex gap-4">
