@@ -193,7 +193,14 @@ export default function ListsView() {
             if (!res.ok) throw new Error(await res.text());
             const j = await res.json();
             const allLeads: any[] = Array.isArray(j?.leads) ? j.leads : [];
-            const withEmail = allLeads.filter((l: any) => !!l.email);
+            // Resolve best available email from all sources for each lead
+            const withEmail = allLeads.map((l: any) => {
+              if (l.email) return l;
+              // Fallback to account-level emails
+              const fallback = l.accountEmail || (l.accountAdditionalEmails && l.accountAdditionalEmails.length > 0 ? l.accountAdditionalEmails[0] : null);
+              if (fallback) return { ...l, email: fallback };
+              return l;
+            }).filter((l: any) => !!l.email);
             const ids = withEmail.map((l: any) => l.id);
             setWizardLeadIds(ids);
             setWizardLeadData(withEmail);

@@ -207,20 +207,23 @@ export async function POST(req: Request) {
       systemLogger.info(`[OUTREACH_SEND] Resolving ${allUnresolvedIds.length} unresolved IDs (${candidateIds.length} candidates + ${missingObjectIds.length} missing DB leads) from ${clientData.length} leadData entries`);
       for (const cid of allUnresolvedIds) {
         const match = clientData.find((ld: any) => ld.id === cid);
-        systemLogger.info(`[OUTREACH_SEND] Unresolved ID "${cid}" -> match: ${match ? `firstName="${match.firstName}", lastName="${match.lastName}", email="${match.email}"` : "NO MATCH"}`);
-        if (match && match.email) {
-          candidateLeads.push({
-            id: cid,
-            firstName: match.firstName || '',
-            lastName: match.lastName || '',
-            company: match.company || '',
-            jobTitle: match.jobTitle || '',
-            email: match.email,
-            additional_emails: (match as any).additional_emails || [],
-            assigned_to: null,
-            outreach_meeting_link: null,
-            outreach_status: 'IDLE',
-          });
+        if (match) {
+          const resolvedEmail = match.email || (match.additional_emails && match.additional_emails[0]) || null;
+          systemLogger.info(`[OUTREACH_SEND] Unresolved ID "${cid}" -> match: firstName="${match.firstName}", lastName="${match.lastName}", email="${resolvedEmail}"`);
+          if (resolvedEmail) {
+            candidateLeads.push({
+              id: cid,
+              firstName: match.firstName || '',
+              lastName: match.lastName || '',
+              company: match.company || '',
+              jobTitle: match.jobTitle || '',
+              email: resolvedEmail,
+              additional_emails: (match as any).additional_emails || [],
+              assigned_to: null,
+              outreach_meeting_link: null,
+              outreach_status: 'IDLE',
+            });
+          }
         }
       }
     }
