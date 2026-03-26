@@ -37,14 +37,52 @@ async function bufferToRows(fileName: string | undefined, buffer: Buffer): Promi
     const worksheet = workbook.getWorksheet(1);
     if (!worksheet) return [];
 
+    /**
+     * ExcelJS cell values can be complex objects:
+     * - Hyperlinks: { text: "email@example.com", hyperlink: "mailto:..." }
+     * - Rich text:  { richText: [{ text: "part1" }, { text: "part2" }] }
+     * - Formulas:   { formula: "=A1", result: "value" }
+     * - Dates:      Date objects
+     * - Errors:     { error: "#VALUE!" }
+     * - Shared strings and plain primitives
+     * 
+     * We normalize everything to a plain string or number.
+     */
+    const resolveExcelCellValue = (val: any): string | number => {
+      if (val === null || val === undefined) return "";
+      if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") return typeof val === "boolean" ? String(val) : val;
+      if (val instanceof Date) return val.toISOString();
+      if (typeof val === "object") {
+        // Hyperlink: { text: "...", hyperlink: "..." }
+        if ("text" in val && typeof val.text === "string") return val.text;
+        // Rich text: { richText: [{ text: "..." }, ...] }
+        if ("richText" in val && Array.isArray(val.richText)) {
+          return val.richText.map((part: any) => part?.text || "").join("");
+        }
+        // Formula with result: { formula: "...", result: "..." }
+        if ("result" in val) {
+          const r = val.result;
+          if (r === null || r === undefined) return "";
+          if (typeof r === "string" || typeof r === "number") return r;
+          if (r instanceof Date) return r.toISOString();
+          return String(r);
+        }
+        // Error object: { error: "#VALUE!" }
+        if ("error" in val) return "";
+        // Fallback
+        return String(val);
+      }
+      return String(val);
+    }
+
     const rows: Record<string, any>[] = [];
     const headers: string[] = [];
 
     // Get headers from first row
     const firstRow = worksheet.getRow(1);
     firstRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-      const val = cell.value;
-      headers[colNumber] = (val === null || val === undefined) ? "" : val.toString();
+      const val = resolveExcelCellValue(cell.value);
+      headers[colNumber] = val === "" ? "" : String(val);
     });
 
     // Get data rows
@@ -54,12 +92,7 @@ async function bufferToRows(fileName: string | undefined, buffer: Buffer): Promi
       row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         const header = headers[colNumber];
         if (header) {
-          let val = cell.value;
-          // Handle cases where value might be an object (like a formula result)
-          if (val && typeof val === 'object' && 'result' in (val as any)) {
-            val = (val as any).result;
-          }
-          rowData[header] = val === null || val === undefined ? "" : val;
+          rowData[header] = resolveExcelCellValue(cell.value);
         }
       });
       rows.push(rowData);
@@ -190,7 +223,7 @@ export async function POST(req: Request) {
         if (colsKey) {
           // Find the original value from the row (case-insensitive header match)
           const originalKey = Object.keys(row).find(k => k.toLowerCase() === csvHeader.toLowerCase());
-          if (originalKey && row[originalKey] !== undefined && row[originalKey] !== "") {
+          if (originalKey && row[originalKey] !== undefined && row[originalKey] !== null && row[originalKey] !== "") {
             // For additionalEmails, we may have multiple CSV columns mapped to the same CRM field
             if (crmField === "additionalEmails") {
               // Append to existing additional email values
