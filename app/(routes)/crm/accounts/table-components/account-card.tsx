@@ -8,9 +8,11 @@ import {
     CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, Calendar, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Building2, Users, Calendar, User, ExternalLink } from "lucide-react";
 import moment from "moment";
 import { Account } from "../table-data/schema";
+import { useRouter } from "next/navigation";
 
 interface AccountCardProps {
     row: Row<Account>;
@@ -19,6 +21,7 @@ interface AccountCardProps {
 
 export function AccountCard({ row, onClick }: AccountCardProps) {
     const account = row.original;
+    const router = useRouter();
 
     return (
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => onClick?.(account)}>
@@ -53,7 +56,20 @@ export function AccountCard({ row, onClick }: AccountCardProps) {
                         <span>Created {moment(account.createdAt).fromNow()}</span>
                     </div>
                 )}
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-[10px] font-bold text-primary hover:bg-primary/10 mt-2 gap-1"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/crm/accounts/${account.id}`);
+                    }}
+                >
+                    <ExternalLink className="h-3 w-3" />
+                    View Details
+                </Button>
             </CardFooter>
         </Card>
     );
 }
+

@@ -33,9 +33,10 @@ import AccountsTasksView from "./components/TasksView";
 import ContractsView from "../../components/ContractsView";
 import { LeadTimeline } from "../../leads/[leadId]/components/LeadTimeline";
 import { BasicView as LeadBasicView } from "../../leads/[leadId]/components/BasicView";
-import { History, Info, Shield, GitBranch } from "lucide-react";
+import { History, Info, Shield, GitBranch, Mail } from "lucide-react";
 import EntitlementPanel from "../components/EntitlementPanel";
 import AccountHierarchyPanel from "../components/AccountHierarchyPanel";
+import { AccountOutreachTab } from "./components/OutreachTab";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
@@ -163,6 +164,12 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
                 Activity
               </TabsTrigger>
               <TabsTrigger
+                value="outreach"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+              >
+                Outreach
+              </TabsTrigger>
+              <TabsTrigger
                 value="contacts"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
               >
@@ -225,6 +232,23 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
                 leadEmail={account?.email || ""}
                 leadName={account?.name || ""}
               />
+            </TabsContent>
+
+            <TabsContent value="outreach" className="space-y-6 animate-in fade-in-50 duration-500">
+              <LearnLink
+                tab="account-detail"
+                overviewTitle="Campaign Outreach History"
+                overviewWhat="Every outreach email, SMS, and LinkedIn message sent to contacts at this company through automated campaigns."
+                overviewWhy="Provides complete visibility into what messaging this account has received, which campaigns drove engagement, and what stage each touchpoint is at."
+                overviewHow="Expand any item to see the full email content, open/click tracking, reply sentiment, and error details. Use the stats bar to gauge overall engagement."
+              />
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-6 w-6 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 text-indigo-400">
+                  <Mail size={14} />
+                </div>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-white/40">Campaign Outreach</h3>
+              </div>
+              <AccountOutreachTab accountId={accountId} />
             </TabsContent>
 
             <TabsContent value="contacts" className="animate-in fade-in-50 duration-500">

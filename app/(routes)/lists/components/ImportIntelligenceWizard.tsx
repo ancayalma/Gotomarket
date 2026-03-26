@@ -284,37 +284,112 @@ export default function ImportIntelligenceWizard({ pools, onCommitted }: Props) 
     setSubmitting(true);
     setError(null);
 
-    const totalRecords = (preview.stats.creates.candidate + preview.stats.creates.contact +
-      preview.stats.updates.candidate + preview.stats.updates.contact) || 1;
+    const allCreateCandidates = preview.creates?.candidates || [];
+    const allCreateContacts = preview.creates?.contacts || [];
+    const allUpdateCandidates = preview.updates?.candidates || [];
+    const allUpdateContacts = preview.updates?.contacts || [];
 
-    // Animate a realistic progress counter while the backend does sequential DB writes
-    let progressCount = 0;
+    const totalRecords = allCreateCandidates.length + allCreateContacts.length +
+      allUpdateCandidates.length + allUpdateContacts.length;
+
+    const BATCH_SIZE = 200;
+
+    // Helper to chunk an array
+    const chunk = <T,>(arr: T[], size: number): T[][] => {
+      const chunks: T[][] = [];
+      for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+      return chunks;
+    };
+
+    // Build ordered batches: each batch is a subset of creates/updates
+    type BatchPayload = {
+      createCandidates: any[];
+      createContacts: any[];
+      updateCandidates: any[];
+      updateContacts: any[];
+    };
+
+    const batches: BatchPayload[] = [];
+    const ccChunks = chunk(allCreateCandidates, BATCH_SIZE);
+    const ctChunks = chunk(allCreateContacts, BATCH_SIZE);
+    const ucChunks = chunk(allUpdateCandidates, BATCH_SIZE);
+    const utChunks = chunk(allUpdateContacts, BATCH_SIZE);
+
+    const maxChunks = Math.max(ccChunks.length, ctChunks.length, ucChunks.length, utChunks.length, 1);
+    for (let i = 0; i < maxChunks; i++) {
+      batches.push({
+        createCandidates: ccChunks[i] || [],
+        createContacts: ctChunks[i] || [],
+        updateCandidates: ucChunks[i] || [],
+        updateContacts: utChunks[i] || [],
+      });
+    }
+
+    let completedRecords = 0;
     setCommitProgress(`Writing records... 0 / ${totalRecords}`);
-    const progressInterval = setInterval(() => {
-      progressCount = Math.min(progressCount + Math.ceil(totalRecords * 0.03), totalRecords - 1);
-      setCommitProgress(`Writing records... ${progressCount} / ${totalRecords}`);
-    }, 400);
+    let resolvedPoolId = preview.poolId ?? undefined;
+    let lastResult: CommitResponse | null = null;
 
     try {
-      const res = await fetch("/api/crm/leads/pools/import/commit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          poolId: preview.poolId ?? undefined,
-          poolName: preview.poolMode === "new" ? (preview.poolName || newPoolName) : undefined,
-          poolDescription: preview.poolMode === "new" ? (newPoolDescription || undefined) : undefined,
-          creates: preview.creates,
-          updates: preview.updates,
-        }),
-      });
-      clearInterval(progressInterval);
-      if (!res.ok) throw new Error(await res.text());
-      setCommitResult((await res.json()) as CommitResponse);
+      for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
+        const batch = batches[batchIdx];
+        const batchRecordCount = batch.createCandidates.length + batch.createContacts.length +
+          batch.updateCandidates.length + batch.updateContacts.length;
+
+        const payload: any = {
+          creates: { candidates: batch.createCandidates, contacts: batch.createContacts },
+          updates: { candidates: batch.updateCandidates, contacts: batch.updateContacts },
+        };
+
+        // First batch carries pool creation metadata
+        if (batchIdx === 0) {
+          if (resolvedPoolId) {
+            payload.poolId = resolvedPoolId;
+          } else {
+            payload.poolName = preview.poolMode === "new" ? (preview.poolName || newPoolName) : undefined;
+            payload.poolDescription = preview.poolMode === "new" ? (newPoolDescription || undefined) : undefined;
+          }
+        } else {
+          // Subsequent batches always use the resolved poolId
+          payload.poolId = resolvedPoolId;
+        }
+
+        const res = await fetch("/api/crm/leads/pools/import/commit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          // Handle non-JSON responses (e.g., Cloudflare 504 HTML pages)
+          const contentType = res.headers.get("content-type") || "";
+          let errorMsg = `Batch ${batchIdx + 1}/${batches.length} failed (HTTP ${res.status})`;
+          if (contentType.includes("application/json")) {
+            try { errorMsg = (await res.json()).message || errorMsg; } catch {}
+          } else {
+            const text = await res.text();
+            if (text.includes("Gateway time-out") || text.includes("504")) {
+              errorMsg = `Server timeout on batch ${batchIdx + 1}/${batches.length}. Try again — already committed records are saved.`;
+            }
+          }
+          throw new Error(errorMsg);
+        }
+
+        const result = await res.json();
+        lastResult = result;
+
+        // Capture the pool ID from the first batch for subsequent batches
+        if (result.poolId) resolvedPoolId = result.poolId;
+
+        completedRecords += batchRecordCount;
+        setCommitProgress(`Writing records... ${Math.min(completedRecords, totalRecords)} / ${totalRecords}`);
+      }
+
+      setCommitResult(lastResult as CommitResponse);
       setCommitProgress(null);
       setStep("syndication");
       if (onCommitted) onCommitted();
     } catch (e: any) {
-      clearInterval(progressInterval);
       setError(e?.message || "Failed to commit import");
       setCommitProgress(null);
     } finally {

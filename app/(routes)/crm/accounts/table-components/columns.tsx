@@ -7,7 +7,6 @@ import { Account } from "../table-data/schema";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
 import moment from "moment";
-import Link from "next/link";
 
 export const columns: ColumnDef<Account>[] = [
   {
@@ -48,13 +47,11 @@ export const columns: ColumnDef<Account>[] = [
     ),
 
     cell: ({ row }) => (
-      <Link href={`/crm/accounts/${row.original?.id}`}>
-        <div className="truncate font-medium">
-          {
-            row.getValue("name") as string
-          }
-        </div>
-      </Link>
+      <div className="truncate font-medium">
+        {
+          row.getValue("name") as string
+        }
+      </div>
     ),
     enableSorting: true,
     enableHiding: true,

@@ -249,21 +249,72 @@ export default function ImportLeadsDialog({ pools, onCommitted }: Props) {
     setSubmitting(true);
     setError(null);
 
+    const allCreateCandidates = preview.creates?.candidates || [];
+    const allCreateContacts = preview.creates?.contacts || [];
+    const allUpdateCandidates = preview.updates?.candidates || [];
+    const allUpdateContacts = preview.updates?.contacts || [];
+
+    const BATCH_SIZE = 200;
+
+    const chunk = <T,>(arr: T[], size: number): T[][] => {
+      const chunks: T[][] = [];
+      for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+      return chunks;
+    };
+
+    const ccChunks = chunk(allCreateCandidates, BATCH_SIZE);
+    const ctChunks = chunk(allCreateContacts, BATCH_SIZE);
+    const ucChunks = chunk(allUpdateCandidates, BATCH_SIZE);
+    const utChunks = chunk(allUpdateContacts, BATCH_SIZE);
+
+    const maxChunks = Math.max(ccChunks.length, ctChunks.length, ucChunks.length, utChunks.length, 1);
+    let resolvedPoolId = preview.poolId ?? undefined;
+    let lastResult: CommitResponse | null = null;
+
     try {
-      const res = await fetch("/api/crm/leads/pools/import/commit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          poolId: preview.poolId ?? undefined,
-          poolName: preview.poolMode === "new" ? (preview.poolName || newPoolName) : undefined,
-          poolDescription: preview.poolMode === "new" ? (newPoolDescription || undefined) : undefined,
-          creates: preview.creates,
-          updates: preview.updates,
-        }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = (await res.json()) as CommitResponse;
-      setCommitResult(data);
+      for (let i = 0; i < maxChunks; i++) {
+        const payload: any = {
+          creates: { candidates: ccChunks[i] || [], contacts: ctChunks[i] || [] },
+          updates: { candidates: ucChunks[i] || [], contacts: utChunks[i] || [] },
+        };
+
+        if (i === 0) {
+          if (resolvedPoolId) {
+            payload.poolId = resolvedPoolId;
+          } else {
+            payload.poolName = preview.poolMode === "new" ? (preview.poolName || newPoolName) : undefined;
+            payload.poolDescription = preview.poolMode === "new" ? (newPoolDescription || undefined) : undefined;
+          }
+        } else {
+          payload.poolId = resolvedPoolId;
+        }
+
+        const res = await fetch("/api/crm/leads/pools/import/commit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const contentType = res.headers.get("content-type") || "";
+          let errorMsg = `Batch ${i + 1}/${maxChunks} failed (HTTP ${res.status})`;
+          if (contentType.includes("application/json")) {
+            try { errorMsg = (await res.json()).message || errorMsg; } catch {}
+          } else {
+            const text = await res.text();
+            if (text.includes("Gateway time-out") || text.includes("504")) {
+              errorMsg = `Server timeout on batch ${i + 1}/${maxChunks}. Try again — already committed records are saved.`;
+            }
+          }
+          throw new Error(errorMsg);
+        }
+
+        const result = await res.json();
+        lastResult = result;
+        if (result.poolId) resolvedPoolId = result.poolId;
+      }
+
+      setCommitResult(lastResult as CommitResponse);
       setStep("complete");
       if (onCommitted) onCommitted();
     } catch (e: any) {

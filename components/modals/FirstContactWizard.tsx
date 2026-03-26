@@ -1,7 +1,7 @@
 "use client";
 import { useSignedUrl } from "@/hooks/use-signed-url";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -505,6 +505,27 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
     if (!isOpen || !selectedBrandId) return;
     loadResources(selectedBrandId);
   }, [selectedBrandId]);
+
+  // Track whether resources have been loaded from the API (skip auto-save on initial hydration)
+  const resourcesLoaded = useRef(false);
+
+  // Auto-save resources on change (debounced)
+  useEffect(() => {
+    if (!resourcesLoaded.current) {
+      // First time resources are set from loadResources() — skip auto-save
+      if (resources.length > 0) resourcesLoaded.current = true;
+      return;
+    }
+    const timer = setTimeout(() => {
+      // Fire-and-forget save
+      fetch(resourcesApiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resourceLinks: resources }),
+      }).catch(() => {});
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [resources, resourcesApiUrl]);
 
   // When brand selection changes, rebuild the default prompt using selected brand
 

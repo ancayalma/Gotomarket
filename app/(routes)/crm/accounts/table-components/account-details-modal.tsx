@@ -1,8 +1,12 @@
+"use client";
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Account } from "../table-data/schema";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Mail, Building2, ExternalLink } from "lucide-react";
 import moment from "moment";
+import { useRouter } from "next/navigation";
 
 interface Props {
   account: Account | null;
@@ -10,6 +14,7 @@ interface Props {
 }
 
 export function AccountDetailsModal({ account, onClose }: Props) {
+  const router = useRouter();
   if (!account) return null;
 
   const additionalEmails = account.additional_emails || [];
@@ -23,7 +28,7 @@ export function AccountDetailsModal({ account, onClose }: Props) {
               <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
                 <Building2 className="w-6 h-6" />
               </div>
-              <div>
+              <div className="flex-1">
                 <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400 tracking-tight">
                   {account.name}
                 </DialogTitle>
@@ -31,6 +36,17 @@ export function AccountDetailsModal({ account, onClose }: Props) {
                   Complete account details and intelligence.
                 </DialogDescription>
               </div>
+              <Button
+                size="sm"
+                className="gap-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white border border-primary/20 transition-colors"
+                onClick={() => {
+                  onClose();
+                  router.push(`/crm/accounts/${account.id}`);
+                }}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                View Details
+              </Button>
             </div>
           </DialogHeader>
 
