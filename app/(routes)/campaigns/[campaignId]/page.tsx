@@ -266,7 +266,12 @@ export default function CampaignDetailPage() {
             }).filter((l: any) => !!l.email);
 
             // Filter out leads already in campaign
-            const existingIds = new Set((campaign.outreach_items || []).map((i: any) => i.lead));
+            // Outreach items could be linked via `lead` (for crm_Leads) or `account_id` (for crm_Accounts)
+            const existingIds = new Set(
+                (campaign.outreach_items || [])
+                    .flatMap((i: any) => [i.lead, i.account_id])
+                    .filter(Boolean)
+            );
             const missingLeads = validLeads.filter((l: any) => !existingIds.has(l.id));
 
             if (missingLeads.length === 0) {

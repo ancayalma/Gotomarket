@@ -49,6 +49,8 @@ export async function GET(
                         status: true,
                         channel: true,
                         auto_reply_count: true,
+                        lead: true,
+                        account_id: true,
                     },
                 },
             },
