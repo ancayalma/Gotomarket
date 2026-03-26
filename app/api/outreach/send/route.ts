@@ -349,7 +349,26 @@ export async function POST(req: Request) {
 
     const ensuredPipelineIds = new Map<string, any>();
 
+    let recipientIndex = 0;
+
     for (const recipient of recipients) {
+      // ── Cancellation Checkpoint ──────────────────────────────────────────
+      // Every 10 recipients, re-check campaign status to allow mid-send cancellation
+      if (campaignId && recipientIndex > 0 && recipientIndex % 10 === 0) {
+        try {
+          const freshCampaign = await prismadb.crm_Outreach_Campaigns.findUnique({
+            where: { id: campaignId },
+            select: { status: true },
+          });
+          if (freshCampaign && freshCampaign.status !== "ACTIVE") {
+            systemLogger.info(`[OUTREACH_SEND] ⛔ Campaign ${campaignId} status is ${freshCampaign.status} — stopping send at ${recipientIndex}/${recipients.length}`);
+            results.push({ leadId: "SYSTEM", status: "skipped", reason: `Campaign stopped (status: ${freshCampaign.status}). Processed ${recipientIndex}/${recipients.length} recipients.` });
+            break;
+          }
+        } catch { /* non-fatal — continue sending */ }
+      }
+      recipientIndex++;
+
       const lead = recipient;
       const targetEmail = recipient.targetEmail;
 

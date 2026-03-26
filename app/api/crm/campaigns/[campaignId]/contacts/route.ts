@@ -71,6 +71,17 @@ export async function GET(_req: Request, { params }: Params) {
       .map((i: any) => i.account_id)
       .filter(Boolean) as string[];
 
+    // Fetch account names for items without candidate_name
+    const accounts = accountIds.length > 0
+      ? await prismadb.crm_Accounts.findMany({
+          where: { id: { in: accountIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const accountNameById = new Map(
+      accounts.map((a: any) => [a.id, a.name])
+    );
+
     const actions =
       contactIds.length > 0 || accountIds.length > 0
         ? await prismadb.crm_Agentic_Actions.findMany({
@@ -109,6 +120,7 @@ export async function GET(_req: Request, { params }: Params) {
     // Combine data
     const items = outreachItems.map((item: any) => ({
       ...item,
+      account_name: item.account_id ? accountNameById.get(item.account_id) || null : null,
       opportunity: item.lead ? oppByLead.get(item.lead) || null : null,
       pendingActions:
         actionsByContact.get(item.contact_id || "") ||
