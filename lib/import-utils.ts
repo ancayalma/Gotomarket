@@ -120,6 +120,8 @@ export const COLS = {
 };
 
 function lc(s: any): string {
+    if (s === null || s === undefined) return "";
+    if (typeof s === "number") return String(s);
     return typeof s === "string" ? s.trim() : "";
 }
 
@@ -271,8 +273,9 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
     for (const rk of Object.keys(row)) {
         const lk = rk.toLowerCase();
         if (emailSynonyms.includes(lk) || lk.includes("email")) {
-            const val = row[rk];
-            if (val && typeof val === "string") {
+            const rawVal = row[rk];
+            if (rawVal !== null && rawVal !== undefined && rawVal !== "") {
+                const val = String(rawVal).trim();
                 if (!usedCols.includes(lk)) usedCols.push(lk);
                 val.split(/[;,|]/).forEach((e: string) => {
                     const trimmed = e.trim().toLowerCase();
@@ -410,7 +413,7 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
         const lk = rk.toLowerCase();
         if (phoneSynonyms.includes(lk)) {
             const val = row[rk];
-            if (val) {
+            if (val !== null && val !== undefined && val !== "") {
                 if (!usedCols.includes(lk)) usedCols.push(lk);
                 allPhonesFound.add(String(val).trim());
             }
