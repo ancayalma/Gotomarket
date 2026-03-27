@@ -257,13 +257,35 @@ export default function CampaignDetailPage() {
             const activeCandidates = Array.isArray(poolData?.candidates) ? poolData.candidates : [];
             const allLeads = [...poolLeads, ...activeCandidates];
 
-            // Resolve emails logic matching the wizard
-            const validLeads = allLeads.map((l: any) => {
-                if (l.email) return l;
-                const fallback = l.accountEmail || (l.accountAdditionalEmails && l.accountAdditionalEmails.length > 0 ? l.accountAdditionalEmails[0] : null);
-                if (fallback) return { ...l, email: fallback };
-                return l;
-            }).filter((l: any) => !!l.email);
+            // Resolve emails strictly matching the FirstContactWizard structure
+            const validLeads = allLeads.map((pl: any) => {
+                // If it's a raw Candidate, it has email directly
+                if (pl.email) return pl;
+
+                // Otherwise, it's a Pool Lead with contact/account relations
+                const contact = pl.contact;
+                const acct = pl.account;
+                
+                if (contact) {
+                    return {
+                        id: contact.id, // This matches i.lead in tracking
+                        firstName: contact.firstName,
+                        lastName: contact.lastName,
+                        company: acct?.name,
+                        jobTitle: contact.jobTitle,
+                        email: contact.email,
+                    };
+                } else if (acct) {
+                    const fallback = acct.email || (acct.additional_emails && acct.additional_emails.length > 0 ? acct.additional_emails[0] : null);
+                    return {
+                        id: acct.id, // This matches i.account_id in tracking
+                        company: acct.name,
+                        email: fallback,
+                        additional_emails: acct.additional_emails || [],
+                    };
+                }
+                return null;
+            }).filter((l: any) => l && !!l.email);
 
             // Filter out leads already in campaign
             // Outreach items could be linked via `lead` (for crm_Leads) or `account_id` (for crm_Accounts)
