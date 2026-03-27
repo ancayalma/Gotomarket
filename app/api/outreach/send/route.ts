@@ -362,8 +362,25 @@ export async function POST(req: Request) {
     }> = [];
 
     const ensuredPipelineIds = new Map<string, any>();
-
     let recipientIndex = 0;
+
+    // ── Pre-fetch Global Deduplication Set for the Campaign ──
+    const existingCampaignRecipientIds = new Set<string>();
+    if (campaignId && !testMode) {
+      try {
+        const trackedItems = await prismadb.crm_Outreach_Items.findMany({
+          where: { campaign: campaignId },
+          select: { lead: true, account_id: true }
+        });
+        for (const item of trackedItems) {
+          if (item.lead) existingCampaignRecipientIds.add(item.lead);
+          if (item.account_id) existingCampaignRecipientIds.add(item.account_id);
+        }
+        systemLogger.info(`[OUTREACH_SEND] Pre-loaded deduplication set for Campaign ${campaignId}: ${existingCampaignRecipientIds.size} protected entities.`);
+      } catch (err: any) {
+        systemLogger.error(`[OUTREACH_SEND] Failed to load campaign deduplication history: ${err.message}`);
+      }
+    }
 
     for (const recipient of recipients) {
       // ── Cancellation Checkpoint ──────────────────────────────────────────
@@ -385,6 +402,16 @@ export async function POST(req: Request) {
 
       const lead = recipient;
       const targetEmail = recipient.targetEmail;
+
+      // ─── Absolute Backend Deduplication ──────────────────────────────────
+      // Block 2: Reject if the Database confirms we already tracked an outreach item for this entity
+      // in this specific Campaign. (The ultimate failsafe against UI payload bugs)
+      if (campaignId && existingCampaignRecipientIds.has(lead.id)) {
+        systemLogger.info(`[OUTREACH_SEND] Target ${targetEmail} skipped: Lead ${lead.id} already exists in Campaign ${campaignId}.`);
+        results.push({ leadId: lead.id, status: "skipped", reason: `Deduplicated: Lead already tracked in campaign history.` });
+        continue;
+      }
+
 
       // Basic validation
       let toEmails: string[] = [targetEmail];
