@@ -201,6 +201,17 @@ export async function POST(req: Request) {
     // Also check for valid ObjectIDs that weren't found in crm_Leads (e.g. pool/account entries)
     const foundDbIds = new Set(dbLeads.map((l: any) => l.id));
     const missingObjectIds = validObjectIds.filter(id => !foundDbIds.has(id));
+    
+    // Check which of the missingObjectIds are actually crm_Accounts
+    let foundAccountIds = new Set<string>();
+    if (missingObjectIds.length > 0) {
+      const dbAccounts = await prismadb.crm_Accounts.findMany({
+        where: { id: { in: missingObjectIds } },
+        select: { id: true },
+      });
+      foundAccountIds = new Set(dbAccounts.map((a: any) => a.id));
+    }
+
     const allUnresolvedIds = [...candidateIds, ...missingObjectIds];
 
     if (allUnresolvedIds.length > 0 && Array.isArray(clientData) && clientData.length > 0) {
@@ -679,7 +690,9 @@ export async function POST(req: Request) {
           }
 
           // ─── Pipeline provisioning for pool candidates ─────────────────
-          const isRealLead = /^[a-f0-9]{24}$/i.test(lead.id);
+          // Flawed regex originally passed Candidates because they are 24-hex MongoDB IDs. 
+          // We now rigorously verify using the actual database sets computed above.
+          const isRealLead = foundDbIds.has(lead.id) || foundAccountIds.has(lead.id);
           let pipelineResult: any = null;
 
           if (!isRealLead && !testMode) {
