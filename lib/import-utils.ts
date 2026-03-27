@@ -267,11 +267,16 @@ export function normalizeRow(row: Record<string, any>): { candidate?: CandidateN
     const accountInstagram = lc(getFromRow(row, COLS.accountInstagram));
     if (accountInstagram) usedCols.push("accountInstagram");
 
-    // Gather all emails in the row
+    // Gather all emails in the row (CONTACT-facing only)
+    // Account-level email columns are excluded — they are stored on the candidate
+    // via the accountEmail field and must NOT generate contact records.
     const allEmailsFound = new Set<string>();
-    const emailSynonyms = [...COLS.email, ...COLS.additionalEmails];
+    const accountEmailSynonyms = new Set(COLS.accountEmail.map(s => s.toLowerCase()));
+    const emailSynonyms = [...COLS.email, ...COLS.additionalEmails, ...COLS.personalEmail];
     for (const rk of Object.keys(row)) {
         const lk = rk.toLowerCase();
+        // Skip account-level email columns — they belong to the organization, not a person
+        if (accountEmailSynonyms.has(lk)) continue;
         if (emailSynonyms.includes(lk) || lk.includes("email")) {
             const rawVal = row[rk];
             if (rawVal !== null && rawVal !== undefined && rawVal !== "") {

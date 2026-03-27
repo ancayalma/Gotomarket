@@ -5,9 +5,10 @@ import { useSalesCommand } from "./SalesCommandProvider";
 import { UnifiedMetricCard } from "./UnifiedMetricCard";
 import MyCommandView from "./MyCommandView";
 import TeamCommandView from "./TeamCommandView";
+import { motion } from "framer-motion";
+import { Radio, RefreshCw, Shield } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import Container from "../../../components/ui/Container"; // Adjust path if needed
 import { EnhancedDateFilter } from "@/components/date-filter/EnhancedDateFilter";
 
 export default function SalesCommandDashboard() {
@@ -28,24 +29,56 @@ export default function SalesCommandDashboard() {
     const { summary, userData } = data;
 
     return (
-        <Container
-            title="Unified Sales Command"
-            description="Centralized control for pipeline, tasks, and team analytics."
-            action={
-                <EnhancedDateFilter
-                    onFilterChange={setDateRange}
-                    storageKey="crm-sales-command-date-filter"
-                    initialType="monthly"
-                />
-            }
-        >
-            <div className="space-y-8">
+        <div className="relative min-h-screen">
+            {/* Ambient background effects */}
+            <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+                <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px]" />
+                <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-violet-500/5 rounded-full blur-[100px]" />
+            </div>
 
-                {/* Global Stats Header (Sticky-ish feel) */}
+            <div className="relative z-10 space-y-6 p-6 md:p-8">
+
+                {/* ═══ HERO HEADER ═══ */}
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    className="flex flex-col md:flex-row md:items-end justify-between gap-4"
+                >
+                    <div className="flex items-start gap-4">
+                        <div className="relative">
+                            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center shadow-lg shadow-primary/10">
+                                <Radio className="h-6 w-6 text-primary" />
+                            </div>
+                            {/* Live pulse */}
+                            <div className="absolute -top-0.5 -right-0.5 h-3 w-3">
+                                <div className="absolute inset-0 bg-emerald-400 rounded-full animate-ping opacity-40" />
+                                <div className="absolute inset-0.5 bg-emerald-400 rounded-full" />
+                            </div>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-white via-white/90 to-white/60 bg-clip-text text-transparent">
+                                Sales Command
+                            </h1>
+                            <p className="text-sm text-white/30 font-medium mt-0.5">
+                                {isMember ? "Personal mission control" : "Centralized pipeline & team analytics"}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <EnhancedDateFilter
+                            onFilterChange={setDateRange}
+                            storageKey="crm-sales-command-date-filter"
+                            initialType="monthly"
+                        />
+                    </div>
+                </motion.div>
+
+                {/* ═══ METRICS ROW ═══ */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <UnifiedMetricCard
                         title={isMember ? "My Revenue" : "Total Revenue"}
-                        // Fallback to 0 if member specific revenue not available in summary/userData yet
                         value={isMember ? "$0" : summary.revenue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
                         subtitle={isMember ? "Your closed revenue" : "From active opportunities"}
                         iconName="DollarSign"
@@ -80,63 +113,73 @@ export default function SalesCommandDashboard() {
                     />
                 </div>
 
-                {/* View Controller */}
-                <div className="flex items-center justify-between border-b pb-4">
-                    <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg">
-                        <button
-                            onClick={() => setViewMode("team")}
-                            className={cn(
-                                "px-4 py-2 text-sm font-medium rounded-md transition-colors",
-                                viewMode === "team"
-                                    ? "bg-background shadow-sm text-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            Team Dashboard
-                        </button>
+                {/* ═══ VIEW CONTROLLER ═══ */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="flex items-center justify-between border-b border-white/5 pb-4"
+                >
+                    <div className="flex items-center gap-0.5 bg-white/[0.03] backdrop-blur-xl p-1 rounded-xl border border-white/[0.06]">
+                        {!isMember && (
+                            <button
+                                onClick={() => setViewMode("team")}
+                                className={cn(
+                                    "relative px-5 py-2 text-sm font-bold rounded-lg transition-all duration-300",
+                                    viewMode === "team"
+                                        ? "bg-white/10 text-white shadow-lg shadow-black/20 border border-white/10"
+                                        : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
+                                )}
+                            >
+                                Team Dashboard
+                            </button>
+                        )}
                         <button
                             onClick={() => setViewMode("personal")}
                             className={cn(
-                                "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                                "relative px-5 py-2 text-sm font-bold rounded-lg transition-all duration-300",
                                 viewMode === "personal"
-                                    ? "bg-background shadow-sm text-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
+                                    ? "bg-white/10 text-white shadow-lg shadow-black/20 border border-white/10"
+                                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
                             )}
                         >
-                            {/* Dynamic Title if drilling down */}
                             {selectedUserData && selectedUserData.meta.userName !== "Me"
                                 ? `${selectedUserData.meta.userName}'s Dashboard`
                                 : "My Dashboard"}
                         </button>
-
                     </div>
 
-                    <div className="hidden md:flex items-center gap-2">
+                    <div className="hidden md:flex items-center gap-3">
                         {isRefreshing && (
-                            <div className="flex items-center gap-2 mr-2">
-                                <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                <span className="text-xs text-muted-foreground">Refreshing...</span>
+                            <div className="flex items-center gap-2">
+                                <RefreshCw className="h-3.5 w-3.5 text-primary animate-spin" />
+                                <span className="text-[11px] text-white/30 font-medium">Syncing...</span>
                             </div>
                         )}
-                        <span className="text-xs text-muted-foreground">
-                            Last active: {new Date(data.meta.serverTime).toLocaleTimeString()}
+                        <span className="text-[11px] text-white/20 font-mono tabular-nums">
+                            {new Date(data.meta.serverTime).toLocaleTimeString()}
                         </span>
                         {isManager && (
-                            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded border border-primary/20">
-                                Admin Access
+                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2.5 py-1 rounded-lg border border-primary/20">
+                                <Shield className="h-3 w-3" />
+                                Admin
                             </span>
                         )}
                     </div>
-                </div>
+                </motion.div>
 
-                {/* Dynamic View Content */}
-                <div className="min-h-[500px]">
+                {/* ═══ DYNAMIC VIEW ═══ */}
+                <motion.div
+                    key={viewMode}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    className="min-h-[500px]"
+                >
                     {viewMode === "personal" && <MyCommandView />}
                     {viewMode === "team" && <TeamCommandView />}
-
-                </div>
-
+                </motion.div>
             </div>
-        </Container>
+        </div>
     );
 }

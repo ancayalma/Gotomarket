@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, Zap, Flame, Medal, Target, TrendingUp, Crown } from "lucide-react";
+import { Trophy, Zap, Flame, Medal, Target, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface QuestLeaderEntry {
@@ -27,9 +27,15 @@ const BADGE_ICONS: Record<string, { icon: any; color: string }> = {
 };
 
 const RANK_STYLES: Record<number, string> = {
-    1: "ring-1 ring-amber-400/50 bg-gradient-to-br from-amber-500/10 to-yellow-500/5",
-    2: "ring-1 ring-zinc-300/30 bg-gradient-to-br from-zinc-500/10 to-zinc-400/5",
-    3: "ring-1 ring-amber-700/30 bg-gradient-to-br from-amber-800/10 to-amber-700/5",
+    1: "border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-transparent to-transparent shadow-amber-500/5",
+    2: "border-zinc-400/15 bg-gradient-to-r from-zinc-400/8 via-transparent to-transparent",
+    3: "border-amber-700/15 bg-gradient-to-r from-amber-700/8 via-transparent to-transparent",
+};
+
+const RANK_BADGE: Record<number, string> = {
+    1: "bg-gradient-to-br from-amber-400 to-yellow-600 text-black shadow-lg shadow-amber-500/30",
+    2: "bg-gradient-to-br from-zinc-300 to-zinc-500 text-black",
+    3: "bg-gradient-to-br from-amber-600 to-amber-800 text-amber-100",
 };
 
 export default function QuestLeaderboardWidget() {
@@ -53,14 +59,17 @@ export default function QuestLeaderboardWidget() {
 
     if (isLoading) {
         return (
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                    <Trophy className="w-5 h-5 text-amber-400" />
-                    <h2 className="text-lg font-semibold">Quest Leaderboard</h2>
+            <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.04] to-transparent backdrop-blur-xl p-5 shadow-2xl">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+                <div className="flex items-center gap-2.5 mb-4">
+                    <div className="h-8 w-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                        <Trophy className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <h2 className="text-lg font-black tracking-tight text-white/90">Quest Leaderboard</h2>
                 </div>
                 <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-16 rounded-lg bg-muted/30 animate-pulse" />
+                        <div key={i} className="h-16 rounded-xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
                     ))}
                 </div>
             </div>
@@ -69,12 +78,15 @@ export default function QuestLeaderboardWidget() {
 
     if (!data || data.leaderboard.length === 0) {
         return (
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                    <Trophy className="w-5 h-5 text-amber-400" />
-                    <h2 className="text-lg font-semibold">Quest Leaderboard</h2>
+            <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.04] to-transparent backdrop-blur-xl p-5 shadow-2xl">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+                <div className="flex items-center gap-2.5 mb-4">
+                    <div className="h-8 w-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                        <Trophy className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <h2 className="text-lg font-black tracking-tight text-white/90">Quest Leaderboard</h2>
                 </div>
-                <div className="text-sm text-muted-foreground text-center py-8">
+                <div className="text-sm text-white/25 text-center py-10 font-medium">
                     No quest activity yet. Complete quests to appear on the leaderboard.
                 </div>
             </div>
@@ -82,13 +94,18 @@ export default function QuestLeaderboardWidget() {
     }
 
     return (
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-amber-400" />
-                    <h2 className="text-lg font-semibold">Quest Leaderboard</h2>
+        <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.04] to-transparent backdrop-blur-xl p-5 shadow-2xl">
+            {/* Accent glow */}
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+
+            <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                        <Trophy className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <h2 className="text-lg font-black tracking-tight text-white/90">Quest Leaderboard</h2>
                 </div>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[11px] font-bold text-white/25 uppercase tracking-wider">
                     {data.totalActiveQuests} active quest{data.totalActiveQuests !== 1 ? "s" : ""}
                 </span>
             </div>
@@ -101,25 +118,22 @@ export default function QuestLeaderboardWidget() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.05 }}
                         className={cn(
-                            "p-3 rounded-lg border bg-background transition-colors",
+                            "p-3.5 rounded-xl border border-white/[0.04] bg-white/[0.02] transition-all duration-200 hover:bg-white/[0.04]",
                             RANK_STYLES[entry.rank] || ""
                         )}
                     >
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                {/* Rank */}
+                                {/* Rank badge */}
                                 <div className={cn(
-                                    "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                                    entry.rank === 1 && "bg-amber-500/20 text-amber-400",
-                                    entry.rank === 2 && "bg-zinc-400/20 text-zinc-300",
-                                    entry.rank === 3 && "bg-amber-700/20 text-amber-600",
-                                    entry.rank > 3 && "bg-muted/50 text-muted-foreground"
+                                    "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black",
+                                    RANK_BADGE[entry.rank] || "bg-white/[0.04] text-white/30"
                                 )}>
                                     {entry.rank}
                                 </div>
 
                                 {/* Avatar */}
-                                <div className="relative h-8 w-8 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                                <div className="relative h-9 w-9 rounded-xl overflow-hidden border border-white/[0.06]">
                                     <img
                                         src={entry.avatar || "/images/nouser.png"}
                                         alt={entry.name}
@@ -129,8 +143,8 @@ export default function QuestLeaderboardWidget() {
 
                                 {/* Info */}
                                 <div>
-                                    <div className="text-sm font-medium">{entry.name}</div>
-                                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                    <div className="text-sm font-bold text-white/80">{entry.name}</div>
+                                    <div className="text-[11px] text-white/25 flex items-center gap-2">
                                         <span className="flex items-center gap-0.5">
                                             <Trophy className="w-3 h-3 text-emerald-400" />
                                             {entry.questsCompleted} done
@@ -147,17 +161,17 @@ export default function QuestLeaderboardWidget() {
 
                             {/* QP */}
                             <div className="text-right">
-                                <div className="text-xl font-bold tabular-nums flex items-center gap-1">
+                                <div className="text-xl font-black tabular-nums flex items-center gap-1 text-white/80">
                                     <Zap className="w-4 h-4 text-amber-400" />
                                     {entry.questPoints.toLocaleString()}
                                 </div>
-                                <div className="text-[10px] text-muted-foreground">QP</div>
+                                <div className="text-[9px] text-white/20 font-bold uppercase tracking-wider">QP</div>
                             </div>
                         </div>
 
                         {/* Badges */}
                         {entry.badges.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
+                            <div className="mt-2.5 flex flex-wrap gap-1">
                                 {entry.badges.map((badgeId) => {
                                     const badge = BADGE_ICONS[badgeId];
                                     if (!badge) return null;
@@ -166,7 +180,7 @@ export default function QuestLeaderboardWidget() {
                                         <span
                                             key={badgeId}
                                             className={cn(
-                                                "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium border bg-muted/40",
+                                                "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider border border-white/[0.06] bg-white/[0.03]",
                                                 badge.color
                                             )}
                                         >

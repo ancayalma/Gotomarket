@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import { WidgetWrapper } from "./WidgetWrapper";
-import { MessageSquare, CalendarIcon, ArrowRight, User, FileText, SendHorizontal, Check } from "lucide-react";
+import { MessageSquare, CalendarIcon, ArrowRight, User, FileText, SendHorizontal, Check, Mail } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -144,9 +144,15 @@ export const MessagesWidget = ({ messages: initialMessages }: MessagesWidgetProp
                                         </span>
                                     </div>
 
-                                    <div className="ml-auto">
+                                    <div className="ml-auto flex items-center gap-1">
                                         {item.type === 'form' && (
                                             <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-border bg-muted/50 text-muted-foreground font-black uppercase tracking-tighter">Form Entry</Badge>
+                                        )}
+                                        {item.type === 'email' && (
+                                            <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-cyan-500/30 bg-cyan-500/10 text-cyan-400 font-black uppercase tracking-tighter">
+                                                <Mail size={8} className="mr-0.5" />
+                                                Inbound
+                                            </Badge>
                                         )}
                                     </div>
                                 </div>

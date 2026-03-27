@@ -5,9 +5,226 @@ import { prismadbChat } from "@/lib/prisma-chat";
 import { prismadb } from "@/lib/prisma";
 const db: any = prismadbChat;
 import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
-import { streamText } from "ai";
+import { streamText, tool } from "ai";
+import { z } from "zod";
 import { systemLogger } from "@/lib/logger";
 import { checkTeamQuota } from "@/lib/quota-service";
+
+// ═══════════════════════════════════════════════════════════════════
+// CRM Query Tools — Let Varuni directly query team-scoped CRM data
+// ═══════════════════════════════════════════════════════════════════
+
+function buildCrmTools(teamId: string, userId: string) {
+    return {
+        query_leads: tool({
+            description: "Search and filter CRM leads. Returns up to 25 leads matching the criteria. Use this to answer questions about lead counts, statuses, pipeline stages, and outreach progress.",
+            parameters: z.object({
+                search: z.string().optional().describe("Free text search across name, email, company"),
+                status: z.enum(["NEW", "CONTACTED", "QUALIFIED", "LOST"]).optional().describe("Lead status filter"),
+                pipeline_stage: z.enum(["Identify", "Engage_AI", "Engage_Human", "Offering", "Finalizing", "Closed"]).optional().describe("Pipeline stage filter"),
+                outreach_status: z.enum(["IDLE", "PENDING", "SENT", "OPENED", "MEETING_LINK_CLICKED", "MEETING_BOOKED", "CLOSED"]).optional().describe("Outreach status filter"),
+                assigned_to: z.string().optional().describe("User ID of the lead owner"),
+                limit: z.number().min(1).max(50).optional().describe("Max results (default 25)"),
+            }),
+            execute: async ({ search, status, pipeline_stage, outreach_status, assigned_to, limit }) => {
+                const where: any = { team_id: teamId };
+                if (status) where.status = status;
+                if (pipeline_stage) where.pipeline_stage = pipeline_stage;
+                if (outreach_status) where.outreach_status = outreach_status;
+                if (assigned_to) where.assigned_to = assigned_to;
+                if (search) {
+                    where.OR = [
+                        { firstName: { contains: search, mode: "insensitive" } },
+                        { lastName: { contains: search, mode: "insensitive" } },
+                        { email: { contains: search, mode: "insensitive" } },
+                        { company: { contains: search, mode: "insensitive" } },
+                    ];
+                }
+                const leads = await prismadb.crm_Leads.findMany({
+                    where,
+                    take: limit || 25,
+                    orderBy: { createdAt: "desc" },
+                    select: {
+                        id: true, firstName: true, lastName: true, email: true, company: true,
+                        status: true, pipeline_stage: true, outreach_status: true, jobTitle: true,
+                        lead_source: true, createdAt: true, assigned_to: true,
+                    }
+                });
+                const total = await prismadb.crm_Leads.count({ where: { team_id: teamId, ...(status ? { status } : {}), ...(pipeline_stage ? { pipeline_stage } : {}) } });
+                return { results: leads, count: leads.length, totalMatching: total };
+            },
+        }),
+
+        query_accounts: tool({
+            description: "Search CRM accounts (companies/organizations). Returns up to 25 accounts matching the criteria.",
+            parameters: z.object({
+                search: z.string().optional().describe("Search by company name, email, or industry"),
+                status: z.enum(["Active", "Inactive"]).optional(),
+                type: z.string().optional().describe("Account type: Customer, Partner, Vendor, Prospect"),
+                limit: z.number().min(1).max(50).optional(),
+            }),
+            execute: async ({ search, status, type, limit }) => {
+                const where: any = { team_id: teamId };
+                if (status) where.status = status;
+                if (type) where.type = type;
+                if (search) {
+                    where.OR = [
+                        { name: { contains: search, mode: "insensitive" } },
+                        { email: { contains: search, mode: "insensitive" } },
+                    ];
+                }
+                const accounts = await prismadb.crm_Accounts.findMany({
+                    where,
+                    take: limit || 25,
+                    orderBy: { createdAt: "desc" },
+                    select: {
+                        id: true, name: true, email: true, website: true,
+                        industry: true, annual_revenue: true, employees: true,
+                        type: true, status: true, city: true, country: true, createdAt: true,
+                    }
+                });
+                const total = await prismadb.crm_Accounts.count({ where: { team_id: teamId } });
+                return { results: accounts, count: accounts.length, totalAccounts: total };
+            },
+        }),
+
+        query_contacts: tool({
+            description: "Search CRM contacts (individuals linked to accounts). Returns up to 25 contacts.",
+            parameters: z.object({
+                search: z.string().optional().describe("Search by name, email, or position"),
+                status: z.enum(["active", "inactive"]).optional(),
+                limit: z.number().min(1).max(50).optional(),
+            }),
+            execute: async ({ search, status, limit }) => {
+                const where: any = { team_id: teamId };
+                if (status) {
+                    if (status === "active") where.is_active = true;
+                    else where.is_active = false;
+                }
+                if (search) {
+                    where.OR = [
+                        { first_name: { contains: search, mode: "insensitive" } },
+                        { last_name: { contains: search, mode: "insensitive" } },
+                        { email: { contains: search, mode: "insensitive" } },
+                        { position: { contains: search, mode: "insensitive" } },
+                    ];
+                }
+                const contacts = await prismadb.crm_Contacts.findMany({
+                    where,
+                    take: limit || 25,
+                    orderBy: { createdAt: "desc" },
+                    select: {
+                        id: true, first_name: true, last_name: true, email: true,
+                        position: true, mobile_phone: true, office_phone: true,
+                        is_active: true, createdAt: true,
+                        assigned_account: { select: { name: true } },
+                    }
+                });
+                const total = await prismadb.crm_Contacts.count({ where: { team_id: teamId } });
+                return { results: contacts, count: contacts.length, totalContacts: total };
+            },
+        }),
+
+        query_opportunities: tool({
+            description: "Search CRM opportunities (deals). Returns up to 25 deals with stage, budget, and status info.",
+            parameters: z.object({
+                search: z.string().optional().describe("Search by deal name"),
+                status: z.enum(["ACTIVE", "INACTIVE", "PENDING", "CLOSED"]).optional(),
+                min_budget: z.number().optional().describe("Minimum budget filter"),
+                max_budget: z.number().optional().describe("Maximum budget filter"),
+                limit: z.number().min(1).max(50).optional(),
+            }),
+            execute: async ({ search, status, min_budget, max_budget, limit }) => {
+                const where: any = { team_id: teamId };
+                if (status) where.status = status;
+                if (search) where.name = { contains: search, mode: "insensitive" };
+                if (min_budget !== undefined || max_budget !== undefined) {
+                    where.budget = {};
+                    if (min_budget !== undefined) where.budget.gte = min_budget;
+                    if (max_budget !== undefined) where.budget.lte = max_budget;
+                }
+                const opps = await prismadb.crm_Opportunities.findMany({
+                    where,
+                    take: limit || 25,
+                    orderBy: { createdAt: "desc" },
+                    select: {
+                        id: true, name: true, description: true, budget: true,
+                        expected_revenue: true, currency: true, close_date: true,
+                        status: true, next_step: true, createdAt: true,
+                        assigned_sales_stage: { select: { name: true, probability: true } },
+                        assigned_to_user: { select: { name: true } },
+                    }
+                });
+                const total = await prismadb.crm_Opportunities.count({ where: { team_id: teamId } });
+                return { results: opps, count: opps.length, totalDeals: total };
+            },
+        }),
+
+        get_pipeline_stats: tool({
+            description: "Get a summary of the sales pipeline: lead counts per stage, deal counts per status, total revenue, team size, and other KPIs. Use this for dashboard-style questions.",
+            parameters: z.object({}),
+            execute: async () => {
+                const [leadsByStage, leadsByStatus, dealsByStatus, totalLeads, totalDeals, totalAccounts, totalContacts] = await Promise.all([
+                    prismadb.crm_Leads.groupBy({ by: ["pipeline_stage"], where: { team_id: teamId }, _count: true }),
+                    prismadb.crm_Leads.groupBy({ by: ["status"], where: { team_id: teamId }, _count: true }),
+                    prismadb.crm_Opportunities.groupBy({ by: ["status"], where: { team_id: teamId }, _count: true, _sum: { budget: true } }),
+                    prismadb.crm_Leads.count({ where: { team_id: teamId } }),
+                    prismadb.crm_Opportunities.count({ where: { team_id: teamId } }),
+                    prismadb.crm_Accounts.count({ where: { team_id: teamId } }),
+                    prismadb.crm_Contacts.count({ where: { team_id: teamId } }),
+                ]);
+
+                return {
+                    leadsByPipelineStage: leadsByStage.map((g: any) => ({ stage: g.pipeline_stage, count: g._count })),
+                    leadsByStatus: leadsByStatus.map((g: any) => ({ status: g.status, count: g._count })),
+                    dealsByStatus: dealsByStatus.map((g: any) => ({ status: g.status, count: g._count, totalBudget: g._sum?.budget || 0 })),
+                    totals: { leads: totalLeads, deals: totalDeals, accounts: totalAccounts, contacts: totalContacts },
+                };
+            },
+        }),
+
+        get_recent_activity: tool({
+            description: "Get recent CRM activity: latest lead activities, newly created leads, and recent deal updates. Use this to answer 'what happened recently' questions.",
+            parameters: z.object({
+                days: z.number().min(1).max(90).optional().describe("Number of days to look back (default 7)"),
+                limit: z.number().min(1).max(50).optional().describe("Max results per category (default 10)"),
+            }),
+            execute: async ({ days, limit }) => {
+                const since = new Date();
+                since.setDate(since.getDate() - (days || 7));
+                const take = limit || 10;
+
+                const [recentLeads, recentDeals, recentActivities] = await Promise.all([
+                    prismadb.crm_Leads.findMany({
+                        where: { team_id: teamId, createdAt: { gte: since } },
+                        take,
+                        orderBy: { createdAt: "desc" },
+                        select: { id: true, firstName: true, lastName: true, company: true, status: true, pipeline_stage: true, createdAt: true },
+                    }),
+                    prismadb.crm_Opportunities.findMany({
+                        where: { team_id: teamId, updatedAt: { gte: since } },
+                        take,
+                        orderBy: { updatedAt: "desc" },
+                        select: { id: true, name: true, status: true, budget: true, updatedAt: true, assigned_sales_stage: { select: { name: true } } },
+                    }),
+                    prismadb.crm_Lead_Activities.findMany({
+                        where: { team_id: teamId, createdAt: { gte: since } },
+                        take,
+                        orderBy: { createdAt: "desc" },
+                        select: { id: true, type: true, notes: true, createdAt: true },
+                    }),
+                ]);
+
+                return {
+                    newLeads: recentLeads,
+                    updatedDeals: recentDeals,
+                    activities: recentActivities,
+                    period: `Last ${days || 7} days`,
+                };
+            },
+        }),
+    };
+}
 
 /**
  * Build the CRM Chief Agent system prompt with current time and comprehensive ontology
@@ -229,24 +446,30 @@ Email integration: access_token, refresh_token, scope, expiry_date.
 5. **Respect Time**: The current time context matters for deadlines, follow-ups, scheduling
 6. **Maintain Context**: Remember conversation history within the session
 
-## CAPABILITIES & LIMITATIONS
+## CAPABILITIES & TOOLS
 
 ### You CAN:
 - Answer questions about CRM concepts, best practices, and workflows
-- Help interpret and analyze CRM data patterns
+- **DIRECTLY QUERY the CRM database** using your tools to get real-time data
+- Search and filter leads, accounts, contacts, and opportunities
+- Get pipeline statistics ... lead counts per stage, deal totals, revenue summaries
+- View recent CRM activity (new leads, deal updates, activities)
 - Suggest sales strategies and outreach approaches
 - Guide users through CRM features and processes
 - Provide templates for emails, proposals, and follow-ups
 - Calculate pipeline metrics and forecasts
-- Recommend next best actions based on context
+- Recommend next best actions based on real data
 
-### You CANNOT (without explicit tool integration):
-- Directly read or write to the CRM database
-- Send emails or messages on behalf of users
-- Access real-time CRM data unless provided in context
-- Modify system configurations
+### AVAILABLE TOOLS:
+- **query_leads**: Search leads by name, email, status, pipeline stage, outreach status
+- **query_accounts**: Search accounts by name, industry, type, status
+- **query_contacts**: Search contacts by name, email, position
+- **query_opportunities**: Search deals by name, status, budget range
+- **get_pipeline_stats**: Get full pipeline summary with counts and revenue per stage
+- **get_recent_activity**: Get recent lead/deal/activity changes (configurable days)
 
-Always clarify when an action requires the user to perform it in the CRM interface versus something you can help with directly.`;
+When users ask about their data, ALWAYS use your tools to get real numbers. Never guess or make up data.
+If a question requires writing data (creating leads, updating records, sending emails), explain that you can only read data and guide them to perform the action in the CRM interface.`;
 }
 
 // Helper to extract content from either UIMessage (parts array) or ModelMessage (content string) format
@@ -396,6 +619,18 @@ export async function POST(req: Request) {
             return new NextResponse("No openai key found", { status: 500 });
         }
 
+        // Build CRM tools if we have a team context
+        let teamIdForTools: string | null = null;
+        try {
+            const toolUser = await prismadb.users.findUnique({
+                where: { id: auth.user.id },
+                select: { team_id: true }
+            });
+            teamIdForTools = toolUser?.team_id || null;
+        } catch (_) {}
+
+        const crmTools = teamIdForTools ? buildCrmTools(teamIdForTools, auth.user.id) : {};
+
         let result: any;
         try {
             // Omit temperature for reasoning models (o1, etc.)
@@ -405,6 +640,8 @@ export async function POST(req: Request) {
                 model,
                 messages: modelMessages,
                 temperature,
+                tools: crmTools,
+                maxSteps: 5,
                 onFinish: async ({ text: completion, usage }) => {
                     try {
                         if (!chatSession.isTemporary) {
