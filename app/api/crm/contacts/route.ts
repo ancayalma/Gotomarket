@@ -59,14 +59,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // Helper to escape regex special characters for case-insensitive search on MongoDB
-    const escapeRegExp = (text: string) => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-
+    // Helper no longer needed — mode:insensitive is SQL-only, removed
     const existingContact = await (prismadb.crm_Contacts as any).findFirst({
       where: {
-        assigned_team: isValidId(teamId) ? { id: teamId } : undefined,
+        team_id: isValidId(teamId) ? teamId : undefined,
         OR: [
-          ...(email ? [{ email: { equals: escapeRegExp(email), mode: "insensitive" } }] : []),
+          ...(email ? [{ email: { equals: email } }] : []),
           ...(mobile_phone ? [{ mobile_phone: { equals: mobile_phone } }] : []),
           ...(office_phone ? [{ office_phone: { equals: office_phone } }] : []),
         ],

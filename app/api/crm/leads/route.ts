@@ -112,7 +112,7 @@ async function createLeadHandler(req: Request, body: LeadInput) {
     if (searchOrConditions.length > 0) {
       existingLead = await (prismadb.crm_Leads as any).findFirst({
         where: {
-          assigned_team: isValidId(teamId) ? { id: teamId } : undefined,
+          team_id: isValidId(teamId) ? teamId : undefined,
           OR: searchOrConditions,
         },
       });

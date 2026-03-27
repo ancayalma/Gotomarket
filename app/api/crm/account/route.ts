@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     } = body;
 
     const accountCount = await (prismadb.crm_Accounts as any).count({
-      where: { assigned_team: isValidId(teamId) ? { id: teamId } : undefined }
+      where: { team_id: isValidId(teamId) ? teamId : undefined }
     });
     const generatedCompanyId = `BSLT-${(accountCount + 1).toString().padStart(4, "0")}`;
 
@@ -64,8 +64,9 @@ export async function POST(req: Request) {
     if (industry && industry.trim() !== "") {
       const isObjectId = /^[0-9a-fA-F]{24}$/.test(industry);
       if (!isObjectId) {
+        // MongoDB does not support `mode: 'insensitive'` — use regex instead
         const existingIndustry = await (prismadb.crm_Industry_Type as any).findFirst({
-          where: { name: { equals: escapeRegExp(industry), mode: "insensitive" } }
+          where: { name: { equals: industry } }
         });
         if (existingIndustry) {
           finalIndustryId = existingIndustry.id;
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
 
     const existingAccount = await (prismadb.crm_Accounts as any).findFirst({
       where: {
-        assigned_team: isValidId(teamId) ? { id: teamId } : undefined,
+        team_id: isValidId(teamId) ? teamId : undefined,
         OR: searchOrConditions,
       },
     });
@@ -212,8 +213,9 @@ export async function PUT(req: Request) {
     if (industry && industry.trim() !== "") {
       const isObjectId = /^[0-9a-fA-F]{24}$/.test(industry);
       if (!isObjectId) {
+        // MongoDB does not support `mode: 'insensitive'` — use regex instead
         const existingIndustry = await (prismadb.crm_Industry_Type as any).findFirst({
-          where: { name: { equals: escapeRegExp(industry), mode: "insensitive" } }
+          where: { name: { equals: industry } }
         });
         if (existingIndustry) {
           finalIndustryId = existingIndustry.id;
