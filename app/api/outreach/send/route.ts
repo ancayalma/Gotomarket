@@ -776,6 +776,10 @@ export async function POST(req: Request) {
                   } as any,
                 },
               });
+            } catch (actErr: any) {
+              systemLogger.warn(`[OUTREACH_SEND] Failed to save lead activity: ${actErr?.message}`);
+            }
+          }
 
           // Save outreach status to CRM (Fire and forget DB update)
           if (!testMode) {
