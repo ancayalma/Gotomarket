@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import CasesClient from "./components/CasesClient";
 import { LearnLink } from "@/components/ui/LearnLink";
+import { UpgradeGate } from "@/components/UpgradeGate";
 
 export const dynamic = "force-dynamic";
 
@@ -66,26 +67,28 @@ const CasesPage = async (props: { searchParams: Promise<any> }) => {
     });
 
     return (
-        <div className="h-full w-full px-4 md:px-6 lg:px-8 pb-36 md:pb-4">
-            <LearnLink
-                tab="cases"
-                overviewTitle="Service Console"
-                overviewWhat="The central helpdesk system for tracking customer issues, support requests, and internal operational tickets."
-                overviewWhy="Support tickets shouldn't live in a silo. Logging cases directly in the CRM ensures sales and account teams the customer's support health before attempting an upsell."
-                overviewHow="Track resolution times, assign cases to specific team members, or build out Knowledge Base articles from frequently resolved tickets."
-            />
-            <Suspense fallback={<SuspenseLoading />}>
-                <CasesClient
-                    initialCases={cases || []}
-                    stats={stats}
-                    teamMembers={teamMembers}
-                    contacts={contacts}
-                    accounts={accounts}
-                    initialView={view}
-                    initialArticles={kbArticles}
+        <UpgradeGate featureId="cases" title="Service Console Locked" description="The helpdesk and case management module requires a Growth plan or higher.">
+            <div className="h-full w-full px-4 md:px-6 lg:px-8 pb-36 md:pb-4">
+                <LearnLink
+                    tab="cases"
+                    overviewTitle="Service Console"
+                    overviewWhat="The central helpdesk system for tracking customer issues, support requests, and internal operational tickets."
+                    overviewWhy="Support tickets shouldn't live in a silo. Logging cases directly in the CRM ensures sales and account teams the customer's support health before attempting an upsell."
+                    overviewHow="Track resolution times, assign cases to specific team members, or build out Knowledge Base articles from frequently resolved tickets."
                 />
-            </Suspense>
-        </div>
+                <Suspense fallback={<SuspenseLoading />}>
+                    <CasesClient
+                        initialCases={cases || []}
+                        stats={stats}
+                        teamMembers={teamMembers}
+                        contacts={contacts}
+                        accounts={accounts}
+                        initialView={view}
+                        initialArticles={kbArticles}
+                    />
+                </Suspense>
+            </div>
+        </UpgradeGate>
     );
 };
 

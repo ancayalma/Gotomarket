@@ -163,8 +163,7 @@ const DynamicModuleMenu = ({
 
     const isVisible = (item: NavItem) => {
         if (item.hidden) return false;
-        // If it's premium, we show it (locked) even if they don't have permission
-        if (item.isPremium) return true;
+        // Always require permission — locked/premium items are hidden entirely
         return checkPermission(item);
     };
 
@@ -211,9 +210,8 @@ const DynamicModuleMenu = ({
 
         if (!isVisible(item)) return null;
 
-
-        const hasAccess = checkPermission(item);
-        const isLocked = item.isPremium && !hasAccess;
+        // All visible items have access (isVisible already enforces checkPermission)
+        const isLocked = false;
 
         if (item.type === "group") {
             // Group header + Children
@@ -455,20 +453,17 @@ const DynamicModuleMenu = ({
                         <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100]">
                             <div className="bg-background/80 backdrop-blur-xl border-t border-white/10 rounded-t-2xl flex flex-row items-center px-2 py-1 gap-1 shadow-2xl overflow-x-auto no-scrollbar">
                                 {flatItems.map((item) => {
-                                    const hasAccess = checkPermission(item);
-                                    const isLocked = item.isPremium && !hasAccess;
                                     const hasSubNav = !!(item.children && item.children.length > 0);
 
                                     return (
                                         <MenuItem
                                             key={item.id}
-                                            href={isLocked ? "#" : (item.href || "#")}
+                                            href={item.href || "#"}
                                             icon={getIcon(item.iconName)}
                                             title={item.label}
                                             isOpen={false}
                                             isActive={pathname.startsWith(item.href || "")}
                                             isMobile
-                                            isLocked={isLocked}
                                             hasSubNav={hasSubNav}
                                         />
                                     );
