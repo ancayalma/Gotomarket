@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { MessageSquare, CalendarIcon, ArrowRight, User, FileInput, FileText } from "lucide-react";
+import { MessageSquare, CalendarIcon, ArrowRight, User, FileInput, FileText, Mail } from "lucide-react";
 import DashboardCard from "./DashboardCard";
 
 import {
@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface NotificationItem {
     id: string;
-    type: 'message' | 'form';
+    type: 'message' | 'form' | 'email';
     createdAt: Date;
     title: string;
     body: string;
@@ -43,6 +43,7 @@ export default function MessagesWidget({ messages }: MessagesWidgetProps) {
     // Calculate counts
     const unreadMessagesCount = messages.filter(m => m.type === 'message').length;
     const newFormsCount = messages.filter(m => m.type === 'form').length;
+    const newEmailsCount = messages.filter(m => m.type === 'email').length;
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -63,7 +64,7 @@ export default function MessagesWidget({ messages }: MessagesWidgetProps) {
                         Inbox & Notifications
                     </DialogTitle>
                     <DialogDescription>
-                        You have {messages.length} new items ({unreadMessagesCount} messages, {newFormsCount} forms).
+                        You have {messages.length} new items ({unreadMessagesCount} messages, {newEmailsCount} emails, {newFormsCount} forms).
                     </DialogDescription>
                 </DialogHeader>
 
@@ -81,17 +82,21 @@ export default function MessagesWidget({ messages }: MessagesWidgetProps) {
                                 <div className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card/50 hover:bg-muted/50 transition-colors">
                                     <div className="space-y-1.5 overflow-hidden w-full">
                                         <div className="flex items-center gap-2">
-                                            {item.type === 'message' ? (
+                                            {item.type === 'email' ? (
+                                                <div className="h-6 w-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+                                                    <Mail className="h-3 w-3" />
+                                                </div>
+                                            ) : item.type === 'form' ? (
+                                                <div className="h-6 w-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                                                    <FileText className="h-3 w-3" />
+                                                </div>
+                                            ) : (
                                                 <Avatar className="h-6 w-6">
                                                     <AvatarImage src={item.sender.avatar || undefined} />
                                                     <AvatarFallback className="text-[10px] bg-gray-100 text-gray-700">
                                                         {item.sender.name.substring(0, 2).toUpperCase()}
                                                     </AvatarFallback>
                                                 </Avatar>
-                                            ) : (
-                                                <div className="h-6 w-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                                                    <FileText className="h-3 w-3" />
-                                                </div>
                                             )}
 
                                             <span className="font-medium truncate block text-sm text-foreground">
@@ -104,6 +109,7 @@ export default function MessagesWidget({ messages }: MessagesWidgetProps) {
 
                                         <div className="font-medium text-sm truncate flex items-center gap-2 text-foreground">
                                             {item.type === 'form' && <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 border-white/20 text-gray-400">Form</Badge>}
+                                            {item.type === 'email' && <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 border-cyan-500/30 text-cyan-400">Email</Badge>}
                                             <span className="text-white">{item.title}</span>
                                         </div>
 

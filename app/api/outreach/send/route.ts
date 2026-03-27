@@ -382,6 +382,10 @@ export async function POST(req: Request) {
       }
     }
 
+    // ── Email-Address-Level Deduplication ──
+    // Prevents duplicate sends when an Account and its linked Contact share the same email.
+    const sentEmailsThisDispatch = new Set<string>();
+
     for (const recipient of recipients) {
       // ── Cancellation Checkpoint ──────────────────────────────────────────
       // Every 10 recipients, re-check campaign status to allow mid-send cancellation
@@ -409,6 +413,14 @@ export async function POST(req: Request) {
       if (campaignId && existingCampaignRecipientIds.has(lead.id)) {
         systemLogger.info(`[OUTREACH_SEND] Target ${targetEmail} skipped: Lead ${lead.id} already exists in Campaign ${campaignId}.`);
         results.push({ leadId: lead.id, status: "skipped", reason: `Deduplicated: Lead already tracked in campaign history.` });
+        continue;
+      }
+
+      // Block 3: Email-address-level dedup — prevents sending to the same email
+      // when both an Account and its linked Contact share the same address.
+      if (!testMode && targetEmail && sentEmailsThisDispatch.has(targetEmail.toLowerCase())) {
+        systemLogger.info(`[OUTREACH_SEND] Target ${targetEmail} skipped: Already sent to this email in current dispatch (Lead ${lead.id}).`);
+        results.push({ leadId: lead.id, status: "skipped", reason: `Deduplicated: Email address already contacted in this batch.` });
         continue;
       }
 
@@ -898,6 +910,9 @@ export async function POST(req: Request) {
               }
             }
           }
+
+          // Track this email in the dispatch-level dedup set
+          if (targetEmail) sentEmailsThisDispatch.add(targetEmail.toLowerCase());
 
           results.push({ leadId: lead.id, status: "sent", subject, to: toEmail });
         } catch (err: any) {
