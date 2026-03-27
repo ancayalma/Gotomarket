@@ -770,6 +770,22 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
               promptOverride: promptOverride?.trim() || undefined,
               signatureHtml: undefined, // Signature is handled per-email in the send route
               meetingLink: meetingLinkOverride?.trim() || undefined,
+              campaignBranding: {
+                templateId: selectedTemplate,
+                senderMode,
+                signatureSource,
+                themeColorOverride,
+                secondaryColorOverride,
+                bgTexture,
+                borderAccent,
+                cardStyle,
+                dividerStyle,
+                showResources,
+                bannerImageUrl,
+                bannerHeight,
+                bannerPositionY,
+                resources: resources.filter((r: any) => r.enabled !== false)
+              },
               voiceConfig: useElevenLabs ? {
                 agentId: voiceAgentId?.trim() || undefined,
                 startTime: voiceStartTime ? new Date(voiceStartTime).toISOString() : undefined,
@@ -792,33 +808,105 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
           console.error("[OUTREACH] Campaign creation error:", e);
         }
 
-        // Step 2: Fire-and-forget the actual sends with campaignId attached
-        const sendPayload = { ...emailPayload, campaignId: newCampaignId };
-        if (useEmail || useElevenLabs) {
-          fetch("/api/outreach/send", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(sendPayload),
-          }).catch((e) => console.error("[OUTREACH] Email send error:", e));
-        }
-        if (useSms) {
-          fetch("/api/outreach/sms", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              leadIds: sendLeadIds,
-              test: false,
-              promptOverride: promptOverride?.trim() || undefined,
-            }),
-          }).catch((e) => console.error("[OUTREACH] SMS send error:", e));
-        }
-        // ElevenLabs Voice scheduling is now handled by the /api/outreach/send backend endpoint 
-        // as part of the overall campaign creation payload when `useVoice: true`.
+        // Step 2: Fire-and-forget the actual sends with chunking mechanism
+        const CHUNK_SIZE = 1;
+        const totalLeads = sendLeadIds.length;
+        
+        // Asynchronous background chunk dispatcher
+        (async () => {
+          let sentCount = 0;
+          
+          for (let i = 0; i < totalLeads; i += CHUNK_SIZE) {
+            const chunkIds = sendLeadIds.slice(i, i + CHUNK_SIZE);
+            const chunkData = sendLeadData.filter(d => chunkIds.includes(d.id));
+            
+            const chunkPayload = { 
+              ...emailPayload, 
+              leadIds: chunkIds,
+              leadData: chunkData,
+              campaignId: newCampaignId 
+            };
+            
+            try {
+              if (useEmail || useElevenLabs) {
+                const sendRes = await fetch("/api/outreach/send", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(chunkPayload),
+                });
+                
+                if (sendRes.ok) {
+                  const resJson = await sendRes.json();
+                  sentCount += resJson.sent || chunkIds.length;
+                  
+                  const progressState = { current: sentCount, total: totalLeads };
+                  
+                  let streamMessage = `Batch generated successfully.`;
+                  if (resJson.results && resJson.results.length > 0) {
+                      const lastResult = resJson.results[resJson.results.length - 1];
+                      if (lastResult.status === "sent") {
+                          streamMessage = `Generation [OK]. Delivered payload to: ${lastResult.to} (${sentCount}/${totalLeads})`;
+                      } else {
+                          streamMessage = `Bypass: ${lastResult.to} - ${lastResult.reason}`;
+                      }
+                  }
+                  
+                  // Broadcast globally
+                  await fetch(`/api/campaigns/${newCampaignId}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ 
+                          campaignBranding: { 
+                            ...chunkPayload.campaignBranding, 
+                            repair_active: true, 
+                            repair_progress: progressState, 
+                            repair_stream: streamMessage 
+                          } 
+                      }),
+                  }).catch(() => {});
+                } else {
+                  console.error(`[OUTREACH] Batch failed:`, await sendRes.text());
+                }
+              }
 
-        // Step 3: Close and redirect — campaign already exists in DB
-        toast.success(`Campaign launched! Sending to ${sendLeadIds.length} lead${sendLeadIds.length !== 1 ? "s" : ""} in the background...`);
+              // Run SMS channel
+              if (useSms) {
+                await fetch("/api/outreach/sms", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    leadIds: chunkIds,
+                    test: false,
+                    promptOverride: promptOverride?.trim() || undefined,
+                  }),
+                });
+              }
+            } catch (err) {
+              console.error("[OUTREACH] Background chunk failure:", err);
+            }
+          }
+          
+          // Complete
+          const streamMessage = `Outreach sequence complete. Output delivered to ${sentCount} aliases.`;
+          await fetch(`/api/campaigns/${newCampaignId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                  status: "ACTIVE",
+                  campaignBranding: { 
+                    ...emailPayload.campaignBranding, 
+                    repair_active: false, 
+                    repair_stream: streamMessage, 
+                    repair_progress: null 
+                  } 
+              }),
+          }).catch(() => {});
+        })();
+
+        // Step 3: Redirect to the live tracking page immediately
+        toast.success(`Campaign launched! Directing to observation deck...`);
         onClose();
-        router.push("/campaigns");
+        router.push(`/campaigns/${newCampaignId}`);
         return;
       }
 

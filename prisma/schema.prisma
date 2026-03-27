@@ -459,6 +459,11 @@ model crm_Outreach_Campaigns {
   ab_auto_winner_threshold Int?     @default(100) // Min sends before auto-picking winner
   ab_decided_at            DateTime? @db.Date
 
+  // Repair Sequence Tracking
+  repair_active            Boolean?  @default(false)
+  repair_progress          Json?     // { current: 0, total: 100 }
+  repair_stream            String?   // Real-time reasoning stream
+
   // Timestamps
   createdAt   DateTime? @default(now()) @db.Date
   updatedAt   DateTime? @updatedAt @db.Date
