@@ -205,6 +205,8 @@ export default function CampaignDetailPage() {
     const [backfillLoading, setBackfillLoading] = useState(false);
     const [statusLoading, setStatusLoading] = useState(false);
     const [repairLoading, setRepairLoading] = useState(false);
+    const [repairProgress, setRepairProgress] = useState({ current: 0, total: 0 });
+    const [repairStream, setRepairStream] = useState<string>("");
 
     const { data: campaign, error, isLoading, mutate } = useSWR<CampaignDetail>(
         campaignId ? `/api/campaigns/${campaignId}` : null,
@@ -247,6 +249,8 @@ export default function CampaignDetailPage() {
             return;
         }
         setRepairLoading(true);
+        setRepairProgress({ current: 0, total: 0 });
+        setRepairStream("Initializing sequence repair... fetching list logic.");
         const toastId = toast.loading("Fetching list logic...");
         try {
             // Fetch list leads
@@ -298,39 +302,69 @@ export default function CampaignDetailPage() {
 
             if (missingLeads.length === 0) {
                 toast.success("No missing leads found. Campaign is up to date.", { id: toastId });
+                setRepairStream("No missing targets detected. Terminating repair.");
                 setRepairLoading(false);
                 return;
             }
 
-            toast.loading(`Found ${missingLeads.length} missed leads. Dispatching...`, { id: toastId });
+            setRepairProgress({ current: 0, total: missingLeads.length });
+            setRepairStream(`Engaged. Queueing ${missingLeads.length} missed targets for LLM generation.`);
+            let sentCount = 0;
+            const CHUNK_SIZE = 5;
+            
+            for (let i = 0; i < missingLeads.length; i += CHUNK_SIZE) {
+                const chunk = missingLeads.slice(i, i + CHUNK_SIZE);
+                toast.loading(`Processing batch ${Math.ceil((i+1)/CHUNK_SIZE)} of ${Math.ceil(missingLeads.length/CHUNK_SIZE)}...`, { id: toastId });
+                
+                const sendPayload = {
+                    leadIds: chunk.map((l: any) => l.id),
+                    leadData: chunk.map((l: any) => ({
+                        id: l.id,
+                        firstName: l.firstName,
+                        lastName: l.lastName,
+                        company: l.company,
+                        jobTitle: l.jobTitle,
+                        email: l.email,
+                        additional_emails: l.additional_emails || l.accountAdditionalEmails || [],
+                    })),
+                    campaignId: campaign.id,
+                    poolId: campaign.assigned_pool.id,
+                    promptOverride: campaign.prompt_override || undefined,
+                    templateId: "minimal", // Default to minimal
+                    senderMode: "company",
+                    signatureSource: "brand",
+                };
 
-            const sendPayload = {
-                leadIds: missingLeads.map((l: any) => l.id),
-                leadData: missingLeads.map((l: any) => ({
-                    id: l.id,
-                    firstName: l.firstName,
-                    lastName: l.lastName,
-                    company: l.company,
-                    jobTitle: l.jobTitle,
-                    email: l.email,
-                    additional_emails: l.additional_emails || l.accountAdditionalEmails || [],
-                })),
-                campaignId: campaign.id,
-                poolId: campaign.assigned_pool.id,
-                promptOverride: campaign.prompt_override || undefined,
-                templateId: "minimal", // Default to minimal
-                senderMode: "company",
-                signatureSource: "brand",
-            };
+                const sendRes = await fetch("/api/outreach/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(sendPayload),
+                });
 
-            const sendRes = await fetch("/api/outreach/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(sendPayload),
-            });
+                if (sendRes.ok) {
+                    const resJson = await sendRes.json();
+                    sentCount += resJson.sent || chunk.length;
+                    setRepairProgress(prev => ({ ...prev, current: sentCount }));
+                    
+                    if (resJson.results && resJson.results.length > 0) {
+                        const lastResult = resJson.results[resJson.results.length - 1];
+                        if (lastResult.status === "sent") {
+                            setRepairStream(`Generation [OK]. Delivered payload to: ${lastResult.to} (${sentCount}/${missingLeads.length})`);
+                        } else {
+                            setRepairStream(`Bypass: ${lastResult.to} - ${lastResult.reason}`);
+                        }
+                    } else {
+                        setRepairStream(`Batch generated successfully.`);
+                    }
+                } else {
+                    setRepairStream(`[ERROR] Batch LLM generation failed for ${chunk.length} targets.`);
+                    toast.error(`Batch ${Math.ceil((i+1)/CHUNK_SIZE)} failed to send. Check server logs.`);
+                }
+            }
 
-            if (sendRes.ok) {
-                toast.success(`Dispatched ${missingLeads.length} missed leads!`, { id: toastId });
+            if (sentCount > 0) {
+                setRepairStream(`Repair sequence concluded. Successfully dispatched to ${sentCount} aliases.`);
+                toast.success(`Dispatched ${sentCount} missed leads successfully!`, { id: toastId });
                 // If the campaign was paused or completed, flip it back to active so tracking resumes
                 if (campaign.status === "COMPLETED" || campaign.status === "PAUSED") {
                     await fetch(`/api/campaigns/${campaign.id}`, {
@@ -341,11 +375,12 @@ export default function CampaignDetailPage() {
                 }
                 mutate();
             } else {
-                const err = await sendRes.json();
-                toast.error(err.message || "Failed to dispatch repair emails", { id: toastId });
+                setRepairStream(`[ERROR] Total Sequence Failure. 0 targets hit.`);
+                toast.error("Failed to dispatch repair emails", { id: toastId });
             }
         } catch (e: any) {
             toast.error(e?.message || "Failed to repair campaign", { id: toastId });
+            setRepairStream(`[FATAL] Pipeline crashed: ${e?.message}`);
         }
         setRepairLoading(false);
     }
@@ -651,37 +686,63 @@ export default function CampaignDetailPage() {
                 </div>
 
                 {/* Email Send Progress Bar */}
-                {(campaign.status === "ACTIVE" || campaign.status === "PAUSED") && campaign.total_leads > 0 && (
+                {((campaign.status === "ACTIVE" || campaign.status === "PAUSED") && campaign.total_leads > 0) || repairLoading ? (
                     <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
                             <span className="text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-2">
-                                Send Progress
-                                {campaign.status === "PAUSED" && (
+                                {repairLoading ? "Repair Progress" : "Send Progress"}
+                                {campaign.status === "PAUSED" && !repairLoading && (
                                     <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider border-amber-500/30 text-amber-400">
                                         <Pause className="w-2.5 h-2.5 mr-0.5" />
                                         STOPPED
                                     </Badge>
                                 )}
+                                {repairLoading && (
+                                    <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider border-amber-500/30 text-amber-400 bg-amber-500/10">
+                                        <RefreshCw className="w-2.5 h-2.5 mr-0.5 animate-spin" />
+                                        REPAIRING
+                                    </Badge>
+                                )}
                             </span>
                             <span className="font-mono font-bold text-primary">
-                                {campaign.emails_sent} / {campaign.total_leads}
+                                {repairLoading 
+                                    ? <>{repairProgress.current} / {repairProgress.total}</>
+                                    : <>{campaign.emails_sent} / {campaign.total_leads}</>
+                                }
                                 <span className="text-muted-foreground ml-1">
-                                    ({campaign.total_leads > 0 ? Math.round((campaign.emails_sent / campaign.total_leads) * 100) : 0}%)
+                                    {repairLoading 
+                                        ? `(${repairProgress.total > 0 ? Math.round((repairProgress.current / repairProgress.total) * 100) : 0}%)`
+                                        : `(${campaign.total_leads > 0 ? Math.round((campaign.emails_sent / campaign.total_leads) * 100) : 0}%)`
+                                    }
                                 </span>
                             </span>
                         </div>
                         <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden">
                             <div
                                 className={`h-full rounded-full transition-all duration-700 ${
-                                    campaign.status === "PAUSED"
-                                        ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                                        : "bg-gradient-to-r from-blue-500 to-indigo-500"
+                                    repairLoading 
+                                        ? "bg-gradient-to-r from-amber-500 to-orange-500 animate-pulse"
+                                        : campaign.status === "PAUSED"
+                                            ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                                            : "bg-gradient-to-r from-blue-500 to-indigo-500"
                                 }`}
-                                style={{ width: `${campaign.total_leads > 0 ? Math.min(100, (campaign.emails_sent / campaign.total_leads) * 100) : 0}%` }}
+                                style={{ width: `${
+                                    repairLoading 
+                                        ? (repairProgress.total > 0 ? Math.min(100, (repairProgress.current / repairProgress.total) * 100) : 0)
+                                        : (campaign.total_leads > 0 ? Math.min(100, (campaign.emails_sent / campaign.total_leads) * 100) : 0)
+                                }%` }}
                             />
                         </div>
+                        
+                        {/* Live Reasoning Stream (Appears Only During Repair) */}
+                        {repairLoading && (
+                            <div className="mt-2 w-full p-2.5 bg-black/60 border border-amber-500/20 rounded font-mono text-[10px] text-amber-400/90 shadow-inner flex items-center gap-2">
+                                <span className="animate-pulse">▶</span>
+                                <span className="truncate">{repairStream}</span>
+                            </div>
+                        )}
                     </div>
-                )}
+                ) : null}
 
                 <Separator className="bg-white/5" />
 

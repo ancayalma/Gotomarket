@@ -108,11 +108,12 @@ export async function GET(req: Request, context: { params: Promise<{ poolId: str
     });
 
     // Separate candidates
-    const activeCandidates = candidates.filter((c: any) => c.status !== "CONVERTED");
-    const convertedCandidates = candidates.filter((c: any) => c.status === "CONVERTED" && c.accountsIDs);
+    // A candidate is considered 'converted' if it's explicitly marked OR if it carries an accountsIDs linkage (Common in CSV imports)
+    const convertedCandidates = candidates.filter((c: any) => c.status === "CONVERTED" || c.accountsIDs);
+    const activeCandidates = candidates.filter((c: any) => !(c.status === "CONVERTED" || c.accountsIDs));
 
     // Fetch Converted Accounts
-    const accountIds = convertedCandidates.map((c: any) => c.accountsIDs);
+    const accountIds = convertedCandidates.map((c: any) => c.accountsIDs).filter(Boolean);
     const convertedAccounts = await (prismadbCrm as any).crm_Accounts.findMany({
       where: { id: { in: accountIds } },
       include: { contacts: true, leads: true }
