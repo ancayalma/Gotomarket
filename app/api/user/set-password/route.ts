@@ -57,8 +57,10 @@ export async function POST(req: Request) {
       return new NextResponse("User not found.", { status: 404 });
     }
 
-    // If user already has a password, require currentPassword validation
-    if (user.password) {
+    // If user already has a password, require currentPassword validation.
+    // Exception: if mustChangePassword is set, the user is in the forced temp-password
+    // change flow and is already authenticated — skip the current password check.
+    if (user.password && !user.mustChangePassword) {
       if (!currentPassword) {
         return new NextResponse("Current password is required.", { status: 400 });
       }
