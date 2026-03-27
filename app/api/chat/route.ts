@@ -16,7 +16,7 @@ import { checkTeamQuota } from "@/lib/quota-service";
 
 function buildCrmTools(teamId: string, userId: string) {
     return {
-        query_leads: tool({
+        query_leads: (tool as any)({
             description: "Search and filter CRM leads. Returns up to 25 leads matching the criteria. Use this to answer questions about lead counts, statuses, pipeline stages, and outreach progress.",
             parameters: z.object({
                 search: z.string().optional().describe("Free text search across name, email, company"),
@@ -26,7 +26,7 @@ function buildCrmTools(teamId: string, userId: string) {
                 assigned_to: z.string().optional().describe("User ID of the lead owner"),
                 limit: z.number().min(1).max(50).optional().describe("Max results (default 25)"),
             }),
-            execute: async ({ search, status, pipeline_stage, outreach_status, assigned_to, limit }) => {
+            execute: async ({ search, status, pipeline_stage, outreach_status, assigned_to, limit }: any) => {
                 const where: any = { team_id: teamId };
                 if (status) where.status = status;
                 if (pipeline_stage) where.pipeline_stage = pipeline_stage;
@@ -55,7 +55,7 @@ function buildCrmTools(teamId: string, userId: string) {
             },
         }),
 
-        query_accounts: tool({
+        query_accounts: (tool as any)({
             description: "Search CRM accounts (companies/organizations). Returns up to 25 accounts matching the criteria.",
             parameters: z.object({
                 search: z.string().optional().describe("Search by company name, email, or industry"),
@@ -63,7 +63,7 @@ function buildCrmTools(teamId: string, userId: string) {
                 type: z.string().optional().describe("Account type: Customer, Partner, Vendor, Prospect"),
                 limit: z.number().min(1).max(50).optional(),
             }),
-            execute: async ({ search, status, type, limit }) => {
+            execute: async ({ search, status, type, limit }: any) => {
                 const where: any = { team_id: teamId };
                 if (status) where.status = status;
                 if (type) where.type = type;
@@ -88,14 +88,14 @@ function buildCrmTools(teamId: string, userId: string) {
             },
         }),
 
-        query_contacts: tool({
+        query_contacts: (tool as any)({
             description: "Search CRM contacts (individuals linked to accounts). Returns up to 25 contacts.",
             parameters: z.object({
                 search: z.string().optional().describe("Search by name, email, or position"),
                 status: z.enum(["active", "inactive"]).optional(),
                 limit: z.number().min(1).max(50).optional(),
             }),
-            execute: async ({ search, status, limit }) => {
+            execute: async ({ search, status, limit }: any) => {
                 const where: any = { team_id: teamId };
                 if (status) {
                     if (status === "active") where.is_active = true;
@@ -125,7 +125,7 @@ function buildCrmTools(teamId: string, userId: string) {
             },
         }),
 
-        query_opportunities: tool({
+        query_opportunities: (tool as any)({
             description: "Search CRM opportunities (deals). Returns up to 25 deals with stage, budget, and status info.",
             parameters: z.object({
                 search: z.string().optional().describe("Search by deal name"),
@@ -134,7 +134,7 @@ function buildCrmTools(teamId: string, userId: string) {
                 max_budget: z.number().optional().describe("Maximum budget filter"),
                 limit: z.number().min(1).max(50).optional(),
             }),
-            execute: async ({ search, status, min_budget, max_budget, limit }) => {
+            execute: async ({ search, status, min_budget, max_budget, limit }: any) => {
                 const where: any = { team_id: teamId };
                 if (status) where.status = status;
                 if (search) where.name = { contains: search, mode: "insensitive" };
@@ -160,7 +160,7 @@ function buildCrmTools(teamId: string, userId: string) {
             },
         }),
 
-        get_pipeline_stats: tool({
+        get_pipeline_stats: (tool as any)({
             description: "Get a summary of the sales pipeline: lead counts per stage, deal counts per status, total revenue, team size, and other KPIs. Use this for dashboard-style questions.",
             parameters: z.object({}),
             execute: async () => {
@@ -183,13 +183,13 @@ function buildCrmTools(teamId: string, userId: string) {
             },
         }),
 
-        get_recent_activity: tool({
+        get_recent_activity: (tool as any)({
             description: "Get recent CRM activity: latest lead activities, newly created leads, and recent deal updates. Use this to answer 'what happened recently' questions.",
             parameters: z.object({
                 days: z.number().min(1).max(90).optional().describe("Number of days to look back (default 7)"),
                 limit: z.number().min(1).max(50).optional().describe("Max results per category (default 10)"),
             }),
-            execute: async ({ days, limit }) => {
+            execute: async ({ days, limit }: any) => {
                 const since = new Date();
                 since.setDate(since.getDate() - (days || 7));
                 const take = limit || 10;
@@ -642,7 +642,7 @@ export async function POST(req: Request) {
                 temperature,
                 tools: crmTools,
                 maxSteps: 5,
-                onFinish: async ({ text: completion, usage }) => {
+                onFinish: async ({ text: completion, usage }: any) => {
                     try {
                         if (!chatSession.isTemporary) {
                             await db.chat_Messages.create({
@@ -691,7 +691,7 @@ export async function POST(req: Request) {
                         systemLogger.error("[CHAT_MESSAGES_ON_COMPLETION_SAVE_ERROR]", e);
                     }
                 },
-            });
+            } as any);
 
             // Handle both promise and sync return (SDK robust handling)
             if (textStreamPromise instanceof Promise) {
