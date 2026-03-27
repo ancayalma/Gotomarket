@@ -146,6 +146,7 @@ export async function POST(req: Request) {
             target_industries,   // ICP industries
             target_geos,         // ICP geographies
             target_titles,       // ICP job titles
+            key_value_props,     // Key value propositions for the campaign
             followupConfig,      // { enabled, delayHours, maxCount, prompt }
             brandId,             // Specific brand identity selected in the wizard
             campaignBranding,    // Template and brand overrides from the wizard
