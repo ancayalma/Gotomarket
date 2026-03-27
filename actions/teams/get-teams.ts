@@ -25,7 +25,6 @@ export const getTeams = async () => {
                         avatar: true
                     }
                 },
-                assigned_plan: true,
                 team_subscriptions: true,
                 departments: {
                     include: {

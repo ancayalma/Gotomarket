@@ -102,7 +102,7 @@ export async function POST(req: Request) {
         assigned_team: isValidId(teamId) ? { connect: { id: teamId } } : undefined,
         createdBy: userId,
         updatedBy: userId,
-        ...(assigned_account !== null && assigned_account !== undefined
+        ...(assigned_account && assigned_account.trim() !== ""
           ? {
             assigned_accounts: {
               connect: {
@@ -111,11 +111,15 @@ export async function POST(req: Request) {
             },
           }
           : {}),
-        assigned_to_user: {
-          connect: {
-            id: assigned_to,
-          },
-        },
+        ...(assigned_to && assigned_to.trim() !== ""
+          ? {
+            assigned_to_user: {
+              connect: {
+                id: assigned_to,
+              },
+            },
+          }
+          : {}),
         birthday: (birthday_day && birthday_month && birthday_year)
           ? birthday_day + "/" + birthday_month + "/" + birthday_year
           : null,
@@ -139,7 +143,7 @@ export async function POST(req: Request) {
       },
     });
 
-    if (assigned_to !== userId) {
+    if (assigned_to && assigned_to.trim() !== "" && assigned_to !== userId) {
       const notifyRecipient = await prismadb.users.findFirst({
         where: {
           id: assigned_to,
@@ -215,7 +219,7 @@ export async function PUT(req: Request) {
         v: 0,
         updatedBy: userId,
         //Update assigned_accountsIDs only if assigned_account is not empty
-        ...(assigned_account !== null && assigned_account !== undefined
+        ...(assigned_account && assigned_account.trim() !== ""
           ? {
             assigned_accounts: {
               connect: {
@@ -224,11 +228,15 @@ export async function PUT(req: Request) {
             },
           }
           : {}),
-        assigned_to_user: {
-          connect: {
-            id: assigned_to,
-          },
-        },
+        ...(assigned_to && assigned_to.trim() !== ""
+          ? {
+            assigned_to_user: {
+              connect: {
+                id: assigned_to,
+              },
+            },
+          }
+          : {}),
         birthday: (birthday_day && birthday_month && birthday_year)
           ? birthday_day + "/" + birthday_month + "/" + birthday_year
           : null,

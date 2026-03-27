@@ -91,6 +91,7 @@ export default async function AppLayout({
 
   let needsBrandSetup = false;
   let userTeamId = "";
+  let hasValidTeam = false;
   let mustChangePassword = false;
   let sesEmailVerified = true; // Default to true to avoid gate flash for unauthenticated edge cases
   let isPlatformAdmin = false;
@@ -100,20 +101,34 @@ export default async function AppLayout({
           where: { id: session.user.id },
           select: { team_id: true, team_role: true, is_admin: true, mustChangePassword: true, sesEmailVerified: true, assigned_role: { select: { name: true } } }
       });
+      
+      const role = (fullUser?.team_role || '').trim().toUpperCase();
+      const pRole = (fullUser?.assigned_role?.name || '').trim().toUpperCase();
+      const isSuperAdmin = fullUser?.is_admin === true || ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN', 'ADMIN'].includes(role) || pRole === 'SUPERADMIN';
+      isPlatformAdmin = isSuperAdmin;
+
       if (fullUser?.team_id) {
           userTeamId = fullUser.team_id;
-          const role = (fullUser.team_role || '').trim().toUpperCase();
-          const pRole = (fullUser.assigned_role?.name || '').trim().toUpperCase();
-          const isSuperAdmin = fullUser.is_admin === true || ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN', 'ADMIN'].includes(role) || pRole === 'SUPERADMIN';
-          isPlatformAdmin = isSuperAdmin;
-          if (isSuperAdmin) {
-              // Check if ANY brand has been set up (not just the default)
-              const anySetupBrand = await prismadb.teamBrandIdentity.findFirst({
-                  where: { team_id: userTeamId, OR: [{ setup_completed: true }, { company_name: { not: "" } }] }
-              });
-              if (!anySetupBrand) {
-                  needsBrandSetup = true;
+          
+          // Verify team actually exists (handling MongoDB missing foreign key cascaded deletes)
+          const existingTeam = await prismadb.team.findUnique({
+              where: { id: userTeamId },
+              select: { id: true }
+          });
+
+          if (existingTeam) {
+              hasValidTeam = true;
+              if (isSuperAdmin) {
+                  // Check if ANY brand has been set up (not just the default)
+                  const anySetupBrand = await prismadb.teamBrandIdentity.findFirst({
+                      where: { team_id: userTeamId, OR: [{ setup_completed: true }, { company_name: { not: "" } }] }
+                  });
+                  if (!anySetupBrand) {
+                      needsBrandSetup = true;
+                  }
               }
+          } else {
+              userTeamId = ""; // Orphaned
           }
       }
       mustChangePassword = fullUser?.mustChangePassword === true;
@@ -122,6 +137,11 @@ export default async function AppLayout({
 
   if (user?.userStatus === "INACTIVE") {
     return redirect("/inactive");
+  }
+
+  // Redirect to setup if user is orphaned (has no valid team and is not a platform admin)
+  if (!hasValidTeam && !isPlatformAdmin) {
+      return redirect("/setup");
   }
 
   // Redirect to email verification page if not verified (platform admins bypass)
