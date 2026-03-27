@@ -90,13 +90,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
     lastName: z.string().min(2, "Last name is required").max(50),
     phone: z.string().min(10, "Valid phone number required for KYC").max(20),
     username: z.string().min(3).max(50),
-    email: z.string().email().refine((email) => {
-      const personalDomains = ["gmail.com", "icloud.com", "yahoo.com", "hotmail.com", "outlook.com", "me.com"];
-      const domain = email.split("@")[1]?.toLowerCase();
-      return !personalDomains.includes(domain);
-    }, {
-      message: "Personal email addresses are restricted. Please use your official workspace email."
-    }),
+    email: z.string().email(),
     language: z.string().min(2).max(50),
     password: z
       .string()
@@ -503,7 +497,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                     <FormItem>
                       <FormLabel>Work E-mail <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input type="email" autoComplete="email" inputMode="email" disabled={isLoading} placeholder="legal@your-workspace.com" {...field} />
+                        <Input type="email" autoComplete="email" inputMode="email" disabled={isLoading} placeholder="you@example.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
