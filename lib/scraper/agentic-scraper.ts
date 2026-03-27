@@ -426,12 +426,12 @@ const saveCompanySchema = z.object({
   industry: z.string().describe("Primary industry"),
   techStack: z.array(z.string()).optional().describe("Detected technologies"),
   contacts: z.array(z.object({
-    name: z.string().describe("REAL person name (FirstName LastName). NEVER use company name. Empty string if unknown."),
-    title: z.string().describe("REAL job title (e.g. 'CEO', 'VP Sales', 'Founder'). NEVER 'Contact' or 'General Contact'. Empty string if unknown."),
-    email: z.string().describe("Email address"),
-    phone: z.string().describe("Phone number (can be empty string if unknown)"),
+    name: z.string().describe("Person name if known (FirstName LastName). Use empty string for generic role contacts like info@ or contact@. NEVER fabricate/invent a name."),
+    title: z.string().describe("Job title if known (e.g. 'CEO', 'VP Sales'). Empty string for generic contacts."),
+    email: z.string().describe("Email address — include role/generic emails (info@, contact@, sales@) if a real personal email is not available."),
+    phone: z.string().describe("Phone number. Include if found even if no email is available."),
     linkedin: z.string().optional().describe("LinkedIn profile URL"),
-  })).describe("Contacts found. Each MUST have a real email. Name should be a real person's name, not the company name."),
+  })).describe("Include ALL contacts found — named individuals, role emails (info@/contact@/sales@), and phone numbers. At least one contact with an email OR phone is required. NEVER invent contact data."),
 });
 
 const refineSearchStrategySchema = z.object({
@@ -1431,7 +1431,7 @@ export async function executeToolCall(toolName: string, args: any, context: any)
       // Validate: Must have at least one contact with email or phone
       if (!args.contacts || !Array.isArray(args.contacts) || args.contacts.length === 0) {
         console.log("[SAVE_COMPANY] Validation failed: No contacts");
-        return { success: false, error: "Cannot save company without contacts" };
+        return { success: false, error: "Cannot save company without contacts — include at least a phone number or email (role emails like info@ are fine)" };
       }
       // ── Contact Name Quality Validation ──
       // Reject names that are company names, department labels, or generic placeholders
@@ -1511,14 +1511,21 @@ export async function executeToolCall(toolName: string, args: any, context: any)
         }
       }
 
-      // Enforce email requirement: must have at least one email (phones alone are not sufficient)
+      // Require at least one contact with email OR phone
       const contactsWithEmails = augmentedContacts.filter((c: any) => c.email && c.email.trim().length > 0);
-      console.log("[SAVE_COMPANY] Contacts with emails:", contactsWithEmails.length);
+      const contactsWithPhones = augmentedContacts.filter((c: any) => c.phone && c.phone.trim().length > 0);
+      console.log("[SAVE_COMPANY] Contacts with emails:", contactsWithEmails.length, "| with phones:", contactsWithPhones.length);
 
-      if (contactsWithEmails.length === 0) {
-        console.log("[SAVE_COMPANY] Validation failed: No emails found");
-        return { success: false, error: "Cannot save company without at least one email address" };
+      if (contactsWithEmails.length === 0 && contactsWithPhones.length === 0) {
+        console.log("[SAVE_COMPANY] Validation failed: No emails or phones found");
+        return { success: false, error: "Cannot save company without at least one email or phone number (role emails like info@ are acceptable)" };
       }
+
+      // Pick the best account-level email: prefer first email with a real name, fall back to any email found
+      const bestAccountEmail =
+        contactsWithEmails.find((c: any) => c.name && c.name.trim().split(/\s+/).length >= 2)?.email ||
+        contactsWithEmails[0]?.email ||
+        null;
 
       // Use AI to enrich missing fields if not provided
       let companyName = args.companyName;
@@ -1655,7 +1662,7 @@ export async function executeToolCall(toolName: string, args: any, context: any)
           });
         }
 
-        // Save ALL contacts with emails or phones
+        // Save ALL contacts with emails or phones (including role emails like info@)
         let contactsSavedCount = 0;
         let validEmailCount = 0;
         let personaDecisionMakerFound = false;
@@ -1667,14 +1674,14 @@ export async function executeToolCall(toolName: string, args: any, context: any)
               phone: contact.phone,
               title: contact.title,
               linkedin: contact.linkedin,
-            }, { deprioritizeRoleEmails: true });
+            }, { deprioritizeRoleEmails: false }); // allow role emails — they're valid company contacts
 
             if (cleaned) {
               let email = cleaned.email || null;
               const phone = cleaned.phone || null;
 
-              // Strict guard: require email per-contact (drop phone-only entries)
-              if (!email) {
+              // Require at least email OR phone — drop truly empty contacts
+              if (!email && !phone) {
                 continue;
               }
 
@@ -1711,6 +1718,9 @@ export async function executeToolCall(toolName: string, args: any, context: any)
               } catch (e) {
                 // Non-fatal: keep email if present
               }
+
+              // After verification, if email was nulled and no phone exists, skip
+              if (!email && !phone) continue;
 
               // Build a safe display name using email/company/domain fallbacks (avoid "Direct Direct")
               let safeName = cleaned.name || safeContactDisplayName(
@@ -1834,8 +1844,10 @@ export async function executeToolCall(toolName: string, args: any, context: any)
                 name: companyName,
                 website: `https://${domain}`,
                 description: description ? `${description}${industry ? `\nIndustry: ${industry}` : ''}` : undefined,
-                email: contactsWithEmails[0]?.email || null,
-                office_phone: augmentedContacts.find((c: any) => c.phone)?.phone || null,
+                // Use the best available account-level email (including role emails like info@)
+                email: bestAccountEmail || null,
+                office_phone: augmentedContacts.find((c: any) => c.phone?.trim())?.phone || null,
+                industry: industry || undefined,
                 status: "Active",
                 type: "Prospect",
                 ...(teamId ? { team_id: teamId } : {}),
@@ -1856,7 +1868,7 @@ export async function executeToolCall(toolName: string, args: any, context: any)
           }
 
           // ═══════════════════════════════════════════════════════════════
-          // CREATE crm_Contacts for decision-makers / identifiable POCs
+          // CREATE crm_Contacts for named individuals AND role-email contacts
           // ═══════════════════════════════════════════════════════════════
           if (crmAccountId) {
             for (const contact of augmentedContacts) {
@@ -1866,22 +1878,16 @@ export async function executeToolCall(toolName: string, args: any, context: any)
                 phone: contact.phone,
                 title: contact.title,
                 linkedin: contact.linkedin,
-              }, { deprioritizeRoleEmails: true });
+              }, { deprioritizeRoleEmails: false });
               if (!cleaned || !cleaned.email) continue;
 
-              // Determine if this is a decision-maker / identifiable POC
+              // Only create a crm_Contacts record for real named individuals.
+              // Role/generic emails (info@, contact@, sales@) are already stored at the
+              // account level via crm_Accounts.email — do NOT create a contact for them.
               const titleInfo = normalizeTitleAndPersona(cleaned.title);
-              const isDecisionMaker = titleInfo && (
-                titleInfo.persona === "TECH_DECISION_MAKER" ||
-                titleInfo.ladder === "C-SUITE" ||
-                titleInfo.ladder === "VP" ||
-                titleInfo.ladder === "DIRECTOR"
-              );
               const safeName = normalizeName(cleaned.name || '') || '';
               const hasRealName = safeName.trim().split(/\s+/).length >= 2;
-              const isIdentifiablePOC = isDecisionMaker || hasRealName;
-
-              if (!isIdentifiablePOC) continue;
+              if (!hasRealName) continue; // skip role contacts — they live on the account only
 
               // De-duplicate by email within the same team
               const existingContact = await (mainDb as any).crm_Contacts.findFirst({
@@ -1905,10 +1911,10 @@ export async function executeToolCall(toolName: string, args: any, context: any)
                 continue;
               }
 
-              // Split name into first/last
+              // Split real name into first/last
               const nameParts = safeName.trim().split(/\s+/);
-              const firstName = nameParts.slice(0, -1).join(' ') || '';
-              const lastName = nameParts[nameParts.length - 1] || safeName || 'Unknown';
+              const firstName = nameParts.slice(0, -1).join(' ');
+              const lastName = nameParts[nameParts.length - 1] || safeName;
 
               try {
                 await (mainDb as any).crm_Contacts.create({
@@ -1932,7 +1938,10 @@ export async function executeToolCall(toolName: string, args: any, context: any)
             }
           }
         } catch (accountErr) {
+          const errMsg = (accountErr as Error).message || String(accountErr);
           console.warn(`[SAVE_COMPANY] crm_Accounts/Contacts creation error for ${domain}:`, accountErr);
+          // Surface this error in the job log so it appears in the dashboard
+          context.logs?.push({ ts: new Date().toISOString(), msg: `⚠️ Account save error for ${domain}: ${errMsg}`, level: "WARN" });
         }
         return {
           success: true,
@@ -2015,20 +2024,22 @@ export async function runAgenticLeadGeneration(
   const isResume = !!initialState && (initialState.companiesSaved || 0) > 0;
 
   // Compact system prompt — optimized for token efficiency
-  let systemPrompt = `You are a B2B lead generation agent. Find ${maxCompanies} companies matching the ICP with real contact emails.
+  let systemPrompt = `You are a B2B lead generation agent. Find ${maxCompanies} companies matching the ICP and save them as accounts.
 
 ICP: Industries: ${icp.industries?.join(", ") || "Any"} | Geos: ${icp.geos?.join(", ") || "Any"} | Tech: ${icp.techStack?.join(", ") || "Any"} | Titles: ${icp.titles?.join(", ") || "Any"}
 ${icp.notes ? `Notes: ${icp.notes}` : ""}
 
 RULES:
-- NEVER save a company without at least one real email address
-- visit_website auto-crawls subpages and returns structured contacts — use the data directly
-- Include ALL contacts, emails, and phone numbers found by visit_website in save_company — do NOT omit any
-- Contact name must be a real person name or empty string "" (never company/department names)
+- A company can be saved with ANY email (info@, contact@, sales@, hello@) OR a phone number — you do NOT need a named individual
+- Make an honest effort to find named contacts (CEO, founder, VP) by visiting /about, /team, /leadership, /contact, /people pages
+- If you cannot find a named contact after checking those pages, save the company anyway with whatever email/phone you found
+- NEVER invent, fabricate, or guess contact names or emails that you did not actually find on the website
+- Include ALL emails and phone numbers found by visit_website in save_company — do NOT omit any, even generic ones
+- visit_website auto-crawls subpages — for sites with no obvious contacts on the homepage, also try visiting /about /team /contact /leadership /people /staff directly
 - Skip directories: Crunchbase, LinkedIn, G2, Capterra, Glassdoor, ProductHunt, Wikipedia, etc.
 - Use parallel tool calls for speed (visit multiple sites at once)
 
-WORKFLOW: search_companies → visit_website (parallel) → save_company (include ALL contacts) → repeat
+WORKFLOW: search_companies → visit_website (parallel, including subpages if needed) → save_company (include ALL contacts found) → repeat
 Tools: search_companies, visit_website, save_company, refine_search_strategy`;
 
   if (isResume) {

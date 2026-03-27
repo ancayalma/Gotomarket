@@ -146,9 +146,9 @@ export async function POST(req: Request) {
             target_industries,   // ICP industries
             target_geos,         // ICP geographies
             target_titles,       // ICP job titles
-            key_value_props,     // Value propositions for this campaign
             followupConfig,      // { enabled, delayHours, maxCount, prompt }
             brandId,             // Specific brand identity selected in the wizard
+            campaignBranding,    // Template and brand overrides from the wizard
             voiceConfig,         // { agentId, startTime, concurrency } for ElevenLabs Voice
         } = body;
 
@@ -213,7 +213,9 @@ export async function POST(req: Request) {
                 signature_meta: null,
                 resource_links: resourceLinks || null,
                 meeting_link: meetingLink || null,
-                campaign_branding: defaultBranding || null,
+                campaign_branding: campaignBranding 
+                  ? { ...(defaultBranding || {}), ...campaignBranding } 
+                  : (defaultBranding || null),
                 channels: channels || ["EMAIL"],
                 total_leads: leadIds?.length || 0,
                 emails_sent: 0,

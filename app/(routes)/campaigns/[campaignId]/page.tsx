@@ -310,12 +310,14 @@ export default function CampaignDetailPage() {
             setRepairProgress({ current: 0, total: missingLeads.length });
             setRepairStream(`Engaged. Queueing ${missingLeads.length} missed targets for LLM generation.`);
             let sentCount = 0;
-            const CHUNK_SIZE = 5;
+            const CHUNK_SIZE = 1;
             
             for (let i = 0; i < missingLeads.length; i += CHUNK_SIZE) {
                 const chunk = missingLeads.slice(i, i + CHUNK_SIZE);
                 toast.loading(`Processing batch ${Math.ceil((i+1)/CHUNK_SIZE)} of ${Math.ceil(missingLeads.length/CHUNK_SIZE)}...`, { id: toastId });
                 
+                const branding = (campaign.campaign_branding || {}) as any;
+
                 const sendPayload = {
                     leadIds: chunk.map((l: any) => l.id),
                     leadData: chunk.map((l: any) => ({
@@ -330,9 +332,22 @@ export default function CampaignDetailPage() {
                     campaignId: campaign.id,
                     poolId: campaign.assigned_pool.id,
                     promptOverride: campaign.prompt_override || undefined,
-                    templateId: "minimal", // Default to minimal
-                    senderMode: "company",
-                    signatureSource: "brand",
+                    templateId: branding.templateId || "minimal",
+                    senderMode: branding.senderMode || "company",
+                    signatureSource: branding.signatureSource || "brand",
+                    themeColorOverride: branding.themeColorOverride || undefined,
+                    secondaryColorOverride: branding.secondaryColorOverride || undefined,
+                    resources: branding.resources || undefined,
+                    templateOptions: {
+                        backgroundTexture: branding.bgTexture || undefined,
+                        borderAccent: branding.borderAccent || undefined,
+                        cardStyle: branding.cardStyle || undefined,
+                        dividerStyle: branding.dividerStyle || undefined,
+                        showResources: branding.showResources ?? true,
+                        bannerImageUrl: branding.bannerImageUrl || undefined,
+                        bannerHeight: branding.bannerHeight || undefined,
+                        bannerPositionY: branding.bannerPositionY || undefined,
+                    }
                 };
 
                 const sendRes = await fetch("/api/outreach/send", {
@@ -344,35 +359,57 @@ export default function CampaignDetailPage() {
                 if (sendRes.ok) {
                     const resJson = await sendRes.json();
                     sentCount += resJson.sent || chunk.length;
+                    
+                    const progressState = { current: sentCount, total: missingLeads.length };
                     setRepairProgress(prev => ({ ...prev, current: sentCount }));
                     
+                    let streamMessage = `Batch generated successfully.`;
                     if (resJson.results && resJson.results.length > 0) {
                         const lastResult = resJson.results[resJson.results.length - 1];
                         if (lastResult.status === "sent") {
-                            setRepairStream(`Generation [OK]. Delivered payload to: ${lastResult.to} (${sentCount}/${missingLeads.length})`);
+                            streamMessage = `Generation [OK]. Delivered payload to: ${lastResult.to} (${sentCount}/${missingLeads.length})`;
                         } else {
-                            setRepairStream(`Bypass: ${lastResult.to} - ${lastResult.reason}`);
+                            streamMessage = `Bypass: ${lastResult.to} - ${lastResult.reason}`;
                         }
-                    } else {
-                        setRepairStream(`Batch generated successfully.`);
                     }
+                    
+                    setRepairStream(streamMessage);
+                    // Broadcast globally to all admins via JSON metadata
+                    fetch(`/api/campaigns/${campaign.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                            campaignBranding: { ...branding, repair_active: true, repair_progress: progressState, repair_stream: streamMessage } 
+                        }),
+                    }).catch(() => {});
                 } else {
-                    setRepairStream(`[ERROR] Batch LLM generation failed for ${chunk.length} targets.`);
+                    const streamMessage = `[ERROR] Batch LLM generation failed for ${chunk.length} targets.`;
+                    setRepairStream(streamMessage);
+                    fetch(`/api/campaigns/${campaign.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                            campaignBranding: { ...branding, repair_active: true, repair_stream: streamMessage } 
+                        }),
+                    }).catch(() => {});
                     toast.error(`Batch ${Math.ceil((i+1)/CHUNK_SIZE)} failed to send. Check server logs.`);
                 }
             }
 
             if (sentCount > 0) {
-                setRepairStream(`Repair sequence concluded. Successfully dispatched to ${sentCount} aliases.`);
+                const streamMessage = `Repair sequence concluded. Successfully dispatched to ${sentCount} aliases.`;
+                setRepairStream(streamMessage);
                 toast.success(`Dispatched ${sentCount} missed leads successfully!`, { id: toastId });
-                // If the campaign was paused or completed, flip it back to active so tracking resumes
-                if (campaign.status === "COMPLETED" || campaign.status === "PAUSED") {
-                    await fetch(`/api/campaigns/${campaign.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ status: "ACTIVE" }),
-                    });
-                }
+                
+                // Turn off repair tracking globally, flip active
+                await fetch(`/api/campaigns/${campaign.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        status: "ACTIVE",
+                        campaignBranding: { ...branding, repair_active: false, repair_stream: streamMessage, repair_progress: null } 
+                    }),
+                });
                 mutate();
             } else {
                 setRepairStream(`[ERROR] Total Sequence Failure. 0 targets hit.`);
@@ -518,6 +555,16 @@ export default function CampaignDetailPage() {
         0
     );
 
+    const branding = campaign.campaign_branding as any;
+    const isRepairing = repairLoading || (branding?.repair_active === true);
+    let activeProgress = repairProgress;
+    let activeStream = repairStream;
+
+    if (!repairLoading && branding?.repair_active) {
+        activeProgress = branding.repair_progress || { current: 0, total: campaign.total_leads || 0 };
+        activeStream = branding.repair_stream || "Syncing sequence...";
+    }
+
     return (
         <div className="flex flex-col h-full bg-background">
             <div className="p-4 md:p-6 lg:p-8 space-y-6">
@@ -630,10 +677,10 @@ export default function CampaignDetailPage() {
                             variant="outline"
                             className="gap-2 border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 font-medium"
                             onClick={handleRepair}
-                            disabled={repairLoading || !campaign.assigned_pool}
+                            disabled={isRepairing || !campaign.assigned_pool}
                             title={!campaign.assigned_pool ? "No associated list to repair from" : "Send outreach to leads in the list that were previously skipped"}
                         >
-                            {repairLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                            {isRepairing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                             Repair Skipped Leads
                         </Button>
                         <Button
@@ -686,18 +733,18 @@ export default function CampaignDetailPage() {
                 </div>
 
                 {/* Email Send Progress Bar */}
-                {((campaign.status === "ACTIVE" || campaign.status === "PAUSED") && campaign.total_leads > 0) || repairLoading ? (
+                {((campaign.status === "ACTIVE" || campaign.status === "PAUSED") && campaign.total_leads > 0) || isRepairing ? (
                     <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
                             <span className="text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-2">
-                                {repairLoading ? "Repair Progress" : "Send Progress"}
-                                {campaign.status === "PAUSED" && !repairLoading && (
+                                {isRepairing ? "Repair Progress" : "Send Progress"}
+                                {campaign.status === "PAUSED" && !isRepairing && (
                                     <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider border-amber-500/30 text-amber-400">
                                         <Pause className="w-2.5 h-2.5 mr-0.5" />
                                         STOPPED
                                     </Badge>
                                 )}
-                                {repairLoading && (
+                                {isRepairing && (
                                     <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider border-amber-500/30 text-amber-400 bg-amber-500/10">
                                         <RefreshCw className="w-2.5 h-2.5 mr-0.5 animate-spin" />
                                         REPAIRING
@@ -705,13 +752,13 @@ export default function CampaignDetailPage() {
                                 )}
                             </span>
                             <span className="font-mono font-bold text-primary">
-                                {repairLoading 
-                                    ? <>{repairProgress.current} / {repairProgress.total}</>
+                                {isRepairing 
+                                    ? <>{activeProgress.current} / {activeProgress.total}</>
                                     : <>{campaign.emails_sent} / {campaign.total_leads}</>
                                 }
                                 <span className="text-muted-foreground ml-1">
-                                    {repairLoading 
-                                        ? `(${repairProgress.total > 0 ? Math.round((repairProgress.current / repairProgress.total) * 100) : 0}%)`
+                                    {isRepairing 
+                                        ? `(${activeProgress.total > 0 ? Math.round((activeProgress.current / activeProgress.total) * 100) : 0}%)`
                                         : `(${campaign.total_leads > 0 ? Math.round((campaign.emails_sent / campaign.total_leads) * 100) : 0}%)`
                                     }
                                 </span>
@@ -720,25 +767,25 @@ export default function CampaignDetailPage() {
                         <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden">
                             <div
                                 className={`h-full rounded-full transition-all duration-700 ${
-                                    repairLoading 
+                                    isRepairing 
                                         ? "bg-gradient-to-r from-amber-500 to-orange-500 animate-pulse"
                                         : campaign.status === "PAUSED"
                                             ? "bg-gradient-to-r from-amber-500 to-orange-500"
                                             : "bg-gradient-to-r from-blue-500 to-indigo-500"
                                 }`}
                                 style={{ width: `${
-                                    repairLoading 
-                                        ? (repairProgress.total > 0 ? Math.min(100, (repairProgress.current / repairProgress.total) * 100) : 0)
+                                    isRepairing 
+                                        ? (activeProgress.total > 0 ? Math.min(100, (activeProgress.current / activeProgress.total) * 100) : 0)
                                         : (campaign.total_leads > 0 ? Math.min(100, (campaign.emails_sent / campaign.total_leads) * 100) : 0)
                                 }%` }}
                             />
                         </div>
                         
                         {/* Live Reasoning Stream (Appears Only During Repair) */}
-                        {repairLoading && (
+                        {isRepairing && activeStream && (
                             <div className="mt-2 w-full p-2.5 bg-black/60 border border-amber-500/20 rounded font-mono text-[10px] text-amber-400/90 shadow-inner flex items-center gap-2">
                                 <span className="animate-pulse">▶</span>
-                                <span className="truncate">{repairStream}</span>
+                                <span className="truncate">{activeStream}</span>
                             </div>
                         )}
                     </div>
