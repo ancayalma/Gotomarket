@@ -612,8 +612,8 @@ export default function CampaignDetailPage() {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        {/* Stop/Resume Button — prominent when campaign is actively sending */}
-                        {(campaign.status === "ACTIVE" && campaign.emails_sent < campaign.total_leads && campaign.total_leads > 0) && (
+                        {/* Stop/Resume Button — visible whenever campaign is ACTIVE */}
+                        {campaign.status === "ACTIVE" && (
                             <Button
                                 size="sm"
                                 className="gap-2 bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20 font-bold"
