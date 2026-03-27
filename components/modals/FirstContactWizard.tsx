@@ -715,14 +715,16 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         ? leadData.find((l: any) => (l.email || l.accountEmail || (l.accountAdditionalEmails && l.accountAdditionalEmails[0])) && l.id === testLeadId)
         : undefined;
 
+      const sendLeadData = (leadData || []).filter((l: any) => l.email).map((l: any) => ({
+        id: l.id, firstName: l.firstName, lastName: l.lastName,
+        company: l.company, jobTitle: l.jobTitle,
+        email: l.email,
+        additional_emails: l.additional_emails || l.accountAdditionalEmails || [],
+      }));
+
       const emailPayload = {
         leadIds: sendLeadIds,
-        leadData: (leadData || []).filter((l: any) => l.email).map((l: any) => ({
-          id: l.id, firstName: l.firstName, lastName: l.lastName,
-          company: l.company, jobTitle: l.jobTitle,
-          email: l.email,
-          additional_emails: l.additional_emails || l.accountAdditionalEmails || [],
-        })),
+        leadData: sendLeadData,
         test: isTest,
         testEmail: testEmailValue,
         inlineLeads: testLeadData ? [testLeadData] : undefined,
@@ -857,7 +859,19 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ 
                           campaignBranding: { 
-                            ...chunkPayload.campaignBranding, 
+                            templateId: selectedTemplate,
+                            senderMode,
+                            signatureSource,
+                            themeColorOverride,
+                            secondaryColorOverride,
+                            bgTexture,
+                            borderAccent,
+                            cardStyle,
+                            dividerStyle,
+                            showResources,
+                            bannerImageUrl,
+                            bannerHeight,
+                            bannerPositionY,
                             repair_active: true, 
                             repair_progress: progressState, 
                             repair_stream: streamMessage 
@@ -894,7 +908,19 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
               body: JSON.stringify({ 
                   status: "ACTIVE",
                   campaignBranding: { 
-                    ...emailPayload.campaignBranding, 
+                    templateId: selectedTemplate,
+                    senderMode,
+                    signatureSource,
+                    themeColorOverride,
+                    secondaryColorOverride,
+                    bgTexture,
+                    borderAccent,
+                    cardStyle,
+                    dividerStyle,
+                    showResources,
+                    bannerImageUrl,
+                    bannerHeight,
+                    bannerPositionY,
                     repair_active: false, 
                     repair_stream: streamMessage, 
                     repair_progress: null 
