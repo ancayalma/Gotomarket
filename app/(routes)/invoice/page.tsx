@@ -20,6 +20,7 @@ import { getActiveUsers } from "@/actions/get-users";
 import { getBoards } from "@/actions/projects/get-boards";
 import NewTaskDialog from "./dialogs/NewTask";
 import { LearnLink } from "@/components/ui/LearnLink";
+import { UpgradeGate } from "@/components/UpgradeGate";
 
 import { SyncInvoiceCard } from "./components/SyncInvoiceCard";
 import { ManualInvoiceDialog } from "./dialogs/ManualInvoiceDialog";
@@ -93,59 +94,61 @@ const InvoicePage = async () => {
 
 
   return (
-    <Container
-      title="Invoices"
-      description={"Everything you need to know about invoices and TAX"}
-      sticky
-    >
-      <LearnLink
-        tab="invoice"
-        overviewTitle="Financial Operations"
-        overviewWhat="The core clearinghouse for all accounts receivable and tax-related documentation. It tracks the movement of money from quotes to finalized settlements."
-        overviewWhy="Accuracy in finance is non-negotiable. This module ensures every invoice is accounted for, providing a clear audit trail for both internal bookkeeping and external tax reporting."
-        overviewHow="Upload PDF invoices directly into the ledger, sync with your external ERP systems, or use the Manual Invoice dialog to create one-off billing statements."
-      />
-      <NewTaskDialog users={users} boards={boards} />
-
-      {/* Navigation Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3 flex-shrink-0">
-
-        {/* Create Manual Invoice */}
-        <ManualInvoiceDialog />
-
-        {/* Upload PDF Card */}
-        <ModalDropzone
-          buttonLabel="Upload pdf"
-          customTrigger={<CardContent card={cards[0]} />}
+    <UpgradeGate featureId="invoice" title="Invoices Locked" description="Invoice management and financial operations require a Growth plan or higher.">
+      <Container
+        title="Invoices"
+        description={"Everything you need to know about invoices and TAX"}
+        sticky
+      >
+        <LearnLink
+          tab="invoice"
+          overviewTitle="Financial Operations"
+          overviewWhat="The core clearinghouse for all accounts receivable and tax-related documentation. It tracks the movement of money from quotes to finalized settlements."
+          overviewWhy="Accuracy in finance is non-negotiable. This module ensures every invoice is accounted for, providing a clear audit trail for both internal bookkeeping and external tax reporting."
+          overviewHow="Upload PDF invoices directly into the ledger, sync with your external ERP systems, or use the Manual Invoice dialog to create one-off billing statements."
         />
+        <NewTaskDialog users={users} boards={boards} />
 
-        {/* My Invoices Link Card */}
-        <Link href={cards[1].href!} className="block h-full">
-          <CardContent card={cards[1]} />
-        </Link>
+        {/* Navigation Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3 flex-shrink-0">
 
-        {/* Sync Cron Card */}
-        {(() => {
-          const { icon, ...syncCardProps } = cards[2];
-          return <SyncInvoiceCard card={syncCardProps} />;
-        })()}
+          {/* Create Manual Invoice */}
+          <ManualInvoiceDialog />
 
-        {/* Settings Card */}
-        <RightViewModal
-          customTrigger
-          label={<CardContent card={cards[3]} />}
-          title="Your company settings"
-          description="This data will be used as default values for your invoices. You can change them at any time. Very important is to set account email which will receive files for import to ERPs"
-          width={"w-[900px]"}
-        >
-          <MyAccountSettingsForm initialData={myAccountSettings} />
-        </RightViewModal>
-      </div>
+          {/* Upload PDF Card */}
+          <ModalDropzone
+            buttonLabel="Upload pdf"
+            customTrigger={<CardContent card={cards[0]} />}
+          />
 
-      <div>
-        <InvoiceDataTable data={invoices} columns={columns} />
-      </div>
-    </Container>
+          {/* My Invoices Link Card */}
+          <Link href={cards[1].href!} className="block h-full">
+            <CardContent card={cards[1]} />
+          </Link>
+
+          {/* Sync Cron Card */}
+          {(() => {
+            const { icon, ...syncCardProps } = cards[2];
+            return <SyncInvoiceCard card={syncCardProps} />;
+          })()}
+
+          {/* Settings Card */}
+          <RightViewModal
+            customTrigger
+            label={<CardContent card={cards[3]} />}
+            title="Your company settings"
+            description="This data will be used as default values for your invoices. You can change them at any time. Very important is to set account email which will receive files for import to ERPs"
+            width={"w-[900px]"}
+          >
+            <MyAccountSettingsForm initialData={myAccountSettings} />
+          </RightViewModal>
+        </div>
+
+        <div>
+          <InvoiceDataTable data={invoices} columns={columns} />
+        </div>
+      </Container>
+    </UpgradeGate>
   );
 };
 
