@@ -124,7 +124,7 @@ export async function POST(req: Request) {
           description: existingAccount.description || description,
           annual_revenue: existingAccount.annual_revenue || annual_revenue,
           member_of: existingAccount.member_of || member_of,
-          industry: existingAccount.industry || finalIndustryId,
+          industry_type: (existingAccount.industry || finalIndustryId) ? { connect: { id: existingAccount.industry || finalIndustryId } } : undefined,
           updatedBy: session.user.id,
         },
       });
@@ -156,19 +156,19 @@ export async function POST(req: Request) {
         shipping_state,
         shipping_country,
         description: description || undefined,
-        assigned_to: assigned_to || undefined,
+        assigned_to_user: assigned_to ? { connect: { id: assigned_to } } : undefined,
         status: "Active",
         annual_revenue: annual_revenue || undefined,
         member_of: member_of || undefined,
-        industry: finalIndustryId || undefined,
+        industry_type: finalIndustryId ? { connect: { id: finalIndustryId } } : undefined,
       },
     });
 
     await logActivityInternal(session.user.id, "CREATE", "crm_Accounts", `Created account: ${newAccount.name} (${newAccount.id})`, teamId || undefined);
     return NextResponse.json({ newAccount }, { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
     systemLogger.error("[NEW_ACCOUNT_POST]", error);
-    return new NextResponse("Initial error", { status: 500 });
+    return new NextResponse(error?.message || "Internal error", { status: 500 });
   }
 }
 
@@ -255,20 +255,20 @@ export async function PUT(req: Request) {
         shipping_state,
         shipping_country,
         description,
-        assigned_to: assigned_to || undefined,
+        assigned_to_user: assigned_to ? { connect: { id: assigned_to } } : (assigned_to === null ? { disconnect: true } : undefined),
         status: status,
         annual_revenue,
         member_of,
-        industry: finalIndustryId,
+        industry_type: finalIndustryId ? { connect: { id: finalIndustryId } } : (industry === null ? { disconnect: true } : undefined),
       },
     });
 
     const teamInfo = await getCurrentUserTeamId();
     await logActivityInternal(session.user.id, "UPDATE", "crm_Accounts", `Updated account: ${newAccount.name} (${id})`, teamInfo?.teamId || undefined);
     return NextResponse.json({ newAccount }, { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
     systemLogger.error("[UPDATE_ACCOUNT_PUT]", error);
-    return new NextResponse("Initial error", { status: 500 });
+    return new NextResponse(error?.message || "Internal error", { status: 500 });
   }
 }
 
