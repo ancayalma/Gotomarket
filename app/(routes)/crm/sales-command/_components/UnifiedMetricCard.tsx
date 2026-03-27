@@ -65,7 +65,7 @@ const accentStyles = {
 
 function useCountUp(end: number, duration = 1200) {
     const [count, setCount] = useState(0);
-    const rafRef = useRef<number>();
+    const rafRef = useRef<number>(undefined);
 
     useEffect(() => {
         if (end === 0) { setCount(0); return; }
