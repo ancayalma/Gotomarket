@@ -366,25 +366,30 @@ export async function POST(req: Request) {
 
     // ── Pre-fetch Global Deduplication Set for the Campaign ──
     const existingCampaignRecipientIds = new Set<string>();
+    // ── Email-Address-Level Deduplication ──
+    // Prevents duplicate sends when the same email appears under multiple accounts/contacts.
+    // Pre-seeded from existing outreach items so it works across separate batch calls.
+    const sentEmailsThisDispatch = new Set<string>();
+
     if (campaignId && !testMode) {
       try {
         const trackedItems = await prismadb.crm_Outreach_Items.findMany({
           where: { campaign: campaignId },
-          select: { lead: true, account_id: true }
+          select: { lead: true, account_id: true, candidate_email: true }
         });
         for (const item of trackedItems) {
           if (item.lead) existingCampaignRecipientIds.add(item.lead);
           if (item.account_id) existingCampaignRecipientIds.add(item.account_id);
+          // Pre-seed email dedup from already-sent outreach items
+          if ((item as any).candidate_email) {
+            sentEmailsThisDispatch.add((item as any).candidate_email.toLowerCase());
+          }
         }
-        systemLogger.info(`[OUTREACH_SEND] Pre-loaded deduplication set for Campaign ${campaignId}: ${existingCampaignRecipientIds.size} protected entities.`);
+        systemLogger.info(`[OUTREACH_SEND] Pre-loaded deduplication set for Campaign ${campaignId}: ${existingCampaignRecipientIds.size} entities, ${sentEmailsThisDispatch.size} unique emails.`);
       } catch (err: any) {
         systemLogger.error(`[OUTREACH_SEND] Failed to load campaign deduplication history: ${err.message}`);
       }
     }
-
-    // ── Email-Address-Level Deduplication ──
-    // Prevents duplicate sends when an Account and its linked Contact share the same email.
-    const sentEmailsThisDispatch = new Set<string>();
 
     for (const recipient of recipients) {
       // ── Cancellation Checkpoint ──────────────────────────────────────────
