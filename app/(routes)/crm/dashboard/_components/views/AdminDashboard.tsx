@@ -93,7 +93,12 @@ const AdminDashboard = ({
         teamMembers: activeUsersCount,
         outreachStarted: (outreachStats?.aggregate?.emails_sent ?? 0) > 0
             || (Array.isArray(outreachStats?.campaigns) && outreachStats.campaigns.length > 0),
+        accounts: crmEntities.find(e => e.id === "entity:accounts")?.value || 0,
+        contacts: crmEntities.find(e => e.id === "entity:contacts")?.value || 0,
+        opportunities: crmEntities.find(e => e.id === "entity:opportunities")?.value || 0,
     };
+
+    const hasCampaigns = crmEntities.some(e => e.id === "entity:projects");
 
     // Only show checklist to admins who are clearly just getting started AND haven't dismissed it
     const isNewishAdmin =
@@ -134,6 +139,7 @@ const AdminDashboard = ({
                                 <QuickLaunchChecklist
                                     counts={checklistCounts}
                                     initiallyDismissed={quickLaunchDismissed}
+                                    hasCampaigns={hasCampaigns}
                                 />
                             </div>
                         )}
@@ -145,7 +151,7 @@ const AdminDashboard = ({
             </DashboardLayoutProvider>
 
             {/* First-login product tour — portal-style, outside layout so z-index is clean */}
-            <ProductTour dismissed={quickLaunchDismissed} />
+            <ProductTour dismissed={quickLaunchDismissed} hasCampaigns={hasCampaigns} />
         </>
     );
 };

@@ -320,11 +320,13 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
 
 // ─── Main export ─────────────────────────────────────────────────────────────
 
-export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
+export function ProductTour({ dismissed = false, hasCampaigns = true }: { dismissed?: boolean, hasCampaigns?: boolean }) {
     const [mounted, setMounted] = useState(false);
     const [active, setActive] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
     const [rect, setRect] = useState<Rect | null>(null);
+
+    const activeSteps = React.useMemo(() => STEPS.filter(s => hasCampaigns || s.id !== "step-campaigns"), [hasCampaigns]);
 
     // 1. Hydration
     useEffect(() => {
@@ -370,27 +372,26 @@ export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
 
     // Scroll & Track fluid bounding box
     useEffect(() => {
-        if (!active || stepIndex >= STEPS.length) return;
+        if (!active || stepIndex >= activeSteps.length) return;
         
-        const step = STEPS[stepIndex];
+        const step = activeSteps[stepIndex];
         let reqId: number;
         let lastScrollCommand = 0;
+        let hasScrolled = false;
         
         const ensureElement = () => document.querySelector(`[data-tour-id="${step.targetId}"]`) || 
                                     (step.fallbackSelector ? document.querySelector(step.fallbackSelector) : null);
-        
-        // Initial scroll
-        const initialEl = ensureElement();
-        if (initialEl) {
-            initialEl.scrollIntoView({ behavior: "smooth", block: "center" });
-            lastScrollCommand = Date.now();
-        }
         
         let lastRect = { top: -9999, left: -9999, width: 0, height: 0 };
         
         const loop = () => {
             const el = ensureElement();
             if (el) {
+                if (!hasScrolled) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                    hasScrolled = true;
+                    lastScrollCommand = Date.now();
+                }
                 const r = el.getBoundingClientRect();
                 // Check if significantly moved (handles smooth scroll flawlessly)
                 if (
@@ -404,9 +405,8 @@ export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
                         lastRect = r;
                     }
                 }
-            } else if (Date.now() - lastScrollCommand > 2000 && !initialEl) {
-                // Not found even after 2s waiting, it might be collapsed UI.
-                // Allow fallback if needed.
+            } else if (Date.now() - lastScrollCommand > 2000 && hasScrolled) {
+                // Not found even after 2s waiting after scrolling, might be collapsed.
             }
             reqId = requestAnimationFrame(loop);
         };
@@ -414,7 +414,7 @@ export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
         reqId = requestAnimationFrame(loop);
         
         return () => cancelAnimationFrame(reqId);
-    }, [active, stepIndex]);
+    }, [active, stepIndex, activeSteps]);
 
     const complete = useCallback(() => {
         setActive(false);
@@ -422,16 +422,16 @@ export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
     }, []);
 
     const handleNext = useCallback(() => {
-        if (stepIndex < STEPS.length - 1) {
+        if (stepIndex < activeSteps.length - 1) {
             setStepIndex((i) => i + 1);
         } else {
             complete();
         }
-    }, [stepIndex, complete]);
+    }, [stepIndex, complete, activeSteps.length]);
 
     if (!mounted || !active || !rect) return null;
 
-    const step = STEPS[stepIndex];
+    const step = activeSteps[stepIndex];
 
     const portalContent = (
         <AnimatePresence>
@@ -440,7 +440,7 @@ export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
                 key={`card-${stepIndex}`}
                 step={step}
                 stepIndex={stepIndex}
-                totalSteps={STEPS.length}
+                totalSteps={activeSteps.length}
                 rect={rect}
                 onNext={handleNext}
                 onSkip={complete}

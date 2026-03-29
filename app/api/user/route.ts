@@ -112,22 +112,22 @@ export async function POST(req: Request) {
 
     const isFree = selectedPlan.price === 0 || selectedPlan.slug === "FREE";
 
-    // Block non-free plans & Enterprise since payment flow is not ready
-    if (planId === "enterprise-contact" || !isFree) {
+    // Block Enterprise since it requires a custom contract
+    if (planId === "enterprise-contact") {
       try {
         await sendEmail({
           to: "sysadm@basalthq.com, sales@basalthq.com",
           subject: `Interest in ${selectedPlan.name} Plan`,
           text: `User ${name} (${email}) from company ${companyName} tried to register for the ${selectedPlan.name} plan.`,
-          html: `<p>User <strong>${name}</strong> (${email}) from company <strong>${companyName}</strong> tried to register for the <strong>${selectedPlan.name}</strong> plan.</p><p>As payment flows are disabled, their account was not created.</p>`
+          html: `<p>User <strong>${name}</strong> (${email}) from company <strong>${companyName}</strong> tried to register for the <strong>${selectedPlan.name}</strong> plan.</p><p>As payment flows are custom for enterprise, their account was not created.</p>`
         });
       } catch (err) {
         systemLogger.error("[Register] Failed to send plan interest email", err);
       }
-      return new NextResponse("We are currently limiting new paid signups. Our team has been notified of your interest and will contact you shortly.", { status: 400 });
+      return new NextResponse("Thank you for your interest in Enterprise. Our team has been notified and will contact you shortly to configure your instance.", { status: 400 });
     }
 
-    let initialStatus: string = "ACTIVE"; // If we only allow free, it's always ACTIVE
+    let initialStatus: string = isFree ? "ACTIVE" : "PENDING";
 
     let finalPrice = selectedPlan.price;
     if (!isFree && billingCycle === "annual") {
@@ -257,9 +257,14 @@ export async function POST(req: Request) {
           }
         });
 
-        // Trigger the SES verification email (uses platform system credentials)
-        await verifyEmailIdentity(email);
-        systemLogger.info(`[Register] SES verification triggered for ${email} (Team: ${team.id})`);
+        if (isFree) {
+          // Trigger the SES verification email immediately for free plans
+          await verifyEmailIdentity(email);
+          systemLogger.info(`[Register] SES verification triggered for ${email} (Team: ${team.id})`);
+        } else {
+          // Defer verification until Stripe payment succeeds
+          systemLogger.info(`[Register] SES verification deferred pending payment for ${email} (Team: ${team.id})`);
+        }
       } catch (sesError) {
         // Non-blocking — registration still succeeds if SES trigger fails
         systemLogger.error("[Register] Auto SES verification failed (non-fatal):", sesError);
@@ -270,42 +275,24 @@ export async function POST(req: Request) {
     let activeInvoiceId = null;
 
     if (!isFree) {
-      // 4. Generate Surge Payment Link for Paid Plans
+      // 4. Generate Stripe Checkout Link for Paid Plans
       try {
-        const { createSurgeCheckoutSession } = await import("@/lib/surge");
+        const { createStripeCheckoutSession } = await import("@/lib/stripe");
 
-        const invoice = await prismadb.invoices.create({
-          data: {
-            team_id: team.id,
-            assigned_user_id: user.id,
-            invoice_number: `REG - ${Date.now()} `,
-            invoice_amount: finalPrice.toString(),
-            invoice_currency: "USD",
-            description: `Registration: ${selectedPlan.name} (${billingCycle})`,
-            status: "UNPAID",
-            payment_status: "UNPAID",
-            invoice_file_mimeType: "application/pdf",
-            invoice_file_url: ""
-          }
-        });
-
-        const checkout = await createSurgeCheckoutSession(team.id, invoice);
-        if (checkout) {
+        const checkout = await createStripeCheckoutSession(
+          team.id,
+          user.email!,
+          selectedPlan.slug,
+          billingCycle as "monthly" | "annual",
+          team.name
+        );
+        
+        if (checkout && checkout.url) {
           paymentUrl = checkout.url;
-          activeInvoiceId = invoice.id;
-
-          // Update invoice with surge details
-          await prismadb.invoices.update({
-            where: { id: invoice.id },
-            data: {
-              surge_payment_id: checkout.id,
-              surge_payment_link: checkout.url,
-              payment_status: "PENDING"
-            }
-          });
         }
-      } catch (surgeError) {
-        systemLogger.error("[Register] Surge link generation failed:", surgeError);
+      } catch (stripeError) {
+        systemLogger.error("[Register] Stripe checkout generation failed:", stripeError);
+        return new NextResponse("Failed to secure checkout link. Please try again.", { status: 500 });
       }
     }
 

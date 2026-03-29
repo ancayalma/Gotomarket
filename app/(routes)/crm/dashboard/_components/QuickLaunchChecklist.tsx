@@ -38,6 +38,12 @@ export interface ChecklistCounts {
     teamMembers: number;
     /** Whether any outreach has been launched */
     outreachStarted: boolean;
+    /** Number of accounts */
+    accounts?: number;
+    /** Number of contacts */
+    contacts?: number;
+    /** Number of opportunities */
+    opportunities?: number;
 }
 
 interface Step {
@@ -56,6 +62,7 @@ interface Step {
 interface QuickLaunchChecklistProps {
     counts: ChecklistCounts;
     initiallyDismissed?: boolean;
+    hasCampaigns?: boolean;
 }
 
 const DISMISS_KEY = "crm_quick_launch_dismissed_v1";
@@ -63,7 +70,7 @@ const TOUR_KEY = "crm_product_tour_v2";
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: QuickLaunchChecklistProps) {
+export function QuickLaunchChecklist({ counts, initiallyDismissed = false, hasCampaigns = true }: QuickLaunchChecklistProps) {
     const router = useRouter();
     const [dismissed, setDismissed] = useState(initiallyDismissed);
     const [collapsed, setCollapsed] = useState(false);
@@ -79,7 +86,7 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
         setMounted(true);
     }, []);
 
-    const steps: Step[] = [
+    const premiumSteps: Step[] = [
         {
             id: "campaign",
             label: "Create a Campaign",
@@ -141,6 +148,59 @@ export function QuickLaunchChecklist({ counts, initiallyDismissed = false }: Qui
             done: counts.outreachStarted,
         },
     ];
+
+    const basicSteps: Step[] = [
+        {
+            id: "wizard_basic",
+            label: "Run the LeadGen Wizard",
+            description: "Describe your ideal customer in plain English. The AI will build a targeted list of accounts and contacts matching your criteria.",
+            tip: "Save hours of manual research by letting our agentic AI build your pipeline.",
+            href: "/crm/accounts",
+            icon: Wand2,
+            gradient: "from-cyan-500 to-blue-500",
+            glowColor: "rgba(6,182,212,0.15)",
+            ctaLabel: "Accounts",
+            done: counts.lists > 0,
+        },
+        {
+            id: "account",
+            label: "Add an Account",
+            description: "Manually track a target company or load one from your AI-generated list.",
+            tip: "The LeadGen wizard automatically creates accounts for you, auto-completing this step.",
+            href: "/crm/accounts",
+            icon: Sparkles, // Or LandmarkIcon equivalent
+            gradient: "from-orange-500 to-rose-500",
+            glowColor: "rgba(249,115,22,0.15)",
+            ctaLabel: "Accounts",
+            done: (counts.accounts ?? 0) > 0,
+        },
+        {
+            id: "contact",
+            label: "Add a Contact",
+            description: "Store individual stakeholders, decision makers, and key prospects for your accounts.",
+            tip: "AI Scraped leads often bring rich contact profiles that link instantly to their accounts.",
+            href: "/crm/contacts",
+            icon: Users,
+            gradient: "from-violet-500 to-indigo-500",
+            glowColor: "rgba(139,92,246,0.15)",
+            ctaLabel: "Contacts",
+            done: (counts.contacts ?? 0) > 0,
+        },
+        {
+            id: "opportunities",
+            label: "Create an Opportunity",
+            description: "Start tracking deals and potential revenue. Move standard contacts into an active sales process.",
+            tip: "Linking an Account to an Opportunity allows for perfectly weighted revenue forecasting.",
+            href: "/crm/opportunities",
+            icon: Rocket,
+            gradient: "from-emerald-500 to-teal-500",
+            glowColor: "rgba(16,185,129,0.15)",
+            ctaLabel: "Opportunities",
+            done: (counts.opportunities ?? 0) > 0,
+        },
+    ];
+
+    const steps = hasCampaigns ? premiumSteps : basicSteps;
 
     const completedCount = steps.filter((s) => s.done).length;
     const allDone = completedCount === steps.length;
