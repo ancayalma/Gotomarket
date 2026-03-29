@@ -226,29 +226,44 @@ export async function POST(req: Request) {
     });
 
     // 4. Auto-trigger SES email verification (PLATFORM_SES) for the new team owner
-    // The user's registration email is used — AWS SES sends a verification link immediately.
-    // When they click it, their team is verified and can send outreach without any Settings page visit.
-    try {
-      const { verifyEmailIdentity } = await import("@/lib/aws/ses-verify");
+    // Only workspace (non-freemail) emails go through SES verification.
+    // Freemail users (gmail, yahoo, etc.) are allowed to use the CRM but are NOT
+    // eligible for outbound email services — they get a warning modal instead.
+    const { isFreemailDomain } = await import("@/lib/freemail");
+    const isFreemail = isFreemailDomain(email);
 
-      // Create the TeamEmailConfig record with PLATFORM_SES
-      await prismadb.teamEmailConfig.create({
-        data: {
-          team_id: team.id,
-          purpose: "GENERAL",
-          provider: "PLATFORM_SES",
-          from_email: email,
-          from_name: companyName,
-          verification_status: "PENDING",
-        }
+    if (isFreemail) {
+      // Freemail: mark email as "verified" so they bypass the SES gate,
+      // but set the isFreemailAccount flag so the UI shows a warning modal.
+      await prismadb.users.update({
+        where: { id: user.id },
+        data: { sesEmailVerified: true, isFreemailAccount: true }
       });
+      systemLogger.info(`[Register] Freemail account (${email}) — SES skipped, warning flag set (Team: ${team.id})`);
+    } else {
+      // Workspace email: trigger full SES verification flow
+      try {
+        const { verifyEmailIdentity } = await import("@/lib/aws/ses-verify");
 
-      // Trigger the SES verification email (uses platform system credentials)
-      await verifyEmailIdentity(email);
-      systemLogger.error(`[Register] SES verification triggered for ${email} (Team: ${team.id})`);
-    } catch (sesError) {
-      // Non-blocking — registration still succeeds if SES trigger fails
-      systemLogger.error("[Register] Auto SES verification failed (non-fatal):", sesError);
+        // Create the TeamEmailConfig record with PLATFORM_SES
+        await prismadb.teamEmailConfig.create({
+          data: {
+            team_id: team.id,
+            purpose: "GENERAL",
+            provider: "PLATFORM_SES",
+            from_email: email,
+            from_name: companyName,
+            verification_status: "PENDING",
+          }
+        });
+
+        // Trigger the SES verification email (uses platform system credentials)
+        await verifyEmailIdentity(email);
+        systemLogger.info(`[Register] SES verification triggered for ${email} (Team: ${team.id})`);
+      } catch (sesError) {
+        // Non-blocking — registration still succeeds if SES trigger fails
+        systemLogger.error("[Register] Auto SES verification failed (non-fatal):", sesError);
+      }
     }
 
     let paymentUrl = null;
@@ -321,6 +336,7 @@ export async function POST(req: Request) {
       ...user,
       teamId: team.id,
       requiresPayment: !isFree,
+      isFreemailAccount: isFreemail,
       paymentUrl,
       invoiceId: activeInvoiceId,
       amount: finalPrice.toString()

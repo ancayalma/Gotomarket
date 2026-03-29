@@ -39,7 +39,7 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource, us
         switch (resource) {
             case "USERS": {
                 const userCount = await prismadb.users.count({ where: { team_id: teamId } });
-                if (userCount >= plan.max_users) {
+                if (plan.max_users !== -1 && userCount >= plan.max_users) {
                     return { allowed: false, message: `User limit reached (${plan.max_users} users max on ${plan.name} plan)` };
                 }
                 break;
@@ -47,7 +47,7 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource, us
             case "LEADS": {
                 const leadCount = await (prismadb as any).crm_Leads.count({ where: { team_id: teamId } });
                 const limit = (plan as any).max_leads || 5000;
-                if (leadCount >= limit) {
+                if (limit !== -1 && leadCount >= limit) {
                     return { allowed: false, message: `Lead limit reached (${limit} leads max)` };
                 }
                 break;
@@ -55,7 +55,7 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource, us
             case "CONTACTS": {
                 const contactCount = await prismadb.crm_Contacts.count({ where: { team_id: teamId } });
                 const limit = (plan as any).max_contacts || 5000;
-                if (contactCount >= limit) {
+                if (limit !== -1 && contactCount >= limit) {
                     return { allowed: false, message: `Contact limit reached (${limit} contacts max)` };
                 }
                 break;
@@ -63,7 +63,7 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource, us
             case "ACCOUNTS": {
                 const accountCount = await prismadb.crm_Accounts.count({ where: { team_id: teamId } });
                 const limit = (plan as any).max_accounts || 1000;
-                if (accountCount >= limit) {
+                if (limit !== -1 && accountCount >= limit) {
                     return { allowed: false, message: `Account limit reached (${limit} accounts max)` };
                 }
                 break;
@@ -71,7 +71,7 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource, us
             case "OPPORTUNITIES": {
                 const opportunityCount = await prismadb.crm_Opportunities.count({ where: { team_id: teamId } });
                 const limit = (plan as any).max_opportunities || 1000;
-                if (opportunityCount >= limit) {
+                if (limit !== -1 && opportunityCount >= limit) {
                     return { allowed: false, message: `Opportunity limit reached (${limit} opportunities max)` };
                 }
                 break;

@@ -29,10 +29,10 @@ export const getCurrentUserTeamId = cache(async () => {
 
     const normalizedRole = (user?.team_role || '').trim().toUpperCase();
     const isPlatformAdminRole = normalizedRole === "PLATFORM_ADMIN" || normalizedRole === "PLATFORM ADMIN";
-
+    
     // PLATFORM_ADMIN gets global access ONLY if they are impersonating a team
     // Otherwise, they should be restricted to their assigned team data (if any)
-    const isGlobalAdmin = isPlatformAdminRole;
+    const isGlobalAdmin = user?.is_admin || isPlatformAdminRole;
 
     // Check for impersonation cookie
     let effectiveTeamId = user?.team_id;

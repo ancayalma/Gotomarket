@@ -67,14 +67,40 @@ export async function POST(req: Request) {
       },
     });
 
-    //If user already exists, return error else create user and send email
     if (checkexisting) {
-      return NextResponse.json(
-        { error: "User already exist, reset password instead!" },
-        {
-          status: 400,
-        }
-      );
+      // User exists. Instead of failing, move them to the new team.
+      try {
+        const user = await prismadb.users.update({
+          where: { id: checkexisting.id },
+          data: {
+            team_id: teamInfo.teamId,
+            team_role: role,
+            assigned_modules: assigned_modules || checkexisting.assigned_modules,
+          },
+        });
+
+        const existingMessage = `You have been added to a new team on ${process.env.NEXT_PUBLIC_APP_NAME}.\n\nPlease login to ${appUrl} to access your new team.\n\nThank you\n\n${process.env.NEXT_PUBLIC_APP_NAME}`;
+
+        // Send a notification email to the existing user
+        await sendEmail({
+          from: process.env.EMAIL_FROM,
+          to: user.email,
+          subject: `You have been added to a new team on ${process.env.NEXT_PUBLIC_APP_NAME}`,
+          text: existingMessage,
+          html: `<p>You have been added to a new team on <strong>${process.env.NEXT_PUBLIC_APP_NAME}</strong>.</p><p>Please <a href="${appUrl}">login</a> to access your new team dashboard.</p>`,
+        });
+
+        await logActivity(
+          "Added Existing User",
+          "User Management",
+          `Added existing user ${email} to team ${teamInfo.teamId}`
+        );
+
+        return NextResponse.json(user, { status: 200 });
+      } catch (err) {
+        systemLogger.error("[INVITE_EXISTING_USER]", err);
+        return new NextResponse("Error adding existing user to team", { status: 500 });
+      }
     } else {
       try {
         const user = await prismadb.users.create({
