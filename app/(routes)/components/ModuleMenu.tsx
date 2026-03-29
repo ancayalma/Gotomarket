@@ -256,6 +256,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
                 isActive={isCrmQuotes}
               />
 
+              <div data-tour-id="tour-lead-wizard">
               <ExpandableMenuItem
                 href="/crm/leads"
                 icon={Users}
@@ -264,6 +265,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
                 isActive={isCrmLeads}
                 items={leadsSubItems}
               />
+              </div>
 
               {hasModule("projects") && hasFeature("projects") && (
                 <MenuItem
@@ -328,6 +330,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
                     />
                   )}
 
+                  <div data-tour-id="tour-campaigns">
                   <MenuItem
                     href="/campaigns"
                     icon={Megaphone}
@@ -335,6 +338,7 @@ const ModuleMenu = ({ modules, dict, features, isPartnerAdmin, teamRole = "MEMBE
                     isOpen={open}
                     isActive={isCrmOutreach}
                   />
+                  </div>
                 </>
               )}
 

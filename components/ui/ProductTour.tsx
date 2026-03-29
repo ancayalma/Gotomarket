@@ -22,7 +22,6 @@ import {
     GraduationCap,
     Megaphone,
     Wand2,
-    List,
     ClipboardList,
     X,
     ChevronRight,
@@ -53,66 +52,48 @@ const STEPS: TourStep[] = [
         id: "step-checklist",
         targetId: "tour-checklist",
         title: "Your Quick Launch Checklist",
-        body: "This 5-step guide walks you through activating your first outreach campaign. It disappears once you're set up — or you can dismiss it anytime.",
+        body: "This guided checklist walks you through activating your first outreach campaign. Click any step to expand it and navigate there. It auto-dismisses once complete.",
         icon: ClipboardList,
         iconGradient: "from-violet-500 to-cyan-500",
-        prefer: "bottom", // Standard for top checklist
+        prefer: "bottom",
     },
     {
         id: "step-campaigns",
         targetId: "tour-campaigns",
-        fallbackSelector: "[data-tour-id='tour-campaigns']",
         title: "Campaigns",
-        body: "Your strategic container. Create a Campaign first — it groups your Lists, outreach sequences, and team assignments under one goal.",
+        body: "Find your Campaigns here in the Marketing Hub. A Campaign is your strategic container — it groups Lists, outreach sequences, and team assignments under one goal.",
         icon: Megaphone,
         iconGradient: "from-orange-500 to-red-500",
-        prefer: "top",
+        prefer: "right",
     },
     {
-        id: "step-wizard",
+        id: "step-leads",
         targetId: "tour-lead-wizard",
-        title: "Lead Wizard",
-        body: "Tell it your Ideal Customer Profile in plain English — industry, company size, geography. It finds matching companies and contacts automatically.",
+        title: "Leads & Lead Wizard",
+        body: "Under Leads you'll find the LeadGen Wizard, your Lists, and Outreach controls. The Wizard lets you describe your ideal customer in plain English and auto-discovers matching companies.",
         icon: Wand2,
         iconGradient: "from-cyan-500 to-blue-500",
-        prefer: "top",
-    },
-    {
-        id: "step-lists",
-        targetId: "tour-lists",
-        title: "Lists",
-        body: "After the Wizard runs, leads are organized into Lists. Assign a List to a team member and they'll work those accounts for outreach.",
-        icon: List,
-        iconGradient: "from-violet-500 to-indigo-500",
-        prefer: "top",
+        prefer: "right",
     },
     {
         id: "step-learn",
         targetId: "tour-learn-nav",
         title: "CRM University",
-        body: "The Learn tab is always here in the sidebar. When you're ready to go deeper — Mastery Paths, Compliance Academy, and more are waiting.",
+        body: "The Learn tab is always here in the sidebar. When you're ready to go deeper — Mastery Paths, Compliance Academy, and more are waiting for you.",
         icon: GraduationCap,
         iconGradient: "from-amber-500 to-orange-500",
         prefer: "right",
     },
 ];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Rect {
     top: number;
     left: number;
     width: number;
     height: number;
-}
-
-function getElementRect(targetId: string, fallback?: string): Rect | null {
-    const el =
-        document.querySelector(`[data-tour-id="${targetId}"]`) ||
-        (fallback ? document.querySelector(fallback) : null);
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return { top: r.top, left: r.left, width: r.width, height: r.height };
 }
 
 // ─── Sub-component: Spotlight overlay (4 rects that frame the target) ────────
