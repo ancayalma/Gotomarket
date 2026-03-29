@@ -173,7 +173,28 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     // Provision AI tokens
     await resetAiTokenBalance(teamId);
 
-    systemLogger.error(`[Stripe Webhook] Subscription activated: ${planSlug} for team ${teamId}`);
+    // Trigger deferred SES Email Verification for workspace accounts
+    try {
+        const pendingConfigs = await prismadb.teamEmailConfig.findMany({
+            where: { 
+                team_id: teamId, 
+                provider: "PLATFORM_SES", 
+                verification_status: "PENDING" 
+            }
+        });
+
+        if (pendingConfigs.length > 0) {
+            const { verifyEmailIdentity } = await import("@/lib/aws/ses-verify");
+            for (const config of pendingConfigs) {
+                await verifyEmailIdentity(config.from_email);
+                systemLogger.info(`[Stripe Webhook] Deferred SES verification triggered for ${config.from_email}`);
+            }
+        }
+    } catch (sesErr) {
+        systemLogger.error(`[Stripe Webhook] Failed to trigger deferred SES verification for team ${teamId}`, sesErr);
+    }
+
+    systemLogger.info(`[Stripe Webhook] Subscription activated: ${planSlug} for team ${teamId}`);
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {

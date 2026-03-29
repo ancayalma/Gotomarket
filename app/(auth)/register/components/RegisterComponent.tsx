@@ -43,8 +43,7 @@ import { Icons } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { PaymentModal } from "@/app/(routes)/invoice/detail/[invoiceId]/_components/PaymentModal";
-
+// Unused imports removed
 interface RegisterComponentProps {
   availablePlans: any[];
   initialPlanSlug?: string;
@@ -58,10 +57,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
 
   const [isLoading, setIsLoading] = useState(false);
   const [show, setShow] = useState(false);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
-  const [activeInvoiceId, setActiveInvoiceId] = useState<string | null>(null);
-  const [paymentAmount, setPaymentAmount] = useState<string>("");
 
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">((initialCycle as any) || "monthly");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
@@ -154,14 +150,14 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
 
       if (response.data.requiresPayment && response.data.paymentUrl) {
         setPaymentUrl(response.data.paymentUrl);
-        setActiveInvoiceId(response.data.invoiceId);
-        setPaymentAmount(response.data.amount);
-        setPaymentModalOpen(true);
-
+        
         toast({
           title: "Account Created (Pending Payment)",
-          description: "Please complete the secure checkout to activate your team.",
+          description: "Redirecting you to secure checkout...",
         });
+
+        // Redirect directly to Stripe Checkout session
+        window.location.href = response.data.paymentUrl;
       } else {
         toast({
           title: "Success",
@@ -326,11 +322,9 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                                 <SelectItem 
                                   key={plan.id} 
                                   value={plan.id}
-                                  disabled={!isFreePlan}
-                                  className={!isFreePlan ? "opacity-50 cursor-not-allowed" : ""}
                                 >
                                   <div className="flex flex-col py-1">
-                                    <span className="font-bold">{plan.name} {!isFreePlan && "(Coming Soon)"}</span>
+                                    <span className="font-bold">{plan.name}</span>
                                     <span className="text-[10px] text-muted-foreground uppercase tracking-widest text-primary/80">
                                       {plan.price === 0 
                                         ? "FREE FOREVER" 
@@ -785,20 +779,6 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
           Already have an account? <Link href="/sign-in" className="text-primary hover:underline font-bold">sign-in</Link>
         </div>
       </CardFooter>
-
-      {paymentUrl && activeInvoiceId && (
-        <PaymentModal
-          open={paymentModalOpen}
-          onOpenChange={(open) => {
-            setPaymentModalOpen(open);
-            if (!open) router.push("/sign-in");
-          }}
-          url={paymentUrl}
-          amount={paymentAmount}
-          currency="USDC"
-          invoiceId={activeInvoiceId}
-        />
-      )}
     </Card>
   );
 }
