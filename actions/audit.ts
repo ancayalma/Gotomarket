@@ -3,6 +3,7 @@
 import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 import { headers } from "next/headers";
 
@@ -72,8 +73,12 @@ export async function getRecentActivities(limit = 50) {
         const twoWeeksAgo = new Date();
         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
+        const teamInfo = await getCurrentUserTeamId();
+        if (!teamInfo?.teamId) return [];
+
         const activities = await prismadb.systemActivity.findMany({
             where: {
+                team_id: teamInfo.teamId,
                 createdAt: {
                     gte: twoWeeksAgo
                 }

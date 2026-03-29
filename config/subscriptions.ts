@@ -7,13 +7,13 @@ export const SUBSCRIPTION_PLANS = {
         limits: {
             max_users: 2,
             max_storage: 50, // MB
-            credits: 500, // Monthly AI Credits (Text Gen)
+            credits: 500, // Monthly AI Credits (Text Gen) (Legacy)
             leadgen_credits: 100, // Aligned with LEADGEN_WIZARD.md
             emails_per_month: 1000,
             sms_per_month: 0, // SMS locked on Starter
             voice_minutes_per_month: 0, // Voice locked on Starter
             max_active_quests: 0, // Quests locked on Starter
-            ai_tokens: 500_000, // 500K AI tokens / month
+            ai_tokens: 5_000_000, // 5M AI tokens / month
         }
     },
     GROWTH: {

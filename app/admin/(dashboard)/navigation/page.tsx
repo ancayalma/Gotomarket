@@ -8,6 +8,7 @@ import { prismadb } from "@/lib/prisma";
 import { DEFAULT_NAV_STRUCTURE } from "@/lib/navigation-defaults";
 import { NavigationEditor } from "./_components/NavigationEditor";
 import { redirect } from "next/navigation";
+import { getSubscriptionPlan } from "@/lib/subscription";
 
 export default async function NavigationPage() {
     // Navigation Manager Refresh
@@ -24,7 +25,7 @@ export default async function NavigationPage() {
         getDictionary(session.user.userLanguage as any),
         prismadb.users.findUnique({
             where: { id: session.user.id },
-            select: { team_id: true, team_role: true, is_admin: true, assigned_team: { select: { slug: true } } }
+            select: { team_id: true, team_role: true, is_admin: true, assigned_team: { select: { slug: true, subscription_plan: true, module_overrides: true, assigned_plan: { select: { features: true } } } } }
         })
     ]);
 
@@ -36,7 +37,18 @@ export default async function NavigationPage() {
     const isAdmin = user.is_admin || ["ADMIN", "SUPER_ADMIN", "OWNER", "PLATFORM_ADMIN"].includes(teamRole.toUpperCase()) || user.assigned_team?.slug === "basalthq";
     const isPartnerAdmin = user.is_admin || teamRole === "PLATFORM_ADMIN";
 
-    const features: string[] = []; // In a real app, resolve features from team's plan
+    const team = user.assigned_team;
+    let features: string[] = [];
+
+    if (team?.assigned_plan) {
+        features = team.assigned_plan.features;
+    } else {
+        features = getSubscriptionPlan(String(team?.subscription_plan || "FREE")).features;
+    }
+
+    if (team?.module_overrides) {
+        features = Array.from(new Set([...features, ...team.module_overrides]));
+    }
 
     const config = dbNavConfig as any;
 

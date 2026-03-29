@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, FileText, Settings, Sparkles, Wand2, Zap, Globe, Code, Loader2, Sliders, FolderKanban } from "lucide-react";
+import { Bot, FileText, Settings, Sparkles, Wand2, Zap, Globe, Code, Loader2, Sliders, FolderKanban, Target } from "lucide-react";
 import { toast } from "react-hot-toast";
 import useSWR from "swr";
 import fetcher from "@/lib/fetcher";
 import AIWriterModal from "../../leads/components/modals/AIWriterModal";
 import { Combobox } from "@/components/ui/combobox";
+import { getTeamCreditsInfo } from "@/actions/crm/credits/index";
 
 type WizardMode = "ai-only" | "step-by-step" | "advanced";
 
@@ -38,6 +39,11 @@ export default function LeadGenWizardPage() {
   const [submitting, setSubmitting] = useState(false);
   const [aiWriterOpen, setAiWriterOpen] = useState(false);
   const [currentAiField, setCurrentAiField] = useState<keyof WizardState | null>(null);
+  const [limitsInfo, setLimitsInfo] = useState<any>(null);
+
+  useEffect(() => {
+    getTeamCreditsInfo().then(setLimitsInfo).catch(console.error);
+  }, []);
 
   // Fetch campaigns for selector
   const { data: campaignsData } = useSWR<{ campaigns: { id: string; name: string; status: string }[] }>("/api/campaigns", fetcher, {
@@ -207,6 +213,29 @@ export default function LeadGenWizardPage() {
       toast.error("Please enter a pool name");
       return;
     }
+
+    if (limitsInfo && !limitsInfo.isUnlimited) {
+      if (limitsInfo.remaining !== -1 && limitsInfo.remaining <= 0) {
+        toast.error("You have exhausted your LeadGen Target for this month.");
+        return;
+      }
+      if (limitsInfo.aiTokensLimit !== -1 && limitsInfo.aiTokensBalance <= 0) {
+        toast.error("You do not have enough AI Tokens to run Lead Generation.");
+        return;
+      }
+      
+      // Warnings if close to limits
+      if (limitsInfo.remaining > 0 && limitsInfo.remaining < state.maxCompanies) {
+         if (!window.confirm(`Warning: You only have ${limitsInfo.remaining} LeadGen targets remaining, but you are attempting to find up to ${state.maxCompanies} leads. The pipeline will stop early once the limit is hit. Do you want to continue?`)) {
+             return;
+         }
+      } else if (limitsInfo.aiTokensBalance > 0 && limitsInfo.aiTokensBalance < 100000) {
+         if (!window.confirm(`Warning: You only have ${limitsInfo.aiTokensBalance.toLocaleString()} AI Tokens remaining. Agentic AI is heavily intensive and your pipeline may halt early automatically. Do you want to continue?`)) {
+             return;
+         }
+      }
+    }
+
     setSubmitting(true);
 
     try {
@@ -618,9 +647,32 @@ export default function LeadGenWizardPage() {
           <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
             AI Lead Generation
           </h1>
-          <p className="text-muted-foreground text-lg">
-            Deploy autonomous agents to find, qualify, and engage your ideal customers.
-          </p>
+          <div className="flex flex-col gap-2">
+            <p className="text-muted-foreground text-lg">
+              Deploy autonomous agents to find, qualify, and engage your ideal customers.
+            </p>
+            {limitsInfo && !limitsInfo.isUnlimited && (
+              <div className="flex gap-4 text-xs font-semibold bg-white/5 border border-white/10 rounded-lg py-2 px-3 w-max">
+                 <div className="flex items-center gap-1.5 font-mono text-cyan-400">
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>AI Tokens Available: {limitsInfo.aiTokensBalance.toLocaleString()}</span>
+                 </div>
+                 <div className="w-px bg-white/10" />
+                 <div className="flex items-center gap-1.5 font-mono text-emerald-400">
+                    <Target className="w-3.5 h-3.5" />
+                    <span>Lead Target Remaining: {limitsInfo.remaining}</span>
+                 </div>
+              </div>
+            )}
+            {limitsInfo && limitsInfo.isUnlimited && (
+              <div className="flex gap-4 text-xs font-semibold bg-white/5 border border-white/10 rounded-lg py-2 px-3 w-max">
+                 <div className="flex items-center gap-1.5 font-mono text-indigo-400">
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>AI Features: Unlimited</span>
+                 </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <form onSubmit={onSubmit}>

@@ -33,6 +33,10 @@ import { Separator } from "@/components/ui/separator";
 import { ViewToggle, type ViewMode } from "@/components/ViewToggle";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { EnhancedDateFilter } from "@/components/date-filter/EnhancedDateFilter";
+import { useSession } from "next-auth/react";
+import { checkTeamFeature } from "@/lib/subscription";
+import { BillingModal } from "@/components/modals/BillingModal";
+import { Lock } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -96,9 +100,13 @@ type PoolsResponse = {
 
 export default function ListsView() {
     const router = useRouter();
+    const { data: session } = useSession();
+    const hasOutreach = session?.user ? checkTeamFeature((session.user as any).assigned_team, "outreach") : false;
+
     const [deleting, setDeleting] = useState<string | null>(null);
     const [icpModalPool, setIcpModalPool] = useState<LeadPool | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
     const { data, error, isLoading, mutate } = useSWR<PoolsResponse>("/api/crm/leads/pools", fetcher, {
         refreshInterval: (data) => {
             const hasActiveJob = data?.pools?.some(p =>
@@ -341,6 +349,26 @@ export default function ListsView() {
                                                             <Bot className="w-4 h-4 mr-1" /> Job
                                                         </Button>
                                                     )}
+                                                    {hasOutreach ? (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-white hover:text-gray-300 hover:bg-white/10"
+                                                            onClick={() => startFirstContact(pool.id)}
+                                                            disabled={loadingOutreach === pool.id}
+                                                        >
+                                                            {loadingOutreach === pool.id ? "..." : "Outreach"}
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-400/10"
+                                                            onClick={() => setIsBillingModalOpen(true)}
+                                                        >
+                                                            <Lock className="w-4 h-4 mr-1" /> Outreach
+                                                        </Button>
+                                                    )}
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
@@ -430,15 +458,26 @@ export default function ListsView() {
                                                 <Bot className="w-3.5 h-3.5 mr-1" /> View Job
                                             </Button>
                                         )}
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="text-xs font-bold uppercase tracking-wider h-8 border-white/10 hover:bg-white/5 whitespace-nowrap"
-                                            onClick={() => startFirstContact(pool.id)}
-                                            disabled={loadingOutreach === pool.id}
-                                        >
-                                            {loadingOutreach === pool.id ? "..." : "Outreach"}
-                                        </Button>
+                                        {hasOutreach ? (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs font-bold uppercase tracking-wider h-8 border-white/10 hover:bg-white/5 whitespace-nowrap"
+                                                onClick={() => startFirstContact(pool.id)}
+                                                disabled={loadingOutreach === pool.id}
+                                            >
+                                                {loadingOutreach === pool.id ? "..." : "Outreach"}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs font-bold uppercase tracking-wider h-8 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/10 whitespace-nowrap"
+                                                onClick={() => setIsBillingModalOpen(true)}
+                                            >
+                                                <Lock className="w-3 h-3 mr-1" /> Outreach
+                                            </Button>
+                                        )}
                                     </CardFooter>
                                 </Card>
                             ))}
@@ -531,6 +570,11 @@ export default function ListsView() {
                 isOpen={!!restrictedPool}
                 onClose={() => setRestrictedPool(null)}
                 poolName={restrictedPool || ""}
+            />
+
+            <BillingModal 
+                isOpen={isBillingModalOpen} 
+                onClose={() => setIsBillingModalOpen(false)} 
             />
         </div>
     );

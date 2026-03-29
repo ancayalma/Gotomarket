@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import getAllCommits from "@/actions/github/get-repo-commits";
 import { prismadb } from "@/lib/prisma";
 import AdminSidebar from "./components/AdminSidebar";
+import { getSubscriptionPlan } from "@/lib/subscription";
 
 import { ReactNode } from "react";
 
@@ -52,6 +53,19 @@ export default async function AdminDashboardLayout({
 
     const showModules = user?.is_admin || user?.assigned_team?.slug === "basalthq";
 
+    const team = user?.assigned_team;
+    let features: string[] = [];
+    
+    if (team?.assigned_plan) {
+        features = team.assigned_plan.features;
+    } else {
+        features = getSubscriptionPlan(String(team?.subscription_plan || "FREE")).features;
+    }
+    
+    if (team?.module_overrides) {
+        features = Array.from(new Set([...features, ...team.module_overrides]));
+    }
+
     return (
         <ThemeGuard>
             <div className="fixed inset-0 flex h-[100dvh] overflow-hidden">
@@ -66,7 +80,7 @@ export default async function AdminDashboardLayout({
                         lang={session.user.userLanguage as string}
                     />
                     <div className="flex flex-1 min-h-0 overflow-hidden">
-                        <AdminSidebar showModules={!!showModules} />
+                        <AdminSidebar showModules={!!showModules} features={features} />
                         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4">
                             {children}
                         </div>

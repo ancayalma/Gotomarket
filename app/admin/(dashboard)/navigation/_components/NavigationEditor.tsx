@@ -587,9 +587,9 @@ export function NavigationEditor({
                                         onChange={(e) => setTitleFontSize(e.target.value)}
                                         className="w-full bg-[#0c0c0e]/80 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 ring-primary/50 transition-colors cursor-pointer hover:border-primary/40"
                                     >
-                                        {["8px", "9px", "10px", "11px", "12px", "13px"].map(size => (
-                                            <option key={size} value={size} className="bg-[#18181b]">{size}</option>
-                                        ))}
+                                        <option value="8px" className="bg-[#18181b]">Small</option>
+                                        <option value="10px" className="bg-[#18181b]">Medium</option>
+                                        <option value="12px" className="bg-[#18181b]">Large</option>
                                     </select>
                                 </div>
                             </div>
@@ -669,9 +669,9 @@ export function NavigationEditor({
                                         onChange={(e) => setItemFontSize(e.target.value)}
                                         className="w-full bg-[#0c0c0e]/80 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 ring-primary/50 transition-colors cursor-pointer hover:border-primary/40"
                                     >
-                                        {["12px", "14px", "16px", "18px", "20px", "22px"].map(size => (
-                                            <option key={size} value={size} className="bg-[#18181b]">{size}</option>
-                                        ))}
+                                        <option value="11px" className="bg-[#18181b]">Small</option>
+                                        <option value="12px" className="bg-[#18181b]">Medium</option>
+                                        <option value="14px" className="bg-[#18181b]">Large</option>
                                     </select>
                                 </div>
                             </div>
