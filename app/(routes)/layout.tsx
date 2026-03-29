@@ -95,11 +95,13 @@ export default async function AppLayout({
   let mustChangePassword = false;
   let sesEmailVerified = true; // Default to true to avoid gate flash for unauthenticated edge cases
   let isPlatformAdmin = false;
+  let isFreemailAccount = false;
+  let freemailWarningAcknowledged = true; // Default to true to avoid gate flash
   
   if (session?.user?.id) {
       const fullUser = await prismadb.users.findUnique({
           where: { id: session.user.id },
-          select: { team_id: true, team_role: true, is_admin: true, mustChangePassword: true, sesEmailVerified: true, assigned_role: { select: { name: true } } }
+          select: { team_id: true, team_role: true, is_admin: true, mustChangePassword: true, sesEmailVerified: true, isFreemailAccount: true, freemailWarningAcknowledged: true, assigned_role: { select: { name: true } } }
       });
       
       const role = (fullUser?.team_role || '').trim().toUpperCase();
@@ -133,6 +135,8 @@ export default async function AppLayout({
       }
       mustChangePassword = fullUser?.mustChangePassword === true;
       sesEmailVerified = fullUser?.sesEmailVerified === true;
+      isFreemailAccount = fullUser?.isFreemailAccount === true;
+      freemailWarningAcknowledged = fullUser?.freemailWarningAcknowledged === true;
   }
 
   if (user?.userStatus === "INACTIVE") {
@@ -147,6 +151,11 @@ export default async function AppLayout({
   // Redirect to email verification page if not verified (platform admins bypass)
   if (!mustChangePassword && !sesEmailVerified && !isPlatformAdmin) {
     return redirect("/verify-email");
+  }
+
+  // Redirect to freemail notice page if user has a personal email and hasn't acknowledged
+  if (!mustChangePassword && isFreemailAccount && !freemailWarningAcknowledged && !isPlatformAdmin) {
+    return redirect("/freemail-notice");
   }
 
   return (

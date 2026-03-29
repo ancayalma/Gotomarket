@@ -1192,6 +1192,8 @@ model Users {
   userLanguage         Language                 @default(en)
   mustChangePassword   Boolean                  @default(false)
   sesEmailVerified     Boolean                  @default(false)
+  isFreemailAccount            Boolean                  @default(false)
+  freemailWarningAcknowledged  Boolean                  @default(false)
   termsAccepted        Boolean                  @default(false)
   termsAcceptedAt      DateTime?                @db.Date
   tasksComment         tasksComments[]

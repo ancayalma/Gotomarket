@@ -68,22 +68,34 @@ export async function setupOrganization(companyName: string) {
             }
         });
 
-        // Optional: create SES email config (ignore failures)
-        try {
-            const { verifyEmailIdentity } = await import("@/lib/aws/ses-verify");
-            await prismadb.teamEmailConfig.create({
-                data: {
-                    team_id: team.id,
-                    purpose: "GENERAL",
-                    provider: "PLATFORM_SES",
-                    from_email: user.email,
-                    from_name: companyName,
-                    verification_status: "PENDING",
-                }
+        // Handle email verification based on whether user has a workspace or freemail address
+        const { isFreemailDomain } = await import("@/lib/freemail");
+        const isFreemail = isFreemailDomain(user.email);
+
+        if (isFreemail) {
+            // Freemail: auto-verify but flag the account so the UI shows a warning
+            await prismadb.users.update({
+                where: { id: user.id },
+                data: { sesEmailVerified: true, isFreemailAccount: true }
             });
-            await verifyEmailIdentity(user.email);
-        } catch (err) {
-            // Non-blocking
+        } else {
+            // Workspace email: trigger SES verification (ignore failures)
+            try {
+                const { verifyEmailIdentity } = await import("@/lib/aws/ses-verify");
+                await prismadb.teamEmailConfig.create({
+                    data: {
+                        team_id: team.id,
+                        purpose: "GENERAL",
+                        provider: "PLATFORM_SES",
+                        from_email: user.email,
+                        from_name: companyName,
+                        verification_status: "PENDING",
+                    }
+                });
+                await verifyEmailIdentity(user.email);
+            } catch (err) {
+                // Non-blocking
+            }
         }
 
         // Revalidate roots to pick up the new team
