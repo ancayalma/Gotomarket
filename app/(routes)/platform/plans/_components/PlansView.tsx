@@ -32,6 +32,8 @@ type Plan = {
     max_users: number;
     max_storage: number;
     max_credits: number;
+    leadgen_credits_monthly: number;
+    ai_tokens_included: number;
     features: string[];
     isActive: boolean;
     billing_cycle: "MONTHLY" | "YEARLY" | "LIFETIME" | "ONE_TIME";
@@ -64,6 +66,8 @@ const PlansView = ({ initialPlans }: Props) => {
         max_users: 1,
         max_storage: 1000,
         max_credits: 0,
+        leadgen_credits_monthly: 100,
+        ai_tokens_included: 500000,
         features: [],
         isActive: true,
         billing_cycle: "MONTHLY",
@@ -80,6 +84,8 @@ const PlansView = ({ initialPlans }: Props) => {
             max_users: 1,
             max_storage: 1000,
             max_credits: 0,
+            leadgen_credits_monthly: 100,
+            ai_tokens_included: 500000,
             features: [],
             isActive: true,
             billing_cycle: "MONTHLY",
@@ -184,11 +190,15 @@ const PlansView = ({ initialPlans }: Props) => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Zap className="w-4 h-4 text-primary" />
-                                    <span className="text-xs font-bold uppercase tracking-wider">{plan.max_credits === -1 ? "Infinite" : plan.max_credits} AI</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider">{plan.ai_tokens_included === -1 ? "Infinite" : plan.ai_tokens_included >= 1000000 ? `${(plan.ai_tokens_included / 1000000).toFixed(1).replace(/\.0$/, '')}M AI` : plan.ai_tokens_included >= 1000 ? `${(plan.ai_tokens_included / 1000).toFixed(0)}K AI` : `${plan.ai_tokens_included} AI`}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <Target className="w-4 h-4 text-primary" />
+                                    <span className="text-xs font-bold uppercase tracking-wider">{plan.leadgen_credits_monthly === -1 ? "Infinite" : `${plan.leadgen_credits_monthly} Leads`}</span>
+                                </div>
+                                <div className="flex items-center gap-2 col-span-2">
                                     <CreditCard className="w-4 h-4 text-primary" />
-                                    <span className="text-xs font-bold uppercase tracking-wider">{plan.features.length} Modules</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider">{plan.features.length} Modules Enabled</span>
                                 </div>
                             </div>
 
@@ -344,6 +354,31 @@ const PlansView = ({ initialPlans }: Props) => {
                                             onCheckedChange={(val) => setFormData({ ...formData, isActive: val })}
                                         />
                                     </div>
+                                </div>
+
+                                <div className="space-y-4 p-6 bg-zinc-900/40 rounded-2xl border border-white/5">
+                                    <h3 className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-4">AI & Lead Gen Limits</h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>AI Tokens (Monthly)</Label>
+                                            <Input
+                                                type="number"
+                                                className="bg-black/40 border-white/10"
+                                                value={formData.ai_tokens_included}
+                                                onChange={(e) => setFormData({ ...formData, ai_tokens_included: Number(e.target.value) })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>LeadGen Target</Label>
+                                            <Input
+                                                type="number"
+                                                className="bg-black/40 border-white/10"
+                                                value={formData.leadgen_credits_monthly}
+                                                onChange={(e) => setFormData({ ...formData, leadgen_credits_monthly: Number(e.target.value) })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground">-1 for infinite limits across all fields.</p>
                                 </div>
                             </div>
 

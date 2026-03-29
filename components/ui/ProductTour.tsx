@@ -3,16 +3,8 @@
 /**
  * ProductTour — One-time, first-login guided spotlight tour.
  *
- * Pattern:
- *   1. Check localStorage for completion flag.
- *   2. If unseen, wait for DOM to settle, then find target elements by their
- *      `data-tour-id` attribute (or a custom id).
- *   3. Render a full-screen overlay with a "spotlight" cutout over the target.
- *   4. Show a positioned tooltip with an arrow + blurb + Next / Skip controls.
- *   5. User clicks through all steps (or skips) — mark complete in localStorage.
- *
- * To target an element from any component, give it the attribute:
- *   data-tour-id="tour-campaigns"
+ * Upgraded to use requestAnimationFrame for fluid element tracking
+ * (handles smooth-scroll seamlessly) and dynamic pointer arrows for clarity.
  */
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
@@ -22,7 +14,6 @@ import {
     GraduationCap,
     Megaphone,
     Wand2,
-    List,
     ClipboardList,
     X,
     ChevronRight,
@@ -36,15 +27,12 @@ const PADDING = 12; // px of glow padding around the spotlight target
 
 interface TourStep {
     id: string;
-    /** matches data-tour-id attribute on the target DOM element */
     targetId: string;
-    /** fallback selector if data-tour-id not found */
     fallbackSelector?: string;
     title: string;
     body: string;
     icon: React.ElementType;
     iconGradient: string;
-    /** Preferred tooltip position relative to the spotlight */
     prefer: "bottom" | "top" | "right" | "left";
 }
 
@@ -53,51 +41,42 @@ const STEPS: TourStep[] = [
         id: "step-checklist",
         targetId: "tour-checklist",
         title: "Your Quick Launch Checklist",
-        body: "This 5-step guide walks you through activating your first outreach campaign. It disappears once you're set up — or you can dismiss it anytime.",
+        body: "This guided checklist walks you through activating your first outreach campaign. Click any step to expand it and navigate there. It auto-dismisses once complete.",
         icon: ClipboardList,
         iconGradient: "from-violet-500 to-cyan-500",
-        prefer: "bottom", // Standard for top checklist
+        prefer: "bottom",
     },
     {
         id: "step-campaigns",
         targetId: "tour-campaigns",
-        fallbackSelector: "[data-tour-id='tour-campaigns']",
         title: "Campaigns",
-        body: "Your strategic container. Create a Campaign first — it groups your Lists, outreach sequences, and team assignments under one goal.",
+        body: "Find your Campaigns here in the Marketing Hub. A Campaign is your strategic container — it groups Lists, outreach sequences, and team assignments under one goal.",
         icon: Megaphone,
         iconGradient: "from-orange-500 to-red-500",
-        prefer: "top",
+        prefer: "right",
     },
     {
-        id: "step-wizard",
+        id: "step-leads",
         targetId: "tour-lead-wizard",
-        title: "Lead Wizard",
-        body: "Tell it your Ideal Customer Profile in plain English — industry, company size, geography. It finds matching companies and contacts automatically.",
+        title: "Leads & Lead Wizard",
+        body: "Under Leads you'll find the LeadGen Wizard, your Lists, and Outreach controls. The Wizard lets you describe your ideal customer in plain English and auto-discovers matching companies.",
         icon: Wand2,
         iconGradient: "from-cyan-500 to-blue-500",
-        prefer: "top",
-    },
-    {
-        id: "step-lists",
-        targetId: "tour-lists",
-        title: "Lists",
-        body: "After the Wizard runs, leads are organized into Lists. Assign a List to a team member and they'll work those accounts for outreach.",
-        icon: List,
-        iconGradient: "from-violet-500 to-indigo-500",
-        prefer: "top",
+        prefer: "right",
     },
     {
         id: "step-learn",
         targetId: "tour-learn-nav",
         title: "CRM University",
-        body: "The Learn tab is always here in the sidebar. When you're ready to go deeper — Mastery Paths, Compliance Academy, and more are waiting.",
+        body: "The Learn tab is always here in the sidebar. When you're ready to go deeper — Mastery Paths, Compliance Academy, and more are waiting for you.",
         icon: GraduationCap,
         iconGradient: "from-amber-500 to-orange-500",
         prefer: "right",
     },
 ];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Rect {
     top: number;
@@ -106,16 +85,7 @@ interface Rect {
     height: number;
 }
 
-function getElementRect(targetId: string, fallback?: string): Rect | null {
-    const el =
-        document.querySelector(`[data-tour-id="${targetId}"]`) ||
-        (fallback ? document.querySelector(fallback) : null);
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return { top: r.top, left: r.left, width: r.width, height: r.height };
-}
-
-// ─── Sub-component: Spotlight overlay (4 rects that frame the target) ────────
+// ─── Sub-component: Spotlight overlay ────────────────────────────────────────
 
 function Spotlight({ rect }: { rect: Rect }) {
     const t = rect.top - PADDING;
@@ -123,7 +93,7 @@ function Spotlight({ rect }: { rect: Rect }) {
     const w = rect.width + PADDING * 2;
     const h = rect.height + PADDING * 2;
 
-    const baseStyle = "fixed bg-black/70 backdrop-blur-[1px] transition-colors duration-500 z-[9998]";
+    const baseStyle = "fixed bg-black/70 backdrop-blur-[1px] z-[9998]";
 
     return (
         <>
@@ -142,24 +112,24 @@ function Spotlight({ rect }: { rect: Rect }) {
                     opacity: 1,
                     scale: 1,
                     boxShadow: [
-                        "0 0 0 2px rgba(139,92,246,0.6), 0 0 20px 2px rgba(139,92,246,0.3)",
-                        "0 0 0 4px rgba(139,92,246,0.9), 0 0 40px 8px rgba(139,92,246,0.5)",
-                        "0 0 0 2px rgba(139,92,246,0.6), 0 0 20px 2px rgba(139,92,246,0.3)"
+                        "0 0 0 2px rgba(139,92,246,0.6), 0 0 25px 4px rgba(139,92,246,0.3)",
+                        "0 0 0 3px rgba(139,92,246,0.9), 0 0 45px 8px rgba(139,92,246,0.5)",
+                        "0 0 0 2px rgba(139,92,246,0.6), 0 0 25px 4px rgba(139,92,246,0.3)"
                     ]
                 }}
                 transition={{
                     opacity: { duration: 0.3 },
                     scale: { duration: 0.3 },
-                    boxShadow: { repeat: Infinity, duration: 2, ease: "easeInOut" }
+                    boxShadow: { repeat: Infinity, duration: 2.5, ease: "easeInOut" }
                 }}
-                className="fixed z-[9999] pointer-events-none"
+                className="fixed z-[9999] pointer-events-none transition-all duration-75"
                 style={{
                     top: t,
                     left: l,
                     width: w,
                     height: h,
                     borderRadius: 14,
-                    border: "2px solid rgba(139,92,246,0.6)",
+                    border: "1.5px solid rgba(139,92,246,0.7)",
                 }}
             />
         </>
@@ -187,33 +157,42 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
     const w = rect.width + PADDING * 2;
     const h = rect.height + PADDING * 2;
 
-    // Determine card position
-    let cardTop: number;
-    let cardLeft: number;
+    const GAP = 16;
+    const MARGIN = 16;
+    
+    let cardTop: number = t;
+    let cardLeft: number = l;
+    let pointerPos: "top" | "bottom" | "left" | "right" | "none" = "none";
+    let pointerOffset = 0;
 
-    // Safety margins
-    const MARGIN = 12;
-
-    if (step.prefer === "bottom" && t + h + 20 + 220 < vh) {
-        // Below the spotlight
-        cardTop = t + h + 20;
+    let pref = step.prefer;
+    
+    // Auto adjust preference if it would overflow bounds
+    if (pref === "bottom" && t + h + GAP + 240 > vh) pref = "top";
+    if (pref === "top" && t - GAP - 240 < 0) pref = "bottom";
+    if (pref === "right" && l + w + GAP + CARD_W > vw) pref = "bottom"; 
+    
+    // Compute positions based on adjusted preference
+    if (pref === "bottom") {
+        cardTop = t + h + GAP;
         cardLeft = Math.min(Math.max(l + w / 2 - CARD_W / 2, MARGIN), vw - CARD_W - MARGIN);
-    } else if (step.prefer === "top" && t - 20 - 220 > 0) {
-        // Above
-        cardTop = t - 240;
+        pointerPos = "top";
+        pointerOffset = Math.max(20, Math.min(CARD_W - 20, (l + w / 2) - cardLeft));
+    } else if (pref === "top") {
+        cardTop = t - 260; // rough generic height
         cardLeft = Math.min(Math.max(l + w / 2 - CARD_W / 2, MARGIN), vw - CARD_W - MARGIN);
-    } else if (step.prefer === "right" && l + w + 20 + CARD_W < vw) {
-        // Right side
-        cardTop = Math.min(Math.max(t + h / 2 - 110, MARGIN), vh - 240);
-        cardLeft = l + w + 20;
-    } else if (l - CARD_W - 20 > MARGIN) {
-        // Left side
-        cardTop = Math.min(Math.max(t + h / 2 - 110, MARGIN), vh - 240);
-        cardLeft = l - CARD_W - 20;
-    } else {
-        // Fallback: Center of viewport if everything else fails
-        cardTop = vh / 2 - 110;
-        cardLeft = vw / 2 - CARD_W / 2;
+        pointerPos = "bottom";
+        pointerOffset = Math.max(20, Math.min(CARD_W - 20, (l + w / 2) - cardLeft));
+    } else if (pref === "right") {
+        cardTop = Math.min(Math.max(t + h / 2 - 120, MARGIN), vh - 260);
+        cardLeft = l + w + GAP;
+        pointerPos = "left";
+        pointerOffset = Math.max(20, Math.min(240, (t + h / 2) - cardTop));
+    } else if (pref === "left") {
+        cardTop = Math.min(Math.max(t + h / 2 - 120, MARGIN), vh - 260);
+        cardLeft = l - CARD_W - GAP;
+        pointerPos = "right";
+        pointerOffset = Math.max(20, Math.min(240, (t + h / 2) - cardTop));
     }
 
     const Icon = step.icon;
@@ -222,33 +201,67 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
     return (
         <motion.div
             key={step.id}
-            initial={{ opacity: 0, scale: 0.92, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 8 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed z-[10000] rounded-2xl border border-border bg-popover/95 backdrop-blur-2xl shadow-2xl shadow-foreground/20 overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95, filter: "blur(4px)", y: 10 }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)", y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)", y: 10 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="fixed z-[10000] rounded-2xl border border-white/10 bg-[#0f111a]/95 backdrop-blur-3xl shadow-2xl shadow-black/80 flex flex-col transition-all duration-75"
             style={{ top: cardTop, left: cardLeft, width: CARD_W }}
         >
-            {/* Gradient top line */}
-            <div className={`h-[2px] w-full bg-gradient-to-r ${step.iconGradient}`} />
+            {/* SVG Pointer Arrow */}
+            {pointerPos === "top" && (
+                <div className="absolute -top-[11px] left-0 w-full flex" style={{ paddingLeft: `${pointerOffset - 12}px` }}>
+                    <svg width="24" height="12" viewBox="0 0 24 12" fill="none" className="drop-shadow-lg">
+                        <path d="M12 0L24 12H0L12 0Z" fill="rgba(255,255,255,0.1)" />
+                        <path d="M12 1L23 12H1L12 1Z" fill="#0f111a" />
+                    </svg>
+                </div>
+            )}
+            {pointerPos === "bottom" && (
+                <div className="absolute -bottom-[11px] left-0 w-full flex" style={{ paddingLeft: `${pointerOffset - 12}px` }}>
+                    <svg width="24" height="12" viewBox="0 0 24 12" fill="none" className="drop-shadow-lg">
+                        <path d="M12 12L0 0H24L12 12Z" fill="rgba(255,255,255,0.1)" />
+                        <path d="M12 11L1 0H23L12 11Z" fill="#0f111a" />
+                    </svg>
+                </div>
+            )}
+            {pointerPos === "left" && (
+                <div className="absolute -left-[11px] top-0 h-full flex flex-col" style={{ paddingTop: `${pointerOffset - 12}px` }}>
+                    <svg width="12" height="24" viewBox="0 0 12 24" fill="none" className="drop-shadow-lg">
+                        <path d="M0 12L12 0V24L0 12Z" fill="rgba(255,255,255,0.1)" />
+                        <path d="M1 12L12 1V23L1 12Z" fill="#0f111a" />
+                    </svg>
+                </div>
+            )}
+            {pointerPos === "right" && (
+                <div className="absolute -right-[11px] top-0 h-full flex flex-col" style={{ paddingTop: `${pointerOffset - 12}px` }}>
+                    <svg width="12" height="24" viewBox="0 0 12 24" fill="none" className="drop-shadow-lg">
+                        <path d="M12 12L0 24V0L12 12Z" fill="rgba(255,255,255,0.1)" />
+                        <path d="M11 12L0 23V1L11 12Z" fill="#0f111a" />
+                    </svg>
+                </div>
+            )}
 
-            <div className="p-5 space-y-4">
+            {/* Gradient top line - offset beautifully underneath the arrow if top */}
+            <div className={`h-[2px] w-full bg-gradient-to-r ${step.iconGradient} rounded-t-2xl relative z-10`} />
+
+            <div className="p-5 space-y-4 relative z-10">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${step.iconGradient} flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                            <Icon className="w-5 h-5 text-primary-foreground" />
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${step.iconGradient} flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                            <Icon className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-0.5">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-0.5">
                                 Step {stepIndex + 1} of {totalSteps}
                             </p>
-                            <h3 className="text-sm font-bold text-foreground leading-tight">{step.title}</h3>
+                            <h3 className="text-sm font-bold text-white leading-tight">{step.title}</h3>
                         </div>
                     </div>
                     <button
                         onClick={onSkip}
-                        className="text-muted-foreground/40 hover:text-foreground transition-colors flex-shrink-0 p-0.5"
+                        className="text-white/40 hover:text-white transition-colors flex-shrink-0 p-1 rounded-md hover:bg-white/5"
                         title="Skip tour"
                     >
                         <X className="w-4 h-4" />
@@ -256,10 +269,10 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
                 </div>
 
                 {/* Body */}
-                <p className="text-xs text-muted-foreground leading-relaxed">{step.body}</p>
+                <p className="text-xs text-white/70 leading-relaxed font-medium">{step.body}</p>
 
                 {/* Progress dots */}
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 pt-2">
                     {Array.from({ length: totalSteps }).map((_, i) => (
                         <div
                             key={i}
@@ -268,33 +281,33 @@ function TooltipCard({ step, stepIndex, totalSteps, rect, onNext, onSkip }: Tool
                                 i === stepIndex
                                     ? `flex-1 bg-gradient-to-r ${step.iconGradient}`
                                     : i < stepIndex
-                                        ? "w-3 bg-muted"
-                                        : "w-3 bg-muted/40",
+                                        ? "w-4 bg-white/20"
+                                        : "w-3 bg-white/10",
                             ].join(" ")}
                         />
                     ))}
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pt-1">
                     <button
                         onClick={onSkip}
-                        className="flex-1 py-2 rounded-xl text-xs font-semibold text-muted-foreground/60 hover:text-foreground border border-border hover:bg-muted transition-colors"
+                        className="flex-[0.8] py-2.5 rounded-xl text-[11px] font-bold text-white/50 hover:text-white border border-white/10 hover:bg-white/5 transition-colors"
                     >
-                        Skip tour
+                        Skip
                     </button>
                     <button
                         onClick={onNext}
-                        className={`flex-[2] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold text-primary-foreground bg-gradient-to-r ${step.iconGradient} hover:opacity-90 transition-opacity shadow-lg`}
+                        className={`flex-[1.2] flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r ${step.iconGradient} hover:opacity-90 transition-opacity shadow-lg`}
                     >
                         {isLast ? (
                             <>
                                 <Sparkles className="w-3.5 h-3.5" />
-                                Let's go!
+                                Let's launch
                             </>
                         ) : (
                             <>
-                                Next
+                                Next step
                                 <ChevronRight className="w-3.5 h-3.5" />
                             </>
                         )}
@@ -312,32 +325,27 @@ export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
     const [active, setActive] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
     const [rect, setRect] = useState<Rect | null>(null);
-    const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // 1. Hydration / Mount check
+    // 1. Hydration
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    // 2. One-time check for tour eligibility
+    // 2. Logic checking
     useEffect(() => {
         if (!mounted) return;
-
         try {
             const seen = localStorage.getItem(TOUR_KEY);
             const sessionDismissed = sessionStorage.getItem("crm_onboarding_session_dismissed") === "true";
             const brandSetupActive = sessionStorage.getItem("crm_brand_setup_active") === "true";
 
-            // If shown once, explicitly dismissed on server, or dismissed for this session, don't show
             if (!seen && !dismissed && !sessionDismissed && !brandSetupActive) {
-                // Small delay to let the dashboard fully render before measuring
-                const t = setTimeout(() => setActive(true), 1400);
+                const t = setTimeout(() => setActive(true), 1200);
                 return () => clearTimeout(t);
             }
         } catch { /* ignore */ }
     }, [mounted, dismissed]);
 
-    // 2b. If tour was deferred because brand setup was active, start it when brand setup closes
     useEffect(() => {
         if (!mounted) return;
         const handler = () => {
@@ -354,56 +362,59 @@ export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
         return () => window.removeEventListener("crm_brand_setup_closed", handler);
     }, [mounted, dismissed]);
 
-    // 3. Listen for session dismissal events (e.g. from the checklist 'X' button)
     useEffect(() => {
-        const handler = () => {
-            setActive(false);
-        };
+        const handler = () => setActive(false);
         window.addEventListener("crm_session_dismiss_onboarding", handler);
         return () => window.removeEventListener("crm_session_dismiss_onboarding", handler);
     }, []);
 
-    // Measure the target element whenever step changes
-    const measureStep = useCallback(function measure(idx: number) {
-        const step = STEPS[idx];
-        if (!step) return;
-
-        const el =
-            document.querySelector(`[data-tour-id="${step.targetId}"]`) ||
-            (step.fallbackSelector ? document.querySelector(step.fallbackSelector) : null);
-
-        if (el) {
-            // Priority: Scroll element into view first
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-
-            // Small delay for scroll to settle before measuring rect
-            setTimeout(() => {
-                const r = el.getBoundingClientRect();
-                setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
-            }, 350);
-
-            if (retryRef.current) clearTimeout(retryRef.current);
-        } else {
-            // Element not yet rendered — retry up to 10 times × 200ms
-            retryRef.current = setTimeout(() => measure(idx), 200);
+    // Scroll & Track fluid bounding box
+    useEffect(() => {
+        if (!active || stepIndex >= STEPS.length) return;
+        
+        const step = STEPS[stepIndex];
+        let reqId: number;
+        let lastScrollCommand = 0;
+        
+        const ensureElement = () => document.querySelector(`[data-tour-id="${step.targetId}"]`) || 
+                                    (step.fallbackSelector ? document.querySelector(step.fallbackSelector) : null);
+        
+        // Initial scroll
+        const initialEl = ensureElement();
+        if (initialEl) {
+            initialEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            lastScrollCommand = Date.now();
         }
-    }, []);
-
-    useEffect(() => {
-        if (!active) return;
-        measureStep(stepIndex);
-        return () => {
-            if (retryRef.current) clearTimeout(retryRef.current);
+        
+        let lastRect = { top: -9999, left: -9999, width: 0, height: 0 };
+        
+        const loop = () => {
+            const el = ensureElement();
+            if (el) {
+                const r = el.getBoundingClientRect();
+                // Check if significantly moved (handles smooth scroll flawlessly)
+                if (
+                    Math.abs(r.top - lastRect.top) > 1 ||
+                    Math.abs(r.left - lastRect.left) > 1 ||
+                    Math.abs(r.width - lastRect.width) > 1 ||
+                    Math.abs(r.height - lastRect.height) > 1
+                ) {
+                    if (r.width > 0 && r.height > 0) {
+                        setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+                        lastRect = r;
+                    }
+                }
+            } else if (Date.now() - lastScrollCommand > 2000 && !initialEl) {
+                // Not found even after 2s waiting, it might be collapsed UI.
+                // Allow fallback if needed.
+            }
+            reqId = requestAnimationFrame(loop);
         };
-    }, [active, stepIndex, measureStep]);
-
-    // Re-measure on window resize
-    useEffect(() => {
-        if (!active) return;
-        const handler = () => measureStep(stepIndex);
-        window.addEventListener("resize", handler, { passive: true });
-        return () => window.removeEventListener("resize", handler);
-    }, [active, stepIndex, measureStep]);
+        
+        reqId = requestAnimationFrame(loop);
+        
+        return () => cancelAnimationFrame(reqId);
+    }, [active, stepIndex]);
 
     const complete = useCallback(() => {
         setActive(false);
@@ -412,7 +423,6 @@ export function ProductTour({ dismissed = false }: { dismissed?: boolean }) {
 
     const handleNext = useCallback(() => {
         if (stepIndex < STEPS.length - 1) {
-            setRect(null); // clear so spotlight can animate to next
             setStepIndex((i) => i + 1);
         } else {
             complete();

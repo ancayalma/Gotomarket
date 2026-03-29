@@ -283,11 +283,11 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                     </div>
                                 ) : (
                                     filteredPlans.map((plan: any) => (
-                                        <button
+                                        <div
                                             key={plan.name}
                                             onClick={() => setSelectedPlan(plan)}
                                             className={cn(
-                                                "w-full text-left p-4 rounded-2xl border transition-colors duration-300 relative group overflow-hidden",
+                                                "w-full text-left p-4 rounded-2xl border transition-colors duration-300 relative group overflow-hidden cursor-pointer",
                                                 selectedPlan?.name === plan.name
                                                     ? "border-primary/50 bg-primary/10 shadow-[0_0_30px_rgba(6,182,212,0.1)]"
                                                     : "border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/60 hover:border-zinc-700"
@@ -298,7 +298,7 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                                     <span className={cn("text-sm font-bold tracking-tight mb-1", selectedPlan?.name === plan.name ? "text-primary" : "text-zinc-300")}>
                                                         {plan.name}
                                                     </span>
-                                                    <div className="flex flex-wrap gap-1">
+                                                    <div className="flex flex-wrap gap-1 mt-1">
                                                         {plan.features.slice(0, 2).map((f: any, i: number) => (
                                                             <span key={i} className="text-[10px] text-zinc-500 bg-zinc-800/50 px-2 py-0.5 rounded-full">{f}</span>
                                                         ))}
@@ -329,7 +329,22 @@ export const BillingModal = ({ isOpen, onClose }: BillingModalProps) => {
                                                     Contact Sales for Pricing
                                                 </div>
                                             )}
-                                        </button>
+                                            
+                                            <div className="mt-3 flex justify-end">
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    className="h-7 text-[10px] bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 hover:text-white"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open("/pricing", "_blank");
+                                                    }}
+                                                >
+                                                    View details
+                                                    <ArrowRight className="w-3 h-3 ml-1 opacity-50" />
+                                                </Button>
+                                            </div>
+                                        </div>
                                     ))
                                 )}
                             </div>

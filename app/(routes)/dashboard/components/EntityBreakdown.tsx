@@ -504,12 +504,6 @@ export function EntityBreakdown({
             return (
               <motion.div
                 key={entity.id}
-                data-tour-id={
-                  entity.id === "entity:outreach" ? "tour-campaigns" :
-                    entity.id === "entity:lead_wizard" ? "tour-lead-wizard" :
-                      entity.id === "entity:lead_pools" ? "tour-lists" :
-                        undefined
-                }
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
