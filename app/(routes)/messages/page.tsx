@@ -433,17 +433,7 @@ const MessagesRoute = async () => {
     const defaultCollapsed = collapsed ? JSON.parse(collapsed.value) : undefined;
 
     return (
-        <Container
-            title="Messages"
-            description="Internal team messaging. Send and receive messages from your team members."
-        >
-            <LearnLink
-                tab="messages"
-                overviewTitle="Internal Team Communications"
-                overviewWhat="A unified inbox for high-fidelity internal messaging, form submissions, and system-wide alerts."
-                overviewWhy="Centralizing team chat within the CRM ensures that critical operational discussions stay connected to the actual customer records and projects being discussed."
-                overviewHow="Compose new threads to any team member, monitor the 'Form Submissions' channel for inbound lead captures, and use the 'Important' filter to prioritize high-velocity alerts."
-            />
+        <div className="relative w-full h-full flex flex-col overflow-hidden">
             <Suspense fallback={<SuspenseLoading />}>
                 <InternalMessagesComponent
                     messages={messages}
@@ -457,7 +447,7 @@ const MessagesRoute = async () => {
                     defaultCollapsed={defaultCollapsed}
                 />
             </Suspense>
-        </Container>
+        </div>
     );
 };
 

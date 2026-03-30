@@ -6,6 +6,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import type { CustomFieldDefinition } from "@/lib/crm/custom-field-defaults";
 
 // Components
 import AccountsManagerTabs from "./components/AccountsManagerTabs";
@@ -43,6 +45,16 @@ const AccountsPage = async ({ searchParams }: AccountsPageProps) => {
   // Load data for 'accounts' tab primarily
   const crmData = tab === "accounts" ? await getAllCrmData() : null;
   const accounts = tab === "accounts" ? await getAccounts() : null;
+
+  const currentUserInfo = await getCurrentUserTeamId();
+  let customFieldDefs = [];
+  if (currentUserInfo?.teamId) {
+      const team = await prismadb.team.findUnique({
+          where: { id: currentUserInfo.teamId },
+          select: { custom_field_definitions: true },
+      });
+      customFieldDefs = (team?.custom_field_definitions as any) || [];
+  }
 
   const getTabInfo = (currentTab: string) => {
     switch (currentTab) {
@@ -86,6 +98,7 @@ const AccountsPage = async ({ searchParams }: AccountsPageProps) => {
         crmData={crmData}
         isMember={isMember}
         defaultTab={tab as "accounts" | "wizard" | "pools"}
+        customFieldDefs={customFieldDefs}
       />
     </div>
   );

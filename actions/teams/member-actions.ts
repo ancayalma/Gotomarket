@@ -224,3 +224,49 @@ export const getOrganizationMembers = async (orgId: string) => {
         return [];
     }
 };
+
+export const setTeamOwner = async (teamId: string, newOwnerId: string) => {
+    try {
+        const currentUser = await getCurrentUserTeamId();
+        if (!currentUser?.userId) return { error: "Unauthorized" };
+
+        const isPlatformAdmin = currentUser.isGlobalAdmin || currentUser.teamRole === "PLATFORM_ADMIN";
+        
+        // Only Global/Platform Admins OR the current Owner can transfer ownership
+        // In BasaltCRM, we'll allow owners and super admins to do this.
+        const isAdminOrOwner = currentUser.teamRole === "OWNER" || currentUser.teamRole === "SUPER_ADMIN";
+        
+        if (!isPlatformAdmin && (currentUser.teamId !== teamId || !isAdminOrOwner)) {
+            return { error: "Unauthorized: Only the current Owner or Platform Admin can reassign ownership." };
+        }
+
+        const team = await prismadb.team.findUnique({ where: { id: teamId } });
+        if (!team) return { error: "Team not found" };
+
+        const targetUser = await prismadb.users.findUnique({ where: { id: newOwnerId } });
+        if (!targetUser) return { error: "Target user not found" };
+
+        if (targetUser.team_id !== teamId) {
+             return { error: "User must be a member of the team to become its owner." };
+        }
+
+        // 1. Update the Team's owner_id
+        await prismadb.team.update({
+            where: { id: teamId },
+            data: { owner_id: newOwnerId }
+        });
+
+        // 2. Ensure they have the OWNER role
+        await prismadb.users.update({
+            where: { id: newOwnerId },
+            data: { team_role: "OWNER" }
+        });
+
+        revalidatePath(`/partners/${teamId}`);
+        revalidatePath(`/platform/${teamId}`);
+        return { success: true };
+    } catch (error) {
+        systemLogger.error("[SET_TEAM_OWNER]", error);
+        return { error: "Failed to set team owner" };
+    }
+};

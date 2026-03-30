@@ -4,8 +4,22 @@ import { NewAccountFormWrapper } from "./components/NewAccountFormWrapper";
 
 import { LearnLink } from "@/components/ui/LearnLink";
 
+import { prismadb } from "@/lib/prisma";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+import type { CustomFieldDefinition } from "@/lib/crm/custom-field-defaults";
+
 const NewAccountPage = async () => {
     const { users, industries } = await getAllCrmData();
+    const currentUserInfo = await getCurrentUserTeamId();
+
+    let customFieldDefs: CustomFieldDefinition[] = [];
+    if (currentUserInfo?.teamId) {
+        const team = await prismadb.team.findUnique({
+            where: { id: currentUserInfo.teamId },
+            select: { custom_field_definitions: true },
+        });
+        customFieldDefs = ((team as any)?.custom_field_definitions as CustomFieldDefinition[]) || [];
+    }
 
     return (
         <Container
@@ -23,6 +37,7 @@ const NewAccountPage = async () => {
                 <NewAccountFormWrapper
                     users={users}
                     industries={industries}
+                    customFieldDefs={customFieldDefs}
                 />
             </div>
         </Container>

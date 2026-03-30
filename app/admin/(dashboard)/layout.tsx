@@ -43,7 +43,7 @@ export default async function AdminDashboardLayout({
     // Check if user is partner admin (BasaltHQ) or global admin
     const user = await prismadb.users.findUnique({
         where: { email: session.user.email as string },
-        include: { assigned_team: true }
+        include: { assigned_team: { include: { assigned_plan: true } } }
     });
 
     // Enforce password change — redirect back to main app where modal will force the change
@@ -54,12 +54,14 @@ export default async function AdminDashboardLayout({
     const showModules = user?.is_admin || user?.assigned_team?.slug === "basalthq";
 
     const team = user?.assigned_team;
+    const planSlug = (team as any)?.assigned_plan?.slug || team?.subscription_plan || "FREE";
+    const configFeatures = getSubscriptionPlan(String(planSlug)).features;
     let features: string[] = [];
     
-    if (team?.assigned_plan) {
-        features = team.assigned_plan.features;
+    if ((team as any)?.assigned_plan) {
+        features = Array.from(new Set([...(team as any).assigned_plan.features, ...configFeatures]));
     } else {
-        features = getSubscriptionPlan(String(team?.subscription_plan || "FREE")).features;
+        features = configFeatures;
     }
     
     if (team?.module_overrides) {

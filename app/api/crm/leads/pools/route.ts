@@ -51,7 +51,7 @@ export async function GET() {
         },
       },
       _count: {
-        select: { candidates: true },
+        select: { candidates: true, lead_maps: true },
       },
     };
 
@@ -119,7 +119,7 @@ export async function GET() {
       icpConfig: p.icpConfig,
       assignedMembers: p.assigned_members || [],
       latestJob: p.jobs?.[0] || null,
-      candidatesCount: p._count?.candidates || 0,
+      candidatesCount: (p._count?.candidates || 0) + (p._count?.lead_maps || 0),
     }));
 
     return NextResponse.json({ pools: results }, { status: 200 });

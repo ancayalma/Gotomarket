@@ -94,7 +94,7 @@ async function createLeadHandler(req: Request, body: LeadInput) {
 
     // SOC2 CC6.1 / A1.2: Check resource quotas before allowing creation
     if (teamId) {
-      const quota = await checkTeamQuota(teamId, "LEADS");
+      const quota = await checkTeamQuota(teamId, "LEADS", session.user.id);
       if (!quota.allowed) {
         return NextResponse.json({ error: quota.message }, { status: 403 });
       }

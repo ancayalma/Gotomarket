@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { useToast } from "@/components/ui/use-toast";
 
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -30,13 +30,150 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Combobox } from "@/components/ui/combobox";
 
+import { groupFieldsByTab, type CustomFieldDefinition } from "@/lib/crm/custom-field-defaults";
+import { Type, DollarSign, Calendar, Link as LinkIcon, Mail, Phone, Hash, Info, Plus, X } from "lucide-react";
+
 type Props = {
   industries: any[];
   users: any[];
+  customFieldDefs?: CustomFieldDefinition[];
   onFinish: () => void;
 };
 
-export function NewAccountForm({ industries, users, onFinish }: Props) {
+function CustomFieldRenderInput({ def, field, isLoading }: { def: CustomFieldDefinition, field: any, isLoading: boolean }) {
+  if (def.type === 'textarea') {
+    return (
+      <Textarea
+        disabled={isLoading}
+        placeholder={def.placeholder}
+        {...field}
+        value={field.value ?? ""}
+        className="min-h-[60px] text-xs bg-background/50 border-white/10"
+      />
+    );
+  }
+  if (def.type === 'select') {
+    return (
+      <Select disabled={isLoading} value={field.value || ""} onValueChange={field.onChange}>
+        <SelectTrigger className="h-8 text-xs bg-background/50 border-white/10">
+            <SelectValue placeholder={def.placeholder || "Select..."} />
+        </SelectTrigger>
+        <SelectContent>
+            {def.options?.map(opt => (
+                <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    {opt.label}
+                </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+  if (def.type === 'date') {
+    return (
+      <Input
+        type="date"
+        disabled={isLoading}
+        {...field}
+        value={field.value ?? ""}
+        className="h-8 text-xs bg-background/50 border-white/10"
+      />
+    );
+  }
+  if (def.type === 'currency') {
+    return (
+      <div className="relative">
+        <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+        <Input
+            type="number"
+            step="0.01"
+            disabled={isLoading}
+            placeholder={def.placeholder || "0.00"}
+            {...field}
+            value={field.value ?? ""}
+            className="h-8 pl-6 text-xs bg-background/50 border-white/10"
+        />
+      </div>
+    );
+  }
+  if (def.type === 'number') {
+    return (
+      <Input
+        type="number"
+        disabled={isLoading}
+        placeholder={def.placeholder}
+        {...field}
+        value={field.value ?? ""}
+        className="h-8 text-xs bg-background/50 border-white/10"
+      />
+    );
+  }
+  return (
+    <Input
+        type={def.type === 'email' ? 'email' : def.type === 'url' ? 'url' : "text"}
+        disabled={isLoading}
+        placeholder={def.placeholder}
+        {...field}
+        value={field.value ?? ""}
+        className="h-8 text-xs bg-background/50 border-white/10"
+    />
+  );
+}
+
+function CustomFieldCollection({ tab, fields, control, isLoading }: { tab: string, fields: CustomFieldDefinition[], control: any, isLoading: boolean }) {
+    const { fields: items, append, remove } = useFieldArray({
+        control,
+        name: `custom_fields.${tab}`
+    });
+
+    return (
+        <div className="space-y-4">
+            {items.map((item, index) => (
+                <div key={item.id} className="relative border border-white/10 rounded-xl p-4 bg-black/20 mt-2">
+                    <Button 
+                        type="button"
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => remove(index)} 
+                        className="absolute top-2 right-2 h-6 w-6 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                    >
+                        <X className="w-3.5 h-3.5" />
+                    </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {fields.map(def => (
+                            <FormField
+                                key={def.key}
+                                control={control}
+                                name={`custom_fields.${tab}.${index}.${def.key}`}
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                                            {def.label}
+                                            {def.required && <span className="text-red-400 ml-1">*</span>}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <CustomFieldRenderInput def={def} field={field} isLoading={isLoading} />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        ))}
+                    </div>
+                </div>
+            ))}
+            <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={() => append({})}
+                className="text-xs bg-white/[0.02] border-white/10 border-dashed hover:bg-white/[0.05]"
+            >
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add {tab} Entry
+            </Button>
+        </div>
+    );
+}
+
+export function NewAccountForm({ industries, users, customFieldDefs, onFinish }: Props) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -65,6 +202,7 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
     member_of: z.string().max(50).optional(),
     industry: z.string().optional().nullable(),
     assigned_to: z.string().optional().nullable(),
+    custom_fields: z.record(z.string(), z.any()).optional(),
   });
 
   type NewAccountFormValues = z.infer<typeof formSchema>;
@@ -95,6 +233,7 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
       member_of: "",
       industry: null,
       assigned_to: null,
+      custom_fields: {},
     },
   });
 
@@ -131,6 +270,7 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
         member_of: "",
         industry: null,
         assigned_to: null,
+        custom_fields: {},
       });
 
       onFinish();
@@ -150,6 +290,9 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
       setIsLoading(false);
     }
   };
+
+  const customFieldGroups = customFieldDefs ? groupFieldsByTab(customFieldDefs) : {};
+  const hasCustomFields = Object.keys(customFieldGroups).length > 0;
 
   return (
     <Form {...form}>
@@ -503,6 +646,55 @@ export function NewAccountForm({ industries, users, onFinish }: Props) {
                 />
               </div>
             </div>
+
+            {hasCustomFields && (
+              <div className="space-y-6 pt-6 -mx-10 px-10 border-t border-white/5 bg-white/[0.01]">
+                {Object.entries(customFieldGroups).map(([tab, fields]) => {
+                  const isCollection = fields[0]?.isCollection;
+                  return (
+                  <div key={tab} className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-lg bg-violet-500/10 flex items-center justify-center border border-violet-500/20 text-violet-400">
+                          <Info size={14} />
+                        </div>
+                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">{tab} Form Attributes</h3>
+                        {isCollection && <span className="text-[9px] bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-1.5 py-0.5 rounded uppercase font-bold">Repeatable</span>}
+                    </div>
+                    {isCollection ? (
+                        <div className="border-l border-white/5 pl-4">
+                            <CustomFieldCollection tab={tab} fields={fields} control={form.control} isLoading={isLoading} />
+                        </div>
+                    ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-l border-white/5 pl-4">
+                        {fields.map(def => (
+                          <FormField
+                            key={def.key}
+                            control={form.control}
+                            name={`custom_fields.${def.key}` as any}
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+                                    {def.label}
+                                    {def.required && <span className="text-red-400 ml-1">*</span>}
+                                </FormLabel>
+                                <FormControl>
+                                  <CustomFieldRenderInput def={def} field={field} isLoading={isLoading} />
+                                </FormControl>
+                                {def.description && (
+                                    <p className="text-[10px] text-muted-foreground/40 mt-1">{def.description}</p>
+                                )}
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                    </div>
+                    )}
+                  </div>
+                )})}
+              </div>
+            )}
+
           </div>
         </div>
         <div className="grid gap-2 py-5">

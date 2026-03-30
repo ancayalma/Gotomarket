@@ -33,7 +33,12 @@ export async function requireFeature(
     // 1. DB-assigned plan (if platform admin has assigned a custom plan)
     if (team.assigned_plan) {
         if (team.assigned_plan.features.includes("all")) return true;
-        return team.assigned_plan.features.includes(feature);
+        if (team.assigned_plan.features.includes(feature)) return true;
+        // Also check config — catches newly added baseline features not yet in DB
+        const configSlug = resolveSlug(team.assigned_plan.slug);
+        const configPlan = SUBSCRIPTION_PLANS[configSlug];
+        if (configPlan.features.includes("all")) return true;
+        return configPlan.features.includes(feature);
     }
 
     // 2. Subscription plan slug (from the enum on the team record)

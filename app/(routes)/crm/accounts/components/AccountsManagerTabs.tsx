@@ -6,18 +6,21 @@ import AccountsView from "../../components/AccountsView";
 import LeadGenWizardPage from "./LeadGenWizard";
 import RightViewModal from "@/components/modals/right-view-modal";
 import { NewAccountForm } from "./NewAccountForm";
-import { Wand2, Plus, Building2, List } from "lucide-react";
+import { CustomFieldManager } from "./CustomFieldManager";
+import { Wand2, Plus, Building2, List, Settings2 } from "lucide-react";
 import DashboardCard from "../../dashboard/_components/DashboardCard";
 import { useRouter } from "next/navigation";
+import type { CustomFieldDefinition } from "@/lib/crm/custom-field-defaults";
 
 type Props = {
     accounts: any[];
     crmData: any;
     defaultTab?: "accounts" | "wizard" | "pools";
     isMember?: boolean;
+    customFieldDefs?: CustomFieldDefinition[];
 };
 
-export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "accounts", isMember = false }: Props) {
+export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "accounts", isMember = false, customFieldDefs }: Props) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState(defaultTab);
 
@@ -50,6 +53,15 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
             iconColor: "text-purple-400",
             permission: "accounts.wizard"
         },
+        {
+            id: "settings",
+            title: "Settings",
+            description: "Account custom fields",
+            icon: Settings2,
+            color: "from-slate-500/20 to-zinc-500/20",
+            iconColor: "text-slate-400",
+            permission: "accounts.settings"
+        },
     ];
 
     const addAccountCard = {
@@ -74,6 +86,7 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
                     if (card.id === "accounts") variant = "info";
                     if (card.id === "pools") variant = "warning";
                     if (card.id === "wizard") variant = "violet";
+                    if (card.id === "settings") variant = "default";
 
                     return (
                         <DashboardCard
@@ -120,6 +133,7 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
                             <NewAccountForm
                                 industries={crmData?.industries || []}
                                 users={crmData?.users || []}
+                                customFieldDefs={customFieldDefs}
                                 onFinish={() => { }}
                             />
                         </div>
@@ -136,6 +150,11 @@ export default function AccountsManagerTabs({ accounts, crmData, defaultTab = "a
                     <>
                         <TabsContent value="wizard" className="flex-1 mt-0">
                             <LeadGenWizardPage />
+                        </TabsContent>
+                        <TabsContent value="settings" className="flex-1 mt-0 p-4">
+                            <div className="max-w-5xl mx-auto">
+                                <CustomFieldManager />
+                            </div>
                         </TabsContent>
                     </>
                 )}
