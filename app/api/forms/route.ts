@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import crypto from "crypto";
 import { logActivityInternal } from "@/actions/audit";
+import { SUBSCRIPTION_PLANS, resolveSlug } from "@/config/subscriptions";
 
 // GET - List forms for team
 export async function GET(req: NextRequest) {
@@ -68,6 +69,26 @@ export async function POST(req: NextRequest) {
 
         if (!teamId) {
             return NextResponse.json({ error: "No team associated. Please contact support." }, { status: 400 });
+        }
+
+        // ── Enforce max_forms limit ─────────────────────────────────────
+        const team = await prismadb.team.findUnique({
+            where: { id: teamId },
+            include: { assigned_plan: true },
+        });
+        const planSlug = (team as any)?.assigned_plan?.slug || (team as any)?.subscription_plan || "STARTER";
+        const plan = SUBSCRIPTION_PLANS[resolveSlug(planSlug)];
+        const maxForms = plan.limits.max_forms;
+
+        if (maxForms !== -1) {
+            const currentFormCount = await (prismadb as any).form.count({ where: { team_id: teamId } });
+            if (currentFormCount >= maxForms) {
+                return NextResponse.json({
+                    error: `Form limit reached. Your ${plan.name} plan allows up to ${maxForms} forms. Upgrade to create more.`,
+                    limit: maxForms,
+                    current: currentFormCount,
+                }, { status: 403 });
+            }
         }
 
         const body = await req.json();

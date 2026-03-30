@@ -22,6 +22,7 @@ interface MemberDashboardProps {
     userTasksCount: number;
     quickLaunchDismissed?: boolean;
     checklistCounts?: ChecklistCounts;
+    hasCampaigns?: boolean;
 }
 
 const MemberDashboard = ({
@@ -34,6 +35,7 @@ const MemberDashboard = ({
     userTasksCount,
     quickLaunchDismissed = false,
     checklistCounts,
+    hasCampaigns = true,
 }: MemberDashboardProps) => {
     const greeting = useGreeting();
     const router = useRouter();
@@ -78,6 +80,7 @@ const MemberDashboard = ({
                         <QuickLaunchChecklist
                             counts={checklistCounts}
                             initiallyDismissed={quickLaunchDismissed}
+                            hasCampaigns={hasCampaigns}
                         />
                     </div>
                 )}
@@ -140,7 +143,7 @@ const MemberDashboard = ({
             </div>
 
             {/* First-login product tour */}
-            <ProductTour dismissed={quickLaunchDismissed} />
+            <ProductTour dismissed={quickLaunchDismissed} hasCampaigns={hasCampaigns} />
         </div>
     );
 };

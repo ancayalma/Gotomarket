@@ -25,6 +25,7 @@ import { getAIInsights } from "@/actions/dashboard/get-ai-insights";
 import { getEngagementPulse } from "@/actions/dashboard/get-engagement-pulse";
 import { getSynthesisAnalytics } from "@/actions/dashboard/get-synthesis-analytics";
 import { getActiveQuestCount } from "@/actions/quests/get-active-quest-count";
+import { checkTeamFeature } from "@/lib/subscription";
 
 import AdminDashboard from "./views/AdminDashboard";
 import MemberDashboard from "./views/MemberDashboard";
@@ -78,6 +79,13 @@ const DashboardRoleManager = async () => {
     // For now, treating PLATFORM_ADMIN and ADMIN similarly but with potential future separation.
     const isAdmin = (user as any)?.is_admin || role === "PLATFORM_ADMIN" || role === "ADMIN" || role === "SUPER_ADMIN" || role === "PLATFORM ADMIN" || role === "SYSADM" || role === "OWNER";
     const isMember = role === "MEMBER";
+
+    // Subscription check for gating
+    const team = teamId ? await prismadb.team.findUnique({
+        where: { id: teamId },
+        include: { assigned_plan: true }
+    }) : null;
+    const hasCampaigns = team ? checkTeamFeature(team as any, "campaigns") : false;
 
     // 2. Fetch Data Parallel
     // We fetch different data based on role to optimize performance
@@ -282,6 +290,7 @@ const DashboardRoleManager = async () => {
                 <AdminDashboard
                     initialLayout={initialLayout as any}
                     quickLaunchDismissed={user?.quickLaunchDismissed || false}
+                    hasCampaigns={hasCampaigns}
                 />
             </DashboardDataProvider>
         );
@@ -298,7 +307,7 @@ const DashboardRoleManager = async () => {
         ]);
 
         const checklistCounts = {
-            campaigns: newProjects.length,
+            campaigns: Array.isArray(newProjects) ? newProjects.length : 0,
             lists: 0, // Members might not see pools yet
             teamMembers: activeUsersCount,
             outreachStarted: false,
@@ -313,11 +322,13 @@ const DashboardRoleManager = async () => {
                 newProjects={newProjects}
                 messages={messages}
                 userTasksCount={userTasksCount}
-                quickLaunchDismissed={user?.quickLaunchDismissed || false}
                 checklistCounts={checklistCounts as any}
+                quickLaunchDismissed={user?.quickLaunchDismissed || false}
+                hasCampaigns={hasCampaigns}
             />
         );
     }
+
 
     // Fallback: Viewer
     // Viewers might just need simple stats

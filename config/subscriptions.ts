@@ -3,7 +3,7 @@ export const SUBSCRIPTION_PLANS = {
         name: "Starter",
         slug: "STARTER",
         price: 0,
-        features: ["crm", "projects", "dashboard", "contacts", "accounts", "opportunities", "leads", "tasks", "university"], // Essential CRM + Learn
+        features: ["crm", "projects", "dashboard", "contacts", "accounts", "opportunities", "leads", "tasks", "university", "lists", "forms", "personalized_signature"], // Essential CRM + Learn + Lists + Forms + Signature
         limits: {
             max_users: 2,
             max_storage: 50, // MB
@@ -14,6 +14,7 @@ export const SUBSCRIPTION_PLANS = {
             voice_minutes_per_month: 0, // Voice locked on Starter
             max_active_quests: 0, // Quests locked on Starter
             ai_tokens: 5_000_000, // 5M AI tokens / month
+            max_forms: 10, // Starter cap: 10 forms
         }
     },
     GROWTH: {
@@ -37,6 +38,7 @@ export const SUBSCRIPTION_PLANS = {
             voice_minutes_per_month: 0, // Voice not included in Growth
             max_active_quests: 5,
             ai_tokens: 5_000_000, // 5M AI tokens / month
+            max_forms: 50, // Growth cap: 50 forms
         }
     },
     SCALE: {
@@ -54,6 +56,7 @@ export const SUBSCRIPTION_PLANS = {
             voice_minutes_per_month: 100,
             max_active_quests: 25,
             ai_tokens: 20_000_000, // 20M AI tokens / month
+            max_forms: -1, // Unlimited
         }
     },
     ENTERPRISE: {
@@ -71,6 +74,7 @@ export const SUBSCRIPTION_PLANS = {
             voice_minutes_per_month: -1,
             max_active_quests: -1,
             ai_tokens: -1, // Unlimited
+            max_forms: -1, // Unlimited
         }
     },
     EXEMPT: {
@@ -88,6 +92,7 @@ export const SUBSCRIPTION_PLANS = {
             voice_minutes_per_month: -1,
             max_active_quests: -1,
             ai_tokens: -1, // Unlimited
+            max_forms: -1, // Unlimited
         }
     }
 };
