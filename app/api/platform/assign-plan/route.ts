@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
+import { resetLeadGenCredits } from "@/lib/scraper/credits";
+import { resetAiTokenBalance } from "@/lib/ai-tokens";
 
 /**
  * POST /api/platform/assign-plan
@@ -32,11 +34,27 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "teamId and planSlug required" }, { status: 400 });
     }
 
-    // Update the team's subscription plan
+    // Try to find the matching Plan record if it exists in the database
+    const dbPlan = await prismadb.plan.findUnique({ 
+        where: { slug: planSlug.toLowerCase() } 
+    }).catch(() => null);
+
+    // Update the team's subscription plan and assigned_plan_id relation
     await prismadb.team.update({
         where: { id: teamId },
-        data: { subscription_plan: planSlug },
+        data: { 
+            subscription_plan: planSlug,
+            ...(dbPlan?.id ? { assigned_plan_id: dbPlan.id } : {})
+        },
     });
+
+    // Reset AI Credits & Tokens to match the new plan's limits
+    try {
+        await resetLeadGenCredits(teamId);
+        await resetAiTokenBalance(teamId);
+    } catch (e) {
+        console.error("Failed to reset AI credits during plan assignment:", e);
+    }
 
     return NextResponse.json({ success: true });
 }

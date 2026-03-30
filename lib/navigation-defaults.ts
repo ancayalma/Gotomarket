@@ -68,8 +68,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 label: "Lists",
                 iconName: "List",
                 href: "/lists",
-                permissions: { minRole: "ADMIN", feature: "accounts" },
-                isPremium: true
+                permissions: { feature: "lists" }
             },
             {
                 id: "nav_campaigns",

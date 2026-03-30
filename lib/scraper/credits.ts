@@ -1,6 +1,7 @@
 
 import { prismadb } from "@/lib/prisma";
-import { SUBSCRIPTION_PLANS, SubscriptionPlanType } from "@/config/subscriptions";
+import { resolveBillingTeamId } from "@/lib/team-billing";
+import { SUBSCRIPTION_PLANS, SubscriptionPlanType, resolveSlug } from "@/config/subscriptions";
 
 /**
  * Manages Lead Generation credits for teams.
@@ -9,6 +10,7 @@ import { SUBSCRIPTION_PLANS, SubscriptionPlanType } from "@/config/subscriptions
  */
 
 export async function getTeamLeadGenCredits(teamId: string) {
+    teamId = await resolveBillingTeamId(teamId);
     const config = await (prismadb as any).teamAiConfig.findUnique({
         where: { team_id: teamId },
         select: {
@@ -17,7 +19,9 @@ export async function getTeamLeadGenCredits(teamId: string) {
         }
     });
 
-    if (!config) return 0;
+    if (!config) {
+        return await resetLeadGenCredits(teamId);
+    }
 
     // Check if reset is needed (monthly)
     const now = new Date();
@@ -32,6 +36,7 @@ export async function getTeamLeadGenCredits(teamId: string) {
 }
 
 export async function resetLeadGenCredits(teamId: string) {
+    teamId = await resolveBillingTeamId(teamId);
     // 1. Fetch team's plan
     const team = await prismadb.team.findUnique({
         where: { id: teamId },
@@ -42,6 +47,14 @@ export async function resetLeadGenCredits(teamId: string) {
 
     if (team?.assigned_plan) {
         monthlyAllowance = team.assigned_plan.leadgen_credits_monthly || 0;
+        // Fallback to config if DB record is 0 or missing
+        if (monthlyAllowance === 0) {
+            const planSlugKey = resolveSlug(team.assigned_plan.slug);
+            const plan = SUBSCRIPTION_PLANS[planSlugKey];
+            if (plan?.limits) {
+                monthlyAllowance = plan.limits.leadgen_credits || 100;
+            }
+        }
     } else if (team?.subscription_plan) {
         const plan = SUBSCRIPTION_PLANS[team.subscription_plan as SubscriptionPlanType];
         monthlyAllowance = (plan as any)?.limits?.leadgen_credits || 100;

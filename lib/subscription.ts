@@ -84,7 +84,16 @@ export const checkTeamFeature = (
     // 1. Check DB Plan
     if (team.assigned_plan) {
         if (team.assigned_plan.features.includes("all")) return true;
-        return team.assigned_plan.features.includes(featureName);
+        if (team.assigned_plan.features.includes(featureName)) return true;
+
+        // 1b. Also check the config constant for the same slug.
+        // This ensures newly added baseline features (e.g. "lists" added to STARTER)
+        // are recognized even if the DB plan record hasn't been updated yet.
+        const configPlan = getSubscriptionPlan(team.assigned_plan.slug);
+        if (configPlan.features.includes("all")) return true;
+        if (configPlan.features.includes(featureName)) return true;
+
+        return false;
     }
 
     // 2. Fallback to constant

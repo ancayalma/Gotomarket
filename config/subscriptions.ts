@@ -13,7 +13,7 @@ export const SUBSCRIPTION_PLANS = {
             sms_per_month: 0, // SMS locked on Starter
             voice_minutes_per_month: 0, // Voice locked on Starter
             max_active_quests: 0, // Quests locked on Starter
-            ai_tokens: 5_000_000, // 5M AI tokens / month
+            ai_tokens: 1_000_000, // 1M AI tokens / month
             max_forms: 10, // Starter cap: 10 forms
         }
     },

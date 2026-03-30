@@ -5,6 +5,7 @@ import { LeadGenWizardSchema, startLeadGenJob } from "@/actions/leads/start-lead
 import { prismadb } from "@/lib/prisma";
 import { logActivityInternal } from "@/actions/audit";
 import { systemLogger } from "@/lib/logger";
+import { getTeamCreditsInfo } from "@/actions/crm/credits/index";
 
 /**
  * POST /api/crm/leads/autogen
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
     const user = await prismadb.users.findUnique({
       where: { id: session.user.id },
       select: {
+        team_id: true,
         is_admin: true,
         is_account_admin: true,
         assigned_role: { select: { name: true } },
@@ -39,6 +41,19 @@ export async function POST(req: Request) {
         { error: "Only admins can create lead pools" },
         { status: 403 }
       );
+    }
+    
+    // Server-side limits enforcement (cannot be bypassed)
+    if (user?.team_id) {
+        const limitsInfo = await getTeamCreditsInfo();
+        if (limitsInfo && !limitsInfo.isUnlimited) {
+            if (limitsInfo.remaining !== undefined && limitsInfo.remaining !== -1 && limitsInfo.remaining <= 0) {
+               return NextResponse.json({ error: "You have exhausted your LeadGen Target for this month." }, { status: 403 });
+            }
+            if (limitsInfo.aiTokensLimit !== undefined && limitsInfo.aiTokensLimit !== -1 && limitsInfo.aiTokensBalance !== undefined && limitsInfo.aiTokensBalance <= 0) {
+               return NextResponse.json({ error: "You do not have enough AI Tokens to run Lead Generation." }, { status: 403 });
+            }
+        }
     }
 
     const body = await req.json();
