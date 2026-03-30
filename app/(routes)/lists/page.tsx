@@ -7,7 +7,7 @@ import { UpgradeGate } from "@/components/UpgradeGate";
 
 const ListsPage = () => {
     return (
-        <UpgradeGate featureId="outreach" title="Lead Lists Locked" description="Lead list management and outreach features require a Growth plan or higher.">
+        <UpgradeGate featureId="lists" title="Lead Lists Locked" description="Lead list management requires a plan with Lists access.">
             <Container title="Lists" description="Manage your lead lists">
                 <LearnLink
                     tab="lists"

@@ -66,9 +66,9 @@ export default function AdminSidebar({ showModules = false, features = [] }: Adm
         { label: "Brand Identity", href: "/admin/brand", icon: Building2 },
         ...(hasFeature("sms") ? [{ label: "SMS Config", href: "/admin/sms-config", icon: MessageSquare }] : []),
         ...(hasFeature("ai_lab") ? [
-            { label: "AI Settings", href: "/admin/ai-settings", icon: Bot },
-            { label: "AI Usage", href: "/admin/ai-usage", icon: BarChart }
+            { label: "AI Settings", href: "/admin/ai-settings", icon: Bot }
         ] : []),
+        { label: "AI Usage", href: "/admin/ai-usage", icon: BarChart },
         { label: "Navigation", href: "/admin/navigation", icon: Layout },
         { label: "Integrations", href: "/admin/integrations", icon: Zap },
         { label: "Billing", href: "/admin/billing", icon: Receipt },

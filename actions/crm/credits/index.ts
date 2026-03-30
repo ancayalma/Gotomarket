@@ -5,13 +5,14 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { getTeamLeadGenCredits } from "@/lib/scraper/credits";
 import { getTeamAiTokenBalance } from "@/lib/ai-tokens";
-import { SUBSCRIPTION_PLANS, SubscriptionPlanType } from "@/config/subscriptions";
+import { SUBSCRIPTION_PLANS, SubscriptionPlanType, resolveSlug } from "@/config/subscriptions";
+import { resolveBillingTeamId } from "@/lib/team-billing";
 
 export async function getTeamCreditsInfo() {
     try {
         const session = await getServerSession(authOptions);
         const user = session?.user as any;
-        const teamId = user?.team_id;
+        let teamId = user?.team_id;
 
         if (!teamId) {
             return {
@@ -22,6 +23,8 @@ export async function getTeamCreditsInfo() {
                 aiTokensLimit: 0,
             };
         }
+
+        teamId = await resolveBillingTeamId(teamId);
 
         const team = await prismadb.team.findUnique({
             where: { id: teamId },
@@ -55,9 +58,18 @@ export async function getTeamCreditsInfo() {
         } else if (team.assigned_plan) {
             monthlyLimit = team.assigned_plan.leadgen_credits_monthly || 0;
             aiTokensLimit = (team.assigned_plan as any).ai_tokens_included || 0;
+            
+            // Fallback to config constants if DB limits are missing or 0
+            if (monthlyLimit === 0 || aiTokensLimit === 0) {
+                const configPlan = SUBSCRIPTION_PLANS[resolveSlug(team.assigned_plan.slug)];
+                if (configPlan?.limits) {
+                    if (monthlyLimit === 0) monthlyLimit = configPlan.limits.leadgen_credits || 100;
+                    if (aiTokensLimit === 0) aiTokensLimit = (configPlan.limits as any).ai_tokens || 0;
+                }
+            }
             if (monthlyLimit === -1 || aiTokensLimit === -1) isUnlimited = true;
         } else if (team.subscription_plan) {
-            const plan = SUBSCRIPTION_PLANS[team.subscription_plan as SubscriptionPlanType];
+            const plan = SUBSCRIPTION_PLANS[resolveSlug(team.subscription_plan)];
             monthlyLimit = plan?.limits?.leadgen_credits || 100;
             aiTokensLimit = (plan?.limits as any)?.ai_tokens || 0;
             if (monthlyLimit === -1 || aiTokensLimit === -1) isUnlimited = true;

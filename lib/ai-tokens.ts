@@ -1,6 +1,7 @@
 
 import { prismadb } from "@/lib/prisma";
-import { SUBSCRIPTION_PLANS, SubscriptionPlanType } from "@/config/subscriptions";
+import { resolveBillingTeamId } from "@/lib/team-billing";
+import { SUBSCRIPTION_PLANS, SubscriptionPlanType, resolveSlug } from "@/config/subscriptions";
 
 /**
  * AI Token Balance Service
@@ -19,6 +20,7 @@ import { SUBSCRIPTION_PLANS, SubscriptionPlanType } from "@/config/subscriptions
 // ---------------------------------------------------------------------------
 
 export async function getTeamAiTokenBalance(teamId: string): Promise<number> {
+    teamId = await resolveBillingTeamId(teamId);
     const config = await (prismadb as any).teamAiConfig.findUnique({
         where: { team_id: teamId },
         select: {
@@ -27,7 +29,9 @@ export async function getTeamAiTokenBalance(teamId: string): Promise<number> {
         },
     });
 
-    if (!config) return 0;
+    if (!config) {
+        return await resetAiTokenBalance(teamId);
+    }
 
     // -1 means unlimited — no reset needed
     if (config.ai_token_balance < 0) return -1;
@@ -48,6 +52,7 @@ export async function getTeamAiTokenBalance(teamId: string): Promise<number> {
 // ---------------------------------------------------------------------------
 
 export async function resetAiTokenBalance(teamId: string): Promise<number> {
+    teamId = await resolveBillingTeamId(teamId);
     // 1. Determine monthly allowance from plan
     const team = await prismadb.team.findUnique({
         where: { id: teamId },
@@ -59,6 +64,14 @@ export async function resetAiTokenBalance(teamId: string): Promise<number> {
     if (team?.assigned_plan) {
         // Use the Plan model's ai_tokens_included field
         monthlyAllowance = (team.assigned_plan as any).ai_tokens_included || 0;
+        // Fallback to config if DB record is 0 or missing
+        if (monthlyAllowance === 0) {
+            const planSlugKey = resolveSlug(team.assigned_plan.slug);
+            const plan = SUBSCRIPTION_PLANS[planSlugKey];
+            if (plan?.limits) {
+                monthlyAllowance = (plan.limits as any).ai_tokens || 0;
+            }
+        }
     } else if (team?.subscription_plan) {
         // Fallback to config constants
         const plan = SUBSCRIPTION_PLANS[team.subscription_plan as SubscriptionPlanType];
@@ -104,6 +117,8 @@ export async function resetAiTokenBalance(teamId: string): Promise<number> {
 // ---------------------------------------------------------------------------
 
 export async function consumeAiTokens(teamId: string, amount: number): Promise<number> {
+    if (amount <= 0) return 0;
+    teamId = await resolveBillingTeamId(teamId);
     const current = await getTeamAiTokenBalance(teamId);
 
     // -1 = unlimited (superadmin / enterprise) — log but don't decrement

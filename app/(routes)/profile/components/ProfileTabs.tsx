@@ -222,3 +222,7 @@ export function ProfileTabs({ data }: ProfileTabsProps) {
         </Container>
     );
 }
+/ /  
+ H M R  
+ t r i g g e r  
+ 
