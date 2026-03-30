@@ -39,7 +39,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { updateMemberRole, removeMember, searchUsers, addMember, changePassword, toggleUserStatus } from "@/actions/teams/member-actions";
+import { updateMemberRole, removeMember, searchUsers, addMember, changePassword, toggleUserStatus, setTeamOwner } from "@/actions/teams/member-actions";
 import { TeamChangeRoleModal, RoleOption } from "./TeamChangeRoleModal";
 
 // Define base roles available to all teams
@@ -166,6 +166,24 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
             }
         } catch (error) {
             toast.error("Failed to update password");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSetOwner = async (userId: string) => {
+        if (!confirm("Are you sure? This will transfer primary ownership to this user.")) return;
+        try {
+            setIsLoading(true);
+            const res = await setTeamOwner(teamId, userId);
+            if (res.error) {
+                toast.error(res.error);
+            } else {
+                toast.success("Team ownership updated successfully");
+                router.refresh();
+            }
+        } catch (error) {
+            toast.error("Failed to set team owner");
         } finally {
             setIsLoading(false);
         }
@@ -480,6 +498,13 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                                             {member.team_role !== "OWNER" && (
                                                 <DropdownMenuItem onClick={() => { setSelectedMember(member); setRoleModalOpen(true); }}>
                                                     <Shield className="w-4 h-4 mr-2" /> Change Role
+                                                </DropdownMenuItem>
+                                            )}
+
+                                            {/* Set as Team Owner */}
+                                            {(isGlobalAdmin || isSuperAdmin) && member.team_role !== "OWNER" && (
+                                                <DropdownMenuItem onClick={() => handleSetOwner(member.id)}>
+                                                    <Shield className="w-4 h-4 mr-2 text-amber-500" /> Set as Team Owner
                                                 </DropdownMenuItem>
                                             )}
 

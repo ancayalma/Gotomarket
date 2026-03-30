@@ -53,27 +53,58 @@ export async function PUT(
                 return NextResponse.json({ error: "Invalid department" }, { status: 400 });
             }
 
-            // Move user to the department team with chosen role
+            // Fetch the target user's current role before we blow it away
+            const targetUser = await prismadb.users.findUnique({
+                where: { id: userId },
+                select: { team_role: true, team_id: true }
+            });
+            const tRole = (targetUser?.team_role || "").toUpperCase();
+            const isTargetAdmin = ["ADMIN", "OWNER", "PLATFORM_ADMIN", "SUPER_ADMIN", "PLATFORM ADMIN", "SYSADM"].includes(tRole);
+
+            // Build update data
+            // Top-level admins retain their organization team_id & role, only gaining department_id affinity
+            const dataToUpdate: any = {
+                department_id: departmentId,
+            };
+
+            if (!isTargetAdmin) {
+                // For normal users, move them squarely into the department team
+                dataToUpdate.team_id = departmentId;
+                dataToUpdate.team_role = role;
+            } else {
+                systemLogger.info(`[USER_DEPT] Target ${userId} is top-level admin (${tRole}); preserving global team_id and role.`);
+            }
+
+            // Move user to the department team with chosen role (or just update department_id for admins)
             const updated = await prismadb.users.update({
                 where: { id: userId },
-                data: {
-                    team_id: departmentId,
-                    team_role: role,
-                    department_id: departmentId, // Also set metadata field for quick lookups
-                }
+                data: dataToUpdate
             });
 
             systemLogger.info(`[USER_DEPT] User ${userId} assigned to dept ${departmentId} with role ${role}`);
             return NextResponse.json({ team_id: updated.team_id, team_role: updated.team_role });
         } else {
             // Unassigning — move user back to the organization level
+            const targetUser = await prismadb.users.findUnique({
+                where: { id: userId },
+                select: { team_role: true }
+            });
+            const tRole = (targetUser?.team_role || "").toUpperCase();
+            const isTargetAdmin = ["ADMIN", "OWNER", "PLATFORM_ADMIN", "SUPER_ADMIN", "PLATFORM ADMIN", "SYSADM"].includes(tRole);
+            
+            const dataToUpdate: any = { department_id: null };
+            
+            if (!isTargetAdmin) {
+                // If they are a top-level admin, DO NOT downgrade their role to MEMBER.
+                dataToUpdate.team_id = organizationId;
+                dataToUpdate.team_role = "MEMBER";
+            } else {
+                systemLogger.info(`[USER_DEPT] Target ${userId} is top-level admin (${tRole}); preserving global team_id and role on unassign.`);
+            }
+
             const updated = await prismadb.users.update({
                 where: { id: userId },
-                data: {
-                    team_id: organizationId,
-                    team_role: "MEMBER",
-                    department_id: null,
-                }
+                data: dataToUpdate
             });
 
             systemLogger.info(`[USER_DEPT] User ${userId} moved back to org ${organizationId}`);

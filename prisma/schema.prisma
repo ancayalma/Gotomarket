@@ -103,6 +103,9 @@ model crm_Accounts {
 
   // Service Cloud
   entitlements crm_Entitlement[]
+
+  // Custom Fields (schemaless JSON — team-defined per custom_field_definitions)
+  custom_fields Json?
 }
 
 model crm_Leads {
@@ -1376,6 +1379,9 @@ model Team {
 
   // Department-level module whitelist (set by company admin, cascades to members)
   allowed_modules  String[]
+
+  // Custom Field definitions for CRM Accounts (JSON array of field specs)
+  custom_field_definitions Json?
 
   // Dynamic Schema Engine
   custom_objects CustomObjectDefinition[]

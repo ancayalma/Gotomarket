@@ -63,6 +63,8 @@ import { format, formatDistanceToNow } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
+import { InboxShell } from "./inbox/InboxShell";
+import { InboxComposeDialog, InboxDeleteDialog } from "./inbox/InboxComposeDialog";
 
 interface TeamMember {
     id: string;
@@ -157,6 +159,8 @@ export function InternalMessagesComponent({
     const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
     const [selectedMessageId, setSelectedMessageId] = React.useState<string | null>(null);
     const [selectedSubmissionId, setSelectedSubmissionId] = React.useState<string | null>(null);
+    const [selectedBatchIds, setSelectedBatchIds] = React.useState<string[]>([]);
+    const [isBulkProcessing, setIsBulkProcessing] = React.useState(false);
 
     // Handle URL params for deep linking
     React.useEffect(() => {
@@ -174,6 +178,12 @@ export function InternalMessagesComponent({
     const [composeOpen, setComposeOpen] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState("");
     const [activeNav, setActiveNav] = React.useState<"inbox" | "sent" | "drafts" | "archive" | "trash" | "submissions" | "notifications">("inbox");
+    
+    // Clear batch selection on nav change
+    React.useEffect(() => {
+        setSelectedBatchIds([]);
+    }, [activeNav]);
+
     const [isConvertingToLead, setIsConvertingToLead] = React.useState(false);
     const [isConvertingEmail, setIsConvertingEmail] = React.useState(false);
     const [isDeletingSubmission, setIsDeletingSubmission] = React.useState(false);
@@ -535,6 +545,104 @@ export function InternalMessagesComponent({
         }
     };
 
+    // Bulk Message Handlers
+    const toggleBatchSelection = React.useCallback((id: string) => {
+        setSelectedBatchIds(prev => 
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    }, []);
+
+    const handleBatchArchive = async () => {
+        if (selectedBatchIds.length === 0) return;
+        setIsBulkProcessing(true);
+        try {
+            const msgs = messages.filter(m => selectedBatchIds.includes(m.id));
+            const promises = msgs.map(msg => {
+                if (msg._apiMeta) {
+                    const threadIds = msg._thread ? msg._thread.map((m: any) => m.id) : [msg.id];
+                    return fetch("/api/crm/messages/thread", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ messageIds: threadIds }),
+                    });
+                }
+                return fetch(`/api/messages/${msg.id}`, {
+                    method: "PATCH",
+                    body: JSON.stringify({ action: "archive" }),
+                });
+            });
+
+            await Promise.all(promises);
+            toast.success(`${selectedBatchIds.length} conversations archived`);
+            setSelectedBatchIds([]);
+            router.refresh();
+        } catch (e) {
+            toast.error("Bulk archive failed");
+        } finally {
+            setIsBulkProcessing(false);
+        }
+    };
+
+    const handleBatchDelete = async () => {
+        if (selectedBatchIds.length === 0) return;
+        setIsBulkProcessing(true);
+        try {
+            const msgs = messages.filter(m => selectedBatchIds.includes(m.id));
+            const promises = msgs.map(msg => {
+                if (msg._apiMeta) {
+                    const threadIds = msg._thread ? msg._thread.map((m: any) => m.id) : [msg.id];
+                    return fetch("/api/crm/messages/thread", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ messageIds: threadIds }),
+                    });
+                }
+                return fetch(`/api/messages/${msg.id}`, {
+                    method: "PATCH",
+                    body: JSON.stringify({ action: "delete" }),
+                });
+            });
+
+            await Promise.all(promises);
+            toast.success(`${selectedBatchIds.length} conversations moved to trash`);
+            setSelectedBatchIds([]);
+            router.refresh();
+        } catch (e) {
+            toast.error("Bulk delete failed");
+        } finally {
+            setIsBulkProcessing(false);
+        }
+    };
+
+    const handleBatchMarkRead = async () => {
+        if (selectedBatchIds.length === 0) return;
+        setIsBulkProcessing(true);
+        try {
+            const msgs = messages.filter(m => selectedBatchIds.includes(m.id));
+            const promises = msgs.map(msg => {
+                if (!msg._apiMeta) {
+                    const { myRecipient } = getStatus(msg);
+                    if (myRecipient && !myRecipient.is_read) {
+                        return fetch(`/api/messages/${msg.id}`, {
+                            method: "PATCH",
+                            body: JSON.stringify({ is_read: true }),
+                        });
+                    }
+                }
+                return Promise.resolve();
+            });
+
+            await Promise.all(promises);
+            toast.success(`${selectedBatchIds.length} conversations marked as read`);
+            setSelectedBatchIds([]);
+            router.refresh();
+        } catch (e) {
+            toast.error("Bulk mark read failed");
+        } finally {
+            setIsBulkProcessing(false);
+        }
+    };
+
     // Delete an entire API message thread
     const handleDeleteApiThread = async (msg: Message) => {
         try {
@@ -775,1225 +883,134 @@ export function InternalMessagesComponent({
         { id: "archive" as const, title: "Archive", icon: Archive, count: totalArchiveCount },
         { id: "trash" as const, title: "Trash", icon: Trash2, count: totalTrashCount },
     ];
-
-    const isDesktop = useMediaQuery("(min-width: 768px)");
-
-    if (!isDesktop) {
-        return (
-            <div className="flex flex-col h-[calc(100vh-150px)]">
-                {selectedMessageId || selectedSubmissionId ? (
-                    // Detail View (Mobile)
-                    <div className="flex flex-col h-full bg-background">
-                        <div className="flex items-center gap-2 p-2 border-b">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    setSelectedMessageId(null);
-                                    setSelectedSubmissionId(null);
-                                }}
-                            >
-                                ← Back
-                            </Button>
-                        </div>
-                        <div className="flex-1 overflow-auto">
-                            {selectedSubmissionId ? (
-                                // Mobile Submission Detail
-                                selectedSubmission ? (
-                                    <div className="p-4">
-                                        <h3 className="font-semibold text-lg">{selectedSubmission.form.name}</h3>
-                                        {/* ... (Reuse submission detail Logic or Components) ... */}
-                                        {/* Ideally extract Detail View to sub-component, but inline for now to save steps */}
-                                        <div className="mt-4 space-y-3">
-                                            {Object.entries(selectedSubmission.data || {}).map(([key, value]) => (
-                                                <div key={key} className="border rounded p-2">
-                                                    <div className="text-xs font-bold uppercase">{key}</div>
-                                                    <div>{String(value)}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ) : null
-                            ) : selectedMessage ? (
-                                // Mobile Message Detail
-                                <div className="p-4">
-                                    <h3 className="font-semibold text-lg">{selectedMessage.subject}</h3>
-                                    <div className="text-sm text-muted-foreground my-2">
-                                        From: {selectedMessage.from_user?.name}
-                                    </div>
-                                    <Separator className="my-2" />
-                                    <div className="whitespace-pre-wrap">{selectedMessage.body}</div>
-                                </div>
-                            ) : null}
-                        </div>
-                    </div>
-                ) : (
-                    // List View (Mobile)
-                    <div className="flex flex-col h-full">
-                        <div className="flex items-center justify-between p-2 border-b gap-2">
-                            <Select value={activeNav} onValueChange={(val: any) => setActiveNav(val)}>
-                                <SelectTrigger className="w-[140px]">
-                                    <SelectValue placeholder="Select Folder" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="inbox">Inbox ({inboxCount})</SelectItem>
-                                    <SelectItem value="sent">Sent</SelectItem>
-                                    <SelectItem value="drafts">Drafts</SelectItem>
-                                    <SelectItem value="submissions">Submissions</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" asChild>
-                                    <Link href="/messages/forms">
-                                        <FileText className="h-5 w-5" />
-                                    </Link>
-                                </Button>
-                                <Button size="sm" onClick={() => setComposeOpen(true)} className="gap-1">
-                                    <PenBox className="h-4 w-4" />
-                                    <span className="sr-only sm:not-sr-only">Compose</span>
-                                </Button>
-                            </div>
-                        </div>
-                        <ScrollArea className="flex-1">
-                            {/* Mobile Message List Items */}
-                            {/* Reuse the mapping logic from desktop but simplified */}
-                            {activeNav === "submissions" ? (
-                                formSubmissions.map(sub => (
-                                    <div key={sub.id} onClick={() => setSelectedSubmissionId(sub.id)} className="p-3 border-b active:bg-muted">
-                                        <div className="font-medium">{sub.form.name}</div>
-                                        <div className="text-sm text-muted-foreground">{formatMessageDate(sub.createdAt)}</div>
-                                    </div>
-                                ))
-                            ) : (
-                                filteredMessages.map(msg => (
-                                    <div key={msg.id} onClick={() => setSelectedMessageId(msg.id)} className="p-3 border-b active:bg-muted">
-                                        <div className="font-semibold">{msg.from_user?.name}</div>
-                                        <div className="text-sm">{msg.subject}</div>
-                                        <div className="text-xs text-muted-foreground">{formatMessageDate(msg.createdAt)}</div>
-                                    </div>
-                                ))
-                            )}
-                            {activeNav === "archive" && archivedSubmissions.length > 0 && (
-                                <div className="border-t">
-                                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground bg-muted/50">Form Submissions</div>
-                                    {archivedSubmissions.map((sub) => (
-                                        <div key={sub.id} onClick={() => setSelectedSubmissionId(sub.id)} className="p-3 border-b active:bg-muted hover:bg-muted/50 cursor-pointer">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Badge variant="outline" className="text-[10px] h-5 px-1">Form</Badge>
-                                                <span className="font-medium text-sm">{sub.form.name}</span>
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">{formatMessageDate(sub.createdAt)}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </ScrollArea>
-                    </div>
-                )}
-                {/* Compose Dialog (Shared) */}
-                <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
-                    <DialogContent className="sm:max-w-[600px]">
-                        <DialogHeader>
-                            <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">New Message</DialogTitle>
-                            <DialogDescription>
-                                Send a message to a team member
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="to">To</Label>
-                                <Select value={composeToUserId} onValueChange={setComposeToUserId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select team member" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {teamMembers
-                                            .filter(m => m.id !== currentUserId)
-                                            .map((member) => (
-                                                <SelectItem key={member.id} value={member.id}>
-                                                    {member.name || member.email || "Unknown"}
-                                                </SelectItem>
-                                            ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="subject">Subject</Label>
-                                <Input
-                                    id="subject"
-                                    placeholder="Message subject"
-                                    value={composeSubject}
-                                    onChange={(e) => setComposeSubject(e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="body">Message</Label>
-                                <Textarea
-                                    id="body"
-                                    placeholder="Write your message..."
-                                    rows={8}
-                                    value={composeBody}
-                                    onChange={(e) => setComposeBody(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setComposeOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleSendMessage} disabled={isSending}>
-                                {isSending ? "Sending..." : "Send Message"}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            </div>
-        );
-    }
-
-    // Desktop Return
     return (
-        <TooltipProvider delayDuration={0}>
-            <ResizablePanelGroup
-                direction="horizontal"
-                onLayout={(sizes: number[]) => {
-                    document.cookie = `react-resizable-panels:layout=${JSON.stringify(sizes)}`;
+        <>
+            <InboxShell
+                filteredMessages={filteredMessages}
+                activeSubmissions={activeSubmissions}
+                activeNotifications={activeNotifications}
+                archivedSubmissions={archivedSubmissions}
+                trashedSubmissions={trashedSubmissions}
+                formSubmissions={formSubmissions}
+                notifications={notifications}
+                currentUserId={currentUserId}
+                currentUserName={currentUserName}
+                currentUserEmail={currentUserEmail}
+                defaultLayout={defaultLayout}
+                defaultCollapsed={defaultCollapsed}
+                activeNav={activeNav}
+                onNavChange={setActiveNav}
+                selectedMessageId={selectedMessageId}
+                selectedSubmissionId={selectedSubmissionId}
+                selectedNotificationId={selectedNotificationId}
+                selectedMessage={selectedMessage}
+                selectedSubmission={selectedSubmission}
+                selectedNotification={selectedNotification}
+                searchQuery={searchQuery}
+                filterReadStatus={filterReadStatus}
+                onSearchChange={setSearchQuery}
+                onFilterChange={setFilterReadStatus}
+                onSelectMessage={setSelectedMessageId}
+                onSelectSubmission={setSelectedSubmissionId}
+                onSelectNotification={(id) => {
+                    setSelectedNotificationId(id);
                 }}
-                className="h-[calc(100vh-250px)] min-h-[500px] items-stretch rounded-lg border"
-            >
-                {/* Left Sidebar - Navigation */}
-                <ResizablePanel
-                    defaultSize={defaultLayout[0]}
-                    collapsedSize={4}
-                    collapsible={true}
-                    minSize={15}
-                    maxSize={25}
-                    onCollapse={() => {
-                        setIsCollapsed(true);
-                        document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(true)}`;
-                    }}
-                    onExpand={() => {
-                        setIsCollapsed(false);
-                        document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(false)}`;
-                    }}
-                    className={cn(isCollapsed && "min-w-[50px] transition-colors duration-300 ease-in-out")}
-                >
-                    <div className="flex flex-col h-full">
-                        {/* Account Display */}
-                        <div className="p-4 border-b">
-                            {isCollapsed ? (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Avatar className="h-8 w-8 mx-auto">
-                                            <AvatarFallback>{getInitials(currentUserName)}</AvatarFallback>
-                                        </Avatar>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right">
-                                        {currentUserName}
-                                    </TooltipContent>
-                                </Tooltip>
-                            ) : (
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-10 w-10">
-                                        <AvatarFallback>{getInitials(currentUserName)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium truncate">{currentUserName}</p>
-                                        <p className="text-xs text-muted-foreground truncate">{currentUserEmail}</p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                onClearSelection={() => {
+                    setSelectedMessageId(null);
+                    setSelectedSubmissionId(null);
+                    setSelectedNotificationId(null);
+                    setApiReplyOpen(false);
+                }}
+                onArchiveMessage={handleArchiveMessage}
+                onDeleteMessage={handleDeleteMessage}
+                onRestoreMessage={handleRestoreMessage}
+                onPermanentDeleteMessage={(id) => {
+                    setMessageToDelete(id);
+                    setShowDeleteConfirm(true);
+                }}
+                onMessageRead={handleMessageRead}
+                onEditDraft={handleEditDraft}
+                onReply={() => {
+                    if (!selectedMessage) return;
+                    setComposeToUserId(selectedMessage.from_user_id === currentUserId ? selectedMessage.to_user_id : selectedMessage.from_user_id);
+                    setComposeSubject(`Re: ${selectedMessage.subject || ""}`.trim());
+                    setComposeBody(`\n\n--- Original Message ---\n${selectedMessage.body}`);
+                    setComposeOpen(true);
+                }}
+                onConvertMessage={handleConvertMessage}
+                isConvertingEmail={isConvertingEmail}
+                onConvertToLead={handleConvertToLead}
+                onArchiveSubmission={handleArchiveSubmission}
+                onDeleteSubmission={handleDeleteSubmission}
+                onRestoreSubmission={handleRestoreSubmission}
+                onPermanentDeleteSubmission={(id) => {
+                    setSubmissionToDelete(id);
+                    setShowDeleteConfirm(true);
+                }}
+                onSubmissionViewed={handleSubmissionViewed}
+                isConvertingToLead={isConvertingToLead}
+                isDeletingSubmission={isDeletingSubmission}
+                onClearNotification={handleClearNotification}
+                onMarkNotificationRead={handleMarkNotificationRead}
+                onCompose={() => {
+                    setComposeToUserId("");
+                    setComposeSubject("");
+                    setComposeBody("");
+                    setComposeOpen(true);
+                }}
+                apiReplyOpen={apiReplyOpen}
+                apiReplyBody={apiReplyBody}
+                apiReplySending={apiReplySending}
+                apiReplyChannel={apiReplyChannel}
+                onApiReplyOpenChange={setApiReplyOpen}
+                onApiReplyBodyChange={setApiReplyBody}
+                onApiReplyChannelChange={setApiReplyChannel}
+                onApiReplySend={handleApiReply}
+                selectedBatchIds={selectedBatchIds}
+                onToggleBatchSelection={toggleBatchSelection}
+                onClearBatchSelection={() => setSelectedBatchIds([])}
+                onBatchArchive={handleBatchArchive}
+                onBatchDelete={handleBatchDelete}
+                onBatchMarkRead={handleBatchMarkRead}
+                isBulkProcessing={isBulkProcessing}
+                isCollapsed={isCollapsed}
+                onCollapsedChange={setIsCollapsed}
+                getIsTrash={(m) => !!getStatus(m).isTrash}
+                getIsApiMessage={isApiMessage}
+                navItems={navItems}
+            />
 
-                        {/* Compose Button */}
-                        <div className="p-2">
-                            {isCollapsed ? (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            size="icon"
-                                            className="w-full"
-                                            onClick={() => setComposeOpen(true)}
-                                        >
-                                            <PenBox className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right">Compose</TooltipContent>
-                                </Tooltip>
-                            ) : (
-                                <Button
-                                    className="w-full gap-2"
-                                    onClick={() => setComposeOpen(true)}
-                                >
-                                    <PenBox className="h-4 w-4" />
-                                    Compose
-                                </Button>
-                            )}
-                        </div>
+            <InboxComposeDialog
+                open={composeOpen}
+                onOpenChange={setComposeOpen}
+                teamMembers={teamMembers}
+                currentUserId={currentUserId}
+                composeToUserId={composeToUserId}
+                composeSubject={composeSubject}
+                composeBody={composeBody}
+                isSending={isSending}
+                onToUserChange={setComposeToUserId}
+                onSubjectChange={setComposeSubject}
+                onBodyChange={setComposeBody}
+                onSend={handleSendMessage}
+                onSaveDraft={handleSaveDraft}
+            />
 
-                        <Separator />
-
-                        {/* Navigation Items */}
-                        <nav className="flex-1 p-2 space-y-1">
-                            {navItems.map((item) => (
-                                <Tooltip key={item.id}>
-                                    <TooltipTrigger asChild>
-                                        <button
-                                            onClick={() => setActiveNav(item.id)}
-                                            className={cn(
-                                                "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                                                activeNav === item.id
-                                                    ? "bg-primary text-primary-foreground"
-                                                    : "hover:bg-muted"
-                                            )}
-                                        >
-                                            <item.icon className="h-4 w-4 flex-shrink-0" />
-                                            {!isCollapsed && (
-                                                <>
-                                                    <span className="flex-1 text-left">{item.title}</span>
-                                                    {item.count > 0 && (
-                                                        <Badge variant="secondary" className="ml-auto">
-                                                            {item.count}
-                                                        </Badge>
-                                                    )}
-                                                </>
-                                            )}
-                                        </button>
-                                    </TooltipTrigger>
-                                    {isCollapsed && (
-                                        <TooltipContent side="right">
-                                            {item.title} {item.count > 0 && `(${item.count})`}
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            ))}
-                        </nav>
-
-
-                    </div>
-                </ResizablePanel>
-
-                <ResizableHandle withHandle />
-
-                {/* Middle - Message List */}
-                <ResizablePanel defaultSize={defaultLayout[1]} minSize={25}>
-                    <div className="flex flex-col h-full">
-                        <div className="flex items-center px-4 py-3 border-b">
-                            <h2 className="text-lg font-semibold capitalize">{activeNav}</h2>
-                            <div className="ml-auto flex items-center gap-2">
-                                <Tabs defaultValue="all" value={filterReadStatus} onValueChange={setFilterReadStatus} className="w-auto">
-                                    <TabsList className="h-8">
-                                        <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-                                        <TabsTrigger value="unread" className="text-xs">Unread</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
-                            </div>
-                        </div>
-                        <div className="p-3 border-b">
-                            <div className="relative">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search messages..."
-                                    className="pl-8 h-9"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <ScrollArea className="flex-1">
-                            {activeNav === "submissions" ? (
-                                /* Form Submissions List */
-                                activeSubmissions.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full py-10 text-center">
-                                        <FormInput className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                                        <p className="text-muted-foreground">No form submissions</p>
-                                        <p className="text-sm text-muted-foreground/70">
-                                            Form submissions will appear here
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="divide-y">
-                                        {activeSubmissions.map((submission) => {
-                                            const email = submission.data?.email || submission.data?.Email || "";
-                                            const name = submission.data?.name || submission.data?.full_name ||
-                                                `${submission.data?.first_name || ""} ${submission.data?.last_name || ""}`.trim() ||
-                                                submission.data?.firstName || email.split("@")[0] || "Anonymous";
-                                            return (
-                                                <button
-                                                    key={submission.id}
-                                                    onClick={() => {
-                                                        setSelectedSubmissionId(submission.id);
-                                                        setSelectedMessageId(null);
-                                                        handleSubmissionViewed(submission.id, submission.status);
-                                                    }}
-                                                    className={cn(
-                                                        "w-full flex items-start gap-3 p-4 text-left hover:bg-muted/50 transition-colors",
-                                                        selectedSubmissionId === submission.id && "bg-muted",
-                                                        submission.status === "NEW" && "bg-muted/30"
-                                                    )}
-                                                >
-                                                    {submission.status === "NEW" && (
-                                                        <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                                                    )}
-                                                    <div className="h-9 w-9 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                                                        <FormInput className="h-4 w-4 text-primary" />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className={cn(
-                                                                "text-sm truncate",
-                                                                submission.status === "NEW" && "font-semibold"
-                                                            )}>
-                                                                {name}
-                                                            </span>
-                                                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                                                Form
-                                                            </Badge>
-                                                            {submission.converted_lead_id && (
-                                                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                                                    Lead Created
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                        <p className={cn(
-                                                            "text-sm truncate",
-                                                            submission.status === "NEW" ? "font-medium" : "text-muted-foreground"
-                                                        )}>
-                                                            {submission.form.name}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                                            {email || submission.source_url || "No email provided"}
-                                                        </p>
-                                                    </div>
-                                                    <span className="text-xs text-muted-foreground flex-shrink-0">
-                                                        {formatMessageDate(submission.createdAt)}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                )
-                            ) : activeNav === "notifications" ? (
-                                /* Notifications List */
-                                activeNotifications.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full py-10 text-center">
-                                        <Bell className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                                        <p className="text-muted-foreground">No active notifications</p>
-                                    </div>
-                                ) : (
-                                    <div className="divide-y">
-                                        {activeNotifications.map((notification) => (
-                                            <button
-                                                key={notification.id}
-                                                onClick={() => {
-                                                    setSelectedNotificationId(notification.id);
-                                                    setSelectedMessageId(null);
-                                                    setSelectedSubmissionId(null);
-                                                    handleMarkNotificationRead(notification);
-                                                }}
-                                                className={cn(
-                                                    "w-full flex items-start gap-3 p-4 text-left hover:bg-muted/50 transition-colors",
-                                                    selectedNotificationId === notification.id && "bg-muted",
-                                                    !notification.isRead && "bg-primary/5"
-                                                )}
-                                            >
-                                                {!notification.isRead && (
-                                                    <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                                                )}
-                                                <div className="h-9 w-9 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                                                    <Bell className="h-4 w-4 text-primary" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={cn("text-sm truncate", !notification.isRead && "font-semibold")}>
-                                                            {notification.title}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                                        {notification.message}
-                                                    </p>
-                                                </div>
-                                                <span className="text-xs text-muted-foreground flex-shrink-0">
-                                                    {formatMessageDate(notification.createdAt)}
-                                                </span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )
-                            ) : activeNav === "trash" ? (
-                                /* Trash - Deleted Messages AND Submissions */
-                                (trashedSubmissions.length === 0 && filteredMessages.length === 0) ? (
-                                    <div className="flex flex-col items-center justify-center h-full py-10 text-center">
-                                        <Trash2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                                        <p className="text-muted-foreground">Trash is empty</p>
-                                        <p className="text-sm text-muted-foreground/70">
-                                            Deleted messages and submissions will appear here
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="divide-y">
-                                        {/* Render Trashed Messages */}
-                                        {filteredMessages.map((message) => {
-                                            const isFromMe = message.from_user_id === currentUserId;
-                                            const otherUser = isFromMe ? message.to_user : message.from_user;
-                                            return (
-                                                <button
-                                                    key={message.id}
-                                                    onClick={() => {
-                                                        setSelectedMessageId(message.id);
-                                                        setSelectedSubmissionId(null);
-                                                    }}
-                                                    className={cn(
-                                                        "w-full flex items-start gap-3 p-4 text-left hover:bg-muted/50 transition-colors border-b",
-                                                        selectedMessageId === message.id && "bg-muted",
-                                                        "opacity-75"
-                                                    )}
-                                                >
-                                                    <div className="h-4 w-4 mt-1.5 flex-shrink-0">
-                                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-sm truncate font-medium">
-                                                                {isFromMe ? `To: ${otherUser?.name || otherUser?.email || "Unknown"}` : (otherUser?.name || otherUser?.email || "Unknown")}
-                                                            </span>
-                                                            <Badge variant="secondary" className="text-[10px] px-1.5 h-4 font-normal">
-                                                                Internal Message
-                                                            </Badge>
-                                                        </div>
-                                                        <p className="text-sm truncate text-muted-foreground mt-0.5">
-                                                            {message.subject || "(No Subject)"}
-                                                        </p>
-                                                    </div>
-                                                    <span className="text-xs text-muted-foreground flex-shrink-0">
-                                                        {formatMessageDate(message.createdAt)}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-
-                                        {/* Render Trashed Submissions */}
-                                        {trashedSubmissions.map((submission) => {
-                                            const email = submission.data?.email || submission.data?.Email || "";
-                                            const name = submission.data?.name || submission.data?.full_name ||
-                                                `${submission.data?.first_name || ""} ${submission.data?.last_name || ""}`.trim() ||
-                                                submission.data?.firstName || email.split("@")[0] || "Anonymous";
-                                            return (
-                                                <button
-                                                    key={submission.id}
-                                                    onClick={() => {
-                                                        setSelectedSubmissionId(submission.id);
-                                                        setSelectedMessageId(null);
-                                                    }}
-                                                    className={cn(
-                                                        "w-full flex items-start gap-3 p-4 text-left hover:bg-muted/50 transition-colors border-b",
-                                                        selectedSubmissionId === submission.id && "bg-muted",
-                                                        "opacity-80"
-                                                    )}
-                                                >
-                                                    <div className="h-4 w-4 mt-1.5 flex-shrink-0">
-                                                        <FormInput className="h-4 w-4 text-muted-foreground" />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-sm truncate font-medium">
-                                                                {name}
-                                                            </span>
-                                                            <Badge variant="secondary" className="text-[10px] px-1.5 h-4">
-                                                                Form Submission
-                                                            </Badge>
-                                                        </div>
-                                                        <p className="text-sm truncate text-muted-foreground">
-                                                            {submission.form.name}
-                                                        </p>
-                                                    </div>
-                                                    <span className="text-xs text-muted-foreground flex-shrink-0">
-                                                        {formatMessageDate(submission.createdAt)}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                )
-                            ) : (filteredMessages.length === 0 && (activeNav !== "archive" || archivedSubmissions.length === 0)) ? (
-                                <div className="flex flex-col items-center justify-center h-full py-10 text-center">
-                                    <Inbox className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                                    <p className="text-muted-foreground">No messages</p>
-                                    <p className="text-sm text-muted-foreground/70">
-                                        {activeNav === "inbox"
-                                            ? "Your inbox is empty"
-                                            : `No messages in ${activeNav}`}
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="divide-y">
-                                    {activeNav === "archive" && archivedSubmissions.length > 0 && (
-                                        <>
-                                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground bg-muted/50">Form Submissions</div>
-                                            {archivedSubmissions.map((sub) => (
-                                                <button key={sub.id} onClick={() => setSelectedSubmissionId(sub.id)} className="w-full flex items-start gap-3 p-4 text-left hover:bg-muted/50 transition-colors border-b">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <Badge variant="outline" className="text-[10px] h-5 px-1">Form</Badge>
-                                                            <span className="font-medium text-sm">{sub.form.name}</span>
-                                                        </div>
-                                                        <div className="text-xs text-muted-foreground">{formatMessageDate(sub.createdAt)}</div>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground bg-muted/50">Messages</div>
-                                        </>
-                                    )}
-                                    {filteredMessages.map((message) => {
-                                        const isFromMe = message.from_user_id === currentUserId;
-                                        const otherUser = isFromMe ? message.to_user : message.from_user;
-                                        return (
-                                            <button
-                                                key={message.id}
-                                                onClick={() => {
-                                                    if (activeNav === "drafts") {
-                                                        handleEditDraft(message);
-                                                    } else {
-                                                        setSelectedMessageId(message.id);
-                                                        setSelectedSubmissionId(null);
-                                                        handleMessageRead(message);
-                                                    }
-                                                }}
-                                                className={cn(
-                                                    "w-full flex items-start gap-3 p-4 text-left hover:bg-muted/50 transition-colors",
-                                                    selectedMessageId === message.id && "bg-muted",
-                                                    !message.is_read && activeNav === "inbox" && "bg-muted/30"
-                                                )}
-                                            >
-                                                {!message.is_read && activeNav === "inbox" && (
-                                                    <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                                                )}
-                                                <Avatar className="h-9 w-9 flex-shrink-0">
-                                                    <AvatarFallback className="text-xs">
-                                                        {getInitials(otherUser?.name)}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={cn(
-                                                            "text-sm truncate",
-                                                            !message.is_read && activeNav === "inbox" && "font-semibold"
-                                                        )}>
-                                                            {isFromMe ? `To: ${otherUser?.name || otherUser?.email || "Unknown"}` : otherUser?.name || otherUser?.email || "Unknown"}
-                                                        </span>
-                                                        {message.is_important && (
-                                                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 flex-shrink-0" />
-                                                        )}
-                                                    </div>
-                                                    <p className={cn(
-                                                        "text-sm truncate",
-                                                        !message.is_read && activeNav === "inbox" ? "font-medium" : "text-muted-foreground"
-                                                    )}>
-                                                        {message.subject || "(No Subject)"}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                                        {(message.body || "").slice(0, 100)}
-                                                    </p>
-                                                    <p className="text-[10px] text-muted-foreground/60 mt-1">
-                                                        {formatMessageDate(message.createdAt)} · {format(new Date(message.createdAt), "h:mm a")}
-                                                    </p>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </ScrollArea>
-                    </div>
-                </ResizablePanel>
-
-                <ResizableHandle withHandle />
-
-                {/* Right - Message/Submission/Notification Display */}
-                <ResizablePanel defaultSize={defaultLayout[2]}>
-                    <div className="flex flex-col h-full">
-                        {selectedNotification ? (
-                            /* Notification Display */
-                            <>
-                                <div className="flex items-center gap-2 p-4 border-b">
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold">{selectedNotification.title}</h3>
-                                    </div>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="gap-2 hover:bg-emerald-500/10 hover:text-emerald-500 border-white/10"
-                                        onClick={() => handleClearNotification(selectedNotification.id)}
-                                    >
-                                        <Check className="h-4 w-4" />
-                                        Clear as Done
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 ml-2" onClick={() => setSelectedNotificationId(null)}>
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                <div className="p-8 flex flex-col items-center justify-center text-center space-y-4">
-                                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <Bell className="h-8 w-8 text-primary" />
-                                    </div>
-                                    <div className="max-w-md">
-                                        <h2 className="text-xl font-bold mb-2">{selectedNotification.title}</h2>
-                                        <p className="text-muted-foreground leading-relaxed">
-                                            {selectedNotification.message}
-                                        </p>
-                                        <div className="mt-6 text-xs text-muted-foreground">
-                                            Received {format(new Date(selectedNotification.createdAt), "PPpp")}
-                                        </div>
-                                        {selectedNotification.link && (
-                                            <Button className="mt-8" asChild>
-                                                <Link href={selectedNotification.link}>
-                                                    View Details
-                                                </Link>
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                            </>
-                        ) : selectedSubmission ? (
-                            /* Form Submission Display */
-                            <>
-                                <div className="flex items-center gap-2 p-4 border-b">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="font-semibold">{selectedSubmission.form.name}</h3>
-                                            <Badge variant="secondary">
-                                                Form Submission
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                    {!selectedSubmission.converted_lead_id && !selectedSubmission.lead_id && (
-                                        selectedSubmission.form?.project_id ? (
-                                            <Button
-                                                size="sm"
-                                                onClick={() => handleConvertToLead(selectedSubmission.id)}
-                                                disabled={isConvertingToLead}
-                                                className="gap-2"
-                                            >
-                                                <UserPlus className="h-4 w-4" />
-                                                {isConvertingToLead ? "Creating..." : "Create Lead"}
-                                            </Button>
-                                        ) : (
-                                            <Badge variant="secondary" className="text-orange-600 bg-orange-100 dark:bg-orange-900/30">
-                                                ⚠️ No project assigned to form
-                                            </Badge>
-                                        )
-                                    )}
-                                    {(selectedSubmission.converted_lead_id || selectedSubmission.lead_id) && (
-                                        <Badge variant="outline" className="text-green-600">
-                                            ✓ Lead Created
-                                        </Badge>
-                                    )}
-                                    {/* Delete/Restore buttons based on status */}
-                                    {selectedSubmission.is_deleted ? (
-                                        <div className="flex items-center gap-2">
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleRestoreSubmission(selectedSubmission.id)}
-                                                        disabled={isDeletingSubmission}
-                                                        className="gap-2"
-                                                    >
-                                                        <Undo2 className="h-4 w-4" />
-                                                        Restore
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>Restore to inbox</TooltipContent>
-                                            </Tooltip>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            setSubmissionToDelete(selectedSubmission.id);
-                                                            setShowDeleteConfirm(true);
-                                                        }}
-                                                        disabled={isDeletingSubmission}
-                                                        className="gap-2"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                        Delete Forever
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>Permanently delete</TooltipContent>
-                                            </Tooltip>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-1">
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8"
-                                                        onClick={() => handleArchiveSubmission(selectedSubmission.id)}
-                                                        disabled={isDeletingSubmission}
-                                                    >
-                                                        <Archive className="h-4 w-4" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>Archive</TooltipContent>
-                                            </Tooltip>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8"
-                                                        onClick={() => handleDeleteSubmission(selectedSubmission.id)}
-                                                        disabled={isDeletingSubmission}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>Move to Trash</TooltipContent>
-                                            </Tooltip>
-                                        </div>
-                                    )}
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 ml-2" onClick={() => setSelectedSubmissionId(null)}>
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                <div className="p-4 border-b bg-muted/30">
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                            <FormInput className="h-5 w-5 text-primary" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-medium">
-                                                    {selectedSubmission.data?.name || selectedSubmission.data?.full_name ||
-                                                        `${selectedSubmission.data?.first_name || ""} ${selectedSubmission.data?.last_name || ""}`.trim() ||
-                                                        selectedSubmission.data?.email?.split("@")[0] || "Anonymous Visitor"}
-                                                </span>
-                                            </div>
-                                            {selectedSubmission.data?.email && (
-                                                <div className="text-sm text-muted-foreground">
-                                                    {selectedSubmission.data.email}
-                                                </div>
-                                            )}
-                                            <div className="text-xs text-muted-foreground mt-1">
-                                                Submitted {format(new Date(selectedSubmission.createdAt), "PPpp")}
-                                                {selectedSubmission.source_url && (
-                                                    <span className="ml-2">• from {new URL(selectedSubmission.source_url).hostname}</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <ScrollArea className="flex-1 p-4">
-                                    <div className="space-y-4">
-                                        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                                            Submitted Data
-                                        </h4>
-                                        <div className="space-y-3">
-                                            {Object.entries(selectedSubmission.data || {}).map(([key, value]) => (
-                                                <div key={key} className="border rounded-lg p-3">
-                                                    <div className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                                        {key.replace(/_/g, " ")}
-                                                    </div>
-                                                    <div className="text-sm whitespace-pre-wrap">
-                                                        {typeof value === "boolean" ? (value ? "Yes" : "No") : String(value || "-")}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {selectedSubmission.source_url && (
-                                            <div className="mt-6 pt-4 border-t">
-                                                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
-                                                    Submission Info
-                                                </h4>
-                                                <div className="text-sm space-y-1">
-                                                    <div><span className="text-muted-foreground">Source:</span> {selectedSubmission.source_url}</div>
-                                                    {selectedSubmission.ip_address && (
-                                                        <div><span className="text-muted-foreground">IP:</span> {selectedSubmission.ip_address}</div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </ScrollArea>
-                            </>
-                        ) : selectedMessage ? (
-                            <>
-                                <div className="flex items-center gap-2 p-4 border-b">
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="font-semibold">{selectedMessage.subject || "(No Subject)"}</h3>
-                                            
-                                        </div>
-                                    </div>
-                                    
-                                    {isApiMessage(selectedMessage) && selectedMessage._apiMeta?.channel === "EMAIL" && !selectedMessage._apiMeta?.contactId && !selectedMessage._apiMeta?.leadId && (
-                                        <div className="flex items-center gap-2 mr-2 border-r bg-muted/20 pr-4">
-                                            <Button size="sm" variant="outline" onClick={() => handleConvertMessage("contact")} disabled={isConvertingEmail} className="h-8 text-xs gap-1"><Users2 className="w-3.5 h-3.5"/> Create Contact</Button>
-                                            <Button size="sm" variant="outline" onClick={() => handleConvertMessage("lead")} disabled={isConvertingEmail} className="h-8 text-xs gap-1"><UserPlus className="w-3.5 h-3.5"/> Create Lead</Button>
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center gap-1">
-                                        {getStatus(selectedMessage).isTrash ? (
-                                            <>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleRestoreMessage(selectedMessage.id)}
-                                                    className="gap-2 mr-2"
-                                                >
-                                                    <Undo2 className="h-4 w-4" />
-                                                    Restore
-                                                </Button>
-                                                <Button
-                                                    variant="destructive"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setMessageToDelete(selectedMessage.id);
-                                                        setShowDeleteConfirm(true);
-                                                    }}
-                                                    className="gap-2"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                    Delete Forever
-                                                </Button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
-                                                            if (isApiMessage(selectedMessage)) {
-                                                                setApiReplyOpen(true);
-                                                                setApiReplyChannel(selectedMessage?._apiMeta?.channel === "EMAIL" ? "EMAIL" : "NOTE");
-                                                            } else {
-                                                                // Existing internal message reply: open compose with pre-filled recipient
-                                                                setComposeToUserId(selectedMessage!.from_user_id === currentUserId ? selectedMessage!.to_user_id : selectedMessage!.from_user_id);
-                                                                setComposeSubject(`Re: ${selectedMessage!.subject || ""}`);
-                                                                setComposeBody("");
-                                                                setComposeOpen(true);
-                                                            }
-                                                        }}>
-                                                            <Reply className="h-4 w-4" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>Reply</TooltipContent>
-                                                </Tooltip>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                            <Forward className="h-4 w-4" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>Forward</TooltipContent>
-                                                </Tooltip>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleArchiveMessage(selectedMessage.id)}>
-                                                            <Archive className="h-4 w-4" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>Archive</TooltipContent>
-                                                </Tooltip>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteMessage(selectedMessage.id)}>
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>Delete</TooltipContent>
-                                                </Tooltip>
-                                            </>
-                                        )}
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 ml-2" onClick={() => setSelectedMessageId(null)}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                                <div className="p-4 border-b">
-                                    <div className="flex items-start gap-3">
-                                        <Avatar className="h-10 w-10">
-                                            <AvatarFallback>
-                                                {getInitials(selectedMessage.from_user?.name)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-medium">
-                                                    {selectedMessage.from_user?.name || selectedMessage.from_user?.email || "Unknown"}
-                                                </span>
-                                                {selectedMessage.from_user_id === currentUserId && (
-                                                    <Badge variant="outline" className="text-xs">You</Badge>
-                                                )}
-                                            </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                To: {selectedMessage.to_user?.name || selectedMessage.to_user?.email || "Unknown"}
-                                                {selectedMessage.to_user_id === currentUserId && " (You)"}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground mt-1">
-                                                {format(new Date(selectedMessage.createdAt), "PPpp")}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <ScrollArea className="flex-1 p-4">
-                                    {/* API message badges */}
-                                    {isApiMessage(selectedMessage) && (
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-400 border-blue-500/30">
-                                                {selectedMessage._apiMeta?.channel || "NOTE"}
-                                            </Badge>
-                                            {selectedMessage._apiMeta?.conversation_id && (
-                                                <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-mono">
-                                                    Thread: {selectedMessage._apiMeta.conversation_id.slice(0, 8)}...
-                                                </Badge>
-                                            )}
-                                            {selectedMessage._thread && selectedMessage._thread.length > 1 && (
-                                                <Badge variant="outline" className="text-xs">
-                                                    {selectedMessage._thread.length} messages
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Chat-style thread view for API messages */}
-                                    {isApiMessage(selectedMessage) && selectedMessage._thread && selectedMessage._thread.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {selectedMessage._thread.map((threadMsg: any, idx: number) => {
-                                                const isOut = threadMsg.direction === "OUTBOUND" || threadMsg._apiMeta?.direction === "OUTBOUND";
-                                                return (
-                                                    <div key={threadMsg.id} className={cn("flex", isOut ? "justify-end" : "justify-start")}>
-                                                        <div className={cn(
-                                                            "max-w-[80%] rounded-xl px-4 py-3 shadow-sm",
-                                                            isOut
-                                                                ? "bg-primary text-primary-foreground rounded-br-sm"
-                                                                : "bg-muted rounded-bl-sm"
-                                                        )}>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className={cn("text-xs font-semibold", isOut ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                                                                    {threadMsg.senderName || threadMsg.from_user?.name || (isOut ? "You" : "Customer")}
-                                                                </span>
-                                                                <span className={cn("text-[10px]", isOut ? "text-primary-foreground/60" : "text-muted-foreground/60")}>
-                                                                    {format(new Date(threadMsg.createdAt), "MMM d, h:mm a")}
-                                                                </span>
-                                                            </div>
-                                                            <div className={cn("text-sm whitespace-pre-wrap", isOut ? "text-primary-foreground" : "")}>
-                                                                {threadMsg.body}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    ) : (
-                                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                                            <div className="whitespace-pre-wrap">{selectedMessage.body}</div>
-                                        </div>
-                                    )}
-
-                                    {/* API Reply Inline Form */}
-                                    {isApiMessage(selectedMessage) && apiReplyOpen && (
-                                        <div className="mt-4 border rounded-lg p-4 bg-muted/30">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Reply className="h-4 w-4 text-muted-foreground" />
-                                                <span className="text-sm font-medium">Reply to thread</span>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div className="flex items-center gap-2">
-                                                    <Label className="text-xs text-muted-foreground w-16">Channel</Label>
-                                                    <Select
-                                                        value={apiReplyChannel}
-                                                        onValueChange={(val: any) => setApiReplyChannel(val)}
-                                                    >
-                                                        <SelectTrigger className="h-8 w-32 text-xs">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="EMAIL">Email</SelectItem>
-                                                            <SelectItem value="NOTE">Note</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    {apiReplyChannel === "EMAIL" && (
-                                                        <span className="text-xs text-amber-500">Will send actual email</span>
-                                                    )}
-                                                </div>
-                                                <Textarea
-                                                    placeholder="Type your reply..."
-                                                    rows={3}
-                                                    value={apiReplyBody}
-                                                    onChange={(e) => setApiReplyBody(e.target.value)}
-                                                    className="text-sm"
-                                                    autoFocus
-                                                />
-                                                <div className="flex justify-end gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            setApiReplyOpen(false);
-                                                            setApiReplyBody("");
-                                                        }}
-                                                    >
-                                                        Cancel
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={handleApiReply}
-                                                        disabled={apiReplySending || !apiReplyBody.trim()}
-                                                        className="gap-2"
-                                                    >
-                                                        <Send className="h-3 w-3" />
-                                                        {apiReplySending ? "Sending..." : "Send Reply"}
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Quick reply button for API messages when form is closed */}
-                                    {isApiMessage(selectedMessage) && !apiReplyOpen && (
-                                        <div className="mt-4">
-                                            <Button
-                                                variant="outline"
-                                                className="w-full gap-2"
-                                                onClick={() => {
-                                                    setApiReplyOpen(true);
-                                                    setApiReplyChannel(selectedMessage?._apiMeta?.channel === "EMAIL" ? "EMAIL" : "NOTE");
-                                                }}
-                                            >
-                                                <Reply className="h-4 w-4" />
-                                                Reply to this message
-                                            </Button>
-                                        </div>
-                                    )}
-                                </ScrollArea>
-                            </>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-center">
-                                <MailPlus className="h-16 w-16 text-muted-foreground/30 mb-4" />
-                                <p className="text-muted-foreground">Select a message to read</p>
-                                <p className="text-sm text-muted-foreground/70 mt-1">
-                                    Or compose a new message to your team
-                                </p>
-                                <Button
-                                    variant="outline"
-                                    className="mt-4 gap-2"
-                                    onClick={() => setComposeOpen(true)}
-                                >
-                                    <PenBox className="h-4 w-4" />
-                                    Compose Message
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                </ResizablePanel>
-            </ResizablePanelGroup>
-
-            {/* Compose Dialog */}
-            <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
-                <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">New Message</DialogTitle>
-                        <DialogDescription>
-                            Send a message to a team member
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="to">To</Label>
-                            <Select value={composeToUserId} onValueChange={setComposeToUserId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select team member" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {teamMembers
-                                        .filter(m => m.id !== currentUserId)
-                                        .map((member) => (
-                                            <SelectItem key={member.id} value={member.id}>
-                                                {member.name || member.email || "Unknown"}
-                                            </SelectItem>
-                                        ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="subject">Subject</Label>
-                            <Input
-                                id="subject"
-                                placeholder="Message subject"
-                                value={composeSubject}
-                                onChange={(e) => setComposeSubject(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="body">Message</Label>
-                            <Textarea
-                                id="body"
-                                placeholder="Write your message..."
-                                rows={8}
-                                value={composeBody}
-                                onChange={(e) => setComposeBody(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter className="sm:justify-between">
-                        <Button type="button" variant="ghost" onClick={handleSaveDraft} disabled={isSending}>
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Save Draft
-                        </Button>
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setComposeOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleSendMessage} disabled={isSending}>
-                                {isSending ? "Sending..." : "Send Message"}
-                            </Button>
-                        </div>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* Permanent Delete Confirmation Dialog */}
-            <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-                <DialogContent className="sm:max-w-[400px]">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
-                            <AlertTriangle className="h-5 w-5" />
-                            Delete Forever?
-                        </DialogTitle>
-                        <DialogDescription>
-                            This action cannot be undone. This will permanently delete the {submissionToDelete ? "form submission" : "message"} and all its data.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowDeleteConfirm(false);
-                                setSubmissionToDelete(null);
-                                setMessageToDelete(null);
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={() => {
-                                if (submissionToDelete) handlePermanentDeleteSubmission(submissionToDelete);
-                                if (messageToDelete) handlePermanentDeleteMessage(messageToDelete);
-                            }}
-                            disabled={isDeletingSubmission}
-                        >
-                            {isDeletingSubmission ? "Deleting..." : "Delete Forever"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </TooltipProvider>
+            <InboxDeleteDialog
+                open={showDeleteConfirm}
+                onOpenChange={setShowDeleteConfirm}
+                isSubmission={!!submissionToDelete}
+                isDeleting={isDeletingSubmission || isConvertingToLead}
+                onConfirm={() => {
+                    if (submissionToDelete) handlePermanentDeleteSubmission(submissionToDelete);
+                    if (messageToDelete) handlePermanentDeleteMessage(messageToDelete);
+                }}
+                onCancel={() => {
+                    setShowDeleteConfirm(false);
+                    setSubmissionToDelete(null);
+                    setMessageToDelete(null);
+                }}
+            />
+        </>
     );
 }

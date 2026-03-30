@@ -44,6 +44,9 @@ import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
 import { LearnLink } from "@/components/ui/LearnLink";
 
 import { notFound } from "next/navigation";
+import { prismadb } from "@/lib/prisma";
+import { CustomFieldsTab } from "./components/CustomFieldsTab";
+import { getCustomFieldTabs, type CustomFieldDefinition } from "@/lib/crm/custom-field-defaults";
 
 interface AccountDetailPageProps {
   params: Promise<{
@@ -69,6 +72,18 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
   const documents: Documents[] = await getDocumentsByAccountId(accountId);
   const tasks: crm_Accounts_Tasks[] = await getAccountsTasks(accountId);
   const crmData = await getAllCrmData();
+
+  // Fetch custom field definitions from the team
+  let customFieldDefs: CustomFieldDefinition[] = [];
+  if (currentUserInfo?.teamId) {
+    const team = await prismadb.team.findUnique({
+      where: { id: currentUserInfo.teamId },
+      select: { custom_field_definitions: true },
+    });
+    customFieldDefs = ((team as any)?.custom_field_definitions as CustomFieldDefinition[]) || [];
+  }
+  const customFieldTabs = getCustomFieldTabs(customFieldDefs);
+  const customFieldValues: Record<string, any> = (account as any)?.custom_fields || {};
 
   /*
   // Existing calls might fail or return empty if accountId is actually a leadId, but shouldn't crash.
@@ -211,6 +226,15 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
               >
                 Hierarchy
               </TabsTrigger>
+              {customFieldTabs.map(tabName => (
+                <TabsTrigger
+                  key={`custom_${tabName}`}
+                  value={`custom_${tabName}`}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+                >
+                  {tabName}
+                </TabsTrigger>
+              ))}
             </TabsList>
 
             <TabsContent value="activity" className="space-y-6 animate-in fade-in-50 duration-500">
@@ -333,6 +357,23 @@ const AccountDetailPage = async (props: AccountDetailPageProps) => {
             <TabsContent value="hierarchy" className="animate-in fade-in-50 duration-500">
               <AccountHierarchyPanel accountId={accountId} />
             </TabsContent>
+
+            {customFieldTabs.map(tabName => (
+              <TabsContent key={`custom_${tabName}`} value={`custom_${tabName}`} className="animate-in fade-in-50 duration-500">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-6 w-6 rounded-lg bg-violet-500/10 flex items-center justify-center border border-violet-500/20 text-violet-400">
+                    <Info size={14} />
+                  </div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-white/40">{tabName}</h3>
+                </div>
+                <CustomFieldsTab
+                  accountId={accountId}
+                  definitions={customFieldDefs}
+                  values={customFieldValues}
+                  tabName={tabName}
+                />
+              </TabsContent>
+            ))}
           </Tabs>
 
           {/* Filling the space below Tabs */}

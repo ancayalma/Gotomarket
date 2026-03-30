@@ -44,13 +44,15 @@ const SideBar = async () => {
   const planSlug = team?.assigned_plan?.slug || team?.subscription_plan || "FREE";
   let features: string[] = [];
 
+  // Always start with the canonical config features for this plan slug
+  const { getSubscriptionPlan } = await import("@/lib/subscription");
+  const configFeatures = getSubscriptionPlan(planSlug).features;
+
   if (team?.assigned_plan) {
-    features = team.assigned_plan.features;
+    // Merge DB features + config features to catch newly added baseline features
+    features = Array.from(new Set([...team.assigned_plan.features, ...configFeatures]));
   } else {
-    // Fallback import
-    const { getSubscriptionPlan } = await import("@/lib/subscription");
-    const slug = team?.subscription_plan || "FREE";
-    features = getSubscriptionPlan(slug).features;
+    features = configFeatures;
   }
 
   // Add overrides to features list
@@ -64,6 +66,57 @@ const SideBar = async () => {
   // Resolve Navigation Structure (Now synced via DB Migration)
   const config = dbNavConfig as any;
   const rawStructure = config?.structure || DEFAULT_NAV_STRUCTURE;
+
+  // ─── Merge Missing Defaults ───
+  // When a team has a DB-persisted nav config, newly added nav items
+  // (e.g. nav_leads, nav_lists) would be missing. This merges them in.
+  const mergeWithDefaults = (dbItems: NavItem[], defaults: NavItem[]): NavItem[] => {
+    // Collect all IDs present in the DB structure (recursively)
+    const collectIds = (items: NavItem[]): Set<string> => {
+      const ids = new Set<string>();
+      items.forEach(item => {
+        ids.add(item.id);
+        if (item.children) {
+          item.children.forEach(child => ids.add(child.id));
+        }
+      });
+      return ids;
+    };
+
+    const existingIds = collectIds(dbItems);
+    const merged = dbItems.map(item => ({ ...item }));
+
+    // For each default group, check if its children exist in the DB structure
+    defaults.forEach(defaultItem => {
+      if (defaultItem.type === "group" && defaultItem.children) {
+        // Find the matching group in the DB structure
+        const dbGroup = merged.find(m => m.id === defaultItem.id);
+
+        if (dbGroup && dbGroup.children) {
+          // Inject any missing children into this group
+          defaultItem.children.forEach(defaultChild => {
+            if (!existingIds.has(defaultChild.id)) {
+              dbGroup.children = dbGroup.children || [];
+              dbGroup.children.push({ ...defaultChild });
+              existingIds.add(defaultChild.id);
+            }
+          });
+        } else if (!dbGroup) {
+          // Entire group is missing from DB — add it
+          merged.push({ ...defaultItem });
+        }
+      } else if (!existingIds.has(defaultItem.id)) {
+        // Top-level non-group item missing — add it
+        merged.push({ ...defaultItem });
+      }
+    });
+
+    return merged;
+  };
+
+  const mergedStructure = config?.structure
+    ? mergeWithDefaults(rawStructure, DEFAULT_NAV_STRUCTURE)
+    : rawStructure;
 
   // Utility to ensure unique IDs across the entire structure
   const deduplicateStructure = (items: NavItem[]): NavItem[] => {
@@ -105,7 +158,7 @@ const SideBar = async () => {
     });
   };
 
-  const activeNavStructure = deduplicateStructure(migratePartnersToPlatform(rawStructure));
+  const activeNavStructure = deduplicateStructure(migratePartnersToPlatform(mergedStructure));
 
   const ensurePlatformMenu = (items: NavItem[]) => {
     if (!isPartnerAdmin) return;

@@ -1,13 +1,52 @@
 import { prismadb } from "@/lib/prisma";
 import { systemLogger } from "@/lib/logger";
 import { getTeamAiTokenBalance } from "@/lib/ai-tokens";
+import { SUBSCRIPTION_PLANS, resolveSlug } from "@/config/subscriptions";
 
 export type QuotaResource = "LEADS" | "USERS" | "STORAGE" | "CREDITS" | "AI_TOKENS" | "CONTACTS" | "ACCOUNTS" | "OPPORTUNITIES";
+
+/** Default CRM record limits per resource when no plan-level override exists */
+const DEFAULT_CRM_LIMITS: Record<string, number> = {
+    LEADS: 5000,
+    CONTACTS: 5000,
+    ACCOUNTS: 1000,
+    OPPORTUNITIES: 1000,
+};
+
+/**
+ * Resolve the effective CRM record limit for a given resource.
+ * Priority: Plan DB field → Canonical SUBSCRIPTION_PLANS config → hardcoded default.
+ * Returns -1 for unlimited.
+ */
+function resolveCrmLimit(plan: any, teamSubscriptionPlan: string | null | undefined, resource: QuotaResource): number {
+    // 1. Check the team's legacy subscription_plan enum for EXEMPT/ENTERPRISE bypass
+    const canonicalSlug = resolveSlug(plan?.slug || teamSubscriptionPlan);
+    const canonicalPlan = SUBSCRIPTION_PLANS[canonicalSlug];
+
+    // If the canonical plan says unlimited (-1) for all resources, bypass
+    if (canonicalPlan) {
+        const limits = canonicalPlan.limits;
+        // EXEMPT and ENTERPRISE have all limits set to -1
+        if (limits.max_users === -1 && limits.max_storage === -1 && limits.credits === -1) {
+            return -1;
+        }
+    }
+
+    // 2. Check if the DB plan model has the field (future-proofing)
+    const fieldName = `max_${resource.toLowerCase()}`;
+    if (plan && typeof plan[fieldName] === "number") {
+        return plan[fieldName];
+    }
+
+    // 3. Fall back to hardcoded defaults
+    return DEFAULT_CRM_LIMITS[resource] ?? 1000;
+}
 
 /**
  * SOC2 A1.2: Enforce tenant-level resource quotas based on their subscription plan.
  * Prevents "Noisy Neighbor" resource exhaustion and subscription fraud.
  * Platform admins (is_admin) bypass all quota checks for testing purposes.
+ * EXEMPT and ENTERPRISE plans bypass all CRM record quotas (unlimited).
  */
 export async function checkTeamQuota(teamId: string, resource: QuotaResource, userId?: string): Promise<{ allowed: boolean; message?: string }> {
     try {
@@ -28,6 +67,13 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource, us
         });
 
         if (!team) return { allowed: false, message: "Team not found" };
+
+        // ── Early bypass: EXEMPT or ENTERPRISE on legacy enum ──
+        const legacyPlan = (team as any).subscription_plan as string | undefined;
+        if (legacyPlan === "EXEMPT" || legacyPlan === "ENTERPRISE") {
+            return { allowed: true };
+        }
+
         if (!team.assigned_plan) {
             const freePlan = await prismadb.plan.findUnique({ where: { slug: "FREE" } });
             if (!freePlan) return { allowed: true };
@@ -35,6 +81,11 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource, us
         }
 
         const plan = team.assigned_plan!;
+
+        // ── Early bypass: EXEMPT or ENTERPRISE on assigned plan slug ──
+        if (plan.slug === "EXEMPT" || plan.slug === "ENTERPRISE") {
+            return { allowed: true };
+        }
 
         switch (resource) {
             case "USERS": {
@@ -45,33 +96,37 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource, us
                 break;
             }
             case "LEADS": {
+                const limit = resolveCrmLimit(plan, legacyPlan, "LEADS");
+                if (limit === -1) break;
                 const leadCount = await (prismadb as any).crm_Leads.count({ where: { team_id: teamId } });
-                const limit = (plan as any).max_leads || 5000;
-                if (limit !== -1 && leadCount >= limit) {
+                if (leadCount >= limit) {
                     return { allowed: false, message: `Lead limit reached (${limit} leads max)` };
                 }
                 break;
             }
             case "CONTACTS": {
+                const limit = resolveCrmLimit(plan, legacyPlan, "CONTACTS");
+                if (limit === -1) break;
                 const contactCount = await prismadb.crm_Contacts.count({ where: { team_id: teamId } });
-                const limit = (plan as any).max_contacts || 5000;
-                if (limit !== -1 && contactCount >= limit) {
+                if (contactCount >= limit) {
                     return { allowed: false, message: `Contact limit reached (${limit} contacts max)` };
                 }
                 break;
             }
             case "ACCOUNTS": {
+                const limit = resolveCrmLimit(plan, legacyPlan, "ACCOUNTS");
+                if (limit === -1) break;
                 const accountCount = await prismadb.crm_Accounts.count({ where: { team_id: teamId } });
-                const limit = (plan as any).max_accounts || 1000;
-                if (limit !== -1 && accountCount >= limit) {
+                if (accountCount >= limit) {
                     return { allowed: false, message: `Account limit reached (${limit} accounts max)` };
                 }
                 break;
             }
             case "OPPORTUNITIES": {
+                const limit = resolveCrmLimit(plan, legacyPlan, "OPPORTUNITIES");
+                if (limit === -1) break;
                 const opportunityCount = await prismadb.crm_Opportunities.count({ where: { team_id: teamId } });
-                const limit = (plan as any).max_opportunities || 1000;
-                if (limit !== -1 && opportunityCount >= limit) {
+                if (opportunityCount >= limit) {
                     return { allowed: false, message: `Opportunity limit reached (${limit} opportunities max)` };
                 }
                 break;

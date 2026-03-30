@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     // SOC2 CC6.1 / A1.2: Check contact quotas before allowing creation
     if (teamId) {
       const { checkTeamQuota } = await import("@/lib/quota-service");
-      const quota = await checkTeamQuota(teamId, "CONTACTS");
+      const quota = await checkTeamQuota(teamId, "CONTACTS", session.user.id);
       if (!quota.allowed) {
         return NextResponse.json({ error: quota.message }, { status: 403 });
       }

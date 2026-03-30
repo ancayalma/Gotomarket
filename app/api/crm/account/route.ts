@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     // SOC2 CC6.1 / A1.2: Check account quotas before allowing creation
     if (teamId) {
       const { checkTeamQuota } = await import("@/lib/quota-service");
-      const quota = await checkTeamQuota(teamId, "ACCOUNTS");
+      const quota = await checkTeamQuota(teamId, "ACCOUNTS", session.user.id);
       if (!quota.allowed) {
         return NextResponse.json({ error: quota.message }, { status: 403 });
       }
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
       annual_revenue,
       member_of,
       industry,
+      custom_fields,
     } = body;
 
     const accountCount = await (prismadb.crm_Accounts as any).count({
@@ -161,6 +162,7 @@ export async function POST(req: Request) {
         annual_revenue: annual_revenue || undefined,
         member_of: member_of || undefined,
         industry_type: finalIndustryId ? { connect: { id: finalIndustryId } } : undefined,
+        custom_fields: custom_fields || undefined,
       },
     });
 
@@ -205,6 +207,7 @@ export async function PUT(req: Request) {
       annual_revenue,
       member_of,
       industry,
+      custom_fields,
     } = body;
 
     const escapeRegExp = (text: string) => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
@@ -260,6 +263,7 @@ export async function PUT(req: Request) {
         annual_revenue,
         member_of,
         industry_type: finalIndustryId ? { connect: { id: finalIndustryId } } : (industry === null ? { disconnect: true } : undefined),
+        ...(custom_fields !== undefined ? { custom_fields } : {}),
       },
     });
 

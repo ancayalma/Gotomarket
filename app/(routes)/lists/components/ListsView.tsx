@@ -37,6 +37,8 @@ import { useSession } from "next-auth/react";
 import { checkTeamFeature } from "@/lib/subscription";
 import { BillingModal } from "@/components/modals/BillingModal";
 import { Lock } from "lucide-react";
+import { ListMethodModal } from "./ListMethodModal";
+import { ManualListModal } from "./ManualListModal";
 import {
     Table,
     TableBody,
@@ -129,6 +131,8 @@ export default function ListsView() {
     const [selectedButtonSet, setSelectedButtonSet] = useState<Record<string, string>>({});
 
     const [viewMode, setViewMode] = useState<ViewMode>("card");
+    const [isMethodModalOpen, setIsMethodModalOpen] = useState(false);
+    const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const isMobile = useIsMobile();
 
     useEffect(() => {
@@ -271,11 +275,11 @@ export default function ListsView() {
                 <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                     <ImportIntelligenceWizard pools={data?.pools ?? []} onCommitted={() => mutate()} />
                     <Button
-                        onClick={() => router.push("/crm/accounts?tab=wizard")}
+                        onClick={() => setIsMethodModalOpen(true)}
                         className="bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap"
                     >
                         <Plus className="w-4 h-4 mr-2" />
-                        New List (Wizard)
+                        New List
                     </Button>
                     <ViewToggle value={viewMode} onChange={setViewMode} />
                 </div>
@@ -576,6 +580,21 @@ export default function ListsView() {
                 isOpen={isBillingModalOpen} 
                 onClose={() => setIsBillingModalOpen(false)} 
             />
+
+            <ListMethodModal
+                isOpen={isMethodModalOpen}
+                onClose={() => setIsMethodModalOpen(false)}
+                onSelectWizard={() => router.push("/crm/accounts?tab=wizard")}
+                onSelectManual={() => setIsManualModalOpen(true)}
+            />
+
+            {isManualModalOpen && (
+                <ManualListModal
+                    isOpen={isManualModalOpen}
+                    onClose={() => setIsManualModalOpen(false)}
+                    onCreated={() => mutate()}
+                />
+            )}
         </div>
     );
 }
