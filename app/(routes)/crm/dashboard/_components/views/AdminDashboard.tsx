@@ -43,11 +43,13 @@ const EditableWidgetGrid = dynamic(
 interface AdminDashboardProps {
     initialLayout?: any[];
     quickLaunchDismissed?: boolean;
+    hasCampaigns?: boolean;
 }
 
 const AdminDashboard = ({
     initialLayout,
-    quickLaunchDismissed = false
+    quickLaunchDismissed = false,
+    hasCampaigns = true
 }: AdminDashboardProps) => {
     const router = useRouter();
     const greeting = useGreeting();
@@ -97,8 +99,6 @@ const AdminDashboard = ({
         contacts: crmEntities.find(e => e.id === "entity:contacts")?.value || 0,
         opportunities: crmEntities.find(e => e.id === "entity:opportunities")?.value || 0,
     };
-
-    const hasCampaigns = crmEntities.some(e => e.id === "entity:projects");
 
     // Only show checklist to admins who are clearly just getting started AND haven't dismissed it
     const isNewishAdmin =
