@@ -154,7 +154,7 @@ export async function DELETE(req: Request) {
     // Verify ownership or admin
     const pool = await (prismadb.crm_Lead_Pools as any).findUnique({
       where: { id: poolId },
-      select: { user: true, team_id: true }
+      select: { user: true, team_id: true, _count: { select: { jobs: true } } }
     });
 
     if (!pool) {
@@ -176,29 +176,48 @@ export async function DELETE(req: Request) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
+    const isManualList = pool._count?.jobs === 0;
+
     // Cascade delete linked CRM accounts if requested
     const shouldDeleteAccounts = searchParams.get("deleteAccounts") === "true";
     if (shouldDeleteAccounts) {
-      // Find all candidates in this pool that have linked accounts
-      const candidatesWithAccounts = await (prismadb.crm_Lead_Candidates as any).findMany({
-        where: { pool: poolId, accountsIDs: { not: null } },
-        select: { accountsIDs: true },
-      });
-      const accountIds = candidatesWithAccounts
-        .map((c: any) => c.accountsIDs)
-        .filter(Boolean) as string[];
+      if (!isManualList) {
+        // 1. Handle AI-generated candidates (Account & Contact deletion)
+        const candidatesWithAccounts = await (prismadb.crm_Lead_Candidates as any).findMany({
+          where: { pool: poolId, accountsIDs: { not: null } },
+          select: { accountsIDs: true },
+        });
+        const accountIds = candidatesWithAccounts
+          .map((c: any) => c.accountsIDs)
+          .filter(Boolean) as string[];
 
-      if (accountIds.length > 0) {
-        const uniqueAccountIds = Array.from(new Set(accountIds));
-        // Delete contacts linked to these accounts
-        await (prismadb.crm_Contacts as any).deleteMany({
-          where: { accountsIDs: { in: uniqueAccountIds } },
-        });
-        // Delete the accounts themselves
-        await (prismadb.crm_Accounts as any).deleteMany({
-          where: { id: { in: uniqueAccountIds } },
-        });
-        systemLogger.info("[LEADS_POOLS_DELETE] Cascade deleted accounts:", uniqueAccountIds.length);
+        if (accountIds.length > 0) {
+          const uniqueAccountIds = Array.from(new Set(accountIds));
+          // Delete contacts linked to these accounts
+          await (prismadb.crm_Contacts as any).deleteMany({
+            where: { accountsIDs: { in: uniqueAccountIds } },
+          });
+          // Delete the accounts themselves
+          await (prismadb.crm_Accounts as any).deleteMany({
+            where: { id: { in: uniqueAccountIds } },
+          });
+          systemLogger.info("[LEADS_POOLS_DELETE] Cascade deleted AI accounts:", uniqueAccountIds.length);
+        }
+      }
+
+      // 2. Handle Manual List assignments (Lead deletion)
+      const manualMappings = await (prismadb.crm_Lead_Pools_Leads as any).findMany({
+          where: { pool: poolId },
+          select: { lead: true }
+      });
+      const leadIds = manualMappings.map((m: any) => m.lead).filter(Boolean);
+      
+      if (leadIds.length > 0) {
+          const uniqueLeadIds = Array.from(new Set(leadIds));
+          await (prismadb.crm_Leads as any).deleteMany({
+              where: { id: { in: uniqueLeadIds } }
+          });
+          systemLogger.info("[LEADS_POOLS_DELETE] Cascade deleted manual Leads:", uniqueLeadIds.length);
       }
     }
 
@@ -231,6 +250,12 @@ export async function DELETE(req: Request) {
 
     await (prismadb.crm_Lead_Gen_Jobs as any).deleteMany({
       where: { pool: poolId }
+    });
+
+    // Clear mapping table records (manual list assignments) before deleting the pool
+    // This removes the pool without destroying the actual Contacts/Leads
+    await (prismadb.crm_Lead_Pools_Leads as any).deleteMany({
+      where: { pool_id: poolId }
     });
 
     await (prismadb.crm_Lead_Pools as any).delete({
