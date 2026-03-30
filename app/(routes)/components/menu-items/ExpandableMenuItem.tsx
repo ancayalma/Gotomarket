@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { LucideIcon, ChevronRight, Lock } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
 
 // SubItem Type
 export type SubMenuItemType = {
@@ -56,11 +57,20 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
     }, []);
 
     const handleMouseEnter = useCallback(() => {
+        if (isLocked) return;
         if (hideTimer.current) clearTimeout(hideTimer.current);
         updatePosition();
         setShowFlyout(true);
         onMouseEnter?.();
-    }, [updatePosition, onMouseEnter]);
+    }, [updatePosition, onMouseEnter, isLocked]);
+
+    const handleLockedClick = (e: React.MouseEvent) => {
+        if (isLocked) {
+            e.preventDefault();
+            e.stopPropagation();
+            toast.error(`Upgrade your plan to access ${title}`);
+        }
+    };
 
     const handleMouseLeave = useCallback(() => {
         hideTimer.current = setTimeout(() => setShowFlyout(false), 120);
@@ -87,7 +97,7 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
 
     if (isMobile) {
         return (
-            <Link href={isLocked ? "#" : href} onClick={isLocked ? (e) => e.preventDefault() : undefined} className="flex-shrink-0">
+            <Link href={isLocked ? "#" : href} onClick={handleLockedClick} className="flex-shrink-0">
                 <div className={cn(
                     "relative flex items-center justify-center p-5 rounded-xl transition-colors duration-200",
                     isActive ? "bg-primary/20 text-primary" : "text-muted-foreground",
@@ -109,7 +119,15 @@ const ExpandableMenuItem = ({ href, icon: Icon, title, isOpen, isActive, items, 
         >
             {/* Main Item */}
             <div
-                onClick={() => !isLocked && router.push(href)}
+                onClick={(e) => {
+                    if (isLocked) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toast.error(`Upgrade your plan to access ${title}`);
+                        return;
+                    }
+                    router.push(href);
+                }}
                 className={cn(isLocked ? "cursor-not-allowed" : "cursor-pointer")}
             >
                 <div className={cn(

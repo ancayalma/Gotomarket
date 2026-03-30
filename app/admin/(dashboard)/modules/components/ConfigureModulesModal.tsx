@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { X, Search, ChevronDown, ChevronRight } from "lucide-react";
+import { X, Search, ChevronDown, ChevronRight, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CRM_MODULES, type CrmModule } from "@/lib/role-permissions";
+import { toast } from "sonner";
 
 interface ConfigureModulesModalProps {
     isOpen: boolean;
@@ -16,6 +17,7 @@ interface ConfigureModulesModalProps {
     onSave: (modules: string[]) => void;
     teamId?: string | null;
     userRole?: string | null;
+    parentLimits?: string[];
 }
 
 // Helper to get all descendant IDs
@@ -32,17 +34,22 @@ const PermissionItem = ({
     selectedModules,
     onToggle,
     depth = 0,
-    searchTerm = ""
+    searchTerm = "",
+    parentLimits = [],
+    isSuperAdmin = false
 }: {
     module: CrmModule;
     selectedModules: string[];
     onToggle: (id: string, allChildIds: string[], checked: boolean) => void;
     depth?: number;
     searchTerm?: string;
+    parentLimits?: string[];
+    isSuperAdmin?: boolean;
 }) => {
     const [isExpanded, setIsExpanded] = useState(depth === 0); // Expand top level by default
     const hasChildren = module.children && module.children.length > 0;
     const isSelected = selectedModules.includes(module.id);
+    const isLocked = !isSuperAdmin && parentLimits && !parentLimits.includes(module.id) && !parentLimits.includes(`${module.id}.view`);
 
     // Filter logic: if search term exists, expand if this item OR children match
     const matchesSearch = module.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -73,6 +80,10 @@ const PermissionItem = ({
     if (searchTerm && !matchesSearch && !childrenMatch) return null;
 
     const handleToggle = (checked: boolean) => {
+        if (isLocked) {
+            toast.error("Organization must upgrade to enable this module.");
+            return;
+        }
         onToggle(module.id, allChildIds, checked);
     };
 
@@ -81,7 +92,8 @@ const PermissionItem = ({
             <div
                 className={cn(
                     "flex items-center justify-between py-2 px-3 rounded-lg group transition-colors",
-                    isSelected ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50"
+                    isSelected ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50",
+                    isLocked && "opacity-60 grayscale"
                 )}
                 style={{ marginLeft: `${depth * 1.5}rem` }}
             >
@@ -109,6 +121,12 @@ const PermissionItem = ({
                             isSelected ? "text-foreground" : "text-muted-foreground"
                         )}>
                             {module.name}
+                            {isLocked && (
+                                <span className="inline-flex items-center gap-1 text-[9px] bg-muted/80 text-muted-foreground px-1.5 py-[2px] rounded border border-border/50 uppercase font-bold ml-2 shadow-sm font-sans tracking-tight">
+                                    <Lock className="w-2.5 h-2.5" />
+                                    Upgrade
+                                </span>
+                            )}
                         </span>
                         {module.description && (
                             <span className="text-[10px] text-muted-foreground/60 truncate">
@@ -119,11 +137,19 @@ const PermissionItem = ({
                 </div>
 
                 {/* Switch */}
-                <Switch
-                    checked={isSelected}
-                    onCheckedChange={handleToggle}
-                    className="ml-4 data-[state=checked]:bg-primary"
-                />
+                <div onClick={(e) => { 
+                    if (isLocked) { 
+                        e.preventDefault(); 
+                        toast.error("Organization must upgrade to enable this module."); 
+                    } 
+                }}>
+                    <Switch
+                        checked={isSelected && !isLocked}
+                        onCheckedChange={handleToggle}
+                        disabled={isLocked}
+                        className="ml-4 data-[state=checked]:bg-primary"
+                    />
+                </div>
             </div>
 
             {/* Recursion */}
@@ -142,6 +168,8 @@ const PermissionItem = ({
                             onToggle={onToggle}
                             depth={depth + 1}
                             searchTerm={searchTerm}
+                            parentLimits={parentLimits}
+                            isSuperAdmin={isSuperAdmin}
                         />
                     ))}
                 </div>
@@ -157,10 +185,14 @@ export default function ConfigureModulesModal({
     enabledModules,
     onSave,
     teamId,
-    userRole
+    userRole,
+    parentLimits = []
 }: ConfigureModulesModalProps) {
     const [selectedModules, setSelectedModules] = useState<string[]>(enabledModules);
     const [searchTerm, setSearchTerm] = useState("");
+    
+    // Evaluate if superadmin globally applies
+    const isSuperAdmin = parentLimits.includes('all');
 
     // Sync state when modal opens or props change
     useEffect(() => {
@@ -221,7 +253,10 @@ export default function ConfigureModulesModal({
         const allIds: string[] = [];
         const traverse = (modules: CrmModule[]) => {
             modules.forEach(m => {
-                allIds.push(m.id);
+                const isLocked = !isSuperAdmin && !parentLimits.includes(m.id) && !parentLimits.includes(`${m.id}.view`);
+                if (!isLocked) {
+                    allIds.push(m.id);
+                }
                 if (m.children) traverse(m.children);
             });
         };
@@ -294,6 +329,8 @@ export default function ConfigureModulesModal({
                             onToggle={handleToggle}
                             depth={0}
                             searchTerm={searchTerm}
+                            parentLimits={parentLimits}
+                            isSuperAdmin={isSuperAdmin}
                         />
                     ))}
 

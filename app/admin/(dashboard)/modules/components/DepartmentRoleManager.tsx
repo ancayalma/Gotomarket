@@ -30,6 +30,7 @@ interface OrgData {
     adminCount: number;
     memberCount: number;
     viewerCount: number;
+    parentLimits?: string[];
 }
 
 interface DepartmentData {
@@ -362,6 +363,7 @@ export default function DepartmentRoleManager({ teamId, departments, orgData }: 
                             description={`Admins within the ${selectedDept.name} department.`}
                             userCount={selectedDept.adminCount}
                             enabledModules={selectedDept.adminModules}
+                            parentLimits={orgData.parentLimits}
                             onUpdate={updateRoleModules.bind(null, selectedDept.id, 'ADMIN', 'DEPARTMENT')}
                         />
                         <RoleModuleCard
@@ -370,6 +372,7 @@ export default function DepartmentRoleManager({ teamId, departments, orgData }: 
                             description={`Members within the ${selectedDept.name} department.`}
                             userCount={selectedDept.memberCount}
                             enabledModules={selectedDept.memberModules}
+                            parentLimits={orgData.parentLimits}
                             onUpdate={updateRoleModules.bind(null, selectedDept.id, 'MEMBER', 'DEPARTMENT')}
                         />
                         <RoleModuleCard
@@ -378,6 +381,7 @@ export default function DepartmentRoleManager({ teamId, departments, orgData }: 
                             description={`Viewers within the ${selectedDept.name} department.`}
                             userCount={selectedDept.viewerCount}
                             enabledModules={selectedDept.viewerModules}
+                            parentLimits={orgData.parentLimits}
                             onUpdate={updateRoleModules.bind(null, selectedDept.id, 'VIEWER', 'DEPARTMENT')}
                         />
                     </div>

@@ -27,16 +27,18 @@ export async function POST(req: Request) {
       where: { id: session.user.id },
       select: {
         team_id: true,
+        team_role: true,
         is_admin: true,
         is_account_admin: true,
         assigned_role: { select: { name: true } },
       },
     });
 
-    const isSuperAdmin = user?.assigned_role?.name === "SuperAdmin";
-    const isAdmin = user?.is_admin || user?.is_account_admin;
+    const role = (user?.team_role || '').trim().toUpperCase();
+    const isHighTier = ['PLATFORM_ADMIN', 'PLATFORM ADMIN', 'SUPER_ADMIN', 'OWNER', 'SYSADM'].includes(role);
+    const isAdmin = isHighTier || role === 'ADMIN' || user?.is_admin || user?.is_account_admin || user?.assigned_role?.name === "SuperAdmin";
 
-    if (!isSuperAdmin && !isAdmin) {
+    if (!isAdmin) {
       return NextResponse.json(
         { error: "Only admins can create lead pools" },
         { status: 403 }

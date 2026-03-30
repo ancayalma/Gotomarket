@@ -6,7 +6,7 @@ import { systemLogger } from "@/lib/logger";
 
 /**
  * GET /api/departments/[departmentId]/modules
- * Returns the allowed_modules for a department.
+ * Returns the allowed_modules for a department and its parent's limits.
  */
 export async function GET(
     req: Request,
@@ -21,16 +21,32 @@ export async function GET(
 
         const department = await prismadb.team.findUnique({
             where: { id: departmentId },
-            select: { allowed_modules: true, name: true }
+            include: {
+                parent_team: {
+                    include: { assigned_plan: true }
+                }
+            }
         });
 
         if (!department) {
             return NextResponse.json({ error: "Department not found" }, { status: 404 });
         }
 
+        const planSlug = department.parent_team?.assigned_plan?.slug || department.parent_team?.subscription_plan || "FREE";
+        const { getSubscriptionPlan } = await import("@/lib/subscription");
+        let parentLimits = getSubscriptionPlan(planSlug).features || [];
+        
+        if (department.parent_team?.assigned_plan) {
+            parentLimits = Array.from(new Set([...department.parent_team.assigned_plan.features, ...parentLimits]));
+        }
+        if (department.parent_team?.module_overrides) {
+            parentLimits = Array.from(new Set([...parentLimits, ...department.parent_team.module_overrides]));
+        }
+
         return NextResponse.json({
             modules: department.allowed_modules || [],
-            name: department.name
+            name: department.name,
+            parentLimits
         });
     } catch (error) {
         systemLogger.error("[DEPT_MODULES_GET]", error);
@@ -74,12 +90,37 @@ export async function PUT(
             return NextResponse.json({ error: "Invalid modules format" }, { status: 400 });
         }
 
-        const updated = await prismadb.team.update({
+        // Load parent limits to enforce security
+        const department = await prismadb.team.findUnique({
             where: { id: departmentId },
-            data: { allowed_modules: modules }
+            include: { parent_team: { include: { assigned_plan: true } } }
         });
 
-        systemLogger.info(`[DEPT_MODULES] Updated modules for department ${departmentId}:`, modules);
+        if (!department) {
+            return NextResponse.json({ error: "Department not found" }, { status: 404 });
+        }
+
+        const planSlug = department.parent_team?.assigned_plan?.slug || department.parent_team?.subscription_plan || "FREE";
+        const { getSubscriptionPlan } = await import("@/lib/subscription");
+        let parentLimits = getSubscriptionPlan(planSlug).features || [];
+        
+        if (department.parent_team?.assigned_plan) {
+            parentLimits = Array.from(new Set([...department.parent_team.assigned_plan.features, ...parentLimits]));
+        }
+        if (department.parent_team?.module_overrides) {
+            parentLimits = Array.from(new Set([...parentLimits, ...department.parent_team.module_overrides]));
+        }
+
+        // Filter provided modules, ignoring anything the parent doesn't have access to
+        const isSuperAdmin = parentLimits.includes('all');
+        const safeModules = isSuperAdmin ? modules : modules.filter(m => parentLimits.includes(m) || parentLimits.includes(`${m}.view`));
+
+        const updated = await prismadb.team.update({
+            where: { id: departmentId },
+            data: { allowed_modules: safeModules }
+        });
+
+        systemLogger.info(`[DEPT_MODULES] Updated modules for department ${departmentId}:`, safeModules);
         return NextResponse.json({ modules: updated.allowed_modules });
     } catch (error) {
         systemLogger.error("[DEPT_MODULES_PUT]", error);
