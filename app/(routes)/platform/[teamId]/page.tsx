@@ -109,7 +109,36 @@ const TeamDetailsPage = async ({ params }: { params: Promise<{ teamId: string }>
             viewer: roleCountsData[3],
         };
         customRoles = customRolesData;
+
+        // Top level admins assigned to departments store it in `department_id` 
+        // because we don't overwrite their Global `team_id`. We must manually inject them 
+        // into the UI payload so they show up as members.
+        if (departmentsData.length > 0) {
+            const deptIds = departmentsData.map((d: any) => d.id);
+            const deptAdmins = await prismadb.users.findMany({
+                where: {
+                    team_id: team.id,
+                    department_id: { in: deptIds }
+                },
+                select: { id: true, name: true, email: true, team_role: true, department_id: true }
+            });
+
+            for (const admin of deptAdmins) {
+                const dept = departmentsData.find((d: any) => d.id === admin.department_id);
+                if (dept && !dept.members.some((m: any) => m.id === admin.id)) {
+                    // Inject them into members list
+                    dept.members.push({
+                        id: admin.id,
+                        name: admin.name,
+                        email: admin.email,
+                        team_role: admin.team_role || "MEMBER"
+                    });
+                    dept._count.members += 1;
+                }
+            }
+        }
         departments = departmentsData;
+
         apiKeys = keysData;
         apiLogs = logsData;
     }

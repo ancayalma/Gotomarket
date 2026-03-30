@@ -17,7 +17,9 @@ import {
     Calendar,
     Shield,
     Sparkles,
-    CreditCard
+    CreditCard,
+    Eye,
+    EyeOff
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -101,11 +103,27 @@ const DynamicModuleMenu = ({
     const [isBillingOpen, setIsBillingOpen] = useState(false);
     const pathname = usePathname();
 
+    // ─── Permission Logic ───
+    const hasFeature = (f?: string) => !f || features.includes("all") || features.includes(f);
+    const hasModule = (n?: string) => !n || modules.find((m: any) => m.name === n && m.enabled);
+    const checkRole = (minRole?: string) => {
+        if (!minRole) return true;
+        if (minRole === "MEMBER") return true;
+        if (minRole === "ADMIN") return teamRole !== "MEMBER"; // Simplified typical check
+        if (minRole === "PARTNER_ADMIN" || minRole === "PLATFORM_ADMIN") return isPartnerAdmin;
+        return false;
+    };
+
+    const [showAllModules, setShowAllModules] = useState(false);
+
     useEffect(() => {
         setIsMounted(true);
         try {
             const persisted = localStorage.getItem("sidebar-open");
             if (persisted !== null) setOpen(persisted === "true");
+            
+            const persistedShowAll = localStorage.getItem("sidebar-show-all");
+            if (persistedShowAll !== null) setShowAllModules(persistedShowAll === "true");
         } catch (_) { }
 
         // Load fonts if they are custom
@@ -124,7 +142,12 @@ const DynamicModuleMenu = ({
         setOpen(next);
         try { localStorage.setItem("sidebar-open", String(next)); } catch (_) { }
     };
-    // ...
+
+    const toggleShowAll = () => {
+        const next = !showAllModules;
+        setShowAllModules(next);
+        try { localStorage.setItem("sidebar-show-all", String(next)); } catch (_) { }
+    };
 
     // (Inside the motion.div, after logo)
     // ─── Impersonation Indicator ───
@@ -139,18 +162,6 @@ const DynamicModuleMenu = ({
             console.error(error);
         }
     };
-    // ...
-
-    // ─── Permission Logic ───
-    const hasFeature = (f?: string) => !f || features.includes("all") || features.includes(f);
-    const hasModule = (n?: string) => !n || modules.find((m: any) => m.name === n && m.enabled);
-    const checkRole = (minRole?: string) => {
-        if (!minRole) return true;
-        if (minRole === "MEMBER") return true;
-        if (minRole === "ADMIN") return teamRole !== "MEMBER"; // Simplified typical check
-        if (minRole === "PARTNER_ADMIN" || minRole === "PLATFORM_ADMIN") return isPartnerAdmin;
-        return false;
-    };
 
     const checkPermission = (item: NavItem) => {
         if (item.permissions) {
@@ -163,7 +174,7 @@ const DynamicModuleMenu = ({
 
     const isVisible = (item: NavItem) => {
         if (item.hidden) return false;
-        // Always require permission — locked/premium items are hidden entirely
+        if (showAllModules) return true;
         return checkPermission(item);
     };
 
@@ -210,8 +221,7 @@ const DynamicModuleMenu = ({
 
         if (!isVisible(item)) return null;
 
-        // All visible items have access (isVisible already enforces checkPermission)
-        const isLocked = false;
+        const isLocked = !checkPermission(item);
 
         if (item.type === "group") {
             // Group header + Children
@@ -379,11 +389,29 @@ const DynamicModuleMenu = ({
 
                         <motion.div
                             animate={{ opacity: open ? 1 : 0 }}
-                            className="flex justify-center shrink-0"
+                            className="flex justify-center shrink-0 mt-2"
                         >
                             <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold">
                                 v{process.env.NEXT_PUBLIC_APP_VERSION}
                             </span>
+                        </motion.div>
+
+                        <motion.div className="flex justify-center shrink-0 pt-2 border-t border-border/10">
+                            <button
+                                onClick={toggleShowAll}
+                                className={cn(
+                                    "flex flex-col items-center justify-center p-1.5 transition-colors gap-1",
+                                    "text-muted-foreground hover:text-foreground"
+                                )}
+                                title={showAllModules ? "Hide locked modules" : "Show all modules"}
+                            >
+                                {showAllModules ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                {open && (
+                                    <span className="text-[8px] uppercase tracking-widest font-semibold opacity-70">
+                                        {showAllModules ? "Hide Locked" : "Show All"}
+                                    </span>
+                                )}
+                            </button>
                         </motion.div>
                     </div>
 

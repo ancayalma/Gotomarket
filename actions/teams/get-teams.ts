@@ -17,6 +17,12 @@ export const getTeams = async () => {
                 created_at: "desc",
             },
             include: {
+                assigned_plan: {
+                    select: {
+                        name: true,
+                        slug: true
+                    }
+                },
                 members: {
                     select: {
                         id: true,

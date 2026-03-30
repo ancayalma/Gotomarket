@@ -21,6 +21,7 @@ interface RoleModuleCardProps {
     badge?: string;
     onModulesChange?: (roleKey: string, modules: string[]) => void;
     onUpdate?: (modules: string[]) => Promise<any>;
+    parentLimits?: string[];
 }
 
 export default function RoleModuleCard({
@@ -33,6 +34,7 @@ export default function RoleModuleCard({
     badge,
     onModulesChange,
     onUpdate,
+    parentLimits = [],
 }: RoleModuleCardProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -173,6 +175,7 @@ export default function RoleModuleCard({
                 roleName={roleName}
                 enabledModules={modules}
                 onSave={handleSave}
+                parentLimits={parentLimits}
             />
 
             <DeleteRoleModal

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
     LayoutDashboard,
     Building2,
@@ -25,6 +26,8 @@ import {
     Lock,
     Rocket,
     LayoutGrid,
+    Eye,
+    EyeOff
 } from "lucide-react";
 
 interface CrmSidebarProps {
@@ -38,13 +41,13 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobileExpanded, setIsMobileExpanded] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const [showAllModules, setShowAllModules] = useState(false);
 
     // Permission Helper
     const hasAccess = (moduleId: string) => {
         if (!allowedModules || allowedModules.length === 0) return false;
-        if (allowedModules.includes('*')) return true; // Super Admin wildcard
+        if (allowedModules.includes('*')) return true;
 
-        // Check exact match (e.g. 'leads') or specific view permission (e.g. 'leads.view')
         return allowedModules.includes(moduleId) || allowedModules.includes(`${moduleId}.view`);
     };
 
@@ -53,6 +56,10 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
         const stored = localStorage.getItem("crm-sidebar-collapsed");
         if (stored) {
             setIsCollapsed(stored === "true");
+        }
+        const storedShowAll = localStorage.getItem("crm-sidebar-show-all");
+        if (storedShowAll) {
+            setShowAllModules(storedShowAll === "true");
         }
     }, [pathname]);
 
@@ -66,6 +73,12 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
         const newState = !isCollapsed;
         setIsCollapsed(newState);
         localStorage.setItem("crm-sidebar-collapsed", String(newState));
+    };
+
+    const toggleShowAll = () => {
+        const newState = !showAllModules;
+        setShowAllModules(newState);
+        localStorage.setItem("crm-sidebar-show-all", String(newState));
     };
 
     // Full Nav List relative to permissions
@@ -88,14 +101,15 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
         { id: 'widgets', label: "Widgets (90+)", href: "/crm/dashboard", icon: LayoutGrid },
     ] as { id: string; label: string; href: string; icon: any; isPremium?: boolean }[];
 
-    // Filter items
-    const navItems = allNavItems.filter(item => hasAccess(item.id));
+    // Process items based on toggle
+    const accessibleItems = allNavItems.filter(item => hasAccess(item.id));
+    const navItems = showAllModules ? allNavItems : accessibleItems;
 
     const isUniversityPage = pathname.includes("/crm/university");
     const isContractsPage = pathname.includes("/crm/contracts");
 
-    // Hide sidebar on specific pages or when no nav items
-    if (isUniversityPage || isContractsPage || navItems.length === 0) {
+    // Hide sidebar on specific pages or when no nav items (unless showing all)
+    if (isUniversityPage || isContractsPage || (accessibleItems.length === 0 && !showAllModules)) {
         return null;
     }
 
@@ -116,6 +130,8 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                     )}
                 >
                     {navItems.map((item) => {
+                        const isAccessible = hasAccess(item.id);
+                        const isLocked = !isAccessible && showAllModules;
                         const isActive =
                             item.href === "/crm"
                                 ? pathname === "/crm"
@@ -124,29 +140,38 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                         return (
                             <button
                                 key={item.label}
-                                onClick={() => router.push(item.href)}
+                                onClick={(e) => {
+                                    if (isLocked) {
+                                        e.preventDefault();
+                                        toast.error(`Upgrade your plan to access ${item.label}`);
+                                        return;
+                                    }
+                                    router.push(item.href);
+                                }}
                                 className={cn(
                                     "relative w-full flex items-center rounded-xl transition-colors duration-200 group text-sm font-medium",
                                     isCollapsed ? "justify-center w-8 h-8 mx-auto" : "py-1.5 px-2",
+                                    isLocked ? "opacity-40 grayscale cursor-not-allowed hidden md:flex" : "",
                                     isActive
                                         ? "text-primary"
-                                        : cn("text-muted-foreground", !isCollapsed && "hover:text-foreground hover:bg-muted/30")
+                                        : cn("text-muted-foreground", !isCollapsed && !isLocked && "hover:text-foreground hover:bg-muted/30")
                                 )}
-                                title={isCollapsed ? item.label : undefined}
+                                title={isCollapsed ? (isLocked ? `${item.label} (Locked)` : item.label) : undefined}
                             >
                                 {/* Active glow */}
-                                {isActive && (
+                                {isActive && !isLocked && (
                                     <div className="absolute inset-0 rounded-xl bg-primary/10 border border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)] content-[''] z-0" />
                                 )}
 
                                 {/* Icon */}
                                 <div className={cn(
                                     "relative z-10 flex items-center justify-center min-w-[24px]",
-                                    isCollapsed && "w-8 h-8 rounded-md transition-colors duration-200 hover:bg-muted/50 hover:ring-1 hover:ring-border group/icon"
+                                    isCollapsed && "w-8 h-8 rounded-md transition-colors duration-200",
+                                    isCollapsed && !isLocked && "hover:bg-muted/50 hover:ring-1 hover:ring-border group/icon"
                                 )}>
                                     <item.icon className={cn(
                                         "w-[18px] h-[18px] transition-colors duration-200",
-                                        isActive ? "text-primary" : (isCollapsed ? "group-hover/icon:text-primary text-muted-foreground" : "group-hover:text-primary")
+                                        isActive ? "text-primary" : (isCollapsed && !isLocked ? "group-hover/icon:text-primary text-muted-foreground" : (!isLocked ? "group-hover:text-primary" : "text-muted-foreground"))
                                     )} />
                                 </div>
 
@@ -155,7 +180,8 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                                     <div className="flex items-center gap-2 flex-1 z-10 ml-2.5">
                                         <span className={cn(
                                             "whitespace-nowrap uppercase tracking-normal leading-normal flex-1 text-left px-1",
-                                            isActive ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent" : "text-muted-foreground group-hover:text-primary transition-colors duration-300"
+                                            isActive && !isLocked ? "bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent" : "text-muted-foreground transition-colors duration-300",
+                                            !isLocked && !isActive ? "group-hover:text-primary" : ""
                                         )}
                                         style={{
                                             fontFamily: 'var(--nav-item-font)',
@@ -166,13 +192,27 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                                         }}>
                                             {item.label}
                                         </span>
-                                        {item.isPremium && <Lock className="w-3 h-3 text-amber-500/70 shrink-0" />}
+                                        {(item.isPremium || isLocked) && <Lock className={cn("w-3 h-3 shrink-0", isLocked ? "text-muted-foreground" : "text-amber-500/70")} />}
                                     </div>
                                 )}
                             </button>
                         );
                     })}
                 </div>
+
+                {/* Show All Modules Toggle */}
+                {isMounted && (
+                    <button
+                        onClick={toggleShowAll}
+                        className={cn(
+                            "absolute bottom-4 z-[100] bg-background/60 backdrop-blur-xl border border-border rounded-full p-1.5 shadow-lg transition-all duration-300",
+                            isCollapsed ? "left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100" : "left-4 text-muted-foreground hover:text-foreground"
+                        )}
+                        title={showAllModules ? "Hide locked modules" : "Show all modules"}
+                    >
+                        {showAllModules ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                )}
 
                 {/* Toggle Button - Outside overflow container */}
                 <button
@@ -192,6 +232,8 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                     onClick={() => setIsMobileExpanded(!isMobileExpanded)}
                 >
                 {navItems.map((item) => {
+                    const isAccessible = hasAccess(item.id);
+                    const isLocked = !isAccessible && showAllModules;
                     const isActive =
                         item.href === "/crm"
                             ? pathname === "/crm"
@@ -202,6 +244,10 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                             key={item.label}
                             onClick={(e) => {
                                 e.stopPropagation();
+                                if (isLocked) {
+                                    toast.error(`Upgrade your plan to access ${item.label}`);
+                                    return;
+                                }
                                 if (!isMobileExpanded) {
                                     setIsMobileExpanded(true);
                                     return;
@@ -210,7 +256,8 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                             }}
                             className={cn(
                                 "flex flex-col items-center justify-center min-w-[48px] py-1.5 px-2 rounded-xl transition-colors duration-200 gap-0.5 shrink-0 relative",
-                                isActive ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-primary"
+                                isLocked ? "opacity-40 grayscale cursor-not-allowed hidden md:flex" : "",
+                                isActive && !isLocked ? "bg-primary/20 text-primary" : (!isLocked ? "text-muted-foreground hover:text-primary" : "")
                             )}
                         >
                             <item.icon className="w-4 h-4" />
@@ -229,7 +276,7 @@ export default function CrmSidebar({ isMember = false, allowedModules = [] }: Cr
                                 {item.label.split(' ')[0]}
                             </span>
 
-                            {isActive && (
+                            {isActive && !isLocked && (
                                 <div className="absolute top-0 w-6 h-0.5 bg-primary rounded-b-full" />
                             )}
                         </button>

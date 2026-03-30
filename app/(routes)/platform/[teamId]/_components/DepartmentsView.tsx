@@ -40,7 +40,6 @@ import { deleteDepartment } from "@/actions/departments/delete-department";
 import { updateDepartment } from "@/actions/departments/update-department";
 import { AddDepartmentMemberModal } from "./AddDepartmentMemberModal";
 import { ViewDepartmentMembersModal } from "./ViewDepartmentMembersModal";
-import { DepartmentModulesModal } from "./DepartmentModulesModal";
 
 interface Department {
     id: string;
@@ -74,7 +73,6 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
     const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [viewMode, setViewMode] = useState<"grid" | "list" | "table">("grid");
-    const [deptForModules, setDeptForModules] = useState<Department | null>(null);
 
     useEffect(() => {
         setDepartments(initialDepartments);
@@ -192,13 +190,6 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                 <DropdownMenuItem onClick={() => router.push(`/${window.location.pathname.split('/')[1]}/admin/modules`)}>
                     <ShieldCheck className="w-4 h-4 mr-2" />
                     Manage Roles
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDeptForModules(dept)}>
-                    <Layers className="w-4 h-4 mr-2" />
-                    Configure Modules
-                    {dept.allowed_modules && dept.allowed_modules.length > 0 && (
-                        <span className="ml-auto text-xs text-muted-foreground">{dept.allowed_modules.length}</span>
-                    )}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push(`/admin/departments/${dept.id}/settings`)}>
                     <Settings2 className="w-4 h-4 mr-2" />
@@ -393,12 +384,6 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                                                 )}
                                             </div>
                                         </div>
-                                        {dept.allowed_modules && dept.allowed_modules.length > 0 && (
-                                            <Badge variant="outline" className="text-xs mt-2">
-                                                <Layers className="w-3 h-3 mr-1" />
-                                                {dept.allowed_modules.length} modules
-                                            </Badge>
-                                        )}
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <div className="hidden md:flex -space-x-2">
@@ -583,16 +568,6 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                     members={deptForView.members}
                     isSuperAdmin={isSuperAdmin}
                     departmentAllowedModules={deptForView.allowed_modules || []}
-                />
-            )}
-
-            {/* Department Modules Modal */}
-            {deptForModules && (
-                <DepartmentModulesModal
-                    isOpen={!!deptForModules}
-                    onClose={() => setDeptForModules(null)}
-                    departmentId={deptForModules.id}
-                    departmentName={deptForModules.name}
                 />
             )}
 

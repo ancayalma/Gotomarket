@@ -255,7 +255,7 @@ export async function DELETE(req: Request) {
     // Clear mapping table records (manual list assignments) before deleting the pool
     // This removes the pool without destroying the actual Contacts/Leads
     await (prismadb.crm_Lead_Pools_Leads as any).deleteMany({
-      where: { pool_id: poolId }
+      where: { pool: poolId }
     });
 
     await (prismadb.crm_Lead_Pools as any).delete({

@@ -102,29 +102,53 @@ export const addMember = async (teamId: string, userId: string, role: string = "
         const currentUser = await getCurrentUserTeamId();
         if (!currentUser?.userId) return { error: "Unauthorized" };
 
-        const isPlatformAdmin = currentUser.isGlobalAdmin || currentUser.teamRole === "PLATFORM_ADMIN";
-        if (!isPlatformAdmin && (currentUser.teamId !== teamId || !currentUser.isAdmin)) {
-            return { error: "Unauthorized: Admin privileges required for this team." };
-        }
-
-        const team = await (prismadb as any).team.findUnique({
+        const targetTeam = await (prismadb as any).team.findUnique({
             where: { id: teamId },
             include: { assigned_plan: true }
         });
-        if (!team) return { error: "Team not found" };
+        if (!targetTeam) return { error: "Team not found" };
+
+        const isPlatformAdmin = currentUser.isGlobalAdmin || currentUser.teamRole === "PLATFORM_ADMIN";
+        if (!isPlatformAdmin) {
+            // Allow if admin of target team OR admin of parent organization (for departments)
+            const isDirectAdmin = currentUser.teamId === teamId && currentUser.isAdmin;
+            const isParentAdmin = targetTeam.parent_id === currentUser.teamId && currentUser.isAdmin;
+            if (!isDirectAdmin && !isParentAdmin) {
+                return { error: "Unauthorized: Admin privileges required for this team." };
+            }
+        }
 
         const memberCount = await (prismadb.users as any).count({ where: { team_id: teamId } });
 
-        if (!checkTeamLimit(team, "max_users", memberCount)) {
+        if (!checkTeamLimit(targetTeam, "max_users", memberCount)) {
             return { error: "Team member limit reached. Upgrade your plan." };
+        }
+
+        const targetUser = await (prismadb.users as any).findUnique({ where: { id: userId } });
+        if (!targetUser) return { error: "User not found" };
+
+        let updateData: any = {};
+        
+        const isTargetTopAdmin = targetUser.team_role === "OWNER" || targetUser.team_role === "SUPER_ADMIN" || targetUser.team_role === "ADMIN";
+        const isDepartmentTarget = targetTeam.team_type === "DEPARTMENT";
+        
+        // When adding someone to a department, tag their department_id
+        if (isDepartmentTarget) {
+            updateData.department_id = teamId;
+        }
+
+        // Preserve full organization access for top-level admins assigned to a department
+        if (isDepartmentTarget && isTargetTopAdmin && targetUser.team_id === targetTeam.parent_id) {
+            // Do NOT overwrite team_id or team_role
+        } else {
+             // Normal assignment (they lose whatever previous team they had)
+             updateData.team_id = teamId;
+             updateData.team_role = role;
         }
 
         await (prismadb.users as any).update({
             where: { id: userId },
-            data: {
-                team_id: teamId,
-                team_role: role
-            }
+            data: updateData
         });
         revalidatePath(`/partners/${teamId}`);
         return { success: true };

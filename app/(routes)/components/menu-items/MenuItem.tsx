@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { LucideIcon, Lock, ChevronUp } from "lucide-react";
+import { toast } from "sonner";
 
 type MenuItemProps = {
     href: string;
@@ -28,10 +29,19 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
     const isDashboard = rawLabel === "Dashboard";
     const microLabel = isDashboard ? "Home" : rawLabel.split(' ')[0];
 
+    const handleLockedClick = (e: React.MouseEvent) => {
+        if (isLocked) {
+            e.preventDefault();
+            toast.error(`Upgrade your plan to access ${title}`);
+        } else if (onClick) {
+            onClick();
+        }
+    };
+
     // ─── Mobile ───
     if (isMobile) {
         return (
-            <Link href={isLocked ? "#" : href} onClick={isLocked ? (e) => e.preventDefault() : onClick} className="flex-shrink-0">
+            <Link href={isLocked ? "#" : href} onClick={handleLockedClick} className="flex-shrink-0">
                 <div
                     className={cn(
                         "relative flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-colors duration-200 gap-0.5",
@@ -74,7 +84,7 @@ const MenuItem = ({ href, icon: Icon, title, isOpen, isActive, onClick, isMobile
     // ─── Desktop ───
     return (
         <div className="w-full" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-            <Link href={isLocked ? "#" : href} onClick={isLocked ? (e) => e.preventDefault() : onClick} className={cn(isLocked && "cursor-not-allowed")}>
+            <Link href={isLocked ? "#" : href} onClick={handleLockedClick} className={cn(isLocked && "cursor-not-allowed")}>
                 <div
                     className={cn(
                         "relative w-full flex items-center rounded-xl transition-colors duration-200 group text-sm font-medium",

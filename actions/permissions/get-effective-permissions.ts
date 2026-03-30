@@ -34,22 +34,7 @@ export async function getEffectiveRoleModules(teamId: string, role: string, scop
             modules = config ? config.defaultModules : [];
         }
 
-        // If user is in a department, intersect with department's allowed_modules
-        if (scope === 'DEPARTMENT' && teamId) {
-            try {
-                const department = await prismadb.team.findUnique({
-                    where: { id: teamId },
-                    select: { allowed_modules: true }
-                });
 
-                if (department?.allowed_modules && department.allowed_modules.length > 0) {
-                    // Intersect: only allow modules that the department has whitelisted
-                    modules = modules.filter(m => department.allowed_modules.includes(m));
-                }
-            } catch (err) {
-                console.error("Failed to fetch department allowed_modules:", err);
-            }
-        }
 
         return modules;
 

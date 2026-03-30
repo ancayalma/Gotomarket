@@ -27,7 +27,7 @@ export default async function AdminModulesPage() {
     // Get user and team info
     const user = await prismadb.users.findUnique({
         where: { email: session.user.email || "" },
-        include: { assigned_team: true },
+        include: { assigned_team: { include: { assigned_plan: true } } },
     });
 
     const isGlobalAdmin = session?.user?.isAdmin;
@@ -50,6 +50,18 @@ export default async function AdminModulesPage() {
     const teamScope = teamId ? { team_id: teamId } : {};
 
     if (!teamId) return <div>No Organization Found</div>;
+    
+    // Calculate Parent Limits for the organization
+    const planSlug = (user?.assigned_team as any)?.assigned_plan?.slug || user?.assigned_team?.subscription_plan || "FREE";
+    const { getSubscriptionPlan } = await import("@/lib/subscription");
+    let parentLimits = getSubscriptionPlan(planSlug)?.features || [];
+    
+    if ((user?.assigned_team as any)?.assigned_plan?.features) {
+        parentLimits = Array.from(new Set([...(user.assigned_team as any).assigned_plan.features, ...parentLimits]));
+    }
+    if (user?.assigned_team?.module_overrides) {
+        parentLimits = Array.from(new Set([...parentLimits, ...(user.assigned_team.module_overrides as any[] || [])]));
+    }
 
     // Fetch Organization-level stats
     const [adminCount, memberCount, viewerCount, customRoles, departments] = await Promise.all([
@@ -147,7 +159,8 @@ export default async function AdminModulesPage() {
                         viewerModules: orgViewerModules,
                         adminCount: adminCount,
                         memberCount: memberCount,
-                        viewerCount: viewerCount
+                        viewerCount: viewerCount,
+                        parentLimits: parentLimits
                     }}
                 />
 
@@ -165,6 +178,7 @@ export default async function AdminModulesPage() {
                                     description={role.description || "Custom team role"}
                                     userCount={role._count.users}
                                     enabledModules={role.modules}
+                                    parentLimits={parentLimits}
                                     isCustom
                                     onModulesChange={async (key, mods) => {
                                         // Placeholder for custom role updates

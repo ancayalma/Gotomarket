@@ -186,14 +186,21 @@ const SideBar = async () => {
   };
   ensurePlatformMenu(activeNavStructure);
 
+  const ensurePx = (val: string | undefined | null, def: string) => {
+    if (!val) return def;
+    const sVal = String(val);
+    if (sVal.endsWith('px') || sVal.endsWith('rem') || sVal.endsWith('em')) return sVal;
+    return `${sVal}px`;
+  };
+
   const styleTag = `
     :root {
       --nav-title-font: ${config?.titleFont ? `'${config?.titleFont}', sans-serif` : 'inherit'};
-      --nav-title-size: ${config?.titleFontSize || '10px'};
+      --nav-title-size: ${ensurePx(config?.titleFontSize, '10px')};
       --nav-title-weight: ${config?.titleFontWeight || '900'};
       --nav-title-style: ${config?.titleFontStyle || 'normal'};
       --nav-item-font: ${config?.itemFont ? `'${config?.itemFont}', sans-serif` : 'inherit'};
-      --nav-item-size: ${config?.itemFontSize || '18px'};
+      --nav-item-size: ${ensurePx(config?.itemFontSize, '18px')};
       --nav-item-weight: ${config?.itemFontWeight || '900'};
       --nav-item-style: ${config?.itemFontStyle || 'normal'};
     }
