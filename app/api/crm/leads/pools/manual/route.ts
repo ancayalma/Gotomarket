@@ -11,26 +11,32 @@ export async function POST(req: Request) {
         if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
         const body = await req.json();
-        const { name, accounts = [], contacts = [] } = body;
+        const { name, accounts = [], contacts = [], existingPoolId } = body;
 
         const teamInfo = await getCurrentUserTeamId();
         const teamId = teamInfo?.teamId || null;
 
-        if (!name) return new NextResponse("Missing list name", { status: 400 });
+        if (!existingPoolId && !name) return new NextResponse("Missing list name", { status: 400 });
         if (accounts.length === 0 && contacts.length === 0) {
             return new NextResponse("List must contain at least one account or contact", { status: 400 });
         }
 
-        // 1. Create the Lead Pool
-        const pool = await (prismadb.crm_Lead_Pools as any).create({
-            data: {
-                name,
-                user: session.user.id,
-                team_id: teamId,
-                status: "ACTIVE",
-                description: "Manually created list from Accounts & Contacts",
-            }
-        });
+        // Use existing pool or create a new one
+        let pool: any;
+        if (existingPoolId) {
+            pool = await (prismadb.crm_Lead_Pools as any).findUnique({ where: { id: existingPoolId } });
+            if (!pool) return new NextResponse("Pool not found", { status: 404 });
+        } else {
+            pool = await (prismadb.crm_Lead_Pools as any).create({
+                data: {
+                    name,
+                    user: session.user.id,
+                    team_id: teamId,
+                    status: "ACTIVE",
+                    description: "Manually created list from Accounts & Contacts",
+                }
+            });
+        }
 
         const createdLeads: string[] = [];
         let candidatesCount = 0;

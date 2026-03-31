@@ -78,6 +78,7 @@ export async function resetLeadGenCredits(teamId: string) {
 }
 
 export async function consumeLeadGenCredits(teamId: string, amount: number) {
+    teamId = await resolveBillingTeamId(teamId);
     const current = await getTeamLeadGenCredits(teamId);
 
     // -1 signifies unlimited. If we have a negative balance, we are operating in unlimited tracking mode.

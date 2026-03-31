@@ -8,7 +8,7 @@ import Heading from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Plus, Loader2, Trash2, Search, ArrowUpDown, CheckCircle2, UserPlus } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Trash2, Search, ArrowUpDown, CheckCircle2, UserPlus, Bot, Building2, ChevronDown } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -31,7 +31,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ListLeadDetailsModal } from "./components/list-lead-details-modal";
+import { ManualListModal } from "../../../../lists/components/ManualListModal";
 
 type Lead = {
     id: string;
@@ -109,6 +116,7 @@ export default function AccountListDetailsPage() {
 
     // Add Contact modal state
     const [addContactOpen, setAddContactOpen] = useState(false);
+    const [directoryModalOpen, setDirectoryModalOpen] = useState(false);
     const [addingContact, setAddingContact] = useState(false);
     const [newContact, setNewContact] = useState({
         companyName: "",
@@ -309,10 +317,31 @@ export default function AccountListDetailsPage() {
                         <CheckCircle2 className="w-4 h-4 mr-2" />
                         Approval Center
                     </Button>
-                    <Button onClick={() => { resetNewContact(); setAddContactOpen(true); }}>
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Add Contact
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Accounts
+                                <ChevronDown className="w-3.5 h-3.5 ml-1.5 opacity-60" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem onClick={() => router.push(`/crm/accounts?tab=wizard&poolId=${listId}`)}>
+                                <Bot className="w-4 h-4 mr-2 text-indigo-400" />
+                                <div>
+                                    <div className="font-semibold text-sm">Add with Wizard</div>
+                                    <div className="text-[10px] text-muted-foreground">AI-powered lead generation</div>
+                                </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDirectoryModalOpen(true)}>
+                                <Building2 className="w-4 h-4 mr-2 text-emerald-400" />
+                                <div>
+                                    <div className="font-semibold text-sm">Add from Directory</div>
+                                    <div className="text-[10px] text-muted-foreground">Select existing accounts & contacts</div>
+                                </div>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
                 <Separator />
 
@@ -576,6 +605,16 @@ export default function AccountListDetailsPage() {
                 onClose={() => setSelectedLead(null)} 
                 getStatusStyles={getStatusStyles} 
             />
+
+            {directoryModalOpen && (
+                <ManualListModal
+                    isOpen={directoryModalOpen}
+                    onClose={() => setDirectoryModalOpen(false)}
+                    onCreated={() => { mutate(); setDirectoryModalOpen(false); }}
+                    existingPoolId={listId}
+                    existingPoolName={pool?.name}
+                />
+            )}
         </div>
     );
 }

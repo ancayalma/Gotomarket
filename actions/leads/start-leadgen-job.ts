@@ -120,6 +120,7 @@ export async function startLeadGenJob(
 
   // Initialize counters/logs
   const counters = {
+    targetCredits: parsed.data.limits?.maxCompanies ?? 100,
     companiesFound: 0,
     companiesCrawled: 0,
     candidatesCreated: 0,

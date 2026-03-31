@@ -25,12 +25,17 @@ type ResourcesResponse = {
 export function ManualListModal({
     isOpen,
     onClose,
-    onCreated
+    onCreated,
+    existingPoolId,
+    existingPoolName,
 }: {
     isOpen: boolean;
     onClose: () => void;
     onCreated: () => void;
+    existingPoolId?: string;
+    existingPoolName?: string;
 }) {
+    const isAppendMode = !!existingPoolId;
     const { data, isLoading } = useSWR<ResourcesResponse>("/api/crm/leads/pools/manual/resources", fetcher);
 
     const [tab, setTab] = useState<"accounts" | "contacts">("accounts");
@@ -76,7 +81,7 @@ export function ManualListModal({
     const totalSelected = selectedAccounts.length + selectedContacts.length;
 
     const handleSave = async () => {
-        if (!listName.trim()) {
+        if (!isAppendMode && !listName.trim()) {
             alert("Please provide a name for the list.");
             return;
         }
@@ -91,9 +96,10 @@ export function ManualListModal({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name: listName,
+                    name: listName || existingPoolName || "Unnamed List",
                     accounts: selectedAccounts.map(a => a.id),
-                    contacts: selectedContacts.map(c => c.id)
+                    contacts: selectedContacts.map(c => c.id),
+                    ...(existingPoolId ? { existingPoolId } : {})
                 })
             });
 
@@ -120,10 +126,13 @@ export function ManualListModal({
                 {/* Header */}
                 <div className="p-6 border-b border-white/5 shrink-0 bg-muted/20">
                     <DialogTitle className="text-xl font-black italic tracking-tight uppercase bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">
-                        Build List Manually
+                        {isAppendMode ? `Add to ${existingPoolName}` : "Build List Manually"}
                     </DialogTitle>
                     <DialogDescription className="text-muted-foreground text-sm mt-1">
-                        Select specific Accounts and Contacts from your database to organize perfectly targeted outreach lists.
+                        {isAppendMode
+                            ? "Select Accounts and Contacts from your directory to add to this list."
+                            : "Select specific Accounts and Contacts from your database to organize perfectly targeted outreach lists."
+                        }
                     </DialogDescription>
                 </div>
 
@@ -267,22 +276,24 @@ export function ManualListModal({
 
                 {/* BOTTOM ACTION BAR */}
                 <div className="p-4 border-t border-white/10 bg-card sticky flex flex-col md:flex-row gap-4 items-end shrink-0">
-                    <div className="flex-1 w-full space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">List Name</label>
-                        <Input 
-                            value={listName} 
-                            onChange={(e) => setListName(e.target.value)} 
-                            placeholder="e.g. Q4 Target Accounts" 
-                            className="bg-muted/50 focus-visible:ring-indigo-500/30 h-10"
-                        />
-                    </div>
+                    {!isAppendMode && (
+                        <div className="flex-1 w-full space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">List Name</label>
+                            <Input 
+                                value={listName} 
+                                onChange={(e) => setListName(e.target.value)} 
+                                placeholder="e.g. Q4 Target Accounts" 
+                                className="bg-muted/50 focus-visible:ring-indigo-500/30 h-10"
+                            />
+                        </div>
+                    )}
                     <Button 
                         onClick={handleSave} 
-                        disabled={isSaving || totalSelected === 0 || !listName.trim()} 
+                        disabled={isSaving || totalSelected === 0 || (!isAppendMode && !listName.trim())} 
                         className="w-full md:w-auto px-8 h-10 bg-indigo-600 hover:bg-indigo-700 uppercase tracking-widest text-xs font-bold text-white shrink-0"
                     >
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                        {isSaving ? "Saving..." : "Create List"}
+                        {isSaving ? "Saving..." : isAppendMode ? "Add to List" : "Create List"}
                     </Button>
                 </div>
 
