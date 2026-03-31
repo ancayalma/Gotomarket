@@ -93,6 +93,20 @@ function detectLadder(title: string): Ladder {
   return "OTHER";
 }
 
+const DEPT_DISPLAY: Record<Department, string> = {
+  "ENGINEERING": "Engineering",
+  "PRODUCT": "Product",
+  "MARKETING": "Marketing",
+  "SALES": "Sales",
+  "HR": "HR",
+  "FINANCE": "Finance",
+  "OPERATIONS": "Operations",
+  "IT": "IT",
+  "DATA": "Data",
+  "CUSTOMER_SUCCESS": "Customer Success",
+  "OTHER": ""
+};
+
 function toCanonical(title: string, ladder: Ladder, dept: Department): string {
   // Simple canonical title synthesis
   const t = lower(title);
@@ -111,11 +125,11 @@ function toCanonical(title: string, ladder: Ladder, dept: Department): string {
       if (/chief people/.test(t)) return "Chief People Officer";
       return "Chief Executive Officer";
     case "VP":
-      return `VP of ${dept.replace("_", " ")}`;
+      return dept === "OTHER" ? "Vice President" : `VP of ${DEPT_DISPLAY[dept]}`;
     case "DIRECTOR":
-      return `Director of ${dept.replace("_", " ")}`;
+      return dept === "OTHER" ? "Director" : `Director of ${DEPT_DISPLAY[dept]}`;
     case "MANAGER":
-      return dept === "OTHER" ? "Manager" : `${dept.replace("_", " ")} Manager`;
+      return dept === "OTHER" ? "Manager" : `${DEPT_DISPLAY[dept]} Manager`;
     case "IC":
       return title; // keep as-is for ICs
     default:

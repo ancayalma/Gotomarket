@@ -9,6 +9,7 @@ import fetcher from "@/lib/fetcher";
 import AIWriterModal from "../../leads/components/modals/AIWriterModal";
 import { Combobox } from "@/components/ui/combobox";
 import { getTeamCreditsInfo } from "@/actions/crm/credits/index";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type WizardMode = "ai-only" | "step-by-step" | "advanced";
 
@@ -40,6 +41,7 @@ export default function LeadGenWizardPage() {
   const [aiWriterOpen, setAiWriterOpen] = useState(false);
   const [currentAiField, setCurrentAiField] = useState<keyof WizardState | null>(null);
   const [limitsInfo, setLimitsInfo] = useState<any>(null);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; description: string; onConfirm: () => void; } | null>(null);
 
   useEffect(() => {
     getTeamCreditsInfo().then(setLimitsInfo).catch(console.error);
@@ -207,8 +209,8 @@ export default function LeadGenWizardPage() {
       .map((s) => s.trim())
       .filter(Boolean);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleWizardSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!state.name) {
       toast.error("Please enter a pool name");
       return;
@@ -226,17 +228,30 @@ export default function LeadGenWizardPage() {
       
       // Warnings if close to limits
       if (limitsInfo.remaining > 0 && limitsInfo.remaining < state.maxCompanies) {
-         if (!window.confirm(`Warning: You only have ${limitsInfo.remaining} LeadGen targets remaining, but you are attempting to find up to ${state.maxCompanies} leads. The pipeline will stop early once the limit is hit. Do you want to continue?`)) {
-             return;
-         }
+         setConfirmModal({
+             isOpen: true,
+             title: "LeadGen Credits Warning",
+             description: `You only have ${limitsInfo.remaining} LeadGen credits remaining, but you are attempting to consume up to ${state.maxCompanies}. The pipeline will stop dynamically once your wallet is empty. Do you want to continue?`,
+             onConfirm: executeSubmission
+         });
+         return;
       } else if (limitsInfo.aiTokensBalance > 0 && limitsInfo.aiTokensBalance < 100000) {
-         if (!window.confirm(`Warning: You only have ${limitsInfo.aiTokensBalance.toLocaleString()} AI Tokens remaining. Agentic AI is heavily intensive and your pipeline may halt early automatically. Do you want to continue?`)) {
-             return;
-         }
+         setConfirmModal({
+             isOpen: true,
+             title: "AI Tokens Warning",
+             description: `You only have ${limitsInfo.aiTokensBalance.toLocaleString()} AI Tokens remaining. Agentic AI is heavily intensive and your pipeline may halt early automatically. Do you want to continue?`,
+             onConfirm: executeSubmission
+         });
+         return;
       }
     }
 
+    await executeSubmission();
+  };
+
+  const executeSubmission = async () => {
     setSubmitting(true);
+    setConfirmModal(null);
 
     try {
       // If in AI-only mode with a prompt, parse it first to populate fields
@@ -412,7 +427,7 @@ export default function LeadGenWizardPage() {
       {/* Leads Limit */}
       <div className="relative group overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-md shadow-sm transition-colors hover:bg-white/10">
         <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 block">
-          Leads Limit (Max 100)
+          Credits Target (Max 100)
         </label>
         <div className="flex items-center gap-2">
           <input
@@ -424,7 +439,7 @@ export default function LeadGenWizardPage() {
             min={1}
             max={100}
           />
-          <div className="text-xs text-muted-foreground whitespace-nowrap">companies</div>
+          <div className="text-xs text-muted-foreground whitespace-nowrap">credits</div>
         </div>
       </div>
     </div>
@@ -660,7 +675,7 @@ export default function LeadGenWizardPage() {
                  <div className="w-px bg-white/10" />
                  <div className="flex items-center gap-1.5 font-mono text-emerald-400">
                     <Target className="w-3.5 h-3.5" />
-                    <span>Lead Target Remaining: {limitsInfo.remaining}</span>
+                    <span>Credits Remaining: {limitsInfo.remaining}</span>
                  </div>
               </div>
             )}
@@ -675,7 +690,7 @@ export default function LeadGenWizardPage() {
           </div>
         </div>
 
-        <form onSubmit={onSubmit}>
+        <form onSubmit={handleWizardSubmit}>
           {renderTopConfiguration()}
 
           {renderModeSelector()}
@@ -693,6 +708,36 @@ export default function LeadGenWizardPage() {
         onClose={() => { setAiWriterOpen(false); setCurrentAiField(null); }}
         onInsert={handleAiInsert}
       />
+
+      {confirmModal && (
+        <AlertDialog open={confirmModal.isOpen} onOpenChange={(open) => !open && setConfirmModal(null)}>
+          <AlertDialogContent className="bg-black/95 border border-white/10 text-white shadow-2xl backdrop-blur-xl sm:rounded-2xl sm:max-w-[425px]">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl flex items-center gap-2 text-pink-400">
+                <Target className="w-5 h-5 flex-shrink-0" />
+                {confirmModal.title}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-zinc-400 text-sm mt-3 leading-relaxed">
+                {confirmModal.description}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="mt-8 pt-4 border-t border-white/5">
+              <AlertDialogCancel 
+                onClick={() => setConfirmModal(null)}
+                className="bg-transparent border-white/10 hover:bg-white/5 hover:text-white transition-colors"
+               >
+                 Cancel
+               </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => confirmModal.onConfirm()} 
+                className="bg-gradient-to-r from-pink-600 to-indigo-600 text-white hover:from-pink-500 hover:to-indigo-500 shadow-md hover:shadow-pink-500/25 transition-all outline-none border-none"
+               >
+                Start Job Anyway
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

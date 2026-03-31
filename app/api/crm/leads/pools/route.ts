@@ -207,32 +207,51 @@ export async function DELETE(req: Request) {
 
       // 2. Handle Manual List assignments (Lead deletion)
       const manualMappings = await (prismadb.crm_Lead_Pools_Leads as any).findMany({
-          where: { pool: poolId },
-          select: { lead: true }
+        where: { pool: poolId },
+        select: { lead: true }
       });
       const leadIds = manualMappings.map((m: any) => m.lead).filter(Boolean);
-      
+
       if (leadIds.length > 0) {
-          const uniqueLeadIds = Array.from(new Set(leadIds));
-          await (prismadb.crm_Leads as any).deleteMany({
-              where: { id: { in: uniqueLeadIds } }
-          });
-          systemLogger.info("[LEADS_POOLS_DELETE] Cascade deleted manual Leads:", uniqueLeadIds.length);
+        const uniqueLeadIds = Array.from(new Set(leadIds));
+        await (prismadb.crm_Leads as any).deleteMany({
+          where: { id: { in: uniqueLeadIds } }
+        });
+        systemLogger.info("[LEADS_POOLS_DELETE] Cascade deleted manual Leads:", uniqueLeadIds.length);
       }
     }
 
     // Delete associated data
-    await (prismadb.crm_Contact_Candidates as any).deleteMany({
-      where: {
-        leadCandidate: {
-          in: await (prismadb.crm_Lead_Candidates as any).findMany({
-            where: { pool: poolId },
-            select: { id: true }
-          }).then((candidates: any[]) => candidates.map(c => c.id))
-        }
-      }
+    const leadCandidates = await (prismadb.crm_Lead_Candidates as any).findMany({
+      where: { pool: poolId },
+      select: { id: true }
     });
+    const leadCandidateIds = leadCandidates.map((c: any) => c.id);
 
+    if (leadCandidateIds.length > 0) {
+      // 1. Find all Contact Candidates
+      const contactCandidates = await (prismadb.crm_Contact_Candidates as any).findMany({
+        where: { leadCandidate: { in: leadCandidateIds } },
+        select: { id: true }
+      });
+      const contactCandidateIds = contactCandidates.map((c: any) => c.id);
+
+      // 2. Clear any downstream lead conversion mappings
+      if (contactCandidateIds.length > 0) {
+        try {
+          await (prismadb.crm_Contact_Candidate_Leads as any).deleteMany({
+            where: { contactCandidate: { in: contactCandidateIds } }
+          });
+        } catch (e) { /* Non-fatal if mappings don't exist yet */ }
+      }
+
+      // 3. Delete Contact Candidates
+      await (prismadb.crm_Contact_Candidates as any).deleteMany({
+        where: { leadCandidate: { in: leadCandidateIds } }
+      });
+    }
+
+    // 4. Finally, delete the parent Lead Candidates
     await (prismadb.crm_Lead_Candidates as any).deleteMany({
       where: { pool: poolId }
     });

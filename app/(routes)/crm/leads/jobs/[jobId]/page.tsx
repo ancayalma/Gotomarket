@@ -226,6 +226,63 @@ function MetricTile({ label, value, accent }: { label: string; value: number | s
   );
 }
 
+// ─── Token Graph Tile ───────────────────────────────────────────────────────
+
+function TokenGraphCard({ label, value, history, accent }: { label: string; value: number | string; history: number[]; accent: string }) {
+  const maxVal = history.length > 0 ? Math.max(...history) : 0;
+  
+  const width = 100;
+  const height = 24; 
+  
+  const points = history.map((val, idx) => {
+    const x = history.length > 1 ? (idx / (history.length - 1)) * width : width / 2;
+    // Map values tightly to Y coordinates (0 is bottom, height is top)
+    const y = maxVal > 0 ? height - (val / maxVal) * height : height;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <div className="flex flex-col gap-2 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.04] min-w-[160px] max-w-[220px] flex-1 relative group overflow-hidden">
+      {/* Background glow base */}
+      <div className={`absolute -inset-x-4 -bottom-6 h-8 bg-current opacity-[0.03] blur-xl rounded-full ${accent}`} />
+
+      <div className="flex justify-between items-start z-10">
+        <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-zinc-500">{label}</span>
+      </div>
+      <div className="flex flex-col gap-1 z-10">
+        <span className={`text-xl font-semibold tabular-nums leading-none ${accent}`}>{value}</span>
+        <div className="flex items-end h-5 w-full mt-1 relative">
+          {history.length === 0 ? (
+            <div className="text-[9px] text-zinc-700 font-mono tracking-tighter">standing by...</div>
+          ) : (
+            <svg viewBox={`0 -1 ${width} ${height+2}`} className={`w-full h-full overflow-visible ${accent}`} preserveAspectRatio="none">
+              <polyline
+                points={points}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                className="opacity-80 drop-shadow-[0_0_3px_currentColor] group-hover:opacity-100 transition-opacity"
+              />
+            </svg>
+          )}
+          {/* Tooltip Hover Overlay */}
+          <div className="absolute inset-x-0 bottom-0 h-full flex items-end opacity-0">
+            {history.map((val, idx) => (
+              <div 
+                key={idx} 
+                className={`flex-1 h-full cursor-crosshair hover:opacity-20 transition-opacity bg-current ${accent}`}
+                title={`Batch ${idx+1}: ${val.toLocaleString()} tokens`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Formatted Time ─────────────────────────────────────────────────────────
 
 function formatTime(ts?: string) {
@@ -307,11 +364,12 @@ export default function LeadGenJobDetailPage({
   const companiesFound = data?.job?.counters?.companiesFound || data?.candidatesCount || 0;
   const contactsFound = data?.job?.counters?.contactsCreated || 0;
   const iterations = data?.job?.counters?.agentIterations || 0;
-  const target = data?.job?.counters?.targetCompanies || 100;
+  const target = data?.job?.counters?.targetCredits || data?.job?.counters?.targetCompanies || 100;
   const tokensUsed = data?.job?.counters?.tokensUsed || 0;
   const promptTokens = data?.job?.counters?.promptTokens || 0;
   const completionTokens = data?.job?.counters?.completionTokens || 0;
-  const progressPct = Math.min(100, target > 0 ? (companiesFound / target) * 100 : 0);
+  const progressPct = data?.job?.counters?.progress ?? Math.min(100, target > 0 ? ((companiesFound + contactsFound) / target) * 100 : 0);
+  const tokenHistory = ((data?.job?.counters as any)?.tokenHistory as { p: number, c: number, t: number }[]) || [];
 
   // Activity type counts
   const activityCounts = useMemo(() => {
@@ -406,13 +464,28 @@ export default function LeadGenJobDetailPage({
           </div>
 
           {/* Metrics row */}
-          <div className="flex flex-wrap gap-3">
-            <MetricTile label="Companies" value={companiesFound} accent="text-emerald-400" />
-            <MetricTile label="Contacts" value={contactsFound} accent="text-sky-400" />
-            <MetricTile label="Iterations" value={iterations} accent="text-violet-400" />
-            <MetricTile label="Prompt Tokens" value={promptTokens.toLocaleString()} accent="text-amber-400" />
-            <MetricTile label="Completion" value={completionTokens.toLocaleString()} accent="text-orange-400" />
-            <MetricTile label="Target" value={target} accent="text-zinc-400" />
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-3">
+              <MetricTile label="Accounts" value={companiesFound} accent="text-emerald-400" />
+              <MetricTile label="Contacts" value={contactsFound} accent="text-sky-400" />
+              <MetricTile label="Credits Used" value={companiesFound + contactsFound} accent="text-amber-400" />
+              <MetricTile label="Target" value={target} accent="text-zinc-400" />
+              <MetricTile label="Iterations" value={iterations} accent="text-violet-400" />
+            </div>
+            <div className="flex gap-3">
+              <TokenGraphCard 
+                label="Prompt Tokens" 
+                value={promptTokens.toLocaleString()} 
+                history={tokenHistory.map(h => h.p)} 
+                accent="text-orange-400" 
+              />
+              <TokenGraphCard 
+                label="Completion" 
+                value={completionTokens.toLocaleString()} 
+                history={tokenHistory.map(h => h.c)} 
+                accent="text-rose-400" 
+              />
+            </div>
           </div>
 
           {/* Progress bar */}
@@ -576,7 +649,9 @@ export default function LeadGenJobDetailPage({
           </DetailCard>
 
           <DetailCard title="Counters">
-            {Object.entries(data.job.counters || {}).map(([k, v]) => (
+            {Object.entries(data.job.counters || {})
+              .filter(([k]) => k !== 'tokenHistory')
+              .map(([k, v]) => (
               <DetailRow key={k} label={k.replace(/([A-Z])/g, " $1").trim()} value={String(v)} mono />
             ))}
             <DetailRow label="Source Events" value={String(data.sourceEventsCount)} mono />

@@ -175,10 +175,10 @@ export async function runLeadGenPipeline({
       select: { icpConfig: true }
     });
 
-    let maxCompanies = (pool?.icpConfig as any)?.limits?.maxCompanies || 100;
+    let maxCredits = job.counters?.targetCredits || (pool?.icpConfig as any)?.limits?.maxCompanies || 100;
     // Cap for free plan contact limit
-    if (job._freeContactCap && job._freeContactCap < maxCompanies) {
-      maxCompanies = job._freeContactCap;
+    if (job._freeContactCap && job._freeContactCap < maxCredits) {
+      maxCredits = job._freeContactCap;
     }
 
     const result = await runAgenticLeadGeneration(
@@ -186,13 +186,28 @@ export async function runLeadGenPipeline({
       userId,
       pool?.icpConfig as any || {},
       job.pool,
-      maxCompanies,
+      maxCredits,
       {
         companiesSaved: job.counters?.companiesSaved || 0,
         contactsSaved: job.counters?.contactsSaved || 0,
         queryTemplates: Array.isArray(job.queryTemplates) ? job.queryTemplates : []
       }
     );
+
+    // Check if the job was stopped by the user during the agent phase
+    const postAgentJob = await db.crm_Lead_Gen_Jobs.findUnique({ where: { id: jobId }, select: { status: true } });
+    if (postAgentJob?.status === "STOPPED" || postAgentJob?.status === "FAILED") {
+      await db.crm_Lead_Gen_Jobs.update({
+        where: { id: jobId },
+        data: {
+          logs: [
+            ...(job.logs || []),
+            { ts: new Date().toISOString(), msg: `Pipeline halted: Job was ${postAgentJob.status.toLowerCase()} during AI phase. Skipping downstream enrichment.` }
+          ]
+        }
+      });
+      return { createdCandidates: result.companiesSaved, createdContacts: result.contactsSaved };
+    }
 
     // SERP fallback: only run if agentic returned zero companies and SERP is enabled
     let serpAddedCandidates = 0;
@@ -238,61 +253,39 @@ export async function runLeadGenPipeline({
       });
     }
 
-    // Optional ToS-safe people enrichment (company site parsing)
-    let peopleContactsAdded = 0;
-    if (job.providers?.peopleEnrichment !== false) {
-      try {
-        const pe = await enrichPeopleForJob(jobId, userId);
-        peopleContactsAdded = pe.contactsAdded || 0;
-      } catch (error) {
-        // Log enrichment failure but don't fail the whole job
-        await db.crm_Lead_Gen_Jobs.update({
-          where: { id: jobId },
-          data: {
-            logs: [
-              ...(job.logs || []),
-              { ts: new Date().toISOString(), level: "ERROR", msg: `People enrichment failed: ${(error as Error)?.message || String(error)}` }
-            ]
-          }
-        });
-      }
-    }
+    // People enrichment is SKIPPED in agentic mode — the AI agent already
+    // discovers and saves contacts during its crawl loop. Running it here
+    // would cause duplicate contacts and inflated credit consumption.
+    const peopleContactsAdded = 0;
 
     createdCandidates = result.companiesSaved + serpAddedCandidates;
 
-    // 3. Consume Credits for Agentic session + Discovery + Enrichment
-    if (!isPlatformAdmin) {
-      const sessionCost = isResume ? 0 : 25;
-      const discoveryCost = createdCandidates * 1;
-      const agentEnrichmentCost = result.companiesSaved * 5;
-      const totalCost = sessionCost + discoveryCost + agentEnrichmentCost;
-      await consumeLeadGenCredits(teamId, totalCost);
-      creditsConsumed = totalCost;
-    }
-
-    // Update counters
+    // (Agentic real-time credit deduction occurs directly inside agent loop now)
+    // Fetch the latest counters from the agent's own writes (includes targetCredits, tokenHistory, etc.)
+    const latestJob = await db.crm_Lead_Gen_Jobs.findUnique({ where: { id: jobId }, select: { counters: true, logs: true } });
+    const agentCounters = latestJob?.counters ?? {};
     await db.crm_Lead_Gen_Jobs.update({
       where: { id: jobId },
       data: {
         status: "SUCCESS",
         finishedAt: new Date(),
         counters: {
+          ...agentCounters,
           companiesFound: result.companiesSaved,
           candidatesCreated: result.companiesSaved + serpAddedCandidates,
-          contactsCreated: (result.contactsSaved || 0) + (peopleContactsAdded || 0),
+          contactsCreated: result.contactsSaved || 0,
           agentIterations: result.iterations,
-          sourceEvents: (job.counters?.sourceEvents ?? 0) + serpEvents,
+          sourceEvents: (agentCounters.sourceEvents ?? 0) + serpEvents,
           peopleContactsAdded
         },
         logs: [
-          ...(job.logs || []),
+          ...(latestJob?.logs || []),
           { ts: new Date().toISOString(), msg: `🤖 Agentic AI complete: ${result.companiesSaved} companies, ${result.contactsSaved} contacts` },
-          ...(peopleContactsAdded ? [{ ts: new Date().toISOString(), msg: `People enrichment: ${peopleContactsAdded} contacts added` }] : [])
         ]
       }
     });
 
-    return { createdCandidates: result.companiesSaved + serpAddedCandidates, createdContacts: (result.contactsSaved || 0) + (peopleContactsAdded || 0) };
+    return { createdCandidates: result.companiesSaved + serpAddedCandidates, createdContacts: result.contactsSaved || 0 };
   }
 
   // Standard pipeline mode
@@ -304,10 +297,7 @@ export async function runLeadGenPipeline({
       serpEvents += res.sourceEvents;
       uniqueDomains = res.uniqueDomains;
 
-      if (res.createdCandidates > 0 && !isPlatformAdmin) {
-        await consumeLeadGenCredits(teamId, res.createdCandidates);
-        creditsConsumed += res.createdCandidates;
-      }
+      uniqueDomains = res.uniqueDomains;
     } catch (error) {
       await db.crm_Lead_Gen_Jobs.update({
         where: { id: jobId },
@@ -321,6 +311,12 @@ export async function runLeadGenPipeline({
     }
   }
 
+  // Check if standard pipeline stopped
+  const postSerpJob = await db.crm_Lead_Gen_Jobs.findUnique({ where: { id: jobId }, select: { status: true } });
+  if (postSerpJob?.status === "STOPPED" || postSerpJob?.status === "FAILED") {
+      return { createdCandidates, createdContacts };
+  }
+
   // Run company enrichment when enabled
   const enrichmentEnabled = job.providers?.crawler !== false;
   if (enrichmentEnabled && createdCandidates > 0) {
@@ -329,10 +325,7 @@ export async function runLeadGenPipeline({
       enrichedCount = enrichmentResult.enriched;
       enrichmentFailed = enrichmentResult.failed;
 
-      if (enrichedCount > 0 && !isPlatformAdmin) {
-        await consumeLeadGenCredits(teamId, enrichedCount * 5);
-        creditsConsumed += enrichedCount * 5;
-      }
+      enrichmentFailed = enrichmentResult.failed;
 
       await db.crm_Lead_Gen_Jobs.update({
         where: { id: jobId },
@@ -356,12 +349,23 @@ export async function runLeadGenPipeline({
     }
   }
 
+  // Check if standard pipeline stopped before people enrichment
+  const postEnrichJob = await db.crm_Lead_Gen_Jobs.findUnique({ where: { id: jobId }, select: { status: true } });
+  if (postEnrichJob?.status === "STOPPED" || postEnrichJob?.status === "FAILED") {
+      return { createdCandidates, createdContacts };
+  }
+
   // ToS-safe people enrichment (company site parsing) when enabled
   const peopleEnrichmentEnabled = job.providers?.peopleEnrichment !== false;
   if (peopleEnrichmentEnabled && (createdCandidates > 0)) {
     try {
       const pe = await enrichPeopleForJob(jobId, userId);
       createdContacts += pe.contactsAdded || 0;
+      
+      if (pe.contactsAdded > 0 && !isPlatformAdmin) {
+        await consumeLeadGenCredits(teamId, pe.contactsAdded);
+        creditsConsumed += pe.contactsAdded;
+      }
 
       await db.crm_Lead_Gen_Jobs.update({
         where: { id: jobId },

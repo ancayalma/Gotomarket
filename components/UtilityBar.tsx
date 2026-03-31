@@ -78,6 +78,7 @@ export default function UtilityBar() {
             }
         };
         fetchCredits();
+        const intervalId = setInterval(fetchCredits, 15000);
 
         const savedNotes = localStorage.getItem("crm-utility-notes");
         if (savedNotes) setNotes(savedNotes);
@@ -90,6 +91,8 @@ export default function UtilityBar() {
                 setTasks([]);
             }
         }
+        
+        return () => clearInterval(intervalId);
     }, []);
 
     const saveNotes = (val: string) => {

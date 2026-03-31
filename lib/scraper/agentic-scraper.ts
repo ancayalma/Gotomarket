@@ -12,6 +12,7 @@ import { z } from "zod";
 import { generateObject, generateText, tool, type ModelMessage } from "ai";
 
 import { prismadbCrm } from "@/lib/prisma-crm";
+import { prismadb } from "@/lib/prisma";
 import { consumeAiTokens } from "@/lib/ai-tokens";
 import { checkTeamQuota } from "@/lib/quota-service";
 // import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
@@ -67,6 +68,10 @@ const SEARCH_EXCLUDE_PATTERNS = [
   'pinterest.com', 'tiktok.com', 'snapchat.com',
   'bing.com', 'yahoo.com', 'quora.com',
   'linkedin.com', 'glassdoor.com', 'duckduckgo.com',
+  'crunchbase.com', 'zoominfo.com', 'apollo.io',
+  'pitchbook.com', 'yelp.com', 'bbb.org',
+  'mapquest.com', 'capterra.com', 'g2.com',
+  'apps.apple.com', 'play.google.com', 'substack.com',
 ];
 
 function isExcludedDomain(hostname: string): boolean {
@@ -106,6 +111,9 @@ async function ddgPuppeteerSearch(query: string, count: number): Promise<SerpRes
         'wikipedia.org', 'youtube.com', 'facebook.com', 'twitter.com',
         'instagram.com', 'google.com', 'reddit.com', 'medium.com',
         'github.com', 'bing.com', 'yahoo.com', 'linkedin.com', 'duckduckgo.com',
+        'crunchbase.com', 'zoominfo.com', 'apollo.io', 'pitchbook.com',
+        'yelp.com', 'bbb.org', 'mapquest.com', 'capterra.com', 'g2.com',
+        'apps.apple.com', 'play.google.com', 'substack.com'
       ];
       const seen = new Set<string>();
 
@@ -426,12 +434,12 @@ const saveCompanySchema = z.object({
   industry: z.string().describe("Primary industry"),
   techStack: z.array(z.string()).optional().describe("Detected technologies"),
   contacts: z.array(z.object({
-    name: z.string().describe("Person name if known (FirstName LastName). Use empty string for generic role contacts like info@ or contact@. NEVER fabricate/invent a name."),
-    title: z.string().describe("Job title if known (e.g. 'CEO', 'VP Sales'). Empty string for generic contacts."),
-    email: z.string().describe("Email address — include role/generic emails (info@, contact@, sales@) if a real personal email is not available."),
-    phone: z.string().describe("Phone number. Include if found even if no email is available."),
+    name: z.string().optional().describe("The REAL human name of the person (e.g., 'John Smith'). IMPORTANT: NEVER put button text, call-to-actions, or role names here. If you don't know the exact human name, DO NOT guess — just omit it or put an empty string."),
+    title: z.string().optional().describe("Job title if known (e.g. 'CEO', 'VP Sales'). Omit or empty string for generic contacts."),
+    email: z.string().optional().describe("Email address — include role/generic emails (info@, contact@, sales@) if a real personal email is not available."),
+    phone: z.string().optional().describe("Phone number. Include if found even if no email is available."),
     linkedin: z.string().optional().describe("LinkedIn profile URL"),
-  })).describe("Include ALL contacts found — named individuals, role emails (info@/contact@/sales@), and phone numbers. At least one contact with an email OR phone is required. NEVER invent contact data."),
+  })).optional().describe("Include ALL contacts found. If you only found a generic email without a named person, include it. If you only found a phone, include it. Pass ALL partial contacts you find."),
 });
 
 const refineSearchStrategySchema = z.object({
@@ -846,7 +854,7 @@ async function extractPageData(page: any): Promise<{
  */
 import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
 
-export async function visitWebsiteForAgent(url: string, userId?: string, icp?: ICPConfig): Promise<any> {
+export async function visitWebsiteForAgent(url: string, userId?: string, icp?: ICPConfig, poolId?: string): Promise<any> {
   const db: any = prismadbCrm;
   const domain = normalizeDomain(url);
   const cacheThreshold = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000); // 14 days
@@ -870,18 +878,33 @@ export async function visitWebsiteForAgent(url: string, userId?: string, icp?: I
       });
 
       if (cached && cached.lastSeen && cached.lastSeen > cacheThreshold) {
-        console.log(`[CACHE_HIT] Using cached data for domain: ${domain}`);
-        return {
-          title: cached.companyName || "",
-          description: cached.description || "",
-          emails: cached.emails || [],
-          phones: cached.phones || [],
-          socialLinks: cached.socialLinks || {},
-          techStack: cached.techStack || [],
-          pagesVisited: [url],
-          errors: [],
-          fromCache: true
-        };
+        // Only serve cache if domain already exists in the CURRENT pool.
+        // If the pool was deleted and re-created, the domain won't be in the new pool yet — bypass cache.
+        let inCurrentPool = true;
+        if (poolId) {
+          const existingCandidate = await db.crm_Lead_Candidates.findFirst({
+            where: { pool: poolId, domain },
+            select: { id: true },
+          });
+          inCurrentPool = !!existingCandidate;
+        }
+
+        if (inCurrentPool) {
+          console.log(`[CACHE_HIT] Using cached data for domain: ${domain}`);
+          return {
+            title: cached.companyName || "",
+            description: cached.description || "",
+            emails: cached.emails || [],
+            phones: cached.phones || [],
+            socialLinks: cached.socialLinks || {},
+            techStack: cached.techStack || [],
+            pagesVisited: [url],
+            errors: [],
+            fromCache: true
+          };
+        } else {
+          console.log(`[CACHE_BYPASS] Domain ${domain} not in current pool ${poolId} — re-scraping`);
+        }
       }
     } catch (cacheErr) {
       console.error("[CACHE_ERROR] Failed to read from global cache:", cacheErr);
@@ -995,6 +1018,14 @@ export async function visitWebsiteForAgent(url: string, userId?: string, icp?: I
               const linkedinLink = card.querySelector('a[href*="linkedin.com/in/"]');
               const linkedin = linkedinLink ? (linkedinLink as HTMLAnchorElement).href : "";
 
+              // Check for phone (tel: link or inline text)
+              const telLink = card.querySelector('a[href^="tel:"]');
+              let cardPhone = telLink ? (telLink as HTMLAnchorElement).href.replace("tel:", "").trim() : "";
+              if (!cardPhone) {
+                const phoneMatch = cardText.match(/(?:\+?1[\s.-]?)?\(?[0-9]{3}\)?[\s.-]?[0-9]{3}[\s.-]?[0-9]{4}/);
+                if (phoneMatch) cardPhone = phoneMatch[0].trim();
+              }
+
               // If we already have this email in contacts, update the name/title
               if (email && seenEmails.has(email)) {
                 const existing = contacts.find(c => c.email === email);
@@ -1002,20 +1033,25 @@ export async function visitWebsiteForAgent(url: string, userId?: string, icp?: I
                   existing.name = candidateName;
                   if (candidateTitle && candidateTitle.length < 80) existing.title = candidateTitle;
                   if (linkedin) existing.linkedin = linkedin;
+                  if (cardPhone && !existing.phone) existing.phone = cardPhone;
                 }
                 return;
               }
-
-              // Add as new contact if it has email or LinkedIn
-              if (email || linkedin) {
+              // Add as new contact to facilitate automatic or LLM-based orphan reconciliation
+              if (candidateName) {
                 if (email) seenEmails.add(email);
-                contacts.push({
-                  name: candidateName,
-                  title: (candidateTitle && candidateTitle.length < 80) ? candidateTitle : "",
-                  email: email || "",
-                  phone: "",
-                  linkedin: linkedin || "",
-                });
+                // Prevent duplicate pure-orphan spam from multiple layout nodes on the same page
+                if (!email && !linkedin && !cardPhone && contacts.some(c => c.name === candidateName)) {
+                  // already added this orphan name, skip
+                } else {
+                  contacts.push({
+                    name: candidateName,
+                    title: (candidateTitle && candidateTitle.length < 80) ? candidateTitle : "",
+                    email: email || "",
+                    phone: cardPhone || "",
+                    linkedin: linkedin || "",
+                  });
+                }
               }
             });
           } catch { /* selector may not exist */ }
@@ -1038,6 +1074,7 @@ export async function visitWebsiteForAgent(url: string, userId?: string, icp?: I
         // 5. Social links (company-level)
         const socials: Record<string, string> = {};
         const linkedinProfiles: string[] = [];
+        const internalLinks: string[] = [];
         document.querySelectorAll("a[href]").forEach(a => {
           const href = (a as HTMLAnchorElement).href;
           if (href.includes("linkedin.com/company")) socials.linkedin = href;
@@ -1046,13 +1083,24 @@ export async function visitWebsiteForAgent(url: string, userId?: string, icp?: I
           if (href.includes("facebook.com/")) socials.facebook = href;
           if (href.includes("instagram.com/")) socials.instagram = href;
           if (href.includes("github.com/")) socials.github = href;
+
+          // Capture internal links for dynamic subpage discovery
+          try {
+            if (href && href.startsWith(window.location.origin)) {
+              internalLinks.push(href.split("#")[0] || "");
+            }
+          } catch { /* ignore invalid URLs */ }
         });
 
-        return { pageTitle, metaDesc, contacts, phones, socials, linkedinProfiles };
+        return {
+          pageTitle, metaDesc, contacts, phones, socials, linkedinProfiles,
+          internalLinks: Array.from(new Set(internalLinks)).filter(Boolean)
+        };
       });
     };
 
     // Visit homepage
+    let homeData: any = {};
     try {
       await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
       await new Promise(r => setTimeout(r, 2000)); // Let JS render
@@ -1095,29 +1143,48 @@ export async function visitWebsiteForAgent(url: string, userId?: string, icp?: I
         } catch { /* ignore */ }
       } catch { /* ignore overlay dismiss errors */ }
 
-      const homeData = await extractPageData();
+      homeData = await extractPageData();
       title = homeData.pageTitle;
       description = homeData.metaDesc;
-      homeData.contacts.forEach(c => { if (c.email) allEmails.add(c.email); });
-      homeData.phones.forEach(p => allPhones.add(p));
+      (homeData.contacts || []).forEach((c: any) => { if (c.email) allEmails.add(c.email); });
+      (homeData.phones || []).forEach((p: any) => allPhones.add(p));
       Object.assign(socialLinks, homeData.socials);
-      allContacts.push(...homeData.contacts);
+      allContacts.push(...(homeData.contacts || []));
       allLinkedinProfiles.push(...(homeData.linkedinProfiles || []));
       pagesVisited.push(targetUrl);
-      console.log(`[PUPPETEER] Homepage: ${homeData.contacts.length} contacts, ${homeData.phones.length} phones`);
+      console.log(`[PUPPETEER] Homepage: ${(homeData.contacts || []).length} contacts, ${(homeData.phones || []).length} phones`);
     } catch (navErr) {
       errors.push(`Homepage navigation failed: ${(navErr as Error).message}`);
     }
 
-    // Visit high-value subpages (expanded list, limit 5)
-    const subpages = ["/about", "/contact", "/team", "/about-us", "/contact-us", "/our-team", "/leadership", "/people", "/staff", "/careers"];
+    // Priority subpages discovery: Combine dynamic on-page nav links with presets
+    const keywordRegex = /\/(about|contact|team|leadership|people|staff|careers|profiles|directory|professionals|faculty|our-story)/i;
+    let dynamicPaths: string[] = [];
+    if (homeData.internalLinks) {
+      const matchLinks = homeData.internalLinks
+        .filter((href: string) => keywordRegex.test(href))
+        .filter((href: string) => href.length < 150); // skip messy URLs
+      // Sort to prioritize shorter, clean paths
+      matchLinks.sort((a: string, b: string) => a.length - b.length);
+      dynamicPaths = Array.from(new Set(matchLinks));
+    }
+
+    // Fallback preset paths
     const baseDomain = targetUrl.replace(/\/+$/, "");
+    const presetPaths = ["/about", "/contact", "/team", "/about-us", "/contact-us", "/our-team", "/leadership", "/people", "/staff", "/careers", "/profiles", "/directory", "/professionals"]
+      .map(p => `${baseDomain}${p}`);
+
+    // Merge dynamic defaults, prioritizing real extracted dynamic nav routes first
+    const allCandidates = Array.from(new Set([...dynamicPaths, ...presetPaths]));
+
     let subpagesVisited = 0;
 
-    for (const path of subpages) {
+    for (const subUrl of allCandidates) {
       if (subpagesVisited >= 5) break;
+      // Skip redundant homepage attempts
+      if (subUrl === targetUrl || subUrl === targetUrl + "/") continue;
+
       try {
-        const subUrl = `${baseDomain}${path}`;
         const response = await page.goto(subUrl, { waitUntil: "domcontentloaded", timeout: 12000 });
 
         // Skip 404s and redirects back to homepage
@@ -1150,7 +1217,7 @@ export async function visitWebsiteForAgent(url: string, userId?: string, icp?: I
         subpagesVisited++;
 
         if (!description && subData.metaDesc) description = subData.metaDesc;
-        console.log(`[PUPPETEER] ${path}: +${subData.contacts.length} contacts, +${subData.phones.length} phones`);
+        console.log(`[PUPPETEER] ${subUrl}: +${subData.contacts.length} contacts, +${subData.phones.length} phones`);
       } catch {
         // Subpage not found or timed out, continue
       }
@@ -1346,7 +1413,7 @@ export async function executeToolCall(toolName: string, args: any, context: any)
       };
 
     case "visit_website":
-      const siteData = await visitWebsiteForAgent(args.url, context.userId, context.icp);
+      const siteData = await visitWebsiteForAgent(args.url, context.userId, context.icp, context.poolId);
       // Truncate visit results to only essential fields for token efficiency
       if (siteData && !siteData.error) {
         return {
@@ -1511,10 +1578,15 @@ export async function executeToolCall(toolName: string, args: any, context: any)
         }
       }
 
+      // Strip ghost contacts — orphan names that didn't merge with any email or phone
+      const viableContacts = augmentedContacts.filter((c: any) =>
+        (c.email && c.email.trim().length > 0) || (c.phone && c.phone.trim().length > 0)
+      );
+
       // Require at least one contact with email OR phone
-      const contactsWithEmails = augmentedContacts.filter((c: any) => c.email && c.email.trim().length > 0);
-      const contactsWithPhones = augmentedContacts.filter((c: any) => c.phone && c.phone.trim().length > 0);
-      console.log("[SAVE_COMPANY] Contacts with emails:", contactsWithEmails.length, "| with phones:", contactsWithPhones.length);
+      const contactsWithEmails = viableContacts.filter((c: any) => c.email && c.email.trim().length > 0);
+      const contactsWithPhones = viableContacts.filter((c: any) => c.phone && c.phone.trim().length > 0);
+      console.log("[SAVE_COMPANY] Viable contacts:", viableContacts.length, "| with emails:", contactsWithEmails.length, "| with phones:", contactsWithPhones.length);
 
       if (contactsWithEmails.length === 0 && contactsWithPhones.length === 0) {
         console.log("[SAVE_COMPANY] Validation failed: No emails or phones found");
@@ -1599,7 +1671,7 @@ export async function executeToolCall(toolName: string, args: any, context: any)
         qualityScore += Math.min(contactsWithEmails.length * 10, 30);
 
         // +10 points if we have multiple emails
-        const emailCount = augmentedContacts.filter((c: any) => c.email).length;
+        const emailCount = viableContacts.filter((c: any) => c.email).length;
         if (emailCount >= 2) qualityScore += 10;
 
         // +5 points for tech stack
@@ -1666,8 +1738,8 @@ export async function executeToolCall(toolName: string, args: any, context: any)
         let contactsSavedCount = 0;
         let validEmailCount = 0;
         let personaDecisionMakerFound = false;
-        if (augmentedContacts && Array.isArray(augmentedContacts)) {
-          for (const contact of augmentedContacts) {
+        if (viableContacts && Array.isArray(viableContacts)) {
+          for (const contact of viableContacts) {
             const cleaned = sanitizeContact({
               name: contact.name,
               email: contact.email,
@@ -1816,6 +1888,7 @@ export async function executeToolCall(toolName: string, args: any, context: any)
         // CREATE crm_Accounts entry for every scraped company
         // ═══════════════════════════════════════════════════════════════════
         let crmAccountId: string | null = null;
+        let accountHasContactInfo = false;
         try {
           const { prismadb: mainDb } = await import("@/lib/prisma");
           const teamId = context.teamId || null;
@@ -1824,10 +1897,12 @@ export async function executeToolCall(toolName: string, args: any, context: any)
           const existingCrmAccount = await (mainDb as any).crm_Accounts.findFirst({
             where: {
               AND: [
-                { OR: [
-                  { website: { contains: domain } },
-                  { website: { endsWith: domain } },
-                ] },
+                {
+                  OR: [
+                    { website: { contains: domain } },
+                    { website: { endsWith: domain } },
+                  ]
+                },
                 ...(teamId ? [{ team_id: teamId }] : []),
               ]
             },
@@ -1847,13 +1922,20 @@ export async function executeToolCall(toolName: string, args: any, context: any)
                 // Use the best available account-level email (including role emails like info@)
                 email: bestAccountEmail || null,
                 office_phone: augmentedContacts.find((c: any) => c.phone?.trim())?.phone || null,
-                industry: industry || undefined,
+                // industry is an ObjectId referencing crm_Industry_Type, so we don't pass the raw string.
+                // The raw industry string is already appended to the description above.
                 status: "Active",
                 type: "Prospect",
                 ...(teamId ? { team_id: teamId } : {}),
               }
             });
             crmAccountId = newAccount.id;
+
+            // Only bill for new accounts if they actually yielded contact info
+            if (bestAccountEmail || augmentedContacts.find((c: any) => c.phone?.trim())?.phone) {
+              accountHasContactInfo = true;
+            }
+
             console.log(`[SAVE_COMPANY] Created new crm_Accounts entry for ${domain}: ${crmAccountId}`);
           }
 
@@ -1886,8 +1968,18 @@ export async function executeToolCall(toolName: string, args: any, context: any)
               // account level via crm_Accounts.email — do NOT create a contact for them.
               const titleInfo = normalizeTitleAndPersona(cleaned.title);
               const safeName = normalizeName(cleaned.name || '') || '';
-              const hasRealName = safeName.trim().split(/\s+/).length >= 2;
-              if (!hasRealName) continue; // skip role contacts — they live on the account only
+              const words = safeName.trim().split(/\s+/);
+
+              // Enforce realistic name constraints
+              const isReasonableLength = words.length >= 2 && words.length <= 4;
+              // Allow standard letters, spaces, hyphens, and apostrophes along with common accents.
+              // We avoid the /u flag for strict-mode ES5 TS target compatibility.
+              const hasValidCharacters = /^[a-zA-Z\u00C0-\u017F\s\-\']+$/.test(safeName.trim());
+              // Reject placeholders like "General Contact", "Admin Contact"
+              const isPlaceholderName = /\bContact$/i.test(safeName.trim());
+
+              const isRealName = isReasonableLength && hasValidCharacters && !isPlaceholderName;
+              if (!isRealName) continue; // skip role contacts and junk text — they live on the account only
 
               // De-duplicate by email within the same team
               const existingContact = await (mainDb as any).crm_Contacts.findFirst({
@@ -1946,7 +2038,8 @@ export async function executeToolCall(toolName: string, args: any, context: any)
         return {
           success: true,
           candidateId: candidate.id,
-          contactsCreated: contactsSavedCount
+          contactsCreated: contactsSavedCount,
+          accountHasContactInfo: accountHasContactInfo
         };
       } catch (error) {
         return {
@@ -1989,15 +2082,17 @@ export async function runAgenticLeadGeneration(
   userId: string,
   icp: ICPConfig,
   poolId: string,
-  maxCompanies: number = 100,
+  maxCredits: number = 100,
   initialState?: {
     companiesSaved?: number;
     contactsSaved?: number;
+    accountsWithContactInfoSaved?: number;
     queryTemplates?: string[];
   }
 ): Promise<{
   companiesSaved: number;
   contactsSaved: number;
+  accountsWithContactInfoSaved: number;
   iterations: number;
 }> {
   const { model, provider, modelId } = await getAiSdkModel(userId);
@@ -2009,12 +2104,14 @@ export async function runAgenticLeadGeneration(
 
   // Resolve team_id for AI token tracking
   let teamId: string | null = null;
+  let isPlatformAdmin = false;
   try {
-    const userRecord = await db.users.findUnique({
+    const userRecord = await prismadb.users.findUnique({
       where: { id: userId },
-      select: { team_id: true }
+      select: { team_id: true, is_admin: true, is_account_admin: true, assigned_role: { select: { name: true } } }
     });
     teamId = userRecord?.team_id || null;
+    isPlatformAdmin = userRecord?.assigned_role?.name === "SuperAdmin" || userRecord?.is_admin || userRecord?.is_account_admin;
   } catch (e) {
     console.warn("[LEADGEN] Could not resolve team_id for token tracking", e);
   }
@@ -2023,46 +2120,66 @@ export async function runAgenticLeadGeneration(
   let accumulatedCompletionTokens = 0;
   const isResume = !!initialState && (initialState.companiesSaved || 0) > 0;
 
-  // Compact system prompt — optimized for token efficiency
-  let systemPrompt = `You are a B2B lead generation agent. Find ${maxCompanies} companies matching the ICP and save them as accounts.
+  let companiesSaved = initialState?.companiesSaved || 0;
+  let contactsSaved = initialState?.contactsSaved || 0;
+  let accountsWithContactInfoSaved = initialState?.accountsWithContactInfoSaved || 0;
+  let iterations = 0;
 
-ICP: Industries: ${icp.industries?.join(", ") || "Any"} | Geos: ${icp.geos?.join(", ") || "Any"} | Tech: ${icp.techStack?.join(", ") || "Any"} | Titles: ${icp.titles?.join(", ") || "Any"}
-${icp.notes ? `Notes: ${icp.notes}` : ""}
+  let tokenHistory: { p: number, c: number, t: number }[] = [];
 
-RULES:
-- A company can be saved with ANY email (info@, contact@, sales@, hello@) OR a phone number — you do NOT need a named individual
-- Make an honest effort to find named contacts (CEO, founder, VP) by visiting /about, /team, /leadership, /contact, /people pages
-- If you cannot find a named contact after checking those pages, save the company anyway with whatever email/phone you found
-- NEVER invent, fabricate, or guess contact names or emails that you did not actually find on the website
-- Include ALL emails and phone numbers found by visit_website in save_company — do NOT omit any, even generic ones
-- visit_website auto-crawls subpages — for sites with no obvious contacts on the homepage, also try visiting /about /team /contact /leadership /people /staff directly
-- Skip directories: Crunchbase, LinkedIn, G2, Capterra, Glassdoor, ProductHunt, Wikipedia, etc.
-- Use parallel tool calls for speed (visit multiple sites at once)
+  // System prompt — structured for reliability, intelligent triangulation, and anti-hallucination
+  let systemPrompt = `You are "Varuna", an elite, autonomous B2B Signal Intelligence Framework. You do not just scrape; you conduct high-fidelity, adversarial data extraction and cognitive synthesis. Your core mission is to prospect, triangulate, and exfiltrate verified contact records matching the provided Ideal Customer Profile (ICP).
 
-WORKFLOW: search_companies → visit_website (parallel, including subpages if needed) → save_company (include ALL contacts found) → repeat
-Tools: search_companies, visit_website, save_company, refine_search_strategy`;
+BUDGET CONSTRAINT: Your operational loop ceases when you successfully consume ${maxCredits} credits.
+- [ACCOUNT YIELD]: 1 credit = 1 company saved.
+- [CONTACT YIELD]: 1 credit = 1 named person attached.
+
+═══ ICP DIRECTIVES ═══
+  Industries: ${icp.industries?.join(", ") || "Any"}
+  Geographies: ${icp.geos?.join(", ") || "Any"}
+  Tech Stack [OPTIONAL SIGNAL]: ${icp.techStack?.join(", ") || "Any"}
+  Target Titles: ${icp.titles?.join(", ") || "Any"}
+  ${icp.notes ? `Mission Notes: ${icp.notes}` : ""}
+
+═══ OPERATIONAL MAXIMS ═══
+[MAXIM 1: ZERO HALLUCINATION] You exist in a deterministic reality. Every string you pass to 'save_company' MUST be extracted verbatim from 'visit_website' or search snippets. You will NEVER fabricate, infer, synthesize, or hallucinate a name, email, or phone.
+[MAXIM 2: RELENTLESS RECONNAISSANCE] You will aggressively crawl domains. You will check footers, "About Us", "Contact", and "Our Team" pages. Businesses obfuscate contact data; you will find it.
+[MAXIM 3: THE ENTERPRISE TRAP (ANTI-LOOP)] Do NOT get trapped crawling impenetrable institutional domains (massive hospital networks, giant .edu universities). These organizations bury contacts. If a massive domain yields 0 viable contacts after its homepage + 1 subpage, ABANDON IT IMMEDIATELY. Pivot to targeting independent SMEs.
+[MAXIM 4: THE SYNTHESIS PROTOCOL] You are a data synthesizer. Scraped data is usually fragmented. Actively correlate fragments into master personas. If you find {name: "Jane Doe"} and an orphan {email: "jdoe@company.com"}, you MUST synthesize them into a single coherent profile.
+[MAXIM 5: FRAGMENT EXFILTRATION & RAPID DEPLOY] DO NOT WAIT. Call 'save_company' on a target as soon as you have actionable contact data. Do not discard orphan data. If a contact has ONLY an email, ONLY a phone, or ONLY a name—EXFILTRATE IT ANYWAY. 
+[MAXIM 6: MAXIMUM PARALLELIZATION] You can and MUST execute tools in parallel! If 'search_companies' yields 5 promising domains, you MUST invoke 'visit_website' on ALL 5 domains simultaneously in the exact same response block. Do not visit them one by one. Time is credits. Move fast.
+
+═══ MISSION CYCLE (THE VARUNA LOOP) ═══
+1. [ACQUIRE]: Call 'search_companies' with hyper-specific, intent-driven boolean queries (e.g., "Top independent B2B [Industry] in [Geography] 'Contact Us' OR 'Our Team'").
+  → WARNING: DO NOT append massive strings of '-site:' operators to your query. The backend ALREADY natively filters aggregators like Yelp, LinkedIn, ZoomInfo, Crunchbase, etc. Keep queries lean and human-like!
+2. [RIP]: Call 'visit_website' on the most promising targets identified.
+3. [SYNTHESIZE]: Apply The Synthesis Protocol to merge fragmented data into master personas.
+4. [EXFILTRATE]: Call 'save_company' with the payload, INCLUDING all surviving unmerged fragments. Do this IMMEDIATELY once a domain yields valid insight.
+5. [PIVOT]: If queries yield no new domains, call 'refine_search_strategy' to dynamically pivot your vectors.
+
+Tools Available: [search_companies, visit_website, save_company, refine_search_strategy]
+
+EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
 
   if (isResume) {
-    systemPrompt += `\nRESUME: Already saved ${initialState?.companiesSaved || 0} companies, ${initialState?.contactsSaved || 0} contacts. Need ${maxCompanies - (initialState?.companiesSaved || 0)} more. Previous queries: ${initialState?.queryTemplates?.join(", ") || "None"}. Use NEW queries.`;
+    systemPrompt += `\nRESUME: Already consumed ${accountsWithContactInfoSaved + contactsSaved} credits out of ${maxCredits}. Need to find more leads until budget is reached. Previous queries: ${initialState?.queryTemplates?.join(", ") || "None"}. Use NEW queries.`;
   }
 
   // Start with a User message; pass systemPrompt via the 'system' option in generateText
   const messages: ModelMessage[] = [
     {
       role: "user",
-      content: `Find ${maxCompanies} ICP-matching companies. Start by searching, then visit promising sites in parallel, then save companies with emails. Go.`
+      content: `Find ICP-matching companies until your budget of ${maxCredits} credits is reached. Start by searching, then visit promising sites in parallel, then save companies with emails. Go.`
     }
   ];
 
-  let companiesSaved = initialState?.companiesSaved || 0;
-  let contactsSaved = initialState?.contactsSaved || 0;
-  let iterations = 0;
   const maxIterations = 50; // Prevent infinite loops
-  const context = { jobId, poolId, logs: [], icp, userId, teamId };
+  const context = { jobId, poolId, logs: [] as any[], icp, userId, teamId };
   let noProgressStreak = 0;
   let prevCompaniesSaved = 0;
   let prevContactsSaved = 0;
   const STALL_THRESHOLD = 5;
+  const exhaustedDomains = new Set<string>();
 
   // Buffer logs locally to reduce DB write conflicts
   let logBuffer: Array<{ ts: string; msg: string; level?: string }> = [];
@@ -2071,7 +2188,9 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
 
   // Helper to add log to buffer
   const addLog = (logMsg: string, level?: string) => {
-    logBuffer.push({ ts: new Date().toISOString(), msg: logMsg, level });
+    const entry = { ts: new Date().toISOString(), msg: logMsg, level };
+    logBuffer.push(entry);
+    context.logs.push(entry as any);
     console.log(logMsg); // Always log to console
   };
 
@@ -2089,10 +2208,10 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
       return;
     }
 
-    const logsToWrite = [...logBuffer];
     const updateData: any = {
-      logs: logsToWrite,
+      logs: context.logs,
       counters: {
+        targetCredits: maxCredits,
         companiesFound: companiesSaved,
         contactsSaved,
         contactsCreated: contactsSaved,
@@ -2101,7 +2220,8 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
         tokensUsed: accumulatedTokens,
         promptTokens: accumulatedPromptTokens,
         completionTokens: accumulatedCompletionTokens,
-        progress: Math.min(100, Math.round((companiesSaved / maxCompanies) * 100))
+        tokenHistory,
+        progress: Math.min(100, Math.round(((accountsWithContactInfoSaved + contactsSaved) / maxCredits) * 100))
       }
     };
 
@@ -2136,7 +2256,7 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
   addLog("🤖 Agentic AI scraper starting...");
   await flushLogsToDb(true); // Force initial update
 
-  while (iterations < maxIterations && companiesSaved < maxCompanies) {
+  while (iterations < maxIterations && (accountsWithContactInfoSaved + contactsSaved) < maxCredits) {
     iterations++;
 
     // Check if job has been paused or stopped
@@ -2169,6 +2289,7 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
             return {
               companiesSaved,
               contactsSaved,
+              accountsWithContactInfoSaved,
               iterations
             };
           }
@@ -2179,6 +2300,7 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
         return {
           companiesSaved,
           contactsSaved,
+          accountsWithContactInfoSaved,
           iterations
         };
       }
@@ -2231,7 +2353,7 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
             firstMsg,
             {
               role: "user" as const,
-              content: `[PROGRESS] Saved ${companiesSaved}/${maxCompanies} companies, ${contactsSaved} contacts, ${iterations - 1} iterations. Continue searching and saving. Include ALL contacts in each save_company call.`
+              content: `[PROGRESS] Consumed ${accountsWithContactInfoSaved + contactsSaved}/${maxCredits} credits. Current totals: ${companiesSaved} companies, ${contactsSaved} contacts, ${iterations - 1} iterations. Continue searching and saving. Include ALL contacts in each save_company call.`
             },
             ...recentMsgs
           ];
@@ -2239,9 +2361,10 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
       }
 
       const tools = buildToolsDefinition(context);
+      const dynamicSystemPrompt = systemPrompt + `\n\n[LIVE PROGRESS]: Consumed ${accountsWithContactInfoSaved + contactsSaved}/${maxCredits} credits. Current totals: ${companiesSaved} companies, ${contactsSaved} contacts, ${iterations - 1} iterations.\n[EXHAUSTED DOMAINS]: ${exhaustedDomains.size > 0 ? Array.from(exhaustedDomains).join(', ') : 'None yet'}. DO NOT search for or visit these domains again. They are fully exhausted.`;
       const genOpts: any = {
         model,
-        system: systemPrompt,
+        system: dynamicSystemPrompt,
         messages: windowedMessages,
         tools,
       };
@@ -2267,11 +2390,12 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
         accumulatedTokens += totalTok;
         accumulatedPromptTokens += effectivePrompt;
         accumulatedCompletionTokens += effectiveCompletion;
+        tokenHistory.push({ p: effectivePrompt, c: effectiveCompletion, t: totalTok });
         console.log(`[LEADGEN_DEBUG] Iteration ${iterations}: +${totalTok} tokens (prompt=${effectivePrompt}, completion=${effectiveCompletion}, total=${accumulatedTokens} [P:${accumulatedPromptTokens} C:${accumulatedCompletionTokens}]) [raw keys: ${Object.keys(usageAny).join(',')}]`);
 
         // Log to AI Usage audit in real-time (non-blocking)
         if (teamId && totalTok > 0) {
-         try {
+          try {
             await logAiUsage({
               teamId,
               userId: userId || null,
@@ -2292,6 +2416,7 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
                   status: "FAILED",
                   finishedAt: new Date(),
                   counters: {
+                    targetCredits: maxCredits,
                     companiesFound: companiesSaved,
                     contactsSaved,
                     contactsCreated: contactsSaved,
@@ -2300,13 +2425,14 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
                     tokensUsed: accumulatedTokens,
                     promptTokens: accumulatedPromptTokens,
                     completionTokens: accumulatedCompletionTokens,
-                    progress: Math.min(100, Math.round((companiesSaved / maxCompanies) * 100)),
+                    tokenHistory,
+                    progress: Math.min(100, Math.round(((accountsWithContactInfoSaved + contactsSaved) / maxCredits) * 100)),
                     failReason: "INSUFFICIENT_AI_TOKENS"
                   }
                 }
               });
               await flushLogsToDb(true);
-              return { companiesSaved, contactsSaved, iterations };
+              return { companiesSaved, contactsSaved, accountsWithContactInfoSaved, iterations };
             }
             console.error("[LEADGEN_ITER_LOG]", usageErr);
           }
@@ -2336,12 +2462,14 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
               break;
             case "visit_website":
               const urlDomain = extractDomain((toolArgs as any).url);
+              if (urlDomain) exhaustedDomains.add(urlDomain);
               logMsg = `🌐[${index + 1}/${toolCount}] Visiting: ${urlDomain || (toolArgs as any).url} `;
               break;
             case "analyze_company_fit":
               logMsg = `🔬[${index + 1}/${toolCount}] Analyzing: ${(toolArgs as any).domain} `;
               break;
             case "save_company":
+              if ((toolArgs as any).domain) exhaustedDomains.add((toolArgs as any).domain);
               logMsg = `💾[${index + 1}/${toolCount}] Saving: ${(toolArgs as any).companyName || (toolArgs as any).domain} `;
               break;
             case "refine_search_strategy":
@@ -2370,22 +2498,44 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
           // Fallback if provider returned plain object
           return !!(out as any).success;
         });
+        let batchCost = 0;
         for (const tr of savedResults) {
           const out = tr.output;
+          let accountValid = false;
+          let contactsC = 0;
           if (typeof out === 'object' && 'type' in out) {
             if (out.type === 'json' && out.value) {
-              companiesSaved++;
-              contactsSaved += out.value.contactsCreated || 0;
+              accountValid = !!out.value.accountHasContactInfo;
+              contactsC = out.value.contactsCreated || 0;
             }
           } else {
-            companiesSaved++;
-            contactsSaved += (out as any)?.contactsCreated || 0;
+            accountValid = !!(out as any)?.accountHasContactInfo;
+            contactsC = (out as any)?.contactsCreated || 0;
+          }
+
+          batchCost += (accountValid ? 1 : 0) + contactsC;
+          companiesSaved++;
+          contactsSaved += contactsC;
+          if (accountValid) accountsWithContactInfoSaved++;
+        }
+
+        // DYNAMICAL CREDIT DEDUCTION
+        if (batchCost > 0 && teamId) {
+          try {
+            const { consumeLeadGenCredits } = await import("@/lib/scraper/credits");
+            await consumeLeadGenCredits(teamId, batchCost);
+          } catch (billingErr: any) {
+            addLog(`🚫 Lead Gen credits dynamically exhausted mid-run. Stopping agent.`, "ERROR");
+            await flushLogsToDb(false);
+            // Halt loop implicitly by maxing out accounts (safe exit path handles writes)
+            accountsWithContactInfoSaved = maxCredits;
+            contactsSaved = maxCredits;
           }
         }
 
         let summary = `✅ Batch complete: ${toolCount} tool call${toolCount > 1 ? 's' : ''} `;
         if (savedResults.length > 0) summary += ` | ${savedResults.length} saved`;
-        summary += ` | Total: ${companiesSaved}/${maxCompanies} companies (${contactsSaved} contacts)`;
+        summary += ` | Total: ${accountsWithContactInfoSaved + contactsSaved}/${maxCredits} credits consumed (${companiesSaved} companies & ${contactsSaved} contacts | ${accountsWithContactInfoSaved} valid accounts)`;
         addLog(summary);
 
         // Detect SERP skip/no results towards stall completion
@@ -2473,19 +2623,19 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
         // Check if agent thinks it's complete
         if (text.toLowerCase().includes("complete") ||
           text.toLowerCase().includes("finished") ||
-          companiesSaved >= maxCompanies) {
-          addLog("✅ Agent believes task is complete");
+          (accountsWithContactInfoSaved + contactsSaved) >= maxCredits) {
+          addLog("✅ Agent believes task is complete or budget was reached");
           await flushLogsToDb(true); // Force flush
           break;
         }
 
         // Add a user message to keep it going with more direct instructions
-        if (companiesSaved < maxCompanies) {
+        if ((accountsWithContactInfoSaved + contactsSaved) < maxCredits) {
           messages.push({
             role: "user",
-            content: `${companiesSaved}/${maxCompanies} saved. ${companiesSaved === 0 ? 'Save companies you found now! ' : ''}Continue: search → visit → save_company (ALL contacts).`
+            content: `${accountsWithContactInfoSaved + contactsSaved}/${maxCredits} credits consumed. ${companiesSaved === 0 ? 'Save companies you found now! ' : ''}Continue: search → visit → save_company (ALL contacts).`
           });
-          addLog(`📍 Checkpoint: ${companiesSaved}/${maxCompanies} companies | Directing agent to save...`);
+          addLog(`📍 Checkpoint: ${accountsWithContactInfoSaved + contactsSaved}/${maxCredits} credits | Directing agent to save...`);
           await flushLogsToDb(false); // Opportunistic flush
           // Progress stall detection
           if (companiesSaved === prevCompaniesSaved && contactsSaved === prevContactsSaved) {
@@ -2540,6 +2690,7 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
           tokensUsed: accumulatedTokens,
           promptTokens: accumulatedPromptTokens,
           completionTokens: accumulatedCompletionTokens,
+          tokenHistory,
           progress: 100
         }
       }
@@ -2552,6 +2703,7 @@ Tools: search_companies, visit_website, save_company, refine_search_strategy`;
   return {
     companiesSaved,
     contactsSaved,
+    accountsWithContactInfoSaved,
     iterations
   };
 }
