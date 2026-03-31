@@ -57,7 +57,7 @@ export async function getOrCreateStripeCustomer(
             stripe_customer_id: customer.id,
             payment_provider: "STRIPE",
             customer_email: email,
-            plan_name: "FREE",
+            plan_name: "STARTER",
             amount: 0,
             billing_day: new Date().getDate(),
             interval: "monthly",

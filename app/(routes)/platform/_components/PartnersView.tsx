@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Users as UsersIcon, Edit, CalendarClock, Lock, Search, Filter, ArrowUpDown, X } from "lucide-react";
+import { useSignedUrl } from "@/hooks/use-signed-url";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +77,18 @@ import {
 } from "@/components/ui/table";
 
 const LinkHref = Link as any;
+
+/** Resolves S3/OVH avatar URLs via signed URL hook; falls back to initials. */
+function SignedAvatar({ url, name }: { url: string; name: string }) {
+    const { signedUrl } = useSignedUrl(url);
+    const [failed, setFailed] = useState(false);
+
+    if (!signedUrl || failed) {
+        return <span className="text-xs font-semibold text-primary/80">{(name || "?")[0].toUpperCase()}</span>;
+    }
+
+    return <img src={signedUrl} alt={name || "User"} className="h-full w-full object-cover" onError={() => setFailed(true)} />;
+}
 
 const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
     const router = useRouter();
@@ -417,7 +430,7 @@ const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
                                         {team.members.slice(0, 5).map((member) => (
                                             <div key={member.id} className="h-8 w-8 rounded-full ring-2 ring-background bg-primary/10 flex items-center justify-center overflow-hidden" title={member.name || member.email}>
                                                 {member.avatar ? (
-                                                    <img src={member.avatar} alt={member.name || "User"} className="h-full w-full object-cover" />
+                                                    <SignedAvatar url={member.avatar} name={member.name || member.email} />
                                                 ) : (
                                                     <span className="text-xs font-semibold text-primary/80">{(member.name || member.email)[0].toUpperCase()}</span>
                                                 )}
@@ -444,7 +457,7 @@ const PartnersView = ({ initialTeams, availablePlans = [] }: Props) => {
                                             )}
                                         </span>
                                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs shadow-sm">
-                                            {getDisplayPlan(team) || "Free"}
+                                            {getDisplayPlan(team) || "Starter"}
                                         </Badge>
                                     </div>
                                     <div className="flex gap-2">

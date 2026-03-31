@@ -6,7 +6,8 @@
  * in the environment.
  * 
  * Usage:
- *   npx tsx scripts/seed-stripe.ts
+ *   npx tsx scripts/seed-stripe.ts          # Create/update products & prices
+ *   npx tsx scripts/seed-stripe.ts --wipe   # Archive old products, then recreate
  * 
  * Idempotent: Searches for existing products by metadata before creating new ones.
  */
@@ -31,18 +32,18 @@ const stripe = new Stripe(STRIPE_API_KEY, {
 
 const PLANS = [
     {
-        slug: "INDIVIDUAL_BASIC",
-        name: "Basalt CRM — Individual Basic",
-        description: "Essential CRM with AI-powered tools. 2 users, 5M AI tokens/month.",
-        monthlyPrice: 5000,   // $50.00 in cents
-        annualPrice: 48000,   // $480.00 in cents ($40/mo with 20% discount)
+        slug: "GROWTH",
+        name: "Basalt CRM — Growth",
+        description: "CRM for growing teams. 5 users, 5M AI tokens/month, 5,000 emails/month.",
+        monthlyPrice: 2900,    // $29.00 in cents
+        annualPrice: 27840,    // $278.40 in cents ($23.20/mo with 20% discount)
     },
     {
-        slug: "INDIVIDUAL_PRO",
-        name: "Basalt CRM — Individual Pro",
-        description: "Full-featured CRM for growing teams. 4 users, 20M AI tokens/month.",
-        monthlyPrice: 15000,  // $150.00 in cents
-        annualPrice: 144000,  // $1,440.00 in cents ($120/mo with 20% discount)
+        slug: "SCALE",
+        name: "Basalt CRM — Scale",
+        description: "Full-featured CRM with SMS, voice & unlimited forms. 10 users, 20M AI tokens/month.",
+        monthlyPrice: 7900,    // $79.00 in cents
+        annualPrice: 75840,    // $758.40 in cents ($63.20/mo with 20% discount)
     },
 ];
 
@@ -52,6 +53,9 @@ const TOPUP = {
     description: "One-time purchase of 6,000,000 additional AI tokens for your team.",
     price: 999,  // $9.99 in cents
 };
+
+// Legacy slugs that should be deactivated during --wipe
+const LEGACY_SLUGS = ["INDIVIDUAL_BASIC", "INDIVIDUAL_PRO", "BASIC", "PRO", "FREE"];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -80,13 +84,48 @@ async function findExistingPrice(productId: string, interval?: string): Promise<
     return prices.data.find(p => p.recurring?.interval === interval) || null;
 }
 
+async function archiveProduct(slug: string) {
+    const product = await findExistingProduct(slug);
+    if (!product) return;
+
+    // Deactivate all prices
+    const prices = await stripe.prices.list({ product: product.id, active: true, limit: 100 });
+    for (const price of prices.data) {
+        await stripe.prices.update(price.id, { active: false });
+        console.log(`   🗑️  Deactivated price: ${price.id}`);
+    }
+
+    // Archive the product
+    await stripe.products.update(product.id, { active: false });
+    console.log(`   🗑️  Archived product: ${product.id} (${slug})`);
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
 async function main() {
+    const isWipe = process.argv.includes("--wipe");
+
     console.log("🔧 Stripe Product & Price Seeder");
+    if (isWipe) console.log("⚠️  WIPE MODE: Archiving old products first");
     console.log("=".repeat(60));
+
+    // ── Wipe Mode: Archive legacy and current products ──────────
+    if (isWipe) {
+        console.log("\n🗑️  Archiving legacy products...");
+        for (const slug of LEGACY_SLUGS) {
+            await archiveProduct(slug);
+        }
+
+        console.log("\n🗑️  Archiving current products (will be recreated)...");
+        for (const plan of PLANS) {
+            await archiveProduct(plan.slug);
+        }
+        await archiveProduct(TOPUP.slug);
+
+        console.log("\n✅ Archive complete. Recreating fresh products...\n");
+    }
 
     const envLines: string[] = [];
 
@@ -103,6 +142,7 @@ async function main() {
             product = await stripe.products.update(product.id, {
                 name: plan.name,
                 description: plan.description,
+                active: true,
             });
         } else {
             product = await stripe.products.create({
@@ -166,9 +206,8 @@ async function main() {
             console.log(`   ✨ Created annual price: ${annualPrice.id} ($${plan.annualPrice / 100}/yr)`);
         }
 
-        const slugUpper = plan.slug.toUpperCase();
-        envLines.push(`STRIPE_PRICE_${slugUpper}_MONTHLY=${monthlyPrice.id}`);
-        envLines.push(`STRIPE_PRICE_${slugUpper}_ANNUAL=${annualPrice.id}`);
+        envLines.push(`STRIPE_PRICE_${plan.slug}_MONTHLY=${monthlyPrice.id}`);
+        envLines.push(`STRIPE_PRICE_${plan.slug}_ANNUAL=${annualPrice.id}`);
     }
 
     // ── AI Token Top-Up ────────────────────────────────────────
@@ -181,6 +220,7 @@ async function main() {
         topupProduct = await stripe.products.update(topupProduct.id, {
             name: TOPUP.name,
             description: TOPUP.description,
+            active: true,
         });
     } else {
         topupProduct = await stripe.products.create({

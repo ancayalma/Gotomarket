@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { MoreHorizontal, Shield, User, Trash, Search, Plus, KeyRound, Ban, CheckCircle, Fingerprint, UserPlus, Building2, Layers } from "lucide-react";
 import { UserModulesModal } from "./UserModulesModal";
 import { AssignDepartmentModal } from "./AssignDepartmentModal";
+import { useSignedUrl } from "@/hooks/use-signed-url";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,12 @@ const PLATFORM_ADMIN_ROLE: RoleOption = {
     description: "Full control over the entire platform (Super Admin).",
     icon: Shield,
 };
+
+/** Resolves private S3/OVH avatar URLs via signed URL hook. */
+function SignedAvatarImage({ src, ...props }: { src?: string | null } & React.ComponentPropsWithoutRef<typeof AvatarImage>) {
+    const { signedUrl } = useSignedUrl(src);
+    return <AvatarImage {...props} src={signedUrl || undefined} />;
+}
 
 
 type Member = {
@@ -309,7 +316,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                                         <div key={user.id} className="flex justify-between items-center p-2 hover:bg-muted rounded">
                                             <div className="flex items-center gap-2">
                                                 <Avatar className="h-8 w-8">
-                                                    <AvatarImage src={user.avatar || undefined} />
+                                                    <SignedAvatarImage src={user.avatar || undefined} />
                                                     <AvatarFallback>{(user.name?.[0] || "U")}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="text-sm">
@@ -457,7 +464,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                             <div key={member.id} className={`flex items-center justify-between p-4 border rounded-lg ${isOwner ? "bg-amber-500/5 border-amber-500/30" : "bg-card/50"}`}>
                                 <div className="flex items-center gap-4">
                                     <Avatar>
-                                        <AvatarImage src={member.avatar || undefined} />
+                                        <SignedAvatarImage src={member.avatar || undefined} />
                                         <AvatarFallback>{(member.name || member.email)[0].toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                     <div>
