@@ -245,7 +245,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
     // Downgrade to FREE
     const freePlan = await prismadb.plan.findFirst({
-        where: { slug: "FREE" },
+        where: { slug: "STARTER" },
     });
 
     await prismadb.crm_Subscriptions.update({
@@ -253,7 +253,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         data: {
             status: "CANCELLED",
             stripe_subscription_id: null,
-            plan_name: "FREE",
+            plan_name: "STARTER",
             amount: 0,
         },
     });
@@ -263,7 +263,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
             where: { id: teamId },
             data: {
                 plan_id: freePlan.id,
-                subscription_plan: "FREE",
+                subscription_plan: "STARTER",
             },
         });
     }

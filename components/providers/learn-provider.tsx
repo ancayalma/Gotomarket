@@ -65,7 +65,18 @@ export function LearnProvider({ children }: { children: React.ReactNode }) {
 export function useLearn() {
     const context = useContext(LearnContext);
     if (context === undefined) {
-        throw new Error("useLearn must be used within a LearnProvider");
+        // Return a no-op fallback so components that mount outside the
+        // provider tree (e.g. during SSR of server components) don't crash.
+        return {
+            activeTab: null,
+            tooltipLabel: null,
+            dismissKey: null,
+            overviewTitle: null,
+            overviewWhat: null,
+            overviewWhy: null,
+            overviewHow: null,
+            setActiveLearn: () => {},
+        } as LearnContextType;
     }
     return context;
 }

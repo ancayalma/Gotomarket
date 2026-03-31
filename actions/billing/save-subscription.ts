@@ -74,14 +74,46 @@ export async function saveSubscription(data: {
             }
         }
 
+        // =====================================================================
+        // STRIPE PATH — Skip local subscription record creation.
+        // The Stripe webhook (checkout.session.completed) handles subscription
+        // creation + plan assignment AFTER payment is confirmed.
+        // This prevents stale PENDING records when users cancel checkout.
+        // =====================================================================
+        if (provider === "STRIPE") {
+            try {
+                const checkoutSession = await createStripeCheckoutSession(
+                    teamId,
+                    user.email!,
+                    data.planName,
+                    data.interval,
+                    team?.name
+                );
+
+                if (checkoutSession?.url) {
+                    return { success: true, url: checkoutSession.url, provider: "STRIPE" };
+                }
+            } catch (stripeErr) {
+                systemLogger.error("[SaveSubscription] Stripe checkout failed", stripeErr);
+                return { error: "Stripe checkout session creation failed. Please try again." };
+            }
+
+            return { error: "Stripe checkout session creation failed (no URL returned)." };
+        }
+
+        // =====================================================================
+        // SURGE PATH (below) — Create subscription record upfront for manual
+        // payment since Surge uses an in-app payment modal, not an external redirect.
+        // =====================================================================
+
         const isInternalTeam = team && ['basalt', 'basalthq', 'ledger1'].includes(team.slug.toLowerCase());
 
         // Internal/exempt teams get ACTIVE immediately; everyone else starts PENDING
-        // until payment is confirmed via Stripe/Surge webhook
+        // until payment is confirmed via Surge webhook
         const status = isInternalTeam ? "ACTIVE" : "PENDING_PAYMENT";
         const lastChargeStatus = isInternalTeam ? "SYSTEM_FREE_TIER" : "PENDING_FIRST_PAYMENT";
 
-        // 1. Create/Update the Subscription Record
+        // 1. Create/Update the Subscription Record (Surge only)
         const sub = await prismadb.crm_Subscriptions.upsert({
             where: { tenant_id: teamId },
             create: {
@@ -124,28 +156,6 @@ export async function saveSubscription(data: {
             sendSmsSetupInstructions(user.email!, user.name!, data.planName, appUrl).catch(e => {
                 systemLogger.error(`[SaveSubscription] Failed to send SMS Setup Instructions to ${user.email}`, e);
             });
-        }
-
-        // =====================================================================
-        // STRIPE PATH — Redirect to Stripe Checkout
-        // =====================================================================
-        if (provider === "STRIPE") {
-            try {
-                const checkoutSession = await createStripeCheckoutSession(
-                    teamId,
-                    user.email!,
-                    data.planName,
-                    data.interval,
-                    team?.name
-                );
-
-                if (checkoutSession?.url) {
-                    return { success: true, url: checkoutSession.url, provider: "STRIPE" };
-                }
-            } catch (stripeErr) {
-                systemLogger.error("[SaveSubscription] Stripe checkout failed", stripeErr);
-                return { error: "Stripe checkout session creation failed. Please try again." };
-            }
         }
 
         // =====================================================================
