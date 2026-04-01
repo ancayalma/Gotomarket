@@ -733,7 +733,7 @@ export default function CampaignDetailPage() {
                 </div>
 
                 {/* Email Send Progress Bar */}
-                {((campaign.status === "ACTIVE" || campaign.status === "PAUSED") && campaign.total_leads > 0) || isRepairing ? (
+                {((campaign.status === "ACTIVE" || campaign.status === "PAUSED") && (campaign.total_leads > 0 || campaign.emails_sent > 0)) || isRepairing ? (
                     <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
                             <span className="text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-2">

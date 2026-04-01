@@ -80,8 +80,8 @@ export async function POST() {
             return NextResponse.json({ message: "Email already verified", verified: true });
         }
 
-        // Trigger SES verification (sends the verification link email)
-        await verifyEmailIdentity(user.email);
+        // Trigger SES verification with force-resend (delete + recreate to actually send the email)
+        await verifyEmailIdentity(user.email, undefined, true);
 
         systemLogger.info(`[SES_USER_VERIFY] Verification triggered for user ${session.user.id} (${user.email})`);
         return NextResponse.json({

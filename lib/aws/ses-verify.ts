@@ -26,8 +26,22 @@ export type VerificationStatus = "PENDING" | "SUCCESS" | "FAILED" | "NOT_STARTED
  * Triggers a verification email to be sent to the specified address.
  * AWS SES will send a link that the user must click.
  */
-export async function verifyEmailIdentity(email: string, creds?: SESCredentials): Promise<boolean> {
+export async function verifyEmailIdentity(email: string, creds?: SESCredentials, forceResend?: boolean): Promise<boolean> {
     const client = getClient(creds);
+
+    // If forceResend is requested, delete the existing identity first
+    // so CreateEmailIdentity actually re-sends the verification email.
+    // SES silently no-ops on AlreadyExists — the only way to resend is delete + recreate.
+    if (forceResend) {
+        try {
+            const deleteCmd = new DeleteEmailIdentityCommand({ EmailIdentity: email });
+            await client.send(deleteCmd);
+            console.log(`[SES_VERIFY] Deleted existing identity for ${email} to force resend.`);
+        } catch {
+            // Ignore if not found — we'll create fresh
+        }
+    }
+
     try {
         const command = new CreateEmailIdentityCommand({
             EmailIdentity: email,
@@ -35,7 +49,7 @@ export async function verifyEmailIdentity(email: string, creds?: SESCredentials)
         await client.send(command);
         return true;
     } catch (error: any) {
-        // If already exists, we just want to ensure it's there — not an error.
+        // If already exists and we're NOT force-resending, that's fine.
         if (
             error.name === "AlreadyExistsException" ||
             error.Code === "AlreadyExistsException" ||
