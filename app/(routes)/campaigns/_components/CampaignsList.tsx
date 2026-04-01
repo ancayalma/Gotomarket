@@ -431,7 +431,7 @@ export default function CampaignsList() {
                                     </div>
 
                                     {/* Send Progress Bar */}
-                                    {campaign.total_leads > 0 && (
+                                    {(campaign.total_leads > 0 || campaign.emails_sent > 0) && (
                                         <div className="pt-2">
                                             <div className="flex items-center justify-between text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-1">
                                                 <span>Send Progress</span>
@@ -442,7 +442,7 @@ export default function CampaignsList() {
                                             <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
                                                 <div
                                                     className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-700"
-                                                    style={{ width: `${Math.min(100, (campaign.emails_sent / campaign.total_leads) * 100)}%` }}
+                                                    style={{ width: `${campaign.total_leads > 0 ? Math.min(100, (campaign.emails_sent / campaign.total_leads) * 100) : (campaign.emails_sent > 0 ? 100 : 0)}%` }}
                                                 />
                                             </div>
                                         </div>

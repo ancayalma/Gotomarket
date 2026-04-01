@@ -278,6 +278,31 @@ export async function POST(req: Request) {
         }
     }
 
+    // ── Upfront Email-Address Deduplication ──────────────────────────────
+    // When a broken import produces duplicate contacts with the same email
+    // (e.g. "Philip" and "Philip Ahn" both mapped to philip.ahn@cincyblind.org),
+    // we must deduplicate BEFORE entering the send loop. The reactive dedup
+    // inside the loop (sentEmailsThisDispatch) only works within a single
+    // API call and can miss duplicates in chunked/batched dispatches.
+    if (!testMode) {
+      const seenEmails = new Set<string>();
+      const deduped: any[] = [];
+      for (const r of recipients) {
+        const key = (r.targetEmail || "").toLowerCase();
+        if (!key || seenEmails.has(key)) {
+          systemLogger.info(`[OUTREACH_SEND] Upfront dedup: skipping duplicate email "${r.targetEmail}" (Lead ${r.id}, name="${r.firstName} ${r.lastName}")`);
+          continue;
+        }
+        seenEmails.add(key);
+        deduped.push(r);
+      }
+      if (deduped.length < recipients.length) {
+        systemLogger.info(`[OUTREACH_SEND] Upfront dedup removed ${recipients.length - deduped.length} duplicate email(s). ${deduped.length} unique recipients remain.`);
+      }
+      recipients.length = 0;
+      recipients.push(...deduped);
+    }
+
     if (recipients.length === 0) {
         return NextResponse.json({ sent: 0, skipped: 0, errors: 0, results: [], message: `No valid recipient emails found for requested leads.` });
     }

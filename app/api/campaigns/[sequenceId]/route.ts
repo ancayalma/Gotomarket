@@ -111,6 +111,7 @@ export async function GET(
         }
 
         // Step 4: Mark remaining legitimate PENDING items as SKIPPED when campaign is done
+        // Safe because Step 5 only auto-completes on genuine terminal statuses (not SKIPPED).
         const campaignIsDone = campaign.status === "COMPLETED" || campaign.status === "PAUSED";
         const sendingIsStale = actualPending > 0 && actualProcessed > 0 && actualSent >= (items.length - actualPending);
         if (actualPending > 0 && (campaignIsDone || sendingIsStale)) {
@@ -133,8 +134,12 @@ export async function GET(
             }
         }
 
-        // Step 5: Auto-complete ACTIVE campaign when all items are processed
-        if (campaign.status === "ACTIVE" && items.length > 0 && actualProcessed >= items.length) {
+        // Step 5: Auto-complete ACTIVE campaign ONLY when all items have genuine
+        // terminal statuses (SENT, OPENED, REPLIED, etc.). Items that are SKIPPED
+        // do NOT count as genuinely processed — they may need repair.
+        const genuineTerminalStatuses = new Set(["SENT", "OPENED", "CLICKED", "REPLIED", "BOUNCED", "DELIVERED", "FAILED"]);
+        const genuinelyProcessed = items.filter((i: any) => genuineTerminalStatuses.has(i.status)).length;
+        if (campaign.status === "ACTIVE" && items.length > 0 && genuinelyProcessed >= items.length) {
             await prisma.crm_Outreach_Campaigns.update({
                 where: { id: sequenceId },
                 data: { status: "COMPLETED" as any },
@@ -169,10 +174,18 @@ export async function PATCH(
 
         const { sequenceId } = await params;
         const body = await req.json();
-        const { status } = body;
+        const { status, campaignBranding } = body;
+
+        // At least one field must be provided
+        if (!status && !campaignBranding) {
+            return NextResponse.json(
+                { message: "Must provide at least 'status' or 'campaignBranding'" },
+                { status: 400 }
+            );
+        }
 
         const validStatuses = ["DRAFT", "ACTIVE", "PAUSED", "COMPLETED", "ARCHIVED"];
-        if (!status || !validStatuses.includes(status)) {
+        if (status && !validStatuses.includes(status)) {
             return NextResponse.json(
                 { message: `Invalid status. Must be one of: ${validStatuses.join(", ")}` },
                 { status: 400 }
@@ -188,12 +201,18 @@ export async function PATCH(
             return NextResponse.json({ message: "Campaign not found" }, { status: 404 });
         }
 
+        const updateData: any = {};
+        if (status) updateData.status = status;
+        if (campaignBranding) updateData.campaign_branding = campaignBranding;
+
         const updated = await prisma.crm_Outreach_Campaigns.update({
             where: { id: sequenceId },
-            data: { status: status as any },
+            data: updateData,
         });
 
-        systemLogger.info(`[CAMPAIGN_STATUS] Campaign ${sequenceId} status changed: ${campaign.status} → ${status} by user ${session.user.id}`);
+        if (status) {
+            systemLogger.info(`[CAMPAIGN_STATUS] Campaign ${sequenceId} status changed: ${campaign.status} → ${status} by user ${session.user.id}`);
+        }
 
         // If pausing, also cancel any pending CRON jobs
         if (status === "PAUSED") {
