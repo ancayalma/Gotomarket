@@ -533,7 +533,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                         <FormItem>
                           <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
-                            <Input disabled={isLoading} autoComplete="new-password" placeholder="Min 15 characters recommended (SOC2)" type={show ? "text" : "password"} {...field} className="pr-10" />
+                            <Input disabled={isLoading} autoComplete="new-password" placeholder="Min 15 characters required (SOC2)" type={show ? "text" : "password"} {...field} className="pr-10" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -551,7 +551,7 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                         <FormItem>
                           <FormLabel>Confirm Password <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
-                            <Input disabled={isLoading} autoComplete="new-password" placeholder="Confirm your long password…" type={show ? "text" : "password"} {...field} className="pr-10" />
+                            <Input disabled={isLoading} autoComplete="new-password" placeholder="Re-enter your 15+ character password" type={show ? "text" : "password"} {...field} className="pr-10" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
