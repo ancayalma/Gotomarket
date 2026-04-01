@@ -232,11 +232,11 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     department: "",
     phone: "",
     email: "",
-    website: "theutilitycompany.co",
+    website: "basaltcrm.com",
     websiteDisplayText: "",
     profileImage: "",
-    companyLogoUrl: "https://storage.googleapis.com/tgl_cdn/images/Medallions/TUC.png",
-    companyTagline: "Simple Choices. Complex Outcomes.",
+    companyLogoUrl: "https://app.basaltcrm.com/CRM-ERP-CMS.png",
+    companyTagline: "",
     accentColor: DEFAULT_COLOR,
     template: "professional",
     socialLinks: DEFAULT_SOCIAL_LINKS, // Initialize with default social links
@@ -748,9 +748,9 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
         if (fields.title && !prev.title) updated.title = fields.title;
         if (fields.email && !prev.email) updated.email = fields.email;
         if (fields.phone && !prev.phone) updated.phone = fields.phone;
-        if (fields.website && prev.website === "theutilitycompany.co") updated.website = fields.website;
+        if (fields.website && prev.website === "basaltcrm.com") updated.website = fields.website;
         if (fields.profileImage && !prev.profileImage) updated.profileImage = fields.profileImage;
-        if (fields.companyLogoUrl && prev.companyLogoUrl === "https://storage.googleapis.com/tgl_cdn/images/Medallions/TUC.png") updated.companyLogoUrl = fields.companyLogoUrl;
+        if (fields.companyLogoUrl && prev.companyLogoUrl === "https://app.basaltcrm.com/CRM-ERP-CMS.png") updated.companyLogoUrl = fields.companyLogoUrl;
         if (fields.accentColor) updated.accentColor = fields.accentColor;
         if (fields.socialLinks) {
           updated.socialLinks = fields.socialLinks.map(parsedLink => {
@@ -786,11 +786,32 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     if (useImportedHtml && importedRawHtml) {
       return importedRawHtml;
     }
+
+    const resolveImg = (url: string | undefined | null) => {
+      if (!url) return "";
+      if (url.includes("/api/media/")) return url;
+      if (url.includes("s3.") && url.includes("amazonaws.com") && url.includes("/uploads/")) {
+        try {
+          const urlObj = new URL(url);
+          const key = urlObj.pathname.startsWith('/') ? urlObj.pathname.slice(1) : urlObj.pathname;
+          const base = typeof window !== "undefined" ? window.location.origin : "https://app.basaltcrm.com";
+          return `${base}/api/media/${key}`;
+        } catch (e) {
+          return url;
+        }
+      }
+      return url;
+    };
+
     const {
       firstName, lastName, title, department, phone, email, website,
-      profileImage, companyLogoUrl, companyTagline, accentColor,
-      template, socialLinks, textColor, backgroundColor, highlightLastName, transparentBackground, medallions, imageShape, contactIconSize
+      companyTagline, accentColor,
+      template, socialLinks, textColor, backgroundColor, highlightLastName, transparentBackground, imageShape, contactIconSize
     } = data;
+
+    const profileImage = resolveImg(data.profileImage);
+    const companyLogoUrl = resolveImg(data.companyLogoUrl);
+    const medallions = data.medallions ? data.medallions.map(m => ({ ...m, imageUrl: resolveImg(m.imageUrl) })) : [];
 
     // Helper: Format Phone Number (+1 XXX-XXX-XXXX)
     const formatPhoneNumber = (str: string) => {
@@ -2017,9 +2038,9 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                             if (fields.title && !prev.title) updated.title = fields.title;
                             if (fields.email && !prev.email) updated.email = fields.email;
                             if (fields.phone && !prev.phone) updated.phone = fields.phone;
-                            if (fields.website && prev.website === "theutilitycompany.co") updated.website = fields.website;
+                            if (fields.website && prev.website === "basaltcrm.com") updated.website = fields.website;
                             if (fields.profileImage && !prev.profileImage) updated.profileImage = fields.profileImage;
-                            if (fields.companyLogoUrl && prev.companyLogoUrl === "https://storage.googleapis.com/tgl_cdn/images/Medallions/TUC.png") updated.companyLogoUrl = fields.companyLogoUrl;
+                            if (fields.companyLogoUrl && prev.companyLogoUrl === "https://app.basaltcrm.com/CRM-ERP-CMS.png") updated.companyLogoUrl = fields.companyLogoUrl;
                             if (fields.accentColor) updated.accentColor = fields.accentColor;
                             if (fields.socialLinks) {
                               updated.socialLinks = fields.socialLinks.map(parsedLink => {

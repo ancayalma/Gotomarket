@@ -106,7 +106,7 @@ export default async function AppLayout({
       
       const role = (fullUser?.team_role || '').trim().toUpperCase();
       const pRole = (fullUser?.assigned_role?.name || '').trim().toUpperCase();
-      const isSuperAdmin = fullUser?.is_admin === true || ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN', 'ADMIN'].includes(role) || pRole === 'SUPERADMIN';
+      const isSuperAdmin = fullUser?.is_admin === true || ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN'].includes(role) || pRole === 'SUPERADMIN';
       isPlatformAdmin = isSuperAdmin;
 
       if (fullUser?.team_id) {
