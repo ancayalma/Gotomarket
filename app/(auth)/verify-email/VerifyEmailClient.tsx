@@ -29,7 +29,7 @@ export default function VerifyEmailClient({ userEmail, isPlatformAdmin = false }
                 setVerified(true);
                 toast.success("Email verified successfully!");
                 setTimeout(() => {
-                    router.push("/");
+                    router.push("/admin");
                 }, 1200);
             } else {
                 toast.error("Email not yet verified. Please check your inbox and click the verification link.");
