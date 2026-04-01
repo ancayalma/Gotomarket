@@ -156,6 +156,10 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
           description: "Redirecting you to secure checkout...",
         });
 
+        if (typeof window !== "undefined" && (window as any).lintrk) {
+          (window as any).lintrk('track', { conversion_id: 24983276 });
+        }
+
         // Redirect directly to Stripe Checkout session
         window.location.href = response.data.paymentUrl;
       } else {
@@ -163,6 +167,11 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
           title: "Success",
           description: "User created successfully, please login.",
         });
+
+        if (typeof window !== "undefined" && (window as any).lintrk) {
+          (window as any).lintrk('track', { conversion_id: 24983276 });
+        }
+
         router.push("/sign-in");
       }
     } catch (error: any) {
