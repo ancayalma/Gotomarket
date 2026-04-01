@@ -18,10 +18,8 @@ import { systemLogger } from "@/lib/logger";
  */
 
 const DEFAULT_RESOURCES = [
-  { id: "surge", label: "Explore Surge", href: "https://surge.basalthq.com", type: "primary", enabled: true },
-  { id: "calendar", label: "Schedule a Call", href: "https://calendar.app.google/EJ4WsqeS2JSXt6ZcA", type: "primary", enabled: true },
-  { id: "investor_portal", label: "View Investor Portal", href: "https://stack.angellist.com/s/lp1srl5cnf", type: "secondary", enabled: true },
-  { id: "data_room", label: "Access Data Room", href: "https://stack.angellist.com/s/x8g9yjgpbw", type: "secondary", enabled: true },
+  { id: "website", label: "Visit Our Website", href: "https://basaltcrm.com", type: "primary", enabled: true, icon: "globe" },
+  { id: "calendar", label: "Book a Meeting", href: "https://calendly.com", type: "primary", enabled: true, icon: "calendar" },
 ];
 
 function isSafeUrl(url: string) {

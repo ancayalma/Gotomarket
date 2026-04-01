@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import React, { useRef, useState } from "react";
-import { Plus, Check, Shield, Zap, Target, Users as UsersIcon, HardDrive, CreditCard, ChevronRight, Sparkles, Calendar, Info, Wallet, Eye, EyeOff, User, Upload } from "lucide-react";
+import { Plus, Check, Shield, Zap, Target, Users as UsersIcon, HardDrive, CreditCard, ChevronRight, Sparkles, Calendar, Info, Wallet, Eye, EyeOff, User, Upload, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -194,6 +194,22 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
     }
     return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
   };
+
+  const formValues = form.watch();
+  const passwordStatus = {
+    length: (formValues.password?.length || 0) >= 15,
+    match: formValues.password && formValues.confirmPassword && formValues.password === formValues.confirmPassword,
+  };
+
+  const requiredSteps = [
+    { id: 'avatar', label: 'Profile Photo', isComplete: !!formValues.avatar },
+    { id: 'company', label: 'Company Name', isComplete: !!formValues.companyName && formValues.companyName.length >= 2 },
+    { id: 'plan', label: 'Select Tier', isComplete: !!formValues.planId },
+    { id: 'personal', label: 'Personal Info', isComplete: !!formValues.firstName && !!formValues.lastName && !!formValues.phone && !!formValues.username && !!formValues.email },
+    { id: 'password', label: 'Secure Password', isComplete: passwordStatus.length && passwordStatus.match },
+    { id: 'terms', label: 'Legal Agreements', isComplete: !!formValues.termsAccepted },
+  ];
+  const allStepsComplete = requiredSteps.every(s => s.isComplete);
 
 
   return (
@@ -545,6 +561,21 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                       {show ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
+
+                  <div className="bg-zinc-900/40 rounded-xl p-4 border border-white/5 space-y-3 mt-2">
+                    <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-[0.2em] text-zinc-500 mb-1">
+                      <Shield className="w-3.5 h-3.5 text-indigo-400" />
+                      SOC2 Password Criteria
+                    </div>
+                    <div className={cn("text-xs font-medium flex items-center gap-2 transition-colors", passwordStatus.length ? "text-emerald-400" : "text-zinc-500")}>
+                      {passwordStatus.length ? <Check className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border border-zinc-600 border-dashed shrink-0" />}
+                      Minimum 15 characters required
+                    </div>
+                    <div className={cn("text-xs font-medium flex items-center gap-2 transition-colors", passwordStatus.match ? "text-emerald-400" : "text-zinc-500")}>
+                      {passwordStatus.match ? <Check className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border border-zinc-600 border-dashed shrink-0" />}
+                      Passwords must match
+                    </div>
+                  </div>
                 </div>
 
                 <FormField
@@ -776,7 +807,24 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
             </div>
 
             <div className="grid gap-2 py-6">
-              <Button disabled={isLoading || !form.formState.isValid} type="submit" className="w-full py-6 font-bold text-lg">
+              {!allStepsComplete && (
+                <div className="bg-gradient-to-br from-zinc-900/80 to-zinc-950 border border-white/10 rounded-2xl p-5 mb-4 shadow-xl shadow-black/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="flex items-center gap-2 mb-4">
+                    <AlertTriangle className="w-4 h-4 text-amber-500 animate-pulse" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-300">Required to Proceed</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-2">
+                    {requiredSteps.map(step => (
+                      <div key={step.id} className={cn("text-[10px] uppercase font-bold tracking-wider flex items-center gap-2 transition-colors duration-500", step.isComplete ? "text-emerald-500" : "text-zinc-500")}>
+                        {step.isComplete ? <Check className="w-4 h-4" /> : <div className="w-4 h-4 rounded-full border-2 border-dashed border-zinc-700 shrink-0" />}
+                        {step.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Button disabled={isLoading || !form.formState.isValid} type="submit" className={cn("w-full py-6 font-bold text-lg transition-all duration-300", form.formState.isValid ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-primary/40 transform hover:-translate-y-0.5" : "")}>
                 Activate Intelligence Engine
               </Button>
             </div>
