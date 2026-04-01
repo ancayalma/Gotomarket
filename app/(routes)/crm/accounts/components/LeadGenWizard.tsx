@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Bot, FileText, Settings, Sparkles, Wand2, Zap, Globe, Code, Loader2, Sliders, FolderKanban, Target } from "lucide-react";
 import { toast } from "react-hot-toast";
 import useSWR from "swr";
@@ -35,6 +35,7 @@ type WizardState = {
 
 export default function LeadGenWizardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<WizardMode>("ai-only");
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -47,12 +48,12 @@ export default function LeadGenWizardPage() {
     getTeamCreditsInfo().then(setLimitsInfo).catch(console.error);
   }, []);
 
-  // Fetch campaigns for selector
-  const { data: campaignsData } = useSWR<{ campaigns: { id: string; name: string; status: string }[] }>("/api/campaigns", fetcher, {
+  // Fetch existing lists (pools) for selector
+  const { data: poolsData } = useSWR<{ pools: { id: string; name: string; candidatesCount: number }[] }>("/api/crm/leads/pools", fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 30000,
   });
-  const activeCampaigns = (campaignsData?.campaigns || []).filter(c => c.status !== "ARCHIVED" && c.status !== "COMPLETED");
+  const availablePools = poolsData?.pools || [];
 
   // Fetch brand identity for ICP pre-fill
   const { data: brandData } = useSWR("/api/admin/brand", fetcher, {
@@ -76,17 +77,35 @@ export default function LeadGenWizardPage() {
     serpFallback: true, // Default to true per plan
     aiPrompt: "",
     campaignId: "",
-    existingListId: "",
+    existingListId: searchParams?.get("poolId") || "",
   });
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    if (type === "number") {
-      setState((prev) => ({ ...prev, [name]: Number(value) }));
+    if (type === "number" || name === "maxCompanies" || name === "maxContactsPerCompany") {
+      // Strip leading zeros and clamp to valid range
+      const stripped = value.replace(/^0+(?=\d)/, "");
+      const num = Number(stripped);
+      setState((prev) => ({ ...prev, [name]: isNaN(num) ? 0 : num }));
     } else {
       setState((prev) => ({ ...prev, [name]: value }));
     }
   };
+
+  // Pre-fill list name when poolId is provided via URL and pools data loads
+  useEffect(() => {
+    const urlPoolId = searchParams?.get("poolId");
+    if (urlPoolId && availablePools.length > 0) {
+      const matchedPool = availablePools.find(p => p.id === urlPoolId);
+      if (matchedPool) {
+        setState(prev => ({
+          ...prev,
+          existingListId: urlPoolId,
+          name: prev.name || matchedPool.name,
+        }));
+      }
+    }
+  }, [searchParams, availablePools]);
 
   // Pre-fill ICP fields from brand identity (AI-first: minimize typing)
   useEffect(() => {
@@ -211,7 +230,7 @@ export default function LeadGenWizardPage() {
 
   const handleWizardSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!state.name) {
+    if (!state.name && !state.existingListId) {
       toast.error("Please enter a pool name");
       return;
     }
@@ -289,6 +308,7 @@ export default function LeadGenWizardPage() {
                 maxContactsPerCompany: state.maxContactsPerCompany,
               },
               campaignId: state.campaignId || undefined,
+              existingPoolId: state.existingListId || undefined,
             };
 
             const res = await fetch("/api/crm/leads/autogen", {
@@ -306,7 +326,7 @@ export default function LeadGenWizardPage() {
             } catch (err) { console.error(err); }
 
             toast.success("AI Agent started successfully!");
-            router.push(`/crm/leads/jobs/${data.jobId}`);
+            router.push(`/lists/jobs/${data.jobId}`);
             return;
           }
         } catch (parseErr) {
@@ -338,7 +358,7 @@ export default function LeadGenWizardPage() {
         },
 
         campaignId: state.campaignId || undefined,
-        existingPoolId: undefined, // Explicitly undefined as we creates new lists per run
+        existingPoolId: state.existingListId || undefined,
       };
 
       const res = await fetch("/api/crm/leads/autogen", {
@@ -355,7 +375,7 @@ export default function LeadGenWizardPage() {
       } catch (err) { console.error(err); }
 
       toast.success("Lead generation started successfully!");
-      router.push(`/crm/leads/jobs/${data.jobId}`);
+      router.push(`/lists/jobs/${data.jobId}`);
 
     } catch (err: any) {
       toast.error(err.message || "Failed to start job");
@@ -395,18 +415,25 @@ export default function LeadGenWizardPage() {
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
       <div className="relative group overflow-hidden rounded-xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 p-4 backdrop-blur-md shadow-sm transition-colors hover:border-indigo-500/40">
         <label className="text-[10px] uppercase tracking-wider font-semibold text-indigo-400 mb-1.5 block flex items-center gap-1.5">
-          <FolderKanban className="w-3 h-3" /> Assign to Campaign
+          <FolderKanban className="w-3 h-3" /> Append to List
         </label>
         <Combobox
-          options={activeCampaigns.map(c => ({ label: c.name, value: c.id }))}
-          value={state.campaignId}
-          onChange={(value) => setState(prev => ({ ...prev, campaignId: value }))}
-          placeholder="Search campaigns..."
-          emptyMessage="No campaigns found."
+          options={availablePools.map(p => ({ label: `${p.name} (${p.candidatesCount})`, value: p.id }))}
+          value={state.existingListId}
+          onChange={(value) => {
+            const selectedPool = availablePools.find(p => p.id === value);
+            setState(prev => ({
+              ...prev,
+              existingListId: value,
+              name: selectedPool ? selectedPool.name : prev.name,
+            }));
+          }}
+          placeholder="Search lists..."
+          emptyMessage="No lists found."
           variant="ghost"
           className="w-full justify-start bg-transparent border-none text-sm font-medium focus:ring-0 px-0 hover:bg-white/5 transition-colors text-white h-auto py-1.5"
         />
-        <div className="text-[10px] text-muted-foreground mt-1">Generated list will be linked to this campaign</div>
+        <div className="text-[10px] text-muted-foreground mt-1">{state.existingListId ? "New leads will be added to this list" : "Or leave empty to create a new list"}</div>
       </div>
 
       {/* Campaign Name */}
@@ -431,10 +458,13 @@ export default function LeadGenWizardPage() {
         </label>
         <div className="flex items-center gap-2">
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             name="maxCompanies"
-            value={state.maxCompanies}
+            value={String(state.maxCompanies)}
             onChange={onChange}
+            onFocus={(e) => e.target.select()}
             className="w-full bg-transparent border-none text-lg font-medium focus:ring-0 px-0"
             min={1}
             max={100}
@@ -519,7 +549,7 @@ export default function LeadGenWizardPage() {
       <div className="flex justify-end p-2">
         <button
           type="submit"
-          disabled={submitting || !limitsInfo || !state.name || (mode === 'ai-only' && !state.aiPrompt)}
+          disabled={submitting || !limitsInfo || (!state.name && !state.existingListId) || (mode === 'ai-only' && !state.aiPrompt)}
           className="group relative px-8 py-4 rounded-xl font-semibold text-white shadow-2xl transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:grayscale disabled:hover:scale-100 w-full md:w-auto"
         >
           <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient" />

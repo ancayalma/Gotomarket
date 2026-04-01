@@ -21,7 +21,8 @@ import {
     Palette,
     MoreVertical,
     Search,
-    Bot
+    Bot,
+    Merge
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ import { BillingModal } from "@/components/modals/BillingModal";
 import { Lock } from "lucide-react";
 import { ListMethodModal } from "./ListMethodModal";
 import { ManualListModal } from "./ManualListModal";
+import MergeListsModal from "./MergeListsModal";
 import {
     Table,
     TableBody,
@@ -134,6 +136,7 @@ export default function ListsView() {
     const [isMethodModalOpen, setIsMethodModalOpen] = useState(false);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const isMobile = useIsMobile();
+    const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
 
     useEffect(() => {
         if (isMobile) {
@@ -275,6 +278,15 @@ export default function ListsView() {
                 <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                     <ImportIntelligenceWizard pools={data?.pools ?? []} onCommitted={() => mutate()} />
                     <Button
+                        variant="outline"
+                        onClick={() => setIsMergeModalOpen(true)}
+                        className="border-white/10 hover:bg-white/5 whitespace-nowrap"
+                        disabled={!data?.pools || data.pools.length < 2}
+                    >
+                        <Merge className="w-4 h-4 mr-2" />
+                        Merge Lists
+                    </Button>
+                    <Button
                         onClick={() => setIsMethodModalOpen(true)}
                         className="bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap"
                     >
@@ -348,7 +360,7 @@ export default function ListsView() {
                                                             variant="ghost"
                                                             size="sm"
                                                             className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
-                                                            onClick={() => router.push(`/crm/leads/jobs/${pool.latestJob!.id}`)}
+                                                            onClick={() => router.push(`/lists/jobs/${pool.latestJob!.id}`)}
                                                         >
                                                             <Bot className="w-4 h-4 mr-1" /> Job
                                                         </Button>
@@ -457,7 +469,7 @@ export default function ListsView() {
                                                 variant="outline"
                                                 size="sm"
                                                     className="text-xs font-bold uppercase tracking-wider h-8 border-blue-500/30 text-blue-400 hover:bg-blue-500/10 whitespace-nowrap"
-                                                onClick={() => router.push(`/crm/leads/jobs/${pool.latestJob!.id}`)}
+                                                onClick={() => router.push(`/lists/jobs/${pool.latestJob!.id}`)}
                                             >
                                                 <Bot className="w-3.5 h-3.5 mr-1" /> View Job
                                             </Button>
@@ -595,6 +607,13 @@ export default function ListsView() {
                     onCreated={() => mutate()}
                 />
             )}
+
+            <MergeListsModal
+                isOpen={isMergeModalOpen}
+                onClose={() => setIsMergeModalOpen(false)}
+                pools={(data?.pools || []).map(p => ({ id: p.id, name: p.name, candidatesCount: p.candidatesCount }))}
+                onMerged={() => mutate()}
+            />
         </div>
     );
 }
