@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ApiKeyModal } from "@/components/modals/api-key-modal";
 import { submitCustomModelRequest } from "@/actions/ai/manage-models";
 import { HuggingFaceBrowser } from "@/components/ai/HuggingFaceBrowser";
@@ -208,19 +209,6 @@ export const AiConfigManager = ({
     const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [selectedModelId, setSelectedModelId] = useState<string | null>(
-        currentConfig?.modelId || null
-    );
-
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('payment') === 'success' && urlParams.get('type') === 'credits') {
-            toast.success("Intelligence Credits added successfully! Your balance will update in a moment.");
-            router.replace('/admin/ai-settings');
-        }
-    }, [router]);
-
-    // Form inputs for pre-filling
     const [requestFormData, setRequestFormData] = useState({
         displayName: "",
         modelId: "",
@@ -240,10 +228,28 @@ export const AiConfigManager = ({
         return grouped;
     }, [models]);
 
-    // Form State
-    const [selectedProvider, setSelectedProvider] = useState<string>(
-        currentConfig?.provider || "OPENAI"
-    );
+    type ServiceConfig = { provider: string, modelId: string | null };
+    const [activeTab, setActiveTab] = useState<"general" | "chat" | "enrichment">("general");
+
+    const [configState, setConfigState] = useState<Record<"general" | "chat" | "enrichment", ServiceConfig>>({
+        general: {
+            provider: currentConfig?.provider || "OPENAI",
+            modelId: currentConfig?.modelId || null
+        },
+        chat: {
+            provider: (currentConfig?.configuration as any)?.services?.chat?.provider || currentConfig?.provider || "OPENAI",
+            modelId: (currentConfig?.configuration as any)?.services?.chat?.modelId || currentConfig?.modelId || null
+        },
+        enrichment: {
+            provider: (currentConfig?.configuration as any)?.services?.enrichment?.provider || currentConfig?.provider || "OPENAI",
+            modelId: (currentConfig?.configuration as any)?.services?.enrichment?.modelId || currentConfig?.modelId || null
+        }
+    });
+
+    // Computed actively displayed selections
+    const selectedProvider = configState[activeTab].provider;
+    const selectedModelId = configState[activeTab].modelId;
+
     const [useSystemKey, setUseSystemKey] = useState(
         currentConfig?.useSystemKey ?? true
     );
@@ -268,8 +274,10 @@ export const AiConfigManager = ({
     };
 
     const handleSelectModel = (model: AiModel) => {
-        setSelectedModelId(model.modelId);
-        setSelectedProvider(model.provider);
+        setConfigState(prev => ({
+            ...prev,
+            [activeTab]: { provider: model.provider, modelId: model.modelId }
+        }));
         if (model.provider !== selectedProvider) {
             const hasSysKey = providersWithSystemKey.includes(model.provider);
             setUseSystemKey(hasSysKey);
@@ -286,7 +294,15 @@ export const AiConfigManager = ({
         if (modalProvider) {
             setApiKeys(prev => ({ ...prev, [modalProvider]: key }));
             setUseSystemKey(false);
-            setSelectedProvider(modalProvider);
+            
+            // Only update the selected provider if we're saving the key for the active tab's provider
+            // Otherwise, just let the key save quietly in the background
+            if (activeTab === "general") {
+                setConfigState(prev => ({
+                    ...prev,
+                    [activeTab]: { ...prev[activeTab], provider: modalProvider }
+                }));
+            }
             const meta = getProviderMeta(modalProvider);
             toast.success(`API Key for ${meta.name} updated`);
         }
@@ -304,10 +320,20 @@ export const AiConfigManager = ({
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        provider: selectedProvider,
-                        modelId: selectedModelId,
+                        provider: configState.general.provider,
+                        modelId: configState.general.modelId,
                         useSystemKey,
-                        apiKey: useSystemKey ? null : apiKeys[selectedProvider],
+                        apiKey: useSystemKey ? null : apiKeys[configState.general.provider],
+                        services: {
+                            chat: {
+                                provider: configState.chat.provider,
+                                modelId: configState.chat.modelId
+                            },
+                            enrichment: {
+                                provider: configState.enrichment.provider,
+                                modelId: configState.enrichment.modelId
+                            }
+                        }
                     }),
                 });
 
@@ -407,9 +433,40 @@ export const AiConfigManager = ({
                 </CardContent>
             </Card>
 
-            {/* Provider Sections */}
-            <div className="space-y-4">
-                {Object.entries(modelsByProvider).map(([provider, providerModels]) => {
+            {/* Service Selection Tabs */}
+            <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/40 border border-white/5 p-1 h-auto rounded-xl">
+                    <TabsTrigger value="general" className="rounded-lg py-2.5 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_15px_rgba(var(--primary),0.2)] transition-all">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Global Default
+                    </TabsTrigger>
+                    <TabsTrigger value="chat" className="rounded-lg py-2.5 data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400 data-[state=active]:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all">
+                        <Bot className="w-4 h-4 mr-2" />
+                        Chat Interface
+                    </TabsTrigger>
+                    <TabsTrigger value="enrichment" className="rounded-lg py-2.5 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400 data-[state=active]:shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all">
+                        <Zap className="w-4 h-4 mr-2" />
+                        Agentic Scraper
+                    </TabsTrigger>
+                </TabsList>
+
+                <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-foreground/90 flex items-center gap-2">
+                        {activeTab === "general" && "Set Global Default Model"}
+                        {activeTab === "chat" && "Override CRM Chat Model"}
+                        {activeTab === "enrichment" && "Override Engine Model"}
+                        {activeTab !== "general" && <Badge variant="outline" className="text-[10px] ml-2 text-muted-foreground">Override</Badge>}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {activeTab === "general" && "This model will be used as a fallback for all AI operations if no specific override is set."}
+                        {activeTab === "chat" && "This model powers the conversational AI bubble. Strong reasoning models (e.g., GPT-4o, Claude 3.5 Sonnet) are recommended."}
+                        {activeTab === "enrichment" && "This pipeline drives the LeadGen OSINT Engine. High-speed, high-context models (e.g., Haiku, DeepSeek) are recommended."}
+                    </p>
+                </div>
+
+                {/* Provider Sections */}
+                <div className="space-y-4">
+                    {Object.entries(modelsByProvider).map(([provider, providerModels]) => {
                     const providerKey = provider as string;
                     const meta = getProviderMeta(providerKey);
                     const isExpanded = expandedProviders.includes(providerKey);
@@ -586,6 +643,7 @@ export const AiConfigManager = ({
                     );
                 })}
             </div>
+            </Tabs>
 
             {/* Empty State */}
             {Object.keys(modelsByProvider).length === 0 && (

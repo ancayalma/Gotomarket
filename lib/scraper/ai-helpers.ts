@@ -78,7 +78,7 @@ export async function parseICPFromNaturalLanguage(
   notes: string;
 }> {
   try {
-    const { model } = await getAiSdkModel(userId);
+    const { model } = await getAiSdkModel(userId, "enrichment");
     if (!model) {
       console.warn("AI model not configured, returning empty ICP");
       return {
@@ -146,7 +146,7 @@ export async function generateAISearchQueries(
   tracker?: LeadGenTokenTracker
 ): Promise<string[]> {
   try {
-    const { model } = await getAiSdkModel(userId);
+    const { model } = await getAiSdkModel(userId, "enrichment");
     if (!model) {
       console.warn("AI model not configured, using fallback queries");
       return generateFallbackQueries(icp);
@@ -239,7 +239,7 @@ export async function analyzeCompanyWithAI(
   confidence: number;
 }> {
   try {
-    const { model } = await getAiSdkModel(userId);
+    const { model } = await getAiSdkModel(userId, "enrichment");
     if (!model) {
       return {
         industry: null,
@@ -306,7 +306,7 @@ export async function calculateAIICPScore(
   recommendations: string[];
 }> {
   try {
-    const { model } = await getAiSdkModel(userId);
+    const { model } = await getAiSdkModel(userId, "enrichment");
     if (!model) {
       return {
         score: 50,
@@ -376,7 +376,7 @@ export async function extractContactsWithAI(
   confidence: number;
 }>> {
   try {
-    const { model } = await getAiSdkModel(userId);
+    const { model } = await getAiSdkModel(userId, "enrichment");
     if (!model) {
       return [];
     }
@@ -424,7 +424,7 @@ export async function resolveDuplicateCompaniesWithAI(
   reasoning: string;
 }> {
   try {
-    const { model } = await getAiSdkModel(userId);
+    const { model } = await getAiSdkModel(userId, "enrichment");
     if (!model) {
       return {
         areSame: false,
@@ -487,7 +487,7 @@ export async function generateOutreachEmailWithAI(
   body: string;
 }> {
   try {
-    const { model } = await getAiSdkModel(userId);
+    const { model } = await getAiSdkModel(userId, "enrichment");
     if (!model) {
       return {
         subject: `Connecting with ${contact.companyName}`,

@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import useSWR from "swr";
 import fetcher from "@/lib/fetcher";
 import AIWriterModal from "../../leads/components/modals/AIWriterModal";
+import DashboardCard from "../../dashboard/_components/DashboardCard";
 import { Combobox } from "@/components/ui/combobox";
 import { getTeamCreditsInfo } from "@/actions/crm/credits/index";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -178,9 +179,13 @@ export default function LeadGenWizardPage() {
     }
   };
 
-  // --- Helper Components ---
-  const AIInputLabel = ({ label, field, className }: { label: string, field: keyof WizardState, className?: string }) => (
-    <div className={`flex items-center justify-between mb-2 ${className}`}>
+  // --- Render Helpers (plain functions, NOT components) ---
+  // Defined as functions returning JSX to avoid React remounting on every state change.
+  // If these were capitalized components defined inside the parent, React would treat
+  // them as new component types on each render, killing input focus after each keystroke.
+
+  const renderAIInputLabel = (label: string, field: keyof WizardState, className?: string) => (
+    <div className={`flex items-center justify-between mb-2 ${className || ""}`}>
       <label className="text-sm font-medium text-foreground/90">{label}</label>
       <div className="flex gap-2 scale-90 origin-right">
         <button
@@ -195,9 +200,9 @@ export default function LeadGenWizardPage() {
     </div>
   );
 
-  const InputWithAI = ({ label, name, placeholder }: { label: string, name: keyof WizardState, placeholder?: string }) => (
-    <div>
-      <AIInputLabel label={label} field={name} />
+  const renderInputWithAI = (label: string, name: keyof WizardState, placeholder?: string) => (
+    <div key={name}>
+      {renderAIInputLabel(label, name)}
       <input
         name={name}
         value={state[name] as string}
@@ -208,9 +213,9 @@ export default function LeadGenWizardPage() {
     </div>
   );
 
-  const TextAreaWithAI = ({ label, name, placeholder, rows = 3 }: { label: string, name: keyof WizardState, placeholder?: string, rows?: number }) => (
-    <div>
-      <AIInputLabel label={label} field={name} />
+  const renderTextAreaWithAI = (label: string, name: keyof WizardState, placeholder?: string, rows: number = 3) => (
+    <div key={name}>
+      {renderAIInputLabel(label, name)}
       <textarea
         name={name}
         value={state[name] as string}
@@ -386,28 +391,25 @@ export default function LeadGenWizardPage() {
 
   const navCards = [
     {
-      id: "ai-only",
+      id: "ai-only" as WizardMode,
       title: "Full Auto AI",
-      description: "Describe your ideal customer, and let AI do the rest.",
+      description: "Let AI do the rest",
       icon: Bot,
-      color: "from-indigo-500/20 to-purple-500/20",
-      iconColor: "text-indigo-400",
+      variant: "violet" as const,
     },
     {
-      id: "step-by-step",
+      id: "step-by-step" as WizardMode,
       title: "Guided Wizard",
-      description: "Step-by-step setup for precise targeting.",
+      description: "Step-by-step targeting",
       icon: Wand2,
-      color: "from-cyan-500/20 to-sky-500/20",
-      iconColor: "text-cyan-400",
+      variant: "info" as const,
     },
     {
-      id: "advanced",
+      id: "advanced" as WizardMode,
       title: "Advanced Mode",
-      description: "Full control over every parameter and setting.",
+      description: "Full control over settings",
       icon: Sliders,
-      color: "from-amber-500/20 to-orange-500/20",
-      iconColor: "text-amber-400",
+      variant: "warning" as const,
     },
   ];
 
@@ -476,85 +478,61 @@ export default function LeadGenWizardPage() {
   );
 
   const renderModeSelector = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-3 gap-3 mb-6">
       {navCards.map((card) => (
-        <button
+        <DashboardCard
           key={card.id}
-          type="button"
-          onClick={() => { setMode(card.id as WizardMode); if (card.id === 'step-by-step') setStep(1); }}
-          className={`group relative overflow-hidden rounded-xl border p-5 transition-[box-shadow,transform] duration-300 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-[1.02] text-left ${mode === card.id
-            ? "border-primary/50 bg-white/10 ring-2 ring-primary/30"
-            : "border-white/10 bg-white/5 hover:bg-white/10"
-            }`}
-        >
-          {/* Gradient Background */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${card.color} ${mode === card.id ? 'opacity-100' : 'opacity-10 group-hover:opacity-60'} transition-opacity duration-300`} />
-
-          <div className="relative z-10 flex flex-col items-start gap-4">
-            <div className={`p-2.5 rounded-lg bg-gradient-to-br ${card.color} border border-white/10 shadow-lg ${card.iconColor} ring-1 ring-white/10`}>
-              <card.icon className="w-6 h-6" strokeWidth={1.5} />
-            </div>
-            <div>
-              <span className={`block text-base font-semibold transition-colors ${mode === card.id ? 'text-white' : 'text-foreground group-hover:text-white'}`}>
-                {card.title}
-              </span>
-              <span className={`block text-xs mt-1 transition-colors ${mode === card.id ? 'text-white/80' : 'text-muted-foreground group-hover:text-white/80'}`}>
-                {card.description}
-              </span>
-            </div>
-          </div>
-        </button>
+          icon={card.icon}
+          label={card.title}
+          description={card.description}
+          variant={card.variant}
+          hideIcon={true}
+          onClick={() => { setMode(card.id); if (card.id === 'step-by-step') setStep(1); }}
+          className={mode === card.id ? "ring-2 ring-primary border-primary/50 bg-accent/10" : ""}
+          labelClassName="text-sm md:text-base"
+          descriptionClassName="text-[10px] md:text-xs"
+        />
       ))}
     </div>
   );
 
+  const submitButtonClass = "px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg shadow-lg hover:shadow-indigo-500/25 transition-all hover:opacity-90 disabled:opacity-50 disabled:hover:shadow-none";
+  const backButtonClass = "px-6 py-2.5 border border-white/10 rounded-lg hover:bg-white/5 transition-colors font-medium";
+
   const renderAIOnlyMode = () => (
     <div className="space-y-6">
-      <div className="relative group rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent p-1 backdrop-blur-xl shadow-2xl">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent opacity-50" />
-
-        <div className="bg-card/40 rounded-xl p-5 min-h-[140px] flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" /> AI Agent Instructions
-            </h3>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
-                onClick={() => handleEnhance('aiPrompt')}
-              >
-                <Zap className="w-3.5 h-3.5" /> Enhance AI
-              </button>
-              <button
-                type="button"
-                className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 transition-colors shadow-lg shadow-indigo-500/20"
-                onClick={() => { setCurrentAiField(null); setAiWriterOpen(true); }}
-              >
-                <Wand2 className="w-3.5 h-3.5" /> Write AI
-              </button>
-            </div>
+      <div className="rounded-xl border border-white/10 bg-card/10 p-6 backdrop-blur-xl shadow-2xl">
+        <div className="flex items-center gap-3 pb-2 border-b border-white/5 mb-6">
+          <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400"><Sparkles className="w-5 h-5" /></div>
+          <h3 className="text-lg font-semibold">AI Agent Instructions</h3>
+          <div className="ml-auto">
+            <button
+              type="button"
+              className="text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+              onClick={() => handleEnhance('aiPrompt')}
+            >
+              <Zap className="w-3 h-3" /> Enhance AI
+            </button>
           </div>
-
-          <textarea
-            name="aiPrompt"
-            value={state.aiPrompt}
-            onChange={onChange}
-            className="w-full flex-1 bg-transparent border-none resize-none focus:ring-0 text-base leading-relaxed placeholder:text-muted-foreground/30 min-h-[100px]"
-            placeholder="Describe your ideal customer profile in detail. For example: 'I'm looking for B2B SaaS companies in the US with 50-200 employees that use HubSpot and Stripe. They should be in the Fintech or Healthcare sectors...'"
-          />
         </div>
+
+        <textarea
+          name="aiPrompt"
+          value={state.aiPrompt}
+          onChange={onChange}
+          className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors resize-none min-h-[120px]"
+          placeholder="Describe your ideal customer profile in detail. For example: 'I'm looking for B2B SaaS companies in the US with 50-200 employees that use HubSpot and Stripe. They should be in the Fintech or Healthcare sectors...'"
+        />
       </div>
 
-      <div className="flex justify-end p-2">
+      <div className="flex justify-end">
         <button
           type="submit"
           disabled={submitting || !limitsInfo || (!state.name && !state.existingListId) || (mode === 'ai-only' && !state.aiPrompt)}
-          className="group relative px-8 py-4 rounded-xl font-semibold text-white shadow-2xl transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:grayscale disabled:hover:scale-100 w-full md:w-auto"
+          className={submitButtonClass}
         >
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient" />
-          <span className="relative flex items-center justify-center gap-2">
-            {(submitting || !limitsInfo) ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bot className="w-5 h-5" />}
+          <span className="flex items-center justify-center gap-2">
+            {(submitting || !limitsInfo) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
             {submitting ? "Deploying Agent..." : !limitsInfo ? "Checking Allocations..." : "Launch AI Agent"}
           </span>
         </button>
@@ -569,53 +547,53 @@ export default function LeadGenWizardPage() {
           {/* Step 1 */}
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 pb-2 border-b border-white/5">
                 <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400"><FileText className="w-5 h-5" /></div>
                 <h3 className="text-lg font-semibold">Pool Details</h3>
               </div>
 
-              <TextAreaWithAI label="Description" name="description" placeholder="e.g. We are targeting B2B SaaS companies..." rows={4} />
+              {renderTextAreaWithAI("Description", "description", "e.g. We are targeting B2B SaaS companies...", 4)}
 
               <div className="flex justify-end pt-4">
-                <button type="button" onClick={() => setStep(2)} className="px-6 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:opacity-90 transition-opacity">Next Step</button>
+                <button type="button" onClick={() => setStep(2)} className={submitButtonClass}>Next Step</button>
               </div>
             </div>
           )}
           {/* Step 2 */}
           {step === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 pb-2 border-b border-white/5">
                 <div className="p-2 rounded-lg bg-pink-500/20 text-pink-400"><Globe className="w-5 h-5" /></div>
                 <h3 className="text-lg font-semibold">Targeting</h3>
               </div>
 
               <div className="grid gap-6">
-                <InputWithAI label="Industries" name="industries" placeholder="e.g. SaaS, Fintech, Healthcare" />
-                <InputWithAI label="Locations" name="geos" placeholder="e.g. United States, Canada, UK" />
+                {renderInputWithAI("Industries", "industries", "e.g. SaaS, Fintech, Healthcare")}
+                {renderInputWithAI("Locations", "geos", "e.g. United States, Canada, UK")}
               </div>
 
               <div className="flex justify-between pt-4">
-                <button type="button" onClick={() => setStep(1)} className="px-6 py-2.5 border border-white/10 rounded-lg hover:bg-white/5 transition-colors">Back</button>
-                <button type="button" onClick={() => setStep(3)} className="px-6 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:opacity-90 transition-opacity">Next Step</button>
+                <button type="button" onClick={() => setStep(1)} className={backButtonClass}>Back</button>
+                <button type="button" onClick={() => setStep(3)} className={submitButtonClass}>Next Step</button>
               </div>
             </div>
           )}
           {/* Step 3 */}
           {step === 3 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 pb-2 border-b border-white/5">
                 <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-400"><Code className="w-5 h-5" /></div>
                 <h3 className="text-lg font-semibold">Roles & Tech</h3>
               </div>
 
               <div className="grid gap-6">
-                <InputWithAI label="Job Titles" name="titles" placeholder="e.g. CEO, CTO, VP Sales" />
-                <InputWithAI label="Tech Stack" name="techStack" placeholder="e.g. HubSpot, Salesforce, AWS" />
+                {renderInputWithAI("Job Titles", "titles", "e.g. CEO, CTO, VP Sales")}
+                {renderInputWithAI("Tech Stack", "techStack", "e.g. HubSpot, Salesforce, AWS")}
               </div>
 
               <div className="flex justify-between pt-4">
-                <button type="button" onClick={() => setStep(2)} className="px-6 py-2.5 border border-white/10 rounded-lg hover:bg-white/5 transition-colors">Back</button>
-                <button type="submit" disabled={submitting || !limitsInfo} className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg shadow-lg hover:shadow-indigo-500/25 transition-shadow">
+                <button type="button" onClick={() => setStep(2)} className={backButtonClass}>Back</button>
+                <button type="submit" disabled={submitting || !limitsInfo} className={submitButtonClass}>
                   {submitting ? "Launching..." : !limitsInfo ? "Checking Allocations..." : "Launch Lead Gen"}
                 </button>
               </div>
@@ -630,46 +608,32 @@ export default function LeadGenWizardPage() {
     <div className="space-y-6">
       <div className="rounded-xl border border-white/10 bg-card/10 p-6 backdrop-blur-xl shadow-2xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex items-center gap-3 pb-2 border-b border-white/5">
-          <Settings className="w-5 h-5 text-muted-foreground" />
+          <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400"><Settings className="w-5 h-5" /></div>
           <h3 className="text-lg font-semibold">Full Configuration</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputWithAI label="Industries" name="industries" />
-          <InputWithAI label="Locations" name="geos" />
-          <InputWithAI label="Job Titles" name="titles" />
-          <InputWithAI label="Tech Stack" name="techStack" />
-          <InputWithAI label="Company Sizes" name="companySizes" />
-          <InputWithAI label="Exclude Domains" name="excludeDomains" />
+          {renderInputWithAI("Industries", "industries", "e.g. SaaS, Fintech, Healthcare, E-commerce")}
+          {renderInputWithAI("Locations", "geos", "e.g. United States, Canada, United Kingdom")}
+          {renderInputWithAI("Job Titles", "titles", "e.g. CEO, CTO, VP Sales, Head of Marketing")}
+          {renderInputWithAI("Tech Stack", "techStack", "e.g. HubSpot, Salesforce, AWS, Stripe")}
+          {renderInputWithAI("Company Sizes", "companySizes", "e.g. 10-50, 50-200, 200-1000")}
+          {renderInputWithAI("Exclude Domains", "excludeDomains", "e.g. google.com, amazon.com")}
         </div>
 
         <div className="pt-2">
-          <TextAreaWithAI label="Additional Notes" name="notes" placeholder="Any specific requirements..." />
-        </div>
-
-        <div className="pt-4 flex items-center gap-3">
-          <input
-            id="serpFallback_adv"
-            type="checkbox"
-            checked={!!state.serpFallback}
-            onChange={(e) => setState((prev) => ({ ...prev, serpFallback: e.target.checked }))}
-            className="rounded border-white/20 bg-white/5 text-primary focus:ring-primary w-4 h-4"
-          />
-          <label htmlFor="serpFallback_adv" className="text-sm text-muted-foreground select-none cursor-pointer">
-            Allow SERP fallback if AI finds 0 companies (Recommended)
-          </label>
+          {renderTextAreaWithAI("Additional Notes", "notes", "Any specific requirements...")}
         </div>
       </div>
 
-      <div className="flex justify-end p-2">
+      <div className="flex justify-end">
         <button
           type="submit"
           disabled={submitting || !limitsInfo}
-          className="group relative px-8 py-4 rounded-xl font-semibold text-white shadow-2xl transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 w-full md:w-auto"
+          className={submitButtonClass}
         >
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-zinc-600 via-slate-600 to-zinc-600 bg-[length:200%_auto] animate-gradient" />
-          <span className="relative flex items-center justify-center gap-2">
-            {(submitting || !limitsInfo) ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
+          <span className="flex items-center justify-center gap-2">
+            {(submitting || !limitsInfo) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
             {submitting ? "Starting..." : !limitsInfo ? "Checking Allocations..." : "Start Lead Gen"}
           </span>
         </button>

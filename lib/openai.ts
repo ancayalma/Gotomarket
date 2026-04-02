@@ -174,7 +174,8 @@ export interface AiModelResponse {
 
 export async function getAiSdkModel(
     target: { userId?: string; teamId?: string } | string | "system",
-    service: AiService = "general"
+    service: AiService = "general",
+    requiresVision: boolean = false
 ): Promise<AiModelResponse> {
     const DEBUG_PREFIX = `[getAiSdkModel][${service}]`;
 
@@ -216,7 +217,7 @@ export async function getAiSdkModel(
         if (teamConfig) {
             // Check for service override in team configuration (JSON)
             const teamOverrides = (teamConfig.configuration as any)?.services || {};
-            if (teamOverrides[service]) {
+            if (teamOverrides[service] && teamOverrides[service].modelId) {
                 finalProvider = teamOverrides[service].provider;
                 finalModelId = teamOverrides[service].modelId;
                 configSource = "team";
@@ -257,18 +258,35 @@ export async function getAiSdkModel(
 
     if (!finalProvider || !finalModelId) {
         // Check for service override in system configuration (JSON)
-        // Check ALL active configs for one that might have this service? 
-        // For simplicity, we check the default one first.
         const systemOverrides = (defaultSystemConfig?.configuration as any)?.services || {};
 
-        if (systemOverrides[service]) {
+        if (systemOverrides[service] && systemOverrides[service].modelId) {
             finalProvider = systemOverrides[service].provider;
             finalModelId = systemOverrides[service].modelId;
         } else {
             finalProvider = defaultSystemConfig?.provider || "BEDROCK";
-            finalModelId = defaultSystemConfig?.defaultModelId || process.env.AWS_AI_MODEL_ID || "us.anthropic.claude-haiku-4-5-20251001-v1:0";
+            finalModelId = defaultSystemConfig?.modelId || process.env.AWS_AI_MODEL_ID || "us.anthropic.claude-3-5-haiku-20241022-v1:0";
         }
         configSource = "system";
+    }
+
+    // C. Multimodal Guarantee Intercept
+    if (requiresVision && finalModelId) {
+        // Models known to strictly reject vision or behave poorly with standard Bedrock image payloads
+        const textOnlyModels = ["qwen", "mistral", "deepseek", "llama", "grok", "gpt-3.5"];
+        const lowerId = finalModelId.toLowerCase();
+        const isTextOnly = textOnlyModels.some(m => lowerId.includes(m)) && !lowerId.includes("vl") && !lowerId.includes("vision");
+        
+        if (isTextOnly) {
+            console.warn(`${DEBUG_PREFIX} Model ${finalModelId} does not support vision payloads. Throwing strict error for UI alert.`);
+            throw new Error(`VISION_UNSUPPORTED_MODEL:${finalModelId}`);
+        }
+    }
+
+    // D. Legacy DB sanitization for Qwen3 Bedrock Models
+    // Fixes team configs that saved the old incorrect identifier before the DB seed was fixed
+    if (finalProvider === "BEDROCK" && finalModelId?.includes("qwen.qwen3-vl-235b-a22b-instruct-v1:0")) {
+        finalModelId = finalModelId.replace("-instruct-v1:0", "");
     }
 
     // 3. Resolve API Keys and Connection Info

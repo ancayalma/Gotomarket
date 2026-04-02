@@ -133,8 +133,14 @@ export default async function AiUsagePage() {
             return "Qwen3 Next 80B";
         }
 
-        // Provider/Model prefixes and variations
-        if (lower.includes("qwen3") || lower.includes("qwen")) return "Qwen3 Next 80B";
+        // Specific Qwen3 models from Bedrock Seed
+        if (lower.includes("coder-30b")) return "Qwen3 Coder 30B";
+        if (lower.includes("235b")) return "Qwen3 Max 235B";
+        if (lower.includes("32b")) return "Qwen3 32B";
+        if (lower.includes("80b")) return "Qwen3 Next 80B";
+        if (lower.includes("qwen")) return "Qwen3 Next 80B"; // General fallback
+        
+        // Claude and legacy models
         if (lower.includes("haiku")) return "Claude 3.5 Haiku";
         if (lower.includes("sonnet")) return "Claude 3.5 Sonnet";
         if (lower.includes("gpt-4")) return "GPT-4o";
@@ -147,13 +153,17 @@ export default async function AiUsagePage() {
     (teamMembers as any[]).forEach(u => {
         userUsage[u.id] = { name: u.name || "Unknown", email: u.email, totalTokens: 0, promptTokens: 0, completionTokens: 0, requestCount: 0 };
     });
+    
+    // Explicitly add an autonomous bucket for backend Agentic Scraper / Lead Gen runs
+    // that execute silently without a specific API-level session.user_id
+    userUsage["system_autonomous"] = { name: "Agentic AI (Background)", email: "autonomous@system", totalTokens: 0, promptTokens: 0, completionTokens: 0, requestCount: 0 };
 
-    // A. Add Chat Usage
+    // A. Add Chat Usage (From complete MongoDB message history)
     (messagesWithUsage as any[]).forEach((msg: any) => {
         const usage = (msg.tokenUsage || {}) as any;
-        const tokens = (usage.totalTokens || 0);
         const pTokens = (usage.promptTokens || usage.inputTokens || 0);
         const cTokens = (usage.completionTokens || usage.outputTokens || 0);
+        const tokens = usage.totalTokens || (pTokens + cTokens);
         
         totalTokens += tokens;
         promptTokens += pTokens;
@@ -164,20 +174,31 @@ export default async function AiUsagePage() {
         const modelName = getCanonicalModelName(rawModelName);
         modelUsage[modelName] = (modelUsage[modelName] || 0) + tokens;
 
-        // Chat messages are always attributed to the Chat service
+        // Chat messages are securely attributed from MongoDB
         serviceUsage["Chat"] = (serviceUsage["Chat"] || 0) + tokens;
 
         const userId = sessionUserMap.get(msg.session);
-        if (userId && userUsage[userId]) {
-            userUsage[userId].totalTokens += tokens;
-            userUsage[userId].promptTokens += pTokens;
-            userUsage[userId].completionTokens += cTokens;
-            userUsage[userId].requestCount += 1;
-        }
+        const targetUserId = (userId && userUsage[userId]) ? userId : "system_autonomous";
+        userUsage[targetUserId].totalTokens += tokens;
+        userUsage[targetUserId].promptTokens += pTokens;
+        userUsage[targetUserId].completionTokens += cTokens;
+        userUsage[targetUserId].requestCount += 1;
     });
 
-    // B. Add Platform Feature Usage
+    // B. Add Platform Feature Usage (From generalized AI usage ledger)
     (aiUsageLogs as any[]).forEach((log: any) => {
+        const rawService = (log.service || "unknown").toLowerCase();
+        
+        // Prevent strictly double-counting chat tokens, since MongoDB array accurately handled them all above
+        if (rawService === "chat") return; 
+
+        let displayService = "Unknown";
+        if (rawService === "unknown" || rawService === "leadgen") {
+            displayService = "Lead Gen";
+        } else {
+            displayService = rawService.charAt(0).toUpperCase() + rawService.slice(1);
+        }
+
         const tokens = (log.tokens_in + log.tokens_out);
         totalTokens += tokens;
         promptTokens += log.tokens_in;
@@ -188,16 +209,13 @@ export default async function AiUsagePage() {
         const modelName = getCanonicalModelName(rawModelName);
         modelUsage[modelName] = (modelUsage[modelName] || 0) + tokens;
 
-        const rawService = log.service || "unknown";
-        const displayService = rawService.charAt(0).toUpperCase() + rawService.slice(1);
         serviceUsage[displayService] = (serviceUsage[displayService] || 0) + tokens;
 
-        if (log.user_id && userUsage[log.user_id]) {
-            userUsage[log.user_id].totalTokens += tokens;
-            userUsage[log.user_id].promptTokens += log.tokens_in;
-            userUsage[log.user_id].completionTokens += log.tokens_out;
-            userUsage[log.user_id].requestCount += 1;
-        }
+        const targetUserId = (log.user_id && userUsage[log.user_id]) ? log.user_id : "system_autonomous";
+        userUsage[targetUserId].totalTokens += tokens;
+        userUsage[targetUserId].promptTokens += log.tokens_in;
+        userUsage[targetUserId].completionTokens += log.tokens_out;
+        userUsage[targetUserId].requestCount += 1;
     });
 
     const modelChartData = Object.entries(modelUsage)

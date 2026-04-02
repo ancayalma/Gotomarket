@@ -34,16 +34,21 @@ export async function POST(req: NextRequest) {
       "image/webp",
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+      "application/msword", // .doc
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+      "application/vnd.ms-excel", // .xls
       "text/csv",
+      "text/markdown",
       "application/json",
       "text/plain"
     ];
 
-    if (file.type && !allowedMimeTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Invalid file type. Only standard documents and images are allowed." }, { status: 400 });
-    }
-
     const fileExt = file.name?.split('.').pop()?.toLowerCase() || '';
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'docx', 'doc', 'xlsx', 'xls', 'csv', 'txt', 'md', 'json'];
+
+    if (file.type && !allowedMimeTypes.includes(file.type) && !allowedExtensions.includes(fileExt)) {
+      return NextResponse.json({ error: `Invalid file type (${file.type}). Only standard documents and images are allowed.` }, { status: 400 });
+    }
     const dangerousExtensions = ['svg', 'html', 'htm', 'exe', 'sh', 'js', 'php', 'py', 'ts', 'jsx', 'tsx'];
     if (dangerousExtensions.includes(fileExt)) {
       return NextResponse.json({ error: "File extension not permitted." }, { status: 400 });
@@ -116,18 +121,18 @@ export async function POST(req: NextRequest) {
     // Ensure container exists; do not change access level here
     try {
       const ensure = await containerClient.createIfNotExists();
-      if (ensure.succeeded) systemLogger.error("[GENERIC_UPLOAD_POST] Container created:", container);
+      if (ensure.succeeded) systemLogger.info("[GENERIC_UPLOAD_POST] Container created:", container);
     } catch (e) {
       console.warn("[GENERIC_UPLOAD_POST] createIfNotExists error:", (e as any)?.message);
     }
 
     const blobClient = containerClient.getBlockBlobClient(key);
-    systemLogger.error("[GENERIC_UPLOAD_POST] Uploading blob", { key, type: file.type, size: buffer.length });
+    systemLogger.info("[GENERIC_UPLOAD_POST] Uploading blob", { key, type: file.type, size: buffer.length });
     await blobClient.uploadData(buffer, {
       blobHTTPHeaders: { blobContentType: file.type || "application/octet-stream" },
     });
     const fileUrl = blobClient.url;
-    systemLogger.error("[GENERIC_UPLOAD_POST] Uploaded blob URL:", fileUrl);
+    systemLogger.info("[GENERIC_UPLOAD_POST] Uploaded blob URL:", fileUrl);
 
     // Create Document record (generic)
     const doc = await (prismadb.documents as any).create({
@@ -143,7 +148,7 @@ export async function POST(req: NextRequest) {
         hash: hex,
       },
     });
-    systemLogger.error("[GENERIC_UPLOAD_POST] Document created:", { id: doc.id, url: doc.document_file_url });
+    systemLogger.info("[GENERIC_UPLOAD_POST] Document created:", doc);
 
     // Handle context-specific actions
     // Handle context-specific actions

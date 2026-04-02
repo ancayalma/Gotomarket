@@ -2160,6 +2160,7 @@ model chat_Messages {
   model      String?
   deployment String?
   tokenUsage Json?
+  attachments Json?
 
   assigned_session chat_Sessions?  @relation(fields: [session], references: [id])
   parent_message   chat_Messages?  @relation("ChatMessageChildren", fields: [parent], references: [id], onDelete: NoAction, onUpdate: NoAction)
