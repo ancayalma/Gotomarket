@@ -82,6 +82,7 @@ interface AiConfigManagerProps {
     modelRequests?: ModelRequest[];
     providerOptions?: { slug: string; name: string }[];
     leadgenCredits?: number;
+    aiTokensBalance?: number;
 }
 
 // ─── Provider metadata for beautiful cards ───
@@ -192,10 +193,11 @@ export const AiConfigManager = ({
     models,
     providersWithSystemKey,
     userId,
-    teamName,
+    teamName = "",
     modelRequests = [],
     providerOptions = [],
     leadgenCredits = 0,
+    aiTokensBalance = 0,
 }: AiConfigManagerProps) => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -384,56 +386,109 @@ export const AiConfigManager = ({
     const hasSystemKey = (provider: string) =>
         providersWithSystemKey.includes(provider);
 
-    return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            {/* LeadGen Credits Wallet */}
-            <Card className="group relative bg-[#09090b] border-[#27272a] overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4">
-                    <div className="space-y-1">
-                        <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
-                            <Zap className="w-6 h-6 fill-amber-500/20" />
-                            LeadGen Intelligence Credits
-                        </CardTitle>
-                        <CardDescription className="text-muted-foreground">
-                            Used for Discovery, Enrichment and Agentic Brain Research.
-                        </CardDescription>
+    const renderLeadGenCard = () => (
+        <Card className="group relative bg-[#09090b] border-[#27272a] overflow-hidden h-full flex flex-col">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4">
+                <div className="space-y-1">
+                    <CardTitle className="text-xl flex items-center md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <Zap className="w-6 h-6 fill-amber-500/20 mr-2 text-primary" />
+                        LeadGen Intelligence Credits
+                    </CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                        Used for Discovery, Enrichment and Agentic Brain Research.
+                    </CardDescription>
+                </div>
+                <div className="text-right p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 backdrop-blur-sm">
+                    <div className="text-4xl font-black text-amber-500 tabular-nums">
+                        {leadgenCredits.toLocaleString()}
                     </div>
-                    <div className="text-right p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 backdrop-blur-sm">
-                        <div className="text-4xl font-black text-amber-500 tabular-nums">
-                            {leadgenCredits.toLocaleString()}
+                    <p className="text-[10px] text-amber-500/60 font-bold uppercase tracking-[0.2em]">Current Balance</p>
+                </div>
+            </CardHeader>
+            <CardContent className="relative flex-1 flex flex-col justify-end">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4 border-t border-white/5 mt-auto">
+                    <div className="grid grid-cols-2 sm:flex gap-x-6 gap-y-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            1 Credit / Company
                         </div>
-                        <p className="text-[10px] text-amber-500/60 font-bold uppercase tracking-[0.2em]">Current Balance</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            5 Credits / Deep Enrich
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            25 Credits / Agentic
+                        </div>
                     </div>
-                </CardHeader>
-                <CardContent className="relative">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4 border-t border-white/5">
-                        <div className="grid grid-cols-2 sm:flex gap-x-6 gap-y-2">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                1 Credit / Company
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                5 Credits / Deep Enrich
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                25 Credits / Agentic
-                            </div>
+                    <Button
+                        onClick={() => setPurchaseModalOpen(true)}
+                        className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-black font-bold h-11 px-8 rounded-xl shadow-xl shadow-amber-500/10 group-hover:scale-105 transition-transform"
+                    >
+                        <Plus className="w-5 h-5 mr-2" />
+                        Purchase Top-Up
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    const renderChatCard = () => (
+        <Card className="group relative bg-[#09090b] border-[#27272a] overflow-hidden h-full flex flex-col">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4">
+                <div className="space-y-1">
+                    <CardTitle className="text-xl flex items-center md:text-2xl font-black bg-gradient-to-r from-blue-500 to-indigo-500/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                        <Bot className="w-6 h-6 fill-blue-500/20 mr-2 text-blue-500" />
+                        Chat & Inference Usage
+                    </CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                        Used for Assistant, CRM insights, and Copilot auto-completion.
+                    </CardDescription>
+                </div>
+                <div className="text-right p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 backdrop-blur-sm">
+                    <div className="text-4xl font-black text-blue-500 tabular-nums">
+                        {aiTokensBalance === -1 ? '∞' : (aiTokensBalance || 0).toLocaleString()}
+                    </div>
+                    <p className="text-[10px] text-blue-500/60 font-bold uppercase tracking-[0.2em]">{aiTokensBalance === -1 ? 'UNLIMITED' : 'Current Balance'}</p>
+                </div>
+            </CardHeader>
+            <CardContent className="relative flex-1 flex flex-col justify-end">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4 border-t border-white/5 mt-auto">
+                    <div className="grid grid-cols-2 sm:flex gap-x-6 gap-y-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                            Refills Monthly ({aiTokensBalance === -1 ? 'Exempt' : 'Plan Limit'})
                         </div>
+                    </div>
+                    {aiTokensBalance !== -1 && (
                         <Button
-                            onClick={() => setPurchaseModalOpen(true)}
-                            className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-black font-bold h-11 px-8 rounded-xl shadow-xl shadow-amber-500/10 group-hover:scale-105 transition-transform"
+                            variant="secondary"
+                            onClick={() => { toast.info("To upgrade AI plan limits, contact platform support."); }}
+                            className="w-full sm:w-auto bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 font-bold h-11 px-8 rounded-xl shadow-xl shadow-blue-500/10 transition-colors"
                         >
                             <Plus className="w-5 h-5 mr-2" />
                             Purchase Top-Up
                         </Button>
-                    </div>
-                </CardContent>
-            </Card>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
 
-            {/* Service Selection Tabs */}
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Credits Wallets (Dynamic based on tab) */}
+            {activeTab === "general" && (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    {renderLeadGenCard()}
+                    {renderChatCard()}
+                </div>
+            )}
+            {activeTab === "enrichment" && renderLeadGenCard()}
+            {activeTab === "chat" && renderChatCard()}
+
             <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
                 <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/40 border border-white/5 p-1 h-auto rounded-xl">
                     <TabsTrigger value="general" className="rounded-lg py-2.5 data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-[0_0_15px_rgba(var(--primary),0.2)] transition-all">

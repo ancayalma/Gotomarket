@@ -125,11 +125,13 @@ export async function runLeadGenPipeline({
   if (!isPlatformAdmin) {
     const { resetLeadGenCredits } = await import("@/lib/scraper/credits");
     let currentCredits = await getTeamLeadGenCredits(teamId);
-    // Auto-initialize credits on first run if no config exists
-    if (currentCredits <= 0) {
+    // Auto-initialize credits on first run if no config exists (0 balance)
+    if (currentCredits === 0) {
       currentCredits = await resetLeadGenCredits(teamId);
     }
-    if (currentCredits <= 0) {
+    
+    // Only fail if exactly 0. Negative balances signify unlimited mode (e.g. starting at -1 and decrementing down to track usage)
+    if (currentCredits === 0) {
       await db.crm_Lead_Gen_Jobs.update({
         where: { id: jobId },
         data: {

@@ -1483,9 +1483,19 @@ export async function POST(req: Request) {
         // Call Azure OpenAI (or fallback OpenAI) with streaming
         const requiresVision = uploadedAttachments && uploadedAttachments.length > 0;
         
+        // Build CRM tools if we have a team context
+        let teamIdForTools: string | null = null;
+        try {
+            const toolUser = await prismadb.users.findUnique({
+                where: { id: auth.user.id },
+                select: { team_id: true }
+            });
+            teamIdForTools = toolUser?.team_id || null;
+        } catch (_) {}
+
         let aiModelResult;
         try {
-            aiModelResult = await getAiSdkModel(auth.user.id, "chat", requiresVision);
+            aiModelResult = await getAiSdkModel({ userId: auth.user.id, teamId: teamIdForTools || undefined }, "chat", requiresVision);
         } catch (modelErr: any) {
             if (modelErr.message?.includes("VISION_UNSUPPORTED_MODEL")) {
                 const modelName = modelErr.message.split(":")[1] || "The selected model";
@@ -1498,16 +1508,6 @@ export async function POST(req: Request) {
         if (!model) {
             return new NextResponse("No openai key found", { status: 500 });
         }
-
-        // Build CRM tools if we have a team context
-        let teamIdForTools: string | null = null;
-        try {
-            const toolUser = await prismadb.users.findUnique({
-                where: { id: auth.user.id },
-                select: { team_id: true }
-            });
-            teamIdForTools = toolUser?.team_id || null;
-        } catch (_) {}
 
         const crmTools = teamIdForTools ? buildCrmTools(teamIdForTools, auth.user.id) : {};
 

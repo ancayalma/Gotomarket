@@ -67,6 +67,7 @@ export default async function AdminDashboardLayout({
     if (team?.module_overrides) {
         features = Array.from(new Set([...features, ...team.module_overrides]));
     }
+    features.push(String(planSlug).toLowerCase());
 
     return (
         <ThemeGuard>

@@ -2095,14 +2095,9 @@ export async function runAgenticLeadGeneration(
   accountsWithContactInfoSaved: number;
   iterations: number;
 }> {
-  const { model, provider, modelId } = await getAiSdkModel(userId, "enrichment");
-  if (!model) {
-    throw new Error("AI model not configured");
-  }
-
   const db: any = prismadbCrm;
 
-  // Resolve team_id for AI token tracking
+  // Resolve team_id for AI token tracking and model configuration routing
   let teamId: string | null = null;
   let isPlatformAdmin = false;
   try {
@@ -2114,6 +2109,11 @@ export async function runAgenticLeadGeneration(
     isPlatformAdmin = userRecord?.assigned_role?.name === "SuperAdmin" || userRecord?.is_admin || userRecord?.is_account_admin;
   } catch (e) {
     console.warn("[LEADGEN] Could not resolve team_id for token tracking", e);
+  }
+
+  const { model, provider, modelId } = await getAiSdkModel({ userId, teamId: teamId || undefined }, "enrichment");
+  if (!model) {
+    throw new Error("AI model not configured");
   }
   let accumulatedTokens = 0;
   let accumulatedPromptTokens = 0;

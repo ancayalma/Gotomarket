@@ -14,6 +14,8 @@ export const TeamAiSettings = ({ teamId }: TeamAiSettingsProps) => {
     const [activeModels, setActiveModels] = useState<AiModel[]>([]);
     const [enabledProviders, setEnabledProviders] = useState<string[]>([]);
     const [providersWithSystemKey, setProvidersWithSystemKey] = useState<string[]>([]);
+    const [leadgenCredits, setLeadgenCredits] = useState<number>(0);
+    const [aiTokensBalance, setAiTokensBalance] = useState<number>(0);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -25,6 +27,8 @@ export const TeamAiSettings = ({ teamId }: TeamAiSettingsProps) => {
                     setActiveModels(data.activeModels);
                     setEnabledProviders(data.enabledProviders);
                     setProvidersWithSystemKey(data.providersWithSystemKey);
+                    setLeadgenCredits(data.leadgenCredits || 0);
+                    setAiTokensBalance(data.aiTokensBalance || 0);
                 }
             } catch (error) {
                 console.error("Failed to fetch AI settings:", error);
@@ -55,6 +59,8 @@ export const TeamAiSettings = ({ teamId }: TeamAiSettingsProps) => {
             currentConfig={teamConfig}
             models={activeModels}
             providersWithSystemKey={providersWithSystemKey}
+            leadgenCredits={leadgenCredits}
+            aiTokensBalance={aiTokensBalance}
         />
     );
 };

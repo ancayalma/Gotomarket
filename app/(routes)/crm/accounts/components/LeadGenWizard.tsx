@@ -84,8 +84,12 @@ export default function LeadGenWizardPage() {
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     if (type === "number" || name === "maxCompanies" || name === "maxContactsPerCompany") {
+      if (value === "" || value === "-") {
+         setState((prev) => ({ ...prev, [name]: value as any }));
+         return;
+      }
       // Strip leading zeros and clamp to valid range
-      const stripped = value.replace(/^0+(?=\d)/, "");
+      const stripped = value.replace(/^-?0+(?=\d)/, (m) => m.startsWith('-') ? '-' : '');
       const num = Number(stripped);
       setState((prev) => ({ ...prev, [name]: isNaN(num) ? 0 : num }));
     } else {
@@ -322,7 +326,10 @@ export default function LeadGenWizardPage() {
               body: JSON.stringify(payload),
             });
 
-            if (!res.ok) throw new Error(await res.text());
+            if (!res.ok) {
+              const errText = await res.text();
+              throw new Error(errText);
+            }
             const data = await res.json();
 
             // Auto-trigger pipeline
@@ -334,8 +341,10 @@ export default function LeadGenWizardPage() {
             router.push(`/lists/jobs/${data.jobId}`);
             return;
           }
-        } catch (parseErr) {
-          console.error("[AUTOGEN] AI parsing error:", parseErr);
+        } catch (parseErr: any) {
+          console.error("[AUTOGEN] AI parsing/submission error:", parseErr);
+          toast.error(parseErr.message || "Failed to start AI Agent. Please check limits.");
+          throw parseErr; // Escalate to the outer catch
         }
       }
 
@@ -456,20 +465,18 @@ export default function LeadGenWizardPage() {
       {/* Leads Limit */}
       <div className="relative group overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-md shadow-sm transition-colors hover:bg-white/10">
         <label className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 block">
-          Credits Target (Max 100)
+          {limitsInfo?.isUnlimited ? "Credits Target (Infinite limit)" : `Credits Target (Max ${limitsInfo?.monthlyLimit || 100})`}
         </label>
         <div className="flex items-center gap-2">
           <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
+            type="number"
             name="maxCompanies"
             value={String(state.maxCompanies)}
             onChange={onChange}
             onFocus={(e) => e.target.select()}
             className="w-full bg-transparent border-none text-lg font-medium focus:ring-0 px-0"
-            min={1}
-            max={100}
+            min={-1}
+            max={limitsInfo?.isUnlimited ? 100000 : (limitsInfo?.monthlyLimit || 100)}
           />
           <div className="text-xs text-muted-foreground whitespace-nowrap">credits</div>
         </div>

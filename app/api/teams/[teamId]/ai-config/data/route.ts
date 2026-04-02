@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 import { systemLogger } from "@/lib/logger";
+import { getTeamLeadGenCredits } from "@/lib/scraper/credits";
+import { getTeamAiTokenBalance } from "@/lib/ai-tokens";
 
 // GET /api/teams/[teamId]/ai-config/data - Get all AI config data for the form
 export async function GET(
@@ -54,6 +56,11 @@ export async function GET(
             .filter(c => c.apiKey && c.apiKey.trim().length > 0)
             .map(c => c.provider);
 
+        const [leadgenCredits, aiTokensBalance] = await Promise.all([
+            getTeamLeadGenCredits(teamId),
+            getTeamAiTokenBalance(teamId)
+        ]);
+
         return NextResponse.json({
             teamConfig: teamConfig ? {
                 ...teamConfig,
@@ -61,7 +68,9 @@ export async function GET(
             } : null,
             activeModels,
             enabledProviders,
-            providersWithSystemKey
+            providersWithSystemKey,
+            leadgenCredits,
+            aiTokensBalance
         });
     } catch (error) {
         systemLogger.error("[TEAM_AI_CONFIG_DATA_GET]", error);
