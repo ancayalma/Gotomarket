@@ -215,17 +215,21 @@ export default function ChatApp({ isCompact = false }: { isCompact?: boolean }) 
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 sm:hidden backdrop-blur-sm transition-opacity"
+          className={cn(
+            "absolute inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity",
+            !isCompact && "sm:hidden"
+          )}
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      {!isCompact && (
-        <aside
+      <aside
           className={cn(
-            "fixed z-50 inset-y-0 left-0 w-80 bg-card border-r border-border flex flex-col transition-transform duration-300 ease-in-out sm:static sm:translate-x-0",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            "absolute z-50 inset-y-0 left-0 bg-card border-r border-border flex flex-col transition-transform duration-300 ease-in-out",
+            isCompact ? "w-64 max-w-[90%]" : "w-80",
+            sidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full",
+            !isCompact && "sm:static sm:translate-x-0 sm:shadow-none"
           )}
         >
           <div className="p-4 border-b border-border flex items-center justify-between">
@@ -379,7 +383,6 @@ export default function ChatApp({ isCompact = false }: { isCompact?: boolean }) 
               ))}
           </div>
         </aside>
-      )}
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 bg-background/50">

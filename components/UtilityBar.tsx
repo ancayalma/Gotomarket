@@ -30,7 +30,7 @@ import { TAB_LABELS, TAB_COLORS } from "@/components/ui/LearnLink";
 import { getTeamCreditsInfo } from "@/actions/crm/credits";
 import DialerPanel from "@/app/(routes)/crm/dialer/DialerPanel";
 import dynamic from "next/dynamic";
-const ChatApp = dynamic(() => import("@/app/(routes)/openAi/components/Chat"), { ssr: false });
+const ChatApp = dynamic(() => import("@/app/(routes)/varuni/components/Chat"), { ssr: false });
 import {
     Popover,
     PopoverContent,

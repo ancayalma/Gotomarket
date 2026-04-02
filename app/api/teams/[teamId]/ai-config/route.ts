@@ -27,7 +27,7 @@ export async function POST(
             return NextResponse.json({ error: "Invalid or empty request body" }, { status: 400 });
         }
 
-        const { provider, modelId, useSystemKey, apiKey } = body;
+        const { provider, modelId, useSystemKey, apiKey, services } = body;
 
         // Validate provider string is non-empty
         if (!provider || typeof provider !== "string" || provider.trim().length === 0) {
@@ -63,12 +63,14 @@ export async function POST(
                 modelId: modelId || null,
                 useSystemKey: useSystemKey ?? true,
                 apiKey: encryptedKey,
+                configuration: { services: services || {} },
             },
             update: {
                 provider,
                 modelId: modelId || null,
                 useSystemKey: useSystemKey ?? true,
                 apiKey: encryptedKey,
+                configuration: { services: services || {} },
             },
         });
 

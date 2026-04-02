@@ -12,11 +12,11 @@ type Props = {
 
 const ChatGPTModuleMenu = ({ open, isMobile = false }: Props) => {
   const pathname = usePathname();
-  const isPath = /^\/([a-z]{2}\/)?openAi(\/|$)/.test(pathname);
+  const isPath = /^\/([a-z]{2}\/)?varuni(\/|$)/.test(pathname);
 
   return (
     <MenuItem
-      href="/openAi"
+      href="/varuni"
       icon={Bot}
       title="Varuni"
       isOpen={open}

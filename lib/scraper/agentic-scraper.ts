@@ -1298,7 +1298,7 @@ export async function enrichCompanyDataWithAI(
   industry: string;
 }> {
   try {
-    const { model } = await getAiSdkModel(userId);
+    const { model } = await getAiSdkModel(userId, "enrichment");
     if (!model) {
       return {
         companyName: domain,
@@ -2095,7 +2095,7 @@ export async function runAgenticLeadGeneration(
   accountsWithContactInfoSaved: number;
   iterations: number;
 }> {
-  const { model, provider, modelId } = await getAiSdkModel(userId);
+  const { model, provider, modelId } = await getAiSdkModel(userId, "enrichment");
   if (!model) {
     throw new Error("AI model not configured");
   }

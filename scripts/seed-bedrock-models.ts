@@ -72,9 +72,9 @@ const BEDROCK_MODELS = [
     maxContext: 131072,
   },
   {
-    name: "Qwen3 VL 235B A22B",
-    modelId: "qwen.qwen3-vl-235b-a22b-instruct-v1:0",
-    description: "Vision-language MoE model. 235B params, 22B active. Multimodal understanding.",
+    name: "Qwen3 Vision 235B",
+    modelId: "qwen.qwen3-vl-235b-a22b",
+    description: "Multi-modal model providing high accuracy in interpreting images, documents, and visual structures.",
     inputPrice: 0.53,
     outputPrice: 2.66,
     maxContext: 131072,

@@ -1451,7 +1451,23 @@ export async function POST(req: Request) {
                                 parts.push({ type: 'text', text: `[Attached Document: ${att.name}] (System Error: Extract failed)` });
                             }
                         } else {
-                            parts.push({ type: 'image', image: fileUrl });
+                            try {
+                                const imgRes = await fetch(finalUrlString);
+                                if (!imgRes.ok) throw new Error("Failed to fetch image");
+                                const ab = await imgRes.arrayBuffer();
+                                
+                                const sharp = (await import('sharp')).default;
+                                const resized = await sharp(Buffer.from(ab))
+                                    .resize({ width: 1024, height: 1024, fit: 'inside', withoutEnlargement: true })
+                                    .jpeg({ quality: 80 })
+                                    .toBuffer();
+                                
+                                parts.push({ type: 'image', image: resized, mimeType: 'image/jpeg' });
+                            } catch (e) {
+                                systemLogger.warn("[CHAT_IMAGE_COMPRESSION_ERROR]", e);
+                                // Fallback just in case
+                                parts.push({ type: 'image', image: fileUrl });
+                            }
                         }
                     } catch (e) {
                         systemLogger.warn("[CHAT_ATTACHMENT_URL_ERROR]", e);
