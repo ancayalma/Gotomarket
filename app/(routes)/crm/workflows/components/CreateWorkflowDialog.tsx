@@ -43,7 +43,7 @@ const formSchema = z.object({
     description: z.string().max(500).optional(),
     flow_type: z.string().min(1, "Select a FlowState type"),
     trigger_type: z.string().optional(),
-    preset_id: z.string().default("blank"),
+    preset_id: z.string(),
     object_type: z.string().optional(),
 });
 
@@ -157,8 +157,8 @@ export function CreateWorkflowDialog({ teamId, children }: CreateWorkflowDialogP
             description: values.description,
             trigger_type: finalTriggerType,
             team_id: teamId,
-            nodes: finalNodes,
-            edges: finalEdges,
+            nodes: finalNodes as any,
+            edges: finalEdges as any,
         });
 
         if (result.success && result.workflow) {
