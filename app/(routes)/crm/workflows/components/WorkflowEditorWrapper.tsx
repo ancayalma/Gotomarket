@@ -15,4 +15,4 @@ export const WorkflowEditorWrapper = dynamic(
             </div>
         ),
     }
-);
+) as React.FC<{ workflow: any; allWorkflows: any[]; teamId: string }>;
