@@ -19,8 +19,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ApiKeysManager } from "@/app/admin/(dashboard)/api-keys/_components/ApiKeysManager";
 import { ApiLogsViewer } from "@/app/admin/(dashboard)/api-keys/_components/ApiLogsViewer";
+import { resolveSlug } from "@/config/subscriptions";
 
 import { NavigationCard } from "../../_components/NavigationCard";
+
 
 type OwnerInfo = {
     id: string;
@@ -116,14 +118,19 @@ const TeamDetailsView = ({ team, availablePlans, currentUserInfo, systemResendDa
             iconColor: "text-purple-500",
         });
 
-        cards.push({
-            id: "ai-config",
-            title: "AI Hub",
-            description: "Model config",
-            icon: Bot,
-            color: "from-indigo-500/20 to-purple-500/20",
-            iconColor: "text-indigo-500",
-        });
+        const planSlug = resolveSlug(team.assigned_plan?.slug || team.subscription_plan).toLowerCase();
+        const canUseAiConfig = isExemptTeam || planSlug === "scale" || planSlug === "enterprise" || team.module_overrides?.includes("ai_lab");
+
+        if (canUseAiConfig) {
+            cards.push({
+                id: "ai-config",
+                title: "AI Hub",
+                description: "Model config",
+                icon: Bot,
+                color: "from-indigo-500/20 to-purple-500/20",
+                iconColor: "text-indigo-500",
+            });
+        }
 
         if (currentUserInfo?.isGlobalAdmin) {
             cards.push({

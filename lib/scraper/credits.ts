@@ -86,18 +86,21 @@ export async function consumeLeadGenCredits(teamId: string, amount: number) {
         throw new Error(`Insufficient LeadGen credits. Required ${amount}, available ${current}.`);
     }
 
-    // For tracking unlimited usage upwards, if current is < 0 (meaning unlimited config mode),
-    // we can actually decrement it further (e.g., -100 used). The UI can display this as `used = Math.abs(current)`.
-    await prismadb.teamAiConfig.update({
-        where: { team_id: teamId },
-        data: {
-            leadgen_credits_balance: {
-                decrement: amount
+    // Only decrement if they are on a metered plan (current > 0). If unlimited (current < 0), leave it as is.
+    if (current > 0) {
+        await prismadb.teamAiConfig.update({
+            where: { team_id: teamId },
+            data: {
+                leadgen_credits_balance: {
+                    decrement: amount
+                }
             }
-        }
-    });
+        });
+        return current - amount;
+    }
 
-    return current - amount;
+    // If unlimited mode, return the same unlimited indicator 
+    return current;
 }
 
 export async function addLeadGenCredits(teamId: string, amount: number) {

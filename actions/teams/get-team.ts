@@ -10,6 +10,7 @@ export const getTeam = async (teamId: string) => {
                 id: teamId,
             },
             include: {
+                assigned_plan: true,
                 members: {
                     select: {
                         id: true,

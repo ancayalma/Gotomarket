@@ -4,11 +4,12 @@ import { authOptions } from "@/lib/auth";
 import Container from "@/app/(routes)/components/ui/Container";
 import { redirect } from "next/navigation";
 import { prismadb } from "@/lib/prisma";
-import { AddProviderModal } from "./_components/AddProviderModal";
 import { AddModelModal } from "./_components/AddModelModal";
-import { ProviderRegistrySection } from "./_components/ProviderRegistrySection";
 import { PendingRequestsSection } from "./_components/PendingRequestsSection";
 import { HuggingFaceBrowser } from "@/components/ai/HuggingFaceBrowser";
+import { AiConfigManager } from "@/components/ai/AiConfigManager";
+import { getTeamLeadGenCredits } from "@/lib/scraper/credits";
+import { getTeamAiTokenBalance } from "@/lib/ai-tokens";
 import {
     Cpu,
     Box,
@@ -38,7 +39,7 @@ export default async function PartnerAiConfigPage() {
     }
 
     // Fetch all data in parallel
-    const [providers, allModels, pendingRequests] = await Promise.all([
+    const [providers, allModels, pendingRequests, teamConfig, systemConfigs, teamModelRequests] = await Promise.all([
         prismadb.aiProviderRegistry.findMany({
             orderBy: { slug: "asc" }
         }),
@@ -49,58 +50,38 @@ export default async function PartnerAiConfigPage() {
             where: { status: "PENDING" },
             orderBy: { createdAt: "desc" }
         }),
+        prismadb.teamAiConfig.findUnique({
+            where: { team_id: user?.assigned_team?.id || "" },
+        }),
+        prismadb.systemAiConfig.findMany(),
+        prismadb.customModelRequest.findMany({
+            where: { team_id: user?.assigned_team?.id || "" },
+            orderBy: { createdAt: "desc" },
+            take: 10,
+        }),
     ]);
 
     const activeProviders = (providers as any[]).filter(p => p.isActive);
     const providerOptions = activeProviders.map(p => ({ slug: p.slug, name: p.name }));
+    const activeModels = (allModels as any[]).filter(m => m.isActive);
+
+    const providersWithSystemKey = (systemConfigs as any[])
+        .filter((c: any) => c.apiKey && c.apiKey.trim().length > 0)
+        .map((c: any) => c.provider);
+
+    const [leadgenCredits, aiTokensBalance] = await Promise.all([
+        getTeamLeadGenCredits(user?.assigned_team?.id || ""),
+        getTeamAiTokenBalance(user?.assigned_team?.id || "")
+    ]);
 
     return (
         <Container
             title="System AI Configuration"
             description="Manage the Platform's AI Providers, Models, and System API Keys."
         >
-            <div className="p-4 space-y-8 max-w-5xl">
+            <div className="p-4 space-y-8 mx-auto w-full max-w-7xl">
 
-                {/* ─── Section 1: Provider Registry ─── */}
-                <section>
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                                <Cpu className="w-5 h-5 text-primary" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-bold text-foreground tracking-tight">Provider Registry</h2>
-                                <p className="text-xs text-muted-foreground">
-                                    {activeProviders.length} active providers · {providers.length} total
-                                </p>
-                            </div>
-                        </div>
-                        <AddProviderModal userId={user?.id} />
-                    </div>
 
-                    <ProviderRegistrySection
-                        providers={providers as any}
-                        models={(allModels as any[]).map(m => ({
-                            id: m.id,
-                            name: m.name,
-                            modelId: m.modelId,
-                            provider: m.provider,
-                            isActive: m.isActive,
-                        }))}
-                    />
-                </section>
-
-                {/* ─── Divider ─── */}
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-border/30" />
-                    </div>
-                    <div className="relative flex justify-center">
-                        <span className="bg-background px-3 flex items-center gap-2 text-xs text-muted-foreground">
-                            <Layers className="w-3 h-3" />
-                        </span>
-                    </div>
-                </div>
 
                 {/* ─── Section 2: Model Registry (Add Model + Stats) ─── */}
                 <section>
@@ -173,10 +154,21 @@ export default async function PartnerAiConfigPage() {
                             </p>
                         </div>
                     </div>
-                    {/* <UnifiedAiCard /> */}
-                    <div className="p-4 text-center text-muted-foreground bg-muted/20 border border-border rounded-xl">
-                        AI Configuration interface temporarily disabled.
-                    </div>
+                    <AiConfigManager
+                        teamId={user?.assigned_team?.id || ""}
+                        currentConfig={teamConfig ? {
+                            ...teamConfig,
+                            apiKey: teamConfig.apiKey ? "********" : null
+                        } : null}
+                        models={activeModels}
+                        providersWithSystemKey={providersWithSystemKey}
+                        userId={user?.id || ""}
+                        teamName={user?.assigned_team?.name || ""}
+                        modelRequests={teamModelRequests as any}
+                        providerOptions={providerOptions}
+                        leadgenCredits={leadgenCredits}
+                        aiTokensBalance={aiTokensBalance}
+                    />
                 </section>
             </div>
         </Container>

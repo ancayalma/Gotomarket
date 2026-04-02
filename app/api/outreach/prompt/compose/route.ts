@@ -130,7 +130,7 @@ export async function POST(req: Request) {
             },
         };
 
-        const { model, modelId, teamId } = await getAiSdkModel(session.user.id);
+        const { model, modelId, teamId } = await getAiSdkModel({ userId: session.user.id, teamId: currentUser?.team_id || undefined }, "email");
         if (!model) {
             return new NextResponse("AI model not configured", { status: 500 });
         }

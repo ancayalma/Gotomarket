@@ -29,8 +29,8 @@ export const LeadGenWizardSchema = z.object({
   // Optional advanced params for the pipeline
   limits: z
     .object({
-      maxCompanies: z.number().int().positive().max(2000).default(100).optional(),
-      maxContactsPerCompany: z.number().int().positive().max(50).default(3).optional(),
+      maxCompanies: z.number().int().min(-1).max(100000).default(100).optional(),
+      maxContactsPerCompany: z.number().int().min(-1).max(50).default(3).optional(),
     })
     .optional(),
   // Link to a project (optional - legacy)

@@ -1234,6 +1234,7 @@ export async function POST(req: Request) {
         let userEmail = auth.user.email || "Unknown";
         let planTier = "Unknown";
         let planFeatures: string[] = [];
+        let targetTeamId: string | undefined = undefined;
 
         try {
             const user = await prismadb.users.findUnique({
@@ -1244,6 +1245,7 @@ export async function POST(req: Request) {
                     } 
                 }
             });
+            if (user?.assigned_team?.id) targetTeamId = user.assigned_team.id;
             if (user?.assigned_team?.name) teamName = user.assigned_team.name;
             if (user?.team_role) userRole = user.team_role;
             if (user?.name) userName = user.name;
@@ -1469,7 +1471,7 @@ export async function POST(req: Request) {
         
         let aiModelResult;
         try {
-            aiModelResult = await getAiSdkModel(auth.user.id, "chat", requiresVision);
+            aiModelResult = await getAiSdkModel({ userId: auth.user.id, teamId: targetTeamId }, "chat", requiresVision);
         } catch (modelErr: any) {
             if (modelErr.message?.includes("VISION_UNSUPPORTED_MODEL")) {
                 const modelName = modelErr.message.split(":")[1] || "The selected model";
