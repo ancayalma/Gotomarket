@@ -10,8 +10,8 @@ export async function getActiveAiModels() {
         });
         
         // Strip duplicate models if any
-        const models = Array.from(new Set(systemConfigs.map((c) => c.modelId))).map(id => {
-            return systemConfigs.find((c) => c.modelId === id);
+        const models = Array.from(new Set(systemConfigs.map((c: any) => c.modelId))).map(id => {
+            return systemConfigs.find((c: any) => c.modelId === id);
         }).filter(Boolean);
 
         return models.map((m) => ({

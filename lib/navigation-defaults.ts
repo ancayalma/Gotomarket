@@ -280,7 +280,7 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 type: "item",
                 label: "Varuni AI",
                 iconName: "Sparkles",
-                href: "/openAi",
+                href: "/varuni",
                 permissions: { feature: "ai_lab" },
                 isPremium: true
             }
