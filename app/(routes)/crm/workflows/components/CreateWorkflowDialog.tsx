@@ -36,12 +36,14 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Zap, LayoutGrid, Database, Clock, CheckCircle2 } from "lucide-react";
 import { createWorkflow } from "@/actions/crm/workflows";
 import { toast } from "sonner";
+import { WORKFLOW_PRESETS } from "./WorkflowPresets";
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required").max(100),
     description: z.string().max(500).optional(),
     flow_type: z.string().min(1, "Select a FlowState type"),
-    trigger_type: z.string().min(1, "Select a trigger"),
+    trigger_type: z.string().optional(),
+    preset_id: z.string().default("blank"),
     object_type: z.string().optional(),
 });
 
@@ -107,36 +109,56 @@ export function CreateWorkflowDialog({ teamId, children }: CreateWorkflowDialogP
             description: "",
             flow_type: "",
             trigger_type: "",
+            preset_id: "blank",
             object_type: "",
         },
     });
 
     const selectedFlowType = form.watch("flow_type");
+    const selectedPresetId = form.watch("preset_id");
+    
     const availableTriggers = triggerOptions[selectedFlowType] || [];
+    const availablePresets = WORKFLOW_PRESETS.filter(p => p.flow_type === selectedFlowType);
+    
     const showObjectType = ["EVENT_DRIVEN", "INTERACTIVE", "APPROVAL_CHAIN"].includes(selectedFlowType);
 
     const onSubmit = async (values: FormValues) => {
         setLoading(true);
 
+        const isBlank = values.preset_id === "blank";
+        
+        if (isBlank && !values.trigger_type) {
+            form.setError("trigger_type", { message: "Select a trigger" });
+            setLoading(false);
+            return;
+        }
+
+        const preset = !isBlank ? WORKFLOW_PRESETS.find(p => p.id === values.preset_id) : null;
+        
         const triggerLabel = availableTriggers.find(t => t.value === values.trigger_type)?.label || "Trigger";
+        
+        const finalNodes = preset ? (preset.nodes as any) : [
+            {
+                id: "trigger-1",
+                type: "trigger",
+                position: { x: 250, y: 50 },
+                data: {
+                    label: triggerLabel,
+                    triggerType: values.trigger_type,
+                },
+            },
+        ];
+        
+        const finalEdges = preset ? preset.edges : [];
+        const finalTriggerType = preset ? preset.trigger_type : values.trigger_type!;
 
         const result = await createWorkflow({
             name: values.name,
             description: values.description,
-            trigger_type: values.trigger_type,
+            trigger_type: finalTriggerType,
             team_id: teamId,
-            nodes: [
-                {
-                    id: "trigger-1",
-                    type: "trigger",
-                    position: { x: 250, y: 50 },
-                    data: {
-                        label: triggerLabel,
-                        triggerType: values.trigger_type,
-                    },
-                },
-            ],
-            edges: [],
+            nodes: finalNodes,
+            edges: finalEdges,
         });
 
         if (result.success && result.workflow) {
@@ -278,43 +300,98 @@ export function CreateWorkflowDialog({ teamId, children }: CreateWorkflowDialogP
                             />
                         )}
 
-                        {/* Trigger */}
+                        {/* Presets and Triggers */}
                         {selectedFlowType && (
-                            <FormField
-                                control={form.control}
-                                name="trigger_type"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Trigger</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="What starts this FlowState?" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {availableTriggers.map((option) => (
-                                                    <SelectItem key={option.value} value={option.value}>
+                            <>
+                                <FormField
+                                    control={form.control}
+                                    name="preset_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Configuration Template</FormLabel>
+                                            <Select
+                                                onValueChange={(v) => {
+                                                    field.onChange(v);
+                                                    if (v !== "blank") {
+                                                        const p = WORKFLOW_PRESETS.find(x => x.id === v);
+                                                        if (p) {
+                                                            form.setValue("name", `${p.name} (Copy)`);
+                                                            form.setValue("description", p.description);
+                                                        }
+                                                    }
+                                                }}
+                                                value={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger className={field.value !== "blank" ? "border-primary/50 bg-primary/5" : ""}>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="blank">
                                                         <div className="flex flex-col">
-                                                            <span>{option.label}</span>
-                                                            <span className="text-xs text-muted-foreground">
-                                                                {option.description}
-                                                            </span>
+                                                            <span className="font-medium">Blank Canvas</span>
+                                                            <span className="text-xs text-muted-foreground">Start from scratch with a single trigger</span>
                                                         </div>
                                                     </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormDescription>
-                                            Choose what event will start this FlowState
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
+                                                    {availablePresets.map((preset) => (
+                                                        <SelectItem key={preset.id} value={preset.id}>
+                                                            <div className="flex flex-col py-1">
+                                                                <span className="font-semibold text-primary">{preset.name}</span>
+                                                                <span className="text-xs text-muted-foreground max-w-[400px] whitespace-normal">
+                                                                    {preset.description}
+                                                                </span>
+                                                            </div>
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormDescription>
+                                                Jumpstart this FlowState with a pre-configured template structure
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {selectedPresetId === "blank" && (
+                                    <FormField
+                                        control={form.control}
+                                        name="trigger_type"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Trigger</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value || ""}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="What starts this FlowState?" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {availableTriggers.map((option) => (
+                                                            <SelectItem key={option.value} value={option.value}>
+                                                                <div className="flex flex-col">
+                                                                    <span>{option.label}</span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        {option.description}
+                                                                    </span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription>
+                                                    Choose what event will start this FlowState
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 )}
-                            />
+                            </>
                         )}
 
                         <DialogFooter>

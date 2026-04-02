@@ -35,59 +35,53 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
 
     return (
         <UpgradeGate featureId="workflows" title="FlowState Automation Locked" description="Visual workflow automation requires an upgraded workspace plan.">
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full bg-[#06080a]">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg">
-                            <Zap className="h-6 w-6 text-white" />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b border-white/5 gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg">
+                                <Zap className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tighter uppercase leading-none">
+                                    FlowState
+                                </h1>
+                                <p className="text-muted-foreground/80 mt-2 text-base font-medium tracking-wide italic border-l-2 border-primary/30 pl-4">
+                                    Visual workflow automation for your CRM
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tighter uppercase leading-none">
-                                {isEditorView ? "Visual Editor" : isHistoryView ? "Execution History" : "FlowState"}
-                            </h1>
-                            <p className="text-muted-foreground/80 mt-2 text-base font-medium tracking-wide italic border-l-2 border-primary/30 pl-4">
-                                {isEditorView ? "Design and test FlowState automations with Mermaid.js" : isHistoryView ? "Review past workflow executions and outcomes" : "Visual workflow automation for your CRM"}
-                            </p>
-                        </div>
+                        {workflows.length > 0 && (
+                            <CreateWorkflowDialog teamId={teamId || ""}>
+                                <Button className="gap-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
+                                    <Plus className="h-4 w-4" />
+                                    New FlowState
+                                </Button>
+                            </CreateWorkflowDialog>
+                        )}
                     </div>
-                    {!isEditorView && (
-                        <CreateWorkflowDialog teamId={teamId || ""}>
-                            <Button className="gap-2">
-                                <Plus className="h-4 w-4" />
-                                New FlowState
-                            </Button>
-                        </CreateWorkflowDialog>
-                    )}
-                </div>
 
                 {/* Content */}
                 <div className="flex-1 p-4 sm:p-6 overflow-auto pb-36 md:pb-6">
-                    {isEditorView ? (
-                        <MermaidEditor />
-                    ) : isHistoryView ? (
-                        <ExecutionHistoryPanel />
-                    ) : workflows.length === 0 ? (
+                    {workflows.length > 0 ? (
+                        <WorkflowList workflows={workflows} />
+                    ) : (
                         <div className="flex flex-col items-center justify-center h-full text-center">
-                            <div className="p-4 bg-muted rounded-full mb-4">
+                            <div className="p-4 bg-muted/10 border border-white/5 shadow-2xl rounded-full mb-4">
                                 <Workflow className="h-12 w-12 text-muted-foreground" />
                             </div>
-                            <h2 className="text-xl font-semibold mb-2">No FlowStates yet</h2>
+                            <h2 className="text-xl font-semibold mb-2 text-white">No FlowStates yet</h2>
                             <p className="text-muted-foreground mb-6 max-w-md">
                                 Create your first FlowState to automate repetitive tasks like
                                 sending follow-up emails, creating tasks, or notifying your team.
                             </p>
                             <CreateWorkflowDialog teamId={teamId || ""}>
-                                <Button size="lg" className="gap-2">
+                                <Button size="lg" className="gap-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
                                     <Plus className="h-5 w-5" />
                                     Create Your First FlowState
                                 </Button>
                             </CreateWorkflowDialog>
                         </div>
-                    ) : (
-                        <Suspense fallback={<div>Loading workflows...</div>}>
-                            <WorkflowList workflows={workflows} />
-                        </Suspense>
                     )}
                 </div>
 
