@@ -27,7 +27,7 @@ export default function FluidNeuralWave({
         const x = Math.sin(s) * 10000;
         return x - Math.floor(x);
     };
-    // Colors for the neural grid
+
     const colorPalettes = {
         default: ["#06b6d4", "#8b5cf6", "#f59e0b", "#10b981", "#3b82f6"],
         aggressive: ["#ef4444", "#8b5cf6", "#06b6d4", "#f472b6", "#fbbf24"],
@@ -37,27 +37,26 @@ export default function FluidNeuralWave({
 
     const colors = colorPalettes[variant];
 
-    // Generate a denser set of paths for a more "complex" neural web
+    // Substantially reduced counts for performance
     const paths = useMemo(() => {
-        const count = variant === "complex" ? 20 : 15;
+        const count = variant === "complex" ? 10 : 6;
         return Array.from({ length: count }).map((_, i) => ({
-            d: `M-100,${300 + i * 25} Q${200 + i * 50 * seed},${100 + (i % 3) * 150} ${500},${500} T1100,${300 + i * 25}`,
-            duration: (variant === "aggressive" ? 6 : 10) + random(seed + i) * 15,
+            d: `M-100,${300 + i * 40} Q${200 + i * 60 * seed},${100 + (i % 3) * 150} ${500},${500} T1100,${300 + i * 40}`,
+            duration: (variant === "aggressive" ? 8 : 14) + random(seed + i) * 10,
             delay: i * 0.5,
             stroke: colors[i % colors.length],
-            width: (variant === "complex" ? 0.5 : 1) + random(seed + i + 100) * 3,
-            opacity: 0.2 + random(seed + i + 200) * 0.5
+            width: (variant === "complex" ? 1 : 1.5) + random(seed + i + 100) * 2,
+            opacity: 0.15 + random(seed + i + 200) * 0.4
         }));
     }, [colors, seed, variant]);
 
-    // Generate more synaptic pulses
     const pulses = useMemo(() => {
-        const count = variant === "aggressive" ? 20 : 12;
+        const count = variant === "aggressive" ? 8 : 4;
         return Array.from({ length: count }).map((_, i) => ({
             pathIndex: i % paths.length,
-            duration: (variant === "aggressive" ? 3 : 5) + random(seed + i + 500) * 10,
+            duration: (variant === "aggressive" ? 4 : 7) + random(seed + i + 500) * 6,
             delay: i * 1.5,
-            size: 2 + random(seed + i + 600) * 4
+            size: 2 + random(seed + i + 600) * 2
         }));
     }, [paths, variant, seed]);
 
@@ -69,14 +68,9 @@ export default function FluidNeuralWave({
                 viewBox="0 0 1000 1000"
                 preserveAspectRatio="xMidYMid slice"
                 className="w-full h-full"
+                style={{ filter: "drop-shadow(0px 0px 8px rgba(6, 182, 212, 0.3))" }}
             >
                 <defs>
-                    <filter id={`neural-glow-${variant}`} x="-50%" y="-50%" width="200%" height="200%">
-                        <feGaussianBlur in="SourceGraphic" stdDeviation={variant === "aggressive" ? "12" : "10"} result="blur" />
-                        <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -10" result="glow" />
-                        <feComposite in="SourceGraphic" in2="glow" operator="over" />
-                    </filter>
-
                     {colors.map((color, i) => (
                         <linearGradient key={`grad-${i}`} id={`grad-${variant}-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
                             <stop offset="0%" stopColor={color} stopOpacity="0" />
@@ -87,7 +81,7 @@ export default function FluidNeuralWave({
                     ))}
                 </defs>
 
-                <g filter={`url(#neural-glow-${variant})`} opacity={opacity}>
+                <g opacity={opacity}>
                     {paths.map((path, i) => (
                         <motion.path
                             key={`path-${i}`}
@@ -101,8 +95,8 @@ export default function FluidNeuralWave({
                                 d: [
                                     path.d,
                                     path.d.replace(/(\d+),(\d+)/g, (match, x, y) => {
-                                        const nx = parseInt(x) + (random(seed + i + 1000) * 150 - 75);
-                                        const ny = parseInt(y) + (random(seed + i + 2000) * 200 - 100);
+                                        const nx = parseInt(x) + (random(seed + i + 1000) * 80 - 40);
+                                        const ny = parseInt(y) + (random(seed + i + 2000) * 100 - 50);
                                         return `${nx},${ny}`;
                                     }),
                                     path.d
@@ -117,28 +111,32 @@ export default function FluidNeuralWave({
                         />
                     ))}
 
-                    {pulses.map((pulse, i) => (
-                        <motion.circle
-                            key={`synapse-${i}`}
-                            r={pulse.size}
-                            fill="white"
-                            filter="blur(1px)"
-                            initial={{ offsetDistance: "0%" }}
-                            animate={{
-                                offsetDistance: ["0%", "100%"],
-                                opacity: [0, 1, 0]
-                            }}
-                            transition={{
-                                duration: pulse.duration,
-                                repeat: Infinity,
-                                ease: "linear",
-                                delay: pulse.delay
-                            }}
-                            style={{
-                                offsetPath: `path("${paths[pulse.pathIndex].d}")`,
-                            }}
-                        />
-                    ))}
+                    {/* Simplified Pulses */}
+                    {pulses.map((pulse, i) => {
+                        const targetPath = paths[pulse.pathIndex];
+                        return (
+                            <motion.circle
+                                key={`synapse-${i}`}
+                                r={pulse.size}
+                                fill="#ffffff"
+                                opacity={0.8}
+                                initial={{ offsetDistance: "0%" }}
+                                animate={{
+                                    offsetDistance: ["0%", "100%"],
+                                    opacity: [0, 1, 0]
+                                }}
+                                transition={{
+                                    duration: pulse.duration,
+                                    repeat: Infinity,
+                                    ease: "linear",
+                                    delay: pulse.delay
+                                }}
+                                style={{
+                                    offsetPath: `path("${targetPath.d}")`,
+                                }}
+                            />
+                        );
+                    })}
                 </g>
             </svg>
         </div>
