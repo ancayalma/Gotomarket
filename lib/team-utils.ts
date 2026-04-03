@@ -38,37 +38,36 @@ export const getCurrentUserTeamId = cache(async () => {
     let effectiveTeamId = user?.team_id;
     let isImpersonating = false;
 
-    if (isGlobalAdmin) {
-        try {
-            const { cookies } = await import("next/headers");
-            const cookieStore = await cookies();
-            if (cookieStore) {
-                const impersonatedToken = cookieStore.get("impersonated_team_id")?.value;
-                if (impersonatedToken) {
-                    const verifiedId = await verifyImpersonatedTeamId(impersonatedToken);
-                    if (verifiedId) {
-                        effectiveTeamId = verifiedId;
-                        isImpersonating = true;
-                    } else {
-                        // If signature verify fails, delete the cookie silently
-                        try {
-                            cookieStore.delete("impersonated_team_id");
-                        } catch (e) { /* ignore */ }
-                    }
+    // We trust the cookie because signImpersonatedTeamId is only issued by authorized server actions
+    try {
+        const { cookies } = await import("next/headers");
+        const cookieStore = await cookies();
+        if (cookieStore) {
+            const impersonatedToken = cookieStore.get("impersonated_team_id")?.value;
+            if (impersonatedToken) {
+                const verifiedId = await verifyImpersonatedTeamId(impersonatedToken);
+                if (verifiedId) {
+                    effectiveTeamId = verifiedId;
+                    isImpersonating = true;
+                } else {
+                    // If signature verify fails, delete the cookie silently
+                    try {
+                        cookieStore.delete("impersonated_team_id");
+                    } catch (e) { /* ignore */ }
                 }
             }
-        } catch (e) {
-            // next/headers might not be available in non-request contexts
         }
+    } catch (e) {
+        // next/headers might not be available in non-request contexts
     }
 
     return {
         teamId: effectiveTeamId || null,
-        isGlobalAdmin: isPlatformAdminRole, // Sysadm: This is now TRUE because you HAVE the role
-        isPlatformAdmin: isPlatformAdminRole,
+        isGlobalAdmin: isImpersonating ? false : isPlatformAdminRole,
+        isPlatformAdmin: isImpersonating ? false : isPlatformAdminRole,
         isImpersonating: isImpersonating, // Tracks if you are actively targeting a specific team
-        teamRole: user?.team_role,
-        isAdmin: user?.is_admin || user?.team_role === "ADMIN" || user?.team_role === "OWNER" || isPlatformAdminRole,
+        teamRole: isImpersonating ? "OWNER" : user?.team_role,
+        isAdmin: isImpersonating ? true : (user?.is_admin || user?.team_role === "ADMIN" || user?.team_role === "OWNER" || isPlatformAdminRole),
         userId: user?.id || (session.user as any).id
     };
 });

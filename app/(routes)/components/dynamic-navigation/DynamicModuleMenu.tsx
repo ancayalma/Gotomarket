@@ -53,6 +53,7 @@ type Props = {
     itemFontSize?: string;
     itemFontWeight?: string;
     itemFontStyle?: string;
+    impersonationContext?: string;
 };
 
 const sidebarVariants = {
@@ -95,7 +96,8 @@ const DynamicModuleMenu = ({
     itemFont,
     itemFontSize,
     itemFontWeight,
-    itemFontStyle
+    itemFontStyle,
+    impersonationContext
 }: Props) => {
     // ... hooks ...
     const [open, setOpen] = useState(true);
@@ -323,7 +325,9 @@ const DynamicModuleMenu = ({
                                 <Shield className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                                 {open && (
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider truncate">God Mode</p>
+                                        <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider truncate">
+                                            {impersonationContext === "COMPANY_MODE" ? "Company Mode" : impersonationContext === "DEPARTMENT_MODE" ? "Department Mode" : "God Mode"}
+                                        </p>
                                         <p className="text-[9px] text-muted-foreground truncate">{impersonatedTeamName}</p>
                                     </div>
                                 )}

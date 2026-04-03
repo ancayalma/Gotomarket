@@ -16,15 +16,15 @@ const SideBar = async () => {
   const session = await getServerSession(authOptions);
   if (!session) return null;
 
-  const [modules, user, caseStats, dbNavConfig] = await Promise.all([
+  const [modules, user, targetTeam, caseStats, dbNavConfig] = await Promise.all([
     getModules(),
     (prismadb.users as any).findUnique({
       where: { id: currentUserInfo.userId },
-      include: {
-        assigned_team: {
-          include: { assigned_plan: true }
-        }
-      }
+      include: { assigned_team: true }
+    }),
+    (prismadb.team as any).findUnique({
+      where: { id: currentUserInfo.teamId },
+      include: { assigned_plan: true }
     }),
     getCaseStats(),
     getNavigationConfig()
@@ -40,7 +40,7 @@ const SideBar = async () => {
 
   if (!dict) return null;
 
-  const team = (user as any)?.assigned_team;
+  const team = targetTeam;
   const planSlug = team?.assigned_plan?.slug || team?.subscription_plan || "FREE";
   let features: string[] = [];
 
@@ -61,7 +61,7 @@ const SideBar = async () => {
   }
 
   const teamRole = currentUserInfo.teamRole || "MEMBER";
-  const isPartnerAdmin = currentUserInfo.isPlatformAdmin || (user as any).assigned_team?.slug === "basalt" || (user as any).assigned_team?.slug === "basalthq";
+  const isPartnerAdmin = currentUserInfo.isPlatformAdmin || targetTeam?.slug === "basalt" || targetTeam?.slug === "basalthq";
 
   // Resolve Navigation Structure (Now synced via DB Migration)
   const config = dbNavConfig as any;
@@ -206,6 +206,15 @@ const SideBar = async () => {
     }
   `;
 
+  let impersonationContext = "GOD_MODE";
+  if (currentUserInfo.isImpersonating) {
+    if (user?.assigned_team?.parent_id === currentUserInfo.teamId) {
+       impersonationContext = "COMPANY_MODE";
+    } else if (targetTeam && targetTeam.parent_id === user?.team_id) {
+       impersonationContext = "DEPARTMENT_MODE";
+    }
+  }
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styleTag }} />
@@ -228,6 +237,7 @@ const SideBar = async () => {
         isImpersonating={currentUserInfo.isImpersonating}
         impersonatedTeamName={team?.name}
         planSlug={planSlug}
+        impersonationContext={impersonationContext}
       />
     </>
   );

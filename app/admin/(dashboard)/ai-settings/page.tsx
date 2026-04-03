@@ -13,14 +13,15 @@ export default async function AdminAiSettingsPage() {
 
     const user = await prismadb.users.findUnique({
         where: { email: session?.user?.email || "" },
-        include: { assigned_team: { include: { assigned_plan: true } } },
+        include: { assigned_team: { include: { assigned_plan: true, parent_team: true } } },
     });
 
     if (!user?.is_admin && !user?.is_account_admin) {
         redirect("/");
     }
 
-    const teamId = user?.assigned_team?.id;
+    const team = user?.assigned_team;
+    const teamId = team?.id;
 
     if (!teamId) {
         return (
@@ -35,13 +36,34 @@ export default async function AdminAiSettingsPage() {
         );
     }
 
-    // Plan gating: Only Scale, Enterprise, and Exempt plans can configure team AI
+    if (team?.team_type === "DEPARTMENT") {
+        return (
+            <Container
+                title="Authorization Locked"
+                description="Insufficient Privileges"
+            >
+                <div className="flex flex-col items-center justify-center h-64 gap-4 text-center">
+                    <div className="text-4xl">🔒</div>
+                    <div>
+                        <h3 className="text-lg font-semibold text-foreground">Access Restricted</h3>
+                        <p className="text-sm text-muted-foreground max-w-md mt-1">
+                            Department administrators do not have access to manage AI configuration. This is managed at the organizational level.
+                        </p>
+                    </div>
+                </div>
+            </Container>
+        );
+    }
+
+    // Plan gating: Only Scale and Enterprise can configure team AI (EXEMPT is secretly bypassed)
     const PLANS_WITH_CUSTOM_AI = ["SCALE", "ENTERPRISE"];
-    const planSlug = (user?.assigned_team as any)?.assigned_plan?.slug
-        || (user?.assigned_team as any)?.subscription_plan
+    const planSlug = (team as any)?.assigned_plan?.slug
+        || (team as any)?.subscription_plan
         || "STARTER";
 
-    if (!PLANS_WITH_CUSTOM_AI.includes(planSlug)) {
+    const isSecretlyAllowed = planSlug === "EXEMPT";
+
+    if (!PLANS_WITH_CUSTOM_AI.includes(planSlug) && !isSecretlyAllowed) {
         return (
             <Container
                 title="AI Settings"
