@@ -32,13 +32,30 @@ export const updateTeam = async (teamId: string, data: { name?: string; slug?: s
             }
         }
 
+        // ── Auto-sync subscription_plan ↔ plan_id ──
+        const updateData: any = { ...data };
+
+        if (data.plan_id) {
+            // plan_id changed → resolve the Plan record and sync subscription_plan
+            const plan = await prismadb.plan.findUnique({ where: { id: data.plan_id } });
+            if (plan) {
+                updateData.subscription_plan = plan.slug as any;
+            }
+        } else if (data.subscription_plan && !data.plan_id) {
+            // subscription_plan changed without plan_id → look up Plan by slug
+            const plan = await prismadb.plan.findFirst({
+                where: { slug: { equals: data.subscription_plan, mode: "insensitive" } }
+            });
+            if (plan) {
+                updateData.plan_id = plan.id;
+            }
+        }
+
         const team = await (prismadb as any).team.update({
             where: {
                 id: teamId,
             },
-            data: {
-                ...data
-            }
+            data: updateData,
         });
 
         revalidatePath(`/partners/${teamId}`);

@@ -2660,10 +2660,34 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
       await new Promise(resolve => setTimeout(resolve, 1000));
 
     } catch (error) {
+      const errMsg = (error as Error).message || String(error);
       console.error("Agent iteration error:", error);
-      addLog(`Agent error: ${(error as Error).message}`, "ERROR");
-      await flushLogsToDb(true); // Force flush errors
-      break;
+      addLog(`Agent error (attempt): ${errMsg}`, "ERROR");
+
+      // Retry up to 2 more times with backoff before giving up
+      let recovered = false;
+      for (let retry = 1; retry <= 2; retry++) {
+        addLog(`🔄 Retrying AI call (${retry}/2) after ${retry * 3}s...`);
+        await new Promise(resolve => setTimeout(resolve, retry * 3000));
+        try {
+          // Re-resolve model in case of transient credential issues
+          const retryResult = await getAiSdkModel({ userId, teamId: teamId || undefined }, "enrichment");
+          if (retryResult.model) {
+            addLog(`✅ AI model reconnected on retry ${retry}. Continuing.`);
+            recovered = true;
+            break;
+          }
+        } catch (retryErr) {
+          addLog(`❌ Retry ${retry} failed: ${(retryErr as Error).message}`, "ERROR");
+        }
+      }
+
+      if (!recovered) {
+        addLog(`🚫 AI model failed after all retries. Last error: ${errMsg}`, "ERROR");
+        await flushLogsToDb(true);
+        break;
+      }
+      await flushLogsToDb(true);
     }
   }
 
@@ -2675,11 +2699,14 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
   if (teamId && accumulatedTokens > 0) {
     console.log(`[LEADGEN_TOKENS] Total: ${accumulatedTokens} tokens for team ${teamId} (logged per-iteration)`);
   }
+  // If we produced 0 companies, mark as FAILED so the user can see what went wrong
+  const finalStatus = companiesSaved > 0 ? "SUCCESS" : "FAILED";
+  const lastErrorLog = context.logs.filter((l: any) => l.level === "ERROR").pop();
   try {
     await db.crm_Lead_Gen_Jobs.update({
       where: { id: jobId },
       data: {
-        status: "SUCCESS",
+        status: finalStatus,
         finishedAt: new Date(),
         counters: {
           companiesFound: companiesSaved,
@@ -2691,11 +2718,12 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
           promptTokens: accumulatedPromptTokens,
           completionTokens: accumulatedCompletionTokens,
           tokenHistory,
-          progress: 100
+          progress: companiesSaved > 0 ? 100 : 0,
+          ...(finalStatus === "FAILED" && lastErrorLog ? { failReason: lastErrorLog.msg } : {})
         }
       }
     });
-    console.log(`[LEADGEN] Final write SUCCESS: tokensUsed=${accumulatedTokens}, companies=${companiesSaved}`);
+    console.log(`[LEADGEN] Final write ${finalStatus}: tokensUsed=${accumulatedTokens}, companies=${companiesSaved}`);
   } catch (err) {
     console.error("[LEADGEN] FINAL WRITE FAILED:", err);
   }
