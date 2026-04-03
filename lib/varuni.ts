@@ -211,7 +211,7 @@ export async function getAiSdkModel(
 
     // A. Check Team Config (only if plan tier allows custom AI config)
     let teamConfig = null;
-    const PLANS_WITH_CUSTOM_AI = ["SCALE", "ENTERPRISE", "EXEMPT"];
+    const PLANS_WITH_CUSTOM_AI = ["SCALE", "ENTERPRISE"];
 
     if (teamId) {
         // Resolve the team's subscription plan to determine if they can use custom AI config
@@ -283,7 +283,9 @@ export async function getAiSdkModel(
     }
 
     if (!finalProvider || !finalModelId) {
-        // Check for service override in system configuration (JSON)
+        // Check for service-specific override in system configuration JSON
+        // This allows setting different models for "chat" vs "enrichment" (leadgen)
+        // Format: configuration.services = { chat: { provider, modelId }, enrichment: { provider, modelId } }
         const systemOverrides = (defaultSystemConfig?.configuration as any)?.services || {};
 
         if (systemOverrides[service] && systemOverrides[service].modelId) {
@@ -291,7 +293,11 @@ export async function getAiSdkModel(
             finalModelId = systemOverrides[service].modelId;
         } else {
             finalProvider = defaultSystemConfig?.provider || "BEDROCK";
-            finalModelId = defaultSystemConfig?.modelId || process.env.AWS_AI_MODEL_ID || "us.anthropic.claude-3-5-haiku-20241022-v1:0";
+            // DB field is `defaultModelId` (not `modelId`) — check both for safety
+            finalModelId = (defaultSystemConfig as any)?.defaultModelId
+                || (defaultSystemConfig as any)?.modelId
+                || process.env.AWS_AI_MODEL_ID
+                || "qwen.qwen3-next-80b-a3b"; // Safe default — supports tool calling
         }
         configSource = "system";
     }

@@ -35,7 +35,7 @@ export default async function AdminAiSettingsPage() {
     }
 
     // Plan gating: Only Scale, Enterprise, and Exempt plans can configure team AI
-    const PLANS_WITH_CUSTOM_AI = ["SCALE", "ENTERPRISE", "EXEMPT"];
+    const PLANS_WITH_CUSTOM_AI = ["SCALE", "ENTERPRISE"];
     const planSlug = (user?.assigned_team as any)?.assigned_plan?.slug
         || (user?.assigned_team as any)?.subscription_plan
         || "STARTER";

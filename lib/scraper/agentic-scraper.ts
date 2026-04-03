@@ -7,7 +7,7 @@
  * - Refine search strategy based on results
  */
 
-import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/varuni";
 import { z } from "zod";
 import { generateObject, generateText, tool, type ModelMessage } from "ai";
 
@@ -2162,7 +2162,7 @@ Tools Available: [search_companies, visit_website, save_company, refine_search_s
 EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
 
   if (isResume) {
-    systemPrompt += `\nRESUME: Already consumed ${accountsWithContactInfoSaved + contactsSaved} credits out of ${maxCredits}. Need to find more leads until budget is reached. Previous queries: ${initialState?.queryTemplates?.join(", ") || "None"}. Use NEW queries.`;
+    systemPrompt += `\nRESUME: Already consumed ${contactsSaved} credits out of ${maxCredits}. Need to find more leads until budget is reached. Previous queries: ${initialState?.queryTemplates?.join(", ") || "None"}. Use NEW queries.`;
   }
 
   // Start with a User message; pass systemPrompt via the 'system' option in generateText
@@ -2221,7 +2221,7 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
         promptTokens: accumulatedPromptTokens,
         completionTokens: accumulatedCompletionTokens,
         tokenHistory,
-        progress: Math.min(100, Math.round(((accountsWithContactInfoSaved + contactsSaved) / maxCredits) * 100))
+        progress: Math.min(100, Math.round((contactsSaved / maxCredits) * 100))
       }
     };
 
@@ -2256,7 +2256,7 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
   addLog("🤖 Agentic AI scraper starting...");
   await flushLogsToDb(true); // Force initial update
 
-  while (iterations < maxIterations && (accountsWithContactInfoSaved + contactsSaved) < maxCredits) {
+  while (iterations < maxIterations && contactsSaved < maxCredits) {
     iterations++;
 
     // Check if job has been paused or stopped
@@ -2353,7 +2353,7 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
             firstMsg,
             {
               role: "user" as const,
-              content: `[PROGRESS] Consumed ${accountsWithContactInfoSaved + contactsSaved}/${maxCredits} credits. Current totals: ${companiesSaved} companies, ${contactsSaved} contacts, ${iterations - 1} iterations. Continue searching and saving. Include ALL contacts in each save_company call.`
+              content: `[PROGRESS] Consumed ${contactsSaved}/${maxCredits} credits. Current totals: ${companiesSaved} companies, ${contactsSaved} contacts, ${iterations - 1} iterations. Continue searching and saving. Include ALL contacts in each save_company call.`
             },
             ...recentMsgs
           ];
@@ -2361,7 +2361,7 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
       }
 
       const tools = buildToolsDefinition(context);
-      const dynamicSystemPrompt = systemPrompt + `\n\n[LIVE PROGRESS]: Consumed ${accountsWithContactInfoSaved + contactsSaved}/${maxCredits} credits. Current totals: ${companiesSaved} companies, ${contactsSaved} contacts, ${iterations - 1} iterations.\n[EXHAUSTED DOMAINS]: ${exhaustedDomains.size > 0 ? Array.from(exhaustedDomains).join(', ') : 'None yet'}. DO NOT search for or visit these domains again. They are fully exhausted.`;
+      const dynamicSystemPrompt = systemPrompt + `\n\n[LIVE PROGRESS]: Consumed ${contactsSaved}/${maxCredits} credits. Current totals: ${companiesSaved} companies, ${contactsSaved} contacts, ${iterations - 1} iterations.\n[EXHAUSTED DOMAINS]: ${exhaustedDomains.size > 0 ? Array.from(exhaustedDomains).join(', ') : 'None yet'}. DO NOT search for or visit these domains again. They are fully exhausted.`;
       const genOpts: any = {
         model,
         system: dynamicSystemPrompt,
@@ -2426,7 +2426,7 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
                     promptTokens: accumulatedPromptTokens,
                     completionTokens: accumulatedCompletionTokens,
                     tokenHistory,
-                    progress: Math.min(100, Math.round(((accountsWithContactInfoSaved + contactsSaved) / maxCredits) * 100)),
+                    progress: Math.min(100, Math.round((contactsSaved / maxCredits) * 100)),
                     failReason: "INSUFFICIENT_AI_TOKENS"
                   }
                 }
@@ -2513,7 +2513,8 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
             contactsC = (out as any)?.contactsCreated || 0;
           }
 
-          batchCost += (accountValid ? 1 : 0) + contactsC;
+          // No longer double-billing for the account if it shares the same contact info
+          batchCost += contactsC;
           companiesSaved++;
           contactsSaved += contactsC;
           if (accountValid) accountsWithContactInfoSaved++;
@@ -2535,7 +2536,7 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
 
         let summary = `✅ Batch complete: ${toolCount} tool call${toolCount > 1 ? 's' : ''} `;
         if (savedResults.length > 0) summary += ` | ${savedResults.length} saved`;
-        summary += ` | Total: ${accountsWithContactInfoSaved + contactsSaved}/${maxCredits} credits consumed (${companiesSaved} companies & ${contactsSaved} contacts | ${accountsWithContactInfoSaved} valid accounts)`;
+        summary += ` | Total: ${contactsSaved}/${maxCredits} credits consumed (${companiesSaved} companies & ${contactsSaved} contacts | ${accountsWithContactInfoSaved} valid accounts)`;
         addLog(summary);
 
         // Detect SERP skip/no results towards stall completion
@@ -2623,19 +2624,19 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
         // Check if agent thinks it's complete
         if (text.toLowerCase().includes("complete") ||
           text.toLowerCase().includes("finished") ||
-          (accountsWithContactInfoSaved + contactsSaved) >= maxCredits) {
+          contactsSaved >= maxCredits) {
           addLog("✅ Agent believes task is complete or budget was reached");
           await flushLogsToDb(true); // Force flush
           break;
         }
 
         // Add a user message to keep it going with more direct instructions
-        if ((accountsWithContactInfoSaved + contactsSaved) < maxCredits) {
+        if (contactsSaved < maxCredits) {
           messages.push({
             role: "user",
-            content: `${accountsWithContactInfoSaved + contactsSaved}/${maxCredits} credits consumed. ${companiesSaved === 0 ? 'Save companies you found now! ' : ''}Continue: search → visit → save_company (ALL contacts).`
+            content: `${contactsSaved}/${maxCredits} credits consumed. ${companiesSaved === 0 ? 'Save companies you found now! ' : ''}Continue: search → visit → save_company (ALL contacts).`
           });
-          addLog(`📍 Checkpoint: ${accountsWithContactInfoSaved + contactsSaved}/${maxCredits} credits | Directing agent to save...`);
+          addLog(`📍 Checkpoint: ${contactsSaved}/${maxCredits} credits | Directing agent to save...`);
           await flushLogsToDb(false); // Opportunistic flush
           // Progress stall detection
           if (companiesSaved === prevCompaniesSaved && contactsSaved === prevContactsSaved) {
@@ -2735,3 +2736,4 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
     iterations
   };
 }
+

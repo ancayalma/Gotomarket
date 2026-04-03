@@ -6,7 +6,7 @@ import { sendTeamEmail } from "@/lib/email/team-mailer";
 import sendSystemEmail from "@/lib/sendmail";
 import { render } from "@react-email/render";
 import OutreachTemplate, { type ResourceLink } from "@/emails/OutreachTemplate";
-import { getAiSdkModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/varuni";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import { sendViaGmail } from "@/lib/gmail";

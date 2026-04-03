@@ -1,7 +1,7 @@
 
 import { prismadb } from "@/lib/prisma";
 import { generateText } from "ai";
-import { getAiSdkModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/varuni";
 import { format } from "date-fns";
 
 export async function getAIDailyBriefing(userId: string) {

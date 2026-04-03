@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
-import { getAiSdkModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/varuni";
 import { generateText } from "ai";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";

@@ -1,6 +1,6 @@
 "use server";
 
-import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/varuni";
 import { generateText } from "ai";
 
 export async function reviseContent(

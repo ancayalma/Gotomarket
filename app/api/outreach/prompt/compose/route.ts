@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/varuni";
 import { generateText } from "ai";
 import { systemLogger } from "@/lib/logger";
 
