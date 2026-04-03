@@ -12,6 +12,7 @@ import DepartmentRoleManager from "./components/DepartmentRoleManager";
 import { getEffectiveRoleModules } from "@/actions/permissions/get-effective-permissions";
 import { updateRoleModules } from "@/actions/permissions/update-role-modules";
 import { ChevronRight, Home } from "lucide-react";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
 
 export default async function AdminModulesPage() {
     const session = await getServerSession(authOptions);
@@ -24,14 +25,18 @@ export default async function AdminModulesPage() {
         );
     }
 
-    // Get user and team info
-    const user = await prismadb.users.findUnique({
-        where: { email: session.user.email || "" },
-        include: { assigned_team: { include: { assigned_plan: true } } },
+    const currentUserInfo = await getCurrentUserTeamId();
+    if (!currentUserInfo?.teamId) return <div>No Organization Found</div>;
+    
+    const teamId = currentUserInfo.teamId;
+
+    const team = await prismadb.team.findUnique({
+        where: { id: teamId },
+        include: { assigned_plan: true }
     });
 
-    const isGlobalAdmin = session?.user?.isAdmin;
-    const isTeamSuperAdmin = user?.team_role === 'SUPER_ADMIN' || user?.team_role === 'OWNER' || user?.team_role === 'PLATFORM_ADMIN';
+    const isGlobalAdmin = currentUserInfo.isGlobalAdmin;
+    const isTeamSuperAdmin = currentUserInfo.isAdmin || currentUserInfo.teamRole === 'SUPER_ADMIN' || currentUserInfo.teamRole === 'OWNER' || currentUserInfo.teamRole === 'PLATFORM_ADMIN';
 
     if (!isGlobalAdmin && !isTeamSuperAdmin) {
         return (
@@ -45,22 +50,19 @@ export default async function AdminModulesPage() {
             </Container>
         );
     }
-
-    const teamId = user?.assigned_team?.id;
-    const teamScope = teamId ? { team_id: teamId } : {};
-
-    if (!teamId) return <div>No Organization Found</div>;
+    
+    const teamScope = { team_id: teamId };
     
     // Calculate Parent Limits for the organization
-    const planSlug = (user?.assigned_team as any)?.assigned_plan?.slug || user?.assigned_team?.subscription_plan || "FREE";
+    const planSlug = (team as any)?.assigned_plan?.slug || team?.subscription_plan || "FREE";
     const { getSubscriptionPlan } = await import("@/lib/subscription");
     let parentLimits = getSubscriptionPlan(planSlug)?.features || [];
     
-    if ((user?.assigned_team as any)?.assigned_plan?.features) {
-        parentLimits = Array.from(new Set([...(user.assigned_team as any).assigned_plan.features, ...parentLimits]));
+    if ((team as any)?.assigned_plan?.features) {
+        parentLimits = Array.from(new Set([...(team as any).assigned_plan.features, ...parentLimits]));
     }
-    if (user?.assigned_team?.module_overrides) {
-        parentLimits = Array.from(new Set([...parentLimits, ...(user.assigned_team.module_overrides as any[] || [])]));
+    if (team?.module_overrides) {
+        parentLimits = Array.from(new Set([...parentLimits, ...(team.module_overrides as any[] || [])]));
     }
 
     // Fetch Organization-level stats

@@ -187,7 +187,7 @@ export function DepartmentsView({ teamId, departments: initialDepartments, isSup
                     <Users className="w-4 h-4 mr-2" />
                     View Members
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push(`/${window.location.pathname.split('/')[1]}/admin/modules`)}>
+                <DropdownMenuItem onClick={() => router.push(`/admin/modules`)}>
                     <ShieldCheck className="w-4 h-4 mr-2" />
                     Manage Roles
                 </DropdownMenuItem>

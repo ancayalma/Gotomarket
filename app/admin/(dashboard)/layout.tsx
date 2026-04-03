@@ -43,7 +43,7 @@ export default async function AdminDashboardLayout({
     // Check if user is partner admin (BasaltHQ) or global admin
     const user = await prismadb.users.findUnique({
         where: { email: session.user.email as string },
-        include: { assigned_team: { include: { assigned_plan: true } } }
+        include: { assigned_team: { include: { assigned_plan: true, parent_team: true } } }
     });
 
     // Enforce password change — redirect back to main app where modal will force the change
@@ -51,10 +51,15 @@ export default async function AdminDashboardLayout({
         return redirect(`/`);
     }
 
-    const showModules = user?.is_admin || user?.assigned_team?.slug === "basalthq";
+    const isBasaltHQ = user?.assigned_team?.slug === "basalthq" || 
+                       user?.assigned_team?.parent_team?.slug === "basalthq";
+
+    const showModules = user?.is_admin || isBasaltHQ;
 
     const team = user?.assigned_team;
-    const planSlug = (team as any)?.assigned_plan?.slug || team?.subscription_plan || "FREE";
+    // For departments, use their explicit plan or fallback to EXEMPT if marked as such
+    const isExemptDepartment = team?.team_type === "DEPARTMENT" && team?.subscription_plan === "EXEMPT";
+    const planSlug = isExemptDepartment ? "EXEMPT" : ((team as any)?.assigned_plan?.slug || team?.subscription_plan || "FREE");
     const configFeatures = getSubscriptionPlan(String(planSlug)).features;
     let features: string[] = [];
     

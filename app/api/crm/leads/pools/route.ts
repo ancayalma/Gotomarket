@@ -25,9 +25,9 @@ export async function GET() {
       select: { team_role: true }
     });
 
-    const isMember = user?.team_role === "MEMBER";
     const teamInfo = await getCurrentUserTeamId();
     const teamId = teamInfo?.teamId;
+    const isMember = teamInfo?.teamRole === "MEMBER";
 
     const poolSelect = {
       id: true,
@@ -62,7 +62,7 @@ export async function GET() {
       systemLogger.info("[LEADS_POOLS_GET] Member query - fetching pools for user:", session.user.id);
 
       // Query 1: Pools created by member
-      const createdPools = await (prismadb.crm_Lead_Pools as any).findMany({
+      const createdPools = await prismadbCrm.crm_Lead_Pools.findMany({
         where: { user: session.user.id },
         orderBy: { createdAt: "desc" },
         select: poolSelect,
@@ -70,7 +70,7 @@ export async function GET() {
       systemLogger.info("[LEADS_POOLS_GET] Created pools count:", createdPools.length);
 
       // Query 2: Pools where member is assigned
-      const assignedPools = await (prismadb.crm_Lead_Pools as any).findMany({
+      const assignedPools = await prismadbCrm.crm_Lead_Pools.findMany({
         where: { assigned_members: { has: session.user.id } },
         orderBy: { createdAt: "desc" },
         select: poolSelect,
@@ -88,18 +88,15 @@ export async function GET() {
     } else {
       // Admins/Team Owners: Team + Own
       if (teamId) {
-        pools = await (prismadb.crm_Lead_Pools as any).findMany({
+        pools = await prismadbCrm.crm_Lead_Pools.findMany({
           where: {
-            OR: [
-              { team_id: teamId },
-              { user: session.user.id }
-            ]
+            team_id: teamId
           },
           orderBy: { createdAt: "desc" },
           select: poolSelect,
         });
       } else {
-        pools = await (prismadb.crm_Lead_Pools as any).findMany({
+        pools = await prismadbCrm.crm_Lead_Pools.findMany({
           where: { user: session.user.id },
           orderBy: { createdAt: "desc" },
           select: poolSelect,

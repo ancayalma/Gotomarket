@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { useLearn } from "@/components/providers/learn-provider";
 import { TAB_LABELS, TAB_COLORS } from "@/components/ui/LearnLink";
 import { getTeamCreditsInfo } from "@/actions/crm/credits";
+import { switchTeam, getAvailableContexts } from "@/actions/teams/switch-team";
 import DialerPanel from "@/app/(routes)/crm/dialer/DialerPanel";
 import dynamic from "next/dynamic";
 const ChatApp = dynamic(() => import("@/app/(routes)/varuni/components/Chat"), { ssr: false });
@@ -60,6 +61,8 @@ export default function UtilityBar() {
     const [isLearnOpen, setIsLearnOpen] = useState(false);
     const [isDialerOpen, setIsDialerOpen] = useState(false);
     const [isVaruniOpen, setIsVaruniOpen] = useState(false);
+    const [contextInfo, setContextInfo] = useState<{ options: any[], currentTeamId: string | null, isImpersonating: boolean } | null>(null);
+    const [isContextSwitcherOpen, setIsContextSwitcherOpen] = useState(false);
 
     useEffect(() => {
         const fetchCredits = async () => {
@@ -77,7 +80,18 @@ export default function UtilityBar() {
                 setCreditsInfo(null);
             }
         };
+        const fetchContexts = async () => {
+            try {
+                const ctx = await getAvailableContexts();
+                if (ctx?.success) {
+                    setContextInfo(ctx);
+                }
+            } catch (err) {
+                // ignore
+            }
+        };
         fetchCredits();
+        fetchContexts();
         const intervalId = setInterval(fetchCredits, 15000);
 
         const savedNotes = localStorage.getItem("crm-utility-notes");
@@ -151,6 +165,84 @@ export default function UtilityBar() {
                             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hidden sm:inline">
                                 Utility Bar
                             </span>
+                            
+                            {/* Context Switcher Popover */}
+                            {contextInfo && (contextInfo.options.length > 1 || contextInfo.isImpersonating) && (
+                                <>
+                                    <div className="h-4 w-px bg-border mx-1 hidden lg:block" />
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Popover open={isContextSwitcherOpen} onOpenChange={setIsContextSwitcherOpen}>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className={cn(
+                                                            "relative gap-2 px-4 h-8 rounded-full overflow-hidden group transition-all duration-500",
+                                                            "bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-purple-500/10",
+                                                            "border border-indigo-500/20 hover:border-indigo-500/40",
+                                                            "text-indigo-400 font-bold uppercase tracking-[0.2em] text-[10px]",
+                                                            "hover:scale-[1.02] active:scale-95 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)]",
+                                                            isContextSwitcherOpen && "from-indigo-500/20 to-purple-500/20 border-indigo-500/50 shadow-[0_0_30px_rgba(99,102,241,0.25)] text-indigo-300"
+                                                        )}
+                                                    >
+                                                        <div className="relative flex items-center justify-center w-4 h-4">
+                                                            <Target className="h-3.5 w-3.5 group-hover:rotate-90 transition-transform duration-300" />
+                                                        </div>
+                                                        <span className="hidden lg:inline">
+                                                            {(() => {
+                                                                if (!contextInfo.isImpersonating) return "Switch View";
+                                                                const activeOpt = contextInfo.options.find(o => o.id === contextInfo.currentTeamId);
+                                                                if (activeOpt?.type === "COMPANY") return "Company Mode";
+                                                                if (activeOpt?.type === "DEPARTMENT") return "Department Mode";
+                                                                return "View: Switched";
+                                                            })()}
+                                                        </span>
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-64 p-0 border-border bg-popover/95 backdrop-blur-xl shadow-2xl overflow-hidden" side="top" align="start" sideOffset={12}>
+                                                    <div className="p-4 border-b border-border/50 bg-muted/10">
+                                                        <h4 className="font-bold text-xs uppercase tracking-tight text-indigo-400">Context Switcher</h4>
+                                                        <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+                                                            Change your active workspace view between available departments and organizations.
+                                                        </p>
+                                                    </div>
+                                                    <div className="p-2 space-y-1">
+                                                        {contextInfo.options.map((opt: any) => {
+                                                            const isActive = !contextInfo.isImpersonating && opt.type === "HOME" || contextInfo.currentTeamId === opt.id;
+                                                            return (
+                                                                <button
+                                                                    key={opt.id}
+                                                                    onClick={async () => {
+                                                                        await switchTeam(opt.type === "HOME" ? null : opt.id);
+                                                                        setIsContextSwitcherOpen(false);
+                                                                        router.refresh();
+                                                                    }}
+                                                                    className={cn(
+                                                                        "w-full text-left px-3 py-2 text-xs font-semibold rounded-md transition-colors",
+                                                                        isActive 
+                                                                            ? "bg-indigo-500/20 text-indigo-400 cursor-default"
+                                                                            : "hover:bg-muted text-foreground"
+                                                                    )}
+                                                                >
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span>{opt.type === "HOME" ? (opt.isDepartment ? "Department Mode" : "Company Mode") : opt.name}</span>
+                                                                            {isActive && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
+                                                                        </div>
+                                                                    <div className="text-[9px] text-muted-foreground uppercase opacity-70 mt-0.5 tracking-wider">
+                                                                        {opt.type}
+                                                                    </div>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </PopoverContent>
+                                            </Popover>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">Switch organizational context.</TooltipContent>
+                                    </Tooltip>
+                                </>
+                            )}
                         </div>
 
                         <div className="flex items-center justify-center gap-1 sm:gap-2">
@@ -496,7 +588,6 @@ export default function UtilityBar() {
                                 </TooltipTrigger>
                                 <TooltipContent side="top">Varuni AI Assistant.</TooltipContent>
                             </Tooltip>
-
 
                         </div>
                     </div>

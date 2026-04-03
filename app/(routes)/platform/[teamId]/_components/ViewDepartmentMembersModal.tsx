@@ -12,10 +12,34 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, Shield, UserMinus, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { removeFromDepartment } from "@/actions/departments/assign-to-department";
+import { updateMemberRole } from "@/actions/teams/member-actions";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserModulesModal } from "./UserModulesModal";
+import { TeamChangeRoleModal, RoleOption } from "./TeamChangeRoleModal";
+
+// Define base roles available to all teams
+const BASE_ROLES: RoleOption[] = [
+    {
+        value: "ADMIN",
+        label: "Admin",
+        description: "Full access to manage company settings and members.",
+        icon: Shield,
+    },
+    {
+        value: "MEMBER",
+        label: "Member",
+        description: "Can access standard features and modules.",
+        icon: Mail,
+    },
+    {
+        value: "VIEWER",
+        label: "Viewer",
+        description: "Read-only access.",
+        icon: Mail,
+    }
+];
 
 interface Member {
     id: string;
@@ -45,6 +69,22 @@ export function ViewDepartmentMembersModal({
     const router = useRouter();
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const [userForModules, setUserForModules] = useState<Member | null>(null);
+    const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+    const [roleModalOpen, setRoleModalOpen] = useState(false);
+
+    const handleRoleUpdate = async (userId: string, role: string) => {
+        try {
+            const res = await updateMemberRole(userId, role);
+            if (res.error) {
+                toast.error(res.error);
+            } else {
+                toast.success("Role updated");
+                router.refresh();
+            }
+        } catch (error) {
+            toast.error("Failed to update role");
+        }
+    };
 
     const handleRemoveMember = async (userId: string) => {
         setIsLoading(userId);
@@ -125,6 +165,15 @@ export function ViewDepartmentMembersModal({
                                                         variant="ghost"
                                                         size="icon"
                                                         className="shrink-0 text-muted-foreground hover:text-primary"
+                                                        onClick={() => { setSelectedMember(member); setRoleModalOpen(true); }}
+                                                        title="Change Role"
+                                                    >
+                                                        <Shield className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="shrink-0 text-muted-foreground hover:text-primary"
                                                         onClick={() => setUserForModules(member)}
                                                         title="Configure Modules"
                                                     >
@@ -163,6 +212,19 @@ export function ViewDepartmentMembersModal({
                     userId={userForModules.id}
                     userName={userForModules.name || userForModules.email}
                     departmentAllowedModules={departmentAllowedModules}
+                />
+            )}
+
+            {/* Change Role Modal */}
+            {selectedMember && (
+                <TeamChangeRoleModal
+                    isOpen={roleModalOpen}
+                    onClose={() => { setRoleModalOpen(false); setSelectedMember(null); }}
+                    memberId={selectedMember.id}
+                    memberName={selectedMember.name || selectedMember.email}
+                    currentRole={selectedMember.team_role || "MEMBER"}
+                    onConfirm={handleRoleUpdate}
+                    allowedRoles={BASE_ROLES}
                 />
             )}
         </>

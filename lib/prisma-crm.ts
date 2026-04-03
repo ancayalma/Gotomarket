@@ -52,8 +52,11 @@ const client = new PrismaClient({
                         if (cookieStore) {
                             const { getCurrentUserTeamId } = await import("@/lib/team-utils");
                             const teamInfo = await getCurrentUserTeamId();
-                            if (teamInfo && !teamInfo.isGlobalAdmin && teamInfo.teamId) {
-                                (args as any).where = { ...(args as any).where || {}, team_id: teamInfo.teamId };
+                            if (teamInfo && teamInfo.teamId) {
+                                // Apply tenant boundary if they are a standard user, OR if they are a global admin currently impersonating a client
+                                if (!teamInfo.isGlobalAdmin || teamInfo.isImpersonating) {
+                                    (args as any).where = { ...(args as any).where || {}, team_id: teamInfo.teamId };
+                                }
                             }
                         }
                     } catch (e) { /* Ignore */ }

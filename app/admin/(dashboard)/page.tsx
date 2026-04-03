@@ -72,9 +72,61 @@ export default async function AdminDashboardPage({
     }),
     prismadb.team.findUnique({
       where: { id: teamId },
-      select: { slug: true, owner_id: true }
+      select: { 
+        slug: true, 
+        owner_id: true,
+        name: true,
+        team_type: true,
+        parent_id: true,
+        parent_team: {
+          select: { name: true }
+        }
+      }
     })
   ]);
+
+  const isDepartment = team?.team_type === "DEPARTMENT";
+
+  let companyUsers: any[] = [];
+  if (isDepartment && team.parent_id) {
+    const data = await prismadb.users.findMany({
+      where: {
+        OR: [
+          { team_id: team.parent_id },
+          { assigned_team: { parent_id: team.parent_id } }
+        ]
+      },
+      include: { assigned_team: true },
+      orderBy: { created_on: "desc" },
+    });
+    
+    // Quick map for department names
+    const ptDeptIds = data.map((u: any) => u.department_id).filter(Boolean);
+    let allDepts: any[] = [];
+    if (ptDeptIds.length > 0) {
+      allDepts = await prismadb.team.findMany({
+        where: { id: { in: ptDeptIds as string[] }, team_type: "DEPARTMENT" as any }
+      });
+    }
+    const dMap = new Map(allDepts.map((d: any) => [d.id, d]));
+    
+    companyUsers = data.map((u: any) => {
+      const copy = { ...u };
+      if (u.department_id && dMap.has(u.department_id)) {
+        (copy as any).assigned_department = dMap.get(u.department_id);
+      } else {
+        (copy as any).assigned_department = null;
+      }
+      return copy;
+    });
+
+    // Merge into the global departmentMap for UI
+    for (const d of allDepts) {
+      if (!departments.some((existing: any) => existing.id === d.id)) {
+         departments.push(d); // push so it gets mapped below
+      }
+    }
+  }
 
   const usersCount = users.length;
   const adminCount = (rolesData as any[]).find(r => r.team_role === 'ADMIN')?._count ?? 0;
@@ -92,37 +144,49 @@ export default async function AdminDashboardPage({
 
   return (
     <Container
-      title="Company Directory"
-      description="Manage your company personnel, configure access controls, and organize your team into departments."
+      title={isDepartment ? "Department Directory" : "Company Directory"}
+      description={isDepartment 
+        ? `Manage personnel for the ${team?.name} department. You are part of the ${team?.parent_team?.name || 'parent'} organization.` 
+        : "Manage your company personnel, configure access controls, and organize your team into departments."}
       // action={<SendMailToAll />}
       fluid
     >
       <LearnLink
         tab="admin"
-        overviewTitle="Company Directory"
+        overviewTitle={isDepartment ? "Department Directory" : "Company Directory"}
         overviewWhat="The core governance panel for your organization. This is where you manage personnel, permissions, and departmental hierarchies."
         overviewWhy="Centralized control is vital for security and operational clarity. By managing personnel and departments here, you ensure that every team member has exactly the access they need to perform their role without over-exposing sensitive data."
         overviewHow="Invite new members via the Personnel tab, audit your existing user base, or organize your structure by creating and managing Departments."
       />
       <Tabs defaultValue={activeTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 max-w-[500px]">
+        <TabsList className={`grid w-full ${isDepartment ? 'grid-cols-2 max-w-[400px]' : 'grid-cols-3 max-w-[500px]'}`}>
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <LayoutDashboard className="w-4 h-4" />
             Personnel
           </TabsTrigger>
-          <TabsTrigger value="departments" className="flex items-center gap-2">
-            <Building2 className="w-4 h-4" />
-            Departments
-            {departments.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
-                {departments.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="sandbox" className="flex items-center gap-2">
-            <Box className="w-4 h-4" />
-            Sandbox
-          </TabsTrigger>
+          {isDepartment && (
+            <TabsTrigger value="company_personnel" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Company Personnel
+            </TabsTrigger>
+          )}
+          {!isDepartment && (
+            <>
+              <TabsTrigger value="departments" className="flex items-center gap-2">
+                <Building2 className="w-4 h-4" />
+                Departments
+                {departments.length > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
+                    {departments.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="sandbox" className="flex items-center gap-2">
+                <Box className="w-4 h-4" />
+                Sandbox
+              </TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 outline-none">
@@ -136,7 +200,9 @@ export default async function AdminDashboardPage({
 
           {/* Users Table */}
           <div className="space-y-4">
-            <h4 className="text-lg font-bold uppercase tracking-tight text-primary/80 ml-1">Company Directory</h4>
+            <h4 className="text-lg font-bold uppercase tracking-tight text-primary/80 ml-1">
+              {isDepartment ? `${team?.name} Personnel` : "Company Directory"}
+            </h4>
             <TeamMembersTable
               teamId={teamId}
               teamSlug={team?.slug || ""}
@@ -144,27 +210,51 @@ export default async function AdminDashboardPage({
               isSuperAdmin={isSuperAdmin}
               isGlobalAdmin={teamInfo.isGlobalAdmin}
               ownerId={team?.owner_id}
-              hasDepartments={departments.length > 0}
+              hasDepartments={!isDepartment && departments.length > 0}
               departmentMap={departmentMap}
             />
           </div>
         </TabsContent>
 
-        <TabsContent value="departments" className="outline-none">
-          <div className="bg-card/50 border border-border rounded-xl p-6">
-            <DepartmentsView
-              teamId={teamId}
-              departments={departments as any}
-              isSuperAdmin={isSuperAdmin}
-            />
-          </div>
-        </TabsContent>
+        {isDepartment && (
+          <TabsContent value="company_personnel" className="space-y-6 outline-none">
+            <div className="space-y-4">
+              <h4 className="text-lg font-bold uppercase tracking-tight text-primary/80 ml-1">
+                {team?.parent_team?.name || 'Company'} Personnel
+              </h4>
+              <TeamMembersTable
+                teamId={teamId}
+                teamSlug={team?.slug || ""}
+                members={companyUsers as any}
+                isSuperAdmin={false}
+                isGlobalAdmin={teamInfo.isGlobalAdmin}
+                ownerId={team?.parent_id}
+                hasDepartments={true}
+                departmentMap={departmentMap}
+              />
+            </div>
+          </TabsContent>
+        )}
 
-        <TabsContent value="sandbox" className="outline-none">
-          <div className="bg-card/50 border border-border rounded-xl p-6">
-            <SandboxManager />
-          </div>
-        </TabsContent>
+        {!isDepartment && (
+          <>
+            <TabsContent value="departments" className="outline-none">
+              <div className="bg-card/50 border border-border rounded-xl p-6">
+                <DepartmentsView
+                  teamId={teamId}
+                  departments={departments as any}
+                  isSuperAdmin={isSuperAdmin}
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="sandbox" className="outline-none">
+              <div className="bg-card/50 border border-border rounded-xl p-6">
+                <SandboxManager />
+              </div>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </Container>
   );
