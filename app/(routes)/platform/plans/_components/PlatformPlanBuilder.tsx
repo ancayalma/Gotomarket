@@ -24,10 +24,10 @@ export function PlatformPlanBuilder({ teams }: PlatformPlanBuilderProps) {
 
     const planKeys = Object.keys(SUBSCRIPTION_PLANS) as SubscriptionPlanType[];
 
-    const handleAssignPlan = async (teamId: string) => {
+    const handleAssignPlan = async (teamId: string, currentPlan: string) => {
         setAssigningTeam(teamId);
         try {
-            const planSlug = selectedPlans[teamId] || "STARTER";
+            const planSlug = selectedPlans[teamId] || currentPlan;
             const res = await fetch("/api/platform/assign-plan", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -159,7 +159,7 @@ export function PlatformPlanBuilder({ teams }: PlatformPlanBuilderProps) {
                                                             size="sm"
                                                             variant="outline"
                                                             className="h-7 px-2 border-indigo-500/30 text-indigo-400 hover:bg-indigo-950/30 text-[10px]"
-                                                            onClick={() => handleAssignPlan(team.id)}
+                                                            onClick={() => handleAssignPlan(team.id, selectedPlan)}
                                                             disabled={assigningTeam === team.id}
                                                         >
                                                             {assigningTeam === team.id
