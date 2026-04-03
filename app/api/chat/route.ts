@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadbChat } from "@/lib/prisma-chat";
 import { prismadb } from "@/lib/prisma";
 const db: any = prismadbChat;
-import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/varuni";
 import { streamText, tool, convertToModelMessages, stepCountIs, type UIMessage } from "ai";
 import { z } from "zod";
 import { retrieveRelevantFacts } from "@/lib/vector-search";

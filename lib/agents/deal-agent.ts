@@ -1,6 +1,6 @@
 import { prismadb } from "@/lib/prisma";
 import { searchDocuments } from "@/lib/document-rag";
-import { getAiSdkModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/varuni";
 import { generateText } from "ai";
 import { z } from "zod";
 import { systemLogger } from "@/lib/logger";

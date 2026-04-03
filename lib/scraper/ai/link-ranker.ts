@@ -8,7 +8,7 @@
  *  - Deterministic ranking fallback when LLM is not available
  */
 
-import { getAiSdkModel, isReasoningModel } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel } from "@/lib/varuni";
 
 export type LinkContext = {
   icp?: {

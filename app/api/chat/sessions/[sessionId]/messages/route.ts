@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadbChat } from "@/lib/prisma-chat";
 const db: any = prismadbChat;
-import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/varuni";
 import { streamText, tool } from "ai";
 import { z } from "zod";
 import { retrieveRelevantFacts } from "@/lib/vector-search";

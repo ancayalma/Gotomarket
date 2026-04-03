@@ -6,7 +6,7 @@ import { prismadb } from "@/lib/prisma"; // Use lib/prisma explicitly
 import { getAiClient } from "@/lib/ai-helper"; // We'll create this next
 import { streamText } from 'ai';
 import { systemLogger } from "@/lib/logger";
-import { logAiUsage } from "@/lib/openai";
+import { logAiUsage } from "@/lib/varuni";
 
 export const maxDuration = 300; // 5 minutes
 

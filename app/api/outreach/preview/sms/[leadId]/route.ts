@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
-import { getAiSdkModel } from "@/lib/openai";
+import { getAiSdkModel } from "@/lib/varuni";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { systemLogger } from "@/lib/logger";
@@ -195,7 +195,7 @@ Project Briefing:
             smsBody = sanitizeSmsBody(object.body || smsBody);
 
             // Import logAiUsage from lib/openai
-            const { logAiUsage } = await import("@/lib/openai");
+            const { logAiUsage } = await import("@/lib/varuni");
             await logAiUsage({
                 teamId,
                 userId: session.user.id,

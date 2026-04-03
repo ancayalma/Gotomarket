@@ -1,5 +1,5 @@
 import { authOptions } from "@/lib/auth";
-import { getAiSdkModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, logAiUsage } from "@/lib/varuni";
 import { streamText } from "ai";
 import { getServerSession } from "next-auth";
 

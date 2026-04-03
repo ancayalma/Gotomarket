@@ -1,6 +1,6 @@
 "use server";
 
-import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/varuni";
 import { generateObject } from "ai";
 import { z } from "zod";
 

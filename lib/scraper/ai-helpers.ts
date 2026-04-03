@@ -3,7 +3,7 @@
  * Uses OpenAI/Azure OpenAI for intelligent query generation, content analysis, and entity resolution
  */
 
-import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/openai";
+import { getAiSdkModel, isReasoningModel, logAiUsage } from "@/lib/varuni";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { consumeAiTokens } from "@/lib/ai-tokens";

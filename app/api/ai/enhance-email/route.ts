@@ -6,7 +6,7 @@ import { prismadb } from "@/lib/prisma";
 import { getAiClient } from "@/lib/ai-helper";
 import { streamText } from 'ai';
 import { systemLogger } from "@/lib/logger";
-import { logAiUsage } from "@/lib/openai";
+import { logAiUsage } from "@/lib/varuni";
 
 export const maxDuration = 300;
 

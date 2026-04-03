@@ -74,6 +74,49 @@ export async function POST(
             },
         });
 
+        // ── PLATFORM ADMIN: Also update SystemAiConfig (global defaults for all teams) ──
+        // When a platform admin saves from the system config page, the same provider/model
+        // should be set as the global fallback for teams without their own config.
+        if (isGlobalAdmin || user?.assigned_team?.slug === "basalthq") {
+            try {
+                // Find existing system config for this provider, or use the first active one
+                const existingSystemConfig = await prismadb.systemAiConfig.findFirst({
+                    where: { provider },
+                });
+
+                const systemConfigData: any = {
+                    provider,
+                    defaultModelId: modelId || null,
+                    isActive: true,
+                    configuration: { services: services || {} },
+                };
+
+                // Only set apiKey on system config if it's an IAM-managed provider (Bedrock)
+                // or if the admin explicitly provided a key
+                if (provider === "BEDROCK") {
+                    systemConfigData.apiKey = "MANAGED_BY_IAM";
+                } else if (!useSystemKey && apiKey) {
+                    systemConfigData.apiKey = encryptedKey;
+                }
+
+                if (existingSystemConfig) {
+                    await prismadb.systemAiConfig.update({
+                        where: { id: existingSystemConfig.id },
+                        data: systemConfigData,
+                    });
+                } else {
+                    await prismadb.systemAiConfig.create({
+                        data: systemConfigData,
+                    });
+                }
+
+                systemLogger.info(`[SYSTEM_AI_CONFIG] Platform admin updated global AI defaults: provider=${provider}, model=${modelId}, services=${JSON.stringify(services || {})}`);
+            } catch (sysErr) {
+                // Don't fail the whole request if system config update fails
+                systemLogger.error("[SYSTEM_AI_CONFIG] Failed to update system config:", sysErr);
+            }
+        }
+
         const actorId = (session.user as any)?.id;
         if (actorId) {
             await logActivityInternal(actorId, "UPDATE", "TeamAiConfig", `Updated AI config for team ${teamId} (provider: ${provider})`, teamId);
