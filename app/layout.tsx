@@ -2,6 +2,7 @@ import "./globals.css";
 
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 
 import { ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -105,6 +106,15 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <link rel="stylesheet" href="https://use.typekit.net/eur3bvn.css" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
+        <Script id="microsoft-clarity" strategy="afterInteractive">
+          {`
+            (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "w5p7mimt0l");
+          `}
+        </Script>
         <TopLoader />
         <AnalyticsTracker />
         <SessionProvider session={session}>

@@ -617,43 +617,104 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
 
                 {/* Terms of Service Modal */}
                 <Dialog open={openTerms} onOpenChange={setOpenTerms}>
-                   <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl shadow-primary/10">
-                      <div className="p-6 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center">
-                          <DialogTitle className="text-2xl font-black italic tracking-tighter text-white uppercase italic">Terms of Service</DialogTitle>
+                   <DialogContent className="max-w-3xl bg-zinc-950 border-zinc-800 h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl shadow-primary/10">
+                      <div className="p-6 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center shrink-0">
+                          <DialogTitle className="text-2xl font-black italic tracking-tighter text-white uppercase">Enterprise Terms of Service</DialogTitle>
                           <span className={cn("text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest", termsRead ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/10 text-amber-500 border border-amber-500/20")}>
-                            {termsRead ? "Read & Acknowledged" : "Scrolling Required"}
+                            {termsRead ? "Acknowledged" : "Scroll to Review"}
                           </span>
                       </div>
                       <div className="flex-1 overflow-y-auto p-8 text-sm text-zinc-400 space-y-8 scrollbar-thin scrollbar-thumb-zinc-800" onScroll={(e) => handleScrollToBottom(e, setTermsRead)}>
                          <section>
-                            <p className="text-zinc-200 leading-relaxed font-medium">
-                                Last updated: December 1, 2025. Please read these Terms of Service carefully before using BasaltCRM.
+                            <p className="text-zinc-200 leading-relaxed font-bold uppercase tracking-wide">
+                                Master Terms of Service Agreement
+                            </p>
+                            <p className="text-zinc-400 mt-2">
+                                Effective Date: April 1, 2026.
+                            </p>
+                            <p className="mt-4">
+                                This Master Terms of Service Agreement ("Agreement" or "Terms") constitutes a legally binding contract between you (referred to herein as "Customer", "Subscriber", "Licensee", or "Authorized User") and BasaltHQ Inc., a corporation organized and existing under the laws of the State of Delaware (referred to herein as "Company", "we", "us", "our", or "Licensor"). This Agreement meticulously governs your access to, integration with, and utilization of the BasaltCRM enterprise platform, interconnected artificial intelligence networks, proprietary data scraping utilities, and all associated communication infrastructure architectures (collectively, the "Service").
+                            </p>
+                            <p className="mt-4">
+                                BY EXECUTING AN ORDER FORM THAT REFERENCES THIS AGREEMENT, BY DEPRESSING THE "I AGREE", "AUTHORIZE", OR "ACCEPT" BUTTON ASSOCIATED WITH THIS AGREEMENT, OR BY ACCESSING OR CONTINUING TO UTILIZE THE SERVICE IN ANY CAPACITY, YOU EXPRESSLY SIGNIFY YOUR UNEQUIVOCAL, UNCONDITIONAL, AND ABSOLUTE CONSENT TO BE BOUND BY THESE TERMS. IF YOU ARE ENTERING INTO THIS AGREEMENT ON BEHALF OF A CORPORATE ENTITY, LIMITED LIABILITY COMPANY, PARTNERSHIP, OR OTHER LEGAL ORGANIZATION, YOU HEREBY REPRESENT, WARRANT, AND COVENANT THAT YOU POSSESS THE REQUISITE LEGAL AUTHORITY TO BIND SUCH ENTITY AND ITS AFFILIATES TO THESE TERMS. IF YOU LACK SUCH AUTHORITY, OR IF YOU DO NOT WHOLLY AGREE WITH EVERY PROVISION SET FORTH HEREIN, YOU MUST NOT ACCEPT THIS AGREEMENT AND MAY NOT ACCESS OR USE THE SERVICE.
                             </p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">1. Accounts</h3>
-                            <p>When you create an account, you must provide information that is accurate, complete, and current. You are responsible for safeguarding your password and for any activities under your account.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">1. Definitions</h3>
+                            <p><strong>1.1. "Affiliate"</strong> means any entity that directly or indirectly controls, is controlled by, or is under common control with the subject entity.</p>
+                            <p><strong>1.2. "Authorized User"</strong> means an individual who is explicitly authorized by the Customer to use a Service, for whom Customer has purchased a subscription (or in the case of any Services provided by Us without charge, for whom a Service has been provisioned), and to whom Customer (or, when applicable, Us at Customer's request) has supplied a user identification and password.</p>
+                            <p><strong>1.3. "Customer Data"</strong> means electronic data and information submitted by or for Customer to the Services, excluding content from third-party applications.</p>
+                            <p><strong>1.4. "Malicious Code"</strong> means code, files, scripts, agents, or programs intended to do harm, including, for example, viruses, worms, time bombs, and Trojan horses.</p>
+                            <p><strong>1.5. "Order Form"</strong> means an ordering document or online order specifying the Services to be provided hereunder that is entered into between Customer and Us.</p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">2. Subscriptions and Payments</h3>
-                            <p>Service is billed on a subscription basis in advance (monthly or annually). Payments are processed through our secure payment providers. Cancellations take effect at the end of the current billing cycle.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">2. Grant of License and Scope of Use</h3>
+                            <p><strong>2.1. Provision of Services.</strong> We will (a) make the Services and Content available to Customer pursuant to this Agreement, and the applicable Order Forms and Documentation, (b) provide applicable standard support for the Services to Customer at no additional charge, and (c) use commercially reasonable efforts to make the online Services available 24 hours a day, 7 days a week, except for: (i) planned downtime (of which We shall give advance electronic notice), and (ii) any unavailability caused by circumstances beyond Our reasonable control.</p>
+                            <p><strong>2.2. Non-Exclusive License.</strong> Subject to Customer's strict adherence to this Agreement and timely remittance of all due pecuniary obligations, BasaltHQ grants Customer a localized, non-exclusive, non-transferable, non-sublicensable, and completely revocable right to access and leverage the Service strictly for Customer's internal business operations.</p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">3. Intellectual Property</h3>
-                            <p>BasaltCRM and its original content, features, and functionality remain the exclusive property of BasaltCRM. Our AI models, proprietary agents, and synthesis layers are protected by international law.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">3. Restrictions on Use</h3>
+                            <p><strong>3.1. Prohibited Actions.</strong> Customer shall not entirely, nor permit any third party under its direction or control to: (a) permit any third party to access the Services except as permitted herein; (b) create derivate works based on the Services; (c) copy, frame, or mirror any part or content of the Services; (d) reverse engineer, decompile, disassemble, or otherwise attempt to discover the source code, object code, or underlying structure, ideas, or algorithms of the Services; (e) access the Services in order to build a competitive product or service; or (f) utilize the Services to traffic maliciously, including but not limited to the distribution of malware, facilitation of phishing operations, or unregulated predatory data harvesting.</p>
+                            <p><strong>3.2. Rate Limiting.</strong> Interfacing with our API endpoints is subject to hard programmatic rate limits designed to insulate the architectural integrity of our shared ecosystem. Customers engaging in "DDoS-style" requests or circumventing standard pagination limits will face immediate API key nullification without preliminary warning.</p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">4. AI and Data Usage</h3>
-                            <p>BasaltCRM utilizes AI models to provide our service. data is processed through these models to synthesize insights. We may use anonymized data to improve global performance unless opted out via Enterprise settings.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">4. Customer Responsibilities</h3>
+                            <p><strong>4.1. Account Sovereignty.</strong> Customer is solely accountable for the fidelity, quality, legality, and operational implications of Customer Data, the means by which Customer acquired Customer Data, and Customer's utilization of Customer Data with the Services. Customer will apply commercially reasonable methodologies to thwart unauthorized access to or use of Services and Content.</p>
+                            <p><strong>4.2. Regulatory Strictures.</strong> The Customer assumes an absolute, non-delegable duty to ensure all communication dispatches (e.g., SMTP polling, SMS routing, Voice synthesis) initiated via BasaltCRM adhere strictly to prevailing multi-jurisdictional frameworks, encompassing, but not relegated to, the Telephone Consumer Protection Act (TCPA), the CAN-SPAM Act, the Telemarketing Sales Rule (TSR), and the General Data Protection Regulation (GDPR).</p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">5. Termination</h3>
-                            <p>We reserve the right to suspend or terminate accounts for breaches of these Terms, including unauthorized scraping of platform intelligence or bypassing security metadata.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">5. Fees and Payment for Purchased Services</h3>
+                            <p><strong>5.1. Fees.</strong> Customer will pay all fees specified in Order Forms. Except as otherwise specified herein or in an Order Form, (i) fees are based on Services and Content subscriptions purchased and not actual usage, (ii) payment obligations are non-cancelable and fees paid are non-refundable, and (iii) quantities purchased cannot be decreased during the relevant subscription term.</p>
+                            <p><strong>5.2. Invoicing and Payment.</strong> Customer will provide Us with valid and updated credit card information, or with a valid purchase order or alternative document reasonably acceptable to Us. If Customer provides credit card information, Customer authorizes Us to charge such credit card for all Purchased Services. Charges shall be made in advance, either annually or in accordance with any different billing frequency stated.</p>
+                            <p><strong>5.3. Overdue Charges & Chargebacks.</strong> If any invoiced amount is not received by Us by the due date, then without limiting Our rights or remedies, those charges may accrue late interest at the rate of 1.5% of the outstanding balance per month, or the maximum rate permitted by law, whichever is lower. The initiation of an uncoordinated bank chargeback against properly rendered services will constitute an immediate, material breach resulting in terminal systemic suspension.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">6. Proprietary Rights and Licenses</h3>
+                            <p><strong>6.1. Reservation of Rights.</strong> Subject to the limited rights expressly granted hereunder, We reserve all of Our right, title and interest in and to the Services and Content, including all of Our related intellectual property rights. No rights are granted to Customer hereunder other than as expressly set forth herein.</p>
+                            <p><strong>6.2. License by Customer.</strong> Customer grants Us, Our Affiliates, and applicable contractors a worldwide, limited-term license to host, copy, transmit and display Customer Data as necessary for Us to provide the Services in accordance with this Agreement. Subject to the limited licenses granted herein, We acquire no right, title or interest from Customer under this Agreement in or to any Customer Data.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">7. Confidentiality</h3>
+                            <p><strong>7.1. Definition of Confidential Information.</strong> "Confidential Information" means all information disclosed by a party ("Disclosing Party") to the other party ("Receiving Party"), whether orally or in writing, that is designated as confidential or that reasonably should be understood to be confidential given the nature of the information and the circumstances of disclosure.</p>
+                            <p><strong>7.2. Protection of Confidential Information.</strong> The Receiving Party will use the same degree of care that it uses to protect the confidentiality of its own confidential information of like kind (but not less than reasonable care) to (i) not use any Confidential Information of the Disclosing Party for any purpose outside the scope of this Agreement and (ii) except as otherwise authorized by the Disclosing Party in writing, limit access to Confidential Information.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">8. Representations, Warranties, Exclusive Remedies and Disclaimers</h3>
+                            <p><strong>8.1. Mutual Representations.</strong> Each party represents that it has validly entered into this Agreement and has the legal power to do so.</p>
+                            <p><strong>8.2. Disclaimers.</strong> EXCEPT AS EXPRESSLY PROVIDED HEREIN, NEITHER PARTY MAKES ANY WARRANTY OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHERWISE, AND EACH PARTY SPECIFICALLY DISCLAIMS ALL IMPLIED WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT, TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW. CONTENT AND BETA SERVICES ARE PROVIDED "AS IS," EXCLUSIVE OF ANY WARRANTY WHATSOEVER.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">9. Mutual Indemnification</h3>
+                            <p><strong>9.1. Indemnification by Us.</strong> We will defend Customer against any claim, demand, suit or proceeding made or brought against Customer by a third party alleging that any Service infringes or misappropriates such third party's intellectual property rights, and will indemnify Customer from any damages, attorney fees and costs finally awarded against Customer.</p>
+                            <p><strong>9.2. Indemnification by Customer.</strong> Customer will defend Us against any claim, demand, suit or proceeding made or brought against Us by a third party alleging that any Customer Data or Customer's use of Customer Data with the Services, or Customer's use of the Services in breach of this Agreement, infringes or misappropriates such third party's intellectual property rights or violates applicable law (including but not limited to TCPA, CAN-SPAM, GDPR).</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">10. Limitation of Liability</h3>
+                            <p><strong>10.1. Limitation of Liability.</strong> IN NO EVENT SHALL THE MAXIMUM AGGREGATE LIABILITY OF EITHER PARTY TOGETHER WITH ALL OF ITS AFFILIATES ARISING OUT OF OR RELATED TO THIS AGREEMENT EXCEED THE TOTAL AMOUNT PAID BY CUSTOMER AND ITS AFFILIATES HEREUNDER FOR THE SERVICES GIVING RISE TO THE LIABILITY IN THE TWELVE MONTHS PRECEDING THE FIRST INCIDENT OUT OF WHICH THE LIABILITY AROSE.</p>
+                            <p><strong>10.2. Exclusion of Consequential Damages.</strong> IN NO EVENT WILL EITHER PARTY OR ITS AFFILIATES HAVE ANY LIABILITY ARISING OUT OF OR RELATED TO THIS AGREEMENT FOR ANY LOST PROFITS, REVENUES, GOODWILL, OR INDIRECT, SPECIAL, INCIDENTAL, CONSEQUENTIAL, COVER, BUSINESS INTERRUPTION OR PUNITIVE DAMAGES, WHETHER AN ACTION IS IN CONTRACT OR TORT.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">11. Term and Termination</h3>
+                            <p><strong>11.1. Term of Agreement.</strong> This Agreement commences on the date Customer first accepts it and continues until all subscriptions hereunder have expired or have been terminated.</p>
+                            <p><strong>11.2. Termination.</strong> A party may terminate this Agreement for cause (i) upon 30 days written notice to the other party of a material breach if such breach remains uncured at the expiration of such period, or (ii) if the other party becomes the subject of a petition in bankruptcy or any other proceeding relating to insolvency.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">12. General Provisions</h3>
+                            <p><strong>12.1. Export Compliance.</strong> The Services, Content, other technology We make available, and derivatives thereof may be subject to export laws and regulations of the United States and other jurisdictions. Each party represents that it is not named on any U.S. government denied-party list.</p>
+                            <p><strong>12.2. Entire Agreement and Order of Precedence.</strong> This Agreement is the entire agreement between Customer and Us regarding Customer's use of Services and Content and supersedes all prior and contemporaneous agreements, proposals or representations, written or oral, concerning its subject matter.</p>
+                            <p><strong>12.3. Governing Law and Jurisdiction.</strong> This Agreement, and any disputes arising out of or related hereto, shall be governed exclusively by the internal laws of the State of Delaware, without regard to its conflicts of laws rules or the United Nations Convention on the International Sale of Goods.</p>
                          </section>
 
                          <div className="pt-12 pb-8 flex flex-col items-center gap-4">
@@ -663,11 +724,11 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                                   onClick={() => setOpenTerms(false)} 
                                   className="text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 h-auto rounded-full transition-all duration-300 transform hover:scale-105"
                                >
-                                  Review Complete & Close ✓
+                                  Execution Authorized ✓
                                </Button>
                             ) : (
                                <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
-                                  Keep scrolling to finish...
+                                  Scroll to bottom to electronically sign
                                </span>
                             )}
                          </div>
@@ -677,38 +738,105 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
 
                 {/* Privacy Policy Modal */}
                 <Dialog open={openPrivacy} onOpenChange={setOpenPrivacy}>
-                   <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl shadow-primary/10">
-                      <div className="p-6 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center">
-                          <DialogTitle className="text-2xl font-black italic tracking-tighter text-white uppercase">Privacy Policy</DialogTitle>
+                   <DialogContent className="max-w-3xl bg-zinc-950 border-zinc-800 h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl shadow-primary/10">
+                      <div className="p-6 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center shrink-0">
+                          <DialogTitle className="text-2xl font-black italic tracking-tighter text-white uppercase">Global Privacy Policy</DialogTitle>
                           <span className={cn("text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest", privacyRead ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/10 text-amber-500 border border-amber-500/20")}>
-                            {privacyRead ? "Read & Acknowledged" : "Scrolling Required"}
+                            {privacyRead ? "Acknowledged" : "Scroll to Review"}
                           </span>
                       </div>
                       <div className="flex-1 overflow-y-auto p-8 text-sm text-zinc-400 space-y-8 scrollbar-thin scrollbar-thumb-zinc-800" onScroll={(e) => handleScrollToBottom(e, setPrivacyRead)}>
                          <section>
-                            <p className="text-zinc-200 leading-relaxed font-medium">
-                                Your privacy is our priority. This policy outlines how we handle your information on BasaltCRM.
+                            <p className="text-zinc-200 leading-relaxed font-bold uppercase tracking-wide">
+                                Master Privacy Policy
+                            </p>
+                            <p className="text-zinc-400 mt-2">
+                                Effective Date: April 1, 2026.
+                            </p>
+                            <p className="mt-4">
+                                BasaltHQ Inc. (referred to herein as "Company", "we", "our", or "us") respects your privacy and is committed to protecting it through our strict compliance with this Master Privacy Policy ("Policy"). This Policy exhaustively describes the types of information we may collect from you or that you may provide when you visit our website, application, or leverage the BasaltCRM suite and its interconnected autonomous systems (our "Service"), and our exacting practices for collecting, using, maintaining, protecting, and disclosing that information.
+                            </p>
+                            <p className="mt-4">
+                                This Policy applies to information we collect upon the Service; in electronic communications between you and the Service; through mobile and desktop applications you download from the Service; and dynamically via interactions with our deployed agents. Please read this policy carefully to understand our policies and practices regarding your information. If you do not agree with our policies and practices, your sole recourse is not to use our Service. By accessing or using this Service, you agree to this Policy unconditionally.
                             </p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">1. Information Collection</h3>
-                            <p>We collect account info (email, company name), usage metadata (IP, browser type), and customer data you input into the CRM. You retain full ownership of lead and contact data.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">1. Scope of Privacy Applicability</h3>
+                            <p>This Policy applies exclusively to the BasaltCRM ecosystem. It does not govern data collection by any application, website, or third-party service outside our direct infrastructure, nor does it govern information collected offline or via channels outside the defined digital perimeter of the Service. We bear no liability for the data practices of non-integrated third parties.</p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">2. How We Use Data</h3>
-                            <p>Data is used purely to provide service functionality, maintain security, and improve platform synthesis features. We do NOT sell your personal data to third parties.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">2. Definitions of Processed Information</h3>
+                            <p><strong>2.1. "Personal Information"</strong> means information that identifies, relates to, describes, references, is reasonably capable of being associated with, or could reasonably be linked, directly or indirectly, with a particular consumer, household, or device. This includes identifiers like a real name, alias, postal address, unique personal identifier, online identifier, Internet Protocol address, email address, account name, Social Security number, driver's license number, or other similar identifiers.</p>
+                            <p><strong>2.2. "Non-Personal Information"</strong> means data that is de-identified, anonymized, or aggregated such that it cannot be reasonably linked to a specific individual or household.</p>
+                            <p><strong>2.3. "Customer Metadata"</strong> means data generated by the use of our infrastructure, such as volume of messages sent, delivery rates, open rates, and general utilization heuristics of our AI engines.</p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">3. AI Training Transparency</h3>
-                            <p>Anonymized, non-PII data may be used to calibrate global AI models. PII (Personal Identifiable Information) is strictly filtered before processing. Enterprise tenants can request dedicated isolation.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">3. Modalities of Information Collection</h3>
+                            <p><strong>3.1. Direct Submission.</strong> We explicitly collect Information by which you may be personally identified, such as name, postal address, e-mail address, and telephone number when you voluntarily provide corresponding entries through our webforms, account creation gateways, or direct inquiries to our corporate contact vectors.</p>
+                            <p><strong>3.2. Automated Telemetry.</strong> As you navigate through and interact with our Service, we employ automatic data collection technologies to continuously harvest highly granular environmental metadata. This includes hardware specifics, operating system signatures, cryptographic browser headers, traffic patterns, and comprehensive behavioral navigation mappings (further analyzed in Section 5 via our Microsoft Clarity integration).</p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">4. Security Measures</h3>
-                            <p>We utilize AES-256 at-rest and TLS 1.3 in-transit encryption. Regular SOC2-compliant auditing is performed on our infrastructure.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">4. Purposes and Legitimate Interests of Processing</h3>
+                            <p>We process the Information that we collect about you or that you proactively provide to us, including any Personal Information, to fundamentally present our Service and its contents to you; to provide you with granular utilization notices; to fulfill any other purpose for which you provide it; to carry out our obligations and legally enforce our rights arising from any contracts entered into between you and us, expressly including billing and complex revenue collection mechanisms; and to notify you unequivocally about vital systemic architectural shifts or newly available integrations.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">5. Microsoft Clarity Integration & Behavioral Telemetry</h3>
+                            <p>To ensure unparalleled engineering stability and rapidly diagnose platform bottlenecks via macroscopic mapping, we inject diagnostic telemetry capture tooling globally across the dashboard. We partner explicitly with Microsoft Clarity and Microsoft Advertising to capture how Authorized Users leverage and interact with our application ecology through behavioral tracking metrics, real-time thermal heatmaps, and deterministic session replication methodologies. This ensures we can rapidly trace user-experience falloff and perfect our products. Website usage data is acquired utilizing dynamic first-party and third-party tracking algorithms to analyze geographic product viability and continuous online interactions. Furthermore, we leverage this information for platform optimization infrastructures, threat-hunting security arrays, and targeted corporate outreach. For comprehensive definitions outlining how Microsoft Corporation collects, synthesizes, and deploys your operational data, please rigorously review the official Microsoft Privacy Statement.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">6. Cookies, Local State, and Persistent Storage Mechanisms</h3>
+                            <p>Our platform relies extensively on both Session (volatile) and Persistent memory cookies. Essential Cookies are non-negotiable and strictly necessary for zero-trust authentication matrices and core navigational state retention. Analytics Cookies assess continuous application fidelity and map user traversal friction. While standard browser manipulations allow you to refuse tracking cookies, invoking such protocols will result in immediate, severe degradation of our capacity to provide rapid engineering support for UI anomalies, and certain modules may reject connection attempts entirely due to missing state verification.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">7. Disclosures and Sharing (Sub-processors)</h3>
+                            <p>We absolutely prohibit the sale, exchange, or unauthorized licensing of your Personal Identifiable Information (PII) to raw data brokers for marketing speculation. However, we may unequivocally disclose aggregated information about our users, and information that does not identify any individual, without restriction. We may disclose Personal Information that we collect or you provide as described in this policy: (a) To our subsidiaries and affiliates; (b) To highly vetted enterprise contractors, service providers (such as AWS, Twilio, OpenAI, Stripe), and other third parties we use strictly to support our business functions; (c) To comply with any court order, valid law enforcement subpoena, or rigorous legal process, including responding to any government or regulatory request.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">8. Intercontinental Data Transfers and SCCs</h3>
+                            <p>BasaltHQ leverages geo-distributed enterprise cloud fabrics. Information collected from you may be transferred to, stored, or processed in the United States or any other country in which we, our affiliates, or our designated sub-processors maintain resilient architecture. If operational data is transferred beyond the European Economic Area (EEA), we mandate the execution of binding Standard Contractual Clauses (SCCs) to guarantee equivalent regulatory safeguards and structural privacy continuity.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">9. Data Security and Cryptographic Standards</h3>
+                            <p>All client payload and persistent data is fortified beneath absolute cryptographic enforcement: Advanced Encryption Standard (AES-256) algorithms govern data at rest within physically secured enterprise cloud facilities, while Transport Layer Security (TLS 1.3 or highest available commercial grade) encrypts all volatile traffic in transit. BasaltCRM enforces ruthless internal principle-of-least-privilege mechanisms, physically isolating engineering arrays from production customer datasets. However, we cannot guarantee the absolute systemic impenetrability of the internet; any transmission of Personal Information is therefore conducted strictly at your own operational risk.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">10. Right to Erasure and Data Retention</h3>
+                            <p>In adherence with the Right to be Forgotten (GDPR Article 17) and equivalent regulatory statutes, Enterprise tenants may invoke terminal hard-deletion commands upon contract dissolution. Invocation of this right systematically incinerates assigned cloud partitions and cryptographically overwrites associated vector search indices beyond the point of standard forensic recovery. Absent such invocation, we retain account routing data perpetually to maintain referential integrity of cross-tenant suppression lists and systemic security logs.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">11. State Privacy Rights (CCPA & CPRA)</h3>
+                            <p>If you are a resident of California or a similarly legislatively protected state, you are endowed with specific rights regarding access to your personal information. You have the right to request comprehensive disclosure of our collection and data disbursement procedures encompassing the prior 12-month trailing operational period. You possess the strict right to formally demand that we do not "sell" or "share" your personal information, a directive we fundamentally fulfill by virtue of our strictly B2B operating philosophy.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">12. European Union Data Protection Disclosures (GDPR)</h3>
+                            <p>For data subjects located within the European Economic Area, we operate strictly as a Data Processor regarding Customer CRM uploads, and a Data Controller concerning standard Account Administration Data. You possess the absolute right to lodge formal grievances with your localized Supervisory Authority should you determine our data practices deviate materially from the stringent processing limitations codified within the General Data Protection Regulation.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">13. Children's Online Privacy Protection Act (COPPA)</h3>
+                            <p>Our Website and concomitant Services are explicitly constructed as elite enterprise toolsets built strictly for verified corporate operators. We do not intentionally orchestrate the extraction of data from entities under the age of eighteen (18). If we obtain validated confirmation that we have inadvertently collected Personal Information from a minor, we will execute immediate terminal deletion via our engineering protocols.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">14. Material Modifications to This Policy</h3>
+                            <p>We perpetually reserve the unilateral right to amend, augment, or synthetically rewrite this Master Privacy Policy dynamically as global regulatory algorithms shift. Material systemic modifications addressing the handling of Personal Information will be boldly communicated via mandatory administrative dashboard alerts at least 30 days prior to global enforcement mapping.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">15. Contact Data Compliance Officer</h3>
+                            <p>To exercise any regulatory rights (Data Portability, Right to Erasure, DPO queries), or to demand formal clarification regarding the esoteric intricacies of our processing pipelines, please contact our Data Compliance team at via electronic routing to legal@basalthq.com.</p>
                          </section>
 
                          <div className="pt-12 pb-8 flex flex-col items-center gap-4">
@@ -718,11 +846,11 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                                   onClick={() => setOpenPrivacy(false)} 
                                   className="text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 h-auto rounded-full transition-all duration-300 transform hover:scale-105"
                                >
-                                  Review Complete & Close ✓
+                                  Execution Authorized ✓
                                </Button>
                             ) : (
                                <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
-                                  Keep scrolling to finish...
+                                  Scroll to bottom to electronically sign
                                </span>
                             )}
                          </div>
@@ -732,38 +860,95 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
 
                 {/* AI Data Processing Policy Modal */}
                 <Dialog open={openDataPolicy} onOpenChange={setOpenDataPolicy}>
-                   <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl shadow-primary/10">
-                      <div className="p-6 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center">
-                          <DialogTitle className="text-2xl font-black italic tracking-tighter text-white uppercase">AI Data Agreement</DialogTitle>
+                   <DialogContent className="max-w-3xl bg-zinc-950 border-zinc-800 h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl shadow-primary/10">
+                      <div className="p-6 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center shrink-0">
+                          <DialogTitle className="text-2xl font-black italic tracking-tighter text-white uppercase">Artificial Intelligence DPA</DialogTitle>
                           <span className={cn("text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest", dataPolicyRead ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/10 text-amber-500 border border-amber-500/20")}>
-                            {dataPolicyRead ? "Read & Acknowledged" : "Scrolling Required"}
+                            {dataPolicyRead ? "Acknowledged" : "Scroll to Review"}
                           </span>
                       </div>
                       <div className="flex-1 overflow-y-auto p-8 text-sm text-zinc-400 space-y-8 scrollbar-thin scrollbar-thumb-zinc-800" onScroll={(e) => handleScrollToBottom(e, setDataPolicyRead)}>
                          <section>
-                            <p className="text-zinc-200 leading-relaxed font-black uppercase text-amber-500">
-                                This agreement is required for all active intelligence and synthesis features.
+                            <p className="text-zinc-200 leading-relaxed font-black uppercase text-amber-500 border border-amber-500/20 bg-amber-500/5 p-4 rounded-lg">
+                                CRITICAL DPA ADDENDUM: This Artificial Intelligence Data Processing Agreement ("AIDPA" or "Addendum") exhaustively governs the interaction between Customer corporate data and all underlying agentic networks, Large Language Models (LLMs), neural synthesis layers, and autonomous lead enrichment chains deployed within BasaltCRM. Due to the rapid evolution of global AI compliance algorithms, this agreement reflects cutting-edge strictures aligned with the EU AI Act classification framework. You must verify and accept these esoteric processing conditions to activate the Intelligence Engine.
                             </p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">1. Synthesis Rights</h3>
-                            <p>By using Basalt Surge and Quests, you grant us permission to analyze CRM unstructured text to build context and synthesize leads. This processing occurs in secure, ephemeral memory.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">1. Lexicon of Terminologies</h3>
+                            <p><strong>1.1. "Generative Model"</strong> means any stochastic algorithmic transformer architecture utilized by the platform to generate novel textual, analytical, or programmatic inference based on user-supplied variables.</p>
+                            <p><strong>1.2. "Synthetic Outputs"</strong> means the explicit data array, communication matrix, or calculated heuristic score yielded by the Generative Model following a successful prompt invocation.</p>
+                            <p><strong>1.3. "RAG Infrastructure"</strong> means the Retrieval-Augmented Generation context window mechanism driving our agentic architecture.</p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">2. Training & Feedback Loops</h3>
-                            <p>Metrics (click-through rates, conversation successes) are metadata analyzed to fine-tune our base models. Any content used for model alignment is strictly anonymized and stripped of PII via automated regex and NLP sanitization.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">2. Isolated Context Windows and Multitenant Cryptography</h3>
+                            <p>Any private enterprise data exposed to our vector generation systems is strictly siloed mathematically within the Customer's isolated tenant boundaries via definitive partitioning hashes. Generative LLM queries performed by Authorized Users reference ONLY their designated databases. We cryptographically guarantee that corporate context cascades do not traverse multi-tenant boundaries under any systemic permutation. Your proprietary data streams cannot leak into a competitor's generative environment.</p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">3. Retrieval-Augmented Generation (RAG)</h3>
-                            <p>Your team's private knowledge context is strictly siloed at the tenant level. RAG vector databases are indexed per-team and never shared across tenant boundaries during live generation or query phases.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">3. Ephemeral Telemetry Processing and API Zero-Retention</h3>
+                            <p>Intelligence tasks forwarded to generalized Base Foundation Models including, but not limited to, OpenAI ecosystem models, Anthropic Claude architectures, and localized Llama variants, are processed ephemerally beneath elite Enterprise API agreements. BasaltHQ maintains zero-data-retention pacts with these primary foundation providers. Your structured CRM text, confidential notes, and historic negotiation records are irrevocably excluded from their global LLM training cycles. They serve merely as transient inference accelerators.</p>
                          </section>
 
                          <section className="space-y-4">
-                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">4. Human Oversight</h3>
-                            <p>AI-generated content is non-deterministic. Users are responsible for final review before sending outreach or taking actions based on AI synthesis recommendations.</p>
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">4. Assignment of Intellectual Property for Outputs</h3>
+                            <p>Any generated text, logic, outreach messaging, synthesized summaries, or calculated lead scoring equations (the "Outputs") derived dynamically from your specific datasets (the "Inputs") remain the total intellectual property of the Customer. BasaltHQ disclaims any ownership over custom AI-generated content uniquely crafted for your specific campaign sequences, placing full structural sovereignty in the hands of the Authorized User.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">5. Absolute Indemnification Regarding Algorithmic Hallucinations</h3>
+                            <p>Due to the inherently probabilistic and biologically non-deterministic nature of Transformer-based AI architectures, BasaltHQ makes NO WARRANTY regarding the absolute factual accuracy, tone, or regulatory compliance of any AI-generated communication drafts. You expressly indemnify and hold BasaltHQ harmless from any financial, legal, or reputational damage incurred because a user dispatched an "AI Hallucination" without adequate pre-flight review. The AI serves as an intelligence amplifier, not a legally accountable fiduciary entity.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">6. Human-in-the-Loop Override Architecture</h3>
+                            <p>Customer strictly acknowledges that all automated communications and heuristic deductions yielded by the agents must theoretically remain subject to unilateral human intercept. You assume total responsibility for configuring approval workflows and verify that a dedicated network operator will maintain supervisory review over autonomous execution protocols. Any unsupervised automation is deployed strictly at Customer's distinct, calculated operational peril.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">7. Autonomous API Execution Strictures</h3>
+                            <p>While Basalt Agentic engines are granted functional capabilities allowing them to execute complex, multi-stage tasks across platforms, BasaltHQ enforces computational "circuit-breaker" constraints. Agents are hard-coded to reject the execution of unsanctioned financial modifications, deployment of irreversible destructive deletions, or the initiation of mass outbound traffic exceeding velocity constraints. The Customer assumes full sovereign accountability over their configuration.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">8. Optimization and Synthetic Fine-Tuning Metadata</h3>
+                            <p>In order to provide continual compounding value to the global software ecosystem, BasaltCRM reserves the right to capture and anonymize interaction telemetry regarding AI outputs. This includes metrics such as AI click-through success rates, execution interruption anomalies, and human-in-the-loop editing distances on drafts. Immediate programmatic scrubbing explicitly redacts Personal Identifiable Information (PII) before this data interacts with our engineering logging networks.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">9. European Union (EU AI Act) Model Categorizations</h3>
+                            <p>BasaltHQ classifies its CRM generative tools under a "Limited to Minimal Risk" categorization matrix beneath contemporary EU AI Act legislation frameworks. We transparently disclose the non-human origin of synthetic text whenever strictly mandated by jurisdictional rule and specifically prohibit the application of our toolsets for high-risk biometric profiling, deceptive interaction mechanisms, or predatory manipulative tactics.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">10. Limitation of Liability on Generative Synthesis</h3>
+                            <p>Notwithstanding any standard indemnification clause, BasaltHQ capably disavows and limits total liability concerning any financial deficit, missed sales opportunities, delayed communication pipelines, or infrastructural lag brought about by third-party cognitive model outages or inference latency events.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">11. Force Majeure on Computational API Networks</h3>
+                            <p>BasaltHQ maintains robust failovers; however, sweeping geographical GPU cluster blackouts or fundamental core foundational provider bankruptcies (e.g., severe multi-day OpenAI API failure cascades) are classified legally as Force Majeure events. Service Level Agreements measuring system uptime explicitly exclude any third-party deep-learning orchestration down-scaling.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">12. Third-Party End-User License Agreement Cascades</h3>
+                            <p>Customer unequivocally assents to be derivatively bound by the specific End User License Agreements, Trust and Safety policies, and Acceptable Use paradigms propagated by our foundational engine sub-processors, mapping down through the technological stack.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">13. Regulatory Audit and Inference Inspection Mechanisms</h3>
+                            <p>Upon reasonable suspicion of algorithmic exploitation or the systemic abuse of our synthetic routing infrastructures, BasaltHQ reserves the absolute mandate to initiate internal inference audits across Customer accounts to ensure compliance with our anti-spam and toxicity detection matrices.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">14. Systemic Ejection Protocols for Malicious Injections</h3>
+                            <p>Any attempt by an Authorized User to fundamentally override, subvert, or deploy "Prompt Injection", "Jailbreaking Sequences", or "Adversarial Syntactics" designed to breach standard operational bounds of the Agentic AI structure will result in an immediate forfeiture of the account ledger without the possibility of prorated remission.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-amber-500 pl-3">15. Final Acknowledgment of Experimental Architectures</h3>
+                            <p>You acknowledge that you are interacting with highly experimental, probabilistic architectures operating at the precipice of current theoretical computer science. Continuous deployment and active testing are fundamental paradigms of our delivery vector.</p>
                          </section>
 
                          <div className="pt-12 pb-8 flex flex-col items-center gap-4">
@@ -773,11 +958,11 @@ export function RegisterComponent({ availablePlans, initialPlanSlug, initialCycl
                                   onClick={() => setOpenDataPolicy(false)} 
                                   className="text-[11px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 h-auto rounded-full transition-all duration-300 transform hover:scale-105"
                                >
-                                  Review Complete & Close ✓
+                                  Execution Authorized ✓
                                </Button>
                             ) : (
                                <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
-                                  Keep scrolling to finish...
+                                  Scroll to bottom to electronically sign
                                </span>
                             )}
                          </div>

@@ -26,113 +26,104 @@ export default function TermsPage() {
                         <p className="text-gray-400 mb-12">Last updated: December 1, 2025</p>
 
                         <div className="prose prose-invert prose-lg max-w-none text-gray-300 space-y-12">
-                            <section>
-                                <p className="lead text-xl text-gray-200">
-                                    Please read these Terms of Service (&quot;Terms&quot;) carefully before using the BasaltCRM website and services operated by BasaltCRM (&quot;us&quot;, &quot;we&quot;, or &quot;our&quot;). By accessing or using our Service, you agree to be bound by these Terms.
+                             <section>
+                                <p className="text-zinc-200 leading-relaxed font-bold uppercase tracking-wide">
+                                    Master Terms of Service Agreement
                                 </p>
-                            </section>
-
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">1. Accounts</h2>
-                                <p>
-                                    When you create an account with us, you must provide us information that is accurate, complete, and current at all times. Failure to do so constitutes a breach of the Terms, which may result in immediate termination of your account on our Service.
+                                <p className="text-zinc-400 mt-2">
+                                    Effective Date: April 1, 2026.
                                 </p>
                                 <p className="mt-4">
-                                    You are responsible for safeguarding the password that you use to access the Service and for any activities or actions under your password. You agree not to disclose your password to any third party.
-                                </p>
-                            </section>
-
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">2. Subscriptions and Payments</h2>
-                                <h3 className="text-xl font-semibold text-white mt-6 mb-2">2.1 Fees</h3>
-                                <p>
-                                    Some parts of the Service are billed on a subscription basis (&quot;Subscription(s)&quot;). You will be billed in advance on a recurring and periodic basis (such as monthly or annually).
-                                </p>
-                                <h3 className="text-xl font-semibold text-white mt-6 mb-2">2.2 Free Trial</h3>
-                                <p>
-                                    We may, at our sole discretion, offer a Subscription with a free trial for a limited period of time. You may be required to enter your billing information in order to sign up for the free trial.
-                                </p>
-                                <h3 className="text-xl font-semibold text-white mt-6 mb-2">2.3 Cancellation</h3>
-                                <p>
-                                    You may cancel your Subscription renewal either through your online account management page or by contacting our customer support team.
-                                </p>
-                            </section>
-
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">3. Intellectual Property</h2>
-                                <p>
-                                    The Service and its original content (excluding Content provided by users), features, and functionality are and will remain the exclusive property of BasaltCRM and its licensors. The Service is protected by copyright, trademark, and other laws of both the United States and foreign countries.
-                                </p>
-                            </section>
-
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">4. User Content</h2>
-                                <p>
-                                    Our Service allows you to post, link, store, share and otherwise make available certain information, text, graphics, videos, or other material (&quot;Content&quot;). You are responsible for the Content that you post to the Service, including its legality, reliability, and appropriateness.
+                                    This Master Terms of Service Agreement ("Agreement" or "Terms") constitutes a legally binding contract between you (referred to herein as "Customer", "Subscriber", "Licensee", or "Authorized User") and BasaltHQ Inc., a corporation organized and existing under the laws of the State of Delaware (referred to herein as "Company", "we", "us", "our", or "Licensor"). This Agreement meticulously governs your access to, integration with, and utilization of the BasaltCRM enterprise platform, interconnected artificial intelligence networks, proprietary data scraping utilities, and all associated communication infrastructure architectures (collectively, the "Service").
                                 </p>
                                 <p className="mt-4">
-                                    By posting Content to the Service, you grant us the right and license to use, modify, publicly perform, publicly display, reproduce, and distribute such Content on and through the Service. You retain any and all of your rights to any Content you submit, post or display on or through the Service and you are responsible for protecting those rights.
+                                    BY EXECUTING AN ORDER FORM THAT REFERENCES THIS AGREEMENT, BY DEPRESSING THE "I AGREE", "AUTHORIZE", OR "ACCEPT" BUTTON ASSOCIATED WITH THIS AGREEMENT, OR BY ACCESSING OR CONTINUING TO UTILIZE THE SERVICE IN ANY CAPACITY, YOU EXPRESSLY SIGNIFY YOUR UNEQUIVOCAL, UNCONDITIONAL, AND ABSOLUTE CONSENT TO BE BOUND BY THESE TERMS. IF YOU ARE ENTERING INTO THIS AGREEMENT ON BEHALF OF A CORPORATE ENTITY, LIMITED LIABILITY COMPANY, PARTNERSHIP, OR OTHER LEGAL ORGANIZATION, YOU HEREBY REPRESENT, WARRANT, AND COVENANT THAT YOU POSSESS THE REQUISITE LEGAL AUTHORITY TO BIND SUCH ENTITY AND ITS AFFILIATES TO THESE TERMS. IF YOU LACK SUCH AUTHORITY, OR IF YOU DO NOT WHOLLY AGREE WITH EVERY PROVISION SET FORTH HEREIN, YOU MUST NOT ACCEPT THIS AGREEMENT AND MAY NOT ACCESS OR USE THE SERVICE.
                                 </p>
-                            </section>
+                             </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">5. AI and Data Usage</h2>
-                                <p>
-                                    BasaltCRM utilizes artificial intelligence ("AI") models to provide certain features of the Service. By using the Service, you acknowledge that we may process your data through these AI models.
-                                </p>
-                                <p className="mt-4">
-                                    <strong>Data Training:</strong> We may use aggregated, anonymized, or opt-in tenant data to fine-tune and improve our AI models. You have the right to opt-out of having your workspace data used for this purpose through your Account Settings. For more information on the datasets we use, please review our <a href="/training-data" className="text-primary hover:underline">Training Data Transparency</a> page.
-                                </p>
-                                <p className="mt-4">
-                                    <strong>Data Scraping and Watermarking:</strong> You agree not to use the Service or its API to scrape data for the purpose of training third-party AI models without explicit permission. Furthermore, attempting to strip or alter any latent metadata or watermarks injected by our AI systems is strictly prohibited and can result in immediate termination of the Service.
-                                </p>
-                            </section>
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">1. Definitions</h3>
+                                <p><strong>1.1. "Affiliate"</strong> means any entity that directly or indirectly controls, is controlled by, or is under common control with the subject entity.</p>
+                                <p><strong>1.2. "Authorized User"</strong> means an individual who is explicitly authorized by the Customer to use a Service, for whom Customer has purchased a subscription (or in the case of any Services provided by Us without charge, for whom a Service has been provisioned), and to whom Customer (or, when applicable, Us at Customer's request) has supplied a user identification and password.</p>
+                                <p><strong>1.3. "Customer Data"</strong> means electronic data and information submitted by or for Customer to the Services, excluding content from third-party applications.</p>
+                                <p><strong>1.4. "Malicious Code"</strong> means code, files, scripts, agents, or programs intended to do harm, including, for example, viruses, worms, time bombs, and Trojan horses.</p>
+                                <p><strong>1.5. "Order Form"</strong> means an ordering document or online order specifying the Services to be provided hereunder that is entered into between Customer and Us.</p>
+                             </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">6. Acceptable Use</h2>
-                                <p>You agree not to use the Service:</p>
-                                <ul className="list-disc pl-6 space-y-2">
-                                    <li>In any way that violates any applicable national or international law or regulation.</li>
-                                    <li>For the purpose of exploiting, harming, or attempting to exploit or harm minors in any way.</li>
-                                    <li>To transmit, or procure the sending of, any advertising or promotional material, including any &quot;junk mail&quot;, &quot;chain letter,&quot; &quot;spam,&quot; or any other similar solicitation.</li>
-                                    <li>To impersonate or attempt to impersonate the Company, a Company employee, another user, or any other person or entity.</li>
-                                </ul>
-                            </section>
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">2. Grant of License and Scope of Use</h3>
+                                <p><strong>2.1. Provision of Services.</strong> We will (a) make the Services and Content available to Customer pursuant to this Agreement, and the applicable Order Forms and Documentation, (b) provide applicable standard support for the Services to Customer at no additional charge, and (c) use commercially reasonable efforts to make the online Services available 24 hours a day, 7 days a week, except for: (i) planned downtime (of which We shall give advance electronic notice), and (ii) any unavailability caused by circumstances beyond Our reasonable control.</p>
+                                <p><strong>2.2. Non-Exclusive License.</strong> Subject to Customer's strict adherence to this Agreement and timely remittance of all due pecuniary obligations, BasaltHQ grants Customer a localized, non-exclusive, non-transferable, non-sublicensable, and completely revocable right to access and leverage the Service strictly for Customer's internal business operations.</p>
+                             </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">7. Limitation of Liability</h2>
-                                <p>
-                                    In no event shall BasaltCRM, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from (i) your access to or use of or inability to access or use the Service; (ii) any conduct or content of any third party on the Service; (iii) any content obtained from the Service; and (iv) unauthorized access, use or alteration of your transmissions or content, whether based on warranty, contract, tort (including negligence) or any other legal theory, whether or not we have been informed of the possibility of such damage.
-                                </p>
-                            </section>
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">3. Restrictions on Use</h3>
+                                <p><strong>3.1. Prohibited Actions.</strong> Customer shall not entirely, nor permit any third party under its direction or control to: (a) permit any third party to access the Services except as permitted herein; (b) create derivate works based on the Services; (c) copy, frame, or mirror any part or content of the Services; (d) reverse engineer, decompile, disassemble, or otherwise attempt to discover the source code, object code, or underlying structure, ideas, or algorithms of the Services; (e) access the Services in order to build a competitive product or service; or (f) utilize the Services to traffic maliciously, including but not limited to the distribution of malware, facilitation of phishing operations, or unregulated predatory data harvesting.</p>
+                                <p><strong>3.2. Rate Limiting.</strong> Interfacing with our API endpoints is subject to hard programmatic rate limits designed to insulate the architectural integrity of our shared ecosystem. Customers engaging in "DDoS-style" requests or circumventing standard pagination limits will face immediate API key nullification without preliminary warning.</p>
+                             </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">8. Termination</h2>
-                                <p>
-                                    We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms. Upon termination, your right to use the Service will immediately cease.
-                                </p>
-                            </section>
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">4. Customer Responsibilities</h3>
+                                <p><strong>4.1. Account Sovereignty.</strong> Customer is solely accountable for the fidelity, quality, legality, and operational implications of Customer Data, the means by which Customer acquired Customer Data, and Customer's utilization of Customer Data with the Services. Customer will apply commercially reasonable methodologies to thwart unauthorized access to or use of Services and Content.</p>
+                                <p><strong>4.2. Regulatory Strictures.</strong> The Customer assumes an absolute, non-delegable duty to ensure all communication dispatches (e.g., SMTP polling, SMS routing, Voice synthesis) initiated via BasaltCRM adhere strictly to prevailing multi-jurisdictional frameworks, encompassing, but not relegated to, the Telephone Consumer Protection Act (TCPA), the CAN-SPAM Act, the Telemarketing Sales Rule (TSR), and the General Data Protection Regulation (GDPR).</p>
+                             </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">9. Governing Law</h2>
-                                <p>
-                                    These Terms shall be governed and construed in accordance with the laws of California, United States, without regard to its conflict of law provisions.
-                                </p>
-                            </section>
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">5. Fees and Payment for Purchased Services</h3>
+                                <p><strong>5.1. Fees.</strong> Customer will pay all fees specified in Order Forms. Except as otherwise specified herein or in an Order Form, (i) fees are based on Services and Content subscriptions purchased and not actual usage, (ii) payment obligations are non-cancelable and fees paid are non-refundable, and (iii) quantities purchased cannot be decreased during the relevant subscription term.</p>
+                                <p><strong>5.2. Invoicing and Payment.</strong> Customer will provide Us with valid and updated credit card information, or with a valid purchase order or alternative document reasonably acceptable to Us. If Customer provides credit card information, Customer authorizes Us to charge such credit card for all Purchased Services. Charges shall be made in advance, either annually or in accordance with any different billing frequency stated.</p>
+                                <p><strong>5.3. Overdue Charges & Chargebacks.</strong> If any invoiced amount is not received by Us by the due date, then without limiting Our rights or remedies, those charges may accrue late interest at the rate of 1.5% of the outstanding balance per month, or the maximum rate permitted by law, whichever is lower. The initiation of an uncoordinated bank chargeback against properly rendered services will constitute an immediate, material breach resulting in terminal systemic suspension.</p>
+                             </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">10. Changes</h2>
-                                <p>
-                                    We reserve the right, at our sole discretion, to modify or replace these Terms at any time. If a revision is material we will try to provide at least 30 days notice prior to any new terms taking effect. What constitutes a material change will be determined at our sole discretion.
-                                </p>
-                            </section>
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">6. Proprietary Rights and Licenses</h3>
+                                <p><strong>6.1. Reservation of Rights.</strong> Subject to the limited rights expressly granted hereunder, We reserve all of Our right, title and interest in and to the Services and Content, including all of Our related intellectual property rights. No rights are granted to Customer hereunder other than as expressly set forth herein.</p>
+                                <p><strong>6.2. License by Customer.</strong> Customer grants Us, Our Affiliates, and applicable contractors a worldwide, limited-term license to host, copy, transmit and display Customer Data as necessary for Us to provide the Services in accordance with this Agreement. Subject to the limited licenses granted herein, We acquire no right, title or interest from Customer under this Agreement in or to any Customer Data.</p>
+                             </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">11. Contact Us</h2>
-                                <p>
-                                    If you have any questions about these Terms, please contact us at <a href="mailto:legal@basalthq.com" className="text-primary hover:underline">legal@basalthq.com</a>.
-                                </p>
-                            </section>
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">7. Confidentiality</h3>
+                                <p><strong>7.1. Definition of Confidential Information.</strong> "Confidential Information" means all information disclosed by a party ("Disclosing Party") to the other party ("Receiving Party"), whether orally or in writing, that is designated as confidential or that reasonably should be understood to be confidential given the nature of the information and the circumstances of disclosure.</p>
+                                <p><strong>7.2. Protection of Confidential Information.</strong> The Receiving Party will use the same degree of care that it uses to protect the confidentiality of its own confidential information of like kind (but not less than reasonable care) to (i) not use any Confidential Information of the Disclosing Party for any purpose outside the scope of this Agreement and (ii) except as otherwise authorized by the Disclosing Party in writing, limit access to Confidential Information.</p>
+                             </section>
+
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">8. Representations, Warranties, Exclusive Remedies and Disclaimers</h3>
+                                <p><strong>8.1. Mutual Representations.</strong> Each party represents that it has validly entered into this Agreement and has the legal power to do so.</p>
+                                <p><strong>8.2. Disclaimers.</strong> EXCEPT AS EXPRESSLY PROVIDED HEREIN, NEITHER PARTY MAKES ANY WARRANTY OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHERWISE, AND EACH PARTY SPECIFICALLY DISCLAIMS ALL IMPLIED WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT, TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW. CONTENT AND BETA SERVICES ARE PROVIDED "AS IS," EXCLUSIVE OF ANY WARRANTY WHATSOEVER.</p>
+                             </section>
+
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">9. Mutual Indemnification</h3>
+                                <p><strong>9.1. Indemnification by Us.</strong> We will defend Customer against any claim, demand, suit or proceeding made or brought against Customer by a third party alleging that any Service infringes or misappropriates such third party's intellectual property rights, and will indemnify Customer from any damages, attorney fees and costs finally awarded against Customer.</p>
+                                <p><strong>9.2. Indemnification by Customer.</strong> Customer will defend Us against any claim, demand, suit or proceeding made or brought against Us by a third party alleging that any Customer Data or Customer's use of Customer Data with the Services, or Customer's use of the Services in breach of this Agreement, infringes or misappropriates such third party's intellectual property rights or violates applicable law (including but not limited to TCPA, CAN-SPAM, GDPR).</p>
+                             </section>
+
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">10. Limitation of Liability</h3>
+                                <p><strong>10.1. Limitation of Liability.</strong> IN NO EVENT SHALL THE MAXIMUM AGGREGATE LIABILITY OF EITHER PARTY TOGETHER WITH ALL OF ITS AFFILIATES ARISING OUT OF OR RELATED TO THIS AGREEMENT EXCEED THE TOTAL AMOUNT PAID BY CUSTOMER AND ITS AFFILIATES HEREUNDER FOR THE SERVICES GIVING RISE TO THE LIABILITY IN THE TWELVE MONTHS PRECEDING THE FIRST INCIDENT OUT OF WHICH THE LIABILITY AROSE.</p>
+                                <p><strong>10.2. Exclusion of Consequential Damages.</strong> IN NO EVENT WILL EITHER PARTY OR ITS AFFILIATES HAVE ANY LIABILITY ARISING OUT OF OR RELATED TO THIS AGREEMENT FOR ANY LOST PROFITS, REVENUES, GOODWILL, OR INDIRECT, SPECIAL, INCIDENTAL, CONSEQUENTIAL, COVER, BUSINESS INTERRUPTION OR PUNITIVE DAMAGES, WHETHER AN ACTION IS IN CONTRACT OR TORT.</p>
+                             </section>
+
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">11. Term and Termination</h3>
+                                <p><strong>11.1. Term of Agreement.</strong> This Agreement commences on the date Customer first accepts it and continues until all subscriptions hereunder have expired or have been terminated.</p>
+                                <p><strong>11.2. Termination.</strong> A party may terminate this Agreement for cause (i) upon 30 days written notice to the other party of a material breach if such breach remains uncured at the expiration of such period, or (ii) if the other party becomes the subject of a petition in bankruptcy or any other proceeding relating to insolvency.</p>
+                             </section>
+
+                             <section className="space-y-4">
+                                <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">12. General Provisions</h3>
+                                <p><strong>12.1. Export Compliance.</strong> The Services, Content, other technology We make available, and derivatives thereof may be subject to export laws and regulations of the United States and other jurisdictions. Each party represents that it is not named on any U.S. government denied-party list.</p>
+                                <p><strong>12.2. Entire Agreement and Order of Precedence.</strong> This Agreement is the entire agreement between Customer and Us regarding Customer's use of Services and Content and supersedes all prior and contemporaneous agreements, proposals or representations, written or oral, concerning its subject matter.</p>
+                                <p><strong>12.3. Governing Law and Jurisdiction.</strong> This Agreement, and any disputes arising out of or related hereto, shall be governed exclusively by the internal laws of the State of Delaware, without regard to its conflicts of laws rules or the United Nations Convention on the International Sale of Goods.</p>
+                             </section>
+
+                             <section>
+                                 <h2 className="text-2xl font-bold text-white mb-4">13. Contact Legal Operations</h2>
+                                 <p>
+                                     If you require specific redline variations of these Terms, please contact our Legal Operations team directly at <a href="mailto:legal@basalthq.com" className="text-primary hover:underline">legal@basalthq.com</a>.
+                                 </p>
+                             </section>
                         </div>
                     </div>
                 </main>
