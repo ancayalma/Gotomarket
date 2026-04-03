@@ -425,7 +425,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
   const toMediaProxyUrl = (rawUrl: string): string => {
     if (!rawUrl) return rawUrl;
     if (rawUrl.includes("/api/media/")) return rawUrl; // Already proxied
-    if (rawUrl.includes("s3.") && rawUrl.includes("amazonaws.com") && rawUrl.includes("/uploads/")) {
+    if (rawUrl.includes("/uploads/") && (rawUrl.includes("s3.") || rawUrl.includes(".cloud.") || rawUrl.includes("basaltcrm"))) {
       try {
         const urlObj = new URL(rawUrl);
         const key = urlObj.pathname.startsWith('/') ? urlObj.pathname.slice(1) : urlObj.pathname;
@@ -807,7 +807,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     const resolveImg = (url: string | undefined | null) => {
       if (!url) return "";
       if (url.includes("/api/media/")) return url;
-      if (url.includes("s3.") && url.includes("amazonaws.com") && url.includes("/uploads/")) {
+      if (url.includes("/uploads/") && (url.includes("s3.") || url.includes(".cloud.") || url.includes("basaltcrm"))) {
         try {
           const urlObj = new URL(url);
           const key = urlObj.pathname.startsWith('/') ? urlObj.pathname.slice(1) : urlObj.pathname;
