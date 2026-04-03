@@ -1,4 +1,4 @@
-import { getAiSdkModel } from "./openai";
+import { getAiSdkModel } from "./varuni";
 
 /**
  * Legacy wrapper around getAiSdkModel for backward compatibility.

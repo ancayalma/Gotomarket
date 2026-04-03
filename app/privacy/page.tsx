@@ -26,108 +26,98 @@ export default function PrivacyPage() {
                         <p className="text-gray-400 mb-12">Last updated: December 1, 2025</p>
 
                         <div className="prose prose-invert prose-lg max-w-none text-gray-300 space-y-12">
-                            <section>
-                                <p className="lead text-xl text-gray-200">
-                                    At BasaltCRM (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website, use our software, or engage with our services.
-                                </p>
-                            </section>
+                         <section>
+                            <p className="text-zinc-200 leading-relaxed font-bold uppercase tracking-wide">
+                                Master Privacy Policy
+                            </p>
+                            <p className="text-zinc-400 mt-2">
+                                Effective Date: April 1, 2026.
+                            </p>
+                            <p className="mt-4">
+                                BasaltHQ Inc. (referred to herein as "Company", "we", "our", or "us") respects your privacy and is committed to protecting it through our strict compliance with this Master Privacy Policy ("Policy"). This Policy exhaustively describes the types of information we may collect from you or that you may provide when you visit our website, application, or leverage the BasaltCRM suite and its interconnected autonomous systems (our "Service"), and our exacting practices for collecting, using, maintaining, protecting, and disclosing that information.
+                            </p>
+                            <p className="mt-4">
+                                This Policy applies to information we collect upon the Service; in electronic communications between you and the Service; through mobile and desktop applications you download from the Service; and dynamically via interactions with our deployed agents. Please read this policy carefully to understand our policies and practices regarding your information. If you do not agree with our policies and practices, your sole recourse is not to use our Service. By accessing or using this Service, you agree to this Policy unconditionally.
+                            </p>
+                         </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">1. Information We Collect</h2>
-                                <p>We collect information that you provide directly to us, as well as information collected automatically when you use our services.</p>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">1. Scope of Privacy Applicability</h3>
+                            <p>This Policy applies exclusively to the BasaltCRM ecosystem. It does not govern data collection by any application, website, or third-party service outside our direct infrastructure, nor does it govern information collected offline or via channels outside the defined digital perimeter of the Service. We bear no liability for the data practices of non-integrated third parties.</p>
+                         </section>
 
-                                <h3 className="text-xl font-semibold text-white mt-6 mb-2">1.1 Information You Provide</h3>
-                                <ul className="list-disc pl-6 space-y-2">
-                                    <li><strong>Account Information:</strong> Name, email address, password, company name, and phone number when you register.</li>
-                                    <li><strong>Payment Information:</strong> Credit card details and billing address (processed by our secure payment provider, Stripe).</li>
-                                    <li><strong>Customer Data:</strong> Data you input into the CRM, including lead details, contacts, and sales data. You retain full ownership of this data.</li>
-                                    <li><strong>Support Communications:</strong> Information you provide when contacting our support team.</li>
-                                </ul>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">2. Definitions of Processed Information</h3>
+                            <p><strong>2.1. "Personal Information"</strong> means information that identifies, relates to, describes, references, is reasonably capable of being associated with, or could reasonably be linked, directly or indirectly, with a particular consumer, household, or device. This includes identifiers like a real name, alias, postal address, unique personal identifier, online identifier, Internet Protocol address, email address, account name, Social Security number, driver's license number, or other similar identifiers.</p>
+                            <p><strong>2.2. "Non-Personal Information"</strong> means data that is de-identified, anonymized, or aggregated such that it cannot be reasonably linked to a specific individual or household.</p>
+                            <p><strong>2.3. "Customer Metadata"</strong> means data generated by the use of our infrastructure, such as volume of messages sent, delivery rates, open rates, and general utilization heuristics of our AI engines.</p>
+                         </section>
 
-                                <h3 className="text-xl font-semibold text-white mt-6 mb-2">1.2 Information Collected Automatically</h3>
-                                <ul className="list-disc pl-6 space-y-2">
-                                    <li><strong>Usage Data:</strong> Pages visited, features used, time spent, and clickstream data.</li>
-                                    <li><strong>Device Data:</strong> IP address, browser type, operating system, and device identifiers.</li>
-                                    <li><strong>Cookies:</strong> We use cookies to maintain your session and analyze usage patterns (see our Cookie Policy).</li>
-                                </ul>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">3. Modalities of Information Collection</h3>
+                            <p><strong>3.1. Direct Submission.</strong> We explicitly collect Information by which you may be personally identified, such as name, postal address, e-mail address, and telephone number when you voluntarily provide corresponding entries through our webforms, account creation gateways, or direct inquiries to our corporate contact vectors.</p>
+                            <p><strong>3.2. Automated Telemetry.</strong> As you navigate through and interact with our Service, we employ automatic data collection technologies to continuously harvest highly granular environmental metadata. This includes hardware specifics, operating system signatures, cryptographic browser headers, traffic patterns, and comprehensive behavioral navigation mappings (further analyzed in Section 5 via our Microsoft Clarity integration).</p>
+                         </section>
 
-                                <h3 className="text-xl font-semibold text-white mt-6 mb-2">1.3 AI Model Training Data</h3>
-                                <p className="mt-2 text-gray-300">
-                                    In certain circumstances, we may use anonymized, aggregated, or explicitly opted-in data to train our artificial intelligence models. For a complete inventory of training data sources and our compliance with California AB 2013, please visit our <a href="/training-data" className="text-primary hover:underline">Training Data Transparency</a> page.
-                                </p>
-                            </section>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">4. Purposes and Legitimate Interests of Processing</h3>
+                            <p>We process the Information that we collect about you or that you proactively provide to us, including any Personal Information, to fundamentally present our Service and its contents to you; to provide you with granular utilization notices; to fulfill any other purpose for which you provide it; to carry out our obligations and legally enforce our rights arising from any contracts entered into between you and us, expressly including billing and complex revenue collection mechanisms; and to notify you unequivocally about vital systemic architectural shifts or newly available integrations.</p>
+                         </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">2. How We Use Your Information</h2>
-                                <p>We use the collected information for the following purposes:</p>
-                                <ul className="list-disc pl-6 space-y-2">
-                                    <li>To provide, operate, and maintain our services.</li>
-                                    <li>To process transactions and manage your account.</li>
-                                    <li>To improve, personalize, and expand our services.</li>
-                                    <li>To communicate with you, including for customer service, updates, and marketing (you can opt-out of marketing).</li>
-                                    <li>To fine-tune and improve our AI models (subject to your opt-out preferences and strict anonymization of Personal Information).</li>
-                                    <li>To detect and prevent fraud and abuse.</li>
-                                    <li>To comply with legal obligations.</li>
-                                </ul>
-                            </section>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">5. Microsoft Clarity Integration & Behavioral Telemetry</h3>
+                            <p>To ensure unparalleled engineering stability and rapidly diagnose platform bottlenecks via macroscopic mapping, we inject diagnostic telemetry capture tooling globally across the dashboard. We partner explicitly with Microsoft Clarity and Microsoft Advertising to capture how Authorized Users leverage and interact with our application ecology through behavioral tracking metrics, real-time thermal heatmaps, and deterministic session replication methodologies. This ensures we can rapidly trace user-experience falloff and perfect our products. Website usage data is acquired utilizing dynamic first-party and third-party tracking algorithms to analyze geographic product viability and continuous online interactions. Furthermore, we leverage this information for platform optimization infrastructures, threat-hunting security arrays, and targeted corporate outreach. For comprehensive definitions outlining how Microsoft Corporation collects, synthesizes, and deploys your operational data, please rigorously review the official Microsoft Privacy Statement.</p>
+                         </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">3. Data Sharing and Disclosure</h2>
-                                <p>We do not sell your personal data. We may share your information in the following circumstances:</p>
-                                <ul className="list-disc pl-6 space-y-2">
-                                    <li><strong>Service Providers:</strong> With third-party vendors who perform services on our behalf (e.g., hosting, payment processing, email delivery).</li>
-                                    <li><strong>Legal Requirements:</strong> If required to do so by law or in response to valid requests by public authorities.</li>
-                                    <li><strong>Business Transfers:</strong> In connection with a merger, sale of assets, or acquisition.</li>
-                                    <li><strong>With Your Consent:</strong> We may share information with your consent or at your direction.</li>
-                                </ul>
-                            </section>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">6. Cookies, Local State, and Persistent Storage Mechanisms</h3>
+                            <p>Our platform relies extensively on both Session (volatile) and Persistent memory cookies. Essential Cookies are non-negotiable and strictly necessary for zero-trust authentication matrices and core navigational state retention. Analytics Cookies assess continuous application fidelity and map user traversal friction. While standard browser manipulations allow you to refuse tracking cookies, invoking such protocols will result in immediate, severe degradation of our capacity to provide rapid engineering support for UI anomalies, and certain modules may reject connection attempts entirely due to missing state verification.</p>
+                         </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">4. Data Security</h2>
-                                <p>
-                                    We implement robust security measures to protect your data, including AES-256 encryption at rest and TLS 1.3 in transit.
-                                    However, no method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.
-                                </p>
-                            </section>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">7. Disclosures and Sharing (Sub-processors)</h3>
+                            <p>We absolutely prohibit the sale, exchange, or unauthorized licensing of your Personal Identifiable Information (PII) to raw data brokers for marketing speculation. However, we may unequivocally disclose aggregated information about our users, and information that does not identify any individual, without restriction. We may disclose Personal Information that we collect or you provide as described in this policy: (a) To our subsidiaries and affiliates; (b) To highly vetted enterprise contractors, service providers (such as AWS, Twilio, OpenAI, Stripe), and other third parties we use strictly to support our business functions; (c) To comply with any court order, valid law enforcement subpoena, or rigorous legal process, including responding to any government or regulatory request.</p>
+                         </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">5. Your Data Rights</h2>
-                                <p>Depending on your location, you may have the following rights:</p>
-                                <ul className="list-disc pl-6 space-y-2">
-                                    <li><strong>Access:</strong> Request a copy of the personal data we hold about you.</li>
-                                    <li><strong>Correction:</strong> Request correction of inaccurate data.</li>
-                                    <li><strong>Deletion & Right to Forget:</strong> Request deletion of your personal data. We ensure this data is additionally purged from any active AI training caches to the extent technically feasible.</li>
-                                    <li><strong>AI Training Opt-Out:</strong> Request that your data strictly not be used for AI model or system training. You can enforce this preference directly in your Workspace Settings.</li>
-                                    <li><strong>Portability:</strong> Request transfer of your data to another service.</li>
-                                </ul>
-                                <p className="mt-4">To exercise these rights, please contact us at <a href="mailto:legal@basalthq.com" className="text-primary hover:underline">legal@basalthq.com</a>.</p>
-                            </section>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">8. Intercontinental Data Transfers and SCCs</h3>
+                            <p>BasaltHQ leverages geo-distributed enterprise cloud fabrics. Information collected from you may be transferred to, stored, or processed in the United States or any other country in which we, our affiliates, or our designated sub-processors maintain resilient architecture. If operational data is transferred beyond the European Economic Area (EEA), we mandate the execution of binding Standard Contractual Clauses (SCCs) to guarantee equivalent regulatory safeguards and structural privacy continuity.</p>
+                         </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">6. International Transfers</h2>
-                                <p>
-                                    Your information may be transferred to and maintained on computers located outside of your state, province, country, or other governmental jurisdiction where the data protection laws may differ.
-                                    We ensure appropriate safeguards are in place for such transfers.
-                                </p>
-                            </section>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">9. Data Security and Cryptographic Standards</h3>
+                            <p>All client payload and persistent data is fortified beneath absolute cryptographic enforcement: Advanced Encryption Standard (AES-256) algorithms govern data at rest within physically secured enterprise cloud facilities, while Transport Layer Security (TLS 1.3 or highest available commercial grade) encrypts all volatile traffic in transit. BasaltCRM enforces ruthless internal principle-of-least-privilege mechanisms, physically isolating engineering arrays from production customer datasets. However, we cannot guarantee the absolute systemic impenetrability of the internet; any transmission of Personal Information is therefore conducted strictly at your own operational risk.</p>
+                         </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">7. Changes to This Policy</h2>
-                                <p>
-                                    We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the &quot;Last updated&quot; date.
-                                </p>
-                            </section>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">10. Right to Erasure and Data Retention</h3>
+                            <p>In adherence with the Right to be Forgotten (GDPR Article 17) and equivalent regulatory statutes, Enterprise tenants may invoke terminal hard-deletion commands upon contract dissolution. Invocation of this right systematically incinerates assigned cloud partitions and cryptographically overwrites associated vector search indices beyond the point of standard forensic recovery. Absent such invocation, we retain account routing data perpetually to maintain referential integrity of cross-tenant suppression lists and systemic security logs.</p>
+                         </section>
 
-                            <section>
-                                <h2 className="text-2xl font-bold text-white mb-4">8. Contact Us</h2>
-                                <p>
-                                    If you have any questions about this Privacy Policy, please contact us at:
-                                </p>
-                                <p className="mt-2">
-                                    <strong>Email:</strong> <a href="mailto:legal@basalthq.com" className="text-primary hover:underline">legal@basalthq.com</a><br />
-                                    <strong>Address:</strong> 123 AI Boulevard, San Francisco, CA 94105, USA
-                                </p>
-                            </section>
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">11. State Privacy Rights (CCPA & CPRA)</h3>
+                            <p>If you are a resident of California or a similarly legislatively protected state, you are endowed with specific rights regarding access to your personal information. You have the right to request comprehensive disclosure of our collection and data disbursement procedures encompassing the prior 12-month trailing operational period. You possess the strict right to formally demand that we do not "sell" or "share" your personal information, a directive we fundamentally fulfill by virtue of our strictly B2B operating philosophy.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">12. European Union Data Protection Disclosures (GDPR)</h3>
+                            <p>For data subjects located within the European Economic Area, we operate strictly as a Data Processor regarding Customer CRM uploads, and a Data Controller concerning standard Account Administration Data. You possess the absolute right to lodge formal grievances with your localized Supervisory Authority should you determine our data practices deviate materially from the stringent processing limitations codified within the General Data Protection Regulation.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">13. Children's Online Privacy Protection Act (COPPA)</h3>
+                            <p>Our Website and concomitant Services are explicitly constructed as elite enterprise toolsets built strictly for verified corporate operators. We do not intentionally orchestrate the extraction of data from entities under the age of eighteen (18). If we obtain validated confirmation that we have inadvertently collected Personal Information from a minor, we will execute immediate terminal deletion via our engineering protocols.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">14. Material Modifications to This Policy</h3>
+                            <p>We perpetually reserve the unilateral right to amend, augment, or synthetically rewrite this Master Privacy Policy dynamically as global regulatory algorithms shift. Material systemic modifications addressing the handling of Personal Information will be boldly communicated via mandatory administrative dashboard alerts at least 30 days prior to global enforcement mapping.</p>
+                         </section>
+
+                         <section className="space-y-4">
+                            <h3 className="text-white font-bold text-lg border-l-2 border-primary pl-3">15. Contact Data Compliance Officer</h3>
+                            <p>To exercise any regulatory rights (Data Portability, Right to Erasure, DPO queries), or to demand formal clarification regarding the esoteric intricacies of our processing pipelines, please contact our Data Compliance team at via electronic routing to legal@basalthq.com.</p>
+                         </section>
                         </div>
                     </div>
                 </main>
