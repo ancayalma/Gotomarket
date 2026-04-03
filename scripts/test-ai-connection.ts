@@ -1,6 +1,6 @@
 
 import { prismadb } from "../lib/prisma";
-import { getAiSdkModel } from "../lib/openai";
+import { getAiSdkModel } from "../lib/varuni";
 import { generateText } from "ai";
 
 async function main() {
