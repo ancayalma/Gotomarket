@@ -74,14 +74,14 @@ export function InboxEmptyState({ type }: InboxEmptyStateProps) {
         <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center select-none">
             <div className={`relative mb-6`}>
                 <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${state.gradient} blur-2xl scale-150 opacity-60`} />
-                <div className="relative h-20 w-20 rounded-2xl bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center shadow-xl">
-                    <Icon className="h-9 w-9 text-zinc-400" strokeWidth={1.5} />
+                <div className="relative h-20 w-20 rounded-2xl bg-muted/80 border border-border/50 flex items-center justify-center shadow-xl">
+                    <Icon className="h-9 w-9 text-muted-foreground" strokeWidth={1.5} />
                 </div>
             </div>
-            <p className="text-[15px] font-semibold text-zinc-300 tracking-tight">
+            <p className="text-[15px] font-semibold text-foreground tracking-tight">
                 {state.title}
             </p>
-            <p className="text-[13px] text-zinc-500 mt-1.5 max-w-[240px] leading-relaxed">
+            <p className="text-[13px] text-muted-foreground mt-1.5 max-w-[240px] leading-relaxed">
                 {state.subtitle}
             </p>
         </div>

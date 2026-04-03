@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
     DndContext,
     closestCenter,
@@ -80,6 +81,7 @@ export function NavigationEditor({
     teamRole
 }: Props) {
     // Helper to merge new defaults into stored config and ensure no duplicates
+    const router = useRouter();
     const mergeDefaultItems = (current: NavItem[], defaults: NavItem[]): NavItem[] => {
         try {
             const merged = JSON.parse(JSON.stringify(current));
@@ -151,16 +153,30 @@ export function NavigationEditor({
         return process(items);
     };
 
+    // Valid font size options for title and item selects
+    const TITLE_SIZE_OPTIONS = ["8px", "10px", "12px"];
+    const ITEM_SIZE_OPTIONS = ["11px", "12px", "14px"];
+
+    // Normalize stored font size to a valid option — handles legacy values gracefully
+    const normalizeTitleSize = (val?: string) => {
+        if (val && TITLE_SIZE_OPTIONS.includes(val)) return val;
+        return "10px"; // Default: Medium
+    };
+    const normalizeItemSize = (val?: string) => {
+        if (val && ITEM_SIZE_OPTIONS.includes(val)) return val;
+        return "12px"; // Default: Medium
+    };
+
     const [structure, setStructure] = useState<NavItem[]>(() =>
         deduplicateStructure(mergeDefaultItems(initialStructure || DEFAULT_NAV_STRUCTURE, DEFAULT_NAV_STRUCTURE))
     );
     const [titleFont, setTitleFont] = useState(initialTitleFont || "Montserrat");
-    const [titleFontSize, setTitleFontSize] = useState(initialTitleFontSize || "10px");
+    const [titleFontSize, setTitleFontSize] = useState(normalizeTitleSize(initialTitleFontSize));
     const [titleFontWeight, setTitleFontWeight] = useState(initialTitleFontWeight || "900");
     const [titleFontStyle, setTitleFontStyle] = useState(initialTitleFontStyle || "normal");
 
     const [itemFont, setItemFont] = useState(initialItemFont || "Inter");
-    const [itemFontSize, setItemFontSize] = useState(initialItemFontSize || "18px");
+    const [itemFontSize, setItemFontSize] = useState(normalizeItemSize(initialItemFontSize));
     const [itemFontWeight, setItemFontWeight] = useState(initialItemFontWeight || "900");
     const [itemFontStyle, setItemFontStyle] = useState(initialItemFontStyle || "normal");
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -324,6 +340,8 @@ export function NavigationEditor({
                     );
                 }
                 toast.success(`Navigation saved for ${scope.toLowerCase()}`);
+                // Refresh the page to reload server-side props so the editor reflects persisted values
+                router.refresh();
             } catch (error: any) {
                 toast.error(error.message || "Failed to save");
             }
@@ -344,11 +362,12 @@ export function NavigationEditor({
                 setTitleFontWeight("900");
                 setTitleFontStyle("normal");
                 setItemFont("Inter");
-                setItemFontSize("18px");
+                setItemFontSize("12px");
                 setItemFontWeight("900");
                 setItemFontStyle("normal");
                 toast.success(`${scope} navigation reset`);
                 setIsResetConfirmOpen(false);
+                router.refresh();
             } catch (error: any) {
                 toast.error("Failed to reset");
             }

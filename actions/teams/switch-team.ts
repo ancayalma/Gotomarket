@@ -66,6 +66,7 @@ export async function switchTeam(teamId: string | null) {
                 await logActivityInternal(currentUser.userId, "UPDATE", "System", `Context switched to team ${team.name} (${teamId})`);
             }
 
+            revalidatePath("/", "layout");
             return { success: true, message: `Switched to ${team.name}` };
         } else {
             // Clear impersonation
@@ -75,6 +76,7 @@ export async function switchTeam(teamId: string | null) {
                 await logActivityInternal(currentUser.userId, "UPDATE", "System", `Exited context switch`);
             }
 
+            revalidatePath("/", "layout");
             return { success: true, message: "Returned to home team" };
         }
     } catch (error) {
@@ -133,5 +135,19 @@ export async function getAvailableContexts() {
         };
     } catch {
         return { success: false, options: [], currentTeamId: null, isImpersonating: false };
+    }
+}
+
+/**
+ * Clears the impersonated_team_id cookie. 
+ * Must be called during logout to prevent stale impersonation persisting across sessions.
+ */
+export async function clearImpersonation() {
+    try {
+        const cookieStore = await cookies();
+        cookieStore.delete("impersonated_team_id");
+        return { success: true };
+    } catch {
+        return { success: false };
     }
 }

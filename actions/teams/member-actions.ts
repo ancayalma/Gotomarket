@@ -17,7 +17,11 @@ export const updateMemberRole = async (userId: string, role: string) => {
         if (!targetUser) return { error: "User not found" };
 
         const isPlatformAdmin = currentUser.isGlobalAdmin || currentUser.teamRole === "PLATFORM_ADMIN";
-        if (!isPlatformAdmin && (currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
+        
+        const targetTeam = targetUser.team_id ? await prismadb.team.findUnique({ where: { id: targetUser.team_id } }) : null;
+        const isChildDepartment = targetTeam?.team_type === "DEPARTMENT" && targetTeam.parent_id === currentUser.teamId;
+
+        if (!isPlatformAdmin && (currentUser.teamId !== targetUser.team_id && !isChildDepartment || !currentUser.isAdmin)) {
             return { error: "Unauthorized: You do not have permission to modify this user." };
         }
 
@@ -49,7 +53,11 @@ export const removeMember = async (userId: string) => {
         if (!targetUser) return { error: "User not found" };
 
         const isPlatformAdmin = currentUser.isGlobalAdmin || currentUser.teamRole === "PLATFORM_ADMIN";
-        if (!isPlatformAdmin && (currentUser.teamId !== targetUser.team_id || !currentUser.isAdmin)) {
+
+        const targetTeam = targetUser.team_id ? await prismadb.team.findUnique({ where: { id: targetUser.team_id } }) : null;
+        const isChildDepartment = targetTeam?.team_type === "DEPARTMENT" && targetTeam.parent_id === currentUser.teamId;
+
+        if (!isPlatformAdmin && (currentUser.teamId !== targetUser.team_id && !isChildDepartment || !currentUser.isAdmin)) {
             return { error: "Unauthorized: You do not have permission to modify this user." };
         }
 

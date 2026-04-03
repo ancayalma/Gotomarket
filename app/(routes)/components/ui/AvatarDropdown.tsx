@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "next-auth/react";
 import { clearUserCache } from "@/lib/cache-utils";
+import { clearImpersonation } from "@/actions/teams/switch-team";
 
 import { LogOut, Settings, CreditCard } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -85,6 +86,7 @@ const AvatarDropdown = ({ avatar, userId, name, email }: Props) => {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={async () => {
             clearUserCache();
+            await clearImpersonation();
             await signOut({ redirect: false });
             window.location.href = `/sign-in?loggedOut=true`;
           }}>

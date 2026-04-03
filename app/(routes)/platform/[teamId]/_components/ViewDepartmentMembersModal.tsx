@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Shield, UserMinus, Layers } from "lucide-react";
+import { Mail, Shield, UserMinus, Layers, Pencil, Eye, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { removeFromDepartment } from "@/actions/departments/assign-to-department";
 import { updateMemberRole } from "@/actions/teams/member-actions";
@@ -31,13 +31,13 @@ const BASE_ROLES: RoleOption[] = [
         value: "MEMBER",
         label: "Member",
         description: "Can access standard features and modules.",
-        icon: Mail,
+        icon: User,
     },
     {
         value: "VIEWER",
         label: "Viewer",
         description: "Read-only access.",
-        icon: Mail,
+        icon: Eye,
     }
 ];
 
@@ -146,9 +146,18 @@ export function ViewDepartmentMembersModal({
                                                         <span className="font-medium text-sm truncate">
                                                             {member.name || "Unknown"}
                                                         </span>
-                                                        {member.team_role === "ADMIN" && (
-                                                            <Badge variant="secondary" className="text-[10px] h-4">
-                                                                Admin
+                                                        {member.team_role && (
+                                                            <Badge 
+                                                                variant="secondary" 
+                                                                className={`text-[10px] h-4 ${
+                                                                    member.team_role === "ADMIN" || member.team_role === "SUPER_ADMIN"
+                                                                        ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                                                                        : member.team_role === "VIEWER"
+                                                                            ? "bg-zinc-500/15 text-zinc-400 border-zinc-500/30"
+                                                                            : ""
+                                                                }`}
+                                                            >
+                                                                {member.team_role === "SUPER_ADMIN" ? "Super Admin" : member.team_role.charAt(0) + member.team_role.slice(1).toLowerCase()}
                                                             </Badge>
                                                         )}
                                                     </div>
@@ -163,12 +172,13 @@ export function ViewDepartmentMembersModal({
                                                 <div className="flex items-center gap-1 shrink-0">
                                                     <Button
                                                         variant="ghost"
-                                                        size="icon"
-                                                        className="shrink-0 text-muted-foreground hover:text-primary"
+                                                        size="sm"
+                                                        className="shrink-0 text-muted-foreground hover:text-primary gap-1.5 h-8 px-2.5"
                                                         onClick={() => { setSelectedMember(member); setRoleModalOpen(true); }}
                                                         title="Change Role"
                                                     >
-                                                        <Shield className="w-4 h-4" />
+                                                        <Pencil className="w-3.5 h-3.5" />
+                                                        <span className="text-xs font-medium">Edit Role</span>
                                                     </Button>
                                                     <Button
                                                         variant="ghost"

@@ -911,8 +911,21 @@ export default function BrandClient({ initialData, teamId, allBrands = [], isMul
       </Tabs>
 
       {/* AI Scrape Dialog — Multi-step Review */}
-      <Dialog open={aiDialogOpen} onOpenChange={(open) => { if (!open) { resetAiDialog(); } setAiDialogOpen(open); }}>
-        <DialogContent className={aiStep === "review" ? "sm:max-w-3xl max-h-[85vh] overflow-y-auto" : "sm:max-w-lg"}>
+      <Dialog open={aiDialogOpen} onOpenChange={() => {}}>
+        <DialogContent
+          className={aiStep === "review" ? "w-[95vw] max-w-5xl max-h-[90vh] overflow-y-auto [&>button]:hidden" : "sm:max-w-lg [&>button]:hidden"}
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          {/* Custom X close button since we disabled default onOpenChange */}
+          <button
+            onClick={() => { resetAiDialog(); setAiDialogOpen(false); }}
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </button>
           {aiStep === "input" ? (
             <>
               <DialogHeader>
@@ -935,7 +948,7 @@ export default function BrandClient({ initialData, teamId, allBrands = [], isMul
                 />
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setAiDialogOpen(false)} disabled={aiLoading}>
+                <Button variant="outline" onClick={() => { resetAiDialog(); setAiDialogOpen(false); }} disabled={aiLoading}>
                   Cancel
                 </Button>
                 <Button
@@ -1070,7 +1083,7 @@ export default function BrandClient({ initialData, teamId, allBrands = [], isMul
                 <Button variant="outline" onClick={() => { resetAiDialog(); }} className="sm:mr-auto">
                   Start Over
                 </Button>
-                <Button variant="outline" onClick={() => setAiDialogOpen(false)}>
+                <Button variant="outline" onClick={() => { resetAiDialog(); setAiDialogOpen(false); }}>
                   Cancel
                 </Button>
                 <Button

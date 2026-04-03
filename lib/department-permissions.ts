@@ -194,7 +194,7 @@ export function getAssignableRoles(actor: UserContext): TeamRole[] {
 export function canManageDepartment(user: UserContext, departmentId: string): boolean {
     if (user.is_admin) return true; // Platform Admin supersedes
     if (user.team_role === 'SUPER_ADMIN') return true;
-    if (user.team_role === 'ADMIN' && user.department_id === departmentId) return true;
+    if (user.team_role === 'ADMIN' && (!user.department_id || user.department_id === departmentId)) return true;
     return false;
 }
 
@@ -222,7 +222,7 @@ export function canDeleteDepartment(user: UserContext): boolean {
 export function canAssignToDepartment(user: UserContext, departmentId: string): boolean {
     if (user.is_admin) return true; // Platform Admin supersedes
     if (user.team_role === 'SUPER_ADMIN') return true;
-    if (user.team_role === 'ADMIN' && user.department_id === departmentId) return true;
+    if (user.team_role === 'ADMIN' && (!user.department_id || user.department_id === departmentId)) return true;
     return false;
 }
 

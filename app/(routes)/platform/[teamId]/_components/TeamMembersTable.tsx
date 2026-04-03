@@ -413,7 +413,7 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                     currentRole={selectedMember.team_role || "MEMBER"}
                     onConfirm={handleRoleUpdate}
                     allowedRoles={
-                        ["ledger1", "basalthq", "basalt"].includes(teamSlug) && isGlobalAdmin
+                        ["ledger1", "basalthq", "basalt"].includes(teamSlug)
                             ? [PLATFORM_ADMIN_ROLE, ...BASE_ROLES]
                             : BASE_ROLES
                     }
@@ -480,17 +480,49 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <Badge variant={member.team_role === "PLATFORM_ADMIN" ? "destructive" : member.team_role === "OWNER" ? "default" : member.team_role === "ADMIN" ? "secondary" : "outline"}>
-                                        {member.team_role || "MEMBER"}
-                                    </Badge>
                                     {(() => {
+                                        const isExplicitPlatformAdmin = member.team_role === "PLATFORM_ADMIN" || (member as any).is_admin;
+                                        const showPlatformAdminBadge = isExplicitPlatformAdmin && ["ledger1", "basalthq", "basalt"].includes(teamSlug);
+                                        
                                         const deptName = departmentMap[(member as any).department_id] || departmentMap[(member as any).team_id];
-                                        return deptName ? (
-                                            <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-400 border-blue-500/30">
-                                                <Building2 className="w-3 h-3 mr-1" />
-                                                {deptName}
-                                            </Badge>
-                                        ) : null;
+                                        const isCompanyLevel = (member as any).team_id === teamId;
+                                        const isDeptAdmin = deptName && !isCompanyLevel && (member.team_role === "ADMIN" || member.team_role === "OWNER");
+                                        
+                                        // We show the standalone role if they are NOT a dept admin, and NOT an explicit platform admin.
+                                        // (Because if they are an explicit platform admin, the red badge covers it).
+                                        // Except if they have no role, we still might want to show "MEMBER".
+                                        const baseRole = member.team_role || "MEMBER";
+                                        const showStandaloneRole = !isDeptAdmin && (!isExplicitPlatformAdmin || !showPlatformAdminBadge);
+
+                                        return (
+                                            <>
+                                                {showPlatformAdminBadge && (
+                                                    <Badge variant="destructive">
+                                                        PLATFORM_ADMIN
+                                                    </Badge>
+                                                )}
+                                                
+                                                {showStandaloneRole && (
+                                                    <Badge variant={baseRole === "OWNER" ? "default" : baseRole === "ADMIN" ? "secondary" : "outline"}>
+                                                        {baseRole}
+                                                    </Badge>
+                                                )}
+
+                                                {deptName && (
+                                                    isDeptAdmin ? (
+                                                        <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/30">
+                                                            <Building2 className="w-3 h-3 mr-1" />
+                                                            {deptName} - Admin
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-400 border-blue-500/30">
+                                                            <Building2 className="w-3 h-3 mr-1" />
+                                                            {deptName}
+                                                        </Badge>
+                                                    )
+                                                )}
+                                            </>
+                                        );
                                     })()}
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>

@@ -25,6 +25,10 @@ import {
     Bell,
     X,
     Pencil,
+    Mail,
+    Phone,
+    MessageSquare,
+    Lock,
 } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
@@ -98,6 +102,7 @@ interface Message {
     _thread?: Message[];
     direction?: string;
     senderName?: string;
+    parent_id?: string;
 }
 
 interface FormSubmission {
@@ -177,7 +182,7 @@ export function InternalMessagesComponent({
     }, [searchParams]);
     const [composeOpen, setComposeOpen] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState("");
-    const [activeNav, setActiveNav] = React.useState<"inbox" | "sent" | "drafts" | "archive" | "trash" | "submissions" | "notifications">("inbox");
+    const [activeNav, setActiveNav] = React.useState<"inbox" | "dms" | "emails" | "sms" | "internal" | "sent" | "drafts" | "archive" | "trash" | "submissions" | "notifications">("inbox");
     
     // Clear batch selection on nav change
     React.useEffect(() => {
@@ -196,6 +201,7 @@ export function InternalMessagesComponent({
     const [composeToUserId, setComposeToUserId] = React.useState("");
     const [composeSubject, setComposeSubject] = React.useState("");
     const [composeBody, setComposeBody] = React.useState("");
+    const [composeParentId, setComposeParentId] = React.useState<string | null>(null);
     const [isSending, setIsSending] = React.useState(false);
     const [draftId, setDraftId] = React.useState<string | null>(null);
 
@@ -203,7 +209,7 @@ export function InternalMessagesComponent({
     const [apiReplyOpen, setApiReplyOpen] = React.useState(false);
     const [apiReplyBody, setApiReplyBody] = React.useState("");
     const [apiReplySending, setApiReplySending] = React.useState(false);
-    const [apiReplyChannel, setApiReplyChannel] = React.useState<"EMAIL" | "NOTE">("NOTE");
+    const [apiReplyChannel, setApiReplyChannel] = React.useState<"EMAIL" | "NOTE" | "INTERNAL">("NOTE");
 
     // Filter messages based on active nav and search
     const getStatus = React.useCallback((m: Message) => {
@@ -223,20 +229,60 @@ export function InternalMessagesComponent({
 
         switch (activeNav) {
             case "inbox":
+            case "dms":
+            case "emails":
+            case "sms":
+            case "internal":
                 filtered = messages.filter(m => {
-                    // API messages (threads) always show in inbox, never in sent
-                    if (m._apiMeta) return true;
-                    const { isMeSender, isTrash, isArchived, myRecipient } = getStatus(m);
-                    // Inbox contains messages where I am recipient, not trashed, not archived
-                    return !!myRecipient && !isTrash && !isArchived;
+                    const isInbox = (() => {
+                        if (m._apiMeta) return true;
+                        
+                        const checkMsg = (msg: Message) => {
+                            const { isTrash, isArchived, myRecipient } = getStatus(msg);
+                            return !!myRecipient && !isTrash && !isArchived;
+                        };
+
+                        if (checkMsg(m)) return true;
+                        if (m._thread && m._thread.some(checkMsg)) return true;
+
+                        return false;
+                    })();
+
+                    if (!isInbox) return false;
+                    if (activeNav === "inbox") return true;
+
+                    const isInternal = !m._apiMeta;
+                    const channel = isInternal ? "INTERNAL" : (m._apiMeta?.channel?.toUpperCase() === "NOTE" ? "DM" : m._apiMeta?.channel?.toUpperCase());
+
+                    if (activeNav === "dms") return channel === "DM";
+                    if (activeNav === "emails") return channel === "EMAIL";
+                    if (activeNav === "sms") return channel === "SMS";
+                    if (activeNav === "internal") return channel === "INTERNAL";
+                    return false;
                 });
                 break;
             case "sent":
                 filtered = messages.filter(m => {
-                    // Exclude API messages from sent — they show as threads in inbox
                     if (m._apiMeta) return false;
-                    const { isMeSender, isTrash, isDraft } = getStatus(m);
-                    return isMeSender && !isTrash && !isDraft;
+                    
+                    const isSent = (() => {
+                        // A thread belongs in Sent ONLY if the entire thread was sent by me
+                        // OR if I sent the latest message and it's not marked as inbound to me.
+                        // Actually, if we want it to ONLY show up in sent if the whole thread is outbound:
+                        // But standard email usually shows a thread in Sent if *any* message was sent by me.
+                        // However, if we just check if I am the sender of ANY message in the thread:
+                        const checkMsg = (msg: Message) => {
+                            const { isMeSender, isTrash, isArchived, isDraft } = getStatus(msg);
+                            return isMeSender && !isTrash && !isArchived && !isDraft;
+                        };
+                        
+                        if (checkMsg(m)) return true;
+                        if (m._thread && m._thread.some(checkMsg)) return true;
+                        
+                        return false;
+                    })();
+                    
+                    return isSent;
                 });
                 break;
             case "drafts":
@@ -286,8 +332,23 @@ export function InternalMessagesComponent({
 
     const inboxCount = messages.filter(m => {
         const { isTrash, isArchived, myRecipient } = getStatus(m);
-        return !!myRecipient && !isTrash && !isArchived && !myRecipient.is_read;
+        return (!!myRecipient && !isTrash && !isArchived && !myRecipient.is_read) || (m._apiMeta && !m.is_read);
     }).length;
+
+    const getChannelUnreadCount = (channelName: string) => messages.filter(m => {
+        const { isTrash, isArchived, myRecipient } = getStatus(m);
+        const isInbox = (!!myRecipient && !isTrash && !isArchived && !myRecipient.is_read) || (m._apiMeta && !m.is_read);
+        if (!isInbox) return false;
+        
+        const isInternal = !m._apiMeta;
+        const channel = isInternal ? "INTERNAL" : (m._apiMeta?.channel?.toUpperCase() === "NOTE" ? "DMS" : m._apiMeta?.channel?.toUpperCase());
+        return channel === channelName;
+    }).length;
+
+    const dmsCount = getChannelUnreadCount("DMS");
+    const emailsCount = getChannelUnreadCount("EMAIL");
+    const smsCount = getChannelUnreadCount("SMS");
+    const internalCount = getChannelUnreadCount("INTERNAL");
 
     const archiveCount = messages.filter(m => {
         const { isArchived, isTrash } = getStatus(m);
@@ -750,7 +811,8 @@ export function InternalMessagesComponent({
                         recipient_ids: [composeToUserId],
                         subject: composeSubject,
                         body_text: composeBody,
-                        status: "SENT"
+                        status: "SENT",
+                        parent_id: composeParentId
                     }),
                 });
                 if (!res.ok) throw new Error("Failed to send message");
@@ -876,6 +938,10 @@ export function InternalMessagesComponent({
 
     const navItems = [
         { id: "inbox" as const, title: "Inbox", icon: Inbox, count: inboxCount },
+        { id: "dms" as const, title: "DMs", icon: MessageSquare, count: dmsCount },
+        { id: "emails" as const, title: "Emails", icon: Mail, count: emailsCount },
+        { id: "sms" as const, title: "SMS", icon: Phone, count: smsCount },
+        { id: "internal" as const, title: "Internal", icon: Lock, count: internalCount },
         { id: "submissions" as const, title: "Form Submissions", icon: FormInput, count: submissionsCount },
         { id: "notifications" as const, title: "Notifications", icon: Bell, count: notificationsCount },
         { id: "sent" as const, title: "Sent", icon: Send, count: sentCount },
@@ -935,6 +1001,7 @@ export function InternalMessagesComponent({
                     setComposeToUserId(selectedMessage.from_user_id === currentUserId ? selectedMessage.to_user_id : selectedMessage.from_user_id);
                     setComposeSubject(`Re: ${selectedMessage.subject || ""}`.trim());
                     setComposeBody(`\n\n--- Original Message ---\n${selectedMessage.body}`);
+                    setComposeParentId(selectedMessage.parent_id || selectedMessage.id);
                     setComposeOpen(true);
                 }}
                 onConvertMessage={handleConvertMessage}
@@ -956,6 +1023,7 @@ export function InternalMessagesComponent({
                     setComposeToUserId("");
                     setComposeSubject("");
                     setComposeBody("");
+                    setComposeParentId(null);
                     setComposeOpen(true);
                 }}
                 apiReplyOpen={apiReplyOpen}

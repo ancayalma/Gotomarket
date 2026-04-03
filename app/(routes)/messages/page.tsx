@@ -57,11 +57,11 @@ const MessagesRoute = async () => {
             include: {
                 recipients: true,
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: "asc" }, // Ascending so oldest comes first for threads
             take: 100,
         });
 
-        messages = (rawMessages as any[]).map((m: any) => {
+        const rawMappedMessages = (rawMessages as any[]).map((m: any) => {
             let toUserId = "";
             // Determine primary "to_user" for UI display
             if (m.sender_id === session.user.id) {
@@ -88,13 +88,42 @@ const MessagesRoute = async () => {
                 from_user: fromUser,
                 to_user: toUser,
                 recipients: m.recipients,
-                status: m.status
+                status: m.status,
+                parent_id: m.parent_id,
+                channel: "INTERNAL",
             };
         });
 
+        // Group internal messages into threads
+        const internalThreadMap = new Map<string, any[]>();
+        rawMappedMessages.forEach(m => {
+            const rootId = m.parent_id || m.id;
+            if (!internalThreadMap.has(rootId)) {
+                internalThreadMap.set(rootId, []);
+            }
+            internalThreadMap.get(rootId)!.push(m);
+        });
+
+        messages = Array.from(internalThreadMap.values()).map(threadMsgs => {
+            if (threadMsgs.length === 1) return threadMsgs[0];
+            
+            // The thread is already chronologically ordered because of createdAt asc query.
+            // But let's guarantee it.
+            threadMsgs.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            
+            // Latest is the representative entry for the list
+            const latest = { ...threadMsgs[threadMsgs.length - 1] };
+            latest._thread = threadMsgs;
+            return latest;
+        });
+
+        // Finally sort the consolidated thread list descending (latest on top)
+        messages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
         const rawEmails = await prismadb.crm_Emails.findMany({
             where: {
-                user_id: session.user.id
+                user_id: session.user.id,
+                ...(teamId ? { team_id: teamId } : {})
             },
             orderBy: { date: "desc" },
             take: 100,
@@ -124,7 +153,8 @@ const MessagesRoute = async () => {
                 from_user: fromUser,
                 to_user: toUser,
                 recipients: isMeSender ? [] : [{ recipient_id: session.user.id, is_read: email.is_read }],
-                status: "SENT"
+                status: "SENT",
+                channel: "EMAIL"
             };
         });
 
@@ -270,12 +300,7 @@ const MessagesRoute = async () => {
         let emailThreads: any[] = [];
         try {
             const rawThreads = await prismadb.crm_Email_Thread.findMany({
-                where: {
-                    OR: [
-                        { team_id: teamId || undefined },
-                        { user: session.user.id },
-                    ]
-                },
+                where: teamId ? { team_id: teamId } : { user: session.user.id },
                 orderBy: { createdAt: "desc" },
                 take: 100,
             });
@@ -369,6 +394,7 @@ const MessagesRoute = async () => {
                     to_user: { id: session.user.id, name: session.user.name || session.user.email, email: session.user.email },
                     to_user_id: session.user.id,
                     body: latest.body || "(No message body)",
+                    channel: "EMAIL",
                     _thread: threadMsgs,
                 });
             });

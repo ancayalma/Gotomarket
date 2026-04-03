@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Building2, Rocket } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { signOut } from "next-auth/react";
+import { clearImpersonation } from "@/actions/teams/switch-team";
 
 export default function SetupOrganizationPage() {
     const [companyName, setCompanyName] = useState("");
@@ -96,7 +97,7 @@ export default function SetupOrganizationPage() {
                     <Button 
                         variant="ghost" 
                         className="text-xs text-muted-foreground hover:text-white"
-                        onClick={() => signOut({ callbackUrl: "/sign-in" })}
+                        onClick={async () => { await clearImpersonation(); signOut({ callbackUrl: "/sign-in" }); }}
                         disabled={isLoading}
                     >
                         Sign out and use a different account

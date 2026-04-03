@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        let { recipient_ids, subject, body_text, body_html, priority, labels, status, send_email, recipient_email, trackClicks, trackOpens } = body;
+        let { recipient_ids, subject, body_text, body_html, priority, labels, status, send_email, recipient_email, trackClicks, trackOpens, parent_id } = body;
 
         // Normalize recipient_ids
         if (!recipient_ids) recipient_ids = [];
@@ -109,6 +109,7 @@ export async function POST(req: NextRequest) {
                     labels: labels || [],
                     team_id: teamId,
                     sentAt: new Date(),
+                    parent_id: parent_id || undefined,
                     recipients: {
                         create: validUserIds.map((recipientId: string) => ({
                             recipient_id: recipientId,

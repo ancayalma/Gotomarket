@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Archive, Star, Trash2, Mail, MessageSquare, Phone } from "lucide-react";
+import { Archive, Star, Trash2, Mail, MessageSquare, Phone, FormInput, Lock } from "lucide-react";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 
 // Deterministic color from initials
@@ -41,6 +41,8 @@ const CHANNEL_ICON: Record<string, React.ElementType> = {
     EMAIL: Mail,
     SMS: Phone,
     NOTE: MessageSquare,
+    DM: MessageSquare,
+    FORM: FormInput,
 };
 
 interface InboxMessageRowProps {
@@ -128,11 +130,11 @@ export function InboxMessageRow({
     return (
         <div className="relative w-full max-w-full min-w-0">
             {/* Swipe actions background (hidden on desktop to prevent visual double-hover bug) */}
-            <div className="absolute inset-0 md:hidden flex items-center justify-end gap-4 px-4 bg-zinc-950 pointer-events-none">
+            <div className="absolute inset-0 md:hidden flex items-center justify-end gap-4 px-4 bg-background pointer-events-none">
                 <div className="flex items-center gap-2 text-emerald-500">
                     <Archive className="h-4 w-4" />
                 </div>
-                <div className="flex items-center gap-2 text-red-500">
+                <div className="flex items-center gap-2 text-destructive">
                     <Trash2 className="h-4 w-4" />
                 </div>
             </div>
@@ -156,7 +158,7 @@ export function InboxMessageRow({
                     }
                 }}
                 className={cn(
-                    "bg-zinc-950 group w-full grid grid-cols-[auto_minmax(0,1fr)_54px] items-center gap-3 pl-4 pr-6 py-3.5 text-left transition-all duration-150 border-l-2 relative overflow-hidden",
+                    "bg-background group w-full grid grid-cols-[auto_minmax(0,1fr)_54px] items-center gap-3 pl-4 pr-6 py-3.5 text-left transition-all duration-150 border-l-2 relative overflow-hidden",
                     isSelected ? "border-l-primary z-10" : "border-l-transparent hover:z-10"
                 )}
             >
@@ -164,25 +166,25 @@ export function InboxMessageRow({
                 <div className={cn(
                     "absolute inset-0 pointer-events-none transition-colors duration-150",
                     isSelectedForBatch 
-                        ? "bg-indigo-500/10 border-l border-indigo-500" 
+                        ? "bg-primary/10 border-l border-primary" 
                         : isSelected 
-                            ? "bg-white/[0.04]" 
-                            : "group-hover:bg-white/[0.025]",
-                    !isRead && !isSelected && !isSelectedForBatch && "bg-white/[0.02]"
+                            ? "bg-muted/50" 
+                            : "group-hover:bg-muted/30",
+                    !isRead && !isSelected && !isSelectedForBatch && "bg-muted/10"
                 )} />
 
                 {/* Col 1: Avatar & Checkbox Container */}
                 <div className="relative flex-shrink-0 flex items-center justify-center w-9 h-9">
                     {!isRead && (
                         <div className="absolute -left-3 top-1/2 -translate-y-1/2">
-                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                            <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                         </div>
                     )}
                     
                     <div className="relative w-full h-full">
                         <Avatar 
                             className={cn(
-                                "h-9 w-9 ring-1 ring-zinc-700/50 absolute inset-0 transition-opacity duration-200",
+                                "h-9 w-9 ring-1 ring-border absolute inset-0 transition-opacity duration-200",
                                 (batchModeActive || isSelectedForBatch) 
                                     ? "opacity-0" 
                                     : "opacity-100 group-hover:opacity-0"
@@ -206,7 +208,7 @@ export function InboxMessageRow({
                             <Checkbox 
                                 checked={isSelectedForBatch}
                                 onCheckedChange={onToggleBatchSelection}
-                                className="data-[state=checked]:bg-indigo-500 data-[state=checked]:text-white border-zinc-500/50"
+                                className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground border-border"
                                 onClick={(e) => { e.stopPropagation(); }}
                             />
                         </div>
@@ -214,54 +216,79 @@ export function InboxMessageRow({
                 </div>
 
                 {/* Col 2: Center Content (Strict Text Ellipsis via Grid Minmax Constraints) */}
-                <div className="flex flex-col min-w-0 overflow-hidden space-y-0.5 pr-2">
+                <div className="flex flex-col min-w-0 overflow-hidden space-y-0.5 pr-2 z-10">
                     <div className="flex items-center gap-1.5 min-w-0 w-full overflow-hidden">
                         <span className={cn(
                             "text-[13px] overflow-hidden text-ellipsis whitespace-nowrap min-w-0 flex-1",
-                            !isRead ? "font-semibold text-zinc-100" : "font-medium text-zinc-300"
+                            !isRead ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
                         )}>
                             {displayName}
                         </span>
                         {isImportant && (
                             <Star className="h-3 w-3 fill-amber-400 text-amber-400 flex-shrink-0" />
                         )}
-                        {ChannelIcon && (
-                            <ChannelIcon className="h-3 w-3 text-zinc-500 flex-shrink-0" />
-                        )}
+                        
                         {threadCount && threadCount > 1 && (
-                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-zinc-700 text-zinc-400 font-mono flex-shrink-0">
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-border text-muted-foreground font-mono flex-shrink-0">
                                 {threadCount}
+                            </Badge>
+                        )}
+
+                        {/* Special Tags for API vs Email */}
+                        {hasApiMeta && channel && (
+                            <Badge variant="outline" className={cn(
+                                "px-0 py-0 h-4 text-[9px] uppercase border capitalize shadow-none font-bold w-[68px] grid grid-cols-[16px_1fr] items-center",
+                                channel.toUpperCase() === "EMAIL" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : 
+                                channel.toUpperCase() === "FORM" ? "bg-violet-500/10 text-violet-500 border-violet-500/20" :
+                                "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                            )}>
+                                <div className="flex justify-center items-center h-full pl-[2px]">
+                                    {ChannelIcon && <ChannelIcon className="h-[9px] w-[9px]" />}
+                                </div>
+                                <div className="flex justify-center items-center h-full pr-[4px] tracking-tight">
+                                    {channel.toUpperCase() === "NOTE" ? "DM" : channel}
+                                </div>
+                            </Badge>
+                        )}
+                        {!hasApiMeta && (
+                            <Badge variant="outline" className="px-0 py-0 h-4 text-[9px] uppercase shadow-none font-bold w-[68px] grid grid-cols-[16px_1fr] items-center bg-primary/10 text-primary border-primary/20">
+                                <div className="flex justify-center items-center h-full pl-[2px]">
+                                    <Lock className="h-[9px] w-[9px]" />
+                                </div>
+                                <div className="flex justify-center items-center h-full pr-[4px] tracking-tighter">
+                                    INTERNAL
+                                </div>
                             </Badge>
                         )}
                     </div>
                     <p className={cn(
                         "text-[12.5px] overflow-hidden text-ellipsis whitespace-nowrap w-full",
-                        !isRead ? "text-zinc-200 font-medium" : "text-zinc-400"
+                        !isRead ? "text-foreground/90 font-medium" : "text-muted-foreground"
                     )}>
                         {subject || "(No Subject)"}
                     </p>
-                    <p className="text-[11.5px] text-zinc-500 overflow-hidden text-ellipsis whitespace-nowrap w-full leading-relaxed">
+                    <p className="text-[11.5px] text-muted-foreground/70 overflow-hidden text-ellipsis whitespace-nowrap w-full leading-relaxed">
                         {(body || "").replace(/<[^>]*>/g, "").slice(0, 100)}
                     </p>
                 </div>
 
                 {/* Col 3: Right Action Column (Time / Hover Actions) */}
-                <div className="flex flex-col items-end justify-center min-w-0 w-full relative h-[38px]">
+                <div className="flex flex-col items-end justify-center min-w-0 w-full relative h-[38px] z-10">
                     {/* Time (visible when NOT hovered) */}
                     <span className={cn(
                         "text-[10.5px] tabular-nums transition-opacity duration-150 absolute top-1 right-0",
-                        !isRead ? "text-indigo-400 font-medium" : "text-zinc-500",
+                        !isRead ? "text-primary font-medium" : "text-muted-foreground",
                         "group-hover:opacity-0"
                     )}>
                         {smartTimestamp(createdAt)}
                     </span>
 
                     {/* Hover quick actions (visible when hovered) */}
-                    <div className="hidden group-hover:flex items-center gap-0.5 absolute top-0 right-0 z-20 bg-zinc-950/95 backdrop-blur-[2px] rounded-md shadow-md border border-zinc-700/60 p-0.5">
+                    <div className="hidden group-hover:flex items-center gap-0.5 absolute top-0 right-0 z-20 bg-background/95 backdrop-blur-[2px] rounded-md shadow-md border border-border p-0.5">
                         {onArchive && (
                             <button
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onArchive(); }}
-                                className="p-1.5 rounded-md text-zinc-400 hover:text-emerald-400 hover:bg-zinc-800 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-md text-muted-foreground hover:text-emerald-400 hover:bg-muted transition-colors cursor-pointer"
                                 title="Archive"
                             >
                                 <Archive className="h-3.5 w-3.5" />
@@ -270,7 +297,7 @@ export function InboxMessageRow({
                         {onDelete && (
                             <button
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(); }}
-                                className="p-1.5 rounded-md text-zinc-400 hover:text-red-400 hover:bg-zinc-800 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors cursor-pointer"
                                 title="Delete"
                             >
                                 <Trash2 className="h-3.5 w-3.5" />
