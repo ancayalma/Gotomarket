@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismadb } from "@/lib/prisma";
 
 // Plans that support multiple brands
-const MULTI_BRAND_PLANS = ["ENTERPRISE", "EXEMPT"];
+const MULTI_BRAND_PLANS = ["ENTERPRISE", "EXEMPT", "SCALE"];
 
 export async function GET(req: Request) {
     try {
