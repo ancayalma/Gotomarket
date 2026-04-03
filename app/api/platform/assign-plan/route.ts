@@ -34,18 +34,35 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "teamId and planSlug required" }, { status: 400 });
     }
 
-    // Try to find the matching Plan record if it exists in the database
-    const dbPlan = await prismadb.plan.findUnique({ 
-        where: { slug: planSlug.toLowerCase() } 
+    // Block assignment to department-type teams — departments inherit from parent org
+    const targetTeam = await prismadb.team.findUnique({
+        where: { id: teamId },
+        select: { team_type: true },
+    });
+
+    if ((targetTeam as any)?.team_type === "DEPARTMENT") {
+        return NextResponse.json(
+            { error: "Departments inherit their parent organization's plan. Assign the plan to the parent company instead." },
+            { status: 400 }
+        );
+    }
+
+    // Case-insensitive slug lookup (DB slugs are uppercase like "GROWTH")
+    const dbPlan = await prismadb.plan.findFirst({
+        where: { slug: { equals: planSlug, mode: "insensitive" } }
     }).catch(() => null);
 
-    // Update the team's subscription plan and assigned_plan_id relation
+    // Always sync both fields
+    const updatePayload: any = {
+        subscription_plan: dbPlan?.slug || planSlug.toUpperCase(),
+    };
+    if (dbPlan?.id) {
+        updatePayload.plan_id = dbPlan.id;
+    }
+
     await prismadb.team.update({
         where: { id: teamId },
-        data: { 
-            subscription_plan: planSlug,
-            ...(dbPlan?.id ? { assigned_plan_id: dbPlan.id } : {})
-        },
+        data: updatePayload,
     });
 
     // Reset AI Credits & Tokens to match the new plan's limits

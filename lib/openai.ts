@@ -202,31 +202,57 @@ export async function getAiSdkModel(
 
     // 2. Load Hierarchy of Configs
     // Priority: Team Service Override > Team Default > System Service Override > System Default
+    // ⚠️ PLAN GATING: Only SCALE, ENTERPRISE, and EXEMPT plans can use team-level AI configs.
+    //    STARTER and GROWTH plans are forced to use the platform system config.
 
     let finalProvider: string | null = null;
     let finalModelId: string | null = null;
     let configSource: "team" | "system" = "system";
 
-    // A. Check Team Config
+    // A. Check Team Config (only if plan tier allows custom AI config)
     let teamConfig = null;
+    const PLANS_WITH_CUSTOM_AI = ["SCALE", "ENTERPRISE", "EXEMPT"];
+
     if (teamId) {
-        teamConfig = await prismadb.teamAiConfig.findUnique({
-            where: { team_id: teamId },
+        // Resolve the team's subscription plan to determine if they can use custom AI config
+        const teamRecord = await prismadb.team.findUnique({
+            where: { id: teamId },
+            select: { subscription_plan: true, team_type: true, parent_id: true }
         });
 
-        if (teamConfig) {
-            // Check for service override in team configuration (JSON)
-            const teamOverrides = (teamConfig.configuration as any)?.services || {};
-            if (teamOverrides[service] && teamOverrides[service].modelId) {
-                finalProvider = teamOverrides[service].provider;
-                finalModelId = teamOverrides[service].modelId;
-                configSource = "team";
-            } else if (teamConfig.provider && teamConfig.modelId) {
-                // Use team default if no service override
-                finalProvider = teamConfig.provider;
-                finalModelId = teamConfig.modelId;
-                configSource = "team";
+        // For departments, check parent's plan
+        let effectivePlan = (teamRecord as any)?.subscription_plan || "STARTER";
+        if ((teamRecord as any)?.team_type === "DEPARTMENT" && (teamRecord as any)?.parent_id) {
+            const parentTeam = await prismadb.team.findUnique({
+                where: { id: (teamRecord as any).parent_id },
+                select: { subscription_plan: true }
+            });
+            effectivePlan = (parentTeam as any)?.subscription_plan || effectivePlan;
+        }
+
+        const canUseCustomAi = PLANS_WITH_CUSTOM_AI.includes(effectivePlan);
+
+        if (canUseCustomAi) {
+            teamConfig = await prismadb.teamAiConfig.findUnique({
+                where: { team_id: teamId },
+            });
+
+            if (teamConfig) {
+                // Check for service override in team configuration (JSON)
+                const teamOverrides = (teamConfig.configuration as any)?.services || {};
+                if (teamOverrides[service] && teamOverrides[service].modelId) {
+                    finalProvider = teamOverrides[service].provider;
+                    finalModelId = teamOverrides[service].modelId;
+                    configSource = "team";
+                } else if (teamConfig.provider && teamConfig.modelId) {
+                    // Use team default if no service override
+                    finalProvider = teamConfig.provider;
+                    finalModelId = teamConfig.modelId;
+                    configSource = "team";
+                }
             }
+        } else {
+            console.debug(`${DEBUG_PREFIX} Team ${teamId} is on ${effectivePlan} plan — using platform system AI config (custom AI requires Scale+)`);
         }
     }
 

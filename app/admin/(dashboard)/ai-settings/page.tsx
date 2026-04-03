@@ -14,10 +14,9 @@ export default async function AdminAiSettingsPage() {
         redirect("/");
     }
 
-    // Get current user's team
     const user = await prismadb.users.findUnique({
         where: { email: session.user.email || "" },
-        include: { assigned_team: true },
+        include: { assigned_team: { include: { assigned_plan: true } } },
     });
 
     const teamId = user?.assigned_team?.id;
@@ -30,6 +29,32 @@ export default async function AdminAiSettingsPage() {
             >
                 <div className="flex items-center justify-center h-64 text-muted-foreground">
                     Please contact support to be assigned to a team.
+                </div>
+            </Container>
+        );
+    }
+
+    // Plan gating: Only Scale, Enterprise, and Exempt plans can configure team AI
+    const PLANS_WITH_CUSTOM_AI = ["SCALE", "ENTERPRISE", "EXEMPT"];
+    const planSlug = (user?.assigned_team as any)?.assigned_plan?.slug
+        || (user?.assigned_team as any)?.subscription_plan
+        || "STARTER";
+
+    if (!PLANS_WITH_CUSTOM_AI.includes(planSlug)) {
+        return (
+            <Container
+                title="AI Settings"
+                description="Custom AI configuration is available on Scale and Enterprise plans"
+            >
+                <div className="flex flex-col items-center justify-center h-64 gap-4 text-center">
+                    <div className="text-4xl">🔒</div>
+                    <div>
+                        <h3 className="text-lg font-semibold text-foreground">Upgrade to Unlock</h3>
+                        <p className="text-sm text-muted-foreground max-w-md mt-1">
+                            Custom AI model configuration is available on the <strong>Scale</strong> and <strong>Enterprise</strong> plans.
+                            Your team is currently on the <strong>{planSlug}</strong> plan and uses the platform&apos;s default AI configuration.
+                        </p>
+                    </div>
                 </div>
             </Container>
         );
