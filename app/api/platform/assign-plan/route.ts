@@ -60,10 +60,15 @@ export async function POST(req: Request) {
         updatePayload.plan_id = dbPlan.id;
     }
 
-    await prismadb.team.update({
-        where: { id: teamId },
-        data: updatePayload,
-    });
+    try {
+        await prismadb.team.update({
+            where: { id: teamId },
+            data: updatePayload,
+        });
+    } catch (e) {
+        console.error("Prisma update failed:", e);
+        return NextResponse.json({ error: "Database error assigning plan" }, { status: 500 });
+    }
 
     // Reset AI Credits & Tokens to match the new plan's limits
     try {
