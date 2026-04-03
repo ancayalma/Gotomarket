@@ -448,9 +448,16 @@ export default function LeadGenJobDetailPage({
         <div className="space-y-5">
           {/* Title */}
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-zinc-100">
-              Neural Prospecting
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-zinc-100">
+                Neural Prospecting
+              </h1>
+              {data?.job?.counters?.aiModel && (
+                <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium font-mono uppercase tracking-wider">
+                  {String(data.job.counters.aiModel)}
+                </span>
+              )}
+            </div>
             <p className="text-sm text-zinc-500 mt-1">
               {isActive
                 ? `Agent active · ${formatDuration(data?.job?.startedAt)} elapsed`
@@ -643,6 +650,9 @@ export default function LeadGenJobDetailPage({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <DetailCard title="Job">
             <DetailRow label="ID" value={data.job.id.slice(0, 12) + "…"} mono />
+            {data.job.counters?.aiModel && (
+              <DetailRow label="Model" value={String(data.job.counters.aiModel)} accent />
+            )}
             <DetailRow label="Started" value={data.job.startedAt ? new Date(data.job.startedAt).toLocaleString() : "—"} />
             <DetailRow label="Finished" value={data.job.finishedAt ? new Date(data.job.finishedAt).toLocaleString() : "—"} />
             <DetailRow label="Duration" value={formatDuration(data.job.startedAt, data.job.finishedAt || undefined)} />
@@ -650,7 +660,7 @@ export default function LeadGenJobDetailPage({
 
           <DetailCard title="Counters">
             {Object.entries(data.job.counters || {})
-              .filter(([k]) => k !== 'tokenHistory')
+              .filter(([k]) => k !== 'tokenHistory' && k !== 'aiModel')
               .map(([k, v]) => (
               <DetailRow key={k} label={k.replace(/([A-Z])/g, " $1").trim()} value={String(v)} mono />
             ))}

@@ -5,19 +5,20 @@ import { prismadb } from "@/lib/prisma";
 import Container from "@/app/(routes)/components/ui/Container";
 import { AiConfigManager } from "@/components/ai/AiConfigManager";
 import { getTeamLeadGenCredits } from "@/lib/scraper/credits";
+import { resolveBillingTeamId } from "@/lib/team-billing";
 import { LearnLink } from "@/components/ui/LearnLink";
 
 export default async function AdminAiSettingsPage() {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.isAdmin) {
-        redirect("/");
-    }
-
     const user = await prismadb.users.findUnique({
-        where: { email: session.user.email || "" },
+        where: { email: session?.user?.email || "" },
         include: { assigned_team: { include: { assigned_plan: true } } },
     });
+
+    if (!user?.is_admin && !user?.is_account_admin) {
+        redirect("/");
+    }
 
     const teamId = user?.assigned_team?.id;
 
@@ -61,9 +62,12 @@ export default async function AdminAiSettingsPage() {
     }
 
     // Fetch AI data in parallel
+    const billingTeamId = await resolveBillingTeamId(teamId);
+    console.log("DEBUG AI TOKENS fetch for billingTeamId:", billingTeamId);
+    
     const [teamConfig, systemConfigs, activeModels, teamModelRequests] = await Promise.all([
         prismadb.teamAiConfig.findUnique({
-            where: { team_id: teamId },
+            where: { team_id: billingTeamId },
         }),
         prismadb.systemAiConfig.findMany(),
         prismadb.aiModel.findMany({
@@ -122,6 +126,8 @@ export default async function AdminAiSettingsPage() {
                 modelRequests={teamModelRequests as any}
                 providerOptions={providerOptions}
                 leadgenCredits={leadgenCredits}
+                aiTokensBalance={teamConfig && 'ai_token_balance' in teamConfig && teamConfig.ai_token_balance !== null ? Number(teamConfig.ai_token_balance) : 0}
+                systemConfigs={systemConfigs as any[]}
             />
         </Container>
     );

@@ -2221,6 +2221,7 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
         promptTokens: accumulatedPromptTokens,
         completionTokens: accumulatedCompletionTokens,
         tokenHistory,
+        aiModel: modelId,
         progress: Math.min(100, Math.round((contactsSaved / maxCredits) * 100))
       }
     };
