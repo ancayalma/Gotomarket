@@ -58,6 +58,20 @@ export const updateTeam = async (teamId: string, data: { name?: string; slug?: s
             data: updateData,
         });
 
+        // ── Plan changed → top up credits to the new plan's allowances ──
+        if (data.plan_id || data.subscription_plan) {
+            try {
+                const { resetLeadGenCredits } = await import("@/lib/scraper/credits");
+                const { resetAiTokenBalance } = await import("@/lib/ai-tokens");
+                await resetLeadGenCredits(teamId);
+                await resetAiTokenBalance(teamId);
+                systemLogger.info("[UPDATE_TEAM] Credits topped up after plan change", { teamId, newPlan: updateData.subscription_plan });
+            } catch (err) {
+                systemLogger.error("[UPDATE_TEAM] Failed to reset credits after plan change:", err);
+                // Non-fatal — the plan was still updated successfully
+            }
+        }
+
         revalidatePath(`/partners/${teamId}`);
         revalidatePath("/partners");
         return { success: true, team };
