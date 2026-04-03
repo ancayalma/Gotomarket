@@ -27,6 +27,7 @@ import { useLocale } from "next-intl";
 
 import { signOut } from "next-auth/react";
 import { clearUserCache } from "@/lib/cache-utils";
+import { clearImpersonation } from "@/actions/teams/switch-team";
 
 export function CommandComponent() {
   const [open, setOpen] = React.useState(false);
@@ -51,7 +52,7 @@ export function CommandComponent() {
       }
       if (e.key === "l" && e.metaKey) {
         clearUserCache();
-        signOut({ callbackUrl: `https://crm.basalthq.com/sign-in?loggedOut=true` });
+        clearImpersonation().then(() => signOut({ callbackUrl: `https://crm.basalthq.com/sign-in?loggedOut=true` }));
       }
     };
 
@@ -97,7 +98,7 @@ export function CommandComponent() {
               <span>Profile settings</span>
               <CommandShortcut>Shift + ⌘ + P</CommandShortcut>
             </CommandItem>
-            <CommandItem onClick={() => { clearUserCache(); signOut({ callbackUrl: `https://crm.basalthq.com/sign-in?loggedOut=true` }); }}>
+            <CommandItem onClick={async () => { clearUserCache(); await clearImpersonation(); signOut({ callbackUrl: `https://crm.basalthq.com/sign-in?loggedOut=true` }); }}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Logout</span>
               <CommandShortcut>⌘L</CommandShortcut>

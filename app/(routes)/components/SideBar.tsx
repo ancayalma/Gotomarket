@@ -200,7 +200,7 @@ const SideBar = async () => {
       --nav-title-weight: ${config?.titleFontWeight || '900'};
       --nav-title-style: ${config?.titleFontStyle || 'normal'};
       --nav-item-font: ${config?.itemFont ? `'${config?.itemFont}', sans-serif` : 'inherit'};
-      --nav-item-size: ${ensurePx(config?.itemFontSize, '18px')};
+      --nav-item-size: ${ensurePx(config?.itemFontSize, '12px')};
       --nav-item-weight: ${config?.itemFontWeight || '900'};
       --nav-item-style: ${config?.itemFontStyle || 'normal'};
     }

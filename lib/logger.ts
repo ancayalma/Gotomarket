@@ -3,7 +3,11 @@ import pino from 'pino';
 // SOC2 CC7.2: Structured secure environment logging
 const isDev = process.env.NODE_ENV !== "production";
 
-export const logger = pino({
+// Singleton pattern: prevent pino-pretty transport worker duplication on Next.js hot-reloads
+// Without this, each reload creates a new worker piping to stdout, leaking EventEmitter listeners
+const globalForLogger = globalThis as unknown as { __pino_logger?: pino.Logger };
+
+export const logger: pino.Logger = globalForLogger.__pino_logger ?? pino({
     level: process.env.LOG_LEVEL || "info",
     transport: isDev ? {
         target: 'pino-pretty',
@@ -14,6 +18,8 @@ export const logger = pino({
         }
     } : undefined,
 });
+
+if (isDev) globalForLogger.__pino_logger = logger;
 
 export const systemLogger = {
     error: (context: string, error?: any) => {

@@ -30,7 +30,7 @@ import { InboxSubmissionDetail } from "./InboxSubmissionDetail";
 import { InboxNotificationDetail } from "./InboxNotificationDetail";
 import { InboxEmptyState } from "./InboxEmptyState";
 
-type NavId = "inbox" | "sent" | "drafts" | "archive" | "trash" | "submissions" | "notifications";
+type NavId = "inbox" | "dms" | "emails" | "sms" | "internal" | "sent" | "drafts" | "archive" | "trash" | "submissions" | "notifications";
 
 interface Message {
     id: string;
@@ -149,10 +149,10 @@ export interface InboxShellProps {
     apiReplyOpen: boolean;
     apiReplyBody: string;
     apiReplySending: boolean;
-    apiReplyChannel: "EMAIL" | "NOTE";
+    apiReplyChannel: "EMAIL" | "NOTE" | "INTERNAL";
     onApiReplyOpenChange: (open: boolean) => void;
     onApiReplyBodyChange: (body: string) => void;
-    onApiReplyChannelChange: (channel: "EMAIL" | "NOTE") => void;
+    onApiReplyChannelChange: (channel: "EMAIL" | "NOTE" | "INTERNAL") => void;
     onApiReplySend: () => void;
 
     // Sidebar collapsed
@@ -342,11 +342,11 @@ export function InboxShell(props: InboxShellProps) {
 
         return (
             <TooltipProvider delayDuration={0}>
-                <div className="flex flex-col h-[calc(100dvh-120px)] bg-zinc-950 relative overflow-hidden">
+                <div className="flex flex-col h-[calc(100dvh-120px)] bg-background relative overflow-hidden">
                     {hasSelection && mobileView === "detail" ? (
                         /* ─── Detail View ─── */
                         <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-200">
-                            <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-800/60 bg-zinc-900/80 backdrop-blur-xl">
+                            <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60 bg-background/80 backdrop-blur-xl">
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -354,7 +354,7 @@ export function InboxShell(props: InboxShellProps) {
                                         props.onClearSelection();
                                         setMobileView("list");
                                     }}
-                                    className="gap-1 text-zinc-400 hover:text-zinc-200 text-[12px] h-7 -ml-1"
+                                    className="gap-1 text-muted-foreground hover:text-foreground text-[12px] h-7 -ml-1"
                                 >
                                     <ArrowLeft className="h-3.5 w-3.5" />
                                     Back
@@ -410,7 +410,7 @@ export function InboxShell(props: InboxShellProps) {
                         /* ─── List View ─── */
                         <div className="flex flex-col h-full">
                         {/* Mobile folder pills */}
-                        <div className="flex items-center gap-1.5 px-3 py-2 border-b border-zinc-800/40 overflow-x-auto no-scrollbar">
+                        <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/40 overflow-x-auto no-scrollbar">
                             {mobileFolderPills.map((pill) => {
                                 const Icon = pill.icon;
                                 const isActive = props.activeNav === pill.id;
@@ -421,8 +421,8 @@ export function InboxShell(props: InboxShellProps) {
                                         className={cn(
                                             "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap transition-all duration-150 flex-shrink-0",
                                             isActive
-                                                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                                                : "bg-zinc-800/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300"
+                                                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                                                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                                         )}
                                     >
                                         <Icon className="h-3 w-3" />
@@ -430,7 +430,7 @@ export function InboxShell(props: InboxShellProps) {
                                         {pill.count > 0 && (
                                             <span className={cn(
                                                 "text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1",
-                                                isActive ? "bg-white/20 text-white" : "bg-zinc-700 text-zinc-300"
+                                                isActive ? "bg-white/20 text-white" : "bg-muted-foreground/20 text-muted-foreground"
                                             )}>
                                                 {pill.count}
                                             </span>
@@ -480,7 +480,7 @@ export function InboxShell(props: InboxShellProps) {
                         <div className="absolute bottom-6 right-5 z-20">
                             <Button
                                 onClick={props.onCompose}
-                                className="h-14 w-14 rounded-2xl bg-indigo-600 hover:bg-indigo-500 shadow-2xl shadow-indigo-500/30 text-white transition-all duration-200 hover:scale-105 active:scale-95"
+                                className="h-14 w-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 text-primary-foreground transition-all duration-200 hover:scale-105 active:scale-95"
                                 size="icon"
                             >
                                 <PenBox className="h-5 w-5" />
@@ -501,7 +501,7 @@ export function InboxShell(props: InboxShellProps) {
                 onLayout={(sizes: number[]) => {
                     document.cookie = `react-resizable-panels:layout=${JSON.stringify(sizes)}`;
                 }}
-                className="h-full w-full items-stretch bg-zinc-950 overflow-hidden"
+                className="h-full w-full items-stretch bg-background overflow-hidden"
             >
                 {/* Left Sidebar */}
                 <ResizablePanel
@@ -531,7 +531,7 @@ export function InboxShell(props: InboxShellProps) {
                     />
                 </ResizablePanel>
 
-                <ResizableHandle withHandle className="bg-zinc-800/40 hover:bg-indigo-500/30 transition-colors data-[resize-handle-active]:bg-indigo-500/50" />
+                <ResizableHandle withHandle className="bg-border/40 hover:bg-primary/30 transition-colors data-[resize-handle-active]:bg-primary/50" />
 
                 {/* Middle — Message List */}
                 <ResizablePanel ref={messageListPanelRef} defaultSize={props.defaultLayout[1]} minSize={22}>
@@ -569,7 +569,7 @@ export function InboxShell(props: InboxShellProps) {
                     />
                 </ResizablePanel>
 
-                <ResizableHandle withHandle className="bg-zinc-800/40 hover:bg-indigo-500/30 transition-colors data-[resize-handle-active]:bg-indigo-500/50" />
+                <ResizableHandle withHandle className="bg-border/40 hover:bg-primary/30 transition-colors data-[resize-handle-active]:bg-primary/50" />
 
                 {/* Right — Detail Pane */}
                 <ResizablePanel defaultSize={props.defaultLayout[2]}>

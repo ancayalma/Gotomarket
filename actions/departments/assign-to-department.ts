@@ -45,9 +45,49 @@ export async function assignToDepartment(data: AssignToDepartmentInput): Promise
 
         const actorContext = buildUserContext(actor as any);
 
-        // If removing from department (null), require at least SUPER_ADMIN or platform admin
+        // Ultimate Override: If the active actor is the literal owner of their current team/company, 
+        // grant them untethered SUPER_ADMIN rights regardless of their explicit DB team_role.
+        if (actor.team_id) {
+            // Check if they own the team or the parent org
+            const currentTeam = await prismadb.team.findUnique({ where: { id: actor.team_id }});
+            
+            let isTrueOwner = currentTeam?.owner_id === session.user.id;
+            
+            if (!isTrueOwner && currentTeam?.parent_id) {
+                const parentTeam = await prismadb.team.findUnique({ where: { id: currentTeam.parent_id }});
+                isTrueOwner = parentTeam?.owner_id === session.user.id;
+            }
+
+            if (isTrueOwner) {
+                actorContext.team_role = 'SUPER_ADMIN';
+                actorContext.department_id = null; 
+            }
+        }
+
+        // Verify target user exists first so we can check their current department
+        // Platform admins can manage users across any team
+        const isPlatformLevel = actorContext.is_admin || actorContext.team_role === 'PLATFORM_ADMIN';
+        const targetUser = await prismadb.users.findFirst({
+            where: {
+                id: data.userId,
+                ...(isPlatformLevel ? {} : { team_id: actor.team_id }),
+            },
+        });
+
+        if (!targetUser) {
+            return { success: false, error: "User not found in your organization" };
+        }
+
+        // If removing from department (null), require at least SUPER_ADMIN, platform admin, or department ADMIN
         if (data.departmentId === null) {
-            const canRemove = actorContext.is_admin || actorContext.team_role === 'SUPER_ADMIN' || actorContext.team_role === 'PLATFORM_ADMIN';
+            let canRemove = actorContext.is_admin || actorContext.team_role === 'SUPER_ADMIN' || actorContext.team_role === 'PLATFORM_ADMIN';
+            
+            if (!canRemove && actorContext.team_role === 'ADMIN') {
+                if (!actorContext.department_id || targetUser.department_id === actorContext.department_id) {
+                    canRemove = true;
+                }
+            }
+
             if (!canRemove) {
                 return { success: false, error: "You don't have permission to remove users from departments" };
             }
@@ -61,20 +101,6 @@ export async function assignToDepartment(data: AssignToDepartmentInput): Promise
         // If a role is being set, verify the actor can assign this role
         if (data.role && !canManageRole(actorContext, data.role)) {
             return { success: false, error: `You cannot assign the ${data.role} role` };
-        }
-
-        // Verify target user exists
-        // Platform admins can manage users across any team
-        const isPlatformLevel = actorContext.is_admin || actorContext.team_role === 'PLATFORM_ADMIN';
-        const targetUser = await prismadb.users.findFirst({
-            where: {
-                id: data.userId,
-                ...(isPlatformLevel ? {} : { team_id: actor.team_id }),
-            },
-        });
-
-        if (!targetUser) {
-            return { success: false, error: "User not found in your organization" };
         }
 
         // Determine the team context for department validation

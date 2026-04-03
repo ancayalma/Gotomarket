@@ -5,6 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
+import { clearImpersonation } from "@/actions/teams/switch-team";
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 Minutes
 const WARNING_BEFORE_MS = 60 * 1000; // 1 Minute warning before logout
@@ -18,6 +19,7 @@ export default function IdleSessionTimeout() {
     const warningTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleLogout = useCallback(async () => {
+        await clearImpersonation();
         await signOut({ redirect: false });
         window.location.href = `/sign-in?idle=true`;
     }, []);

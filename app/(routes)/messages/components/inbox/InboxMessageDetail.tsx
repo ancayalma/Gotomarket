@@ -89,10 +89,10 @@ interface InboxMessageDetailProps {
     apiReplyOpen: boolean;
     apiReplyBody: string;
     apiReplySending: boolean;
-    apiReplyChannel: "EMAIL" | "NOTE";
+    apiReplyChannel: "EMAIL" | "NOTE" | "INTERNAL";
     onApiReplyOpenChange: (open: boolean) => void;
     onApiReplyBodyChange: (body: string) => void;
-    onApiReplyChannelChange: (channel: "EMAIL" | "NOTE") => void;
+    onApiReplyChannelChange: (channel: "EMAIL" | "NOTE" | "INTERNAL") => void;
     onApiReplySend: () => void;
 }
 
@@ -157,22 +157,22 @@ export function InboxMessageDetail({
     const showConvertBar = isApiMessage && msg._apiMeta?.channel === "EMAIL" && !msg._apiMeta?.contactId && !msg._apiMeta?.leadId;
 
     return (
-        <div className="flex flex-col h-full min-w-0 overflow-hidden">
+        <div className="flex flex-col h-full min-w-0 overflow-hidden bg-background">
             {/* Sticky Header */}
-            <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-zinc-800/60 bg-zinc-900/80 backdrop-blur-xl sticky top-0 z-10">
+            <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-border/60 bg-muted/20 backdrop-blur-xl sticky top-0 z-10">
                 <div className="flex-1 min-w-0 max-w-full">
-                    <h3 className="text-[14px] font-semibold text-zinc-100 truncate">
+                    <h3 className="text-[14px] font-semibold text-foreground truncate">
                         {msg.subject || "(No Subject)"}
                     </h3>
                 </div>
 
                 <div className="flex items-center flex-wrap gap-2 flex-shrink-0">
                     {showConvertBar && (
-                        <div className="flex items-center gap-1.5 border-r border-zinc-700/50 pr-2">
-                            <Button size="sm" variant="outline" onClick={() => onConvertMessage("contact")} disabled={isConvertingEmail} className="h-7 text-[11px] gap-1 border-zinc-700 text-zinc-300 hover:text-white">
+                        <div className="flex items-center gap-1.5 border-r border-border pr-2">
+                            <Button size="sm" variant="outline" onClick={() => onConvertMessage("contact")} disabled={isConvertingEmail} className="h-7 text-[11px] gap-1 border-border text-muted-foreground hover:text-foreground">
                                 <Users2 className="w-3 h-3" /> Contact
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => onConvertMessage("lead")} disabled={isConvertingEmail} className="h-7 text-[11px] gap-1 border-zinc-700 text-zinc-300 hover:text-white">
+                            <Button size="sm" variant="outline" onClick={() => onConvertMessage("lead")} disabled={isConvertingEmail} className="h-7 text-[11px] gap-1 border-border text-muted-foreground hover:text-foreground">
                                 <UserPlus className="w-3 h-3" /> Lead
                             </Button>
                         </div>
@@ -182,7 +182,7 @@ export function InboxMessageDetail({
                     <div className="flex flex-wrap items-center gap-0.5 flex-shrink-0">
                         {isTrash ? (
                             <>
-                                <Button variant="outline" size="sm" onClick={() => onRestore(msg.id)} className="gap-1.5 h-7 text-[11px] border-zinc-700 text-zinc-300 hover:text-white">
+                                <Button variant="outline" size="sm" onClick={() => onRestore(msg.id)} className="gap-1.5 h-7 text-[11px] border-border text-muted-foreground hover:text-foreground">
                                     <Undo2 className="h-3.5 w-3.5" /> Restore
                                 </Button>
                                 <Button variant="destructive" size="sm" onClick={() => onPermanentDelete(msg.id)} className="gap-1.5 h-7 text-[11px]">
@@ -193,39 +193,39 @@ export function InboxMessageDetail({
                             <>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800" onClick={onReply}>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={onReply}>
                                             <Reply className="h-3.5 w-3.5" />
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent className="bg-zinc-800 border-zinc-700 text-zinc-200 text-xs">Reply (R)</TooltipContent>
+                                    <TooltipContent className="bg-muted border-border text-foreground text-xs">Reply (R)</TooltipContent>
                                 </Tooltip>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted">
                                             <Forward className="h-3.5 w-3.5" />
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent className="bg-zinc-800 border-zinc-700 text-zinc-200 text-xs">Forward</TooltipContent>
+                                    <TooltipContent className="bg-muted border-border text-foreground text-xs">Forward</TooltipContent>
                                 </Tooltip>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800" onClick={() => onArchive(msg.id)}>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => onArchive(msg.id)}>
                                             <Archive className="h-3.5 w-3.5" />
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent className="bg-zinc-800 border-zinc-700 text-zinc-200 text-xs">Archive (E)</TooltipContent>
+                                    <TooltipContent className="bg-muted border-border text-foreground text-xs">Archive (E)</TooltipContent>
                                 </Tooltip>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-red-400 hover:bg-red-500/10" onClick={() => onDelete(msg.id)}>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => onDelete(msg.id)}>
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent className="bg-zinc-800 border-zinc-700 text-zinc-200 text-xs">Delete (#)</TooltipContent>
+                                    <TooltipContent className="bg-muted border-border text-foreground text-xs">Delete (#)</TooltipContent>
                                 </Tooltip>
                             </>
                         )}
-                        <Button variant="ghost" size="icon" className="h-7 w-7 ml-1 text-zinc-500 hover:text-zinc-300" onClick={onClose}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 ml-1 text-muted-foreground hover:text-foreground" onClick={onClose}>
                             <X className="h-3.5 w-3.5" />
                         </Button>
                     </div>
@@ -233,9 +233,9 @@ export function InboxMessageDetail({
             </div>
 
             {/* Sender Info Bar */}
-            <div className="px-4 py-3 border-b border-zinc-800/40 bg-zinc-900/30">
+            <div className="px-4 py-3 border-b border-border/40 bg-muted/10">
                 <div className="flex items-start gap-3">
-                    <Avatar className="h-10 w-10 ring-1 ring-zinc-700/50">
+                    <Avatar className="h-10 w-10 ring-1 ring-border/50">
                         <AvatarFallback
                             className="text-[11px] font-bold"
                             style={{ backgroundColor: `${fromColor}15`, color: fromColor }}
@@ -245,16 +245,16 @@ export function InboxMessageDetail({
                     </Avatar>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                            <span className="text-[13px] font-semibold text-zinc-100">{fromName}</span>
+                            <span className="text-[13px] font-semibold text-foreground">{fromName}</span>
                             {msg.from_user_id === currentUserId && (
-                                <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-zinc-700 text-zinc-400">You</Badge>
+                                <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-border text-muted-foreground">You</Badge>
                             )}
                         </div>
-                        <div className="text-[11.5px] text-zinc-500">
+                        <div className="text-[11.5px] text-muted-foreground">
                             To: {msg.to_user?.name || msg.to_user?.email || "Unknown"}
                             {msg.to_user_id === currentUserId && " (You)"}
                         </div>
-                        <div className="text-[10.5px] text-zinc-600 mt-0.5">
+                        <div className="text-[10.5px] text-muted-foreground/70 mt-0.5">
                             {format(new Date(msg.createdAt), "PPpp")}
                         </div>
                     </div>
@@ -262,21 +262,21 @@ export function InboxMessageDetail({
             </div>
 
             {/* Message Body / Thread */}
-            <ScrollArea className="flex-1 min-w-0" ref={scrollRef}>
+            <ScrollArea className="flex-1 min-w-0 bg-background" ref={scrollRef}>
                 <div className="p-4 overflow-hidden">
                     {/* API message badges */}
                     {isApiMessage && (
                         <div className="flex items-center gap-2 mb-4">
-                            <Badge variant="outline" className="text-[10px] h-5 bg-indigo-500/10 text-indigo-400 border-indigo-500/25">
-                                {msg._apiMeta?.channel || "NOTE"}
+                            <Badge variant="outline" className="text-[10px] h-5 bg-primary/10 text-primary border-primary/25">
+                                {(msg._apiMeta?.channel || "NOTE").toUpperCase() === "NOTE" ? "DM" : msg._apiMeta?.channel?.toUpperCase() || "DM"}
                             </Badge>
                             {msg._apiMeta?.conversation_id && (
-                                <Badge variant="outline" className="text-[10px] h-5 bg-emerald-500/10 text-emerald-400 border-emerald-500/25 font-mono">
+                                <Badge variant="outline" className="text-[10px] h-5 bg-emerald-500/10 text-emerald-500 border-emerald-500/25 font-mono">
                                     Thread: {msg._apiMeta.conversation_id.slice(0, 8)}…
                                 </Badge>
                             )}
                             {msg._thread && msg._thread.length > 1 && (
-                                <Badge variant="outline" className="text-[10px] h-5 border-zinc-700 text-zinc-400">
+                                <Badge variant="outline" className="text-[10px] h-5 border-border text-muted-foreground">
                                     {msg._thread.length} messages
                                 </Badge>
                             )}
@@ -284,16 +284,16 @@ export function InboxMessageDetail({
                     )}
 
                     {/* Thread view */}
-                    {isApiMessage && msg._thread && msg._thread.length > 0 ? (
+                    {msg._thread && msg._thread.length > 0 ? (
                         <div className="space-y-3">
                             {msg._thread.map((threadMsg: any) => {
-                                const isOut = threadMsg.direction === "OUTBOUND" || threadMsg._apiMeta?.direction === "OUTBOUND";
+                                const isOut = threadMsg.direction === "OUTBOUND" || threadMsg._apiMeta?.direction === "OUTBOUND" || threadMsg.from_user_id === currentUserId;
                                 const senderName = threadMsg.senderName || threadMsg.from_user?.name || (isOut ? "You" : "Customer");
                                 const sColor = avatarHue(senderName);
                                 return (
                                     <div key={threadMsg.id} className={cn("flex", isOut ? "justify-end" : "justify-start")}>
                                         {!isOut && (
-                                            <Avatar className="h-7 w-7 mr-2 mt-1 flex-shrink-0 ring-1 ring-zinc-700/30">
+                                            <Avatar className="h-7 w-7 mr-2 mt-1 flex-shrink-0 ring-1 ring-border/30">
                                                 <AvatarFallback className="text-[9px] font-bold" style={{ backgroundColor: `${sColor}15`, color: sColor }}>
                                                     {getInitials(senderName)}
                                                 </AvatarFallback>
@@ -302,24 +302,35 @@ export function InboxMessageDetail({
                                         <div className={cn(
                                             "max-w-[75%] rounded-2xl px-4 py-2.5",
                                             isOut
-                                                ? "bg-indigo-600 text-white rounded-br-md"
-                                                : "bg-zinc-800/80 border border-zinc-700/40 rounded-bl-md"
+                                                ? "bg-primary text-primary-foreground rounded-br-md"
+                                                : "bg-muted/80 border border-border/40 rounded-bl-md"
                                         )}>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className={cn("text-[10.5px] font-semibold", isOut ? "text-indigo-200" : "text-zinc-400")}>
+                                                <span className={cn("text-[10.5px] font-semibold", isOut ? "text-primary-foreground/80" : "text-muted-foreground")}>
                                                     {senderName}
                                                 </span>
-                                                <span className={cn("text-[9.5px]", isOut ? "text-indigo-300/60" : "text-zinc-600")}>
+                                                <span className={cn("text-[9.5px]", isOut ? "text-primary-foreground/60" : "text-muted-foreground/60")}>
                                                     {format(new Date(threadMsg.createdAt), "MMM d, h:mm a")}
                                                 </span>
+                                                {threadMsg.channel && (
+                                                    <span className={cn(
+                                                        "text-[8.5px] px-1.5 py-0.5 rounded font-medium border uppercase ml-1",
+                                                        threadMsg.channel.toUpperCase() === "EMAIL" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                                                        threadMsg.channel.toUpperCase() === "FORM" ? "bg-violet-500/10 text-violet-500 border-violet-500/20" :
+                                                        threadMsg.channel.toUpperCase() === "INTERNAL" ? "bg-primary/10 text-primary border-primary/20" :
+                                                        "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                                    )}>
+                                                        {threadMsg.channel.toUpperCase() === "NOTE" ? "DM" : threadMsg.channel}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <div className={cn("text-[13px] whitespace-pre-wrap break-words break-all leading-relaxed", isOut ? "text-white/95" : "text-zinc-200")}>
+                                            <div className={cn("text-[13px] whitespace-pre-wrap break-words break-all leading-relaxed", isOut ? "text-primary-foreground/95" : "text-foreground")}>
                                                 {threadMsg.body}
                                             </div>
                                         </div>
                                         {isOut && (
-                                            <Avatar className="h-7 w-7 ml-2 mt-1 flex-shrink-0 ring-1 ring-zinc-700/30">
-                                                <AvatarFallback className="text-[9px] font-bold bg-indigo-500/15 text-indigo-400">
+                                            <Avatar className="h-7 w-7 ml-2 mt-1 flex-shrink-0 ring-1 ring-border/30">
+                                                <AvatarFallback className="text-[9px] font-bold bg-primary/15 text-primary">
                                                     {getInitials(senderName)}
                                                 </AvatarFallback>
                                             </Avatar>
@@ -331,7 +342,7 @@ export function InboxMessageDetail({
                     ) : (
                         /* Single message view */
                         <div className="prose prose-sm prose-invert w-full min-w-0 overflow-hidden">
-                            <div className="text-[13px] text-zinc-300 leading-relaxed break-words break-all whitespace-pre-wrap">
+                            <div className="text-[13px] text-foreground leading-relaxed break-words break-all whitespace-pre-wrap">
                                 {msg.body}
                             </div>
                         </div>
@@ -339,25 +350,26 @@ export function InboxMessageDetail({
 
                     {/* API Reply Form */}
                     {isApiMessage && apiReplyOpen && (
-                        <div className="mt-5 rounded-xl border border-zinc-700/50 bg-zinc-800/30 p-4">
+                        <div className="mt-5 rounded-xl border border-border/50 bg-muted/30 p-4">
                             <div className="flex items-center gap-2 mb-3">
-                                <Reply className="h-3.5 w-3.5 text-zinc-400" />
-                                <span className="text-[12px] font-semibold text-zinc-300">Reply to thread</span>
+                                <Reply className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-[12px] font-semibold text-foreground">Reply to thread</span>
                             </div>
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
-                                    <Label className="text-[11px] text-zinc-500 w-14">Channel</Label>
+                                    <Label className="text-[11px] text-muted-foreground w-14">Channel</Label>
                                     <Select value={apiReplyChannel} onValueChange={(v: any) => onApiReplyChannelChange(v)}>
-                                        <SelectTrigger className="h-7 w-28 text-[11px] bg-zinc-800/50 border-zinc-700/50 text-zinc-300">
+                                        <SelectTrigger className="h-7 w-28 text-[11px] bg-muted/50 border-border/50 text-foreground">
                                             <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-zinc-800 border-zinc-700">
+                                        <SelectContent className="bg-muted border-border text-foreground">
                                             <SelectItem value="EMAIL">Email</SelectItem>
-                                            <SelectItem value="NOTE">Note</SelectItem>
+                                            <SelectItem value="NOTE">DM</SelectItem>
+                                            <SelectItem value="INTERNAL">Internal</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     {apiReplyChannel === "EMAIL" && (
-                                        <span className="text-[10px] text-amber-400/80">Will send actual email</span>
+                                        <span className="text-[10px] text-amber-500/80 font-medium">Will send actual email</span>
                                     )}
                                 </div>
                                 <Textarea
@@ -365,14 +377,14 @@ export function InboxMessageDetail({
                                     rows={3}
                                     value={apiReplyBody}
                                     onChange={(e) => onApiReplyBodyChange(e.target.value)}
-                                    className="text-[12.5px] bg-zinc-800/40 border-zinc-700/40 text-zinc-200 placeholder:text-zinc-500 focus-visible:ring-indigo-500/30"
+                                    className="text-[12.5px] bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/30"
                                     autoFocus
                                 />
                                 <div className="flex justify-end gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => { onApiReplyOpenChange(false); onApiReplyBodyChange(""); }} className="h-7 text-[11px] border-zinc-700 text-zinc-400">
+                                    <Button variant="outline" size="sm" onClick={() => { onApiReplyOpenChange(false); onApiReplyBodyChange(""); }} className="h-7 text-[11px] border-border text-muted-foreground">
                                         Cancel
                                     </Button>
-                                    <Button size="sm" onClick={onApiReplySend} disabled={apiReplySending || !apiReplyBody.trim()} className="h-7 text-[11px] gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white">
+                                    <Button size="sm" onClick={onApiReplySend} disabled={apiReplySending || !apiReplyBody.trim()} className="h-7 text-[11px] gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground">
                                         <Send className="h-3 w-3" />
                                         {apiReplySending ? "Sending..." : "Send Reply"}
                                     </Button>
@@ -386,10 +398,10 @@ export function InboxMessageDetail({
                         <div className="mt-5">
                             <Button
                                 variant="outline"
-                                className="w-full gap-2 h-9 text-[12px] border-zinc-700/50 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 hover:border-zinc-600"
+                                className="w-full gap-2 h-9 text-[12px] border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted"
                                 onClick={() => {
                                     onApiReplyOpenChange(true);
-                                    onApiReplyChannelChange(msg._apiMeta?.channel === "EMAIL" ? "EMAIL" : "NOTE");
+                                    onApiReplyChannelChange(msg._apiMeta?.channel === "EMAIL" ? "EMAIL" : msg._apiMeta?.channel === "INTERNAL" ? "INTERNAL" : "NOTE");
                                 }}
                             >
                                 <Reply className="h-3.5 w-3.5" />

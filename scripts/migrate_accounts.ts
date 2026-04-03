@@ -5,7 +5,7 @@ async function run() {
     const TARGET_TEAM = '69ce9c26e8f6d7cd8945f89f';
 
     const cands = await prismadbCrm.crm_Lead_Candidates.findMany({ where: { pool: POOL_ID } });
-    const accIds = cands.map(c => c.accountsIDs).filter(Boolean) as string[];
+    const accIds = cands.map((c: { accountsIDs: any; }) => c.accountsIDs).filter(Boolean) as string[];
 
     console.log(`Found ${cands.length} candidates, and ${accIds.length} associated accounts to migrate.`);
 
