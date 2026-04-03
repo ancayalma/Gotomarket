@@ -235,7 +235,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     website: "basaltcrm.com",
     websiteDisplayText: "",
     profileImage: "",
-    companyLogoUrl: "https://app.basaltcrm.com/CRM-ERP-CMS.png",
+    companyLogoUrl: "/CRM-ERP-CMS.png",
     companyTagline: "",
     accentColor: DEFAULT_COLOR,
     template: "professional",
@@ -421,6 +421,23 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
     }));
   };
 
+  // Helper: convert raw S3 URL to /api/media/ proxy URL
+  const toMediaProxyUrl = (rawUrl: string): string => {
+    if (!rawUrl) return rawUrl;
+    if (rawUrl.includes("/api/media/")) return rawUrl; // Already proxied
+    if (rawUrl.includes("s3.") && rawUrl.includes("amazonaws.com") && rawUrl.includes("/uploads/")) {
+      try {
+        const urlObj = new URL(rawUrl);
+        const key = urlObj.pathname.startsWith('/') ? urlObj.pathname.slice(1) : urlObj.pathname;
+        const base = typeof window !== "undefined" ? window.location.origin : "";
+        return `${base}/api/media/${key}`;
+      } catch {
+        return rawUrl;
+      }
+    }
+    return rawUrl;
+  };
+
   // Handler: Image Upload
   const handleImageUpload = async (file: File, field: "profileImage" | "companyLogoUrl") => {
     // Client-side size check: 2MB max
@@ -442,9 +459,9 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
         const json = await res.json();
 
         if (res.ok && json?.document?.document_file_url) {
-          startUpdate(field, json.document.document_file_url);
+          startUpdate(field, toMediaProxyUrl(json.document.document_file_url));
           toast.success("Logo uploaded!");
-          return json.document.document_file_url;
+          return toMediaProxyUrl(json.document.document_file_url);
         } else {
           throw new Error(json?.error || "Upload failed");
         }
@@ -494,9 +511,9 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
         const json = await res.json();
 
         if (res.ok && json?.document?.document_file_url) {
-          startUpdate(field, json.document.document_file_url);
+          startUpdate(field, toMediaProxyUrl(json.document.document_file_url));
           toast.success("Image uploaded!");
-          return json.document.document_file_url; // Return URL for medallions
+          return toMediaProxyUrl(json.document.document_file_url); // Return proxied URL for medallions
         } else {
           throw new Error(json?.error || "Upload failed");
         }
@@ -750,7 +767,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
         if (fields.phone && !prev.phone) updated.phone = fields.phone;
         if (fields.website && prev.website === "basaltcrm.com") updated.website = fields.website;
         if (fields.profileImage && !prev.profileImage) updated.profileImage = fields.profileImage;
-        if (fields.companyLogoUrl && prev.companyLogoUrl === "https://app.basaltcrm.com/CRM-ERP-CMS.png") updated.companyLogoUrl = fields.companyLogoUrl;
+        if (fields.companyLogoUrl && prev.companyLogoUrl === "/CRM-ERP-CMS.png") updated.companyLogoUrl = fields.companyLogoUrl;
         if (fields.accentColor) updated.accentColor = fields.accentColor;
         if (fields.socialLinks) {
           updated.socialLinks = fields.socialLinks.map(parsedLink => {
@@ -794,7 +811,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
         try {
           const urlObj = new URL(url);
           const key = urlObj.pathname.startsWith('/') ? urlObj.pathname.slice(1) : urlObj.pathname;
-          const base = typeof window !== "undefined" ? window.location.origin : "https://app.basaltcrm.com";
+          const base = typeof window !== "undefined" ? window.location.origin : "";
           return `${base}/api/media/${key}`;
         } catch (e) {
           return url;
@@ -2040,7 +2057,7 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({ hasAccess = true, b
                             if (fields.phone && !prev.phone) updated.phone = fields.phone;
                             if (fields.website && prev.website === "basaltcrm.com") updated.website = fields.website;
                             if (fields.profileImage && !prev.profileImage) updated.profileImage = fields.profileImage;
-                            if (fields.companyLogoUrl && prev.companyLogoUrl === "https://app.basaltcrm.com/CRM-ERP-CMS.png") updated.companyLogoUrl = fields.companyLogoUrl;
+                            if (fields.companyLogoUrl && prev.companyLogoUrl === "/CRM-ERP-CMS.png") updated.companyLogoUrl = fields.companyLogoUrl;
                             if (fields.accentColor) updated.accentColor = fields.accentColor;
                             if (fields.socialLinks) {
                               updated.socialLinks = fields.socialLinks.map(parsedLink => {
