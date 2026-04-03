@@ -83,6 +83,7 @@ interface AiConfigManagerProps {
     providerOptions?: { slug: string; name: string }[];
     leadgenCredits?: number;
     aiTokensBalance?: number;
+    systemConfigs?: any[];
 }
 
 // ─── Provider metadata for beautiful cards ───
@@ -198,6 +199,7 @@ export const AiConfigManager = ({
     providerOptions = [],
     leadgenCredits = 0,
     aiTokensBalance = 0,
+    systemConfigs = [],
 }: AiConfigManagerProps) => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -233,24 +235,42 @@ export const AiConfigManager = ({
     type ServiceConfig = { provider: string, modelId: string | null };
     const [activeTab, setActiveTab] = useState<"general" | "chat" | "enrichment">("general");
 
-    const [configState, setConfigState] = useState<Record<"general" | "chat" | "enrichment", ServiceConfig>>({
-        general: {
-            provider: currentConfig?.provider || "OPENAI",
-            modelId: currentConfig?.modelId || null
-        },
-        chat: {
-            provider: (currentConfig?.configuration as any)?.services?.chat?.provider || currentConfig?.provider || "OPENAI",
-            modelId: (currentConfig?.configuration as any)?.services?.chat?.modelId || currentConfig?.modelId || null
-        },
-        enrichment: {
-            provider: (currentConfig?.configuration as any)?.services?.enrichment?.provider || currentConfig?.provider || "OPENAI",
-            modelId: (currentConfig?.configuration as any)?.services?.enrichment?.modelId || currentConfig?.modelId || null
-        }
+    const [configState, setConfigState] = useState<Record<"general" | "chat" | "enrichment", ServiceConfig>>(() => {
+        const sysActiveConfig = systemConfigs.find(c => c.isActive) || systemConfigs[0];
+        const defaultSysProvider = sysActiveConfig?.provider || "OPENAI";
+
+        const sysChatProvider = (sysActiveConfig?.configuration as any)?.services?.chat?.provider || defaultSysProvider;
+        const sysEnrichmentProvider = (sysActiveConfig?.configuration as any)?.services?.enrichment?.provider || defaultSysProvider;
+
+        return {
+            general: {
+                provider: currentConfig?.provider || defaultSysProvider,
+                modelId: currentConfig?.modelId || null
+            },
+            chat: {
+                provider: (currentConfig?.configuration as any)?.services?.chat?.provider || currentConfig?.provider || sysChatProvider,
+                modelId: (currentConfig?.configuration as any)?.services?.chat?.modelId || currentConfig?.modelId || null
+            },
+            enrichment: {
+                provider: (currentConfig?.configuration as any)?.services?.enrichment?.provider || currentConfig?.provider || sysEnrichmentProvider,
+                modelId: (currentConfig?.configuration as any)?.services?.enrichment?.modelId || currentConfig?.modelId || null
+            }
+        };
     });
 
     // Computed actively displayed selections
     const selectedProvider = configState[activeTab].provider;
     const selectedModelId = configState[activeTab].modelId;
+
+    // Evaluate system fallback globally for the current tab
+    const activeSysConfigForTab = systemConfigs?.find(c => c.provider === selectedProvider);
+    let resolvedSysDefault = activeSysConfigForTab?.defaultModelId;
+    if (activeSysConfigForTab && activeTab !== "general") {
+        const features = (activeSysConfigForTab.configuration as any)?.services || {};
+        if (activeTab === "chat" && features.chat?.modelId) resolvedSysDefault = features.chat.modelId;
+        else if (activeTab === "enrichment" && features.enrichment?.modelId) resolvedSysDefault = features.enrichment.modelId;
+    }
+    const isRunningOnSystemDefault = !selectedModelId && !!resolvedSysDefault;
 
     const [useSystemKey, setUseSystemKey] = useState(
         currentConfig?.useSystemKey ?? true
@@ -411,15 +431,11 @@ export const AiConfigManager = ({
                     <div className="grid grid-cols-2 sm:flex gap-x-6 gap-y-2">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            1 Credit / Company
+                            1 Credit / Company Account
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            5 Credits / Deep Enrich
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            25 Credits / Agentic
+                            1 Credit / Contact Person
                         </div>
                     </div>
                     <Button
@@ -505,18 +521,36 @@ export const AiConfigManager = ({
                     </TabsTrigger>
                 </TabsList>
 
-                <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-foreground/90 flex items-center gap-2">
-                        {activeTab === "general" && "Set Global Default Model"}
-                        {activeTab === "chat" && "Override CRM Chat Model"}
-                        {activeTab === "enrichment" && "Override Engine Model"}
-                        {activeTab !== "general" && <Badge variant="outline" className="text-[10px] ml-2 text-muted-foreground">Override</Badge>}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        {activeTab === "general" && "This model will be used as a fallback for all AI operations if no specific override is set."}
-                        {activeTab === "chat" && "This model powers the conversational AI bubble. Strong reasoning models (e.g., GPT-4o, Claude 3.5 Sonnet) are recommended."}
-                        {activeTab === "enrichment" && "This pipeline drives the LeadGen OSINT Engine. High-speed, high-context models (e.g., Haiku, DeepSeek) are recommended."}
-                    </p>
+                <div className="mb-4 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-semibold text-foreground/90 flex items-center gap-2">
+                            {activeTab === "general" && "Set Global Default Model"}
+                            {activeTab === "chat" && "Override CRM Chat Model"}
+                            {activeTab === "enrichment" && "Override Engine Model"}
+                            {activeTab !== "general" && <Badge variant="outline" className="text-[10px] ml-2 text-muted-foreground">Override</Badge>}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            {activeTab === "general" && "This model will be used as a fallback for all AI operations if no specific override is set."}
+                            {activeTab === "chat" && "This model powers the conversational AI bubble. Strong reasoning models (e.g., GPT-4o, Claude 3.5 Sonnet) are recommended."}
+                            {activeTab === "enrichment" && "This pipeline drives the LeadGen OSINT Engine. High-speed, high-context models (e.g., Haiku, DeepSeek) are recommended."}
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/40 border border-white/5 shadow-inner">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Active:</span>
+                        {(() => {
+                            const activeId = selectedModelId || resolvedSysDefault || "Not Configured";
+                            return (
+                                <Badge variant="outline" className={cn(
+                                    "px-2 py-0.5 text-xs border shadow-sm",
+                                    !selectedModelId && !resolvedSysDefault ? "bg-muted/10 text-muted-foreground border-white/10" : "bg-primary/20 text-primary border-primary/30"
+                                )}>
+                                    {activeId} 
+                                    {isRunningOnSystemDefault ? " (System Default)" : (selectedModelId ? " (Team Override)" : "")}
+                                </Badge>
+                            );
+                        })()}
+                    </div>
                 </div>
 
                 {/* Provider Sections */}
@@ -636,7 +670,9 @@ export const AiConfigManager = ({
                                     {/* Models Grid */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {(providerModels as any[]).map((model) => {
-                                            const isSelected = selectedModelId === model.modelId;
+                                            const isExplicitlySelected = selectedModelId === model.modelId;
+                                            const isImplicitlySelected = isRunningOnSystemDefault && isCurrentProvider && resolvedSysDefault === model.modelId;
+                                            const isSelected = isExplicitlySelected || isImplicitlySelected;
 
                                             return (
                                                 <div
@@ -651,9 +687,15 @@ export const AiConfigManager = ({
                                                 >
                                                     {isSelected && (
                                                         <div className="absolute top-3 right-3 animate-in zoom-in duration-200">
-                                                            <div className="p-1 rounded-full bg-primary text-primary-foreground shadow-sm">
-                                                                <Check className="w-3 h-3" />
-                                                            </div>
+                                                            {isImplicitlySelected ? (
+                                                                <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] px-2 py-0 tracking-widest shadow-sm">
+                                                                    SYSTEM DEFAULT
+                                                                </Badge>
+                                                            ) : (
+                                                                <div className="p-1 rounded-full bg-primary text-primary-foreground shadow-sm">
+                                                                    <Check className="w-3 h-3" />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
 
