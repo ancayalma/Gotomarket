@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import BrandClient from "./components/brand-client";
 
-const MULTI_BRAND_PLANS = ["ENTERPRISE", "EXEMPT"];
+const MULTI_BRAND_PLANS = ["ENTERPRISE", "EXEMPT", "SCALE"];
 
 export default async function BrandIdentityPage() {
     const session = await getServerSession(authOptions);
