@@ -1299,6 +1299,10 @@ model Users {
   quickLaunchDismissed   Boolean              @default(false)
   dismissedAIInsights    String[]
 
+  // Visual Studio — per-user theme persistence
+  preferredTheme   String?  // Active theme ID (preset like "crimson-night" or custom theme UUID)
+  customThemes     Json?    // Array of custom theme objects created in the Theme Studio
+
   // MFA & NIST Compliance
   mfaEnabled      Boolean         @default(false)
   mfaMethod       MfaMethod       @default(NONE)

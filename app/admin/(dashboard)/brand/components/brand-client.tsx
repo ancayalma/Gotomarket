@@ -440,7 +440,7 @@ export default function BrandClient({ initialData, teamId, allBrands = [], isMul
 
 
   return (
-    <div className="flex flex-col h-full bg-background text-foreground rounded-xl border border-border overflow-hidden shadow-2xl relative">
+    <div className="flex flex-col min-h-full bg-background text-foreground rounded-xl border border-border shadow-2xl relative">
       
       {/* Header Container */}
       {/* ═══ Multi-Brand Switcher Bar (Enterprise/Exempt only) ═══ */}
@@ -491,7 +491,7 @@ export default function BrandClient({ initialData, teamId, allBrands = [], isMul
         </div>
       )}
 
-      <Tabs defaultValue="identity" className="flex flex-col h-full w-full relative z-10">
+      <Tabs defaultValue="identity" className="flex flex-col w-full relative z-10">
         <div className="flex items-center justify-between border-b border-border p-4 bg-background/90 backdrop-blur-md">
           <div className="flex items-center gap-6">
             <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -558,7 +558,7 @@ export default function BrandClient({ initialData, teamId, allBrands = [], isMul
         </div>
 
         {/* Form Body Scroll Area */}
-        <div className="flex-1 overflow-auto p-8 no-scrollbar relative z-10 glass bg-opacity-10 backdrop-blur-none bg-transparent">
+        <div className="p-8 relative z-10">
           
           {/* ════════════════════════════════════════════════════════
               TAB 1: IDENTITY
@@ -610,9 +610,12 @@ export default function BrandClient({ initialData, teamId, allBrands = [], isMul
                         placeholder="#0ea5e9 or rgb(14, 165, 233)"
                         className="flex-1 bg-background/80 text-muted-foreground border border-border rounded-md focus-visible:ring-primary" 
                       />
-                      <div 
-                        className="h-10 w-10 shrink-0 rounded border border-border shadow-sm"
-                        style={{ backgroundColor: formData.primary_brand_color || 'transparent' }}
+                      <input
+                        type="color"
+                        value={formData.primary_brand_color || '#000000'}
+                        onChange={(e) => setFormData({...formData, primary_brand_color: e.target.value})}
+                        className="h-10 w-10 shrink-0 rounded border border-border shadow-sm cursor-pointer bg-transparent p-0.5"
+                        title="Pick a color"
                       />
                     </div>
                   </div>

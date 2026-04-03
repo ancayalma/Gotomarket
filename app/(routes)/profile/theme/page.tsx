@@ -23,6 +23,7 @@ import { THEME_PRESETS, type ThemePreset } from "@/app/providers/ThemeProvider";
 import { checkTeamFeature } from "@/lib/subscription";
 import { Shield, Lock } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { saveUserTheme, saveUserCustomThemes, getUserTheme } from "@/actions/user/update-theme";
 
 // Theme metadata with colors for the card dots
 const THEME_METADATA: Record<
@@ -126,11 +127,28 @@ export default function ThemeStudioPage() {
         setHighContrast(storedHighContrast);
         setInitialHighContrast(storedHighContrast);
 
-        // Load custom themes
-        const saved = localStorage.getItem("custom-themes");
-        if (saved) {
-            setCustomThemes(JSON.parse(saved));
-        }
+        // Load custom themes from DB first, fallback to localStorage
+        (async () => {
+            try {
+                const { customThemes: dbCustomThemes } = await getUserTheme();
+                if (dbCustomThemes && Array.isArray(dbCustomThemes) && dbCustomThemes.length > 0) {
+                    setCustomThemes(dbCustomThemes);
+                    // Sync DB → localStorage for ThemeProvider/CustomThemeInjector
+                    localStorage.setItem("custom-themes", JSON.stringify(dbCustomThemes));
+                } else {
+                    const saved = localStorage.getItem("custom-themes");
+                    if (saved) {
+                        setCustomThemes(JSON.parse(saved));
+                    }
+                }
+            } catch {
+                // Fallback to localStorage if DB call fails
+                const saved = localStorage.getItem("custom-themes");
+                if (saved) {
+                    setCustomThemes(JSON.parse(saved));
+                }
+            }
+        })();
     }, []);
 
     // Feature flagging access check
@@ -164,10 +182,18 @@ export default function ThemeStudioPage() {
         setTheme(themeId);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         setOriginalTheme(previewTheme);
         setInitialReducedMotion(reducedMotion);
         setInitialHighContrast(highContrast);
+        // Persist the active theme + custom themes to the DB
+        try {
+            const currentCustom = localStorage.getItem("custom-themes");
+            const parsed = currentCustom ? JSON.parse(currentCustom) : [];
+            await saveUserTheme(previewTheme || theme || "obsidian-gold", parsed);
+        } catch (err) {
+            console.error("[ThemeStudio] Failed to persist theme to DB:", err);
+        }
         router.refresh();
     };
 
@@ -216,20 +242,33 @@ export default function ThemeStudioPage() {
         router.push("/profile/theme?tab=create", { scroll: false });
     };
 
-    const closeEditor = () => {
+    const closeEditor = async () => {
         setEditingTheme(null);
         router.push("/profile/theme", { scroll: false });
-        // Reload custom themes
+        // Reload custom themes from localStorage and sync to DB
         const saved = localStorage.getItem("custom-themes");
         if (saved) {
-            setCustomThemes(JSON.parse(saved));
+            const parsed = JSON.parse(saved);
+            setCustomThemes(parsed);
+            // Persist newly created/edited theme to DB
+            try {
+                await saveUserCustomThemes(parsed);
+            } catch (err) {
+                console.error("[ThemeStudio] Failed to sync custom themes to DB:", err);
+            }
         }
     };
 
-    const deleteCustomTheme = (id: string) => {
+    const deleteCustomTheme = async (id: string) => {
         const updated = customThemes.filter((t) => t.id !== id);
         localStorage.setItem("custom-themes", JSON.stringify(updated));
         setCustomThemes(updated);
+        // Sync deletion to DB
+        try {
+            await saveUserCustomThemes(updated);
+        } catch (err) {
+            console.error("[ThemeStudio] Failed to sync custom theme deletion:", err);
+        }
     };
 
     const applyCustomTheme = (customTheme: CustomTheme) => {
