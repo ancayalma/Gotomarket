@@ -105,7 +105,8 @@ export async function createStripeCheckoutSession(
     email: string,
     planSlug: string,
     interval: "monthly" | "annual",
-    teamName?: string
+    teamName?: string,
+    quantity: number = 1
 ) {
     try {
         const customerId = await getOrCreateStripeCustomer(teamId, email, teamName);
@@ -116,7 +117,7 @@ export async function createStripeCheckoutSession(
         let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[];
 
         if (priceId) {
-            lineItems = [{ price: priceId, quantity: 1 }];
+            lineItems = [{ price: priceId, quantity }];
         } else {
             // Fallback: inline price_data (for migration before seed-stripe is run)
             const plan = SUBSCRIPTION_PLANS[planSlug as SubscriptionPlanType];
@@ -138,7 +139,7 @@ export async function createStripeCheckoutSession(
                         interval: (interval === "annual" ? "year" : "month") as Stripe.Price.Recurring.Interval,
                     },
                 },
-                quantity: 1,
+                quantity,
             }];
         }
 

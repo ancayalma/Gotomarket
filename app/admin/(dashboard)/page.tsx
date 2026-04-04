@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // import { columns } from "@/app/cms/(dashboard)/users/table-components/columns";
 import { getUsers } from "@/actions/get-users";
 import TeamMembersTable from "@/app/(routes)/platform/[teamId]/_components/TeamMembersTable";
+import { getTeamQuotaLimit } from "@/lib/quota-service";
 import DepartmentsView from "@/app/(routes)/platform/[teamId]/_components/DepartmentsView";
 import SandboxManager from "@/app/(routes)/crm/settings/components/SandboxManager";
 
@@ -133,6 +134,8 @@ export default async function AdminDashboardPage({
   const memberCount = (rolesData as any[]).find(r => r.team_role === 'MEMBER' || r.team_role === null)?._count ?? 0;
   const viewerCount = (rolesData as any[]).find(r => r.team_role === 'VIEWER')?._count ?? 0;
 
+  const maxSeatsAllowed = await getTeamQuotaLimit(teamId, "USERS");
+
   const role = (teamInfo.teamRole || '').toUpperCase();
   const isSuperAdmin = teamInfo.isGlobalAdmin || ['SUPER_ADMIN', 'OWNER', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN'].includes(role);
 
@@ -212,6 +215,7 @@ export default async function AdminDashboardPage({
               ownerId={team?.owner_id}
               hasDepartments={!isDepartment && departments.length > 0}
               departmentMap={departmentMap}
+              maxSeats={maxSeatsAllowed}
             />
           </div>
         </TabsContent>

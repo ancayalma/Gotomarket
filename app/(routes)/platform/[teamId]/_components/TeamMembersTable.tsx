@@ -92,9 +92,10 @@ type Props = {
     hasDepartments?: boolean;
     departmentMap?: Record<string, string>;
     isExemptTeam?: boolean;
+    maxSeats?: number;
 };
 
-const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdmin, ownerId, hasDepartments = false, departmentMap = {}, isExemptTeam = false }: Props) => {
+const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdmin, ownerId, hasDepartments = false, departmentMap = {}, isExemptTeam = false, maxSeats = -1 }: Props) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -277,8 +278,22 @@ const TeamMembersTable = ({ teamId, teamSlug, members, isSuperAdmin, isGlobalAdm
     }
 
 
+    const isOverLimit = maxSeats !== -1 && members.length > maxSeats;
+
     return (
         <Card>
+            {isOverLimit && (
+                <div className="bg-red-500/10 border-l-4 border-red-500 p-4 m-4 rounded-md flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />
+                    <div>
+                        <h4 className="font-bold text-red-500">Seat Limit Exceeded</h4>
+                        <p className="text-sm text-red-500/80">
+                            Your workspace has {members.length} users but your subscription only covers {maxSeats} seats. 
+                            Please use the table below to disable or remove users, or upgrade your active seat quantity to avoid account suspension.
+                        </p>
+                    </div>
+                </div>
+            )}
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">{isExemptTeam ? "Platform Admins" : "Personnel"}</CardTitle>

@@ -43,6 +43,52 @@ function resolveCrmLimit(plan: any, teamSubscriptionPlan: string | null | undefi
 }
 
 /**
+ * Returns the exact numeric limit for a resource (returns -1 if unlimited).
+ */
+export async function getTeamQuotaLimit(teamId: string, resource: QuotaResource): Promise<number> {
+    try {
+        const team = await prismadb.team.findUnique({
+            where: { id: teamId },
+            include: { assigned_plan: true }
+        });
+
+        if (!team) return 0;
+
+        const legacyPlan = (team as any).subscription_plan as string | undefined;
+        if (legacyPlan === "EXEMPT" || legacyPlan === "ENTERPRISE") return -1;
+
+        const plan = team.assigned_plan;
+        if (!plan || plan.slug === "EXEMPT" || plan.slug === "ENTERPRISE") return -1;
+
+        switch (resource) {
+            case "USERS": {
+                let limit = plan.max_users;
+                if (limit !== -1) {
+                    const sub = await prismadb.crm_Subscriptions.findFirst({
+                        where: { tenant_id: teamId, payment_provider: "STRIPE", status: "ACTIVE" },
+                        select: { quantity: true }
+                    });
+                    if (sub && sub.quantity) {
+                        limit = limit * sub.quantity;
+                    }
+                }
+                return limit;
+            }
+            case "LEADS": return resolveCrmLimit(plan, legacyPlan, "LEADS");
+            case "CONTACTS": return resolveCrmLimit(plan, legacyPlan, "CONTACTS");
+            case "ACCOUNTS": return resolveCrmLimit(plan, legacyPlan, "ACCOUNTS");
+            case "OPPORTUNITIES": return resolveCrmLimit(plan, legacyPlan, "OPPORTUNITIES");
+            case "STORAGE": return plan.max_storage;
+            case "CREDITS": return plan.max_credits;
+            case "AI_TOKENS": return -1; // Unbounded per check logic
+            default: return -1;
+        }
+    } catch {
+        return -1;
+    }
+}
+
+/**
  * SOC2 A1.2: Enforce tenant-level resource quotas based on their subscription plan.
  * Prevents "Noisy Neighbor" resource exhaustion and subscription fraud.
  * Platform admins (is_admin) bypass all quota checks for testing purposes.
@@ -90,8 +136,20 @@ export async function checkTeamQuota(teamId: string, resource: QuotaResource, us
         switch (resource) {
             case "USERS": {
                 const userCount = await prismadb.users.count({ where: { team_id: teamId } });
-                if (plan.max_users !== -1 && userCount >= plan.max_users) {
-                    return { allowed: false, message: `User limit reached (${plan.max_users} users max on ${plan.name} plan)` };
+                let limit = plan.max_users;
+                
+                if (limit !== -1) {
+                    const sub = await prismadb.crm_Subscriptions.findFirst({
+                        where: { tenant_id: teamId, payment_provider: "STRIPE", status: "ACTIVE" },
+                        select: { quantity: true }
+                    });
+                    if (sub && sub.quantity) {
+                        limit = limit * sub.quantity;
+                    }
+                }
+
+                if (limit !== -1 && userCount >= limit) {
+                    return { allowed: false, message: `User limit reached (${limit} users max configured with purchased seats)` };
                 }
                 break;
             }

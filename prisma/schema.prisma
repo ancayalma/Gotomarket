@@ -4526,6 +4526,7 @@ model crm_Subscriptions {
   // Billing Config
   plan_name   String
   amount      Float
+  quantity    Int    @default(1)
   currency    String @default("USD")
   interval    String @default("monthly") // monthly, yearly
   billing_day Int    @default(14) // e.g. 14th of the month
@@ -4537,6 +4538,7 @@ model crm_Subscriptions {
   last_charge_date    DateTime? @db.Date
   last_charge_status  String?
   last_transaction_id String?
+  payment_failed_at   DateTime? @db.Date
   metadata            Json?
 
   // Billing invoices for this subscription
