@@ -115,12 +115,12 @@ export default async function AppLayout({
           // Verify team actually exists (handling MongoDB missing foreign key cascaded deletes)
           const existingTeam = await prismadb.team.findUnique({
               where: { id: userTeamId },
-              select: { id: true }
+              select: { id: true, parent_id: true }
           });
 
           if (existingTeam) {
               hasValidTeam = true;
-              if (isSuperAdmin) {
+              if (isSuperAdmin && !existingTeam.parent_id) {
                   // Check if ANY brand has been set up (not just the default)
                   const anySetupBrand = await prismadb.teamBrandIdentity.findFirst({
                       where: { team_id: userTeamId, OR: [{ setup_completed: true }, { company_name: { not: "" } }] }
