@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { planSlug, interval = "monthly", topUp = false } = body;
+        const { planSlug, interval = "monthly", topUp = false, quantity = 1 } = body;
 
         let checkoutSession;
 
@@ -53,7 +53,8 @@ export async function POST(req: Request) {
                 user.email!,
                 planSlug,
                 interval,
-                user.assigned_team?.name
+                user.assigned_team?.name,
+                quantity
             );
         }
 

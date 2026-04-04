@@ -101,8 +101,8 @@ export const LeadWizardQuickModal = ({
                 },
                 providers: {
                     agenticAI: true,
-                    serp: true,
-                    serpFallback: true,
+                    serp: false,
+                    serpFallback: false,
                 },
                 limits: {
                     maxCompanies,

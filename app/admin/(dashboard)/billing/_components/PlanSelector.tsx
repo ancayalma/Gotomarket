@@ -104,6 +104,7 @@ export function PlanSelector({ subscription, teamId, isPlatformAdmin = false }: 
     const [loading, setLoading] = useState<string | null>(null);
     const [tokenBalance, setTokenBalance] = useState<number | null>(null);
     const [tokenUnlimited, setTokenUnlimited] = useState(false);
+    const [seatQuantity, setSeatQuantity] = useState(1);
 
     const currentPlan = subscription?.plan_name || "FREE";
     const INTERNAL_SLUGS = ["basalt", "basalthq", "ledger1"];
@@ -133,7 +134,7 @@ export function PlanSelector({ subscription, teamId, isPlatformAdmin = false }: 
             const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ planSlug, interval }),
+                body: JSON.stringify({ planSlug, interval, quantity: seatQuantity }),
             });
 
             const data = await res.json();
@@ -235,19 +236,35 @@ export function PlanSelector({ subscription, teamId, isPlatformAdmin = false }: 
                 </Card>
             )}
 
-            {/* ── Billing Toggle ── */}
-            <div className="flex items-center justify-center gap-3">
-                <span className={`text-sm font-medium transition-colors ${!isAnnual ? "text-white" : "text-zinc-500"}`}>Monthly</span>
-                <button
-                    onClick={() => setIsAnnual(!isAnnual)}
-                    className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${isAnnual ? "bg-indigo-600" : "bg-zinc-700"}`}
-                >
-                    <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-lg transition-transform duration-300 ${isAnnual ? "translate-x-7" : "translate-x-0.5"}`} />
-                </button>
-                <span className={`text-sm font-medium transition-colors ${isAnnual ? "text-white" : "text-zinc-500"}`}>
-                    Annual
-                    <Badge className="ml-2 bg-green-500/20 text-green-400 border-green-500/20 text-[9px]">Save {ANNUAL_DISCOUNT}%</Badge>
-                </span>
+            <div className="flex flex-col sm:flex-row items-center justify-between bg-zinc-900/50 p-4 rounded-xl border border-zinc-800/50 gap-4">
+                <div className="flex items-center gap-3">
+                    <span className={`text-sm font-medium transition-colors ${!isAnnual ? "text-white" : "text-zinc-500"}`}>Monthly</span>
+                    <button
+                        onClick={() => setIsAnnual(!isAnnual)}
+                        className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${isAnnual ? "bg-indigo-600" : "bg-zinc-700"}`}
+                    >
+                        <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-lg transition-transform duration-300 ${isAnnual ? "translate-x-7" : "translate-x-0.5"}`} />
+                    </button>
+                    <span className={`text-sm font-medium transition-colors ${isAnnual ? "text-white" : "text-zinc-500"}`}>
+                        Annual
+                        <Badge className="ml-2 bg-green-500/20 text-green-400 border-green-500/20 text-[9px]">Save {ANNUAL_DISCOUNT}%</Badge>
+                    </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-zinc-300 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-indigo-400" />
+                        Seats Required
+                    </span>
+                    <input 
+                        type="number" 
+                        min="1" 
+                        max="1000"
+                        value={seatQuantity}
+                        onChange={(e) => setSeatQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-20 bg-zinc-950 border border-zinc-700 rounded-md py-1 px-3 text-white text-sm focus:outline-none focus:border-indigo-500"
+                    />
+                </div>
             </div>
 
             {/* ── Plan Cards ── */}
@@ -259,9 +276,9 @@ export function PlanSelector({ subscription, teamId, isPlatformAdmin = false }: 
                     const isEnterprise = "enterprise" in plan && plan.enterprise;
                     const isPopular = "popular" in plan && plan.popular;
 
-                    const monthlyDisplayPrice = plan.monthlyPrice;
-                    const displayPrice = isAnnual ? annualMonthly(plan.monthlyPrice) : monthlyDisplayPrice;
-                    const totalAnnual = annualPrice(plan.monthlyPrice);
+                    const monthlyDisplayPrice = plan.monthlyPrice * seatQuantity;
+                    const displayPrice = isAnnual ? annualMonthly(plan.monthlyPrice) * seatQuantity : monthlyDisplayPrice;
+                    const totalAnnual = annualPrice(plan.monthlyPrice) * seatQuantity;
 
                     const stripePrice = isAnnual ? totalAnnual : monthlyDisplayPrice;
                     const surgePriceVal = surgePrice(stripePrice);
@@ -316,8 +333,14 @@ export function PlanSelector({ subscription, teamId, isPlatformAdmin = false }: 
                                         </div>
                                         {isAnnual && plan.monthlyPrice > 0 && (
                                             <div className="text-[10px] text-zinc-500 mt-0.5">
-                                                <span className="line-through text-zinc-600">${plan.monthlyPrice}/mo</span>
+                                                <span className="line-through text-zinc-600">${plan.monthlyPrice * seatQuantity}/mo</span>
                                                 {" · "}${totalAnnual}/yr billed annually
+                                                {seatQuantity > 1 && ` for ${seatQuantity} seats`}
+                                            </div>
+                                        )}
+                                        {!isAnnual && plan.monthlyPrice > 0 && seatQuantity > 1 && (
+                                            <div className="text-[10px] text-zinc-500 mt-0.5">
+                                                Billed monthly for {seatQuantity} seats
                                             </div>
                                         )}
                                     </div>

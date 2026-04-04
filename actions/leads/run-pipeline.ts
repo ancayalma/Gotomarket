@@ -243,16 +243,7 @@ export async function runLeadGenPipeline({
         });
       }
     } else {
-      // Skip SERP when agentic produced results or SERP is disabled
-      await db.crm_Lead_Gen_Jobs.update({
-        where: { id: jobId },
-        data: {
-          logs: [
-            ...(job.logs || []),
-            { ts: new Date().toISOString(), msg: `Skipping SERP: agenticSaved=${agentSaved}, serpEnabled=${job.providers?.serp !== false}, serpFallback=${job.providers?.serpFallback === true}` }
-          ]
-        }
-      });
+      // SERP disabled — purely agentic mode, no fallback needed
     }
 
     // People enrichment is SKIPPED in agentic mode — the AI agent already

@@ -1889,6 +1889,8 @@ export async function executeToolCall(toolName: string, args: any, context: any)
         // ═══════════════════════════════════════════════════════════════════
         let crmAccountId: string | null = null;
         let accountHasContactInfo = false;
+        // Track unique contact info pieces for billing (1 credit = 1 unique email or phone)
+        const billedContactInfo = new Set<string>();
         try {
           const { prismadb: mainDb } = await import("@/lib/prisma");
           const teamId = context.teamId || null;
@@ -1931,10 +1933,11 @@ export async function executeToolCall(toolName: string, args: any, context: any)
             });
             crmAccountId = newAccount.id;
 
-            // Only bill for new accounts if they actually yielded contact info
-            if (bestAccountEmail || augmentedContacts.find((c: any) => c.phone?.trim())?.phone) {
-              accountHasContactInfo = true;
-            }
+            // Track billable contact info pieces for new account
+            if (bestAccountEmail) billedContactInfo.add(`email:${bestAccountEmail.toLowerCase().trim()}`);
+            const acctPhone = augmentedContacts.find((c: any) => c.phone?.trim())?.phone;
+            if (acctPhone) billedContactInfo.add(`phone:${acctPhone.replace(/\D/g, '')}`);
+            accountHasContactInfo = billedContactInfo.size > 0;
 
             console.log(`[SAVE_COMPANY] Created new crm_Accounts entry for ${domain}: ${crmAccountId}`);
           }
@@ -2024,6 +2027,9 @@ export async function executeToolCall(toolName: string, args: any, context: any)
                   }
                 });
                 console.log(`[SAVE_COMPANY] Created crm_Contacts entry: ${cleaned.email} under account ${crmAccountId}`);
+                // Track billable info pieces (deduped against account-level via Set)
+                if (cleaned.email) billedContactInfo.add(`email:${cleaned.email.toLowerCase().trim()}`);
+                if (cleaned.phone) billedContactInfo.add(`phone:${cleaned.phone.replace(/\D/g, '')}`);
               } catch (contactErr) {
                 console.warn(`[SAVE_COMPANY] Failed to create crm_Contacts for ${cleaned.email}:`, contactErr);
               }
@@ -2039,6 +2045,7 @@ export async function executeToolCall(toolName: string, args: any, context: any)
           success: true,
           candidateId: candidate.id,
           contactsCreated: contactsSavedCount,
+          contactInfoCredits: billedContactInfo.size,
           accountHasContactInfo: accountHasContactInfo
         };
       } catch (error) {
@@ -2507,11 +2514,11 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
           if (typeof out === 'object' && 'type' in out) {
             if (out.type === 'json' && out.value) {
               accountValid = !!out.value.accountHasContactInfo;
-              contactsC = out.value.contactsCreated || 0;
+              contactsC = out.value.contactInfoCredits || out.value.contactsCreated || 0;
             }
           } else {
             accountValid = !!(out as any)?.accountHasContactInfo;
-            contactsC = (out as any)?.contactsCreated || 0;
+            contactsC = (out as any)?.contactInfoCredits || (out as any)?.contactsCreated || 0;
           }
 
           // No longer double-billing for the account if it shares the same contact info

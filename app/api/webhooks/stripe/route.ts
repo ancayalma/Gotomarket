@@ -62,6 +62,12 @@ export async function POST(req: Request) {
                 break;
             }
 
+            case "invoice.payment_failed": {
+                const invoice = event.data.object as Stripe.Invoice;
+                await handleInvoiceFailed(invoice);
+                break;
+            }
+
             case "customer.subscription.updated": {
                 const subscription = event.data.object as Stripe.Subscription;
                 await handleSubscriptionUpdated(subscription);
@@ -234,9 +240,35 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
         data: {
             last_charge_date: now,
             last_charge_status: "PAID",
+            payment_failed_at: null, // Clear the grace period explicitly
             last_transaction_id: invoiceAny.charge as string || invoice.id,
         },
     });
+}
+
+async function handleInvoiceFailed(invoice: Stripe.Invoice) {
+    const invoiceAny = invoice as any;
+    const teamId = invoiceAny.subscription_details?.metadata?.team_id
+        || invoice.metadata?.team_id;
+    if (!teamId) return;
+
+    const now = new Date();
+
+    // Check if we already marked a failure, we don't want to reset the clock if it's a persistent failure
+    const existing = await prismadb.crm_Subscriptions.findUnique({
+        where: { tenant_id: teamId },
+        select: { payment_failed_at: true }
+    });
+
+    await prismadb.crm_Subscriptions.update({
+        where: { tenant_id: teamId },
+        data: {
+            last_charge_status: "FAILED",
+            payment_failed_at: existing?.payment_failed_at ? undefined : now
+        },
+    });
+
+    systemLogger.warn(`[Stripe Webhook] Payment failed for team ${teamId}, setting failure clock.`);
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -284,8 +316,13 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     if (subscription.status === "canceled") status = "CANCELLED";
     if (subscription.status === "paused") status = "PAUSED";
 
+    let quantity = 1;
+    if (subscription.items?.data && subscription.items.data.length > 0) {
+        quantity = subscription.items.data[0].quantity || 1;
+    }
+
     await prismadb.crm_Subscriptions.update({
         where: { tenant_id: teamId },
-        data: { status },
+        data: { status, quantity },
     });
 }
