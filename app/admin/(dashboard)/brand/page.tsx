@@ -17,7 +17,8 @@ export default async function BrandIdentityPage() {
         include: { assigned_team: { select: { subscription_plan: true, parent_id: true } } },
     });
 
-    if (!user || (!user.is_admin && user.team_role !== "SUPER_ADMIN" && user.team_role !== "OWNER" && user.team_role !== "ADMIN")) {
+    const normalizedRole = (user?.team_role || '').trim().toUpperCase();
+    if (!user || (!user.is_admin && normalizedRole !== "SUPER_ADMIN" && normalizedRole !== "OWNER" && normalizedRole !== "ADMIN" && normalizedRole !== "PLATFORM_ADMIN" && normalizedRole !== "PLATFORM ADMIN")) {
         redirect("/crm/dashboard");
     }
 

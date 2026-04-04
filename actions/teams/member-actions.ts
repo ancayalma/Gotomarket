@@ -32,9 +32,11 @@ export const updateMemberRole = async (userId: string, role: string) => {
             }
         }
 
+        // Sync is_admin flag: PLATFORM_ADMIN gets is_admin=true, all other roles get is_admin=false
+        const shouldBeAdmin = role === "PLATFORM_ADMIN";
         await (prismadb.users as any).update({
             where: { id: userId },
-            data: { team_role: role },
+            data: { team_role: role, is_admin: shouldBeAdmin },
         });
         revalidatePath(`/partners`);
         return { success: true };

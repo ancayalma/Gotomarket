@@ -75,7 +75,7 @@ export default function LeadGenWizardPage() {
     notes: "",
     maxCompanies: 100,
     maxContactsPerCompany: 3,
-    serpFallback: true, // Default to true per plan
+    serpFallback: false, // SERP disabled — purely agentic process
     aiPrompt: "",
     campaignId: "",
     existingListId: searchParams?.get("poolId") || "",
@@ -309,8 +309,8 @@ export default function LeadGenWizardPage() {
               },
               providers: {
                 agenticAI: true,
-                serp: true,
-                serpFallback: true, // Always true as requested
+                serp: false,
+                serpFallback: false,
               },
               limits: {
                 maxCompanies: state.maxCompanies,
@@ -363,8 +363,8 @@ export default function LeadGenWizardPage() {
         },
         providers: {
           agenticAI: true,
-          serp: true,
-          serpFallback: !!state.serpFallback,
+          serp: false,
+          serpFallback: false,
         },
         limits: {
           maxCompanies: state.maxCompanies,

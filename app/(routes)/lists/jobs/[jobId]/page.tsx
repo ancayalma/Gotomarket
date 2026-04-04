@@ -475,7 +475,7 @@ export default function LeadGenJobDetailPage({
             <div className="flex flex-wrap gap-3">
               <MetricTile label="Accounts" value={companiesFound} accent="text-emerald-400" />
               <MetricTile label="Contacts" value={contactsFound} accent="text-sky-400" />
-              <MetricTile label="Credits Used" value={companiesFound + contactsFound} accent="text-amber-400" />
+              <MetricTile label="Credits Used" value={contactsFound} accent="text-amber-400" />
               <MetricTile label="Target" value={target} accent="text-zinc-400" />
               <MetricTile label="Iterations" value={iterations} accent="text-violet-400" />
             </div>
