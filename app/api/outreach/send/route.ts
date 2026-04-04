@@ -127,7 +127,8 @@ export async function POST(req: Request) {
         resource_links: true,
         outreach_prompt_default: true,
         team_id: true,
-      } as const,
+        assigned_team: { select: { parent_id: true } }
+      },
     });
 
     if (!user || !user.team_id) {
@@ -157,8 +158,9 @@ export async function POST(req: Request) {
     // Fetch Team Brand Identity
     let brandIdentity = null;
     if (user.team_id) {
+      const targetTeamId = user.assigned_team?.parent_id || user.team_id;
       brandIdentity = await prismadb.teamBrandIdentity.findFirst({
-        where: { team_id: user.team_id, is_default: true },
+        where: { team_id: targetTeamId, is_default: true },
         select: { logo_url: true, company_name: true, primary_brand_color: true },
       });
     }

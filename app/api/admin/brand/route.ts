@@ -15,12 +15,14 @@ export async function GET(req: Request) {
 
         const user = await prismadb.users.findUnique({
             where: { email: session.user.email },
-            include: { assigned_team: { select: { subscription_plan: true } } },
+            include: { assigned_team: { select: { subscription_plan: true, parent_id: true } } },
         });
 
         if (!user?.team_id) {
             return new NextResponse("Team Error", { status: 403 });
         }
+
+        const targetTeamId = user.assigned_team?.parent_id || user.team_id;
 
         const plan = String(user.assigned_team?.subscription_plan || "FREE");
         const isMultiBrand = MULTI_BRAND_PLANS.includes(plan);
@@ -28,14 +30,14 @@ export async function GET(req: Request) {
         if (isMultiBrand) {
             // Enterprise/Exempt: Return all brands for this team
             const brands = await prismadb.teamBrandIdentity.findMany({
-                where: { team_id: user.team_id },
+                where: { team_id: targetTeamId },
                 orderBy: [{ is_default: "desc" }, { createdAt: "asc" }],
             });
             return NextResponse.json({ brands, multiBrand: true, plan });
         } else {
             // Standard plans: Return single default brand (backward compatible)
             const brand = await prismadb.teamBrandIdentity.findFirst({
-                where: { team_id: user.team_id, is_default: true },
+                where: { team_id: targetTeamId, is_default: true },
             });
             return NextResponse.json(brand || {});
         }
@@ -54,12 +56,14 @@ export async function POST(req: Request) {
 
         const user = await prismadb.users.findUnique({
             where: { email: session.user.email },
-            include: { assigned_team: { select: { subscription_plan: true } } },
+            include: { assigned_team: { select: { subscription_plan: true, parent_id: true } } },
         });
 
         if (!user?.team_id) {
             return new NextResponse("Team Error", { status: 403 });
         }
+
+        const targetTeamId = user.assigned_team?.parent_id || user.team_id;
 
         const data = await req.json();
         const { brandId, ...brandData } = data;
@@ -85,7 +89,7 @@ export async function POST(req: Request) {
                 delete brandData._createNew;
                 const newBrand = await prismadb.teamBrandIdentity.create({
                     data: {
-                        team_id: user.team_id,
+                        team_id: targetTeamId,
                         ...brandData,
                         is_default: false,
                         setup_completed: true,
@@ -96,7 +100,7 @@ export async function POST(req: Request) {
 
             // Standard upsert for default brand
             const existing = await prismadb.teamBrandIdentity.findFirst({
-                where: { team_id: user.team_id, is_default: true },
+                where: { team_id: targetTeamId, is_default: true },
             });
 
             if (existing) {
@@ -111,7 +115,7 @@ export async function POST(req: Request) {
             } else {
                 const newBrand = await prismadb.teamBrandIdentity.create({
                     data: {
-                        team_id: user.team_id,
+                        team_id: targetTeamId,
                         ...brandData,
                         is_default: true,
                         setup_completed: true,
@@ -136,12 +140,14 @@ export async function DELETE(req: Request) {
 
         const user = await prismadb.users.findUnique({
             where: { email: session.user.email },
-            include: { assigned_team: { select: { subscription_plan: true } } },
+            include: { assigned_team: { select: { subscription_plan: true, parent_id: true } } },
         });
 
         if (!user?.team_id) {
             return new NextResponse("Team Error", { status: 403 });
         }
+
+        const targetTeamId = user.assigned_team?.parent_id || user.team_id;
 
         const plan = String(user.assigned_team?.subscription_plan || "FREE");
         if (!MULTI_BRAND_PLANS.includes(plan)) {
@@ -159,7 +165,7 @@ export async function DELETE(req: Request) {
             where: { id: brandId },
         });
 
-        if (!brand || brand.team_id !== user.team_id) {
+        if (!brand || brand.team_id !== targetTeamId) {
             return new NextResponse("Brand not found", { status: 404 });
         }
 
