@@ -4383,6 +4383,10 @@ model crm_Products {
   drmEnabled       Boolean  @default(false) // DRM protection enabled
   isSubscription   Boolean  @default(false) // Subscription item
 
+  // Shipping & Fulfillment Integration
+  shippingEnabled  Boolean  @default(false)
+  shippingConfig   Json?    // Stores dimensions, weight, fulfillment tracking requirements.
+
   team_id String @db.ObjectId
   team    Team   @relation(fields: [team_id], references: [id])
 

@@ -51,23 +51,61 @@ export async function createProduct(data: {
     height?: number;
     length?: number;
     isDigital?: boolean;
+    imageUrl?: string;
     tags?: string[];
     taxable?: boolean;
     jurisdictionCode?: string;
+    attributes?: any;
+    industryPack?: string;
+    currency?: string;
+    ownerWallet?: string;
+    isBook?: boolean;
+    allowDownload?: boolean;
+    drmEnabled?: boolean;
+    isSubscription?: boolean;
+    shippingEnabled?: boolean;
+    shippingConfig?: any;
 }) {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) return { success: false };
 
-        await prismadb.crm_Products.create({
+        const teamId = (session.user as any).team_id;
+
+        const newProduct = await prismadb.crm_Products.create({
             data: {
                 ...data,
-                team_id: (session.user as any).team_id,
+                team_id: teamId,
             },
         });
 
+        // Fetch integration config once for all sync checks
+        const integration = await prismadb.tenant_Integrations.findUnique({
+            where: { tenant_id: teamId }
+        });
+
+        const syncResults: string[] = [];
+
+        // Auto-sync to Surge if linked
+        if (integration?.surge_enabled && integration?.surge_api_key) {
+            const result = await syncProductToSurge(newProduct, integration.surge_api_key);
+            if (result) syncResults.push("Surge");
+        }
+
+        // Auto-sync to Shopify if linked
+        if (integration?.shopify_enabled && integration?.shopify_access_token && integration?.shopify_store_url) {
+            const result = await syncProductToShopify(newProduct, integration.shopify_store_url, integration.shopify_access_token);
+            if (result) syncResults.push("Shopify");
+        }
+
+        // Auto-sync to WooCommerce if linked
+        if (integration?.woocommerce_enabled && integration?.woocommerce_consumer_key && integration?.woocommerce_consumer_secret && integration?.woocommerce_store_url) {
+            const result = await syncProductToWooCommerce(newProduct, integration.woocommerce_store_url, integration.woocommerce_consumer_key, integration.woocommerce_consumer_secret);
+            if (result) syncResults.push("WooCommerce");
+        }
+
         revalidatePath("/crm/products");
-        return { success: true };
+        return { success: true, syncedTo: syncResults };
     } catch (error) {
         systemLogger.error("[CREATE_PRODUCT]", error);
         return { success: false };
@@ -77,6 +115,29 @@ export async function createProduct(data: {
 // Helper: push product data to Surge API
 async function syncProductToSurge(product: any, apiKey: string) {
     try {
+        let surgeImages: string[] | undefined = undefined;
+        
+        if (product.imageUrl) {
+            if (product.imageUrl.startsWith("data:")) {
+                surgeImages = [product.imageUrl];
+            } else if (product.imageUrl.startsWith("http")) {
+                try {
+                    const imgRes = await fetch(product.imageUrl);
+                    if (imgRes.ok) {
+                        const arrayBuffer = await imgRes.arrayBuffer();
+                        const buffer = Buffer.from(arrayBuffer);
+                        const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+                        const base64 = buffer.toString("base64");
+                        surgeImages = [`data:${contentType};base64,${base64}`];
+                    }
+                } catch (e) {
+                    systemLogger.error("[SURGE_IMAGE_ENCODE_ERROR]", e);
+                }
+            } else {
+                surgeImages = [product.imageUrl];
+            }
+        }
+
         const surgeBody = {
             id: product.surge_id || undefined,
             sku: product.sku,
@@ -89,14 +150,16 @@ async function syncProductToSurge(product: any, apiKey: string) {
             costUsd: product.costPrice || undefined,
             taxable: product.taxable,
             jurisdictionCode: product.jurisdictionCode || undefined,
-            images: product.imageUrl ? [product.imageUrl] : undefined,
+            images: surgeImages,
             attributes: product.attributes || undefined,
             industryPack: product.industryPack || undefined,
             currency: product.currency || "USD",
             wallet: product.ownerWallet || undefined,
             isBook: product.isBook || false,
             allowDownload: product.allowDownload || false,
-            drmEnabled: product.drmEnabled || false
+            drmEnabled: product.drmEnabled || false,
+            shippingEnabled: product.shippingEnabled || false,
+            shippingConfig: product.shippingConfig || undefined
         };
 
         const response = await fetch("https://surge.basalthq.com/api/inventory", {
@@ -265,6 +328,8 @@ export async function updateProduct(productId: string, data: {
     allowDownload?: boolean;
     drmEnabled?: boolean;
     isSubscription?: boolean;
+    shippingEnabled?: boolean;
+    shippingConfig?: any;
 }) {
     try {
         const session = await getServerSession(authOptions);
@@ -402,6 +467,8 @@ export async function importFromSurge() {
                         isBook: item.isBook || false,
                         allowDownload: item.allowDownload || false,
                         drmEnabled: item.drmEnabled || false,
+                        shippingEnabled: item.shippingEnabled || false,
+                        shippingConfig: item.shippingConfig || undefined
                     }
                 });
                 updatedCount++;
@@ -427,6 +494,8 @@ export async function importFromSurge() {
                         isBook: item.isBook || false,
                         allowDownload: item.allowDownload || false,
                         drmEnabled: item.drmEnabled || false,
+                        shippingEnabled: item.shippingEnabled || false,
+                        shippingConfig: item.shippingConfig || undefined,
                         team_id: teamId
                     }
                 });
@@ -462,6 +531,29 @@ export async function exportToSurge(productId: string) {
 
         if (!product) return { success: false, error: "Product not found" };
 
+        let surgeImages: string[] | undefined = undefined;
+        
+        if (product.imageUrl) {
+            if (product.imageUrl.startsWith("data:")) {
+                surgeImages = [product.imageUrl];
+            } else if (product.imageUrl.startsWith("http")) {
+                try {
+                    const imgRes = await fetch(product.imageUrl);
+                    if (imgRes.ok) {
+                        const arrayBuffer = await imgRes.arrayBuffer();
+                        const buffer = Buffer.from(arrayBuffer);
+                        const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+                        const base64 = buffer.toString("base64");
+                        surgeImages = [`data:${contentType};base64,${base64}`];
+                    }
+                } catch (e) {
+                    systemLogger.error("[SURGE_IMAGE_ENCODE_ERROR]", e);
+                }
+            } else {
+                surgeImages = [product.imageUrl];
+            }
+        }
+
         const surgeBody = {
             id: product.surge_id || undefined,
             sku: product.sku,
@@ -473,7 +565,17 @@ export async function exportToSurge(productId: string) {
             tags: product.tags,
             costUsd: product.costPrice || undefined,
             taxable: product.taxable,
-            jurisdictionCode: product.jurisdictionCode || undefined
+            jurisdictionCode: product.jurisdictionCode || undefined,
+            images: surgeImages,
+            attributes: product.attributes || undefined,
+            industryPack: product.industryPack || undefined,
+            currency: product.currency || "USD",
+            wallet: product.ownerWallet || undefined,
+            isBook: product.isBook || false,
+            allowDownload: product.allowDownload || false,
+            drmEnabled: product.drmEnabled || false,
+            shippingEnabled: product.shippingEnabled || false,
+            shippingConfig: product.shippingConfig || undefined
         };
 
         const response = await fetch("https://surge.basalthq.com/api/inventory", {
