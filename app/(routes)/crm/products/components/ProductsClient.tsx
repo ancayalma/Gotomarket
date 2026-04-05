@@ -99,6 +99,8 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editFormData, setEditFormData] = useState<any>({});
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [editImageFile, setEditImageFile] = useState<File | null>(null);
     const router = useRouter();
 
     const [formData, setFormData] = useState({
@@ -119,7 +121,23 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
         isDigital: false,
         tags: "",
         taxable: true,
-        jurisdictionCode: ""
+        jurisdictionCode: "",
+        imageUrl: "",
+        shippingEnabled: false,
+        shippingConfig: {
+            enabled: true,
+            weightLbs: 0,
+            dimensions: { length: 0, width: 0, height: 0, unit: "in" },
+            shippingClass: "standard",
+            allowedMethods: ["standard"],
+            methodPricing: { "standard": 0 } as Record<string, number>,
+            freeShippingThreshold: 0,
+            handlingTimeDays: 1,
+            originCountry: "US",
+            domesticOnly: false,
+            requiresSignature: false,
+            insuranceRequired: false
+        }
     });
 
     const [taxCatalog, setTaxCatalog] = useState<{ jurisdictions: any[] }>({ jurisdictions: [] });
@@ -190,10 +208,30 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
         });
     };
 
+    const uploadImage = async (file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        const uploadRes = await fetch("/api/upload?context=generic", {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!uploadRes.ok) {
+            throw new Error("Failed to upload image");
+        }
+        const data = await uploadRes.json();
+        return data.document.document_file_url;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         try {
+            let finalImageUrl = formData.imageUrl;
+            if (imageFile) {
+                finalImageUrl = await uploadImage(imageFile);
+            }
+
             const res = await createProduct({
                 ...formData,
                 price: parseFloat(formData.price) || 0,
@@ -204,7 +242,10 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                 width: formData.width ? parseFloat(formData.width) : undefined,
                 height: formData.height ? parseFloat(formData.height) : undefined,
                 length: formData.length ? parseFloat(formData.length) : undefined,
-                tags: formData.tags ? formData.tags.split(",").map(t => t.trim()).filter(Boolean) : []
+                tags: formData.tags ? formData.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
+                imageUrl: finalImageUrl || undefined,
+                shippingEnabled: formData.shippingEnabled,
+                shippingConfig: formData.shippingEnabled ? { ...formData.shippingConfig, enabled: true } : undefined
             });
             if (res.success) {
                 toast.success("Product created successfully");
@@ -227,8 +268,25 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                     isDigital: false,
                     tags: "",
                     taxable: true,
-                    jurisdictionCode: ""
+                    jurisdictionCode: "",
+                    imageUrl: "",
+                    shippingEnabled: false,
+                    shippingConfig: {
+                        enabled: true,
+                        weightLbs: 0,
+                        dimensions: { length: 0, width: 0, height: 0, unit: "in" },
+                        shippingClass: "standard",
+                        allowedMethods: ["standard"],
+                        methodPricing: { "standard": 0 } as Record<string, number>,
+                        freeShippingThreshold: 0,
+                        handlingTimeDays: 1,
+                        originCountry: "US",
+                        domesticOnly: false,
+                        requiresSignature: false,
+                        insuranceRequired: false
+                    }
                 });
+                setImageFile(null);
                 router.refresh();
             } else {
                 toast.error("Failed to create product");
@@ -300,8 +358,24 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
             allowDownload: product.allowDownload || false,
             drmEnabled: product.drmEnabled || false,
             isSubscription: product.isSubscription || false,
-            industryPack: product.industryPack || ""
+            industryPack: product.industryPack || "",
+            shippingEnabled: product.shippingEnabled || false,
+            shippingConfig: product.shippingConfig || {
+                enabled: true,
+                weightLbs: 0,
+                dimensions: { length: 0, width: 0, height: 0, unit: "in" },
+                shippingClass: "standard",
+                allowedMethods: ["standard"],
+                methodPricing: { "standard": 0 } as Record<string, number>,
+                freeShippingThreshold: 0,
+                handlingTimeDays: 1,
+                originCountry: "US",
+                domesticOnly: false,
+                requiresSignature: false,
+                insuranceRequired: false
+            }
         });
+        setEditImageFile(null);
         setIsEditModalOpen(true);
     };
 
@@ -310,6 +384,11 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
         if (!editProduct) return;
         setIsEditing(true);
         try {
+            let finalImageUrl = editFormData.imageUrl;
+            if (editImageFile) {
+                finalImageUrl = await uploadImage(editImageFile);
+            }
+
             const updateData: any = {
                 name: editFormData.name,
                 sku: editFormData.sku,
@@ -326,7 +405,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                 height: editFormData.height ? parseFloat(editFormData.height) : undefined,
                 length: editFormData.length ? parseFloat(editFormData.length) : undefined,
                 isDigital: editFormData.isDigital || false,
-                imageUrl: editFormData.imageUrl || undefined,
+                imageUrl: finalImageUrl || undefined,
                 tags: editFormData.tags ? editFormData.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [],
                 taxable: editFormData.taxable ?? true,
                 jurisdictionCode: editFormData.jurisdictionCode || undefined,
@@ -339,6 +418,8 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                 allowDownload: editFormData.allowDownload || false,
                 drmEnabled: editFormData.drmEnabled || false,
                 isSubscription: editFormData.isSubscription || false,
+                shippingEnabled: editFormData.shippingEnabled,
+                shippingConfig: editFormData.shippingEnabled ? { ...editFormData.shippingConfig, enabled: true } : undefined,
             };
             const res = await updateProduct(editProduct.id, updateData);
             if (res.success) {
@@ -674,6 +755,38 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                                     />
                                                 </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="imageUpload" className="text-sm font-semibold flex items-center gap-2">
+                                                        <Box className="h-3.5 w-3.5 text-primary" /> Product Image
+                                                    </Label>
+                                                    <div className="flex flex-col gap-2">
+                                                        {formData.imageUrl && !imageFile && (
+                                                            <div className="w-20 h-20 rounded-md overflow-hidden border border-primary/10 bg-muted">
+                                                                <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                                            </div>
+                                                        )}
+                                                        {imageFile && (
+                                                            <div className="w-20 h-20 rounded-md overflow-hidden border border-primary/10 bg-muted">
+                                                                <img src={URL.createObjectURL(imageFile)} alt="Local Preview" className="w-full h-full object-cover" />
+                                                            </div>
+                                                        )}
+                                                        <Input
+                                                            id="imageUpload"
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => {
+                                                                if (e.target.files && e.target.files.length > 0) {
+                                                                    setImageFile(e.target.files[0]);
+                                                                    // Clear existing URL if uploading a new file
+                                                                    setFormData({ ...formData, imageUrl: "" });
+                                                                } else {
+                                                                    setImageFile(null);
+                                                                }
+                                                            }}
+                                                            className="text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </TabsContent>
 
                                             <TabsContent value="advanced" className="mt-0 space-y-6">
@@ -844,6 +957,107 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                {/* Shipping Configuration (Add) */}
+                                                <div className="space-y-4 pt-4 border-t border-primary/10">
+                                                    <div className="flex items-center justify-between">
+                                                        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                                            <Package className="h-4 w-4" /> Fulfillment & Shipping
+                                                        </h3>
+                                                        <Switch checked={formData.shippingEnabled} onCheckedChange={(c) => setFormData({ ...formData, shippingEnabled: c })} />
+                                                    </div>
+
+                                                    {formData.shippingEnabled && (
+                                                        <div className="grid gap-4 p-4 border border-primary/10 rounded-lg bg-muted/5">
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div className="space-y-2">
+                                                                    <Label className="text-xs">Physical Weight (lbs)</Label>
+                                                                    <Input type="number" step="0.01" value={formData.shippingConfig.weightLbs} onChange={(e) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, weightLbs: parseFloat(e.target.value) || 0 } })} />
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    <Label className="text-xs">Shipping Class</Label>
+                                                                    <select value={formData.shippingConfig.shippingClass} onChange={(e) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, shippingClass: e.target.value } })} className="w-full bg-muted/30 border border-primary/10 rounded-md p-1.5 text-sm">
+                                                                        <option value="standard">Standard</option>
+                                                                        <option value="oversized">Oversized</option>
+                                                                        <option value="fragile">Fragile</option>
+                                                                        <option value="hazardous">Hazardous</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-3 gap-2">
+                                                                <div className="space-y-2">
+                                                                    <Label className="text-xs">Length ({formData.shippingConfig.dimensions.unit})</Label>
+                                                                    <Input type="number" step="0.1" value={formData.shippingConfig.dimensions.length} onChange={(e) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, dimensions: { ...formData.shippingConfig.dimensions, length: parseFloat(e.target.value) || 0 } } })} />
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    <Label className="text-xs">Width ({formData.shippingConfig.dimensions.unit})</Label>
+                                                                    <Input type="number" step="0.1" value={formData.shippingConfig.dimensions.width} onChange={(e) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, dimensions: { ...formData.shippingConfig.dimensions, width: parseFloat(e.target.value) || 0 } } })} />
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    <Label className="text-xs">Height ({formData.shippingConfig.dimensions.unit})</Label>
+                                                                    <Input type="number" step="0.1" value={formData.shippingConfig.dimensions.height} onChange={(e) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, dimensions: { ...formData.shippingConfig.dimensions, height: parseFloat(e.target.value) || 0 } } })} />
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="space-y-2">
+                                                                <Label className="text-xs">Allowed Methods (hold Ctrl to select multiple)</Label>
+                                                                <select multiple value={formData.shippingConfig.allowedMethods} onChange={(e) => {
+                                                                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                                                    const newPricing = { ...formData.shippingConfig.methodPricing };
+                                                                    selected.forEach(s => { if (newPricing[s] === undefined) newPricing[s] = 0; });
+                                                                    setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, allowedMethods: selected, methodPricing: newPricing } })
+                                                                }} className="w-full bg-muted/30 border border-primary/10 rounded-md p-1.5 text-sm h-24">
+                                                                    <option value="standard">Standard</option>
+                                                                    <option value="express">Express</option>
+                                                                    <option value="overnight">Overnight</option>
+                                                                    <option value="freight">Freight</option>
+                                                                </select>
+                                                            </div>
+
+                                                            {formData.shippingConfig.allowedMethods.length > 0 && (
+                                                                <div className="space-y-2 p-3 bg-background/50 rounded-md border border-primary/10">
+                                                                    <Label className="text-xs font-semibold">Method Pricing Overrides ($)</Label>
+                                                                    <div className="grid grid-cols-2 gap-2 mt-2">
+                                                                        {formData.shippingConfig.allowedMethods.map((method: string) => (
+                                                                            <div key={method} className="flex items-center gap-2">
+                                                                                <Label className="text-xs w-20 capitalize">{method}</Label>
+                                                                                <Input type="number" step="0.01" className="h-8 text-xs flex-1" value={formData.shippingConfig.methodPricing[method] || 0} onChange={(e) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, methodPricing: { ...formData.shippingConfig.methodPricing, [method]: parseFloat(e.target.value) || 0 } } })} />
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div className="space-y-2">
+                                                                    <Label className="text-xs">Free Shipping Min Total ($)</Label>
+                                                                    <Input type="number" step="0.01" value={formData.shippingConfig.freeShippingThreshold} onChange={(e) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, freeShippingThreshold: parseFloat(e.target.value) || 0 } })} />
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    <Label className="text-xs">Handling Time (Days)</Label>
+                                                                    <Input type="number" step="1" value={formData.shippingConfig.handlingTimeDays} onChange={(e) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, handlingTimeDays: parseInt(e.target.value) || 0 } })} />
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex flex-wrap items-center gap-4 mt-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Switch checked={formData.shippingConfig.domesticOnly} onCheckedChange={(v) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, domesticOnly: v } })} />
+                                                                    <Label className="text-xs text-muted-foreground">Domestic Only</Label>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Switch checked={formData.shippingConfig.requiresSignature} onCheckedChange={(v) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, requiresSignature: v } })} />
+                                                                    <Label className="text-xs text-muted-foreground">Signature Req.</Label>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Switch checked={formData.shippingConfig.insuranceRequired} onCheckedChange={(v) => setFormData({ ...formData, shippingConfig: { ...formData.shippingConfig, insuranceRequired: v } })} />
+                                                                    <Label className="text-xs text-muted-foreground">Insurance Req.</Label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
                                             </TabsContent>
                                         </ScrollArea>
                                     </Tabs>
@@ -1103,19 +1317,45 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Image URL</Label>
-                                <div className="flex gap-3 items-start">
-                                    {editFormData.imageUrl && (
-                                        <div className="w-16 h-16 rounded-md overflow-hidden border border-primary/10 bg-muted shrink-0">
+                                <Label>Product Image</Label>
+                                <div className="flex gap-3 items-start flex-col">
+                                    {editFormData.imageUrl && !editImageFile && (
+                                        <div className="w-20 h-20 rounded-md overflow-hidden border border-primary/10 bg-muted shrink-0">
                                             <img src={editFormData.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                         </div>
                                     )}
+                                    {editImageFile && (
+                                        <div className="w-20 h-20 rounded-md overflow-hidden border border-primary/10 bg-muted shrink-0">
+                                            <img src={URL.createObjectURL(editImageFile)} alt="Local Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="grid gap-2 mt-2">
                                     <Input
-                                        value={editFormData.imageUrl}
-                                        onChange={(e) => setEditFormData({ ...editFormData, imageUrl: e.target.value })}
-                                        placeholder="https://example.com/product-image.jpg"
-                                        className="flex-1"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            if (e.target.files && e.target.files.length > 0) {
+                                                setEditImageFile(e.target.files[0]);
+                                                setEditFormData({ ...editFormData, imageUrl: "" });
+                                            } else {
+                                                setEditImageFile(null);
+                                            }
+                                        }}
+                                        className="text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                                     />
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-xs text-muted-foreground w-16">Or URL:</span>
+                                        <Input
+                                            value={editFormData.imageUrl}
+                                            onChange={(e) => {
+                                                setEditFormData({ ...editFormData, imageUrl: e.target.value });
+                                                setEditImageFile(null); // URL overrides local file
+                                            }}
+                                            placeholder="https://example.com/product-image.jpg"
+                                            className="flex-1 h-8 text-xs"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -1149,6 +1389,106 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                                     <Switch checked={editFormData.drmEnabled} onCheckedChange={(v) => setEditFormData({ ...editFormData, drmEnabled: v })} />
                                     <Label className="text-xs">DRM</Label>
                                 </div>
+                            </div>
+
+                            {/* Shipping Configuration (Edit) */}
+                            <div className="space-y-4 pt-4 border-t border-primary/10">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                        <Package className="h-4 w-4" /> Fulfillment & Shipping
+                                    </h3>
+                                    <Switch checked={editFormData.shippingEnabled} onCheckedChange={(c) => setEditFormData({ ...editFormData, shippingEnabled: c })} />
+                                </div>
+
+                                {editFormData.shippingEnabled && (
+                                    <div className="grid gap-4 p-4 border border-primary/10 rounded-lg bg-muted/5">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs">Physical Weight (lbs)</Label>
+                                                <Input type="number" step="0.01" value={editFormData.shippingConfig.weightLbs} onChange={(e) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, weightLbs: parseFloat(e.target.value) || 0 } })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-xs">Shipping Class</Label>
+                                                <select value={editFormData.shippingConfig.shippingClass} onChange={(e) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, shippingClass: e.target.value } })} className="w-full bg-muted/30 border border-primary/10 rounded-md p-1.5 text-sm">
+                                                    <option value="standard">Standard</option>
+                                                    <option value="oversized">Oversized</option>
+                                                    <option value="fragile">Fragile</option>
+                                                    <option value="hazardous">Hazardous</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs">Length ({editFormData.shippingConfig.dimensions.unit})</Label>
+                                                <Input type="number" step="0.1" value={editFormData.shippingConfig.dimensions.length} onChange={(e) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, dimensions: { ...editFormData.shippingConfig.dimensions, length: parseFloat(e.target.value) || 0 } } })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-xs">Width ({editFormData.shippingConfig.dimensions.unit})</Label>
+                                                <Input type="number" step="0.1" value={editFormData.shippingConfig.dimensions.width} onChange={(e) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, dimensions: { ...editFormData.shippingConfig.dimensions, width: parseFloat(e.target.value) || 0 } } })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-xs">Height ({editFormData.shippingConfig.dimensions.unit})</Label>
+                                                <Input type="number" step="0.1" value={editFormData.shippingConfig.dimensions.height} onChange={(e) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, dimensions: { ...editFormData.shippingConfig.dimensions, height: parseFloat(e.target.value) || 0 } } })} />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label className="text-xs">Allowed Methods (hold Ctrl to select multiple)</Label>
+                                            <select multiple value={editFormData.shippingConfig.allowedMethods} onChange={(e) => {
+                                                const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                                const newPricing = { ...editFormData.shippingConfig.methodPricing };
+                                                selected.forEach(s => { if (newPricing[s] === undefined) newPricing[s] = 0; });
+                                                setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, allowedMethods: selected, methodPricing: newPricing } })
+                                            }} className="w-full bg-muted/30 border border-primary/10 rounded-md p-1.5 text-sm h-24">
+                                                <option value="standard">Standard</option>
+                                                <option value="express">Express</option>
+                                                <option value="overnight">Overnight</option>
+                                                <option value="freight">Freight</option>
+                                            </select>
+                                        </div>
+
+                                        {editFormData.shippingConfig.allowedMethods.length > 0 && (
+                                            <div className="space-y-2 p-3 bg-background/50 rounded-md border border-primary/10">
+                                                <Label className="text-xs font-semibold">Method Pricing Overrides ($)</Label>
+                                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                                    {editFormData.shippingConfig.allowedMethods.map((method: string) => (
+                                                        <div key={method} className="flex items-center gap-2">
+                                                            <Label className="text-xs w-20 capitalize">{method}</Label>
+                                                            <Input type="number" step="0.01" className="h-8 text-xs flex-1" value={editFormData.shippingConfig.methodPricing[method] || 0} onChange={(e) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, methodPricing: { ...editFormData.shippingConfig.methodPricing, [method]: parseFloat(e.target.value) || 0 } } })} />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs">Free Shipping Min Total ($)</Label>
+                                                <Input type="number" step="0.01" value={editFormData.shippingConfig.freeShippingThreshold} onChange={(e) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, freeShippingThreshold: parseFloat(e.target.value) || 0 } })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-xs">Handling Time (Days)</Label>
+                                                <Input type="number" step="1" value={editFormData.shippingConfig.handlingTimeDays} onChange={(e) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, handlingTimeDays: parseInt(e.target.value) || 0 } })} />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap items-center gap-4 mt-2">
+                                            <div className="flex items-center gap-2">
+                                                <Switch checked={editFormData.shippingConfig.domesticOnly} onCheckedChange={(v) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, domesticOnly: v } })} />
+                                                <Label className="text-xs text-muted-foreground">Domestic Only</Label>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Switch checked={editFormData.shippingConfig.requiresSignature} onCheckedChange={(v) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, requiresSignature: v } })} />
+                                                <Label className="text-xs text-muted-foreground">Signature Req.</Label>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Switch checked={editFormData.shippingConfig.insuranceRequired} onCheckedChange={(v) => setEditFormData({ ...editFormData, shippingConfig: { ...editFormData.shippingConfig, insuranceRequired: v } })} />
+                                                <Label className="text-xs text-muted-foreground">Insurance Req.</Label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Industry Pack & Currency & Wallet */}
