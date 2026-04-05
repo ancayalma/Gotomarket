@@ -257,6 +257,50 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        // --- Smart Fallback for unmapped fields ---
+        const smartMappedKeys = new Set<string>();
+        let fallbackFirstName = "";
+        let fallbackLastName = "";
+
+        for (const [key, val] of Object.entries(submittedData)) {
+            const lowerKey = key.toLowerCase();
+            const strVal = String(val);
+            
+            if (!extracted_email && (lowerKey === 'email' || lowerKey.includes('email'))) {
+                extracted_email = strVal;
+                smartMappedKeys.add(key);
+            }
+            else if (!extracted_phone && (lowerKey === 'phone' || lowerKey.includes('phone') || lowerKey === 'tel' || lowerKey === 'mobile')) {
+                extracted_phone = strVal;
+                smartMappedKeys.add(key);
+            }
+            else if (!extracted_company && (lowerKey === 'company' || lowerKey === 'organization' || lowerKey === 'business')) {
+                extracted_company = strVal;
+                smartMappedKeys.add(key);
+            }
+            else if (!extracted_jobTitle && (lowerKey === 'jobtitle' || lowerKey === 'job_title' || lowerKey === 'title' || lowerKey === 'role')) {
+                extracted_jobTitle = strVal;
+                smartMappedKeys.add(key);
+            }
+            else if (!extracted_name && (lowerKey === 'name' || lowerKey === 'fullname' || lowerKey === 'full_name')) {
+                extracted_name = strVal;
+                smartMappedKeys.add(key);
+            }
+            else if (lowerKey === 'first_name' || lowerKey === 'firstname') {
+                fallbackFirstName = strVal;
+                smartMappedKeys.add(key);
+            }
+            else if (lowerKey === 'last_name' || lowerKey === 'lastname') {
+                fallbackLastName = strVal;
+                smartMappedKeys.add(key);
+            }
+        }
+
+        // Combine fallback first/last names if extracted_name wasn't explicitly found
+        if (!extracted_name && (fallbackFirstName || fallbackLastName)) {
+            extracted_name = `${fallbackFirstName} ${fallbackLastName}`.trim();
+        }
+
         // --- CRM Integration: Create Lead ---
 
         // 1. Name Parsing
@@ -287,7 +331,10 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        const allMappedKeys = new Set(form.fields.filter((f: any) => f.lead_field_mapping && f.lead_field_mapping !== "__none__").map((f: any) => f.name));
+        const allMappedKeys = new Set([
+            ...form.fields.filter((f: any) => f.lead_field_mapping && f.lead_field_mapping !== "__none__").map((f: any) => f.name),
+            ...Array.from(smartMappedKeys)
+        ]);
         const unmappedData = Object.entries(submittedData)
             .filter(([key]) => !allMappedKeys.has(key))
             .map(([key, val]) => `${key}: ${val}`)
