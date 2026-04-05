@@ -162,6 +162,12 @@ export async function POST(req: Request) {
       });
     }
 
+    if (assigned_account && assigned_account.trim() !== "") {
+      import("@/actions/quests/add-raw-xp")
+        .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 1, reason: "Sourced Contact for Account" }))
+        .catch((e) => systemLogger.warn(`[CONTACT_ACCOUNT_GAMIFICATION] Failed to award XP: ${e?.message}`));
+    }
+
     return NextResponse.json({ newContact }, { status: 200 });
   } catch (error) {
     systemLogger.error("[NEW_CONTACT_POST]", error);

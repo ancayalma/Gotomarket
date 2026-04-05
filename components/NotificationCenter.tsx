@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { getNotifications, markAsRead, markAllAsRead, clearNotification, clearAllNotifications } from "@/actions/crm/notifications";
 import { useRouter } from "next/navigation";
+import { logUserMetric } from "@/actions/university/log-user-metric";
 
 export default function NotificationCenter() {
     const [notifications, setNotifications] = useState<any[]>([]);
@@ -79,7 +80,10 @@ export default function NotificationCenter() {
     return (
         <DropdownMenu open={open} onOpenChange={(val) => {
             setOpen(val);
-            if (val) fetchNotifications();
+            if (val) {
+                fetchNotifications();
+                logUserMetric("viewed_notifications").catch(console.error);
+            }
         }}>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full bg-background/50 border hover:bg-background transition-colors">

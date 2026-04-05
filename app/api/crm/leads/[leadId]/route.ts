@@ -30,7 +30,15 @@ export async function DELETE(req: Request, props: { params: Promise<{ leadId: st
       return await unauthorizedResponse("DELETE", `crm_Leads:${params.leadId}`);
     }
 
-    // 3. Perform Delete
+    // 3. Perform Deep Delete (Wipe Completely)
+    await prismadb.crm_Lead_Pools_Leads.deleteMany({
+      where: { lead: params.leadId },
+    }).catch(() => {});
+
+    await prismadb.crm_Lead_Activities.deleteMany({
+      where: { lead: params.leadId },
+    }).catch(() => {});
+
     await prismadb.crm_Leads.delete({
       where: {
         id: params.leadId,

@@ -203,6 +203,11 @@ export async function sendInvoice(invoiceId: string, email: string) {
                 text: emailText,
                 html: emailHtml,
             });
+
+            import("@/actions/quests/add-raw-xp")
+                .then((m) => m.addRawXP({ userId, xpAmount: 5, reason: "Invoice Sent" }))
+                .catch((e) => systemLogger.warn(`[INVOICE_GAMIFICATION] Failed to award XP: ${e?.message}`));
+
             systemLogger.error(`[SendInvoice] Email sent to ${email} via SES (Tracked)`);
             return { success: true, message: "Email sent with tracking" };
         } catch (sesError: any) {

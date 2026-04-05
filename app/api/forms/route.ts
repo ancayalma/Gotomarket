@@ -193,6 +193,11 @@ export async function POST(req: NextRequest) {
         });
 
         await logActivityInternal(userId, "CREATE", "Form", `Created form: ${form.name} (${form.id})`, teamId);
+
+        import("@/actions/quests/add-raw-xp")
+          .then((m) => m.addRawXP({ userId, xpAmount: 5, reason: "Created Lead Capture Form" }))
+          .catch((e) => console.warn(`[CREATE_FORM_GAMIFICATION] Failed to award XP: ${e?.message}`));
+
         return NextResponse.json(form);
     } catch (error: any) {
         console.error("Error creating form:", error);

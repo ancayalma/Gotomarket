@@ -8,7 +8,7 @@ import { systemLogger } from "@/lib/logger";
 export async function PUT(req: Request, props: { params: Promise<{ userId: string }> }) {
   const params = await props.params;
   const session = await getServerSession(authOptions);
-  const { name, username, account_name } = await req.json();
+  const { name, username, account_name, lastKnownRegion } = await req.json();
 
   if (!session) {
     return new NextResponse("Unauthenticated", { status: 401 });
@@ -24,11 +24,25 @@ export async function PUT(req: Request, props: { params: Promise<{ userId: strin
         name: name,
         username: username,
         account_name: account_name,
+        lastKnownRegion: lastKnownRegion,
       },
       where: {
         id: params.userId,
       },
     });
+
+    import("@/actions/quests/add-raw-xp")
+      .then((m) => m.grantOneTimeXP({
+          userId: params.userId,
+          xpAmount: 10,
+          flagKey: "profile_completed",
+          reason: "Completed User Profile"
+      }))
+      .catch((e) => systemLogger.warn(`[UPDATE_PROFILE] Failed to award XP: ${e?.message}`));
+
+    import("@/actions/university/log-user-metric")
+      .then((m) => m.logUserMetric("updated_timezone"))
+      .catch((e) => systemLogger.warn(`[UPDATE_PROFILE] Failed to log user metric: ${e?.message}`));
 
     return NextResponse.json(newUserPass);
   } catch (error) {

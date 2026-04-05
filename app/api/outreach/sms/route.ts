@@ -315,6 +315,14 @@ export async function POST(req: Request) {
       errors: results.filter((r) => r.status === "error").length,
       results,
     };
+
+    // Gamification hook: Raw XP awarded per SMS sent
+    if (summary.sent > 0 && !testMode) {
+      import("@/actions/quests/add-raw-xp")
+        .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: summary.sent, reason: "Outreach SMS Sent" }))
+        .catch((e) => systemLogger.warn(`[OUTREACH_SMS] Failed to award XP: ${e?.message}`));
+    }
+
     return NextResponse.json(summary, { status: 200 });
   } catch (error) {
     systemLogger.error("[OUTREACH_SMS_POST]", error);

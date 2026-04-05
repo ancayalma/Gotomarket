@@ -3,11 +3,14 @@ import Container from "../../components/ui/Container";
 import DashboardRoleManager from "./_components/DashboardRoleManager";
 import SuspenseLoading from "@/components/loadings/suspense";
 import { LearnLink } from "@/components/ui/LearnLink";
+import { logUserMetric } from "@/actions/university/log-user-metric";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const CrmDashboardPage = async () => {
+  await logUserMetric("viewed_dashboard").catch(console.error);
+  
   return (
     <Container>
       <LearnLink

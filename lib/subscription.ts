@@ -13,6 +13,7 @@ type TeamWithPlan = {
     subscription_plan?: string | null; // Old Enum
     assigned_plan?: DBPlan | null;      // New Relation
     module_overrides?: string[];
+    temporary_modules?: { module: string; expires_at: Date | string }[];
 }
 
 export const getSubscriptionPlan = (slug?: string) => {
@@ -80,6 +81,17 @@ export const checkTeamFeature = (
     // 0. Check Override (Highest Priority)
     if (team.module_overrides?.includes("all")) return true;
     if (team.module_overrides?.includes(featureName)) return true;
+
+    // 0.5 Check Temporary Educational Unlocks
+    if (team.temporary_modules && team.temporary_modules.length > 0) {
+        const tempModule = team.temporary_modules.find(m => m.module === featureName || m.module === "all");
+        if (tempModule) {
+            const expires = new Date(tempModule.expires_at).getTime();
+            if (expires > Date.now()) {
+                return true;
+            }
+        }
+    }
 
     // 1. Check DB Plan
     if (team.assigned_plan) {

@@ -132,6 +132,11 @@ export async function createQuote(data: {
 
 
         revalidatePath("/crm/quotes");
+
+        import("@/actions/quests/add-raw-xp")
+          .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 10, reason: "Drafted CPQ Quote" }))
+          .catch((e) => systemLogger.warn(`[CREATE_QUOTE_GAMIFICATION] Failed to award XP: ${e?.message}`));
+
         return { success: true, quoteId: quote.id };
     } catch (error: any) {
         systemLogger.error("[CREATE_QUOTE]", error);

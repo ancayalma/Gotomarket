@@ -290,6 +290,13 @@ export async function PUT(req: Request) {
 
         const teamInfo = await getCurrentUserTeamId();
         await logActivityInternal(session.user.id, "UPDATE", "crm_Cases", `Updated case: ${updatedCase.id} (status: ${currentCase.status} → ${updateData.status || currentCase.status})`, teamInfo?.teamId || undefined);
+
+        if (updateData.status && updateData.status === "CLOSED" && currentCase.status !== "CLOSED") {
+            import("@/actions/quests/add-raw-xp")
+              .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 15, reason: "Resolved Support Case" }))
+              .catch((e) => systemLogger.warn(`[CLOSE_CASE_GAMIFICATION] Failed to award XP: ${e?.message}`));
+        }
+
         return NextResponse.json(updatedCase, { status: 200 });
     } catch (error) {
         systemLogger.error("[UPDATE_CASE_PUT]", error);

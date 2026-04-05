@@ -35,6 +35,7 @@ import { useIsMobile } from "@/hooks/use-is-mobile";
 
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import { useTableSettings } from "@/hooks/use-table-settings";
+import { logUserMetric } from "@/actions/university/log-user-metric";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -104,7 +105,12 @@ export function ContactsDataTable<TData, TValue>({
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    onColumnFiltersChange: (updater) => {
+        setColumnFilters(updater);
+        if (typeof updater === 'function' || (Array.isArray(updater) && updater.length > 0)) {
+            logUserMetric("used_custom_filter").catch(console.error);
+        }
+    },
     onColumnVisibilityChange: setColumnVisibility,
     onColumnSizingChange: setColumnSizing,
     getCoreRowModel: getCoreRowModel(),

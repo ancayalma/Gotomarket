@@ -41,6 +41,15 @@ export async function GET() {
                 data: { sesEmailVerified: true }
             });
 
+            import("@/actions/quests/add-raw-xp")
+              .then((m) => m.grantOneTimeXP({
+                  userId: session.user.id,
+                  xpAmount: 10,
+                  flagKey: "email_verified",
+                  reason: "Verified Work Email"
+              }))
+              .catch((e) => systemLogger.warn(`[VERIFY_EMAIL] Failed to award XP: ${e?.message}`));
+
             systemLogger.info(`[SES_USER_VERIFY] Email verified for user ${session.user.id} (${user.email})`);
             return NextResponse.json({ verified: true, email: user.email });
         }

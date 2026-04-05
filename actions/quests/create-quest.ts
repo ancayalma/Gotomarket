@@ -22,7 +22,7 @@ export async function createQuest(data: {
     icon?: string;
     color?: string;
     badge_name?: string;
-    badge_icon?: string;
+    badge_dna?: any;
     status?: "DRAFT" | "ACTIVE";
 }): Promise<{ success: boolean; questId?: string; error?: string }> {
     try {
@@ -100,7 +100,7 @@ export async function createQuest(data: {
             qp_reward: data.qp_reward || defaultQP[data.difficulty] || 100,
             xp_reward: data.xp_reward || 10,
             badge_name: data.badge_name || null,
-            badge_icon: data.badge_icon || null,
+            badge_dna: data.badge_dna || null,
             duration_preset: data.duration_preset,
             status: data.status || "DRAFT",
             starts_at,

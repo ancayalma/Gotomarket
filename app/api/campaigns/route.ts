@@ -353,6 +353,10 @@ export async function POST(req: Request) {
             }
         }
 
+        import("@/actions/quests/add-raw-xp")
+          .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 15, reason: "Configured Delivery Sequence" }))
+          .catch((e) => systemLogger.warn(`[CREATE_CAMPAIGN_GAMIFICATION] Failed to award XP: ${e?.message}`));
+
         return NextResponse.json({
             id: campaign.id,
             name: campaign.name,

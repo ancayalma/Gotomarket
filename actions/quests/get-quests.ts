@@ -15,6 +15,13 @@ export async function getQuests(filters?: {
         const { ObjectId } = require("mongodb");
         const questCollection = await dbAdapter.getNativeCollection("Quest");
         const progressCollection = await dbAdapter.getNativeCollection("QuestProgress");
+        const usersCollection = await dbAdapter.getNativeCollection("Users");
+
+        // Get total active team members for team-wide quests
+        const totalTeamMembers = await usersCollection.countDocuments({ 
+            team_id: new ObjectId(teamInfo.teamId),
+            userStatus: "ACTIVE"
+        });
 
         // Build filter
         const filter: any = { team_id: new ObjectId(teamInfo.teamId) };
@@ -52,7 +59,7 @@ export async function getQuests(filters?: {
                 {
                     $group: {
                         _id: "$quest_id",
-                        total_participants: { $sum: 1 },
+                        accepted_count: { $sum: 1 },
                         completed_count: {
                             $sum: { $cond: ["$is_completed", 1, 0] },
                         },
@@ -68,6 +75,14 @@ export async function getQuests(filters?: {
         return quests.map((q: any) => {
             const p = progressMap.get(q._id.toString());
             const tp = teamProgressMap.get(q._id.toString());
+            // Calculate total participants
+            let total_participants = 0;
+            if (q.is_team_wide) {
+                total_participants = totalTeamMembers;
+            } else if (q.assigned_users && Array.isArray(q.assigned_users)) {
+                total_participants = q.assigned_users.length;
+            }
+
             return {
                 ...q,
                 id: q._id.toString(),
@@ -81,13 +96,12 @@ export async function getQuests(filters?: {
                         completed_at: p.completed_at,
                         qp_awarded: p.qp_awarded || 0,
                     }
-                    : { current_count: 0, is_completed: false, qp_awarded: 0 },
-                team_progress: tp
-                    ? {
-                        total_participants: tp.total_participants || 0,
-                        completed_count: tp.completed_count || 0,
-                    }
-                    : { total_participants: 0, completed_count: 0 },
+                    : null,
+                team_progress: {
+                    total_participants,
+                    accepted_count: tp?.accepted_count || 0,
+                    completed_count: tp?.completed_count || 0,
+                },
             };
         });
     } catch (error) {

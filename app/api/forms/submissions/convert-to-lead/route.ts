@@ -105,9 +105,9 @@ export async function POST(req: NextRequest) {
                 phone: submission.extracted_phone || submission.data?.phone || submission.data?.Phone || "",
                 description: `Lead generated from form submission: ${submission.form?.name || "Unknown Form"}\n\nSource: ${submission.source_url || "Direct"}`,
                 lead_source: "FORM_SUBMISSION",
-                assigned_to: userId,
-                project: project.id, // Link to the project
-                team_id: teamId,
+                assigned_to_user: { connect: { id: userId } },
+                assigned_project: { connect: { id: project.id } },
+                assigned_team: { connect: { id: teamId } },
                 v: 0,
             },
         });

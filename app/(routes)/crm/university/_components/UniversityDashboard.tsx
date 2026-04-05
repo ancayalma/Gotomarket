@@ -160,9 +160,10 @@ interface UniversityDashboardProps {
     plan?: string;
     userLevel?: number;
     user?: any;
+    dynamicFlags?: Record<string, boolean>;
 }
 
-export default function UniversityDashboard({ plan, userLevel, user }: UniversityDashboardProps) {
+export default function UniversityDashboard({ plan, userLevel, user, dynamicFlags }: UniversityDashboardProps) {
     const [activeTab, setActiveTab] = useState<TabId>("getting-started");
     const [activeStage, setActiveStage] = useState<string | undefined>(undefined);
 
@@ -370,7 +371,7 @@ export default function UniversityDashboard({ plan, userLevel, user }: Universit
                             overviewWhy="Certifications standardized the team's skillset. Earning these badges demonstrates to leadership that you are capable of managing complex automation and high-value accounts."
                             overviewHow="Enroll in a Mastery Path. Complete the interactive assessments and pass the final simulation to earn your digital certificate and platform profile badge."
                         />
-                        <CertificationPaths userLevel={userLevel} user={user} />
+                        <CertificationPaths userLevel={userLevel} user={user} dynamicFlags={dynamicFlags} />
                     </motion.div>
                 )}
 

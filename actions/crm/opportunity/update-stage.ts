@@ -5,6 +5,7 @@ import { prismadb } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { logUserMetric } from "@/actions/university/log-user-metric";
 
 export async function updateOpportunitySalesStage(opportunityId: string, salesStageId: string) {
     try {
@@ -15,6 +16,8 @@ export async function updateOpportunitySalesStage(opportunityId: string, salesSt
             where: { id: opportunityId },
             data: { sales_stage: salesStageId }
         });
+
+        await logUserMetric("opportunity_moved");
 
         revalidatePath("/crm/opportunities");
         return { success: true };

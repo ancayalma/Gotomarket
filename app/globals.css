@@ -1544,3 +1544,14 @@ div.headlessui-portal>div {
 [data-state="open"]>.DropdownMenuValue {
   color: hsl(var(--foreground)) !important;
 }
+
+/* Fix for italic text getting clipped when using bg-clip-text */
+.bg-clip-text.italic,
+.italic .bg-clip-text,
+.bg-clip-text i,
+.bg-clip-text em {
+  padding-right: 0.3em;
+  margin-right: -0.3em; /* Negative margin to offset layout shift */
+  padding-left: 0.05em;
+  margin-left: -0.05em;
+}

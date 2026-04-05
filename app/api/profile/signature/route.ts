@@ -112,6 +112,16 @@ export async function POST(req: Request) {
           signature_meta: meta ?? undefined,
         },
       });
+
+      import("@/actions/quests/add-raw-xp")
+        .then((m) => m.grantOneTimeXP({
+            userId: session.user.id,
+            xpAmount: 25,
+            flagKey: "brand_signature_setup",
+            reason: "Configured Brand Signature"
+        }))
+        .catch((e) => systemLogger.warn(`[SIGNATURE_SETUP] Failed to award XP: ${e?.message}`));
+
       return NextResponse.json({ status: "ok" }, { status: 200 });
     }
 
@@ -124,6 +134,15 @@ export async function POST(req: Request) {
         signature_updated_at: new Date() as any,
       },
     });
+
+    import("@/actions/quests/add-raw-xp")
+      .then((m) => m.grantOneTimeXP({
+          userId: session.user.id,
+          xpAmount: 25,
+          flagKey: "signature_setup",
+          reason: "Configured Custom Signature"
+      }))
+      .catch((e) => systemLogger.warn(`[SIGNATURE_SETUP] Failed to award XP: ${e?.message}`));
 
     return NextResponse.json({ status: "ok" }, { status: 200 });
   } catch (error) {

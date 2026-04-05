@@ -2,9 +2,10 @@
 
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { dbAdapter } from "@/lib/database/db-adapter";
+import { computeLevelFromXP, getPrestigeTitle } from "@/lib/quest-engine/xp-curve";
 
 /**
- * Gets the current user's quest stats summary.
+ * Gets the current user's quest stats summary including XP, Level, and Badges.
  */
 export async function getMyQuestProgress(): Promise<{
     totalQP: number;
@@ -14,6 +15,30 @@ export async function getMyQuestProgress(): Promise<{
     streak: number;
     badges: string[];
     rank: number;
+    // XP/Level fields
+    xpTotal: number;
+    xpCurrent: number;
+    xpToNext: number;
+    level: number;
+    prestige: number;
+    prestigeTitle: string;
+    progressPct: number;
+    earnedBadges: Array<{
+        badge_id: string;
+        badge_dna: any;
+        badge_name: string;
+        category: string;
+        rarity: string;
+        awarded_at: string;
+    }>;
+    showcaseBadge: {
+        badge_id: string;
+        badge_dna: any;
+        badge_name: string;
+        category: string;
+        rarity: string;
+        awarded_at: string;
+    } | null;
 } | null> {
     try {
         const teamInfo = await getCurrentUserTeamId();
@@ -23,6 +48,7 @@ export async function getMyQuestProgress(): Promise<{
         const usersCollection = await dbAdapter.getNativeCollection("Users");
         const progressCollection = await dbAdapter.getNativeCollection("QuestProgress");
         const questCollection = await dbAdapter.getNativeCollection("Quest");
+        const badgeCollection = await dbAdapter.getNativeCollection("UserBadge");
 
         const user = await usersCollection.findOne({
             _id: new ObjectId(teamInfo.userId),
@@ -59,6 +85,43 @@ export async function getMyQuestProgress(): Promise<{
 
         const rank = allMembers.findIndex((m: any) => m._id.toString() === teamInfo.userId) + 1;
 
+        // Compute level state
+        const xpTotal = user.xp_total || 0;
+        const prestige = user.prestige || 0;
+        const levelState = computeLevelFromXP(xpTotal, prestige);
+        const prestigeTitle = user.prestige_title || getPrestigeTitle(prestige);
+
+        // Fetch earned badges
+        const rawBadges = await badgeCollection
+            .find({ user_id: new ObjectId(teamInfo.userId) })
+            .sort({ awarded_at: -1 })
+            .toArray();
+
+        const earnedBadges = rawBadges.map((b: any) => ({
+            badge_id: b.badge_id,
+            badge_dna: b.badge_dna,
+            badge_name: b.badge_name,
+            category: b.category,
+            rarity: b.rarity,
+            awarded_at: b.awarded_at?.toISOString() || new Date().toISOString(),
+        }));
+
+        // Showcase badge
+        let showcaseBadge = null;
+        if (user.showcase_badge_id) {
+            const showcase = rawBadges.find((b: any) => b._id.toString() === user.showcase_badge_id);
+            if (showcase) {
+                showcaseBadge = {
+                    badge_id: showcase.badge_id,
+                    badge_dna: showcase.badge_dna,
+                    badge_name: showcase.badge_name,
+                    category: showcase.category,
+                    rarity: showcase.rarity,
+                    awarded_at: showcase.awarded_at?.toISOString() || new Date().toISOString(),
+                };
+            }
+        }
+
         return {
             totalQP: user.quest_points_total || 0,
             seasonQP: user.quest_points_season || 0,
@@ -67,6 +130,15 @@ export async function getMyQuestProgress(): Promise<{
             streak: user.quest_streak || 0,
             badges: user.quest_badges || [],
             rank: rank || 1,
+            xpTotal,
+            xpCurrent: levelState.xpCurrent,
+            xpToNext: levelState.xpToNext,
+            level: levelState.level,
+            prestige,
+            prestigeTitle,
+            progressPct: levelState.progressPct,
+            earnedBadges,
+            showcaseBadge,
         };
     } catch (error) {
         console.error("[GET_MY_QUEST_PROGRESS]", error);

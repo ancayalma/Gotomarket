@@ -159,13 +159,19 @@ async function createLeadHandler(req: Request, body: LeadInput) {
         social_twitter,
         social_facebook,
         social_linkedin,
-        assigned_to: assigned_to || userId,
-        accountsIDs: accountIDs || undefined,
+        assigned_to_user: { connect: { id: assigned_to || userId } },
+        assigned_accounts: accountIDs ? { connect: { id: accountIDs } } : undefined,
         status: "NEW",
         type: "DEMO",
-        project: body.project || undefined,
+        pipeline_stage: "Engage_Human",
+        assigned_project: body.project ? { connect: { id: body.project } } : undefined,
       },
     });
+
+    // Automatically ensure contact creation for manually entered leads (since they are in Engage_Human)
+    import("@/actions/crm/lead-conversions")
+      .then((m) => m.ensureContactForLead(newLead.id))
+      .catch((e) => systemLogger.error("[NEW_LEAD_CONTACT_SYNC]", e));
 
     if (assigned_to !== userId) {
       const notifyRecipient = await prismadb.users.findFirst({
@@ -185,6 +191,10 @@ async function createLeadHandler(req: Request, body: LeadInput) {
         text: `New lead ${first_name} ${last_name} has been added to the system and assigned to you. You can click here for detail: ${process.env.NEXT_PUBLIC_APP_URL}/crm/leads/${newLead.id}`,
       });
     }
+
+    import("@/actions/quests/add-raw-xp")
+      .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 1, reason: "Manually Created Prospect" }))
+      .catch((e) => systemLogger.warn(`[CREATE_LEAD_GAMIFICATION] Failed to award XP: ${e?.message}`));
 
     return NextResponse.json({ newLead }, { status: 200 });
   } catch (error) {
@@ -251,11 +261,11 @@ export async function PUT(req: Request) {
         social_twitter: body.social_twitter,
         social_facebook: body.social_facebook,
         social_linkedin: body.social_linkedin,
-        assigned_to: body.assigned_to || userId,
-        accountsIDs: body.accountIDs,
+        assigned_to_user: (body.assigned_to || userId) ? { connect: { id: body.assigned_to || userId } } : undefined,
+        assigned_accounts: body.accountIDs === undefined ? undefined : (body.accountIDs ? { connect: { id: body.accountIDs } } : { disconnect: true }),
         status: body.status,
         type: body.type,
-        project: body.project,
+        assigned_project: body.project === undefined ? undefined : (body.project ? { connect: { id: body.project } } : { disconnect: true }),
       },
     });
 

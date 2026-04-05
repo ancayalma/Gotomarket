@@ -9,6 +9,7 @@ const navLinks = [
     { label: 'FEATURES', href: '/features' },
     { label: 'AI AGENTS', href: '/ai-agents' },
     { label: 'PRICING', href: '/pricing' },
+    { label: 'PARTNERS', href: '/partners' },
 ];
 
 const externalLinks: { label: string; href: string; internal?: boolean }[] = [

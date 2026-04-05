@@ -112,6 +112,10 @@ export async function POST(req: Request) {
       console.log(error);
     }
 
+    import("@/actions/quests/add-raw-xp")
+      .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 2, reason: "Created Account Task" }))
+      .catch((e) => systemLogger.warn(`[CREATE_TASK_GAMIFICATION] Failed to award XP: ${e?.message}`));
+
     return NextResponse.json(task);
   } catch (error) {
     systemLogger.error("[NEW_BOARD_POST]", error);

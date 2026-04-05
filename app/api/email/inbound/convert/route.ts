@@ -66,10 +66,10 @@ export async function POST(req: Request) {
                     first_name: firstName || undefined,
                     last_name: lastName,
                     email: email,
-                    team_id: thread.team_id || userTeamId,
-                    created_by: session.user.id,
+                    assigned_team: (thread.team_id || userTeamId) ? { connect: { id: thread.team_id || userTeamId } } : undefined,
+                    crate_by_user: session.user.id ? { connect: { id: session.user.id } } : undefined,
                     createdBy: session.user.id,
-                    assigned_to: session.user.id,
+                    assigned_to_user: session.user.id ? { connect: { id: session.user.id } } : undefined,
                     status: true,
                     type: "Customer"
                 }
@@ -96,8 +96,8 @@ export async function POST(req: Request) {
                     firstName: firstName || undefined,
                     lastName: lastName,
                     email: email,
-                    team_id: thread.team_id || userTeamId,
-                    assigned_to: session.user.id,
+                    assigned_team: (thread.team_id || userTeamId) ? { connect: { id: thread.team_id || userTeamId } } : undefined,
+                    assigned_to_user: session.user.id ? { connect: { id: session.user.id } } : undefined,
                     status: "NEW",
                     type: "DEMO"
                 }

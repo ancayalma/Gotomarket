@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import QuestCard from "./QuestCard";
 import CreateQuestModal from "./CreateQuestModal";
 import MyQuestsSummary from "./MyQuestsSummary";
+import QuestSystemGuide from "./QuestSystemGuide";
 import type { QuestWithProgress } from "@/actions/quests/types";
 import { LearnLink } from "@/components/ui/LearnLink";
 
@@ -22,6 +23,15 @@ interface QuestsPageShellProps {
         streak: number;
         badges: string[];
         rank: number;
+        xpTotal: number;
+        xpCurrent: number;
+        xpToNext: number;
+        level: number;
+        prestige: number;
+        prestigeTitle: string;
+        progressPct: number;
+        earnedBadges: any[];
+        showcaseBadge: any | null;
     } | null;
     activeQuestCount: number;
     isAdmin: boolean;
@@ -33,6 +43,7 @@ const STATUS_TABS = [
     { id: "COMPLETED", label: "Completed", icon: Trophy },
     { id: "DRAFT", label: "Drafts", icon: Filter, adminOnly: true },
     { id: "ARCHIVED", label: "Archived", icon: Filter, adminOnly: true },
+    { id: "GUIDE", label: "Field Manual", icon: Medal },
 ];
 
 const DIFFICULTY_FILTERS = ["ALL", "EASY", "MEDIUM", "HARD", "LEGENDARY"] as const;
@@ -122,7 +133,7 @@ export default function QuestsPageShell({
             </motion.div>
 
             {/* My Stats Summary */}
-            <MyQuestsSummary progress={myProgress} />
+            <MyQuestsSummary progress={myProgress} userId={userId} />
 
             {/* Toolbar */}
             <motion.div
@@ -190,62 +201,65 @@ export default function QuestsPageShell({
                 </div>
             </motion.div>
 
-            {/* Quest Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <AnimatePresence mode="popLayout">
-                    {filteredQuests.map((quest, idx) => (
-                        <motion.div
-                            key={quest.id}
-                            initial={{ opacity: 0, y: 15, scale: 0.97 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                            transition={{
-                                duration: 0.3,
-                                delay: idx * 0.05,
-                                ease: [0.25, 0.46, 0.45, 0.94],
-                            }}
-                        >
-                            <QuestCard
-                                quest={quest}
-                                isAdmin={isAdmin}
-                                onStatusChange={handleQuestCreated}
-                            />
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-
-                {filteredQuests.length === 0 && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="col-span-full flex flex-col items-center justify-center py-20 text-center"
-                    >
-                        <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
-                            <Sword className="w-8 h-8 text-muted-foreground/50" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-muted-foreground">
-                            {activeTab === "ACTIVE"
-                                ? "No active quests"
-                                : `No ${activeTab.toLowerCase()} quests`}
-                        </h3>
-                        <p className="text-sm text-muted-foreground/60 mt-1">
-                            {isAdmin && activeTab === "ACTIVE"
-                                ? "Create your first quest to get your team started."
-                                : "Check back soon for new challenges."}
-                        </p>
-                        {isAdmin && activeTab === "ACTIVE" && (
-                            <Button
-                                variant="outline"
-                                className="mt-4 gap-2"
-                                onClick={() => setShowCreateModal(true)}
+            {activeTab === "GUIDE" ? (
+                <QuestSystemGuide />
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <AnimatePresence mode="popLayout">
+                        {filteredQuests.map((quest, idx) => (
+                            <motion.div
+                                key={quest.id}
+                                initial={{ opacity: 0, y: 15, scale: 0.97 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                transition={{
+                                    duration: 0.3,
+                                    delay: idx * 0.05,
+                                    ease: [0.25, 0.46, 0.45, 0.94],
+                                }}
                             >
-                                <Plus className="w-4 h-4" />
-                                Create Quest
-                            </Button>
-                        )}
-                    </motion.div>
-                )}
-            </div>
+                                <QuestCard
+                                    quest={quest}
+                                    isAdmin={isAdmin}
+                                    onStatusChange={handleQuestCreated}
+                                />
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+
+                    {filteredQuests.length === 0 && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="col-span-full flex flex-col items-center justify-center py-20 text-center"
+                        >
+                            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
+                                <Sword className="w-8 h-8 text-muted-foreground/50" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-muted-foreground">
+                                {activeTab === "ACTIVE"
+                                    ? "No active quests"
+                                    : `No ${activeTab.toLowerCase()} quests`}
+                            </h3>
+                            <p className="text-sm text-muted-foreground/60 mt-1">
+                                {isAdmin && activeTab === "ACTIVE"
+                                    ? "Create your first quest to get your team started."
+                                    : "Check back soon for new challenges."}
+                            </p>
+                            {isAdmin && activeTab === "ACTIVE" && (
+                                <Button
+                                    variant="outline"
+                                    className="mt-4 gap-2"
+                                    onClick={() => setShowCreateModal(true)}
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Create Quest
+                                </Button>
+                            )}
+                        </motion.div>
+                    )}
+                </div>
+            )}
 
             {/* Create Quest Modal */}
             {isAdmin && (

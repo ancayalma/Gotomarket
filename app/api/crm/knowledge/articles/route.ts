@@ -59,6 +59,11 @@ export async function POST(req: Request) {
         });
 
         await logActivityInternal(session.user.email || "SYSTEM", "CREATE", "KnowledgeArticle", `Created knowledge article: ${title}`, teamInfo?.teamId || "");
+
+        import("@/actions/quests/add-raw-xp")
+          .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 10, reason: "Authored Knowledge Document" }))
+          .catch((e) => systemLogger.warn(`[CREATE_ARTICLE_GAMIFICATION] Failed to award XP: ${e?.message}`));
+
         return NextResponse.json(article, { status: 201 });
     } catch (error) {
         systemLogger.error("[KB_ARTICLE_POST]", error);

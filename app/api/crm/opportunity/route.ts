@@ -139,6 +139,14 @@ export async function PUT(req: Request) {
       // ... (other fields)
     } = body;
 
+    // Gamification level 7 tracking
+    if (body.next_step && body.next_step.trim().length > 0) {
+      import("@/actions/university/log-user-metric").then(m => m.logUserMetric("opportunity_next_step").catch(() => {}));
+    }
+    if (body.type) {
+      import("@/actions/university/log-user-metric").then(m => m.logUserMetric("opportunity_tagged").catch(() => {}));
+    }
+
     // 1. Fetch current opportunity to check ownership
     const existingOpportunity = await prismadb.crm_Opportunities.findUnique({
       where: { id },

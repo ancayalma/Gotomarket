@@ -39,6 +39,7 @@ const FormSchema = z.object({
   name: z.string().min(3).max(50),
   username: z.string().min(2).max(50),
   account_name: z.string().min(2).max(50),
+  lastKnownRegion: z.string().optional(),
 });
 
 export function ProfileForm({ data }: ProfileFormProps) {
@@ -56,6 +57,7 @@ export function ProfileForm({ data }: ProfileFormProps) {
       name: data?.name || "",
       username: data?.username || "",
       account_name: data?.account_name || "",
+      lastKnownRegion: data?.lastKnownRegion || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
     },
   });
 
@@ -136,6 +138,34 @@ export function ProfileForm({ data }: ProfileFormProps) {
                   value={field.value ?? ""}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="lastKnownRegion"
+          render={({ field }) => (
+            <FormItem className="w-full md:w-1/3">
+              <FormLabel>Time Zone</FormLabel>
+              <Select disabled={isLoading} onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a timezone" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                  <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
+                  <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
+                  <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
+                  <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                  <SelectItem value="Europe/Paris">Central Europe (CET)</SelectItem>
+                  <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                  <SelectItem value="UTC">UTC</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

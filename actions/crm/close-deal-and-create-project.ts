@@ -170,6 +170,10 @@ export async function closeDealAndCreateProject(opportunityId: string): Promise<
             }).catch(() => { });
         }
 
+        import("@/actions/quests/add-raw-xp")
+          .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 50, reason: "Closed Opportunity (Won)" }))
+          .catch((e) => systemLogger.warn(`[CLOSE_DEAL_GAMIFICATION] Failed to award XP: ${e?.message}`));
+
         return {
             success: true,
             data: { projectId }

@@ -50,10 +50,10 @@ export async function POST(
                 jobTitle: contact.position,
                 status: "NEW",
                 lead_source: "Contact Conversion",
-                assigned_to: contact.assigned_to || userId,
-                accountsIDs: contact.accountsIDs || undefined, // Transfers associations unconditionally!
-                team_id: contact.team_id || undefined,
-                project: contact.assigned_department_id || undefined, // Assuming temporary mapping hook
+                assigned_to_user: { connect: { id: contact.assigned_to || userId } },
+                assigned_accounts: contact.accountsIDs ? { connect: { id: contact.accountsIDs } } : undefined,
+                assigned_team: contact.team_id ? { connect: { id: contact.team_id } } : undefined,
+                assigned_project: contact.assigned_department_id ? { connect: { id: contact.assigned_department_id } } : undefined,
                 description: `Converted from Contact: ${contact.first_name || ""} ${contact.last_name || ""}`,
             },
         });
