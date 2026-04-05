@@ -46,6 +46,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
@@ -61,7 +62,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createProduct, updateProduct, importFromSurge, importFromShopify, importFromWooCommerce, exportToSurge, getSurgeTaxCatalog, getEnabledIntegrations } from "@/actions/crm/products";
+import { createProduct, updateProduct, deleteProduct, importFromSurge, importFromShopify, importFromWooCommerce, exportToSurge, getSurgeTaxCatalog, getEnabledIntegrations } from "@/actions/crm/products";
 import Image from "next/image";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -1190,9 +1191,54 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                                                         {isExporting === product.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
                                                         {product.surge_id ? "Sync to Surge" : "Export to Surge"}
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="gap-2 text-destructive">
-                                                        <Trash className="h-3.5 w-3.5" /> Delete
-                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                    {product.surge_id ? (
+                                                        <>
+                                                            <DropdownMenuItem className="gap-2 text-orange-400" onClick={() => {
+                                                                if (confirm(`Remove "${product.name}" from CRM only? It will remain on Surge and can be re-imported.`)) {
+                                                                    deleteProduct(product.id, false).then((res: any) => {
+                                                                        if (res.success) {
+                                                                            toast.success("Removed from CRM (still on Surge)");
+                                                                            router.refresh();
+                                                                        } else {
+                                                                            toast.error(res.error || "Failed to delete");
+                                                                        }
+                                                                    });
+                                                                }
+                                                            }}>
+                                                                <Trash className="h-3.5 w-3.5" /> Remove from CRM
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem className="gap-2 text-destructive" onClick={() => {
+                                                                if (confirm(`Permanently delete "${product.name}" from both CRM and Surge?`)) {
+                                                                    deleteProduct(product.id, true).then((res: any) => {
+                                                                        if (res.success) {
+                                                                            toast.success(`Product deleted${res.deletedFromSurge ? " from CRM & Surge" : ""}`);
+                                                                            router.refresh();
+                                                                        } else {
+                                                                            toast.error(res.error || "Failed to delete");
+                                                                        }
+                                                                    });
+                                                                }
+                                                            }}>
+                                                                <Trash className="h-3.5 w-3.5" /> Delete Everywhere
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    ) : (
+                                                        <DropdownMenuItem className="gap-2 text-destructive" onClick={() => {
+                                                            if (confirm(`Delete "${product.name}"?`)) {
+                                                                deleteProduct(product.id, false).then((res: any) => {
+                                                                    if (res.success) {
+                                                                        toast.success("Product deleted");
+                                                                        router.refresh();
+                                                                    } else {
+                                                                        toast.error(res.error || "Failed to delete");
+                                                                    }
+                                                                });
+                                                            }
+                                                        }}>
+                                                            <Trash className="h-3.5 w-3.5" /> Delete
+                                                        </DropdownMenuItem>
+                                                    )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>

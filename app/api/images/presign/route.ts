@@ -9,13 +9,15 @@ export async function GET(req: NextRequest) {
 
         if (!url) return NextResponse.json({ error: "No URL provided" }, { status: 400 });
 
-        if (url.includes("s3") || url.includes("ovh.us")) {
+        // Only presign URLs from our own CRM S3 bucket
+        if (url.includes("basaltcrm") && (url.includes("s3") || url.includes("ovh.us"))) {
             const client = getBlobServiceClient();
             const key = new URL(url).pathname.substring(1);
             const presigned = await client.getPresignedUrl(key);
             return NextResponse.redirect(presigned);
         }
 
+        // For any other URL (Surge S3, external, etc.), just redirect directly
         return NextResponse.redirect(url);
     } catch (e) {
         systemLogger.error("[IMAGE_PRESIGN_PROXY_ERROR]", e);

@@ -112,56 +112,68 @@ export async function createProduct(data: {
     }
 }
 
+// Helper: check if a URL is from Surge's S3 bucket (not ours)
+function isSurgeHostedUrl(url: string): boolean {
+    return url.includes("basaltsurge") && (url.includes("s3") || url.includes("ovh.us"));
+}
+
+// Helper: check if a URL is from our CRM S3 bucket
+function isCrmHostedUrl(url: string): boolean {
+    return url.includes("basaltcrm") && (url.includes("s3") || url.includes("ovh.us"));
+}
+
+// Helper: resolve a product image to a data URL for Surge's images[] array
+// Returns undefined if the image is already on Surge (no re-upload needed)
+async function resolveImageForSurge(product: any): Promise<string[] | undefined> {
+    // If we have the original Surge data URL cached, use it directly — no fetch needed
+    if (product.surgeImageData) {
+        return [product.surgeImageData];
+    }
+
+    if (!product.imageUrl) return undefined;
+
+    // If this image is already hosted on Surge, Surge already has it — don't touch
+    if (isSurgeHostedUrl(product.imageUrl)) {
+        return undefined;
+    }
+
+    try {
+        // Already a data URL — pass through directly
+        if (product.imageUrl.startsWith("data:")) {
+            return [product.imageUrl];
+        }
+
+        if (product.imageUrl.startsWith("http")) {
+            let fetchUrl = product.imageUrl;
+            // Presign if from our own private S3
+            if (isCrmHostedUrl(fetchUrl)) {
+                const { getBlobServiceClient } = await import("@/lib/s3-storage");
+                const key = new URL(product.imageUrl).pathname.substring(1);
+                fetchUrl = await getBlobServiceClient().getPresignedUrl(key);
+            }
+
+            // Fetch and convert to data URL
+            const imgRes = await fetch(fetchUrl);
+            if (imgRes.ok) {
+                const arrayBuffer = await imgRes.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+                const base64 = buffer.toString("base64");
+                return [`data:${contentType};base64,${base64}`];
+            }
+        }
+    } catch (e) {
+        systemLogger.error("[SURGE_IMAGE_RESOLVE_ERROR]", e);
+    }
+    return undefined;
+}
+
 // Helper: push product data to Surge API
 async function syncProductToSurge(product: any, apiKey: string) {
     try {
-        let surgeImages: string[] | undefined = undefined;
-        
-        if (product.imageUrl) {
-            if (product.imageUrl.startsWith("data:")) {
-                surgeImages = [product.imageUrl];
-            } else if (product.imageUrl.startsWith("http")) {
-                try {
-                    let fetchUrl = product.imageUrl;
-                    if (fetchUrl.includes("s3") || fetchUrl.includes("ovh.us")) {
-                        const { getBlobServiceClient } = await import("@/lib/s3-storage");
-                        const key = new URL(product.imageUrl).pathname.substring(1);
-                        fetchUrl = await getBlobServiceClient().getPresignedUrl(key);
-                    }
-                    const imgRes = await fetch(fetchUrl);
-                    if (imgRes.ok) {
-                        const blob = await imgRes.blob();
-                        const formData = new FormData();
-                        formData.append("image", blob, `product-${product.sku}.jpg`);
-                        formData.append("sku", product.sku);
+        const surgeImages = await resolveImageForSurge(product);
 
-                        const uploadRes = await fetch("https://surge.basalthq.com/api/inventory/images", {
-                            method: "POST",
-                            headers: {
-                                "Ocp-Apim-Subscription-Key": apiKey
-                            },
-                            body: formData
-                        });
-
-                        if (uploadRes.ok) {
-                            const json = await uploadRes.json();
-                            if (json.ok && (json.images || json.imageUrl)) {
-                                const parsedImages = json.images || json.imageUrl;
-                                surgeImages = Array.isArray(parsedImages) ? parsedImages : [parsedImages];
-                            }
-                        } else {
-                            systemLogger.error("[SURGE_IMAGE_UPLOAD_FAILED]", await uploadRes.text());
-                        }
-                    }
-                } catch (e) {
-                    systemLogger.error("[SURGE_IMAGE_ENCODE_ERROR]", e);
-                }
-            } else {
-                surgeImages = [product.imageUrl];
-            }
-        }
-
-        const surgeBody = {
+        const surgeBody: any = {
             id: product.surge_id || undefined,
             sku: product.sku,
             name: product.name,
@@ -173,7 +185,6 @@ async function syncProductToSurge(product: any, apiKey: string) {
             costUsd: product.costPrice || undefined,
             taxable: product.taxable,
             jurisdictionCode: product.jurisdictionCode || undefined,
-            images: surgeImages,
             attributes: product.attributes || undefined,
             industryPack: product.industryPack || undefined,
             currency: product.currency || "USD",
@@ -184,6 +195,11 @@ async function syncProductToSurge(product: any, apiKey: string) {
             shippingEnabled: product.shippingEnabled || false,
             shippingConfig: product.shippingConfig || undefined
         };
+
+        // Only include images if we have new ones to push — omitting preserves existing Surge images
+        if (surgeImages) {
+            surgeBody.images = surgeImages;
+        }
 
         const response = await fetch("https://surge.basalthq.com/api/inventory", {
             method: "POST",
@@ -398,6 +414,70 @@ export async function updateProduct(productId: string, data: {
     }
 }
 
+export async function deleteProduct(productId: string, deleteFromSurge: boolean = true) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+        const teamId = (session.user as any).team_id;
+
+        const product = await prismadb.crm_Products.findUnique({
+            where: { id: productId, team_id: teamId }
+        });
+
+        if (!product) return { success: false, error: "Product not found" };
+
+        let surgeDeleted = false;
+
+        // Only delete from Surge if explicitly requested and product is synced
+        if (deleteFromSurge && product.surge_id) {
+            try {
+                const integration = await prismadb.tenant_Integrations.findUnique({
+                    where: { tenant_id: teamId }
+                });
+
+                if (integration?.surge_enabled && integration?.surge_api_key) {
+                    const response = await fetch(`https://surge.basalthq.com/api/inventory?id=${product.surge_id}`, {
+                        method: "DELETE",
+                        headers: {
+                            "Ocp-Apim-Subscription-Key": integration.surge_api_key
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errText = await response.text().catch(() => "");
+                        systemLogger.error("[DELETE_FROM_SURGE]", `Failed (${response.status}): ${errText}`);
+                    } else {
+                        surgeDeleted = true;
+                    }
+                }
+            } catch (surgeErr) {
+                systemLogger.error("[DELETE_FROM_SURGE]", surgeErr);
+            }
+        }
+
+        // Delete locally (hard delete including bundle relations)
+        await prismadb.crm_ProductBundles.deleteMany({
+            where: {
+                OR: [
+                    { parentProductId: productId },
+                    { childProductId: productId }
+                ]
+            }
+        });
+
+        await prismadb.crm_Products.delete({
+            where: { id: productId }
+        });
+
+        revalidatePath("/crm/products");
+        return { success: true, deletedFromSurge: surgeDeleted };
+    } catch (error) {
+        systemLogger.error("[DELETE_PRODUCT]", error);
+        return { success: false, error: "Failed to delete product" };
+    }
+}
+
 export async function getSurgeTaxCatalog() {
     try {
         const session = await getServerSession(authOptions);
@@ -458,6 +538,41 @@ export async function importFromSurge() {
         let updatedCount = 0;
 
         for (const item of surgeItems) {
+            // Resolve image: data URLs get uploaded to our S3, HTTP URLs stored directly
+            const surgeImageSrc = item.images?.[0] || undefined;
+            let resolvedImageUrl: string | undefined = undefined;
+            let surgeImageData: string | undefined = undefined;
+
+            if (surgeImageSrc) {
+                if (surgeImageSrc.startsWith("data:")) {
+                    // Keep the original data URL for sync operations
+                    surgeImageData = surgeImageSrc;
+                    // Upload to our S3 for reliable display
+                    try {
+                        const base64Match = surgeImageSrc.match(/^data:([^;]+);base64,(.+)$/);
+                        if (base64Match) {
+                            const mimeType = base64Match[1];
+                            const buffer = Buffer.from(base64Match[2], "base64");
+                            const ext = mimeType.split("/")[1] || "jpg";
+                            const key = `uploads/${teamId}/${Date.now()}_${item.sku}.${ext}`;
+                            const { getBlobServiceClient } = await import("@/lib/s3-storage");
+                            const s3 = getBlobServiceClient();
+                            const container = s3.getContainerClient(process.env.S3_BUCKET_NAME || "basaltcrm");
+                            const blobClient = container.getBlockBlobClient(key);
+                            await blobClient.uploadData(buffer, {
+                                blobHTTPHeaders: { blobContentType: mimeType }
+                            });
+                            resolvedImageUrl = blobClient.url;
+                        }
+                    } catch (imgErr) {
+                        systemLogger.error(`[IMPORT_SURGE_IMAGE] S3 upload failed for ${item.sku}:`, imgErr);
+                    }
+                } else if (surgeImageSrc.startsWith("http")) {
+                    // Surge S3 URLs are accessible directly
+                    resolvedImageUrl = surgeImageSrc;
+                }
+            }
+
             const existingProduct = await prismadb.crm_Products.findFirst({
                 where: {
                     OR: [
@@ -482,7 +597,9 @@ export async function importFromSurge() {
                         surge_id: item.id,
                         taxable: item.taxable ?? true,
                         jurisdictionCode: item.jurisdictionCode,
-                        imageUrl: item.images?.[0] || undefined,
+                        // Prefer existing CRM image, only use Surge image if no local image exists
+                        imageUrl: existingProduct.imageUrl || resolvedImageUrl || undefined,
+                        surgeImageData: surgeImageData || existingProduct.surgeImageData || undefined,
                         industryPack: item.industryPack || undefined,
                         attributes: item.attributes || undefined,
                         currency: item.currency || "USD",
@@ -509,7 +626,8 @@ export async function importFromSurge() {
                         surge_id: item.id,
                         taxable: item.taxable ?? true,
                         jurisdictionCode: item.jurisdictionCode,
-                        imageUrl: item.images?.[0] || undefined,
+                        imageUrl: resolvedImageUrl || undefined,
+                        surgeImageData: surgeImageData || undefined,
                         industryPack: item.industryPack || undefined,
                         attributes: item.attributes || undefined,
                         currency: item.currency || "USD",
@@ -554,53 +672,9 @@ export async function exportToSurge(productId: string) {
 
         if (!product) return { success: false, error: "Product not found" };
 
-        let surgeImages: string[] | undefined = undefined;
-        
-        if (product.imageUrl) {
-            if (product.imageUrl.startsWith("data:")) {
-                surgeImages = [product.imageUrl];
-            } else if (product.imageUrl.startsWith("http")) {
-                try {
-                    let fetchUrl = product.imageUrl;
-                    if (fetchUrl.includes("s3") || fetchUrl.includes("ovh.us")) {
-                        const { getBlobServiceClient } = await import("@/lib/s3-storage");
-                        const key = new URL(product.imageUrl).pathname.substring(1);
-                        fetchUrl = await getBlobServiceClient().getPresignedUrl(key);
-                    }
-                    const imgRes = await fetch(fetchUrl);
-                    if (imgRes.ok) {
-                        const blob = await imgRes.blob();
-                        const formData = new FormData();
-                        formData.append("image", blob, `product-${product.sku}.jpg`);
-                        formData.append("sku", product.sku);
+        const surgeImages = await resolveImageForSurge(product);
 
-                        const uploadRes = await fetch("https://surge.basalthq.com/api/inventory/images", {
-                            method: "POST",
-                            headers: {
-                                "Ocp-Apim-Subscription-Key": integration.surge_api_key
-                            },
-                            body: formData
-                        });
-
-                        if (uploadRes.ok) {
-                            const json = await uploadRes.json();
-                            if (json.ok && (json.images || json.imageUrl)) {
-                                const parsedImages = json.images || json.imageUrl;
-                                surgeImages = Array.isArray(parsedImages) ? parsedImages : [parsedImages];
-                            }
-                        } else {
-                            systemLogger.error("[SURGE_IMAGE_UPLOAD_FAILED]", await uploadRes.text());
-                        }
-                    }
-                } catch (e) {
-                    systemLogger.error("[SURGE_IMAGE_ENCODE_ERROR]", e);
-                }
-            } else {
-                surgeImages = [product.imageUrl];
-            }
-        }
-
-        const surgeBody = {
+        const surgeBody: any = {
             id: product.surge_id || undefined,
             sku: product.sku,
             name: product.name,
@@ -612,7 +686,6 @@ export async function exportToSurge(productId: string) {
             costUsd: product.costPrice || undefined,
             taxable: product.taxable,
             jurisdictionCode: product.jurisdictionCode || undefined,
-            images: surgeImages,
             attributes: product.attributes || undefined,
             industryPack: product.industryPack || undefined,
             currency: product.currency || "USD",
@@ -623,6 +696,11 @@ export async function exportToSurge(productId: string) {
             shippingEnabled: product.shippingEnabled || false,
             shippingConfig: product.shippingConfig || undefined
         };
+
+        // Only include images if we have new ones to push — omitting preserves existing Surge images
+        if (surgeImages) {
+            surgeBody.images = surgeImages;
+        }
 
         const response = await fetch("https://surge.basalthq.com/api/inventory", {
             method: "POST",
