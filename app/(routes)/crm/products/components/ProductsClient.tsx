@@ -762,7 +762,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                                                     <div className="flex flex-col gap-2">
                                                         {formData.imageUrl && !imageFile && (
                                                             <div className="w-20 h-20 rounded-md overflow-hidden border border-primary/10 bg-muted">
-                                                                <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                                                <img src={formData.imageUrl?.match(/s3|ovh\.us/) ? `/api/images/presign?url=${encodeURIComponent(formData.imageUrl)}` : formData.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                                             </div>
                                                         )}
                                                         {imageFile && (
@@ -1114,7 +1114,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                                         <TableCell>
                                             {product.imageUrl ? (
                                                 <div className="w-10 h-10 rounded-md overflow-hidden border border-primary/10 bg-muted">
-                                                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                                                    <img src={product.imageUrl?.match(/s3|ovh\.us/) ? `/api/images/presign?url=${encodeURIComponent(product.imageUrl)}` : product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
                                                 </div>
                                             ) : (
                                                 <div className="p-2 bg-muted rounded-md group-hover:bg-primary/10 transition-colors">
@@ -1321,7 +1321,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                                 <div className="flex gap-3 items-start flex-col">
                                     {editFormData.imageUrl && !editImageFile && (
                                         <div className="w-20 h-20 rounded-md overflow-hidden border border-primary/10 bg-muted shrink-0">
-                                            <img src={editFormData.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                            <img src={editFormData.imageUrl?.match(/s3|ovh\.us/) ? `/api/images/presign?url=${encodeURIComponent(editFormData.imageUrl)}` : editFormData.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                         </div>
                                     )}
                                     {editImageFile && (
