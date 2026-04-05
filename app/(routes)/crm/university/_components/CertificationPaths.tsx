@@ -40,6 +40,7 @@ import Link from "next/link";
 import Image from "next/image"; // Added Image import as it was in the provided diff, assuming it's needed later
 
 import { cn } from "@/lib/utils";
+import { managePartnerProfile } from "@/actions/university/toggle-partner";
 
 const PHASES = [
     { title: "The Foundation", id: "foundation", range: "0-15%", color: "text-blue-400", borderColor: "border-blue-500/20", bgColor: "bg-blue-500/10" },
@@ -272,10 +273,20 @@ function clamp(min: number, val: number, max: number) {
     return Math.max(min, Math.min(max, val));
 }
 
-export default function CertificationPaths({ userLevel = 1, user }: { userLevel?: number, user?: any }) {
+export default function CertificationPaths({ userLevel = 1, user, dynamicFlags = {} }: { userLevel?: number, user?: any, dynamicFlags?: Record<string, boolean> }) {
     const [stage, setStage] = React.useState<string>("Step 10: Close Won");
     const [touches, setTouches] = React.useState<string>("3");
     const [daysToBooking, setDaysToBooking] = React.useState<string>("7");
+    
+    // Partner Form State
+    const [isPartner, setIsPartner] = React.useState<boolean>(user?.partner_profile?.is_active || false);
+    const [partnerForm, setPartnerForm] = React.useState({
+        agency_name: user?.partner_profile?.agency_name || "",
+        website: user?.partner_profile?.website || "",
+        calendar_url: user?.partner_profile?.calendar_url || "",
+        bio: user?.partner_profile?.bio || "",
+    });
+    const [partnerStatus, setPartnerStatus] = React.useState<"idle" | "saving" | "success" | "error">("idle");
 
     const simulatorResult = React.useMemo(() => {
         const base = STAGE_WEIGHTS[stage] || 0;
@@ -329,11 +340,78 @@ export default function CertificationPaths({ userLevel = 1, user }: { userLevel?
                                     if (milestone.id === userLevel) {
                                         let isReqDone = req.done;
 
-                                        // Level 1 logic: evaluate in real-time
+                                        // Level 1 logic: evaluate metrics from flags
                                         if (milestone.id === 1) {
-                                            if (req.text.includes("avatar")) isReqDone = !!user?.avatar;
-                                            if (req.text.includes("time zone")) isReqDone = true; // Assume configured if they are here
-                                            if (req.text.includes("Dashboard")) isReqDone = true; // Assume navigated
+                                            if (req.text.includes("avatar")) isReqDone = !!dynamicFlags["avatar"];
+                                            if (req.text.includes("time zone")) isReqDone = !!dynamicFlags["timezone"];
+                                            if (req.text.includes("Dashboard")) isReqDone = !!dynamicFlags["dashboard"];
+                                        }
+                                        
+                                        // Level 2 logic: map to dynamic flags
+                                        if (milestone.id === 2) {
+                                            if (req.text.includes("signature")) isReqDone = !!dynamicFlags["signature"];
+                                            if (req.text.includes("message")) isReqDone = !!dynamicFlags["message"];
+                                            if (req.text.includes("notification")) isReqDone = !!dynamicFlags["notifications"];
+                                        }
+
+                                        // Level 3 logic
+                                        if (milestone.id === 3) {
+                                            if (req.text.includes("Lead")) isReqDone = !!dynamicFlags["lead_created"];
+                                            if (req.text.includes("note")) isReqDone = !!dynamicFlags["note_created"];
+                                            if (req.text.includes("contact")) isReqDone = !!dynamicFlags["contact_updated"];
+                                        }
+
+                                        // Level 4 logic
+                                        if (milestone.id === 4) {
+                                            if (req.text.includes("Task")) isReqDone = !!dynamicFlags["created_task"];
+                                            if (req.text.includes("completed")) isReqDone = !!dynamicFlags["completed_task"];
+                                            if (req.text.includes("Opportunity")) isReqDone = !!dynamicFlags["linked_task"];
+                                        }
+
+                                        // Level 5 logic
+                                        if (milestone.id === 5) {
+                                            if (req.text.includes("global search")) isReqDone = !!dynamicFlags["global_search"];
+                                            if (req.text.includes("filter")) isReqDone = !!dynamicFlags["custom_filter"];
+                                            if (req.text.includes("bookmark")) isReqDone = !!dynamicFlags["bookmark"];
+                                        }
+
+                                        // Level 6 logic
+                                        if (milestone.id === 6) {
+                                            if (req.text.includes("active Opportunity")) isReqDone = !!dynamicFlags["opportunity_created"];
+                                            if (req.text.includes("primary contact")) isReqDone = !!dynamicFlags["opportunity_contact"];
+                                            if (req.text.includes("new pipeline stage")) isReqDone = !!dynamicFlags["opportunity_moved"];
+                                        }
+
+                                        // Level 7 logic
+                                        if (milestone.id === 7) {
+                                            if (req.text.includes("filter the Kanban")) isReqDone = !!dynamicFlags["kanban_filtered"];
+                                            if (req.text.includes("Add a specific tag")) isReqDone = !!dynamicFlags["opportunity_tagged"];
+                                            if (req.text.includes("Next Step")) isReqDone = !!dynamicFlags["opportunity_next_step"];
+                                        }
+
+                                        // Level 8 logic
+                                        if (milestone.id === 8) {
+                                            if (req.text.includes("Connect your email")) isReqDone = !!dynamicFlags["email_connected"];
+                                            if (req.text.includes("tracked email directly")) isReqDone = !!dynamicFlags["email_sent"];
+                                            if (req.text.includes("Create a basic email template")) isReqDone = !!dynamicFlags["email_template"];
+                                        }
+
+                                        // Level 9 logic
+                                        if (milestone.id === 9) {
+                                            if (req.text.includes("Connect your external calendar")) isReqDone = !!dynamicFlags["calendar_connected"];
+                                            if (req.text.includes("meeting booking link")) isReqDone = !!dynamicFlags["meeting_link"];
+                                            if (req.text.includes("outcome notes")) isReqDone = !!dynamicFlags["meeting_note"];
+                                        }
+
+                                        // Level 10 logic
+                                        if (milestone.id === 10) {
+                                            if (req.text.includes("Mention (@tag)")) isReqDone = !!dynamicFlags["mention_user"];
+                                            if (req.text.includes("Reassign a lead")) isReqDone = !!dynamicFlags["reassign_record"];
+                                            if (req.text.includes("Share a specific CRM")) isReqDone = !!dynamicFlags["share_record"];
+                                        }
+
+                                        if (milestone.id > 10) {
+                                            isReqDone = false;
                                         }
 
                                         return { ...req, done: isReqDone };
@@ -673,30 +751,133 @@ export default function CertificationPaths({ userLevel = 1, user }: { userLevel?
                                 )}
                             </div>
                         </div>
-                        <div className="flex flex-col gap-3">
-                            <button className={cn(
-                                "px-10 py-5 text-black font-black uppercase text-xs tracking-[0.2em] rounded-2xl transition-[color,background-color,border-color,transform]",
-                                userLevel >= 25
-                                    ? "bg-amber-500 hover:bg-amber-400 shadow-[0_10px_40px_rgba(245,158,11,0.3)] hover:scale-105 active:scale-95"
-                                    : "bg-indigo-500 hover:bg-indigo-400 shadow-[0_10px_40px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95"
-                            )}>
-                                View Certificate
-                            </button>
-                            {userLevel < 25 && (
-                                <button className="px-10 py-5 bg-white/5 text-white font-black uppercase text-xs tracking-[0.2em] border border-white/10 rounded-2xl transition-all hover:bg-white/10 hover:border-white/30 hidden md:block">
-                                    Share Badge
-                                </button>
+                        <div className="flex flex-col gap-3 z-20">
+                            {userLevel > 5 && (
+                                <>
+                                    <Link 
+                                        href={`/crm/university/certificate`}
+                                        className={cn(
+                                            "px-10 py-5 text-black text-center font-black uppercase text-xs tracking-[0.2em] rounded-2xl transition-[color,background-color,border-color,transform]",
+                                            userLevel >= 25
+                                                ? "bg-amber-500 hover:bg-amber-400 shadow-[0_10px_40px_rgba(245,158,11,0.3)] hover:scale-105 active:scale-95"
+                                                : "bg-indigo-500 hover:bg-indigo-400 shadow-[0_10px_40px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95"
+                                        )}
+                                    >
+                                        View Certificate
+                                    </Link>
+                                    {userLevel < 25 && (
+                                        <button className="px-10 py-5 bg-white/5 text-white font-black uppercase text-xs tracking-[0.2em] border border-white/10 rounded-2xl transition-all hover:bg-white/10 hover:border-white/30 hidden md:block">
+                                            Share Badge
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
 
                     {/* Background Decor */}
                     <div className={cn(
-                        "absolute -bottom-20 -right-20 w-80 h-80 blur-[120px]",
+                        "absolute -bottom-20 -right-20 w-80 h-80 blur-[120px] pointer-events-none",
                         userLevel >= 25 ? "bg-amber-500/5" : "bg-indigo-500/10"
                     )} />
                 </Card>
             </div>
+
+            {/* Strategic Master Partner Network Opt-In */}
+            {userLevel >= 21 && (
+                <div className="pt-8">
+                    <Card className="bg-black/60 border-amber-500/20 overflow-hidden relative">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-400 to-amber-600" />
+                        <CardHeader className="pl-8 pb-4">
+                            <div className="flex items-center gap-3 mb-2">
+                                <Trophy className="w-5 h-5 text-amber-500" />
+                                <CardTitle className="text-xl font-black text-white">Strategic Master Emissary Program</CardTitle>
+                            </div>
+                            <CardDescription className="text-gray-400 max-w-2xl">
+                                You have achieved Elite Status. You are now eligible to list your services as a Certified Partner on our public directory. Help other businesses architect and automate their CRM ecosystems.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pl-8 pb-8 pr-8 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-white/5 border border-white/10">
+                                <div className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Agency / Brand Name</label>
+                                        <Input 
+                                            value={partnerForm.agency_name} 
+                                            onChange={(e) => setPartnerForm(p => ({ ...p, agency_name: e.target.value }))}
+                                            placeholder="Your Agency Name" 
+                                            className="bg-black/50 border-white/10 h-10" 
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Website URL</label>
+                                        <Input 
+                                            value={partnerForm.website} 
+                                            onChange={(e) => setPartnerForm(p => ({ ...p, website: e.target.value }))}
+                                            placeholder="https://your-agency.com" 
+                                            className="bg-black/50 border-white/10 h-10" 
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Booking Link (Calendly)</label>
+                                        <Input 
+                                            value={partnerForm.calendar_url} 
+                                            onChange={(e) => setPartnerForm(p => ({ ...p, calendar_url: e.target.value }))}
+                                            placeholder="https://calendly.com/your-name" 
+                                            className="bg-black/50 border-white/10 h-10" 
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-4 flex flex-col">
+                                    <div className="space-y-1.5 flex-grow">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Public Bio / Specialties</label>
+                                        <textarea 
+                                            className="w-full h-full min-h-[120px] p-3 rounded-md bg-black/50 border border-white/10 text-sm text-white resize-none outline-none focus:border-amber-500/50 transition-colors"
+                                            value={partnerForm.bio}
+                                            onChange={(e) => setPartnerForm(p => ({ ...p, bio: e.target.value }))}
+                                            placeholder="I specialize in high-volume outbound architectures and predictive revenue modeling..."
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between mt-4">
+                                <div className="flex items-center gap-3">
+                                    <button 
+                                        onClick={async () => {
+                                            const newStatus = !isPartner;
+                                            setIsPartner(newStatus);
+                                            await managePartnerProfile("TOGGLE_STATUS", { is_active: newStatus });
+                                        }}
+                                        className={cn(
+                                            "w-12 h-6 rounded-full transition-colors relative",
+                                            isPartner ? "bg-amber-500" : "bg-white/10"
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform",
+                                            isPartner && "translate-x-6"
+                                        )} />
+                                    </button>
+                                    <span className={cn("text-xs font-black uppercase tracking-widest transition-colors", isPartner ? "text-amber-500" : "text-gray-500")}>
+                                        {isPartner ? "Publicly Listed" : "Private (Not Listed)"}
+                                    </span>
+                                </div>
+                                <button 
+                                    onClick={async () => {
+                                        setPartnerStatus("saving");
+                                        const res = await managePartnerProfile("UPDATE", partnerForm);
+                                        setPartnerStatus(res.error ? "error" : "success");
+                                        setTimeout(() => setPartnerStatus("idle"), 3000);
+                                    }}
+                                    className="px-6 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg font-bold text-xs uppercase tracking-widest transition-colors"
+                                >
+                                    {partnerStatus === "saving" ? "Saving..." : partnerStatus === "success" ? "Saved!" : "Update Profile"}
+                                </button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }

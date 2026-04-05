@@ -322,8 +322,8 @@ export async function POST(req: NextRequest) {
                     lead_source: `Form: ${form.name}`,
                     status: "NEW",
                     type: "DEMO",
-                    team_id: form.team_id,
-                    documentsIDs: createdDocumentIds, // Link files
+                    assigned_team: form.team_id ? { connect: { id: form.team_id } } : undefined,
+                    assigned_documents: createdDocumentIds.length > 0 ? { connect: createdDocumentIds.map(id => ({ id })) } : undefined,
                 }
             });
             createdLeadId = lead.id;

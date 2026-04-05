@@ -10,6 +10,8 @@ import { DataTableViewOptions } from "./data-table-view-options";
 import { statuses } from "../table-data/data";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { EnhancedDateFilter } from "@/components/date-filter/EnhancedDateFilter";
+import { useEffect, useRef } from "react";
+import { logUserMetric } from "@/actions/university/log-user-metric";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -21,6 +23,15 @@ export function DataTableToolbar<TData>({
   onDateFilterChange,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
+  
+  // Gamification tracking for Phase 2: Pipeline Organizer
+  const filterLogged = useRef(false);
+  useEffect(() => {
+    if (isFiltered && !filterLogged.current) {
+        filterLogged.current = true;
+        logUserMetric("kanban_filtered").catch(() => {});
+    }
+  }, [isFiltered]);
 
   return (
     <div className="flex items-center justify-between">

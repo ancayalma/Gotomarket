@@ -12,6 +12,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import BadgeSVG from "@/components/ui/BadgeSVG";
+import type { BadgeDNA } from "@/lib/quest-engine/badge-dna";
+
+const generateRandomDNA = (): BadgeDNA => ({
+    shape: Math.floor(Math.random() * 8),
+    icon: Math.floor(Math.random() * 24),
+    palette: Math.floor(Math.random() * 12),
+    pattern: Math.floor(Math.random() * 6),
+    frame: Math.floor(Math.random() * 7),
+    rarity: Math.floor(Math.random() * 5),
+});
 
 interface CreateQuestModalProps {
     isOpen: boolean;
@@ -57,10 +68,10 @@ const QUEST_TYPES = [
 ];
 
 const DIFFICULTIES = [
-    { id: "EASY", label: "Easy", qp: 50, icon: Target, color: "emerald" },
-    { id: "MEDIUM", label: "Medium", qp: 100, icon: Sword, color: "amber" },
-    { id: "HARD", label: "Hard", qp: 200, icon: Flame, color: "rose" },
-    { id: "LEGENDARY", label: "Legendary", qp: 500, icon: Crown, color: "violet" },
+    { id: "EASY", label: "Easy", qp: 50, xp: 25, icon: Target, color: "emerald" },
+    { id: "MEDIUM", label: "Medium", qp: 100, xp: 50, icon: Sword, color: "amber" },
+    { id: "HARD", label: "Hard", qp: 200, xp: 100, icon: Flame, color: "rose" },
+    { id: "LEGENDARY", label: "Legendary", qp: 500, xp: 250, icon: Crown, color: "violet" },
 ];
 
 const DURATION_PRESETS = [
@@ -88,6 +99,9 @@ export default function CreateQuestModal({ isOpen, onClose, onCreated }: CreateQ
     const [questType, setQuestType] = useState("");
     const [targetCount, setTargetCount] = useState(10);
     const [difficulty, setDifficulty] = useState("MEDIUM");
+    const [xpReward, setXpReward] = useState(50);
+    const [enableCustomBadge, setEnableCustomBadge] = useState(false);
+    const [badgeDNA, setBadgeDNA] = useState<BadgeDNA | null>(null);
     const [durationPreset, setDurationPreset] = useState("WEEKLY_SPRINT");
     const [isRecurring, setIsRecurring] = useState(false);
     const [customStartDate, setCustomStartDate] = useState("");
@@ -119,6 +133,9 @@ export default function CreateQuestModal({ isOpen, onClose, onCreated }: CreateQ
                 target_count: targetCount,
                 difficulty: difficulty as any,
                 qp_reward: qpReward,
+                xp_reward: xpReward,
+                badge_dna: enableCustomBadge ? badgeDNA : undefined,
+                badge_name: enableCustomBadge ? "Custom Quest Badge" : undefined,
                 duration_preset: durationPreset as any,
                 starts_at: durationPreset === "CUSTOM" && customStartDate ? customStartDate : undefined,
                 ends_at: durationPreset === "CUSTOM" && customEndDate ? customEndDate : undefined,
@@ -134,6 +151,9 @@ export default function CreateQuestModal({ isOpen, onClose, onCreated }: CreateQ
                 setQuestType("");
                 setTargetCount(10);
                 setDifficulty("MEDIUM");
+                setXpReward(50);
+                setEnableCustomBadge(false);
+                setBadgeDNA(null);
                 setDurationPreset("WEEKLY_SPRINT");
                 setIsRecurring(false);
                 onCreated();
@@ -151,7 +171,7 @@ export default function CreateQuestModal({ isOpen, onClose, onCreated }: CreateQ
         } finally {
             setIsSubmitting(false);
         }
-    }, [title, description, questType, targetCount, difficulty, qpReward, durationPreset, customStartDate, customEndDate, isRecurring, launchAsActive, onCreated]);
+    }, [title, description, questType, targetCount, difficulty, qpReward, xpReward, durationPreset, customStartDate, customEndDate, isRecurring, launchAsActive, enableCustomBadge, badgeDNA, onCreated]);
 
     if (!isOpen) return null;
 
@@ -297,12 +317,55 @@ export default function CreateQuestModal({ isOpen, onClose, onCreated }: CreateQ
                                                     <Icon className="w-4 h-4 flex-shrink-0" />
                                                     <div className="text-left">
                                                         <div className="text-xs font-semibold">{d.label}</div>
-                                                        <div className="text-[10px] text-muted-foreground">{d.qp} QP</div>
+                                                        <div className="text-[10px] text-muted-foreground">{d.qp} QP · {d.xp} XP</div>
                                                     </div>
                                                 </button>
                                             );
                                         })}
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium mb-1.5 block">XP Reward</label>
+                                    <Input
+                                        type="number"
+                                        min={1}
+                                        value={xpReward}
+                                        onChange={(e) => setXpReward(Number(e.target.value) || 1)}
+                                        className="h-10"
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-1">XP earned toward user level progression</p>
+                                </div>
+                                <div className="pt-2 border-t border-white/5 mt-4">
+                                    <label className="flex items-center gap-2 cursor-pointer mb-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={enableCustomBadge}
+                                            onChange={(e) => {
+                                                setEnableCustomBadge(e.target.checked);
+                                                if (e.target.checked && !badgeDNA) setBadgeDNA(generateRandomDNA());
+                                            }}
+                                            className="rounded border-white/20"
+                                        />
+                                        <span className="text-sm font-medium">Award custom unique badge</span>
+                                    </label>
+                                    
+                                    {enableCustomBadge && badgeDNA && (
+                                        <div className="flex items-center gap-4 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                                            <BadgeSVG dna={badgeDNA} size={48} />
+                                            <div className="flex-1">
+                                                <p className="text-xs font-semibold mb-1">Quest Completion Badge</p>
+                                                <p className="text-[10px] text-muted-foreground mb-2">Awarded automatically upon completion</p>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs border-primary/50 text-primary hover:bg-primary/10"
+                                                    onClick={() => setBadgeDNA(generateRandomDNA())}
+                                                >
+                                                    Randomize DNA
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         )}
@@ -392,7 +455,7 @@ export default function CreateQuestModal({ isOpen, onClose, onCreated }: CreateQ
                                         </div>
                                         <div className="rounded border p-2 bg-background/50">
                                             <span className="text-muted-foreground">Reward:</span>{" "}
-                                            <span className="font-medium text-amber-400">{qpReward} QP</span>
+                                            <span className="font-medium text-amber-400">{qpReward} QP · {xpReward} XP</span>
                                         </div>
                                     </div>
                                     {isRecurring && (

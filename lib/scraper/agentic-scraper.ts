@@ -2533,6 +2533,13 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
           try {
             const { consumeLeadGenCredits } = await import("@/lib/scraper/credits");
             await consumeLeadGenCredits(teamId, batchCost);
+
+            // Gamification hook: 1 Raw XP awarded per credit consumed
+            if (userId) {
+              import("@/actions/quests/add-raw-xp")
+                .then((m) => m.addRawXP({ userId, xpAmount: batchCost, reason: "Lead Gen Credits" }))
+                .catch((e) => console.warn(`[AGENTIC_LEADGEN] Failed to award XP: ${e?.message}`));
+            }
           } catch (billingErr: any) {
             addLog(`🚫 Lead Gen credits dynamically exhausted mid-run. Stopping agent.`, "ERROR");
             await flushLogsToDb(false);

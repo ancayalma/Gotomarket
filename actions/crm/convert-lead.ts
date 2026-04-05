@@ -163,6 +163,10 @@ export async function convertLeadToOpportunity(leadId: string): Promise<ActionRe
             }).catch(() => { });
         }
 
+        import("@/actions/quests/add-raw-xp")
+          .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 20, reason: "Converted Lead to Opportunity" }))
+          .catch((e) => systemLogger.warn(`[CONVERT_LEAD_GAMIFICATION] Failed to award XP: ${e?.message}`));
+
         return {
             success: true,
             data: {

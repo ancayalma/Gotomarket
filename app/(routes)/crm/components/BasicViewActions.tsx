@@ -14,6 +14,7 @@ import { MoreHorizontal, Edit, Trash, FileText } from "lucide-react";
 import { usePermission } from "@/components/providers/permissions-provider";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import axios from "axios";
 import RightViewModal from "@/components/modals/right-view-modal";
 import { UpdateAccountForm } from "../accounts/components/UpdateAccountForm";
 
@@ -54,10 +55,23 @@ export function BasicViewActions({ module, entityId, initialData }: BasicViewAct
         toast.info(`Edit ${module} ${entityId} (Not implemented in demo)`);
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (confirm("Are you sure you want to delete this?")) {
-            // Call delete action
-            toast.info(`Delete ${module} ${entityId} (Not implemented in demo)`);
+            try {
+                let endpoint = "";
+                switch (module) {
+                    case "accounts": endpoint = `/api/crm/account/${entityId}`; break;
+                    case "contacts": endpoint = `/api/crm/contacts/${entityId}`; break;
+                    case "opportunities": endpoint = `/api/crm/opportunity/${entityId}`; break;
+                    case "leads": endpoint = `/api/crm/leads/${entityId}`; break;
+                }
+                await axios.delete(endpoint);
+                toast.success(`${module.charAt(0).toUpperCase() + module.slice(1)} deleted successfully.`);
+                router.push(`/crm/${module}`);
+                router.refresh();
+            } catch (error) {
+                toast.error(`Failed to delete ${module}`);
+            }
         }
     };
 

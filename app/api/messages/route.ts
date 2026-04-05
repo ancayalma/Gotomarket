@@ -223,6 +223,13 @@ export async function POST(req: NextRequest) {
             }));
         }
 
+        if (message || (send_email && emailRecipients.length > 0)) {
+            const isReply = !!parent_id;
+            import("@/actions/quests/add-raw-xp")
+              .then((m) => m.addRawXP({ userId, xpAmount: isReply ? 2 : 1, reason: isReply ? "Replied to Communication" : "Direct Communication" }))
+              .catch((e) => console.warn(`[MESSAGE_GAMIFICATION] Failed to award XP: ${e?.message}`));
+        }
+
         if (message) {
             return NextResponse.json(message);
         } else if (send_email && emailRecipients.length > 0) {

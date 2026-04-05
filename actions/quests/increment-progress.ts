@@ -73,18 +73,7 @@ export async function incrementQuestProgress(params: {
                     }
                 );
             } else {
-                await progressCollection.insertOne({
-                    quest_id: quest._id,
-                    user_id: new ObjectId(params.userId),
-                    current_count: newCount,
-                    is_completed: isNowCompleted,
-                    completed_at: isNowCompleted ? now : null,
-                    qp_awarded: 0,
-                    xp_awarded: false,
-                    bonuses_applied: null,
-                    started_at: now,
-                    updated_at: now,
-                });
+                continue; // User has not accepted this quest yet, do not track!
             }
 
             // Award rewards on completion

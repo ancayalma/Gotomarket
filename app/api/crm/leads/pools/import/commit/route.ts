@@ -372,6 +372,14 @@ export async function POST(req: Request) {
       }
     }
 
+    const totalProcessed = createdAccountsCount + updatedAccountsCount + createdContactsCount + updatedContactsCount;
+    if (totalProcessed > 0) {
+      const xpToAward = 5 + Math.floor(totalProcessed / 20);
+      import("@/actions/quests/add-raw-xp")
+        .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: xpToAward, reason: `Data Import (${totalProcessed} records)` }))
+        .catch((e) => systemLogger.warn(`[IMPORT_GAMIFICATION] Failed to award XP: ${e?.message}`));
+    }
+
     return NextResponse.json({
       poolId: targetPoolId,
       created: {

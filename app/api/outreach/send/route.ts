@@ -984,6 +984,15 @@ export async function POST(req: Request) {
     // Gamification: award bonus credits for first outreach email (fire-and-forget)
     if (summary.sent > 0 && !testMode) {
       claimOnboardingBonus("first_outreach_email").catch(() => { });
+
+      // Gamification hook: Phase 2 Level 8 Tracking
+      import("@/actions/university/log-user-metric")
+        .then((m) => m.logUserMetric("sent_crm_email").catch(() => {}));
+
+      // Gamification hook: Raw XP awarded per email sent
+      import("@/actions/quests/add-raw-xp")
+        .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: summary.sent, reason: "Outreach Emails Sent" }))
+        .catch((e) => systemLogger.warn(`[OUTREACH_SEND] Failed to award XP: ${e?.message}`));
     }
 
     return NextResponse.json(summary, { status: 200 });

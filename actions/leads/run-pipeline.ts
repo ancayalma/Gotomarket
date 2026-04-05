@@ -358,6 +358,10 @@ export async function runLeadGenPipeline({
       if (pe.contactsAdded > 0 && !isPlatformAdmin) {
         await consumeLeadGenCredits(teamId, pe.contactsAdded);
         creditsConsumed += pe.contactsAdded;
+
+        // Gamification hook: Raw XP awarded per enrichment credit
+        const { addRawXP } = await import("@/actions/quests/add-raw-xp");
+        await addRawXP({ userId, xpAmount: pe.contactsAdded, reason: "Lead Gen Enrichment Credits" }).catch(() => {});
       }
 
       await db.crm_Lead_Gen_Jobs.update({

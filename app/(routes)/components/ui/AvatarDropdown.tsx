@@ -12,6 +12,7 @@ import {
 import { signOut } from "next-auth/react";
 import { clearUserCache } from "@/lib/cache-utils";
 import { clearImpersonation } from "@/actions/teams/switch-team";
+import { logUserMetric } from "@/actions/university/log-user-metric";
 
 import { LogOut, Settings, CreditCard } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -79,7 +80,10 @@ const AvatarDropdown = ({ avatar, userId, name, email }: Props) => {
             <CreditCard className="w-4 h-4 inline-block mr-2 stroke-current text-gray-500" />
             <span>Billing & Payments</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push("/profile")}>
+          <DropdownMenuItem onClick={async () => {
+              logUserMetric("viewed_settings").catch(console.error);
+              router.push("/profile");
+          }}>
             <Settings className="w-4 h-4 inline-block mr-2 stroke-current text-gray-500" />
             <span>Account Settings</span>
           </DropdownMenuItem>

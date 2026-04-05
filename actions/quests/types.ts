@@ -17,7 +17,7 @@ export interface QuestWithProgress {
     qp_reward: number;
     xp_reward: number;
     badge_name?: string;
-    badge_icon?: string;
+    badge_dna?: any;
     duration_preset?: string;
     status: string;
     starts_at?: Date | string;
@@ -39,6 +39,7 @@ export interface QuestWithProgress {
     };
     team_progress?: {
         total_participants: number;
+        accepted_count: number;
         completed_count: number;
     };
 }

@@ -97,17 +97,21 @@ export default async function AppLayout({
   let isPlatformAdmin = false;
   let isFreemailAccount = false;
   let freemailWarningAcknowledged = true; // Default to true to avoid gate flash
+  let navLevel = 1;
+  let navXp = 0;
   
   if (session?.user?.id) {
       const fullUser = await prismadb.users.findUnique({
           where: { id: session.user.id },
-          select: { team_id: true, team_role: true, is_admin: true, mustChangePassword: true, sesEmailVerified: true, isFreemailAccount: true, freemailWarningAcknowledged: true, assigned_role: { select: { name: true } } }
+          select: { team_id: true, team_role: true, is_admin: true, mustChangePassword: true, sesEmailVerified: true, isFreemailAccount: true, freemailWarningAcknowledged: true, assigned_role: { select: { name: true } }, university_level: true, xp_total: true }
       });
       
       const role = (fullUser?.team_role || '').trim().toUpperCase();
       const pRole = (fullUser?.assigned_role?.name || '').trim().toUpperCase();
       const isSuperAdmin = fullUser?.is_admin === true || ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'SYSADM', 'PLATFORM ADMIN'].includes(role) || pRole === 'SUPERADMIN';
       isPlatformAdmin = isSuperAdmin;
+      navLevel = fullUser?.university_level || 1;
+      navXp = fullUser?.xp_total || 0;
 
       if (fullUser?.team_id) {
           userTeamId = fullUser.team_id;
@@ -173,6 +177,8 @@ export default async function AppLayout({
             email={session.user.email as string}
             avatar={session.user.image as string}
             lang={session.user.userLanguage as string}
+            level={navLevel}
+            xp={navXp}
           />
           <SmartBreadcrumb className="shrink-0" />
           <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">

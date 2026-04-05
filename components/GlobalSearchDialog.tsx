@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { globalSearch, SearchResult } from "@/actions/dashboard/global-search";
 import { useRouter } from "next/navigation";
+import { logUserMetric } from "@/actions/university/log-user-metric";
 import {
     CommandDialog,
     CommandEmpty,
@@ -68,6 +69,7 @@ export default function GlobalSearchDialog() {
         try {
             const res = await globalSearch(val);
             setResults(res);
+            logUserMetric("used_global_search").catch(console.error);
         } catch (error) {
             console.error(error);
         } finally {

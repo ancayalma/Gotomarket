@@ -93,6 +93,14 @@ export async function POST(req: Request, { params }: Params) {
       },
     });
 
+    import("@/actions/quests/add-raw-xp")
+      .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 1, reason: "Logged CRM Note" }))
+      .catch((e) => systemLogger.warn(`[NOTES_GAMIFICATION] Failed to award XP: ${e?.message}`));
+
+    import("@/actions/university/log-user-metric")
+      .then((m) => m.logUserMetric("note_created").catch(() => {}));
+
+
     return NextResponse.json({ status: "ok" }, { status: 200 });
   } catch (error) {
     systemLogger.error("[LEAD_NOTES_POST]", error);

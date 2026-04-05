@@ -18,6 +18,13 @@ export async function updateLeadPipelineStage(leadId: string, newStage: any) {
             data: { pipeline_stage: newStage }
         });
 
+        // Trigger contact creation if the new stage is beyond Identify
+        import("@/actions/crm/lead-conversions").then((m) => {
+            m.ensureContactForLead(leadId).catch((err) => {
+                console.error("[PIPELINE_CONTACT_SYNC_ERROR]", err);
+            });
+        });
+
         revalidatePath("/crm/leads");
         return { success: true };
     } catch (error) {

@@ -1293,6 +1293,15 @@ model Users {
   quest_streak        Int             @default(0)
   quest_badges        String[]
 
+  // XP & Leveling System
+  xp_total          Int     @default(0)   // Lifetime XP earned (never resets)
+  xp_current        Int     @default(0)   // XP in current level (resets on level-up)
+  level             Int     @default(1)   // Current level (1-100)
+  prestige          Int     @default(0)   // Prestige tier (resets level to 1)
+  prestige_title    String?               // e.g. "Bronze", "Silver", "Gold"
+  showcase_badge_id String?  @db.ObjectId  // User's chosen showcase badge
+  earned_badges     UserBadge[] @relation(name: "UserBadges")
+
   dashboard_preference   DashboardPreference?
   navigation_preferences NavigationConfig[]
   ai_usage_logs          crm_AiUsageLog[]     @relation(name: "AiUsageUser")
@@ -1319,6 +1328,21 @@ model Users {
 
   // Usage Quota Allocations
   usage_allocations TeamUserAllocation[]
+
+  // Gamification Event Logging for UI tracking
+  user_metrics UserMetrics[]
+}
+
+model UserMetrics {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  metricKey String   // e.g., "viewed_notifications", "used_global_search"
+  count     Int      @default(1)
+  createdAt DateTime @default(now()) @db.Date
+  updatedAt DateTime @updatedAt @db.Date
+  
+  @@unique([userId, metricKey])
 }
 
 model Team {
@@ -1531,7 +1555,7 @@ model Quest {
   qp_reward  Int     @default(100)
   xp_reward  Int     @default(10)
   badge_name String?
-  badge_icon String?
+  badge_dna  Json?
 
   // Sprint Duration
   duration_preset   String? // WEEKEND_SPRINT, WEEKLY_SPRINT, BIWEEKLY, MONTHLY, QUARTERLY, STRONG_START, STRONG_FINISH, CUSTOM, OPEN_ENDED
@@ -1589,6 +1613,21 @@ model QuestProgress {
   @@unique([quest_id, user_id])
   @@index([user_id])
   @@index([quest_id])
+}
+
+model UserBadge {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  user_id    String   @db.ObjectId
+  user       Users    @relation(name: "UserBadges", fields: [user_id], references: [id], onDelete: Cascade)
+  badge_id   String   // Unique achievement key e.g. "first_blood", "level_50"
+  badge_dna  Json     // BadgeDNA object for rendering
+  badge_name String   // Human-readable name
+  category   String   // "quest", "streak", "level", "prestige", "social", "meta"
+  rarity     String   @default("COMMON") // COMMON, UNCOMMON, RARE, EPIC, LEGENDARY
+  awarded_at DateTime @default(now()) @db.Date
+
+  @@unique([user_id, badge_id])
+  @@index([user_id])
 }
 
 model Authenticator {

@@ -9,6 +9,7 @@ import { History, Info } from "lucide-react";
 import { getCurrentUserTeamId } from "@/lib/team-utils";
 import { RelocateEntityDialog } from "@/components/admin/RelocateEntityDialog";
 import { LearnLink } from "@/components/ui/LearnLink";
+import { DeleteLeadButton } from "../components/DeleteLeadButton";
 
 interface LeadDetailPageProps {
   params: Promise<{
@@ -36,6 +37,9 @@ const LeadDetailPage = async (props: LeadDetailPageProps) => {
             entityName={`${lead?.firstName} ${lead?.lastName}`}
             isGlobalAdmin={!!currentUserInfo?.isGlobalAdmin}
           />
+          {(currentUserInfo?.isGlobalAdmin || currentUserInfo?.isAdmin) && (
+             <DeleteLeadButton leadId={leadId} />
+          )}
           <LeadScore leadData={lead} />
         </div>
       }

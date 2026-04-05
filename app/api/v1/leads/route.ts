@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
         const newLead = await prismadb.crm_Leads.create({
             data: {
                 v: 1,
-                team_id: auth!.tenantId,
+                assigned_team: { connect: { id: auth!.tenantId } },
                 firstName,
                 lastName,
                 company,

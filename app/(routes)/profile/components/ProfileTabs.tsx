@@ -7,6 +7,7 @@ import { ProfileForm } from "./ProfileForm";
 import { ProfilePhotoForm } from "./ProfilePhotoForm";
 import { PasswordChangeForm } from "./PasswordChange";
 import { MfaSettings } from "./MfaSettings";
+import { NotificationSettings } from "./NotificationSettings";
 
 import { OpenAiForm } from "./OpenAiForm";
 import SignatureBuilder from "@/components/SignatureBuilder";
@@ -20,7 +21,7 @@ import CalendarEventsPanel from "../../crm/leads/components/CalendarEventsPanel"
 import SignaturesResourcesPanel from "../../crm/leads/components/SignaturesResourcesPanel";
 import PortalSettingsPanel from "../../crm/leads/components/PortalSettingsPanel";
 import DashboardCard from "../../crm/dashboard/_components/DashboardCard";
-import { User, PenTool, Link, Clock, Calendar, MessageSquare, Shield } from "lucide-react";
+import { User, PenTool, Link, Clock, Calendar, MessageSquare, Shield, Bell } from "lucide-react";
 
 import { checkTeamFeature } from "@/lib/subscription";
 
@@ -59,6 +60,11 @@ export function ProfileTabs({ data }: ProfileTabsProps) {
                 return {
                     title: "Event Types",
                     description: "Manage your meeting types and scheduling links."
+                };
+            case "notifications":
+                return {
+                    title: "Notification Preferences",
+                    description: "Configure your email, SMS, and push notification alerts."
                 };
             case "signatures":
                 return {
@@ -131,6 +137,16 @@ export function ProfileTabs({ data }: ProfileTabsProps) {
                             label="Events"
                             description="Meeting types"
                             variant="violet"
+                            hideIcon={true}
+                            className="data-[state=active]:ring-2 data-[state=active]:ring-primary data-[state=active]:border-primary/50"
+                        />
+                    </TabsTrigger>
+                    <TabsTrigger value="notifications" asChild>
+                        <DashboardCard
+                            icon={Bell}
+                            label="Alerts"
+                            description="Notifications"
+                            variant="default"
                             hideIcon={true}
                             className="data-[state=active]:ring-2 data-[state=active]:ring-primary data-[state=active]:border-primary/50"
                         />
@@ -208,6 +224,10 @@ export function ProfileTabs({ data }: ProfileTabsProps) {
 
                     <TabsContent value="events" className="mt-0">
                         <CalendarEventsPanel />
+                    </TabsContent>
+
+                    <TabsContent value="notifications" className="mt-0 pt-4 max-w-4xl">
+                        <NotificationSettings data={data} />
                     </TabsContent>
 
                     <TabsContent value="signatures" className="mt-0">
