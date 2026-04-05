@@ -122,13 +122,36 @@ async function syncProductToSurge(product: any, apiKey: string) {
                 surgeImages = [product.imageUrl];
             } else if (product.imageUrl.startsWith("http")) {
                 try {
-                    const imgRes = await fetch(product.imageUrl);
+                    let fetchUrl = product.imageUrl;
+                    if (fetchUrl.includes("s3") || fetchUrl.includes("ovh.us")) {
+                        const { getBlobServiceClient } = await import("@/lib/s3-storage");
+                        const key = new URL(product.imageUrl).pathname.substring(1);
+                        fetchUrl = await getBlobServiceClient().getPresignedUrl(key);
+                    }
+                    const imgRes = await fetch(fetchUrl);
                     if (imgRes.ok) {
-                        const arrayBuffer = await imgRes.arrayBuffer();
-                        const buffer = Buffer.from(arrayBuffer);
-                        const contentType = imgRes.headers.get("content-type") || "image/jpeg";
-                        const base64 = buffer.toString("base64");
-                        surgeImages = [`data:${contentType};base64,${base64}`];
+                        const blob = await imgRes.blob();
+                        const formData = new FormData();
+                        formData.append("image", blob, `product-${product.sku}.jpg`);
+                        formData.append("sku", product.sku);
+
+                        const uploadRes = await fetch("https://surge.basalthq.com/api/inventory/images", {
+                            method: "POST",
+                            headers: {
+                                "Ocp-Apim-Subscription-Key": apiKey
+                            },
+                            body: formData
+                        });
+
+                        if (uploadRes.ok) {
+                            const json = await uploadRes.json();
+                            if (json.ok && (json.images || json.imageUrl)) {
+                                const parsedImages = json.images || json.imageUrl;
+                                surgeImages = Array.isArray(parsedImages) ? parsedImages : [parsedImages];
+                            }
+                        } else {
+                            systemLogger.error("[SURGE_IMAGE_UPLOAD_FAILED]", await uploadRes.text());
+                        }
                     }
                 } catch (e) {
                     systemLogger.error("[SURGE_IMAGE_ENCODE_ERROR]", e);
@@ -538,13 +561,36 @@ export async function exportToSurge(productId: string) {
                 surgeImages = [product.imageUrl];
             } else if (product.imageUrl.startsWith("http")) {
                 try {
-                    const imgRes = await fetch(product.imageUrl);
+                    let fetchUrl = product.imageUrl;
+                    if (fetchUrl.includes("s3") || fetchUrl.includes("ovh.us")) {
+                        const { getBlobServiceClient } = await import("@/lib/s3-storage");
+                        const key = new URL(product.imageUrl).pathname.substring(1);
+                        fetchUrl = await getBlobServiceClient().getPresignedUrl(key);
+                    }
+                    const imgRes = await fetch(fetchUrl);
                     if (imgRes.ok) {
-                        const arrayBuffer = await imgRes.arrayBuffer();
-                        const buffer = Buffer.from(arrayBuffer);
-                        const contentType = imgRes.headers.get("content-type") || "image/jpeg";
-                        const base64 = buffer.toString("base64");
-                        surgeImages = [`data:${contentType};base64,${base64}`];
+                        const blob = await imgRes.blob();
+                        const formData = new FormData();
+                        formData.append("image", blob, `product-${product.sku}.jpg`);
+                        formData.append("sku", product.sku);
+
+                        const uploadRes = await fetch("https://surge.basalthq.com/api/inventory/images", {
+                            method: "POST",
+                            headers: {
+                                "Ocp-Apim-Subscription-Key": integration.surge_api_key
+                            },
+                            body: formData
+                        });
+
+                        if (uploadRes.ok) {
+                            const json = await uploadRes.json();
+                            if (json.ok && (json.images || json.imageUrl)) {
+                                const parsedImages = json.images || json.imageUrl;
+                                surgeImages = Array.isArray(parsedImages) ? parsedImages : [parsedImages];
+                            }
+                        } else {
+                            systemLogger.error("[SURGE_IMAGE_UPLOAD_FAILED]", await uploadRes.text());
+                        }
                     }
                 } catch (e) {
                     systemLogger.error("[SURGE_IMAGE_ENCODE_ERROR]", e);
