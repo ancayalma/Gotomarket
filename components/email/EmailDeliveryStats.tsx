@@ -86,8 +86,8 @@ export function EmailDeliveryStats({ teamId }: EmailDeliveryStatsProps) {
                                 <TableRow key={item.id}>
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span className="font-medium">{item.lead.firstName} {item.lead.lastName}</span>
-                                            <span className="text-xs text-muted-foreground">{item.lead.email}</span>
+                                            <span className="font-medium">{item.lead?.firstName || ''} {item.lead?.lastName || ''}</span>
+                                            <span className="text-xs text-muted-foreground">{item.lead?.email || 'Unknown'}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell className="max-w-[200px] truncate" title={item.subject}>

@@ -22,7 +22,8 @@ import {
     MoreVertical,
     Search,
     Bot,
-    Merge
+    Merge,
+    Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,6 +96,7 @@ type LeadPool = {
     } | null;
     candidatesCount: number;
     contactsCount: number;
+    outreachCount: number;
     icpConfig?: any;
 };
 
@@ -320,6 +322,7 @@ export default function ListsView() {
                                         <TableHead className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Status</TableHead>
                                         <TableHead className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Accounts</TableHead>
                                         <TableHead className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Contacts</TableHead>
+                                        <TableHead className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Outreach</TableHead>
                                         <TableHead className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Created</TableHead>
                                         <TableHead className="text-right font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Actions</TableHead>
                                     </TableRow>
@@ -342,6 +345,15 @@ export default function ListsView() {
                                             </TableCell>
                                             <TableCell className="font-bold text-emerald-500">{pool.candidatesCount}</TableCell>
                                             <TableCell className="font-bold text-blue-500">{pool.contactsCount}</TableCell>
+                                            <TableCell>
+                                                {pool.outreachCount > 0 ? (
+                                                    <Badge variant="secondary" className="bg-orange-500/10 text-orange-400 border-none text-[10px] font-bold uppercase tracking-wider">
+                                                        {pool.outreachCount} {pool.outreachCount === 1 ? "Campaign" : "Campaigns"}
+                                                    </Badge>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground/50">—</span>
+                                                )}
+                                            </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {pool.createdAt ? new Date(pool.createdAt).toLocaleDateString() : "-"}
                                             </TableCell>
@@ -446,6 +458,12 @@ export default function ListsView() {
                                                             ({pool.latestJob.counters.companiesFound || 0} Found, {pool.latestJob.counters.contactsCreated || 0} Contacts)
                                                         </span>
                                                     )}
+                                                </Badge>
+                                            )}
+                                            {pool.outreachCount > 0 && (
+                                                <Badge variant="secondary" className="bg-orange-500/10 text-orange-400 border-none text-[10px] font-bold uppercase tracking-wider">
+                                                    <Send className="w-3 h-3 mr-1" />
+                                                    {pool.outreachCount} {pool.outreachCount === 1 ? "Campaign" : "Campaigns"}
                                                 </Badge>
                                             )}
                                         </div>

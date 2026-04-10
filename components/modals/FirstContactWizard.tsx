@@ -839,7 +839,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                 
                 if (sendRes.ok) {
                   const resJson = await sendRes.json();
-                  sentCount += resJson.sent || chunkIds.length;
+                  sentCount += resJson.sent ?? 0;
                   
                   const progressState = { current: sentCount, total: totalLeads };
                   
