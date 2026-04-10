@@ -556,7 +556,10 @@ export default function CampaignDetailPage() {
     );
 
     const branding = campaign.campaign_branding as any;
-    const isRepairing = repairLoading || (branding?.repair_active === true);
+    // Never show repair/send progress for completed or paused campaigns —
+    // the wizard's cleanup PATCH (repair_active: false) can fail silently.
+    const campaignDone = campaign.status === "COMPLETED" || campaign.status === "PAUSED";
+    const isRepairing = !campaignDone && (repairLoading || (branding?.repair_active === true));
     let activeProgress = repairProgress;
     let activeStream = repairStream;
 
@@ -782,12 +785,16 @@ export default function CampaignDetailPage() {
                             <span className="font-mono font-bold text-primary">
                                 {isRepairing 
                                     ? <>{activeProgress.current} / {activeProgress.total}</>
-                                    : <>{campaign.emails_sent} / {campaign.total_leads}</>
+                                    : campaign.status === "COMPLETED"
+                                        ? <>{campaign.total_leads} / {campaign.total_leads}</>
+                                        : <>{campaign.emails_sent} / {campaign.total_leads}</>
                                 }
                                 <span className="text-muted-foreground ml-1">
                                     {isRepairing 
                                         ? `(${activeProgress.total > 0 ? Math.round((activeProgress.current / activeProgress.total) * 100) : 0}%)`
-                                        : `(${campaign.total_leads > 0 ? Math.round((campaign.emails_sent / campaign.total_leads) * 100) : 0}%)`
+                                        : campaign.status === "COMPLETED"
+                                            ? "(100%)"
+                                            : `(${campaign.total_leads > 0 ? Math.round((campaign.emails_sent / campaign.total_leads) * 100) : 0}%)`
                                     }
                                 </span>
                             </span>
@@ -798,13 +805,17 @@ export default function CampaignDetailPage() {
                                     isRepairing 
                                         ? "bg-gradient-to-r from-amber-500 to-orange-500 animate-pulse"
                                         : campaign.status === "PAUSED"
-                                            ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                                            : "bg-gradient-to-r from-blue-500 to-indigo-500"
+                                            ? "bg-amber-500"
+                                        : campaign.status === "COMPLETED"
+                                            ? "bg-emerald-500"
+                                            : "bg-gradient-to-r from-blue-500 to-indigo-500 animate-pulse"
                                 }`}
                                 style={{ width: `${
                                     isRepairing 
                                         ? (activeProgress.total > 0 ? Math.min(100, (activeProgress.current / activeProgress.total) * 100) : 0)
-                                        : (campaign.total_leads > 0 ? Math.min(100, (campaign.emails_sent / campaign.total_leads) * 100) : 0)
+                                        : campaign.status === "COMPLETED"
+                                            ? 100
+                                            : (campaign.total_leads > 0 ? Math.min(100, (campaign.emails_sent / campaign.total_leads) * 100) : 0)
                                 }%` }}
                             />
                         </div>

@@ -116,9 +116,11 @@ export async function GET(
             }
         }
 
-        // NOTE: Campaign auto-completion is NOT done here. The wizard's completion
-        // handler (FirstContactWizard.tsx) is the sole authority for marking a
-        // campaign as COMPLETED. A GET handler must never mutate lifecycle state.
+        // Server-side auto-completion is disabled. Since we no longer pre-create 
+        // PENDING items for ACTIVE campaigns, the items array only contains 
+        // items already successfully processed. A server has no way of knowing 
+        // if the chunked send loop is actually finished or just halfway done.
+        // We rely entirely on the FirstContactWizard to PATCH the completion state.
 
         return NextResponse.json(campaign);
     } catch (error: any) {
@@ -167,7 +169,7 @@ export async function PATCH(
 
         const campaign = await prisma.crm_Outreach_Campaigns.findUnique({
             where: { id: sequenceId },
-            select: { id: true, status: true, user: true },
+            select: { id: true, status: true, user: true, campaign_branding: true },
         });
 
         if (!campaign) {
@@ -176,7 +178,14 @@ export async function PATCH(
 
         const updateData: any = {};
         if (status) updateData.status = status;
-        if (campaignBranding) updateData.campaign_branding = campaignBranding;
+        
+        if (campaignBranding) {
+            updateData.campaign_branding = campaignBranding;
+        } else if (status === "COMPLETED" || status === "PAUSED") {
+            // If stopping or completing manually, ensure repair states are cleared
+            const existingBranding = (campaign.campaign_branding as any) || {};
+            updateData.campaign_branding = { ...existingBranding, repair_active: false, repair_progress: null };
+        }
 
         const updated = await prisma.crm_Outreach_Campaigns.update({
             where: { id: sequenceId },

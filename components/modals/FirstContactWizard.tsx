@@ -817,6 +817,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         // Asynchronous background chunk dispatcher
         (async () => {
           let sentCount = 0;
+          let processedCount = 0;
           
           for (let i = 0; i < totalLeads; i += CHUNK_SIZE) {
             const chunkIds = sendLeadIds.slice(i, i + CHUNK_SIZE);
@@ -840,14 +841,15 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                 if (sendRes.ok) {
                   const resJson = await sendRes.json();
                   sentCount += resJson.sent ?? 0;
+                  processedCount += chunkIds.length;
                   
-                  const progressState = { current: sentCount, total: totalLeads };
+                  const progressState = { current: processedCount, total: totalLeads };
                   
                   let streamMessage = `Batch generated successfully.`;
                   if (resJson.results && resJson.results.length > 0) {
                       const lastResult = resJson.results[resJson.results.length - 1];
                       if (lastResult.status === "sent") {
-                          streamMessage = `Generation [OK]. Delivered payload to: ${lastResult.to} (${sentCount}/${totalLeads})`;
+                          streamMessage = `Generation [OK]. Delivered payload to: ${lastResult.to} (${processedCount}/${totalLeads})`;
                       } else {
                           streamMessage = `Bypass: ${lastResult.to} - ${lastResult.reason}`;
                       }
