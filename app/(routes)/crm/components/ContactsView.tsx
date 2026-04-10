@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { NavigationCard } from "@/components/NavigationCard";
 
-const ContactsView = ({ data, crmData }: any) => {
+const ContactsView = ({ data, crmData, accountId }: any) => {
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
@@ -65,6 +65,7 @@ const ContactsView = ({ data, crmData }: any) => {
               <NewContactForm
                 users={users}
                 accounts={accounts}
+                accountId={accountId}
                 onFinish={() => setOpen(false)}
               />
             </div>
