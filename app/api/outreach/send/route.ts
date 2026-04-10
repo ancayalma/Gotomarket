@@ -787,6 +787,15 @@ export async function POST(req: Request) {
                 pipelineResult = ensuredPipelineIds.get(lead.id);
             }
 
+            // Register the newly created pipeline lead ID in the entity dedup set
+            // so subsequent chunks (separate API calls) won't double-send.
+            if (pipelineResult?.leadId) {
+              existingCampaignRecipientIds.add(pipelineResult.leadId);
+            }
+            // Also register the raw candidate ID so the entity-level check (line 445)
+            // catches it when the same candidate appears in a later chunk.
+            existingCampaignRecipientIds.add(lead.id);
+
             // Create outreach item linked to campaign
             if (body.campaignId && pipelineResult) {
               await prismadb.crm_Outreach_Items.create({
@@ -866,7 +875,11 @@ export async function POST(req: Request) {
           }
 
           // Save outreach status to CRM (Fire and forget DB update)
-          if (!testMode) {
+          // GUARD: Only run for real leads/accounts. Pool candidates already had
+          // their outreach item created in the candidate-specific block above.
+          // Running this for candidates caused a duplicate outreach item via the
+          // account fallback path (lead.update fails → isLeadUpdated=false → account fallback).
+          if (!testMode && isRealLead) {
             let isLeadUpdated = false;
             try {
               // Try to update crm_Leads for proper tracking

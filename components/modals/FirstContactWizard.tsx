@@ -811,7 +811,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
         }
 
         // Step 2: Fire-and-forget the actual sends with chunking mechanism
-        const CHUNK_SIZE = 1;
+        const CHUNK_SIZE = 25;
         const totalLeads = sendLeadIds.length;
         
         // Asynchronous background chunk dispatcher
