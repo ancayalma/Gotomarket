@@ -277,8 +277,12 @@ export async function POST(req: Request) {
             }
         }
 
-        // If leads were provided, create outreach items (only for valid ObjectId leads)
-        if (leadIds && leadIds.length > 0) {
+        // If leads were provided AND status is DRAFT, pre-create outreach items
+        // as a planning manifest. For ACTIVE campaigns (wizard launches), skip
+        // pre-creation — the send route creates fully-populated SENT items with
+        // subject, body, message_id, and tracking_token. Pre-creating PENDING
+        // items for ACTIVE campaigns caused duplicates and inflated total_leads.
+        if (leadIds && leadIds.length > 0 && campaignStatus === "DRAFT") {
             // Filter: only valid 24-char hex ObjectIDs can be stored in the `lead` field
             const validLeadIds = leadIds.filter((id: string) => /^[a-f0-9]{24}$/i.test(id));
 
@@ -337,8 +341,13 @@ export async function POST(req: Request) {
                         data: outreachItems,
                     });
                 }
+            }
+        }
 
-                // Log activity
+        // Log activity for all valid lead IDs (both DRAFT and ACTIVE)
+        if (leadIds && leadIds.length > 0) {
+            const validLeadIds = leadIds.filter((id: string) => /^[a-f0-9]{24}$/i.test(id));
+            if (validLeadIds.length > 0) {
                 await prisma.crm_Lead_Activities.createMany({
                     data: validLeadIds.map((leadId: string) => ({
                         lead: leadId,

@@ -35,6 +35,7 @@ export async function GET(
                     select: {
                         id: true,
                         name: true,
+                        icpConfig: true,
                     },
                 },
                 assigned_project: {
@@ -63,39 +64,16 @@ export async function GET(
             );
         }
 
-        // ── Self-correcting progress reconciliation ─────────────────────────
+        // ── Progress reconciliation (READ-SAFE — no destructive mutations) ────
         let items = campaign.outreach_items || [];
 
-        // Step 1: Delete duplicate empty shells from campaign wizard creation.
-        // The wizard pre-creates PENDING items with only lead+channel,
-        // then the send route creates NEW fully-populated items with candidate_email.
-        // The empty shells are duplicates that show as "Unknown".
-        const emptyShells = items.filter((i: any) =>
-            !i.candidate_email && !i.sentAt && (i.status === "PENDING" || i.status === "SKIPPED")
-        );
-        if (emptyShells.length > 0) {
-            const emptyIds = emptyShells.map((i: any) => i.id);
-            await prisma.crm_Outreach_Items.deleteMany({
-                where: { id: { in: emptyIds } },
-            }).catch(() => {});
-            // Remove from local list
-            items = items.filter((i: any) => !emptyIds.includes(i.id));
-            (campaign as any).outreach_items = items;
-        }
-
-        // Step 2: Count actual statuses
+        // Count actual statuses from outreach items
         const sentStatuses = new Set(["SENT", "OPENED", "CLICKED", "REPLIED", "BOUNCED", "DELIVERED"]);
-        const nonPendingStatuses = new Set(["SENT", "OPENED", "CLICKED", "REPLIED", "BOUNCED", "DELIVERED", "FAILED", "SKIPPED"]);
         const actualSent = items.filter((i: any) => sentStatuses.has(i.status)).length;
         const actualReplied = items.filter((i: any) => i.status === "REPLIED").length;
-        const actualPending = items.filter((i: any) => i.status === "PENDING" || i.status === "RESEARCHING" || i.status === "READY").length;
-        const actualProcessed = items.filter((i: any) => nonPendingStatuses.has(i.status)).length;
 
-        // Step 3: Reconcile campaign counters
+        // Reconcile campaign counters (safe — only increases counts)
         const patchData: any = {};
-        if (items.length > 0 && campaign.total_leads !== items.length) {
-            patchData.total_leads = items.length;
-        }
         if (actualSent > campaign.emails_sent) patchData.emails_sent = actualSent;
         if (actualReplied > campaign.emails_replied) patchData.emails_replied = actualReplied;
 
@@ -105,16 +83,20 @@ export async function GET(
                 data: patchData,
             }).catch(() => {});
 
-            if (patchData.total_leads) (campaign as any).total_leads = patchData.total_leads;
             if (patchData.emails_sent) (campaign as any).emails_sent = patchData.emails_sent;
             if (patchData.emails_replied) (campaign as any).emails_replied = patchData.emails_replied;
         }
 
-        // Step 4: Mark remaining legitimate PENDING items as SKIPPED when campaign is done
-        // Safe because Step 5 only auto-completes on genuine terminal statuses (not SKIPPED).
+        // Mark stale PENDING items as SKIPPED — but ONLY if the campaign has been
+        // idle for at least 10 minutes (prevents interfering with active sends).
+        const campaignAge = campaign.updatedAt
+            ? Date.now() - new Date(campaign.updatedAt).getTime()
+            : Infinity;
+        const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
         const campaignIsDone = campaign.status === "COMPLETED" || campaign.status === "PAUSED";
-        const sendingIsStale = actualPending > 0 && actualProcessed > 0 && actualSent >= (items.length - actualPending);
-        if (actualPending > 0 && (campaignIsDone || sendingIsStale)) {
+        const actualPending = items.filter((i: any) => i.status === "PENDING" || i.status === "RESEARCHING" || i.status === "READY").length;
+
+        if (actualPending > 0 && campaignIsDone && campaignAge > STALE_THRESHOLD_MS) {
             const pendingIds = items
                 .filter((i: any) => i.status === "PENDING" || i.status === "RESEARCHING" || i.status === "READY")
                 .map((i: any) => i.id);
@@ -134,18 +116,9 @@ export async function GET(
             }
         }
 
-        // Step 5: Auto-complete ACTIVE campaign ONLY when all items have genuine
-        // terminal statuses (SENT, OPENED, REPLIED, etc.). Items that are SKIPPED
-        // do NOT count as genuinely processed — they may need repair.
-        const genuineTerminalStatuses = new Set(["SENT", "OPENED", "CLICKED", "REPLIED", "BOUNCED", "DELIVERED", "FAILED"]);
-        const genuinelyProcessed = items.filter((i: any) => genuineTerminalStatuses.has(i.status)).length;
-        if (campaign.status === "ACTIVE" && items.length > 0 && genuinelyProcessed >= items.length) {
-            await prisma.crm_Outreach_Campaigns.update({
-                where: { id: sequenceId },
-                data: { status: "COMPLETED" as any },
-            }).catch(() => {});
-            (campaign as any).status = "COMPLETED";
-        }
+        // NOTE: Campaign auto-completion is NOT done here. The wizard's completion
+        // handler (FirstContactWizard.tsx) is the sole authority for marking a
+        // campaign as COMPLETED. A GET handler must never mutate lifecycle state.
 
         return NextResponse.json(campaign);
     } catch (error: any) {

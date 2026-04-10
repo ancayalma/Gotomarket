@@ -23,7 +23,8 @@ import {
     Search,
     Bot,
     Merge,
-    Send
+    Send,
+    Edit3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,6 +140,30 @@ export default function ListsView() {
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const isMobile = useIsMobile();
     const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+    const [renamingPool, setRenamingPool] = useState<{ id: string; name: string } | null>(null);
+    const [renameValue, setRenameValue] = useState("");
+    const [renameLoading, setRenameLoading] = useState(false);
+
+    const handleRename = async () => {
+        if (!renamingPool || !renameValue.trim()) return;
+        setRenameLoading(true);
+        try {
+            const res = await fetch(`/api/crm/leads/pools/${renamingPool.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: renameValue.trim() }),
+            });
+            if (!res.ok) throw new Error("Failed to rename");
+            mutate();
+            setRenamingPool(null);
+            const toast = (await import("react-hot-toast")).default;
+            toast.success("List renamed successfully");
+        } catch (e: any) {
+            const toast = (await import("react-hot-toast")).default;
+            toast.error(e?.message || "Failed to rename list");
+        }
+        setRenameLoading(false);
+    };
 
     useEffect(() => {
         if (isMobile) {
@@ -400,6 +425,15 @@ export default function ListsView() {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
+                                                        className="text-muted-foreground hover:text-white hover:bg-white/10"
+                                                        onClick={() => { setRenamingPool({ id: pool.id, name: pool.name }); setRenameValue(pool.name); }}
+                                                        title="Rename"
+                                                    >
+                                                        <Edit3 className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
                                                         className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
                                                         onClick={() => setPoolToDelete({ id: pool.id, name: pool.name })}
                                                         disabled={deleting === pool.id}
@@ -434,6 +468,7 @@ export default function ListsView() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-48">
                                                     <DropdownMenuLabel>Manage List</DropdownMenuLabel>
+                                                    <DropdownMenuItem onClick={() => { setRenamingPool({ id: pool.id, name: pool.name }); setRenameValue(pool.name); }}><Edit3 className="w-4 h-4 mr-2" /> Rename</DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => setAssignModalPool(pool)}><UserPlus className="w-4 h-4 mr-2" /> Assign Members</DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => router.push(`/documents?poolId=${pool.id}`)}><FileText className="w-4 h-4 mr-2" /> Manage Documents</DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => setIcpModalPool(pool)}><Target className="w-4 h-4 mr-2" /> View ICP</DropdownMenuItem>
@@ -595,6 +630,35 @@ export default function ListsView() {
                             className={`uppercase tracking-widest text-[10px] font-bold ${deleteAccounts ? 'bg-red-700 hover:bg-red-800 shadow-lg shadow-red-700/30' : 'bg-red-600 hover:bg-red-700'}`}
                         >
                             {deleting ? "Deleting..." : deleteAccounts ? "Delete Everything" : "Delete Pool Only"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!renamingPool} onOpenChange={(open) => { if (!open) setRenamingPool(null); }}>
+                <AlertDialogContent className="bg-card border-white/10 shadow-2xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-xl font-bold">Rename List</AlertDialogTitle>
+                        <AlertDialogDescription className="text-muted-foreground">
+                            Enter a new name for <span className="text-foreground font-semibold">"{renamingPool?.name}"</span>.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <Input
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        placeholder="List name"
+                        className="bg-background/50 border-white/10"
+                        autoFocus
+                        onKeyDown={(e) => { if (e.key === "Enter") handleRename(); }}
+                    />
+                    <AlertDialogFooter className="mt-2">
+                        <AlertDialogCancel className="border-white/10 hover:bg-white/5 uppercase tracking-widest text-[10px] font-bold">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleRename}
+                            disabled={renameLoading || !renameValue.trim() || renameValue.trim() === renamingPool?.name}
+                            className="bg-indigo-600 hover:bg-indigo-700 uppercase tracking-widest text-[10px] font-bold"
+                        >
+                            {renameLoading ? "Saving..." : "Rename"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
