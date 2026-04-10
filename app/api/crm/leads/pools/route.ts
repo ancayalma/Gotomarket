@@ -51,7 +51,7 @@ export async function GET() {
         },
       },
       _count: {
-        select: { candidates: true, lead_maps: true },
+        select: { candidates: true, lead_maps: true, outreach_campaigns: true },
       },
     };
 
@@ -117,6 +117,7 @@ export async function GET() {
       assignedMembers: p.assigned_members || [],
       latestJob: p.jobs?.[0] || null,
       candidatesCount: (p._count?.candidates || 0) + (p._count?.lead_maps || 0),
+      outreachCount: p._count?.outreach_campaigns || 0,
     }));
 
     return NextResponse.json({ pools: results }, { status: 200 });

@@ -26,7 +26,15 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
             orderBy: {
                 sentAt: 'desc'
             },
-            include: {
+            select: {
+                id: true,
+                subject: true,
+                status: true,
+                sentAt: true,
+                createdAt: true,
+                candidate_email: true,
+                candidate_name: true,
+                candidate_company: true,
                 assigned_lead: {
                     select: {
                         firstName: true,
@@ -38,14 +46,22 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
             }
         });
 
-        // Map to simpler format
-        const mapped = (items as any[]).map(item => ({
-            id: item.id,
-            lead: item.assigned_lead,
-            subject: item.subject,
-            sentAt: item.sentAt || item.createdAt,
-            status: item.status
-        }));
+        // Map to simpler format, with fallback for pool candidates without a lead record
+        const mapped = (items as any[]).map(item => {
+            const lead = item.assigned_lead || {
+                firstName: item.candidate_name?.split(' ')[0] || '',
+                lastName: item.candidate_name?.split(' ').slice(1).join(' ') || '',
+                email: item.candidate_email || 'Unknown',
+                company: item.candidate_company || '',
+            };
+            return {
+                id: item.id,
+                lead,
+                subject: item.subject,
+                sentAt: item.sentAt || item.createdAt,
+                status: item.status
+            };
+        });
 
         return NextResponse.json(mapped);
 
