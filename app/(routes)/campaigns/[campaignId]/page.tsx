@@ -978,6 +978,18 @@ export default function CampaignDetailPage() {
                                             <p className="text-sm font-semibold">{productFocus}</p>
                                         </div>
                                     )}
+                                    {campaign.campaign_branding?.senderMode && (
+                                        <div>
+                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Sender Mode</span>
+                                            <p className="text-sm font-semibold capitalize">{campaign.campaign_branding.senderMode}</p>
+                                        </div>
+                                    )}
+                                    {campaign.campaign_branding?.templateId && (
+                                        <div>
+                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Email Template</span>
+                                            <p className="text-sm font-semibold capitalize">{campaign.campaign_branding.templateId}</p>
+                                        </div>
+                                    )}
                                     {campaign.campaign_branding?.persona_preset && (
                                         <div>
                                             <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Voice</span>
@@ -996,6 +1008,9 @@ export default function CampaignDetailPage() {
                                             <p className="text-sm text-muted-foreground">{campaign.campaign_branding.outreach_approach}</p>
                                         </div>
                                     )}
+                                    {!campaign.campaign_branding?.company_name && !campaign.campaign_branding?.senderMode && !productFocus && (
+                                        <p className="text-sm text-muted-foreground">No brand identity configured. Set up your brand in Settings → Brand Identity.</p>
+                                    )}
                                 </CardContent>
                             </Card>
 
@@ -1008,42 +1023,72 @@ export default function CampaignDetailPage() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
-                                    {campaign.campaign_branding?.target_industries?.length > 0 && (
-                                        <div>
-                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Industries</span>
-                                            <div className="flex flex-wrap gap-1 mt-1">
-                                                {campaign.campaign_branding.target_industries.map((ind: string) => (
-                                                    <Badge key={ind} variant="secondary" className="text-[10px]">{ind}</Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {campaign.campaign_branding?.target_geos?.length > 0 && (
-                                        <div>
-                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Geographies</span>
-                                            <div className="flex flex-wrap gap-1 mt-1">
-                                                {campaign.campaign_branding.target_geos.map((geo: string) => (
-                                                    <Badge key={geo} variant="secondary" className="text-[10px]">{geo}</Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {campaign.campaign_branding?.ideal_customer_profile && (
-                                        <div>
-                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Ideal Customer</span>
-                                            <p className="text-sm text-muted-foreground mt-1">{campaign.campaign_branding.ideal_customer_profile}</p>
-                                        </div>
-                                    )}
-                                    {campaign.campaign_branding?.key_value_props?.length > 0 && (
-                                        <div>
-                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Value Props</span>
-                                            <div className="flex flex-wrap gap-1 mt-1">
-                                                {campaign.campaign_branding.key_value_props.map((prop: string) => (
-                                                    <Badge key={prop} variant="outline" className="text-[10px] border-emerald-500/20 text-emerald-400">{prop}</Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
+                                    {(() => {
+                                        const icp = campaign.campaign_branding?.target_industries?.length > 0
+                                            ? campaign.campaign_branding
+                                            : (campaign as any).assigned_pool?.icpConfig;
+                                        if (!icp) return <p className="text-sm text-muted-foreground">No ICP targeting data available.</p>;
+                                        return (
+                                            <>
+                                                {(icp.target_industries || icp.industries)?.length > 0 && (
+                                                    <div>
+                                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Industries</span>
+                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                            {(icp.target_industries || icp.industries).map((ind: string) => (
+                                                                <Badge key={ind} variant="secondary" className="text-[10px]">{ind}</Badge>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {(icp.target_geos || icp.geos)?.length > 0 && (
+                                                    <div>
+                                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Geographies</span>
+                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                            {(icp.target_geos || icp.geos).map((geo: string) => (
+                                                                <Badge key={geo} variant="secondary" className="text-[10px]">{geo}</Badge>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {(icp.target_titles || icp.titles)?.length > 0 && (
+                                                    <div>
+                                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Job Titles</span>
+                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                            {(icp.target_titles || icp.titles).map((t: string) => (
+                                                                <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {(icp.companySizes)?.length > 0 && (
+                                                    <div>
+                                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Company Size</span>
+                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                            {icp.companySizes.map((s: string) => (
+                                                                <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {(icp.ideal_customer_profile || icp.notes) && (
+                                                    <div>
+                                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Ideal Customer</span>
+                                                        <p className="text-sm text-muted-foreground mt-1">{icp.ideal_customer_profile || icp.notes}</p>
+                                                    </div>
+                                                )}
+                                                {campaign.campaign_branding?.key_value_props?.length > 0 && (
+                                                    <div>
+                                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Value Props</span>
+                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                            {campaign.campaign_branding.key_value_props.map((prop: string) => (
+                                                                <Badge key={prop} variant="outline" className="text-[10px] border-emerald-500/20 text-emerald-400">{prop}</Badge>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                 </CardContent>
                             </Card>
 
