@@ -906,7 +906,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
-                  status: "ACTIVE",
+                  status: "COMPLETED",
                   campaignBranding: { 
                     templateId: selectedTemplate,
                     senderMode,

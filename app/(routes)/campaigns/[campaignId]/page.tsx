@@ -663,6 +663,34 @@ export default function CampaignDetailPage() {
                                 </Button>
                             </>
                         )}
+                        {campaign.status === "COMPLETED" && (
+                            <Button
+                                size="sm"
+                                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 font-bold"
+                                onClick={async () => {
+                                    setStatusLoading(true);
+                                    try {
+                                        const res = await fetch(`/api/campaigns/${campaignId}`, {
+                                            method: "PATCH",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ status: "ACTIVE" }),
+                                        });
+                                        if (res.ok) {
+                                            mutate();
+                                            toast.success("Campaign reactivated.");
+                                        } else {
+                                            const err = await res.json();
+                                            toast.error(err.message || "Failed to reactivate campaign");
+                                        }
+                                    } catch { toast.error("Failed to reactivate campaign"); }
+                                    setStatusLoading(false);
+                                }}
+                                disabled={statusLoading}
+                            >
+                                {statusLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                                Reactivate
+                            </Button>
+                        )}
                         <Button
                             size="sm"
                             variant="outline"
@@ -733,7 +761,7 @@ export default function CampaignDetailPage() {
                 </div>
 
                 {/* Email Send Progress Bar */}
-                {((campaign.status === "ACTIVE" || campaign.status === "PAUSED") && (campaign.total_leads > 0 || campaign.emails_sent > 0)) || isRepairing ? (
+                {(campaign.status !== "DRAFT" && (campaign.total_leads > 0 || campaign.emails_sent > 0)) || isRepairing ? (
                     <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
                             <span className="text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-2">
