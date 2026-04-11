@@ -419,7 +419,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
       let fetchedBrand: any = null;
       try {
         setLoadingBrands(true);
-        const b = await fetch("/api/admin/brand");
+        const b = await fetch("/api/admin/brand?_t=" + Date.now(), { cache: "no-store", headers: { "Pragma": "no-cache", "Cache-Control": "no-cache" } });
         if (b.ok) {
           const data = await b.json();
           if (data.multiBrand && Array.isArray(data.brands)) {

@@ -128,7 +128,12 @@ const NewCampaignDialog = ({ customTrigger, entityName = "Campaign", apiEndpoint
       (async () => {
         try {
           const res = await axios.get("/api/admin/brand");
-          const brand = res.data;
+          const brandData = res.data;
+          
+          const brand = brandData?.multiBrand && Array.isArray(brandData.brands)
+            ? (brandData.brands.find((b: any) => b.is_default) || brandData.brands[0])
+            : brandData;
+
           if (brand && Object.keys(brand).length > 0) {
             const currentVals = form.getValues();
             

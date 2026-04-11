@@ -112,22 +112,29 @@ export default function LeadGenWizardPage() {
     }
   }, [searchParams, availablePools]);
 
-  // Pre-fill ICP fields from brand identity (AI-first: minimize typing)
   useEffect(() => {
     if (!brandData) return;
+    
+    // Handle multi-brand vs single-brand shapes
+    const brand = brandData.multiBrand && Array.isArray(brandData.brands)
+      ? (brandData.brands.find((b: any) => b.is_default) || brandData.brands[0])
+      : brandData;
+
+    if (!brand) return;
+
     setState((prev) => {
       const updates: Partial<WizardState> = {};
       // Pre-fill industries from brand's industry or ICP
-      if (!prev.industries && brandData.industry) {
-        updates.industries = brandData.industry;
+      if (!prev.industries && brand.industry) {
+        updates.industries = brand.industry;
       }
       // Pre-fill geos from brand's location
-      if (!prev.geos && brandData.location) {
-        updates.geos = brandData.location;
+      if (!prev.geos && brand.location) {
+        updates.geos = brand.location;
       }
       // Pre-fill AI prompt with brand context for AI-only mode
-      if (!prev.aiPrompt && brandData.ideal_customer_profile) {
-        updates.aiPrompt = brandData.ideal_customer_profile;
+      if (!prev.aiPrompt && brand.ideal_customer_profile) {
+        updates.aiPrompt = brand.ideal_customer_profile;
       }
       return Object.keys(updates).length > 0 ? { ...prev, ...updates } : prev;
     });
