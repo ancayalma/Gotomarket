@@ -41,6 +41,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^5.2.2",
+    "@lightpanda/browser": "^1.2.0",
     "@marsidev/react-turnstile": "^1.4.2",
     "@mendable/firecrawl-js": "^4.13.0",
     "@microsoft/microsoft-graph-client": "^3.0.7",

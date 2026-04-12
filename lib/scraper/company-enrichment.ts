@@ -3,7 +3,7 @@
  * Extracts detailed information from company websites
  */
 
-import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
+import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/scraper-browser";
 import { normalizeDomain, normalizeUrl, normalizeCompanyName, calculateCompanyConfidence } from "./normalize";
 import { prismadbCrm } from "@/lib/prisma-crm";
 import { analyzeCompanyWithAI } from "./ai-helpers";
