@@ -107,16 +107,16 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
   const btnPrimary: React.CSSProperties = {
     ...btnBase,
     color: "#ffffff",
-    background: `linear-gradient(135deg, ${SECONDARY} 0%, ${SECONDARY}dd 100%)`,
-    boxShadow: `0 2px 8px ${SECONDARY}40`,
-    border: `2px solid ${SECONDARY}`,
+    background: ACCENT,
+    boxShadow: `0 2px 8px ${ACCENT}40`,
+    border: `2px solid ${ACCENT}`,
   };
   const btnSecondary: React.CSSProperties = {
     ...btnBase,
-    color: "#ffffff",
-    background: `linear-gradient(135deg, ${ACCENT} 0%, #c7301e 100%)`,
-    boxShadow: "0 2px 6px rgba(245,64,41,0.20)",
-    border: `2px solid ${ACCENT}`,
+    color: SECONDARY,
+    background: "transparent",
+    boxShadow: "none",
+    border: `2px solid ${SECONDARY}`,
   };
 
   const footerText =
@@ -198,10 +198,9 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
               style={{
                 margin: "28px 0 20px 0",
                 padding: "20px",
-                background:
-                  "linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%)",
+                background: `linear-gradient(135deg, ${SECONDARY}11 0%, ${SECONDARY}08 100%)`,
                 borderRadius: "10px",
-                border: "1px solid #e1e4e8",
+                border: `1px solid ${SECONDARY}22`,
               }}
             >
               <Text

@@ -29,6 +29,7 @@ interface OutreachPlayfulTemplateProps {
   trackingPixelUrl?: string;
   brand?: {
     accentColor?: string;
+    secondaryColor?: string;
     primaryText?: string;
     fontFamily?: string;
     logoUrl?: string;
@@ -67,6 +68,7 @@ export const OutreachPlayfulTemplate: React.FC<
   const ACCENT = brand?.accentColor || DEFAULTS.ACCENT;
   const PRIMARY = brand?.primaryText || DEFAULTS.PRIMARY;
   const FONT = brand?.fontFamily || DEFAULTS.FONT;
+  const SECONDARY = brand?.secondaryColor || "#10b981";
 
   const bgTexture = getBackgroundTexture(templateOptions?.backgroundTexture, ACCENT);
   const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
@@ -96,10 +98,10 @@ export const OutreachPlayfulTemplate: React.FC<
 
   const funBtnSecondary: React.CSSProperties = {
     ...funBtn,
-    color: ACCENT,
-    background: hexToRgba(ACCENT, 0.1),
+    color: SECONDARY,
+    background: hexToRgba(SECONDARY, 0.1),
     boxShadow: "none",
-    border: `2px solid ${hexToRgba(ACCENT, 0.3)}`,
+    border: `2px solid ${hexToRgba(SECONDARY, 0.3)}`,
   };
 
   return (
@@ -132,7 +134,7 @@ export const OutreachPlayfulTemplate: React.FC<
           {!templateOptions?.bannerImageUrl && (
             <Section
               style={{
-                background: `linear-gradient(135deg, ${hexToRgba(ACCENT, 0.15)} 0%, ${hexToRgba(ACCENT, 0.05)} 100%)`,
+                background: `linear-gradient(135deg, ${hexToRgba(SECONDARY, 0.15)} 0%, ${hexToRgba(SECONDARY, 0.05)} 100%)`,
                 padding: "24px 32px",
                 borderRadius: "20px",
                 textAlign: "center",

@@ -30,6 +30,7 @@ interface OutreachNewsletterTemplateProps {
   trackingPixelUrl?: string;
   brand?: {
     accentColor?: string;
+    secondaryColor?: string;
     primaryText?: string;
     fontFamily?: string;
     logoUrl?: string;
@@ -61,6 +62,7 @@ export const OutreachNewsletterTemplate: React.FC<
   const ACCENT = brand?.accentColor || DEFAULTS.ACCENT;
   const PRIMARY = brand?.primaryText || DEFAULTS.PRIMARY;
   const FONT = brand?.fontFamily || DEFAULTS.FONT;
+  const SECONDARY = brand?.secondaryColor || "#10b981";
 
   const bgTexture = getBackgroundTexture(templateOptions?.backgroundTexture, ACCENT);
   const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
@@ -84,9 +86,9 @@ export const OutreachNewsletterTemplate: React.FC<
     fontFamily: DEFAULTS.SANS,
     padding: "14px 16px",
     margin: "0",
-    color: ACCENT,
-    backgroundColor: "#f0fdfa",
-    border: `1px solid ${ACCENT}33`,
+    color: SECONDARY,
+    backgroundColor: `${SECONDARY}0a`,
+    border: `1px solid ${SECONDARY}33`,
     textAlign: "center" as const,
   };
 
@@ -210,35 +212,42 @@ export const OutreachNewsletterTemplate: React.FC<
               >
                 Continue Reading
               </Text>
-              {/* Two-column resource cards */}
-              <Row>
-                {resourceButtons.map((r, idx) => {
-                  const isPrimary = r.type === "primary";
-                  return (
-                  <Column key={r.id || r.href} style={{ padding: idx % 2 === 0 ? "0 6px 10px 0" : "0 0 10px 6px", width: "50%" }}>
-                    <Link
-                      href={r.href}
-                      style={isPrimary ? cardLinkPrimary : cardLink}
-                    >
-                      {r.iconUrl && (
-                        <Img
-                          src={r.iconUrl}
-                          alt=""
-                          width="14"
-                          height="14"
-                          style={{
-                            display: "inline-block",
-                            verticalAlign: "middle",
-                            marginRight: "6px",
-                          }}
-                        />
-                      )}
-                      {r.label}
-                    </Link>
-                  </Column>
-                  );
-                })}
-              </Row>
+              {/* Two-column resource cards — 2 per row */}
+              {resourceButtons.reduce((rows: any[][], r: any, idx: number) => {
+                if (idx % 2 === 0) rows.push([]);
+                rows[rows.length - 1].push(r);
+                return rows;
+              }, []).map((pair: any[], rowIdx: number) => (
+                <Row key={rowIdx} style={{ marginBottom: "10px" }}>
+                  {pair.map((r: any, colIdx: number) => {
+                    const isPrimary = r.type === "primary";
+                    return (
+                    <Column key={r.id || r.href} style={{ padding: colIdx === 0 ? "0 6px 0 0" : "0 0 0 6px", width: "50%" }}>
+                      <Link
+                        href={r.href}
+                        style={isPrimary ? cardLinkPrimary : cardLink}
+                      >
+                        {r.iconUrl && (
+                          <Img
+                            src={r.iconUrl}
+                            alt=""
+                            width="14"
+                            height="14"
+                            style={{
+                              display: "inline-block",
+                              verticalAlign: "middle",
+                              marginRight: "6px",
+                            }}
+                          />
+                        )}
+                        {r.label}
+                      </Link>
+                    </Column>
+                    );
+                  })}
+                  {pair.length === 1 && <Column style={{ width: "50%" }} />}
+                </Row>
+              ))}
             </Section>
           )}
 
@@ -255,7 +264,7 @@ export const OutreachNewsletterTemplate: React.FC<
             style={{
               padding: "16px 32px",
               borderTop: `1px solid #e2e8f0`,
-              backgroundColor: "#f8fafc",
+              backgroundColor: `${SECONDARY}08`,
             }}
           >
             <Text

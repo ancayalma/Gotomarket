@@ -29,6 +29,7 @@ interface OutreachProfessionalTemplateProps {
   trackingPixelUrl?: string;
   brand?: {
     accentColor?: string;
+    secondaryColor?: string;
     primaryText?: string;
     fontFamily?: string;
     logoUrl?: string;
@@ -59,6 +60,7 @@ export const OutreachProfessionalTemplate: React.FC<
   const ACCENT = brand?.accentColor || DEFAULTS.ACCENT;
   const PRIMARY = brand?.primaryText || DEFAULTS.PRIMARY;
   const FONT = brand?.fontFamily || DEFAULTS.FONT;
+  const SECONDARY = brand?.secondaryColor || "#10b981";
 
   const bgTexture = getBackgroundTexture(templateOptions?.backgroundTexture, ACCENT);
   const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
@@ -88,9 +90,9 @@ export const OutreachProfessionalTemplate: React.FC<
 
   const pillBtnSecondary: React.CSSProperties = {
     ...pillBtn,
-    color: ACCENT,
+    color: SECONDARY,
     background: "transparent",
-    border: `2px solid ${ACCENT}`,
+    border: `2px solid ${SECONDARY}`,
   };
 
   return (
@@ -186,9 +188,9 @@ export const OutreachProfessionalTemplate: React.FC<
               style={{
                 margin: "0 0 20px 0",
                 padding: "24px 32px",
-                backgroundColor: "#ffffff",
+                backgroundColor: `${SECONDARY}0a`,
                 borderRadius: "8px",
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${SECONDARY}1a`,
               }}
             >
               <Hr
