@@ -19,6 +19,8 @@ import {
   ExternalLink,
   Ban,
   RotateCcw,
+  Maximize2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -124,6 +126,7 @@ export function CampaignContactTracker({
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [previewFullscreenId, setPreviewFullscreenId] = useState<string | null>(null);
 
   useEffect(() => {
     loadItems();
@@ -410,16 +413,82 @@ export function CampaignContactTracker({
 
                     {/* Email Body */}
                     {((item as any).body_text || (item as any).body_html) && (
-                      <div className="bg-muted/30 rounded-md p-3 max-h-60 overflow-y-auto">
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Email Content</p>
+                      <div className="rounded-md overflow-hidden border border-border/50" style={{ position: 'relative' }}>
+                        <div className="flex items-center justify-between px-3 py-1.5" style={{ background: '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
+                          <p className="text-xs font-medium" style={{ color: '#64748b' }}>Email Content</p>
+                          {(item as any).body_html && (
+                            <button
+                              onClick={() => setPreviewFullscreenId(item.id)}
+                              title="View fullscreen"
+                              style={{
+                                background: 'rgba(0,0,0,0.6)', color: 'white',
+                                border: 'none', borderRadius: 4, padding: '3px 8px',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                                fontSize: '0.65rem', fontWeight: 600,
+                              }}
+                            >
+                              <Maximize2 size={10} /> Fullscreen
+                            </button>
+                          )}
+                        </div>
                         {(item as any).body_html ? (
-                          <div
-                            className="text-sm prose prose-sm prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{ __html: (item as any).body_html }}
+                          <iframe
+                            srcDoc={`<!DOCTYPE html><html><head><meta name="color-scheme" content="light only"><style>:root{color-scheme:light only!important}html,body{background:#ffffff!important;color:#1f2937!important;margin:0;padding:0}</style></head><body>${(item as any).body_html}</body></html>`}
+                            title="Email Preview"
+                            sandbox="allow-same-origin"
+                            style={{ width: '100%', height: 700, border: 'none', display: 'block', background: '#ffffff' }}
                           />
                         ) : (
-                          <p className="text-sm whitespace-pre-wrap">{(item as any).body_text}</p>
+                          <div style={{ background: '#ffffff', padding: '12px', maxHeight: 400, overflowY: 'auto' }}>
+                            <p className="text-sm whitespace-pre-wrap" style={{ color: '#374151' }}>{(item as any).body_text}</p>
+                          </div>
                         )}
+                      </div>
+                    )}
+
+                    {/* Fullscreen Email Modal */}
+                    {previewFullscreenId === item.id && (item as any).body_html && (
+                      <div style={{
+                        position: 'fixed', inset: 0, zIndex: 99999,
+                        background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        padding: '2rem',
+                      }}>
+                        <div style={{
+                          position: 'relative', width: '100%', maxWidth: 720,
+                          height: '90vh', borderRadius: 12, overflow: 'hidden',
+                          boxShadow: '0 25px 60px rgba(0,0,0,0.5)', background: '#fff',
+                          display: 'flex', flexDirection: 'column',
+                        }}>
+                          <div style={{
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0',
+                            background: '#f8fafc', flexShrink: 0,
+                          }}>
+                            <div>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155' }}>Email Preview</span>
+                              {item.subject && (
+                                <span style={{ fontSize: '0.7rem', color: '#94a3b8', marginLeft: 8 }}>— {item.subject}</span>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => setPreviewFullscreenId(null)}
+                              style={{
+                                background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 6,
+                                cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 4,
+                                fontSize: '0.75rem', fontWeight: 600, color: '#64748b',
+                              }}
+                            >
+                              <X size={14} /> Close
+                            </button>
+                          </div>
+                          <iframe
+                            srcDoc={`<!DOCTYPE html><html><head><meta name="color-scheme" content="light only"><style>:root{color-scheme:light only!important}html,body{background:#ffffff!important;color:#1f2937!important;margin:0;padding:0}</style></head><body>${(item as any).body_html}</body></html>`}
+                            title="Fullscreen Email Preview"
+                            sandbox="allow-same-origin"
+                            style={{ flex: 1, width: '100%', border: 'none', background: '#ffffff' }}
+                          />
+                        </div>
                       </div>
                     )}
 

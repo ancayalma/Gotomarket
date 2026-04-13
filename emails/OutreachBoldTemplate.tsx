@@ -29,6 +29,7 @@ interface OutreachBoldTemplateProps {
   trackingPixelUrl?: string;
   brand?: {
     accentColor?: string;
+    secondaryColor?: string;
     primaryText?: string;
     fontFamily?: string;
     logoUrl?: string;
@@ -68,6 +69,7 @@ export const OutreachBoldTemplate: React.FC<
   const PRIMARY = brand?.primaryText || DEFAULTS.PRIMARY;
   const FONT = brand?.fontFamily || DEFAULTS.FONT;
   const ACCENT_DARK = darken(ACCENT, 50);
+  const SECONDARY = brand?.secondaryColor || "#10b981";
 
   const bgTexture = getBackgroundTexture(templateOptions?.backgroundTexture, ACCENT);
   const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
@@ -102,9 +104,9 @@ export const OutreachBoldTemplate: React.FC<
 
   const ctaBtnSecondary: React.CSSProperties = {
     ...ctaBtn,
-    color: ACCENT,
+    color: SECONDARY,
     background: "#ffffff",
-    border: `2px solid ${ACCENT}`,
+    border: `2px solid ${SECONDARY}`,
     boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
   };
 
@@ -118,7 +120,7 @@ export const OutreachBoldTemplate: React.FC<
           lineHeight: 1.7,
           color: PRIMARY,
           padding: "40px 20px",
-          backgroundColor: "#f1f5f9",
+          backgroundColor: `${SECONDARY}08`,
           ...bgTexture,
         }}
       >

@@ -419,7 +419,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
       let fetchedBrand: any = null;
       try {
         setLoadingBrands(true);
-        const b = await fetch("/api/admin/brand");
+        const b = await fetch("/api/admin/brand?_t=" + Date.now(), { cache: "no-store", headers: { "Pragma": "no-cache", "Cache-Control": "no-cache" } });
         if (b.ok) {
           const data = await b.json();
           if (data.multiBrand && Array.isArray(data.brands)) {
@@ -1543,7 +1543,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                   {/* Accent / Secondary Button Color */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-muted-foreground w-14 shrink-0">Accent</span>
+                      <span className="text-[11px] text-muted-foreground w-14 shrink-0">Primary</span>
                       {["#F54029", "#2563eb", "#8b5cf6", "#ec4899", "#f97316"].map((c) => (
                         <button
                           key={c}
@@ -1572,7 +1572,7 @@ export default function FirstContactWizard({ isOpen, onClose, leadIds, leadData,
                   {/* Primary Button Color */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-muted-foreground w-14 shrink-0">Buttons</span>
+                      <span className="text-[11px] text-muted-foreground w-14 shrink-0">Secondary</span>
                       {["#10b981", "#2563eb", "#8b5cf6", "#f59e0b", "#0ea5e9"].map((c) => (
                         <button
                           key={c}

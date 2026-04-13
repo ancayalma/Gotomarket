@@ -1,5 +1,5 @@
 import { prismadbCrm } from "@/lib/prisma-crm";
-import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
+import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/scraper-browser";
 import {
     normalizeDomain,
     normalizeName,

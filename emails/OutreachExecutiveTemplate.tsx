@@ -29,6 +29,7 @@ interface OutreachExecutiveTemplateProps {
   trackingPixelUrl?: string;
   brand?: {
     accentColor?: string;
+    secondaryColor?: string;
     primaryText?: string;
     fontFamily?: string;
     logoUrl?: string;
@@ -59,6 +60,7 @@ export const OutreachExecutiveTemplate: React.FC<
   const ACCENT = brand?.accentColor || DEFAULTS.ACCENT;
   const PRIMARY = brand?.primaryText || DEFAULTS.PRIMARY;
   const FONT = brand?.fontFamily || DEFAULTS.FONT;
+  const SECONDARY = brand?.secondaryColor || "#10b981";
 
   const bgTexture = getBackgroundTexture(templateOptions?.backgroundTexture, ACCENT);
   const borderAccent = getBorderAccent(templateOptions?.borderAccent, ACCENT);
@@ -81,8 +83,8 @@ export const OutreachExecutiveTemplate: React.FC<
     fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
     padding: "10px 20px",
     margin: "6px 6px 6px 0",
-    color: ACCENT,
-    border: `1.5px solid ${ACCENT}`,
+    color: SECONDARY,
+    border: `1.5px solid ${SECONDARY}`,
     borderRadius: "4px",
     letterSpacing: "0.5px",
     textTransform: "uppercase" as const,
@@ -105,7 +107,7 @@ export const OutreachExecutiveTemplate: React.FC<
           lineHeight: 1.9,
           color: PRIMARY,
           padding: "40px 20px",
-          backgroundColor: "#fafaf8",
+          backgroundColor: `${SECONDARY}0a`,
           ...bgTexture,
         }}
       >

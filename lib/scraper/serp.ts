@@ -157,7 +157,7 @@ async function webSearch(query: string): Promise<SerpResult[]> {
   // Fallback: Puppeteer Google search
   let browser;
   try {
-    const { launchBrowser, newPageWithDefaults, closeBrowser } = await import("@/lib/browser");
+    const { launchBrowser, newPageWithDefaults, closeBrowser } = await import("@/lib/scraper-browser");
     browser = await launchBrowser();
     const page = await newPageWithDefaults(browser);
 
@@ -207,7 +207,7 @@ async function webSearch(query: string): Promise<SerpResult[]> {
   } catch (error) {
     console.error(`Google Puppeteer search error for "${query}":`, error);
     if (browser) {
-      const { closeBrowser } = await import("@/lib/browser");
+      const { closeBrowser } = await import("@/lib/scraper-browser");
       await closeBrowser(browser);
     }
     return [];

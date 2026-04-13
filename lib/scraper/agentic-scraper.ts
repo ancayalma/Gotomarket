@@ -15,7 +15,7 @@ import { prismadbCrm } from "@/lib/prisma-crm";
 import { prismadb } from "@/lib/prisma";
 import { consumeAiTokens } from "@/lib/ai-tokens";
 import { checkTeamQuota } from "@/lib/quota-service";
-// import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
+// import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/scraper-browser";
 import {
   normalizeDomain,
   normalizeEmail,
@@ -90,7 +90,7 @@ type SerpResult = { name: string; url: string; snippet: string; domain: string }
 async function ddgPuppeteerSearch(query: string, count: number): Promise<SerpResult[]> {
   let browser;
   try {
-    const { launchBrowser: lb, newPageWithDefaults: np, closeBrowser: cb } = await import("@/lib/browser");
+    const { launchBrowser: lb, newPageWithDefaults: np, closeBrowser: cb } = await import("@/lib/scraper-browser");
     browser = await lb();
     const page = await np(browser);
 
@@ -184,7 +184,7 @@ async function ddgPuppeteerSearch(query: string, count: number): Promise<SerpRes
     return [];
   } finally {
     if (browser) {
-      const { closeBrowser: cb } = await import("@/lib/browser");
+      const { closeBrowser: cb } = await import("@/lib/scraper-browser");
       await cb(browser);
     }
   }
@@ -265,7 +265,7 @@ async function ddgHttpSearch(query: string, count: number): Promise<SerpResult[]
 async function googlePuppeteerSearch(query: string, count: number): Promise<SerpResult[]> {
   let browser;
   try {
-    const { launchBrowser: lb, newPageWithDefaults: np, closeBrowser: cb } = await import("@/lib/browser");
+    const { launchBrowser: lb, newPageWithDefaults: np, closeBrowser: cb } = await import("@/lib/scraper-browser");
     browser = await lb();
     const page = await np(browser);
 
@@ -361,7 +361,7 @@ async function googlePuppeteerSearch(query: string, count: number): Promise<Serp
     return [];
   } finally {
     if (browser) {
-      const { closeBrowser: cb } = await import("@/lib/browser");
+      const { closeBrowser: cb } = await import("@/lib/scraper-browser");
       await cb(browser);
     }
   }
@@ -852,7 +852,7 @@ async function extractPageData(page: any): Promise<{
  * Visit website using Puppeteer (real browser) to extract company data
  * Visits homepage + high-value subpages (/about, /contact, /team)
  */
-import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/browser";
+import { launchBrowser, newPageWithDefaults, closeBrowser } from "@/lib/scraper-browser";
 
 export async function visitWebsiteForAgent(url: string, userId?: string, icp?: ICPConfig, poolId?: string): Promise<any> {
   const db: any = prismadbCrm;

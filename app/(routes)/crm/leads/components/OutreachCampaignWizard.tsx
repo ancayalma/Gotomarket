@@ -305,27 +305,32 @@ export default function OutreachCampaignWizard({
             try {
                 const res = await fetch("/api/admin/brand");
                 if (!res.ok) return;
-                const brand = await res.json();
+                const brandData = await res.json();
+                
+                // Handle both single-brand and multi-brand API responses
+                const brand = brandData.multiBrand && Array.isArray(brandData.brands) 
+                    ? (brandData.brands.find((b: any) => b.is_default) || brandData.brands[0]) 
+                    : brandData;
 
                 // Auto-populate company name from brand (replaces hardcoded "The Utility Company")
-                if (brand.company_name && !companyName) {
+                if (brand?.company_name && !companyName) {
                     setCompanyName(brand.company_name);
                 }
 
                 // Auto-populate meeting preferences from brand location (replaces hardcoded "Santa Fe")
-                if (!meetingPreferences && brand.location) {
+                if (!meetingPreferences && brand?.location) {
                     setMeetingPreferences(
                         `- I am based in ${brand.location}.\n- I'm available for remote meetings.`
                     );
                 }
 
                 // Auto-populate user title if not set
-                if (!userTitle && brand.persona_preset) {
+                if (!userTitle && brand?.persona_preset) {
                     setUserTitle(brand.persona_preset);
                 }
 
                 // If no campaign briefing and brand has mission, use it as seed
-                if (!campaignBriefing && brand.mission_statement) {
+                if (!campaignBriefing && brand?.mission_statement) {
                     setCampaignBriefing(brand.mission_statement);
                 }
             } catch (error) {
