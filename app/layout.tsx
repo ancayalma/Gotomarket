@@ -78,11 +78,6 @@ export async function generateMetadata(): Promise<Metadata> {
       description: "Automated prospecting, social intelligence, and 24/7 AI agents that never sleep.",
       creator: "@BasaltHQ",
     },
-    icons: {
-      icon: "/favicon-32x32.png",
-      shortcut: "/favicon-32x32.png",
-      apple: "/apple-touch-icon.png",
-    },
     manifest: "/site.webmanifest",
     alternates: {
       canonical: "/",
