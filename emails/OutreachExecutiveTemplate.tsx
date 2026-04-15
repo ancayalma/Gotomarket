@@ -37,6 +37,7 @@ interface OutreachExecutiveTemplateProps {
   };
   heroIconUrl?: string;
   templateOptions?: TemplateOptions;
+  unsubscribeUrl?: string;
 }
 
 const DEFAULTS = {
@@ -56,6 +57,7 @@ export const OutreachExecutiveTemplate: React.FC<
   brand,
   heroIconUrl,
   templateOptions,
+  unsubscribeUrl,
 }) => {
   const ACCENT = brand?.accentColor || DEFAULTS.ACCENT;
   const PRIMARY = brand?.primaryText || DEFAULTS.PRIMARY;
@@ -220,17 +222,20 @@ export const OutreachExecutiveTemplate: React.FC<
               borderTop: `1px solid #e5e5e5`,
             }}
           >
-            <Text
-              style={{
-                color: "#9ca3af",
-                fontSize: "11px",
-                fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-                fontStyle: "italic",
-              }}
-            >
-              To unsubscribe from future emails, please reply with
-              &quot;UNSUBSCRIBE&quot; in the subject line.
-            </Text>
+            {unsubscribeUrl && (
+              <Text
+                style={{
+                  color: "#9ca3af",
+                  fontSize: "11px",
+                  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                  fontStyle: "italic",
+                }}
+              >
+                <Link href={unsubscribeUrl} style={{ color: "#9ca3af", textDecoration: "underline" }}>
+                  Click here to unsubscribe
+                </Link>
+              </Text>
+            )}
           </Section>
 
           {/* Thin accent bottom line */}
