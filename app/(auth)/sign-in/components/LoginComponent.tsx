@@ -52,6 +52,7 @@ import {
 import LoadingComponent from "@/components/LoadingComponent";
 
 export function LoginComponent() {
+  const oauthEnabled = process.env.NEXT_PUBLIC_ENABLE_OAUTH === "true";
   const [isLoading, setIsLoading] = useState(false);
   const [show, setShow] = useState(false);
   //State for dialog to be by opened and closed by DialogTrigger
@@ -329,44 +330,48 @@ export function LoginComponent() {
       <CardContent className="grid gap-4">
         {mfaStep === "login" ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <Button variant="outline" onClick={loginWithGitHub} className="px-0">
-                <Icons.gitHub className="mr-2 h-4 w-4" />
-                Github
-              </Button>
-              <Button
-                variant="outline"
-                onClick={loginWithGoogle}
-                disabled={isLoading}
-                className="px-0"
-              >
-                {isLoading ? (
-                  <Icons.google className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Icons.google className="mr-2 h-4 w-4" />
-                )}{" "}
-                Google
-              </Button>
-              <Button
-                variant="outline"
-                onClick={loginWithMicrosoft}
-                disabled={isLoading}
-                className="px-0"
-              >
-                <Icons.microsoft className="mr-2 h-4 w-4" />
-                Microsoft
-              </Button>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-transparent px-2 text-gray-400">
-                  Or continue with
-                </span>
-              </div>
-            </div>
+            {oauthEnabled && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <Button variant="outline" onClick={loginWithGitHub} className="px-0">
+                    <Icons.gitHub className="mr-2 h-4 w-4" />
+                    Github
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={loginWithGoogle}
+                    disabled={isLoading}
+                    className="px-0"
+                  >
+                    {isLoading ? (
+                      <Icons.google className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Icons.google className="mr-2 h-4 w-4" />
+                    )}{" "}
+                    Google
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={loginWithMicrosoft}
+                    disabled={isLoading}
+                    className="px-0"
+                  >
+                    <Icons.microsoft className="mr-2 h-4 w-4" />
+                    Microsoft
+                  </Button>
+                </div>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-transparent px-2 text-gray-400">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="grid gap-2">
