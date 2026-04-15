@@ -119,8 +119,7 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
     border: `2px solid ${SECONDARY}`,
   };
 
-  const footerText =
-    'To unsubscribe from future emails, please reply with "UNSUBSCRIBE" in the subject line.';
+
 
   return (
     <Html>
@@ -254,16 +253,15 @@ export const OutreachTemplate: React.FC<Readonly<OutreachTemplateProps>> = ({
           )}
 
           {/* CAN-SPAM footer */}
-          <Section style={{ marginTop: "16px", borderTop: "1px solid #e5e7eb", paddingTop: "12px" }}>
-            <Text style={{ color: "#6b7280", fontSize: "12px" }}>{footerText}</Text>
-            {unsubscribeUrl && (
-              <Text style={{ color: "#9ca3af", fontSize: "11px", marginTop: "8px" }}>
+          {unsubscribeUrl && (
+            <Section style={{ marginTop: "16px", borderTop: "1px solid #e5e7eb", paddingTop: "12px" }}>
+              <Text style={{ color: "#9ca3af", fontSize: "11px" }}>
                 <Link href={unsubscribeUrl} style={{ color: "#9ca3af", textDecoration: "underline" }}>
-                  Unsubscribe from future emails
+                  Click here to unsubscribe
                 </Link>
               </Text>
-            )}
-          </Section>
+            </Section>
+          )}
 
           {/* Tracking pixel */}
           {trackingPixelUrl && (

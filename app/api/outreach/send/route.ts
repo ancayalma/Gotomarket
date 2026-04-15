@@ -310,10 +310,10 @@ export async function POST(req: Request) {
     }
 
     // A subtle compliance: skip contacts with unsubscribed email if we can match them
-    // (Best effort, optional)
+    // Scoped to the sending team — unsubscribing from Team A doesn't block Team B
     const leadEmails = recipients.map((r: any) => r.targetEmail).filter(Boolean) as string[];
     const unsubscribedContacts = await prismadb.crm_Contacts.findMany({
-      where: { email: { in: leadEmails } },
+      where: { email: { in: leadEmails }, team_id: user.team_id },
       select: { email: true, email_unsubscribed: true },
     });
     const unsubSet = new Set(
@@ -812,6 +812,7 @@ export async function POST(req: Request) {
                   body_html: html,
                   message_id: messageId || undefined,
                   tracking_token: token,
+                  unsubscribe_token: unsubToken,
                   sentAt: new Date(),
                   candidate_email: targetEmail,
                   candidate_name: contactName,
@@ -908,6 +909,7 @@ export async function POST(req: Request) {
                       body_text: bodyText || null,
                       message_id: messageId || null,
                       tracking_token: token,
+                      unsubscribe_token: unsubToken,
                       sentAt: new Date(),
                       candidate_email: toEmail,
                       candidate_name: [lead.firstName, lead.lastName].filter(Boolean).join(" ") || null,
@@ -943,6 +945,7 @@ export async function POST(req: Request) {
                       body_text: bodyText || null,
                       message_id: messageId || null,
                       tracking_token: token,
+                      unsubscribe_token: unsubToken,
                       sentAt: new Date(),
                       candidate_email: toEmail,
                       candidate_name: lead.company || lead.firstName || null,
