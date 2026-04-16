@@ -470,6 +470,27 @@ export async function POST(req: Request) {
         continue;
       }
 
+      // ── Live Email Verification ──────────────────────────────────────────
+      if (!testMode && targetEmail) {
+        try {
+          const { verifyEmail } = await import("@/lib/scraper/verify/email-verify");
+          const { buildResendAdapters } = await import("@/lib/scraper/verify/adapters/resend-adapters");
+          systemLogger.info(`[OUTREACH_SEND] Verifying email liveliness for ${targetEmail}`);
+          const verification = await verifyEmail(targetEmail, {
+            stages: ["syntax", "mx", "smtp"],
+            adapters: buildResendAdapters(),
+          });
+          
+          if (verification.status === "invalid") {
+            systemLogger.warn(`[OUTREACH_SEND] Target ${targetEmail} skipped: Email verification failed (Status: invalid). Reasons: ${verification.reasons.join(", ")}`);
+            results.push({ leadId: lead.id, status: "skipped", reason: `Invalid email address: ${verification.reasons.join(", ")}` });
+            continue;
+          }
+        } catch (verifErr: any) {
+          systemLogger.warn(`[OUTREACH_SEND] Email verification threw an error for ${targetEmail}: ${verifErr.message}`);
+        }
+      }
+
       // Choose meeting link: override > lead's outreach_meeting_link > user's profile meeting link
       const meetingLink = meetingLinkOverride || lead.outreach_meeting_link || user.meeting_link || null;
 

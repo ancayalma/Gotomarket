@@ -21,6 +21,7 @@ export async function getTeamCreditsInfo() {
                 isUnlimited: false,
                 aiTokensBalance: 0,
                 aiTokensLimit: 0,
+                planSlug: "FREE",
             };
         }
 
@@ -97,6 +98,7 @@ export async function getTeamCreditsInfo() {
             displayString: isUnlimited ? `${used} / Unlimited` : `${remaining} / ${monthlyLimit}`,
             aiTokensBalance,
             aiTokensLimit,
+            planSlug: team.assigned_plan?.slug || team.subscription_plan || "FREE",
         };
     } catch (error) {
         console.error("Failed to fetch credits info:", error);
@@ -106,6 +108,7 @@ export async function getTeamCreditsInfo() {
             isUnlimited: false,
             aiTokensBalance: 0,
             aiTokensLimit: 0,
+            planSlug: "FREE",
         };
     }
 }
