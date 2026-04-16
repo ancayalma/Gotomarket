@@ -57,7 +57,7 @@ function classifyLog(log: LogEntry): ActivityType {
   const msg = (log.msg || "").toLowerCase();
   if (log.level === "ERROR" || log.level === "WARN") return "error";
   if (msg.includes("search") || msg.includes("🔍") || msg.includes("🔎") || msg.includes("serp")) return "search";
-  if (msg.includes("visit") || msg.includes("🌐") || msg.includes("scraping") || msg.includes("crawl") || msg.includes("puppeteer")) return "visit";
+  if (msg.includes("visit") || msg.includes("🌐") || msg.includes("scraping") || msg.includes("scraper") || msg.includes("crawl") || msg.includes("puppeteer")) return "visit";
   if (msg.includes("save") || msg.includes("💾") || msg.includes("saved") || msg.includes("captured")) return "save";
   if (msg.includes("strategy") || msg.includes("🎯") || msg.includes("refin") || msg.includes("checkpoint") || msg.includes("📍")) return "strategy";
   if (msg.includes("thinking") || msg.includes("💭") || msg.includes("reasoning") || msg.includes("agent reason")) return "thinking";
