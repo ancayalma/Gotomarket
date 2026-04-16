@@ -541,6 +541,32 @@ export default function LeadGenWizardPage() {
           className="w-full rounded-lg border border-white/10 bg-black/20 p-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors resize-none min-h-[120px]"
           placeholder="Describe your ideal customer profile in detail. For example: 'I'm looking for B2B SaaS companies in the US with 50-200 employees that use HubSpot and Stripe. They should be in the Fintech or Healthcare sectors...'"
         />
+
+        <div className="pt-4 border-t border-white/5 mt-4">
+          <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-black/20">
+            <div>
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Globe className="w-4 h-4 text-emerald-400" /> Advanced AI Scraper
+                {limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT' && (
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/50 border border-white/5">EXEMPT PLAN ONLY</span>
+                )}
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                Bypass default search infrastructure to use ScraperAPI proxies and structured nodes.
+              </p>
+            </div>
+            <div className="flex items-center">
+               <input 
+                 type="checkbox" 
+                 name="useAdvancedScraper_ai_only" 
+                 checked={state.useAdvancedScraper} 
+                 onChange={(e) => setState(prev => ({ ...prev, useAdvancedScraper: e.target.checked }))}
+                 className="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 focus:ring-offset-0 transition-colors disabled:opacity-50 cursor-pointer"
+                 disabled={limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT'}
+               />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end">
