@@ -24,6 +24,7 @@ export const LeadGenWizardSchema = z.object({
       peopleEnrichment: z.boolean().default(true).optional(), // Company site team/about pages parsing (ToS-safe)
       aiQueries: z.boolean().default(true).optional(),
       aiAnalysis: z.boolean().default(true).optional(),
+      scraperApi: z.boolean().default(false).optional(), // High-perfm ScraperAPI bypass (Exempt Plan Only)
     })
     .optional(),
   // Optional advanced params for the pipeline
@@ -74,6 +75,19 @@ export async function startLeadGenJob(
     throw new Error(`Invalid wizard input - ${msg}`);
   }
 
+  const mainDb = (await import("@/lib/prisma")).prismadb;
+  const user = await mainDb.users.findUnique({
+    where: { id: userId },
+    select: { team_id: true, assigned_team: { include: { assigned_plan: true } } }
+  });
+
+  if (parsed.data.providers?.scraperApi) {
+    const planSlug = user?.assigned_team?.assigned_plan?.slug || user?.assigned_team?.subscription_plan || "FREE";
+    if (planSlug.toUpperCase() !== "EXEMPT") {
+      parsed.data.providers.scraperApi = false; // Force false if not exempt
+    }
+  }
+
   let poolId = wizard.existingPoolId;
 
   if (poolId) {
@@ -92,11 +106,7 @@ export async function startLeadGenJob(
     }
     // We reuse this pool.
   } else {
-    // Fetch user's team_id
-    const user = await (prismadbCrm as any).users.findUnique({
-      where: { id: userId },
-      select: { team_id: true }
-    });
+    // Fetch user's team_id (already fetched above, reuse it)
 
     // Create New Lead Pool
     const pool = await (prismadbCrm as any).crm_Lead_Pools.create({

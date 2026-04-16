@@ -87,6 +87,7 @@
     "amazon-connect-streams": "^2.22.0",
     "aws-crt": "^1.28.1",
     "bcryptjs": "^3.0.3",
+    "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

@@ -1356,13 +1356,14 @@ Based on this information, provide:
  * Checks job status before executing — bails out if job was stopped/paused
  */
 export async function executeToolCall(toolName: string, args: any, context: any): Promise<any> {
+  let jobData: any = null;
   // ── Abort check: bail out immediately if job was stopped ──
   try {
-    const jobStatus = await (prismadbCrm as any).crm_Lead_Gen_Jobs.findUnique({
+    jobData = await (prismadbCrm as any).crm_Lead_Gen_Jobs.findUnique({
       where: { id: context.jobId },
-      select: { status: true }
+      select: { status: true, providers: true }
     });
-    if (jobStatus?.status === "STOPPED") {
+    if (jobData?.status === "STOPPED") {
       console.log(`[TOOL_ABORT] ${toolName} aborted — job was stopped by user`);
       return { success: false, aborted: true, reason: "Job stopped by user" };
     }
@@ -1372,7 +1373,14 @@ export async function executeToolCall(toolName: string, args: any, context: any)
 
   switch (toolName) {
     case "search_companies":
-      const searchResults = await ddgWebSearch(args.query, args.count || 20, context.jobId);
+      const useScraperApi = !!jobData?.providers?.scraperApi;
+      let searchResults;
+      if (useScraperApi) {
+        const { scraperApiGoogleSearch } = await import("@/lib/scraper/scraper-api");
+        searchResults = await scraperApiGoogleSearch(args.query, args.count || 20);
+      } else {
+        searchResults = await ddgWebSearch(args.query, args.count || 20, context.jobId);
+      }
       // Log the search outcome to the job for traceability
       try {
         const top = searchResults.slice(0, 5).map(r => r.domain || (r.url ? extractDomain(r.url) : '')).filter(Boolean).join(', ');
@@ -1413,7 +1421,21 @@ export async function executeToolCall(toolName: string, args: any, context: any)
       };
 
     case "visit_website":
-      const siteData = await visitWebsiteForAgent(args.url, context.userId, context.icp, context.poolId);
+      const useScraperApiForVisit = !!jobData?.providers?.scraperApi;
+      let siteData: any = null;
+      if (useScraperApiForVisit) {
+        const { scraperApiExtractHtml } = await import("@/lib/scraper/scraper-api");
+        const { parseHtmlForBusinessData } = await import("@/lib/scraper/html-parser");
+        const urlObj = args.url.startsWith("http") ? args.url : `https://${args.url}`;
+        const rawHtml = await scraperApiExtractHtml(urlObj);
+        if (rawHtml) {
+          siteData = parseHtmlForBusinessData(rawHtml, urlObj);
+        } else {
+          siteData = { error: "Failed to load via ScraperAPI" };
+        }
+      } else {
+        siteData = await visitWebsiteForAgent(args.url, context.userId, context.icp, context.poolId);
+      }
       // Truncate visit results to only essential fields for token efficiency
       if (siteData && !siteData.error) {
         return {

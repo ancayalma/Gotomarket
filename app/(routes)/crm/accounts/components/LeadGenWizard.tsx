@@ -32,6 +32,7 @@ type WizardState = {
   // User wants "Lists" dropdown. If selecting a list, do we append? Or just link?
   // User said: "dropdown for projects this should be changed to lists"
   existingListId?: string;
+  useAdvancedScraper?: boolean; // ScraperAPI usage
 };
 
 export default function LeadGenWizardPage() {
@@ -79,6 +80,7 @@ export default function LeadGenWizardPage() {
     aiPrompt: "",
     campaignId: "",
     existingListId: searchParams?.get("poolId") || "",
+    useAdvancedScraper: false,
   });
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -318,6 +320,7 @@ export default function LeadGenWizardPage() {
                 agenticAI: true,
                 serp: false,
                 serpFallback: false,
+                scraperApi: state.useAdvancedScraper,
               },
               limits: {
                 maxCompanies: state.maxCompanies,
@@ -372,6 +375,7 @@ export default function LeadGenWizardPage() {
           agenticAI: true,
           serp: false,
           serpFallback: false,
+          scraperApi: state.useAdvancedScraper,
         },
         limits: {
           maxCompanies: state.maxCompanies,
@@ -637,6 +641,32 @@ export default function LeadGenWizardPage() {
 
         <div className="pt-2">
           {renderTextAreaWithAI("Additional Notes", "notes", "Any specific requirements...")}
+        </div>
+
+        <div className="pt-4 border-t border-white/5">
+          <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-black/20">
+            <div>
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Globe className="w-4 h-4 text-emerald-400" /> Advanced AI Scraper
+                {limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT' && (
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/50 border border-white/5">EXEMPT PLAN ONLY</span>
+                )}
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                Bypass default search infrastructure to use ScraperAPI proxies and structured nodes.
+              </p>
+            </div>
+            <div className="flex items-center">
+               <input 
+                 type="checkbox" 
+                 name="useAdvancedScraper" 
+                 checked={state.useAdvancedScraper} 
+                 onChange={(e) => setState(prev => ({ ...prev, useAdvancedScraper: e.target.checked }))}
+                 className="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 focus:ring-offset-0 transition-colors disabled:opacity-50 cursor-pointer"
+                 disabled={limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT'}
+               />
+            </div>
+          </div>
         </div>
       </div>
 
