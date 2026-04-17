@@ -34,7 +34,7 @@ type JobStatusResponse = {
 
 // ─── Activity Classification ────────────────────────────────────────────────
 
-type ActivityType = "search" | "visit" | "save" | "strategy" | "thinking" | "error" | "complete" | "info";
+type ActivityType = "search" | "visit" | "inspect" | "save" | "strategy" | "thinking" | "error" | "complete" | "info";
 
 const ACTIVITY_CONFIG: Record<ActivityType, {
   label: string;
@@ -44,7 +44,8 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   borderClass: string;
 }> = {
   search: { label: "SEARCH", color: "text-sky-400", accentHex: "#38bdf8", bgClass: "bg-sky-500/[0.06]", borderClass: "border-sky-500/10" },
-  visit: { label: "CRAWL", color: "text-teal-400", accentHex: "#2dd4bf", bgClass: "bg-teal-500/[0.06]", borderClass: "border-teal-500/10" },
+  visit: { label: "SCAN", color: "text-teal-400", accentHex: "#2dd4bf", bgClass: "bg-teal-500/[0.06]", borderClass: "border-teal-500/10" },
+  inspect: { label: "INSPECT", color: "text-fuchsia-400", accentHex: "#e879f9", bgClass: "bg-fuchsia-500/[0.06]", borderClass: "border-fuchsia-500/10" },
   save: { label: "CAPTURED", color: "text-amber-400", accentHex: "#fbbf24", bgClass: "bg-amber-500/[0.06]", borderClass: "border-amber-500/10" },
   strategy: { label: "STRATEGY", color: "text-violet-400", accentHex: "#a78bfa", bgClass: "bg-violet-500/[0.06]", borderClass: "border-violet-500/10" },
   thinking: { label: "REASONING", color: "text-indigo-400", accentHex: "#818cf8", bgClass: "bg-indigo-500/[0.06]", borderClass: "border-indigo-500/10" },
@@ -57,7 +58,8 @@ function classifyLog(log: LogEntry): ActivityType {
   const msg = (log.msg || "").toLowerCase();
   if (log.level === "ERROR" || log.level === "WARN") return "error";
   if (msg.includes("search") || msg.includes("🔍") || msg.includes("🔎") || msg.includes("serp")) return "search";
-  if (msg.includes("visit") || msg.includes("🌐") || msg.includes("scraping") || msg.includes("scraper") || msg.includes("crawl") || msg.includes("puppeteer")) return "visit";
+  if (msg.includes("visit") || msg.includes("🌐") || msg.includes("scraping") || msg.includes("scraper") || msg.includes("crawl") || msg.includes("puppeteer") || msg.includes("explore_website")) return "visit";
+  if (msg.includes("read_html") || msg.includes("📖") || msg.includes("inspect")) return "inspect";
   if (msg.includes("save") || msg.includes("💾") || msg.includes("saved") || msg.includes("captured")) return "save";
   if (msg.includes("strategy") || msg.includes("🎯") || msg.includes("refin") || msg.includes("checkpoint") || msg.includes("📍")) return "strategy";
   if (msg.includes("thinking") || msg.includes("💭") || msg.includes("reasoning") || msg.includes("agent reason")) return "thinking";
@@ -309,7 +311,7 @@ function formatDuration(start?: string, end?: string) {
 
 function cleanMessage(msg: string): string {
   // Strip leading emoji and whitespace for cleaner display
-  return msg.replace(/^[\s🔍🔎🌐💾🎯💭⚠️✅📋📍]+/, "").trim();
+  return msg.replace(/^[\s🔍🔎🌐💾🎯💭⚠️✅📋📍👁️📖]+/, "").trim();
 }
 
 // ─── Main Page ──────────────────────────────────────────────────────────────
@@ -570,7 +572,7 @@ export default function LeadGenJobDetailPage({
 
             {/* Activity type chips */}
             <div className="hidden md:flex items-center gap-3">
-              {(["search", "visit", "save", "strategy", "thinking", "error"] as ActivityType[]).map(type => {
+              {(["search", "visit", "inspect", "save", "strategy", "thinking", "error"] as ActivityType[]).map(type => {
                 const count = activityCounts[type] || 0;
                 if (count === 0) return null;
                 const cfg = ACTIVITY_CONFIG[type];
