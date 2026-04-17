@@ -7,6 +7,8 @@ import { sendTeamEmail } from "@/lib/email/team-mailer";
 import { logActivityInternal } from "@/actions/audit";
 import { systemLogger } from "@/lib/logger";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(
     req: Request,
     props: { params: Promise<{ quoteId: string }> }
