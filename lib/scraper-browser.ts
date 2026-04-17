@@ -131,15 +131,18 @@ export async function newPageWithDefaults(browser: Browser): Promise<Page> {
     page = await browser.newPage();
   }
 
-  const userAgent =
-    process.env.SCRAPER_USER_AGENT ||
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36";
+  const userAgent = process.env.SCRAPER_USER_AGENT;
   const acceptLanguage = process.env.SCRAPER_LANG || "en-US,en;q=0.9";
 
-  await page.setUserAgent(userAgent);
+  if (userAgent) {
+    await page.setUserAgent(userAgent);
+  }
+  
   await page.setExtraHTTPHeaders({
     "Accept-Language": acceptLanguage,
+    "Upgrade-Insecure-Requests": "1"
   });
+  // Reasonable defaults
   page.setDefaultTimeout(30000);
   page.setDefaultNavigationTimeout(45000);
 

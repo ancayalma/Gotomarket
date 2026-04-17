@@ -67,3 +67,8 @@ standardize_headings_3.py
 
 # puppeteer browser cache (downloaded by postinstall)
 /chrome/
+
+# lightpanda
+/lightpanda/
+
+/chrome-stealth-data/

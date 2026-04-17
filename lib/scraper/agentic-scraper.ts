@@ -198,13 +198,22 @@ async function googlePuppeteerSearch(query: string, count: number): Promise<Serp
     browser = await lb();
     const page = await np(browser);
 
-    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=${count + 5}`;
-    
-    // Retry loop for stealth volatility
+    // Human simulation: Navigation to direct /search?q= gets CAPTCHAs instantly.
+    // We must navigate to the home page, type naturally, and hit Enter
     let results: SerpResult[] = [];
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        await page.goto(googleUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+        await page.goto('https://www.google.com/', { waitUntil: "domcontentloaded", timeout: 20000 });
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 500));
+        
+        // Wait for the pristine Google search box and type the query organically
+        await page.waitForSelector('textarea[name="q"]', { timeout: 8000 });
+        await page.type('textarea[name="q"]', query, { delay: 35 });
+        
+        await Promise.all([
+          page.keyboard.press('Enter'),
+          page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 15000 })
+        ]);
         
         // Wait for results
         await page.waitForSelector('.g, #search, [data-sokoban-container]', { timeout: 8000 });
