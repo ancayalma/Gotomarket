@@ -94,18 +94,32 @@ async function ddgPuppeteerSearch(query: string, count: number): Promise<SerpRes
     browser = await lb();
     const page = await np(browser);
 
-    const ddgUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=web`;
-    await page.goto(ddgUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+    // Human simulation: Direct navigation to /?q= gets blocked/rate-limited easily.
+    // We must navigate to the home page, type naturally, and hit Enter
+    let results: SerpResult[] = [];
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await page.goto('https://duckduckgo.com/', { waitUntil: "domcontentloaded", timeout: 20000 });
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 500));
+        
+        // Wait for the pristine DuckDuckGo search box and type the query organically
+        await page.waitForSelector('input[name="q"], #search_form_input_homepage', { timeout: 8000 });
+        await page.type('input[name="q"], #search_form_input_homepage', query, { delay: 35 });
+        
+        await Promise.all([
+          page.keyboard.press('Enter'),
+          page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 15000 }).catch(() => {})
+        ]);
 
-    // Wait for results to render (DDG uses JS rendering)
-    try {
-      await page.waitForSelector('[data-result], .result, article[data-testid="result"]', { timeout: 8000 });
-    } catch {
-      // Results might already be there or use a different selector
-    }
-    await new Promise(resolve => setTimeout(resolve, 2000));
+        // Wait for results to render (DDG uses JS rendering)
+        try {
+          await page.waitForSelector('[data-result], .result, article[data-testid="result"]', { timeout: 8000 });
+        } catch {
+          // Results might already be there or use a different selector
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-    const results = await page.evaluate((maxCount: number) => {
+        results = await page.evaluate((maxCount: number) => {
       const items: Array<{ name: string; url: string; snippet: string; domain: string }> = [];
       const excludes = [
         'wikipedia.org', 'youtube.com', 'facebook.com', 'twitter.com',
@@ -177,8 +191,17 @@ async function ddgPuppeteerSearch(query: string, count: number): Promise<SerpRes
       return items;
     }, count);
 
-    console.log(`[DDG/Puppeteer] "${query}" -> ${results.length} results`);
-    return results;
+    if (results.length > 0) {
+      console.log(`[DDG/Puppeteer] "${query}" -> ${results.length} results`);
+      return results;
+    }
+
+  } catch (err) {
+    console.warn(`[DDG/Puppeteer] Attempt ${attempt} failed:`, err);
+  }
+}
+
+return [];
   } catch (error) {
     console.error("[DDG/Puppeteer] Search error:", error);
     return [];
