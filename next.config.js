@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
+    serverComponentsExternalPackages: ["puppeteer-core", "puppeteer-extra", "puppeteer-extra-plugin-stealth"],
     serverActions: {
       bodySizeLimit: '4mb',
     },
