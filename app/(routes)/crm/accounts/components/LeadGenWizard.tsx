@@ -303,52 +303,22 @@ export default function LeadGenWizardPage() {
 
           if (parseRes.ok) {
             const parsed = await parseRes.json();
+            
+            // Populate the state with the AI's generated parameters
+            setState(prev => ({
+              ...prev,
+              industries: parsed.industries?.length ? parsed.industries.join(", ") : prev.industries,
+              companySizes: parsed.companySizes?.length ? parsed.companySizes.join(", ") : prev.companySizes,
+              geos: parsed.geos?.length ? parsed.geos.join(", ") : prev.geos,
+              techStack: parsed.techStack?.length ? parsed.techStack.join(", ") : prev.techStack,
+              titles: parsed.titles?.length ? parsed.titles.join(", ") : prev.titles,
+              notes: parsed.notes || prev.aiPrompt,
+            }));
 
-            const payload = {
-              name: state.name || "AI Generated Pool",
-              description: state.description,
-              icp: {
-                industries: parsed.industries || [],
-                companySizes: parsed.companySizes || [],
-                geos: parsed.geos || [],
-                techStack: parsed.techStack || [],
-                titles: parsed.titles || [],
-                excludeDomains: tags(state.excludeDomains),
-                notes: parsed.notes || state.aiPrompt,
-              },
-              providers: {
-                agenticAI: true,
-                serp: false,
-                serpFallback: false,
-                scraperApi: state.useAdvancedScraper,
-              },
-              limits: {
-                maxCompanies: state.maxCompanies,
-                maxContactsPerCompany: state.maxContactsPerCompany,
-              },
-              campaignId: state.campaignId || undefined,
-              existingPoolId: state.existingListId || undefined,
-            };
-
-            const res = await fetch("/api/crm/leads/autogen", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-              const errText = await res.text();
-              throw new Error(errText);
-            }
-            const data = await res.json();
-
-            // Auto-trigger pipeline
-            try {
-              await fetch(`/api/crm/leads/autogen/run/${data.jobId}`, { method: "POST" });
-            } catch (err) { console.error(err); }
-
-            toast.success("AI Agent started successfully!");
-            router.push(`/lists/jobs/${data.jobId}`);
+            // Force user to review by dropping them into the Advanced Mode tab
+            setMode("advanced");
+            setSubmitting(false);
+            toast.success("ICP Strategy parsed! Please review and confirm the logic below before launching.");
             return;
           }
         } catch (parseErr: any) {

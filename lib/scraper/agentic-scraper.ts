@@ -1430,6 +1430,76 @@ export async function executeToolCall(toolName: string, args: any, context: any)
         const rawHtml = await scraperApiExtractHtml(urlObj);
         if (rawHtml) {
           siteData = parseHtmlForBusinessData(rawHtml, urlObj);
+
+          // Subpage discovery replication for ScraperAPI
+          const keywordRegex = /\/(about|contact|team|leadership|people|staff|careers|profiles|directory|professionals|faculty|our-story)/i;
+          let dynamicPaths: string[] = [];
+          if (siteData.internalLinks) {
+            const matchLinks = siteData.internalLinks
+              .filter((href: string) => keywordRegex.test(href))
+              .filter((href: string) => href.length < 150)
+              .sort((a: string, b: string) => a.length - b.length);
+            dynamicPaths = Array.from(new Set<string>(matchLinks));
+          }
+
+          const baseDomain = urlObj.replace(/\/+$/, "");
+          const presetPaths = ["/about", "/contact", "/team", "/about-us", "/contact-us", "/our-team", "/leadership", "/people", "/staff", "/careers", "/profiles", "/directory", "/professionals"]
+            .map(p => `${baseDomain}${p}`);
+
+          const allCandidates = Array.from(new Set([...dynamicPaths, ...presetPaths]));
+          const allEmails = new Set(siteData.emails || []);
+          const allPhones = new Set(siteData.phones || []);
+          
+          let subpagesVisited = 0;
+          const subpagePromises = [];
+
+          // Launch parallel synchronous scrapes
+          for (const subUrl of allCandidates) {
+            if (subUrl === urlObj || subUrl === urlObj + "/") continue;
+            if (subpagesVisited >= 5) break; 
+            subpagesVisited++;
+            
+            subpagePromises.push(
+              scraperApiExtractHtml(subUrl)
+                .then(html => html ? parseHtmlForBusinessData(html, subUrl) : null)
+                .catch(() => null)
+            );
+          }
+
+          const subpagesResults = await Promise.all(subpagePromises);
+          
+          (siteData as any).pagesVisited = [urlObj];
+
+          for (const subData of subpagesResults) {
+            if (!subData) continue;
+            (siteData as any).pagesVisited.push("subpage");
+
+            // Merge contacts, deduped by email
+            for (const c of (subData.contacts || [])) {
+              if (c.email && allEmails.has(c.email)) continue;
+              siteData.contacts.push(c);
+              if (c.email) {
+                allEmails.add(c.email);
+                siteData.emails.push(c.email);
+              }
+            }
+
+            // Merge unassociated emails
+            for (const e of (subData.emails || [])) {
+              if (!allEmails.has(e)) {
+                allEmails.add(e);
+                siteData.emails.push(e);
+              }
+            }
+
+            // Merge phones
+            for (const p of (subData.phones || [])) {
+              if (!allPhones.has(p)) {
+                allPhones.add(p);
+                siteData.phones.push(p);
+              }
+            }
+          }
         } else {
           siteData = { error: "Failed to load via ScraperAPI" };
         }
