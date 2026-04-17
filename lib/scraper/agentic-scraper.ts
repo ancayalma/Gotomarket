@@ -198,13 +198,22 @@ async function googlePuppeteerSearch(query: string, count: number): Promise<Serp
     browser = await lb();
     const page = await np(browser);
 
-    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=${count + 5}`;
-    
-    // Retry loop for stealth volatility
+    // Human simulation: Navigation to direct /search?q= gets CAPTCHAs instantly.
+    // We must navigate to the home page, type naturally, and hit Enter
     let results: SerpResult[] = [];
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        await page.goto(googleUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+        await page.goto('https://www.google.com/', { waitUntil: "domcontentloaded", timeout: 20000 });
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 500));
+        
+        // Wait for the pristine Google search box and type the query organically
+        await page.waitForSelector('textarea[name="q"]', { timeout: 8000 });
+        await page.type('textarea[name="q"]', query, { delay: 35 });
+        
+        await Promise.all([
+          page.keyboard.press('Enter'),
+          page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 15000 })
+        ]);
         
         // Wait for results
         await page.waitForSelector('.g, #search, [data-sokoban-container]', { timeout: 8000 });
@@ -405,8 +414,13 @@ const searchCompaniesSchema = z.object({
   count: z.number().optional().describe("Number of results to return (1-50), defaults to 20"),
 });
 
-const visitWebsiteSchema = z.object({
-  url: z.string().describe("The URL to visit"),
+const exploreWebsiteSchema = z.object({
+  url: z.string().describe("The root URL or sublink to visit and scan for structure"),
+});
+
+const readComponentSchema = z.object({
+  url: z.string().describe("The URL of the page this component belongs to (must have been scanned first)"),
+  component_id: z.string().describe("The specific structural ID or tag to read (e.g. 'footer', 'header', 'main', '.contact-info')"),
 });
 
 const analyzeCompanyFitSchema = z.object({
@@ -450,11 +464,18 @@ function buildToolsDefinition(context: { jobId: string; poolId: string; icp: ICP
         return await executeToolCall("search_companies", input, context);
       },
     }),
-    visit_website: tool({
-      description: "Visit a company website and extract all available information including company details and contact information.",
-      inputSchema: visitWebsiteSchema,
+    explore_website_structure: tool({
+      description: "Visit a URL and scan its structural layout (Header, Footer, Main Content) and sublinks. Returns a skeleton map of the page. Use this first to decide where to look for contacts.",
+      inputSchema: exploreWebsiteSchema,
       async execute(input) {
-        return await executeToolCall("visit_website", input, context);
+        return await executeToolCall("explore_website_structure", input, context);
+      },
+    }),
+    read_html_component: tool({
+      description: "Reads the extracted text/HTML payload from a specific structural element parsed during the explore phase. Only use this on components returned by explore_website_structure.",
+      inputSchema: readComponentSchema,
+      async execute(input) {
+        return await executeToolCall("read_html_component", input, context);
       },
     }),
     analyze_company_fit: tool({
@@ -1410,109 +1431,79 @@ export async function executeToolCall(toolName: string, args: any, context: any)
         count: searchResults.length
       };
 
-    case "visit_website":
+    case "explore_website_structure": {
+      const urlObj = args.url.startsWith("http") ? args.url : `https://${args.url}`;
+      let rawHtml = "";
+      
       const useScraperApiForVisit = jobData?.providers?.searchProvider === "scraper-api";
-      let siteData: any = null;
       if (useScraperApiForVisit) {
         const { scraperApiExtractHtml } = await import("@/lib/scraper/scraper-api");
-        const { parseHtmlForBusinessData } = await import("@/lib/scraper/html-parser");
-        const urlObj = args.url.startsWith("http") ? args.url : `https://${args.url}`;
-        const rawHtml = await scraperApiExtractHtml(urlObj);
-        if (rawHtml) {
-          siteData = parseHtmlForBusinessData(rawHtml, urlObj);
-
-          // Subpage discovery replication for ScraperAPI
-          const keywordRegex = /\/(about|contact|team|leadership|people|staff|careers|profiles|directory|professionals|faculty|our-story)/i;
-          let dynamicPaths: string[] = [];
-          if (siteData.internalLinks) {
-            const matchLinks = siteData.internalLinks
-              .filter((href: string) => keywordRegex.test(href))
-              .filter((href: string) => href.length < 150)
-              .sort((a: string, b: string) => a.length - b.length);
-            dynamicPaths = Array.from(new Set<string>(matchLinks));
-          }
-
-          const baseDomain = urlObj.replace(/\/+$/, "");
-          const presetPaths = ["/about", "/contact", "/team", "/about-us", "/contact-us", "/our-team", "/leadership", "/people", "/staff", "/careers", "/profiles", "/directory", "/professionals"]
-            .map(p => `${baseDomain}${p}`);
-
-          const allCandidates = Array.from(new Set([...dynamicPaths, ...presetPaths]));
-          const allEmails = new Set(siteData.emails || []);
-          const allPhones = new Set(siteData.phones || []);
-          
-          let subpagesVisited = 0;
-          const subpagePromises = [];
-
-          // Launch parallel synchronous scrapes
-          for (const subUrl of allCandidates) {
-            if (subUrl === urlObj || subUrl === urlObj + "/") continue;
-            if (subpagesVisited >= 5) break; 
-            subpagesVisited++;
-            
-            subpagePromises.push(
-              scraperApiExtractHtml(subUrl)
-                .then(html => html ? parseHtmlForBusinessData(html, subUrl) : null)
-                .catch(() => null)
-            );
-          }
-
-          const subpagesResults = await Promise.all(subpagePromises);
-          
-          (siteData as any).pagesVisited = [urlObj];
-
-          for (const subData of subpagesResults) {
-            if (!subData) continue;
-            (siteData as any).pagesVisited.push("subpage");
-
-            // Merge contacts, deduped by email
-            for (const c of (subData.contacts || [])) {
-              if (c.email && allEmails.has(c.email)) continue;
-              siteData.contacts.push(c);
-              if (c.email) {
-                allEmails.add(c.email);
-                siteData.emails.push(c.email);
-              }
-            }
-
-            // Merge unassociated emails
-            for (const e of (subData.emails || [])) {
-              if (!allEmails.has(e)) {
-                allEmails.add(e);
-                siteData.emails.push(e);
-              }
-            }
-
-            // Merge phones
-            for (const p of (subData.phones || [])) {
-              if (!allPhones.has(p)) {
-                allPhones.add(p);
-                siteData.phones.push(p);
-              }
-            }
-          }
-        } else {
-          siteData = { error: "Failed to load via ScraperAPI" };
-        }
+        rawHtml = await scraperApiExtractHtml(urlObj) || "";
       } else {
-        siteData = await visitWebsiteForAgent(args.url, context.userId, context.icp, context.poolId);
+        const { launchBrowser, newPageWithDefaults, closeBrowser } = await import("@/lib/scraper-browser");
+        let browser;
+        try {
+          browser = await launchBrowser();
+          const page = await newPageWithDefaults(browser);
+          await page.goto(urlObj, { waitUntil: "domcontentloaded", timeout: 20000 });
+          // Dismiss overlays text-based
+          await new Promise(r => setTimeout(r, 1500));
+          rawHtml = await page.evaluate(() => document.documentElement.outerHTML);
+        } catch(e) {
+          console.error("Puppeteer fail", e);
+        } finally {
+          if (browser) await closeBrowser(browser);
+        }
       }
-      // Truncate visit results to only essential fields for token efficiency
-      if (siteData && !siteData.error) {
-        return {
-          success: true,
-          url: args.url,
-          title: (siteData.title || '').slice(0, 100),
-          description: (siteData.description || '').slice(0, 200),
-          contacts: (siteData.contacts || []).slice(0, 15).map((c: any) => ({
-            name: c.name || '', title: c.title || '', email: c.email || '',
-            phone: c.phone || '', linkedin: c.linkedin || ''
-          })),
-          emails: (siteData.emails || []).slice(0, 15),
-          phones: (siteData.phones || []).slice(0, 10),
-          pagesVisited: (siteData.pagesVisited || []).length,
-        };
+
+      if (!rawHtml) return { success: false, url: args.url, error: "Failed to load HTML" };
+
+      // Use cheerio to parse the DOM
+      const cheerio = await import("cheerio");
+      const $ = cheerio.load(rawHtml);
+      $('script, style, svg, path, iframe, noscript').remove();
+
+      const cache: Record<string, string> = {};
+      cache['header'] = $('header').text() || '';
+      cache['footer'] = $('footer').text() || '';
+      cache['main'] = $('main').text() || $('body').text()?.substring(0, 10000) || '';
+      cache['#contact'] = $('.contact, .contact-us, #contact, address, .footer').text() || '';
+
+      // Initialize domCache for this URL
+      context.domCache[urlObj] = cache;
+
+      const baseDomain = extractDomain(urlObj);
+      const sublinks = Array.from(new Set($('a[href]').map((i, el) => $(el).attr('href')).get()))
+          .filter(h => h && (h.startsWith('/') || h.includes(baseDomain)))
+          .slice(0, 25); // cap at 25 links
+
+      return {
+        success: true,
+        url: urlObj,
+        message: "Successfully scanned. Use read_html_component on these components to extract contacts.",
+        available_components: Object.keys(cache).filter(k => cache[k]?.trim().length > 0),
+        discovered_sublinks: sublinks
+      };
+    }
+
+    case "read_html_component": {
+      const urlObj = args.url.startsWith("http") ? args.url : `https://${args.url}`;
+      if (!context.domCache[urlObj]) {
+        return { success: false, error: "URL not explored yet. Use explore_website_structure first." };
       }
-      return { success: false, url: args.url, error: siteData?.error || 'Failed to load' };
+      const textContent = context.domCache[urlObj][args.component_id];
+      if (!textContent) {
+        return { success: false, error: `Component ${args.component_id} not found on this page.` };
+      }
+      
+      return {
+        success: true,
+        url: args.url,
+        component_id: args.component_id,
+        // We return the raw scraped text, collapsing extreme whitespace to save tokens
+        textPayload: textContent.replace(/\s{2,}/g, ' ').trim().slice(0, 4000) 
+      };
+    }
 
     case "analyze_company_fit":
       // AI will analyze this in its next turn
@@ -2231,22 +2222,23 @@ BUDGET CONSTRAINT: Your operational loop ceases when you successfully consume ${
   ${icp.notes ? `Mission Notes: ${icp.notes}` : ""}
 
 ═══ OPERATIONAL MAXIMS ═══
-[MAXIM 1: ZERO HALLUCINATION] You exist in a deterministic reality. Every string you pass to 'save_company' MUST be extracted verbatim from 'visit_website' or search snippets. You will NEVER fabricate, infer, synthesize, or hallucinate a name, email, or phone.
-[MAXIM 2: RELENTLESS RECONNAISSANCE] You will aggressively crawl domains. You will check footers, "About Us", "Contact", and "Our Team" pages. Businesses obfuscate contact data; you will find it.
-[MAXIM 3: THE ENTERPRISE TRAP (ANTI-LOOP)] Do NOT get trapped crawling impenetrable institutional domains (massive hospital networks, giant .edu universities). These organizations bury contacts. If a massive domain yields 0 viable contacts after its homepage + 1 subpage, ABANDON IT IMMEDIATELY. Pivot to targeting independent SMEs.
+[MAXIM 1: ZERO HALLUCINATION] You exist in a deterministic reality. Every string you pass to 'save_company' MUST be extracted verbatim from 'read_html_component', 'explore_website_structure', or search snippets. You will NEVER fabricate, infer, synthesize, or hallucinate a name, email, or phone.
+[MAXIM 2: RELENTLESS RECONNAISSANCE] You will aggressively crawl domains. Call 'explore_website_structure' first to get the layout map. Then, actively call 'read_html_component' on specific blocks like footers, headers, or .contact-info. Businesses obfuscate contact data; you will find it.
+[MAXIM 3: THE ENTERPRISE TRAP (ANTI-LOOP)] Do NOT get trapped crawling impenetrable institutional domains (massive hospital networks, giant .edu universities). These organizations bury contacts. If a massive domain yields 0 viable contacts after exploring its homepage + 1 sublink, ABANDON IT IMMEDIATELY. Pivot to targeting independent SMEs.
 [MAXIM 4: THE SYNTHESIS PROTOCOL] You are a data synthesizer. Scraped data is usually fragmented. Actively correlate fragments into master personas. If you find {name: "Jane Doe"} and an orphan {email: "jdoe@company.com"}, you MUST synthesize them into a single coherent profile.
 [MAXIM 5: FRAGMENT EXFILTRATION & RAPID DEPLOY] DO NOT WAIT. Call 'save_company' on a target as soon as you have actionable contact data. Do not discard orphan data. If a contact has ONLY an email, ONLY a phone, or ONLY a name—EXFILTRATE IT ANYWAY. 
-[MAXIM 6: MAXIMUM PARALLELIZATION] You can and MUST execute tools in parallel! If 'search_companies' yields 5 promising domains, you MUST invoke 'visit_website' on ALL 5 domains simultaneously in the exact same response block. Do not visit them one by one. Time is credits. Move fast.
+[MAXIM 6: MAXIMUM PARALLELIZATION] You can and MUST execute tools in parallel! If 'search_companies' yields 5 promising domains, you MUST invoke 'explore_website_structure' on ALL 5 domains simultaneously in the exact same response block. Move fast.
 
 ═══ MISSION CYCLE (THE VARUNA LOOP) ═══
 1. [ACQUIRE]: Call 'search_companies' with hyper-specific, intent-driven boolean queries (e.g., "Top independent B2B [Industry] in [Geography] 'Contact Us' OR 'Our Team'").
-  → WARNING: DO NOT append massive strings of '-site:' operators to your query. The backend ALREADY natively filters aggregators like Yelp, LinkedIn, ZoomInfo, Crunchbase, etc. Keep queries lean and human-like!
-2. [RIP]: Call 'visit_website' on the most promising targets identified.
-3. [SYNTHESIZE]: Apply The Synthesis Protocol to merge fragmented data into master personas.
-4. [EXFILTRATE]: Call 'save_company' with the payload, INCLUDING all surviving unmerged fragments. Do this IMMEDIATELY once a domain yields valid insight.
-5. [PIVOT]: If queries yield no new domains, call 'refine_search_strategy' to dynamically pivot your vectors.
+  → WARNING: DO NOT append '-site:' operators to your query.
+2. [SCAN]: Call 'explore_website_structure' on promising targets to get a map of their DOM elements and sublinks.
+3. [INSPECT]: Call 'read_html_component' on high-value layout blocks (e.g., 'footer', '#contact') or call 'explore_website_structure' on a promising sublink (e.g., /about-us) to find names and emails.
+4. [SYNTHESIZE]: Apply The Synthesis Protocol to merge fragmented data into master personas.
+5. [EXFILTRATE]: Call 'save_company' with the payload, INCLUDING all surviving unmerged fragments. Do this IMMEDIATELY once a domain yields valid insight.
+6. [PIVOT]: If queries yield no new domains, call 'refine_search_strategy' to dynamically pivot your vectors.
 
-Tools Available: [search_companies, visit_website, save_company, refine_search_strategy]
+Tools Available: [search_companies, explore_website_structure, read_html_component, save_company, refine_search_strategy]
 
 EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
 
@@ -2258,12 +2250,12 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
   const messages: ModelMessage[] = [
     {
       role: "user",
-      content: `Find ICP-matching companies until your budget of ${maxCredits} credits is reached. Start by searching, then visit promising sites in parallel, then save companies with emails. Go.`
+      content: `Find ICP-matching companies until your budget of ${maxCredits} credits is reached. Start by searching, scan promising sites, then read their footer/contact HTML blocks to find real humans and emails. Go.`
     }
   ];
 
   const maxIterations = 50; // Prevent infinite loops
-  const context = { jobId, poolId, logs: [] as any[], icp, userId, teamId };
+  const context = { jobId, poolId, logs: [] as any[], icp, userId, teamId, domCache: {} as Record<string, any> };
   let noProgressStreak = 0;
   let prevCompaniesSaved = 0;
   let prevContactsSaved = 0;
