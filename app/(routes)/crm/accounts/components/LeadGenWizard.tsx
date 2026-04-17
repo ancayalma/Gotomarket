@@ -32,7 +32,7 @@ type WizardState = {
   // User wants "Lists" dropdown. If selecting a list, do we append? Or just link?
   // User said: "dropdown for projects this should be changed to lists"
   existingListId?: string;
-  useAdvancedScraper?: boolean; // ScraperAPI usage
+  searchProvider: "ddg" | "google-stealth" | "scraper-api";
 };
 
 export default function LeadGenWizardPage() {
@@ -80,7 +80,7 @@ export default function LeadGenWizardPage() {
     aiPrompt: "",
     campaignId: "",
     existingListId: searchParams?.get("poolId") || "",
-    useAdvancedScraper: false,
+    searchProvider: "ddg",
   });
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -345,7 +345,7 @@ export default function LeadGenWizardPage() {
           agenticAI: true,
           serp: false,
           serpFallback: false,
-          scraperApi: state.useAdvancedScraper,
+          searchProvider: state.searchProvider,
         },
         limits: {
           maxCompanies: state.maxCompanies,
@@ -513,27 +513,39 @@ export default function LeadGenWizardPage() {
         />
 
         <div className="pt-4 border-t border-white/5 mt-4">
-          <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-black/20">
-            <div>
-              <h4 className="text-sm font-medium flex items-center gap-2">
-                <Globe className="w-4 h-4 text-emerald-400" /> Advanced AI Scraper
-                {limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT' && (
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/50 border border-white/5">EXEMPT PLAN ONLY</span>
-                )}
-              </h4>
-              <p className="text-xs text-muted-foreground mt-1">
-                Bypass default search infrastructure to use ScraperAPI proxies and structured nodes.
-              </p>
-            </div>
-            <div className="flex items-center">
-               <input 
-                 type="checkbox" 
-                 name="useAdvancedScraper_ai_only" 
-                 checked={state.useAdvancedScraper} 
-                 onChange={(e) => setState(prev => ({ ...prev, useAdvancedScraper: e.target.checked }))}
-                 className="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 focus:ring-offset-0 transition-colors disabled:opacity-50 cursor-pointer"
-                 disabled={limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT'}
-               />
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <Globe className="w-4 h-4 text-emerald-400" /> Search Infrastructure
+              {limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT' && (
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/50 border border-white/5">EXEMPT PLAN ONLY</span>
+              )}
+            </h4>
+            <p className="text-xs text-muted-foreground">Select the backend search engine routing your AI agent will use to discover companies.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+              <label className={`relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none ${state.searchProvider === 'ddg' ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 bg-black/20 hover:bg-white/5'}`}>
+                <input type="radio" name="searchProvider_ai" value="ddg" className="sr-only" checked={state.searchProvider === 'ddg'} onChange={(e) => setState(prev => ({...prev, searchProvider: e.target.value as any}))} />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold mb-1">DuckDuckGo</span>
+                  <span className="text-[11px] text-muted-foreground leading-snug">Default headless web search. Reliable and stable.</span>
+                </div>
+              </label>
+
+              <label className={`relative flex rounded-lg border p-4 shadow-sm focus:outline-none ${limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${state.searchProvider === 'google-stealth' ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 bg-black/20 hover:bg-white/5'}`}>
+                <input type="radio" name="searchProvider_ai" value="google-stealth" className="sr-only" disabled={limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT'} checked={state.searchProvider === 'google-stealth'} onChange={(e) => setState(prev => ({...prev, searchProvider: e.target.value as any}))} />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold mb-1">Google (Stealth)</span>
+                  <span className="text-[11px] text-muted-foreground leading-snug">Aggressive evasion mode targeting Google SERP.</span>
+                </div>
+              </label>
+
+              <label className={`relative flex rounded-lg border p-4 shadow-sm focus:outline-none ${limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${state.searchProvider === 'scraper-api' ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 bg-black/20 hover:bg-white/5'}`}>
+                <input type="radio" name="searchProvider_ai" value="scraper-api" className="sr-only" disabled={limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT'} checked={state.searchProvider === 'scraper-api'} onChange={(e) => setState(prev => ({...prev, searchProvider: e.target.value as any}))} />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold mb-1">ScraperAPI</span>
+                  <span className="text-[11px] text-muted-foreground leading-snug">Enterprise scraping via structural proxy endpoints.</span>
+                </div>
+              </label>
             </div>
           </div>
         </div>
@@ -639,28 +651,40 @@ export default function LeadGenWizardPage() {
           {renderTextAreaWithAI("Additional Notes", "notes", "Any specific requirements...")}
         </div>
 
-        <div className="pt-4 border-t border-white/5">
-          <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-black/20">
-            <div>
-              <h4 className="text-sm font-medium flex items-center gap-2">
-                <Globe className="w-4 h-4 text-emerald-400" /> Advanced AI Scraper
-                {limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT' && (
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/50 border border-white/5">EXEMPT PLAN ONLY</span>
-                )}
-              </h4>
-              <p className="text-xs text-muted-foreground mt-1">
-                Bypass default search infrastructure to use ScraperAPI proxies and structured nodes.
-              </p>
-            </div>
-            <div className="flex items-center">
-               <input 
-                 type="checkbox" 
-                 name="useAdvancedScraper" 
-                 checked={state.useAdvancedScraper} 
-                 onChange={(e) => setState(prev => ({ ...prev, useAdvancedScraper: e.target.checked }))}
-                 className="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50 focus:ring-offset-0 transition-colors disabled:opacity-50 cursor-pointer"
-                 disabled={limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT'}
-               />
+        <div className="pt-4 border-t border-white/5 mt-4">
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <Globe className="w-4 h-4 text-emerald-400" /> Search Infrastructure
+              {limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT' && (
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/50 border border-white/5">EXEMPT PLAN ONLY</span>
+              )}
+            </h4>
+            <p className="text-xs text-muted-foreground">Select the backend search engine routing your AI agent will use to discover companies.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+              <label className={`relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none ${state.searchProvider === 'ddg' ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 bg-black/20 hover:bg-white/5'}`}>
+                <input type="radio" name="searchProvider" value="ddg" className="sr-only" checked={state.searchProvider === 'ddg'} onChange={(e) => setState(prev => ({...prev, searchProvider: e.target.value as any}))} />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold mb-1">DuckDuckGo</span>
+                  <span className="text-[11px] text-muted-foreground leading-snug">Default headless web search. Reliable and stable.</span>
+                </div>
+              </label>
+
+              <label className={`relative flex rounded-lg border p-4 shadow-sm focus:outline-none ${limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${state.searchProvider === 'google-stealth' ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 bg-black/20 hover:bg-white/5'}`}>
+                <input type="radio" name="searchProvider" value="google-stealth" className="sr-only" disabled={limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT'} checked={state.searchProvider === 'google-stealth'} onChange={(e) => setState(prev => ({...prev, searchProvider: e.target.value as any}))} />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold mb-1">Google (Stealth)</span>
+                  <span className="text-[11px] text-muted-foreground leading-snug">Aggressive evasion mode targeting Google SERP.</span>
+                </div>
+              </label>
+
+              <label className={`relative flex rounded-lg border p-4 shadow-sm focus:outline-none ${limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${state.searchProvider === 'scraper-api' ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 bg-black/20 hover:bg-white/5'}`}>
+                <input type="radio" name="searchProvider" value="scraper-api" className="sr-only" disabled={limitsInfo?.planSlug?.toUpperCase() !== 'EXEMPT'} checked={state.searchProvider === 'scraper-api'} onChange={(e) => setState(prev => ({...prev, searchProvider: e.target.value as any}))} />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold mb-1">ScraperAPI</span>
+                  <span className="text-[11px] text-muted-foreground leading-snug">Enterprise scraping via structural proxy endpoints.</span>
+                </div>
+              </label>
             </div>
           </div>
         </div>
