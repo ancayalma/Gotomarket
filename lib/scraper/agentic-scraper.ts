@@ -2424,53 +2424,32 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
 
     try {
       // Message history windowing — keep only recent messages to control token growth
-      // CRITICAL: never split tool_use / tool_result pairs or Bedrock will 400
-      const MAX_HISTORY_MESSAGES = 6;
+      // AI SDK strictly appends pairs of (assistant, tool) messages.
+      // We will keep only the most recent 1 iteration (2 messages) to prevent bloat.
+      const KEEP_PAIRS = 1;
+      const MAX_HISTORY_MESSAGES = KEEP_PAIRS * 2;
+      
       let windowedMessages = messages;
       if (messages.length > MAX_HISTORY_MESSAGES + 1) {
         const firstMsg = messages[0]; // Original user instruction
-        // Walk backward from the end to find a safe cut point.
-        // A position is safe to cut at IF:
-        //   1. The message at that position is NOT role='tool' (orphaned tool result)
-        //   2. The message BEFORE that position is NOT an assistant with tool_use content
-        //      (which would leave a tool_use without its matching tool_result)
-        let cutIdx = messages.length - MAX_HISTORY_MESSAGES;
-        // Ensure cutIdx is at least 1 (don't cut before the first message)
-        if (cutIdx < 1) cutIdx = 1;
-        // Search forward for a safe boundary
-        let foundSafe = false;
-        for (let i = cutIdx; i < messages.length - 1; i++) {
-          const msg = messages[i] as any;
-          const prevMsg = messages[i - 1] as any;
-          // Skip if this message IS a tool result (cutting here orphans it)
-          if (msg.role === 'tool') continue;
-          // Skip if previous message is an assistant with tool_use content
-          // (cutting here would leave tool_use without its tool_result)
-          if (prevMsg.role === 'assistant' && Array.isArray(prevMsg.content)) {
-            const hasToolUse = prevMsg.content.some((c: any) =>
-              c.type === 'tool-use' || c.type === 'tool_use' || c.type === 'tool-call'
-            );
-            if (hasToolUse) continue;
-          }
-          // This position is safe
-          cutIdx = i;
-          foundSafe = true;
-          break;
+        const recentMsgs = messages.slice(-MAX_HISTORY_MESSAGES);
+        
+        // Ensure we don't accidentally split a pair if length parity was violated.
+        // recentMsgs[0] should be an assistant message.
+        let safeMsgs = recentMsgs;
+        if (safeMsgs[0]?.role === 'tool') {
+           // If we accidentally started on a tool result, drop it to find the next assistant
+           safeMsgs = safeMsgs.slice(1);
         }
-        // If no safe cut found, keep ALL messages (don't risk breaking pairs)
-        if (!foundSafe) {
-          windowedMessages = messages;
-        } else {
-          const recentMsgs = messages.slice(cutIdx);
-          windowedMessages = [
-            firstMsg,
-            {
-              role: "user" as const,
-              content: `[PROGRESS] Consumed ${contactsSaved}/${maxCredits} credits. Current totals: ${companiesSaved} companies, ${contactsSaved} contacts, ${iterations - 1} iterations. Continue searching and saving. Include ALL contacts in each save_company call.`
-            },
-            ...recentMsgs
-          ];
-        }
+        
+        windowedMessages = [
+          firstMsg,
+          {
+            role: "user" as const,
+            content: `[PROGRESS] Consumed ${contactsSaved}/${maxCredits} credits. Current totals: ${companiesSaved} companies, ${contactsSaved} contacts, ${iterations - 1} iterations. Continue saving and searching.`
+          },
+          ...safeMsgs
+        ];
       }
 
       const tools = buildToolsDefinition(context);
@@ -2597,7 +2576,7 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
         // Track saves and summarize using toolResults
         const savedResults = (toolResults ?? []).filter((tr: any) => {
           if (tr.toolName !== "save_company") return false;
-          const out = tr.output;
+          const out = (tr as any).result || (tr as any).output;
           if (!out) return false;
           if (typeof out === 'object' && 'type' in out) {
             if (out.type === 'json' && out.value && typeof out.value === 'object') {
@@ -2613,7 +2592,7 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
         });
         let batchCost = 0;
         for (const tr of savedResults) {
-          const out = tr.output;
+          const out = (tr as any).result || (tr as any).output;
           let accountValid = false;
           let contactsC = 0;
           if (typeof out === 'object' && 'type' in out) {
