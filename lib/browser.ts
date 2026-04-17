@@ -58,10 +58,10 @@ function detectSystemBrowser(): string | null {
  */
 function detectCachedBrowser(): string | null {
   // Search multiple potential cache locations
-  const projectRoot = resolve(__dirname, "..");
+  const projectRoot = process.cwd();
   const cacheRoots = [
-    join(projectRoot, "chrome"),           // default: <project>/chrome/
-    join(projectRoot, ".cache", "puppeteer"), // older puppeteer cache location
+    join(/*turbopackIgnore: true*/ projectRoot, "chrome"),           // default: <project>/chrome/
+    join(/*turbopackIgnore: true*/ projectRoot, ".cache", "puppeteer"), // older puppeteer cache location
   ];
 
   const chromeBinaryNames =

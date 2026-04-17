@@ -15,6 +15,8 @@ const corsHeaders = {
     "Access-Control-Allow-Headers": "Content-Type",
 };
 
+export const dynamic = "force-dynamic";
+
 // Public endpoint - no auth required
 export async function POST(req: NextRequest) {
     try {

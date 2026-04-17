@@ -6,6 +6,8 @@ import sendEmail from "@/lib/sendmail";
 import { generateSubmissionPdf } from "@/lib/pdf-utils";
 import { systemLogger } from "@/lib/logger";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
     try {
         systemLogger.error("[Send Email API] Received request");
