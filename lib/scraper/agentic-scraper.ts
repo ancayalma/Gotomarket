@@ -190,6 +190,97 @@ async function ddgPuppeteerSearch(query: string, count: number): Promise<SerpRes
   }
 }
 
+/** Tier 3: Puppeteer Google (Stealth) — powerful but volatile */
+async function googlePuppeteerSearch(query: string, count: number): Promise<SerpResult[]> {
+  let browser;
+  try {
+    const { launchBrowser: lb, newPageWithDefaults: np, closeBrowser: cb } = await import("@/lib/scraper-browser");
+    browser = await lb();
+    const page = await np(browser);
+
+    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=${count + 5}`;
+    
+    // Retry loop for stealth volatility
+    let results: SerpResult[] = [];
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await page.goto(googleUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+        
+        // Wait for results
+        await page.waitForSelector('.g, #search, [data-sokoban-container]', { timeout: 8000 });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        results = await page.evaluate((maxCount: number) => {
+          const items: Array<{ name: string; url: string; snippet: string; domain: string }> = [];
+          const excludes = [
+            'wikipedia.org', 'youtube.com', 'facebook.com', 'twitter.com',
+            'instagram.com', 'google.com', 'reddit.com', 'medium.com',
+            'github.com', 'bing.com', 'yahoo.com', 'linkedin.com', 'duckduckgo.com',
+            'crunchbase.com', 'zoominfo.com', 'apollo.io', 'pitchbook.com',
+            'yelp.com', 'bbb.org', 'mapquest.com', 'capterra.com', 'g2.com',
+            'apps.apple.com', 'play.google.com', 'substack.com'
+          ];
+          const seen = new Set<string>();
+
+          // Google standard organic results '.g'
+          const resultContainers = document.querySelectorAll('.g');
+
+          for (let i = 0; i < resultContainers.length && items.length < maxCount; i++) {
+            const container = resultContainers[i];
+            const link = container.querySelector('a[href^="http"]') as HTMLAnchorElement | null;
+            if (!link) continue;
+
+            const href = link.href;
+            if (!href || seen.has(href)) continue;
+
+            try {
+              const u = new URL(href);
+              const hostname = u.hostname.replace(/^www\./i, '');
+              if (excludes.some(p => hostname.includes(p))) continue;
+              // Ignore generic google redirects which happen occasionally
+              if (hostname.includes('google.com')) continue;
+
+              seen.add(href);
+
+              const heading = container.querySelector('h3');
+              const name = (heading?.textContent?.trim() || link.textContent?.trim() || '').slice(0, 120);
+              if (!name) continue;
+
+              // Snippet usually wrapped in this class
+              const snippetEl = container.querySelector('.VwiC3b, .UroOpe');
+              const snippet = (snippetEl?.textContent?.trim() || '').slice(0, 200);
+
+              items.push({ name, url: href, snippet, domain: hostname });
+            } catch { continue; }
+          }
+          return items;
+        }, count);
+
+        // Break early if we found successful extraction
+        if (results.length > 0) {
+          console.log(`[Google/Stealth] Attempt ${attempt}: "${query}" -> ${results.length} results`);
+          break;
+        } else {
+          console.log(`[Google/Stealth] Attempt ${attempt}: 0 results found, potentially blocked.`);
+        }
+      } catch (e) {
+        console.warn(`[Google/Stealth] Attempt ${attempt} failed: ${(e as Error).message}`);
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+    
+    return results;
+  } catch (error) {
+    console.error("[Google/Stealth] Search error:", error);
+    return [];
+  } finally {
+    if (browser) {
+      const { closeBrowser: cb } = await import("@/lib/scraper-browser");
+      await cb(browser);
+    }
+  }
+}
+
 /** Tier 2: HTTP DuckDuckGo HTML — no browser, fast, reliable */
 async function ddgHttpSearch(query: string, count: number): Promise<SerpResult[]> {
   try {
@@ -261,111 +352,7 @@ async function ddgHttpSearch(query: string, count: number): Promise<SerpResult[]
   }
 }
 
-/** Tier 3: Puppeteer Google — last resort with consent page handling */
-async function googlePuppeteerSearch(query: string, count: number): Promise<SerpResult[]> {
-  let browser;
-  try {
-    const { launchBrowser: lb, newPageWithDefaults: np, closeBrowser: cb } = await import("@/lib/scraper-browser");
-    browser = await lb();
-    const page = await np(browser);
 
-    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&num=${Math.min(count + 5, 30)}&hl=en`;
-    await page.goto(googleUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Handle Google consent page (cookie dialog)
-    try {
-      const consentSelectors = [
-        'button[id="L2AGLb"]',           // "I agree" button
-        'button[aria-label="Accept all"]',
-        'button[aria-label="Aceptar todo"]',
-        'form[action*="consent"] button',
-        '#CXQnmb button',                // Another consent variant
-        'button.tHlp8d',                 // Generic consent button
-      ];
-      for (const sel of consentSelectors) {
-        try {
-          const btn = await page.$(sel);
-          if (btn) {
-            await btn.click();
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            break;
-          }
-        } catch { /* ignore */ }
-      }
-    } catch { /* consent handling failed, continue */ }
-
-    // Wait for actual search results
-    try {
-      await page.waitForSelector('#search, #rso', { timeout: 8000 });
-    } catch {
-      // Log what page we actually landed on for debugging
-      const pageTitle = await page.title();
-      const pageUrl = page.url();
-      console.warn(`[Google/Puppeteer] No #search found. Page: "${pageTitle}" URL: ${pageUrl}`);
-    }
-
-    const results = await page.evaluate((maxCount: number) => {
-      const items: Array<{ name: string; url: string; snippet: string; domain: string }> = [];
-      const excludes = [
-        'wikipedia.org', 'youtube.com', 'facebook.com', 'twitter.com',
-        'instagram.com', 'google.com', 'reddit.com', 'medium.com',
-        'github.com', 'bing.com', 'yahoo.com', 'linkedin.com',
-      ];
-
-      const anchors = document.querySelectorAll('#search a[href^="http"], #rso a[href^="http"]');
-      const seen = new Set<string>();
-
-      for (let i = 0; i < anchors.length && items.length < maxCount; i++) {
-        const a = anchors[i] as HTMLAnchorElement;
-        const href = a.href;
-        if (!href || href.includes('google.com/') || seen.has(href)) continue;
-
-        const h3 = a.querySelector('h3');
-        if (!h3) continue;
-
-        seen.add(href);
-        try {
-          const u = new URL(href);
-          const hostname = u.hostname.replace(/^www\./i, '');
-          if (excludes.some(p => hostname.includes(p))) continue;
-
-          let snippet = '';
-          const parent = a.closest('[data-sokoban-container], .g, [data-hveid]');
-          if (parent) {
-            const spans = Array.from(parent.querySelectorAll('span'));
-            for (let si = 0; si < spans.length; si++) {
-              const txt = (spans[si] as HTMLElement).textContent?.trim() || '';
-              if (txt.length > 40 && !txt.includes('http') && txt !== h3.textContent?.trim()) {
-                snippet = txt.slice(0, 200);
-                break;
-              }
-            }
-          }
-
-          items.push({
-            name: (h3.textContent?.trim() || '').slice(0, 120),
-            url: href,
-            snippet,
-            domain: hostname,
-          });
-        } catch { continue; }
-      }
-      return items;
-    }, count);
-
-    console.log(`[Google/Puppeteer] "${query}" -> ${results.length} results`);
-    return results;
-  } catch (error) {
-    console.error("[Google/Puppeteer] Search error:", error);
-    return [];
-  } finally {
-    if (browser) {
-      const { closeBrowser: cb } = await import("@/lib/scraper-browser");
-      await cb(browser);
-    }
-  }
-}
 
 async function ddgWebSearch(query: string, count: number = 20, jobId?: string): Promise<SerpResult[]> {
   // Tier 1: Puppeteer DuckDuckGo (bot-friendly, JS-rendered results)
@@ -1373,11 +1360,14 @@ export async function executeToolCall(toolName: string, args: any, context: any)
 
   switch (toolName) {
     case "search_companies":
-      const useScraperApi = !!jobData?.providers?.scraperApi;
+      const searchProvider = jobData?.providers?.searchProvider || "ddg";
       let searchResults;
-      if (useScraperApi) {
+      
+      if (searchProvider === "scraper-api") {
         const { scraperApiGoogleSearch } = await import("@/lib/scraper/scraper-api");
         searchResults = await scraperApiGoogleSearch(args.query, args.count || 20);
+      } else if (searchProvider === "google-stealth") {
+        searchResults = await googlePuppeteerSearch(args.query, args.count || 20);
       } else {
         searchResults = await ddgWebSearch(args.query, args.count || 20, context.jobId);
       }
@@ -1421,7 +1411,7 @@ export async function executeToolCall(toolName: string, args: any, context: any)
       };
 
     case "visit_website":
-      const useScraperApiForVisit = !!jobData?.providers?.scraperApi;
+      const useScraperApiForVisit = jobData?.providers?.searchProvider === "scraper-api";
       let siteData: any = null;
       if (useScraperApiForVisit) {
         const { scraperApiExtractHtml } = await import("@/lib/scraper/scraper-api");

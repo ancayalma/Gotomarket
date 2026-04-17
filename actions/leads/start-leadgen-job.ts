@@ -24,7 +24,7 @@ export const LeadGenWizardSchema = z.object({
       peopleEnrichment: z.boolean().default(true).optional(), // Company site team/about pages parsing (ToS-safe)
       aiQueries: z.boolean().default(true).optional(),
       aiAnalysis: z.boolean().default(true).optional(),
-      scraperApi: z.boolean().default(false).optional(), // High-perfm ScraperAPI bypass (Exempt Plan Only)
+      searchProvider: z.enum(["ddg", "google-stealth", "scraper-api"]).default("ddg").optional(),
     })
     .optional(),
   // Optional advanced params for the pipeline
@@ -81,10 +81,10 @@ export async function startLeadGenJob(
     select: { team_id: true, assigned_team: { include: { assigned_plan: true } } }
   });
 
-  if (parsed.data.providers?.scraperApi) {
+  if (parsed.data.providers?.searchProvider && parsed.data.providers.searchProvider !== "ddg") {
     const planSlug = user?.assigned_team?.assigned_plan?.slug || user?.assigned_team?.subscription_plan || "FREE";
     if (planSlug.toUpperCase() !== "EXEMPT") {
-      parsed.data.providers.scraperApi = false; // Force false if not exempt
+      parsed.data.providers.searchProvider = "ddg"; // Force default if not exempt
     }
   }
 

@@ -1,4 +1,9 @@
 import puppeteerCore, { Browser, Page } from "puppeteer-core";
+import { addExtra } from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+
+const stealthCore = addExtra(puppeteerCore);
+stealthCore.use(StealthPlugin());
 import { existsSync, readdirSync, statSync } from "fs";
 import { join, resolve } from "path";
 
@@ -132,8 +137,10 @@ export async function launchBrowser(): Promise<Browser> {
   if (!executablePath) {
     try {
       const puppeteer = (await import("puppeteer")).default;
-      console.log("[browser] Launching via bundled puppeteer Chromium");
-      return (await puppeteer.launch({
+      const stealthPuppeteer = addExtra(puppeteer);
+      stealthPuppeteer.use(StealthPlugin());
+      console.log("[browser] Launching via bundled stealth puppeteer Chromium");
+      return (await stealthPuppeteer.launch({
         headless: true,
         args: HEADLESS_ARGS,
       })) as any as Browser;
@@ -179,8 +186,8 @@ export async function launchBrowser(): Promise<Browser> {
   }
 
   /* ── Launch puppeteer-core with discovered executable ──────────── */
-  console.log(`[browser] Launching puppeteer-core with: ${executablePath}`);
-  const browser = await puppeteerCore.launch({
+  console.log(`[browser] Launching stealth puppeteer-core with: ${executablePath}`);
+  const browser = await stealthCore.launch({
     headless: true,
     executablePath,
     args: HEADLESS_ARGS,
