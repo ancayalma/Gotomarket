@@ -2446,32 +2446,46 @@ EXECUTE VARUNA INTELLIGENCE PROTOCOL.`;
     }
 
     try {
-      // Message history windowing — keep only recent messages to control token growth
-      // AI SDK strictly appends pairs of (assistant, tool) messages.
-      // We will keep only the most recent 1 iteration (2 messages) to prevent bloat.
-      const KEEP_PAIRS = 1;
-      const MAX_HISTORY_MESSAGES = KEEP_PAIRS * 2;
+      // Stateful Memory Compaction — Instead of brutally slicing and causing amnesia,
+      // we retain the ENTIRE message history but aggressively truncate the massive HTML 
+      // payloads from old 'read_html_component' tool results to strictly control token growth.
       
-      let windowedMessages = messages;
-      if (messages.length > MAX_HISTORY_MESSAGES + 1) {
-        const firstMsg = messages[0]; // Original user instruction
-        const recentMsgs = messages.slice(-MAX_HISTORY_MESSAGES);
-        
-        // Ensure we don't accidentally split a pair if length parity was violated.
-        // recentMsgs[0] should be an assistant message.
-        let safeMsgs = recentMsgs;
-        if (safeMsgs[0]?.role === 'tool') {
-           // If we accidentally started on a tool result, drop it to find the next assistant
-           safeMsgs = safeMsgs.slice(1);
+      const KEEP_RAW_PAIRS = 2; // Keep raw HTML for only the last 2 iterations
+      const rawThresholdIdx = Math.max(1, messages.length - (KEEP_RAW_PAIRS * 2));
+      
+      let compactedMessages = messages.map((msg, idx) => {
+        // Only compact old messages, and specifically only 'tool' role messages
+        if (idx >= rawThresholdIdx || msg.role !== 'tool' || !Array.isArray(msg.content)) {
+          return msg;
         }
-        
+
+        // Deep clone to avoid mutating the original message array
+        const clonedContent = msg.content.map((c: any) => {
+          if (c.type === 'tool-result' && c.toolName === 'read_html_component' && typeof c.result === 'object' && c.result?.textPayload) {
+            return {
+              ...c,
+              result: {
+                ...c.result,
+                textPayload: "[HTML TRUNCATED FOR MEMORY COMPACTION. You have already processed this target.]"
+              }
+            };
+          }
+          return c;
+        });
+
+        return { ...msg, content: clonedContent };
+      });
+      
+      // We still insert the global progress override to act as a system boundary
+      let windowedMessages = compactedMessages;
+      if (windowedMessages.length > 1) {
         windowedMessages = [
-          firstMsg,
+          windowedMessages[0],
           {
             role: "user" as const,
-            content: `[PROGRESS] Consumed ${contactsSaved}/${maxCredits} credits. Current totals: ${companiesSaved} companies, ${contactsSaved} contacts, ${iterations - 1} iterations. Continue saving and searching.`
+            content: `[PROGRESS] Consumed ${contactsSaved}/${maxCredits} credits. Current totals: ${companiesSaved} companies, ${contactsSaved} contacts, ${iterations - 1} iterations. Ensure you clear your queue of found targets.`
           },
-          ...safeMsgs
+          ...windowedMessages.slice(1)
         ];
       }
 
