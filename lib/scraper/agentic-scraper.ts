@@ -1477,6 +1477,21 @@ export async function executeToolCall(toolName: string, args: any, context: any)
           .filter(h => h && (h.startsWith('/') || h.includes(baseDomain)))
           .slice(0, 25); // cap at 25 links
 
+      try {
+        const job = await (prismadbCrm as any).crm_Lead_Gen_Jobs.findUnique({
+          where: { id: context.jobId }, select: { logs: true }
+        });
+        await (prismadbCrm as any).crm_Lead_Gen_Jobs.update({
+          where: { id: context.jobId },
+          data: {
+            logs: [
+              ...(Array.isArray(job?.logs) ? job.logs : []),
+              { ts: new Date().toISOString(), msg: `👁️ explore_website_structure("${urlObj}") -> Found ${Object.keys(cache).length} sections, ${sublinks.length} sublinks.` }
+            ]
+          }
+        });
+      } catch (dbErr) { console.error("Failed to update job log", dbErr); }
+
       return {
         success: true,
         url: urlObj,
@@ -1496,6 +1511,22 @@ export async function executeToolCall(toolName: string, args: any, context: any)
         return { success: false, error: `Component ${args.component_id} not found on this page.` };
       }
       
+      const payloadLength = textContent.replace(/\s{2,}/g, ' ').trim().length;
+      try {
+        const job = await (prismadbCrm as any).crm_Lead_Gen_Jobs.findUnique({
+          where: { id: context.jobId }, select: { logs: true }
+        });
+        await (prismadbCrm as any).crm_Lead_Gen_Jobs.update({
+          where: { id: context.jobId },
+          data: {
+            logs: [
+              ...(Array.isArray(job?.logs) ? job.logs : []),
+              { ts: new Date().toISOString(), msg: `📖 read_html_component("${args.component_id}") on ${urlObj} -> Retrieved chunk (${payloadLength} chars)` }
+            ]
+          }
+        });
+      } catch (dbErr) { console.error("Failed to update job log", dbErr); }
+
       return {
         success: true,
         url: args.url,
