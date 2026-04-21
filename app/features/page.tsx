@@ -10,15 +10,36 @@ import AnalyticsGraph from "../components/AnalyticsGraph";
 import { Zap, Mail, Bot, Globe, MessageSquare, TrendingUp, BarChart3, Cpu, Shield, Server, Command } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Script from "next/script";
 
 export const metadata = {
-    title: "System Specs - BasaltCRM",
-    description: "Explore the neural-scale features of the Basalt Revenue Core.",
+    title: "System Specs & Features - BasaltCRM | The Autonomous AI CRM",
+    description: "Explore the neural-scale features of the Basalt Revenue Core. Autonomous agentic leaf generation, 0.12s voice AI, and multi-modal prospecting.",
+    openGraph: {
+        title: "System Specs - BasaltCRM",
+        description: "Explore the neural-scale features of the Basalt Revenue Core.",
+        type: "website",
+        url: "https://crm.basalthq.com/features",
+    },
+};
+
+const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "BasaltCRM - System Specs",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "description": "Explore the neural-scale features of the Basalt Revenue Core including Agentic AI and Voice AI."
 };
 
 export default function FeaturesPage() {
     return (
         <div className="min-h-screen font-sans selection:bg-cyan-500/30 text-white bg-black">
+            <Script
+                id="software-application-schema"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <div className="fixed inset-0 z-0">
                 <SynapticNetwork opacity={0.6} nodeCount={60} />
             </div>

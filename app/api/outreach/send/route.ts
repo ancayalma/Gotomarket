@@ -587,7 +587,10 @@ export async function POST(req: Request) {
           await logAiUsage({
             teamId, userId: session.user.id, service: "email",
             model: modelId || "unknown",
-            usage: { promptTokens: (usage as any)?.promptTokens || 0, completionTokens: (usage as any)?.completionTokens || 0 },
+            usage: { 
+                promptTokens: (usage as any)?.promptTokens || (usage as any)?.inputTokens || 0, 
+                completionTokens: (usage as any)?.completionTokens || (usage as any)?.outputTokens || 0 
+            },
             description: "Outreach email generation"
           });
 
@@ -622,7 +625,10 @@ export async function POST(req: Request) {
             await logAiUsage({
               teamId, userId: session.user.id, service: "email",
               model: modelId || "unknown",
-              usage: { promptTokens: (retryUsage as any)?.promptTokens || 0, completionTokens: (retryUsage as any)?.completionTokens || 0 },
+              usage: { 
+                  promptTokens: (retryUsage as any)?.promptTokens || (retryUsage as any)?.inputTokens || 0, 
+                  completionTokens: (retryUsage as any)?.completionTokens || (retryUsage as any)?.outputTokens || 0 
+              },
               description: "Outreach email generation (retry)"
             });
           } catch (retryErr: any) {

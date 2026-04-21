@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Cpu, Bot, Zap } from "lucide-react";
+import { ArrowRight, Search, Mail, Gift } from "lucide-react";
 import FluidNeuralWave from "@/app/components/FluidNeuralWave";
 
 export default function BasaltHero() {
@@ -37,10 +37,15 @@ export default function BasaltHero() {
                 </div>
 
                 {/* Mission Statement */}
-                <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed opacity-0 animate-fadeInUp stagger-2 font-light">
+                <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 leading-relaxed opacity-0 animate-fadeInUp stagger-2 font-light">
                     Move beyond management. Deploy performance. <br className="hidden md:block" />
                     <span className="text-white font-medium">BasaltCRM</span> is the first end-to-end autonomous <span className="text-white">AI-ASSISTED STACK</span>.
                     From infrastructure provisioning to AI closing, we build the loop that never sleeps.
+                </p>
+
+                {/* Conversion Subtitle */}
+                <p className="text-base md:text-lg text-cyan-400/80 max-w-2xl mx-auto mb-12 leading-relaxed opacity-0 animate-fadeInUp stagger-2 font-mono tracking-wide">
+                    AI-powered lead generation • Automated outreach • Free signature &amp; form builders — <span className="text-white font-semibold">starting at $0/mo</span>
                 </p>
 
                 {/* CTA Buttons */}
@@ -68,23 +73,23 @@ export default function BasaltHero() {
                 <div className="mt-12 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 opacity-0 animate-fadeInUp stagger-4 px-4">
                     <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-colors duration-500 hover:border-cyan-500/50 hover:bg-cyan-500/5">
                         <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-[opacity,transform] duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
-                            <Cpu className="h-16 w-16 text-cyan-400" />
+                            <Search className="h-16 w-16 text-cyan-400" />
                         </div>
-                        <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-cyan-400 transition-colors uppercase tracking-widest">GRID SCALE PROVISION</span>
+                        <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-cyan-400 transition-colors uppercase tracking-widest">AI LEAD GENERATION</span>
                     </div>
 
                     <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-colors duration-500 hover:border-violet-500/50 hover:bg-violet-500/5">
                         <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-[opacity,transform] duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
-                            <Bot className="h-16 w-16 text-violet-400" />
+                            <Mail className="h-16 w-16 text-violet-400" />
                         </div>
-                        <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-violet-400 transition-colors uppercase tracking-widest">SYNAPTIC SDR CORES</span>
+                        <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-violet-400 transition-colors uppercase tracking-widest">AUTOMATED OUTREACH</span>
                     </div>
 
-                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-colors duration-500 hover:border-blue-500/50 hover:bg-blue-500/5">
+                    <div className="group relative flex items-center justify-center px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-colors duration-500 hover:border-emerald-500/50 hover:bg-emerald-500/5">
                         <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-40 transition-[opacity,transform] duration-700 pointer-events-none group-hover:scale-150 group-hover:-rotate-12">
-                            <Zap className="h-16 w-16 text-blue-400" />
+                            <Gift className="h-16 w-16 text-emerald-400" />
                         </div>
-                        <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-blue-400 transition-colors uppercase tracking-widest">0.12s SYNAPTIC LATENCY</span>
+                        <span className="relative z-10 text-[9px] md:text-[10px] font-mono text-gray-500 group-hover:text-emerald-400 transition-colors uppercase tracking-widest">FREE BUSINESS TOOLS</span>
                     </div>
                 </div>
             </div>

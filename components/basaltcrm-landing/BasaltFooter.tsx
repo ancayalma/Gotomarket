@@ -9,6 +9,36 @@ const navigationLinks = [
     { label: 'Developers', href: '/developers' },
 ];
 
+const exploreCategories = [
+    {
+        category: 'Comparisons',
+        mainHref: '/compare',
+        sublinks: [
+            { label: 'vs Salesforce', href: '/compare/salesforce' },
+            { label: 'vs HubSpot', href: '/compare/hubspot' },
+            { label: 'vs Dynamics', href: '/compare/microsoft-dynamics' },
+        ]
+    },
+    {
+        category: 'Industries',
+        mainHref: '/industry',
+        sublinks: [
+            { label: 'Real Estate', href: '/industry/real-estate' },
+            { label: 'Healthcare', href: '/industry/healthcare' },
+            { label: 'Legal CRM', href: '/industry/legal' },
+        ]
+    },
+    {
+        category: 'Locations',
+        mainHref: '/location',
+        sublinks: [
+            { label: 'New York', href: '/location/new-york' },
+            { label: 'London', href: '/location/london' },
+            { label: 'Toronto', href: '/location/toronto' },
+        ]
+    }
+];
+
 const ecosystemLinks = [
     { label: 'BasaltHQ', href: 'https://basalthq.com' },
     { label: 'BasaltSURGE', href: 'https://surge.basalthq.com' },
@@ -28,7 +58,7 @@ export default function BasaltFooter() {
     return (
         <footer className="relative pt-6 pb-4 px-6 border-t border-white/10">
             <div className="max-w-7xl mx-auto">
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-6">
+                <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-8 mb-6">
                     {/* Brand Column */}
                     <div>
                         <div className="flex items-center gap-3 mb-6">
@@ -77,6 +107,35 @@ export default function BasaltFooter() {
                                 </li>
                             ))}
                         </ul>
+                    </div>
+
+                    {/* Explore */}
+                    <div>
+                        <h4 className="text-xs font-mono tracking-wider text-gray-500 mb-4">EXPLORE</h4>
+                        <div className="space-y-6">
+                            {exploreCategories.map((group) => (
+                                <div key={group.category} className="space-y-2">
+                                    <Link
+                                        href={group.mainHref}
+                                        className="text-white text-sm hover:text-cyan-500 font-medium transition-colors"
+                                    >
+                                        {group.category}
+                                    </Link>
+                                    <ul className="space-y-1.5 pl-2 border-l border-white/5">
+                                        {group.sublinks.map((sublink) => (
+                                            <li key={sublink.label}>
+                                                <Link
+                                                    href={sublink.href}
+                                                    className="text-gray-400 text-xs hover:text-white transition-colors"
+                                                >
+                                                    {sublink.label}
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Ecosystem */}

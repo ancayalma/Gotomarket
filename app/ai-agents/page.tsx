@@ -8,8 +8,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-    title: "AI Agents - BasaltCRM",
-    description: "Deploy autonomous AI agents that handle sales, support, and research 24/7.",
+    title: "Autonomous AI Sales Agents | BasaltCRM",
+    description: "Deploy 24/7 AI agents with 0.12s voice latency. BasaltEcho acts as your autonomous SDR and CSM, closing deals while you sleep.",
+    openGraph: {
+        title: "Autonomous AI Sales Agents | BasaltCRM",
+        description: "Deploy 24/7 AI agents with 0.12s voice latency. SDR and CSM cores online.",
+        url: "https://crm.basalthq.com/ai-agents",
+        type: "website",
+    }
 };
 
 export default function AliensPage() {

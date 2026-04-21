@@ -1,37 +1,16 @@
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import GeometricBackground from "@/app/components/GeometricBackground";
+import { ArrowRight, Building2 } from "lucide-react";
 import industries from "@/data/industries.json";
-import { ArrowRight } from "lucide-react";
 import BasaltNavbar from "@/components/basaltcrm-landing/BasaltNavbar";
 import BasaltFooter from "@/components/basaltcrm-landing/BasaltFooter";
+import GeometricBackground from "@/app/components/GeometricBackground";
 
 export const metadata = {
-    title: "AI CRM Solutions by Industry | BasaltCRM",
-    description: "Discover how BasaltCRM serves Real Estate, Healthcare, Legal, Finance, E-commerce, and more with industry-specific AI automation.",
-    openGraph: {
-        title: "Industry-Specific AI CRM Solutions",
-        description: "Built for Your Industry's Unique Needs",
-        type: "website",
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/industry`,
-        images: [
-            {
-                url: `/api/og?title=AI CRM by Industry&description=Tailored Solutions for Every Sector&type=industry&badge=Industry Solutions`,
-                width: 1200,
-                height: 630,
-                alt: "AI CRM Solutions by Industry",
-            },
-        ],
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: "Industry-Specific AI CRM Solutions",
-        description: "Built for Your Industry's Unique Needs",
-        images: ["/api/og?title=AI CRM by Industry&description=Tailored Solutions for Every Sector&type=industry&badge=Industry Solutions"],
-    },
+    title: "Industries | BasaltCRM",
+    description: "Discover how BasaltCRM's autonomous AI agents transform operations and hypercharge growth across 50+ industries.",
 };
 
-export default function IndustriesPage() {
+export default function IndustryHubPage() {
     return (
         <div className="min-h-screen font-sans selection:bg-cyan-500/30 text-white">
             <div className="fixed inset-0 z-0">
@@ -40,38 +19,52 @@ export default function IndustriesPage() {
 
             <div className="relative z-10 flex flex-col min-h-screen">
                 <BasaltNavbar />
-                <main className="flex-grow pt-20">
-                    <section className="relative w-full py-20 md:py-32 overflow-hidden">
-                        <div className="container px-4 md:px-6 relative z-10">
-                            <div className="text-center mb-16">
-                                <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/50 mb-6">
-                                    Built for Your Industry
-                                </h1>
-                                <p className="text-gray-400 text-xl max-w-3xl mx-auto">
-                                    BasaltCRM adapts to the unique challenges of your sector. Explore industry-specific solutions.
-                                </p>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                                {industries.map((industry) => (
-                                    <Link key={industry.slug} href={`/industry/${industry.slug}`}>
-                                        <Card className="border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-cyan-500/30 transition-colors duration-300 h-full group cursor-pointer">
-                                            <CardHeader>
-                                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
-                                                    <span>{industry.name}</span>
-                                                    <ArrowRight className="w-5 h-5 text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                </CardTitle>
-                                                <CardDescription className="text-base text-gray-400">
-                                                    {industry.use_case}
-                                                </CardDescription>
-                                            </CardHeader>
-                                        </Card>
-                                    </Link>
-                                ))}
-                            </div>
+                <section className="relative w-full pt-32 pb-20 overflow-hidden">
+                    <div className="container px-4 md:px-6 relative z-10 text-center">
+                        <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-medium text-primary backdrop-blur-sm mb-6">
+                            <span>Industry Solutions</span>
                         </div>
-                    </section>
-                </main>
+                        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 mb-6 pb-4">
+                            Built for Your Ecosystem
+                        </h1>
+                        <p className="mx-auto max-w-[800px] text-gray-400 md:text-xl leading-relaxed mb-8">
+                            Whether you're selling real estate, managing healthcare patients, or scaling a SaaS empire, BasaltCRM adapts its AI workflow to your exact use cases.
+                        </p>
+                    </div>
+                </section>
+
+                <section className="py-12 bg-black/40 border-t border-white/10">
+                    <div className="container px-4 md:px-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {industries.map((industry) => (
+                                <Link key={industry.slug} href={`/industry/${industry.slug}`} className="block group">
+                                    <div className="h-full p-6 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 hover:border-primary/50 transition-all duration-300 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full translate-x-8 -translate-y-8 group-hover:bg-primary/20 transition-colors" />
+                                        
+                                        <div className="flex items-start justify-between mb-4 relative z-10">
+                                            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                                <Building2 className="w-6 h-6" />
+                                            </div>
+                                            <ArrowRight className="w-5 h-5 text-gray-500 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                        </div>
+                                        
+                                        <h3 className="text-xl font-bold mb-2 text-white group-hover:text-primary transition-colors relative z-10">
+                                            {industry.name}
+                                        </h3>
+                                        <p className="text-sm font-medium text-cyan-500 mb-3 relative z-10">
+                                            {industry.use_case}
+                                        </p>
+                                        <p className="text-gray-400 text-sm line-clamp-2 relative z-10">
+                                            {industry.description}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
                 <BasaltFooter />
             </div>
         </div>

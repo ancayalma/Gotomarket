@@ -24,8 +24,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const origin = new URL(request.url).origin;
 
-    // Fetch font
-    const interBold = await fetch("https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.woff").then(
+    // Fetch font (using stable TTF from Google Fonts to prevent Satori WOFF kerning bugs)
+    const interBold = await fetch("https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYMZg.ttf").then(
       (res) => res.arrayBuffer()
     );
 

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, Shield, LineChart, PlugZap, CheckCircle, Wrench, FileText, Zap, Clock, DollarSign, HeartHandshake, Sparkles, Bot, Lock, Globe, Mail, MessageSquare, BarChart3, Database } from "lucide-react";
+import { ArrowRight, CheckCircle2, Shield, LineChart, PlugZap, CheckCircle, Wrench, FileText, Zap, Clock, DollarSign, HeartHandshake, Sparkles, Bot, Lock, Globe, Mail, MessageSquare, BarChart3, Database, Star, StarHalf } from "lucide-react";
 import competitors from "@/data/competitors.json";
 import BasaltNavbar from "@/components/basaltcrm-landing/BasaltNavbar";
 import BasaltFooter from "@/components/basaltcrm-landing/BasaltFooter";
@@ -76,7 +76,7 @@ const STATIC = {
         { feature: "Autonomous Support Agents", ours: "Included", theirs: "Varies by plan" },
         { feature: "Open API & Webhooks", ours: "Open & documented", theirs: "Limited / proprietary" },
         { feature: "Cloud-native SaaS", ours: "Fully managed cloud", theirs: "Varies by vendor" },
-        { feature: "Pricing Model", ours: "Flat rate per org", theirs: "Per-seat / usage tiers" },
+        { feature: "Pricing Model", ours: "Transparent per-seat", theirs: "Hidden usage tiers" },
         { feature: "Data Residency Options", ours: "EU/US options", theirs: "Limited / premium" }
     ],
     faqs: [
@@ -142,6 +142,82 @@ export default async function CompetitorPage(props: Props) {
                             </div>
                             <div className="relative h-[450px] w-full rounded-2xl overflow-hidden shadow-[0_0_100px_rgba(16,185,129,0.15)] border border-white/10 bg-black/50 backdrop-blur-xl">
                                 <AnalyticsGraph />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Star Rating Comparison Section */}
+                <section className="py-16 bg-black">
+                    <div className="container px-4 md:px-6">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl font-bold mb-4">The Verdict: BasaltCRM vs {competitor.name}</h2>
+                            <p className="text-gray-400 max-w-2xl mx-auto">
+                                Evaluating value, innovation, and total cost of ownership.
+                            </p>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                            {/* BasaltCRM Core */}
+                            <div className="p-8 rounded-2xl bg-gradient-to-b from-primary/20 to-primary/5 border border-primary/30 relative">
+                                <div className="absolute top-0 right-8 -translate-y-1/2 bg-primary text-black px-4 py-1 rounded-full text-sm font-bold shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                                    Top Rated
+                                </div>
+                                <h3 className="text-2xl font-bold mb-6 text-white text-center">BasaltCRM</h3>
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-gray-300">Predictable Pricing</span>
+                                        <div className="flex gap-1 text-primary"><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /></div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-gray-300">Autonomous AI Power</span>
+                                        <div className="flex gap-1 text-primary"><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /></div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-gray-300">Ease of Deployment</span>
+                                        <div className="flex gap-1 text-primary"><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /></div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-gray-300">Customer Support SLA</span>
+                                        <div className="flex gap-1 text-primary"><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /></div>
+                                    </div>
+                                </div>
+                                <div className="mt-8 text-center text-sm text-primary font-medium">Average: 5.0 / 5.0</div>
+                            </div>
+                            
+                            {/* Competitor Core */}
+                            <div className="p-8 rounded-2xl bg-white/5 border border-white/10 opacity-75 grayscale hover:grayscale-0 transition-all duration-300">
+                                <h3 className="text-2xl font-bold mb-6 text-gray-400 text-center">{competitor.name}</h3>
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-gray-400">Predictable Pricing</span>
+                                        <div className="flex gap-1 text-gray-500">
+                                            {competitor.weakness.toLowerCase().includes("cost") || competitor.weakness.toLowerCase().includes("tier") ? (
+                                                <><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star className="w-5 h-5" /><Star className="w-5 h-5" /><Star className="w-5 h-5" /></>
+                                            ) : (
+                                                <><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star className="w-5 h-5" /><Star className="w-5 h-5" /></>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-gray-400">Autonomous AI Power</span>
+                                        <div className="flex gap-1 text-gray-500"><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><StarHalf fill="currentColor" className="w-5 h-5" /><Star className="w-5 h-5" /></div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-gray-400">Ease of Deployment</span>
+                                        <div className="flex gap-1 text-gray-500">
+                                            {competitor.weakness.toLowerCase().includes("complex") ? (
+                                                <><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star className="w-5 h-5" /><Star className="w-5 h-5" /><Star className="w-5 h-5" /></>
+                                            ) : (
+                                                <><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star className="w-5 h-5" /><Star className="w-5 h-5" /></>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-gray-400">Customer Support SLA</span>
+                                        <div className="flex gap-1 text-gray-500"><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star fill="currentColor" className="w-5 h-5" /><Star className="w-5 h-5" /><Star className="w-5 h-5" /></div>
+                                    </div>
+                                </div>
+                                <div className="mt-8 text-center text-sm text-gray-500 font-medium whitespace-pre-wrap">{`Reported Weakness:\n${competitor.weakness}`}</div>
                             </div>
                         </div>
                     </div>
@@ -219,7 +295,7 @@ export default async function CompetitorPage(props: Props) {
                                 </div>
                                 <h3 className="text-xl font-semibold mb-4">Pricing That Makes Sense</h3>
                                 <p className="text-gray-400 leading-relaxed mb-6">
-                                    Tired of surprise invoices every time you add a user? We charge a flat rate per organization—add as many team members, contacts, and deals as you need without watching the meter.
+                                    Tired of surprise invoices every time you scale? We offer straightforward per-seat pricing—giving you full API access, contacts, and deals without hidden data meters.
                                 </p>
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3 text-sm">
@@ -422,13 +498,13 @@ export default async function CompetitorPage(props: Props) {
                             </div>
                             <h2 className="text-3xl font-bold mb-4">One Price. Everything Included.</h2>
                             <p className="text-gray-400 max-w-2xl mx-auto mb-12">
-                                No per-seat fees. No surprise charges for AI features. No nickel-and-diming on integrations.
+                                No hidden feature walls. No surprise charges for AI features. No nickel-and-diming on integrations.
                                 You get the full platform for one predictable price.
                             </p>
 
                             <div className="rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/10 to-transparent p-8">
-                                <div className="text-4xl font-bold mb-2">Flat Rate Per Organization</div>
-                                <p className="text-gray-400 mb-8">Unlimited users • Unlimited contacts • All AI features</p>
+                                <div className="text-4xl font-bold mb-2">Transparent Per-Seat Pricing</div>
+                                <p className="text-gray-400 mb-8">No hidden API fees • Unlimited contacts • All AI features</p>
                                 <div className="grid sm:grid-cols-2 gap-6 text-left max-w-xl mx-auto">
                                     <div>
                                         <h4 className="font-semibold mb-3 text-primary">Included</h4>
