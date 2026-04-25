@@ -74,8 +74,12 @@ export default async function sendEmail(
 
     const result = await transporter.sendMail({
       ...emailOptions,
-      from: fromAddress
-    });
+      from: fromAddress,
+      ses: {
+        ConfigurationSetName: process.env.SES_CONFIGURATION_SET || "BasaltCRMConfigSet",
+        Tags: [{ Name: "Environment", Value: process.env.NODE_ENV || "development" }]
+      }
+    } as any);
     const realMessageId = result.messageId?.replace(/[<>]/g, "").trim() || null;
     console.log(`[Email Success] To: ${emailOptions.to}, From: ${fromAddress}, MessageId: ${realMessageId}`);
     return realMessageId;

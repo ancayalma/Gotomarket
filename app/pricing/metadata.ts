@@ -1,12 +1,12 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "BasaltCRM – AI Sales & Support Engine",
-    description: "Automated prospecting, social intelligence, and 24/7 AI agents that never sleep.",
+    title: "BasaltCRM Pricing | Flat-Rate AI CRM for Scaling Teams",
+    description: "Flat-rate pricing with $0/mo starting plans. Zero per-seat AI taxes, unlimited lead generation options, and 100% transparent pricing for autonomous CRMs.",
     openGraph: {
-        title: "BasaltCRM – AI Sales & Support Engine",
-        description: "Automated prospecting, social intelligence, and 24/7 AI agents that never sleep.",
-        url: "https://crm.basalthq.com",
+        title: "BasaltCRM Pricing | Flat-Rate AI CRM",
+        description: "Zero per-seat AI taxes, unlimited lead generation options, and transparent pricing.",
+        url: "https://crm.basalthq.com/pricing",
         type: "website",
         images: [
             {
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: "summary_large_image",
-        title: "BasaltCRM – AI Sales & Support Engine",
-        description: "Automated prospecting, social intelligence, and 24/7 AI agents that never sleep.",
+        title: "BasaltCRM Pricing | Flat-Rate AI CRM",
+        description: "Zero per-seat AI taxes, unlimited lead generation options, and transparent pricing.",
         images: ["https://crm.basalthq.com/social-preview.jpg"],
     },
 };

@@ -5,6 +5,9 @@ import FluidNeuralWave from "./components/FluidNeuralWave";
 // import GeometricBackground from "./components/GeometricBackground";
 import BasaltNavbar from "@/components/basaltcrm-landing/BasaltNavbar";
 import BasaltHero from "@/components/basaltcrm-landing/BasaltHero";
+import BasaltFreeTools from "@/components/basaltcrm-landing/BasaltFreeTools";
+import BasaltAIProcess from "@/components/basaltcrm-landing/BasaltAIProcess";
+import BasaltComparisonSnippet from "@/components/basaltcrm-landing/BasaltComparisonSnippet";
 import BasaltFeatures from "@/components/basaltcrm-landing/BasaltFeatures";
 import BasaltSEO from "@/components/basaltcrm-landing/BasaltSEO";
 import BasaltAbout from "@/components/basaltcrm-landing/BasaltAbout";
@@ -57,6 +60,9 @@ export default function LandingPage() {
 
                 <main className="flex-grow">
                     <BasaltHero />
+                    <BasaltFreeTools />
+                    <BasaltAIProcess />
+                    <BasaltComparisonSnippet />
                     <BasaltFeatures />
                     <BasaltSEO />
                     <BasaltAbout />

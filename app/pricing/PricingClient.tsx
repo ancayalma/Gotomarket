@@ -19,7 +19,7 @@ export default function PricingClient() {
             {
                 title: "Starter",
                 price: "$0",
-                period: "/ user / month",
+                period: "/ seat / month",
                 description: "Essential tools for small teams and startups.",
                 features: [
                     "Basic CRM & Project Management",
@@ -27,7 +27,7 @@ export default function PricingClient() {
                     "Email Campaigns: 500 / month",
                     "1M AI Tokens / mo",
                     "Max 100 Accounts Staging",
-                    "2 User Licenses",
+                    "Up to 2 Free Seats",
                 ],
                 buttonText: "Start for Free",
                 buttonVariant: "outline" as const,
@@ -36,7 +36,7 @@ export default function PricingClient() {
             {
                 title: "Growth",
                 price: billingCycle === "monthly" ? "$29" : "$279",
-                period: billingCycle === "monthly" ? "/ user / month" : "/ user / year",
+                period: billingCycle === "monthly" ? "/ seat / month" : "/ seat / year",
                 description: "Standard CRM with enhanced lead enrichment.",
                 features: [
                     "LeadGen Credits: 1,000 / month",
@@ -44,7 +44,7 @@ export default function PricingClient() {
                     "5M AI Tokens / mo",
                     "Max 750 Accounts Staging",
                     "Workflow & Contract Vault",
-                    "5 User Licenses",
+                    "Billed Per Seat",
                 ],
                 buttonText: "Start Basic",
                 buttonVariant: "outline" as const,
@@ -53,7 +53,7 @@ export default function PricingClient() {
             {
                 title: "Scale",
                 price: billingCycle === "monthly" ? "$79" : "$759",
-                period: billingCycle === "monthly" ? "/ user / month" : "/ user / year",
+                period: billingCycle === "monthly" ? "/ seat / month" : "/ seat / year",
                 description: "Power user features for maximum growth.",
                 features: [
                     "LeadGen Credits: 5,000 / month",
@@ -61,7 +61,7 @@ export default function PricingClient() {
                     "20M AI Tokens / mo",
                     "Max 3,000 Accounts Staging",
                     "BasaltECHO AI Calling (50 min)",
-                    "10 User Licenses",
+                    "Billed Per Seat",
                 ],
                 buttonText: "Go Pro",
                 buttonVariant: "primary" as const,
@@ -464,8 +464,8 @@ function IndividualComparisonTable() {
             values: ["—", "Quotes & Contracts", "FlowState & Approvals", "Fully Custom"]
         },
         {
-            category: "User Licenses",
-            values: ["2", "5", "10", "Custom"]
+            category: "Seat Capacity",
+            values: ["Max 2 Seats", "Billed Per Seat", "Billed Per Seat", "Uncapped"]
         },
         {
             category: "Support Tier",

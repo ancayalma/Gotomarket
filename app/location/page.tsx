@@ -1,37 +1,16 @@
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import GeometricBackground from "@/app/components/GeometricBackground";
-import locations from "@/data/locations.json";
 import { ArrowRight, MapPin } from "lucide-react";
+import locations from "@/data/locations.json";
 import BasaltNavbar from "@/components/basaltcrm-landing/BasaltNavbar";
 import BasaltFooter from "@/components/basaltcrm-landing/BasaltFooter";
+import GeometricBackground from "@/app/components/GeometricBackground";
 
 export const metadata = {
-    title: "BasaltCRM Available Worldwide | Global AI CRM",
-    description: "BasaltCRM serves businesses in New York, London, Toronto, Sydney, Singapore, and major cities worldwide. Find your local CRM solution.",
-    openGraph: {
-        title: "BasaltCRM Available Worldwide",
-        description: "Local Support, Global Scale",
-        type: "website",
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/location`,
-        images: [
-            {
-                url: `/api/og?title=Global AI CRM&description=Available in Major Cities Worldwide&type=location&badge=Global Coverage`,
-                width: 1200,
-                height: 630,
-                alt: "BasaltCRM Available Worldwide",
-            },
-        ],
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: "BasaltCRM Available Worldwide",
-        description: "Local Support, Global Scale",
-        images: ["/api/og?title=Global AI CRM&description=Available in Major Cities Worldwide&type=location&badge=Global Coverage"],
-    },
+    title: "Global Markets & Locations | BasaltCRM",
+    description: "Discover how BasaltCRM empowers businesses across the globe with decentralized, compliant AI agents and localized infrastructure.",
 };
 
-export default function LocationsPage() {
+export default function LocationHubPage() {
     return (
         <div className="min-h-screen font-sans selection:bg-cyan-500/30 text-white">
             <div className="fixed inset-0 z-0">
@@ -40,41 +19,52 @@ export default function LocationsPage() {
 
             <div className="relative z-10 flex flex-col min-h-screen">
                 <BasaltNavbar />
-                <main className="flex-grow pt-20">
-                    <section className="relative w-full py-20 md:py-32 overflow-hidden">
-                        <div className="container px-4 md:px-6 relative z-10">
-                            <div className="text-center mb-16">
-                                <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/50 mb-6">
-                                    Available Worldwide
-                                </h1>
-                                <p className="text-gray-400 text-xl max-w-3xl mx-auto">
-                                    Join thousands of businesses using BasaltCRM to dominate their local markets with global-grade AI.
-                                </p>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                                {locations.map((location) => (
-                                    <Link key={location.slug} href={`/location/${location.slug}`}>
-                                        <Card className="border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-cyan-500/30 transition-colors duration-300 h-full group cursor-pointer">
-                                            <CardHeader>
-                                                <CardTitle className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <MapPin className="w-5 h-5 text-cyan-400" />
-                                                        <span>{location.name}</span>
-                                                    </div>
-                                                    <ArrowRight className="w-5 h-5 text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                </CardTitle>
-                                                <CardDescription className="text-base text-gray-400">
-                                                    {location.context}
-                                                </CardDescription>
-                                            </CardHeader>
-                                        </Card>
-                                    </Link>
-                                ))}
-                            </div>
+                <section className="relative w-full pt-32 pb-20 overflow-hidden">
+                    <div className="container px-4 md:px-6 relative z-10 text-center">
+                        <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-medium text-primary backdrop-blur-sm mb-6">
+                            <span>Global Markets</span>
                         </div>
-                    </section>
-                </main>
+                        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 mb-6 pb-4">
+                            Deploy Operations Anywhere
+                        </h1>
+                        <p className="mx-auto max-w-[800px] text-gray-400 md:text-xl leading-relaxed mb-8">
+                            From GDPR compliance in London to NYDFS in New York, BasaltCRM delivers localized compliance, currency tracking, and hyper-local contextual AI globally.
+                        </p>
+                    </div>
+                </section>
+
+                <section className="py-12 bg-black/40 border-t border-white/10">
+                    <div className="container px-4 md:px-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {locations.map((location) => (
+                                <Link key={location.slug} href={`/location/${location.slug}`} className="block group">
+                                    <div className="h-full p-6 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 hover:border-primary/50 transition-all duration-300 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full translate-x-8 -translate-y-8 group-hover:bg-primary/20 transition-colors" />
+                                        
+                                        <div className="flex items-start justify-between mb-4 relative z-10">
+                                            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                                <MapPin className="w-6 h-6" />
+                                            </div>
+                                            <ArrowRight className="w-5 h-5 text-gray-500 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                        </div>
+                                        
+                                        <h3 className="text-xl font-bold mb-1 text-white group-hover:text-primary transition-colors relative z-10">
+                                            {location.name}
+                                        </h3>
+                                        <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-widest relative z-10">
+                                            {location.country}
+                                        </p>
+                                        <p className="text-gray-400 text-sm line-clamp-2 relative z-10">
+                                            {location.description}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
                 <BasaltFooter />
             </div>
         </div>

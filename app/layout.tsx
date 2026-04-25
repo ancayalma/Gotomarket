@@ -51,11 +51,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(baseUrl),
     title: {
-      default: "BasaltCRM – AI Sales & Support Engine",
+      default: "BasaltCRM – The Autonomous AI CRM",
       template: `%s | BasaltCRM`,
     },
-    description: "Automated prospecting, social intelligence, and 24/7 AI agents that never sleep.",
-    keywords: ["CRM", "AI CRM", "Sales Automation", "Next.js CRM"],
+    description: "The autonomous AI sales engine. Automated prospecting, agentic lead generation, zero-latency voice agents, and $0/mo free tools.",
+    keywords: ["AI CRM", "Autonomous Lead Generation", "Sales AI", "Voice AI Agents", "Next.js CRM", "Business Operations", "Lead Finder"],
     authors: [{ name: "BasaltCRM Team" }],
     creator: "BasaltCRM",
     publisher: "BasaltCRM",
@@ -74,16 +74,27 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: "BasaltCRM – AI Sales & Support Engine",
-      description: "Automated prospecting, social intelligence, and 24/7 AI agents that never sleep.",
+      title: "BasaltCRM – The Autonomous AI CRM",
+      description: "Automated prospecting, zero-latency voice agents, and free business tools.",
       creator: "@BasaltHQ",
     },
     manifest: "/site.webmanifest",
     alternates: {
-      canonical: "/",
+      canonical: baseUrl,
     },
   };
 }
+
+const orgJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "BasaltCRM",
+  "url": "https://crm.basalthq.com",
+  "logo": "https://crm.basalthq.com/BasaltCRM.png",
+  "sameAs": [
+    "https://twitter.com/BasaltHQ"
+  ]
+};
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const session = await getServerSession(authOptions);
@@ -99,6 +110,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <link rel="stylesheet" href="https://use.typekit.net/eur3bvn.css" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <Script id="microsoft-clarity" strategy="afterInteractive">

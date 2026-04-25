@@ -137,6 +137,7 @@ model crm_Leads {
 
   // Outreach tracking fields
   outreach_status            OutreachStatus? @default(IDLE)
+  email_status               String?         @default("active")
   outreach_sent_at           DateTime?       @db.Date
   outreach_opened_at         DateTime?       @db.Date
   outreach_followup_sent_at  DateTime?       @db.Date
@@ -663,6 +664,7 @@ model crm_Contacts {
   description            String?
   email                  String?
   email_unsubscribed     Boolean?            @default(false)
+  email_status           String?             @default("active")
   personal_email         String?
   first_name             String?
   last_name              String

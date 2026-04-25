@@ -46,8 +46,8 @@ const PLANS_CONFIG = [
         features: [
             "5M AI Tokens / mo",
             "1,000 LeadGen Credits",
-            "5,000 Emails / mo",
-            "5 User Licenses"
+            "Max 750 Accounts",
+            "Billed Per Seat"
         ]
     },
     {
