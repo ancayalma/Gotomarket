@@ -1333,6 +1333,9 @@ model Users {
 
   // Gamification Event Logging for UI tracking
   user_metrics UserMetrics[]
+
+  // Thirdweb Authentication (Dual-Auth Bridge)
+  thirdweb_address String? @unique
 }
 
 model UserMetrics {

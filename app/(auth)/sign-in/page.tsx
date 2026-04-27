@@ -1,5 +1,5 @@
-import { LoginComponent } from "./components/LoginComponent";
 import { ThemedLogo } from "@/components/ThemedLogo";
+import SignInClientPage from "./SignInClientPage";
 
 const SignInPage = async () => {
   return (
@@ -14,7 +14,7 @@ const SignInPage = async () => {
         />
       </div>
       <div className="w-full max-w-md sm:max-w-lg">
-        <LoginComponent />
+        <SignInClientPage />
       </div>
     </div>
   );
