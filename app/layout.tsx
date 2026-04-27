@@ -14,6 +14,7 @@ import { AnalyticsTracker } from "@/components/analytics/AnalyticsTracker";
 import SuspensionCheck from "@/components/SuspensionCheck";
 import RecentActivityTracker from "@/components/RecentActivityTracker";
 import { SessionProvider } from "@/app/providers/SessionProvider";
+import { ThirdwebClientProvider } from "@/app/providers/ThirdwebProvider";
 import { SWRSessionProvider } from "@/components/providers/swr-session-provider";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -127,19 +128,21 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </Script>
         <TopLoader />
         <AnalyticsTracker />
-        <SessionProvider session={session}>
-          <SWRSessionProvider>
-            <ThemeProvider>
-              <RecentActivityTracker />
-              <LearnProvider>
-                {children}
-              </LearnProvider>
-              {/* Team Suspension Check */}
-              <SuspensionCheck />
-              <ToastProvider />
-            </ThemeProvider>
-          </SWRSessionProvider>
-        </SessionProvider>
+        <ThirdwebClientProvider>
+          <SessionProvider session={session}>
+            <SWRSessionProvider>
+              <ThemeProvider>
+                <RecentActivityTracker />
+                <LearnProvider>
+                  {children}
+                </LearnProvider>
+                {/* Team Suspension Check */}
+                <SuspensionCheck />
+                <ToastProvider />
+              </ThemeProvider>
+            </SWRSessionProvider>
+          </SessionProvider>
+        </ThirdwebClientProvider>
         <Toaster />
         <SonnerToaster />
       </body>

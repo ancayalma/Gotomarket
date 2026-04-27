@@ -545,6 +545,11 @@ export function LoginComponent() {
 
       {mfaStep === "login" && (
         <CardFooter className="flex flex-col gap-3 pt-2 pb-4">
+          <Link href="/sign-in" className="w-full">
+            <Button variant="ghost" className="w-full h-9 text-xs text-muted-foreground hover:text-primary transition-colors">
+              ← Back to new login experience
+            </Button>
+          </Link>
           <Link href="/register" className="w-full">
             <Button variant="outline" className="w-full h-10 text-sm font-medium border-white/10 hover:border-primary/50 hover:bg-primary/5 transition-colors">
               Need an account? <span className="text-primary ml-1 font-semibold">Register</span>
