@@ -131,25 +131,22 @@ async function bridgeNextAuthSession(res: NextResponse, user: any) {
       maxAge: 8 * 60 * 60,
     });
 
-    const isProduction = process.env.NODE_ENV === "production";
-
-    if (isProduction) {
-      res.cookies.set("__Secure-next-auth.session-token", sessionToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 8 * 60 * 60,
-      });
-    } else {
-      res.cookies.set("next-auth.session-token", sessionToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 8 * 60 * 60,
-      });
-    }
+    // Set BOTH cookies to prevent NextAuth NEXTAUTH_URL http/https inference mismatches on custom hosting (Plesk)
+    res.cookies.set("__Secure-next-auth.session-token", sessionToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 8 * 60 * 60,
+    });
+    
+    res.cookies.set("next-auth.session-token", sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 8 * 60 * 60,
+    });
   } catch (err) {
     console.error("[ThirdwebOnboarding] Failed to bridge NextAuth session:", err);
   }
