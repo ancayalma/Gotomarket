@@ -119,20 +119,26 @@ async function bridgeNextAuthSession(res: NextResponse, user: any) {
       return;
     }
 
-    const sessionToken = await encode({
-      token: {
-        email: user.email,
-        name: user.name,
-        picture: user.avatar,
-        id: user.id,
-        session_version: user.session_version,
-      },
+    const payload = {
+      email: user.email,
+      name: user.name,
+      picture: user.avatar,
+      id: user.id,
+      session_version: user.session_version,
+    };
+
+    // NextAuth derives the AES encryption key using an empty salt ("") by default.
+    // We generate the token and place it in both cookies to prevent NEXTAUTH_URL mismatches.
+    const secureToken = await encode({
+      token: payload,
       secret,
       maxAge: 8 * 60 * 60,
     });
 
+    const insecureToken = secureToken; // They use the exact same salt, so we can just reuse the token
+
     // Set BOTH cookies to prevent NextAuth NEXTAUTH_URL http/https inference mismatches on custom hosting (Plesk)
-    res.cookies.set("__Secure-next-auth.session-token", sessionToken, {
+    res.cookies.set("__Secure-next-auth.session-token", secureToken, {
       httpOnly: true,
       secure: true,
       sameSite: "lax",
@@ -140,7 +146,7 @@ async function bridgeNextAuthSession(res: NextResponse, user: any) {
       maxAge: 8 * 60 * 60,
     });
     
-    res.cookies.set("next-auth.session-token", sessionToken, {
+    res.cookies.set("next-auth.session-token", insecureToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
