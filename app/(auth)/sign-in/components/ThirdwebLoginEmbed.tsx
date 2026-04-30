@@ -5,37 +5,60 @@ import { ConnectEmbed, darkTheme, lightTheme, useProfiles, useActiveAccount } fr
 import { useTheme } from "next-themes";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 import { base } from "thirdweb/chains";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { KeyRound } from "lucide-react";
 
 export default function ThirdwebLoginEmbed() {
   const account = useActiveAccount();
   const { data: profiles } = useProfiles({ client });
-  const router = useRouter();
-  const [isBackendLoggedIn, setIsBackendLoggedIn] = useState(false);
-  const [onboardingError, setOnboardingError] = useState<string | null>(null);
+  const [bridging, setBridging] = useState(false);
+  const bridgeTriggered = useRef(false);
 
-  // Detect SSO status on mount
+  // When account becomes active, poll until the SIWE login (doLogin) has
+  // completed and the thirdweb_auth_token cookie is set, THEN redirect
+  // to the bridge endpoint via full navigation.
   useEffect(() => {
-    fetch("/api/auth/thirdweb/is-logged-in")
-      .then((res) => res.json())
-      .then((loggedIn) => {
-        if (loggedIn) setIsBackendLoggedIn(true);
-      })
-      .catch(console.error);
-  }, []);
+    if (!account) return;
+    if (bridgeTriggered.current) return;
 
-  // After backend login, auto-onboard with profile data then redirect
-  useEffect(() => {
-    if (!isBackendLoggedIn) return;
+    // Prevent infinite bridge loops using sessionStorage counter
+    const attempts = parseInt(sessionStorage.getItem("bridge_attempts") || "0", 10);
+    if (attempts >= 3) return;
 
-    const tryOnboard = async (currentProfiles: any[]) => {
-      let email: string | undefined = undefined;
-      let displayName: string | undefined = undefined;
+    let cancelled = false;
 
-      if (currentProfiles && currentProfiles.length > 0) {
+    const waitForLoginThenBridge = async () => {
+      // Poll is-logged-in until the SIWE cookie is confirmed
+      let loggedIn = false;
+      for (let i = 0; i < 20; i++) {
+        if (cancelled) return;
+        try {
+          const res = await fetch("/api/auth/thirdweb/is-logged-in");
+          loggedIn = await res.json();
+          if (loggedIn) break;
+        } catch { /* ignore */ }
+        await new Promise((r) => setTimeout(r, 500));
+      }
+
+      if (cancelled || bridgeTriggered.current || !loggedIn) return;
+      bridgeTriggered.current = true;
+      setBridging(true);
+
+      // Increment attempt counter
+      sessionStorage.setItem("bridge_attempts", String(attempts + 1));
+
+      // Wait for profiles to populate (social logins)
+      if (!profiles || profiles.length === 0) {
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+
+      // Extract email/name from Thirdweb profiles
+      const currentProfiles = profiles || [];
+      let email: string | undefined;
+      let displayName: string | undefined;
+
+      if (currentProfiles.length > 0) {
         const emailProfile =
           currentProfiles.find((p: any) => p.details?.email && p.details?.name) ||
           currentProfiles.find((p: any) => p.details?.email);
@@ -47,47 +70,16 @@ export default function ThirdwebLoginEmbed() {
         }
       }
 
-      try {
-        const res = await fetch("/api/auth/thirdweb/onboarding", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, displayName }),
-        });
-        
-        const data = await res.json();
+      const params = new URLSearchParams();
+      if (email) params.set("email", email);
+      if (displayName) params.set("name", displayName);
 
-        if (data.needsRegistration) {
-          // New user with PENDING status — send to register
-          router.push("/register");
-          return;
-        }
-
-        if (!res.ok) {
-          setOnboardingError(data.error || "Onboarding failed. No email detected.");
-          return;
-        }
-      } catch (err) {
-        console.error("[ThirdwebLogin] Onboarding error:", err);
-      }
-      
-      // Redirect to dashboard (either bridged existing session, or failed but we proceed to NextAuth guard)
-      router.push("/dashboard");
+      window.location.href = `/api/auth/thirdweb/bridge?${params.toString()}`;
     };
 
-    // If profiles exist and have data, onboard immediately
-    if (profiles && profiles.length > 0) {
-      tryOnboard(profiles);
-      return;
-    }
-
-    // If profiles are empty, wait up to 3 seconds for Thirdweb to fetch them
-    // from the In-App Wallet social provider before falling back to external wallet behavior.
-    const timer = setTimeout(() => {
-      tryOnboard(profiles || []);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [isBackendLoggedIn, profiles, router]);
+    waitForLoginThenBridge();
+    return () => { cancelled = true; };
+  }, [account, profiles]);
 
   // Remove Thirdweb branding via DOM mutation observer
   useEffect(() => {
@@ -124,31 +116,14 @@ export default function ThirdwebLoginEmbed() {
     inAppWallet({
       auth: {
         options: [
-          "google",
-          "apple",
-          "discord",
-          "telegram",
-          "farcaster",
-          "email",
-          "x",
-          "passkey",
-          "phone",
-          "twitch",
-          "steam",
-          "github",
-          "line",
-          "epic",
-          "tiktok",
-          "facebook",
-          "coinbase",
+          "google", "apple", "discord", "telegram", "farcaster", "email",
+          "x", "passkey", "phone", "twitch", "steam", "github",
+          "line", "epic", "tiktok", "facebook", "coinbase",
         ],
       },
       executionMode: {
         mode: "EIP4337",
-        smartAccount: {
-          chain: base,
-          sponsorGas: true,
-        },
+        smartAccount: { chain: base, sponsorGas: true },
       },
     }),
     createWallet("io.metamask"),
@@ -160,8 +135,17 @@ export default function ThirdwebLoginEmbed() {
 
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
-
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://crm.basalthq.com";
+
+  // Show bridging state
+  if (bridging) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-12">
+        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+        <p className="text-sm text-muted-foreground">Signing you in...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center w-full">
@@ -181,7 +165,8 @@ export default function ThirdwebLoginEmbed() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(params),
               });
-              setIsBackendLoggedIn(true);
+              // Don't set any state here — let the SDK finish its flow.
+              // The useEffect watching `account` handles the bridge redirect.
             },
             getLoginPayload: async ({ address }) => {
               const res = await fetch(
@@ -239,12 +224,6 @@ export default function ThirdwebLoginEmbed() {
           })}
         />
       </div>
-
-      {onboardingError && (
-        <p className="mt-3 p-3 bg-red-900/10 border border-red-700/20 rounded-lg text-red-400 text-sm text-center max-w-md">
-          {onboardingError}
-        </p>
-      )}
 
       {/* Legacy credentials link */}
       <Link

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismadb } from "@/lib/prisma";
 import { thirdwebAuth } from "@/lib/thirdweb-auth";
-import { encode } from "next-auth/jwt";
 
 const COOKIE_DOMAIN = process.env.NODE_ENV === "production" ? ".basalthq.com" : undefined;
 
@@ -98,10 +97,8 @@ export async function POST(
         ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
       });
 
-      // If we already have a linked user, also issue a NextAuth session cookie
-      if (existingByAddress) {
-        await bridgeNextAuthSession(res, existingByAddress);
-      }
+      // NextAuth session cookie is set via the /bridge endpoint (full navigation)
+      // to avoid browser silently dropping Set-Cookie headers from fetch() responses.
 
       return res;
     } catch (e: any) {
@@ -142,51 +139,4 @@ export async function POST(
   }
 
   return NextResponse.json({ error: "Not found" }, { status: 404 });
-}
-
-/**
- * Bridge: Issue a NextAuth-compatible JWT session cookie so that
- * all 400+ existing getServerSession() calls continue to work.
- */
-async function bridgeNextAuthSession(res: NextResponse, user: any) {
-  try {
-    const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
-    if (!secret) {
-      console.error("[ThirdwebAuth] Cannot bridge session — JWT_SECRET not set");
-      return;
-    }
-
-    const token = await encode({
-      token: {
-        email: user.email,
-        name: user.name,
-        picture: user.avatar,
-        id: user.id,
-        session_version: user.session_version,
-      },
-      secret,
-      maxAge: 8 * 60 * 60, // Match the 8-hour SOC2 session cap
-    });
-
-    // Set BOTH cookies to prevent NextAuth NEXTAUTH_URL http/https inference mismatches on custom hosting (Plesk)
-    res.cookies.set("__Secure-next-auth.session-token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 8 * 60 * 60,
-    });
-    
-    res.cookies.set("next-auth.session-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 8 * 60 * 60,
-    });
-
-    console.log(`[ThirdwebAuth] Bridged NextAuth session for ${user.email}`);
-  } catch (err) {
-    console.error("[ThirdwebAuth] Failed to bridge NextAuth session:", err);
-  }
 }
