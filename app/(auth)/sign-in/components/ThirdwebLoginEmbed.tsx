@@ -29,18 +29,16 @@ export default function ThirdwebLoginEmbed() {
 
   // After backend login, auto-onboard with profile data then redirect
   useEffect(() => {
-    // If backend is logged in, we try to onboard. 
-    // We don't strictly wait for `account` if we are doing SSO, but if we have profiles we use them.
     if (!isBackendLoggedIn) return;
 
-    const tryOnboard = async () => {
+    const tryOnboard = async (currentProfiles: any[]) => {
       let email: string | undefined = undefined;
       let displayName: string | undefined = undefined;
 
-      if (profiles && profiles.length > 0) {
+      if (currentProfiles && currentProfiles.length > 0) {
         const emailProfile =
-          profiles.find((p: any) => p.details?.email && p.details?.name) ||
-          profiles.find((p: any) => p.details?.email);
+          currentProfiles.find((p: any) => p.details?.email && p.details?.name) ||
+          currentProfiles.find((p: any) => p.details?.email);
 
         if (emailProfile?.details) {
           const details = emailProfile.details as any;
@@ -65,7 +63,7 @@ export default function ThirdwebLoginEmbed() {
         }
 
         if (!res.ok) {
-          setOnboardingError(data.error || "Onboarding failed");
+          setOnboardingError(data.error || "Onboarding failed. No email detected.");
           return;
         }
       } catch (err) {
@@ -76,15 +74,19 @@ export default function ThirdwebLoginEmbed() {
       router.push("/dashboard");
     };
 
-    if (profiles !== undefined) {
-      tryOnboard();
-    } else {
-      // For external wallets, profiles may never load. We wait a bit then hit the onboarding route without email to bridge session if possible.
-      const timer = setTimeout(() => {
-        tryOnboard();
-      }, 1500);
-      return () => clearTimeout(timer);
+    // If profiles exist and have data, onboard immediately
+    if (profiles && profiles.length > 0) {
+      tryOnboard(profiles);
+      return;
     }
+
+    // If profiles are empty, wait up to 3 seconds for Thirdweb to fetch them
+    // from the In-App Wallet social provider before falling back to external wallet behavior.
+    const timer = setTimeout(() => {
+      tryOnboard(profiles || []);
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, [isBackendLoggedIn, profiles, router]);
 
   // Remove Thirdweb branding via DOM mutation observer
