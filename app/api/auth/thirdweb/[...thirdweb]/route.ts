@@ -5,6 +5,7 @@ import { encode } from "next-auth/jwt";
 
 const COOKIE_DOMAIN = process.env.NODE_ENV === "production" ? ".basalthq.com" : undefined;
 
+/**
  * Thirdweb Auth catch-all handler.
  * 
  * GET  /api/auth/thirdweb/payload?address=...&chainId=...

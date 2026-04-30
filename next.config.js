@@ -1,11 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: [
+    "puppeteer-core", 
+    "puppeteer-extra", 
+    "puppeteer-extra-plugin-stealth", 
+    "puppeteer", 
+    "@sparticuz/chromium"
+  ],
   experimental: {
-    serverComponentsExternalPackages: ["puppeteer-core", "puppeteer-extra", "puppeteer-extra-plugin-stealth"],
     serverActions: {
       bodySizeLimit: '4mb',
     },
-    routeHandlerBodySizeLimit: '4mb',
   },
   // TypeScript errors will now fail the build (safety net removed)
   // typescript: { ignoreBuildErrors: true },
