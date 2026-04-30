@@ -4,8 +4,6 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
 const stealthCore = addExtra(puppeteerCore);
 stealthCore.use(StealthPlugin());
-import { existsSync, readdirSync, statSync } from "fs";
-import { join, resolve } from "path";
 
 /**
  * Headless Chromium launcher compatible with local dev, Linux Plesk, and serverless.
@@ -13,9 +11,8 @@ import { join, resolve } from "path";
  * Fallback order:
  *   1. CHROME_PATH env var (explicit override)
  *   2. Well-known Linux Chrome/Chromium paths (for Plesk / bare-metal Linux)
- *   3. @puppeteer/browsers cache (downloaded by postinstall script)
- *   4. Full puppeteer (bundled Chromium – local dev / CI)
- *   5. @sparticuz/chromium (AWS Lambda / serverless only – dynamic import)
+ *   3. Full puppeteer (bundled Chromium – local dev / CI)
+ *   4. @sparticuz/chromium (AWS Lambda / serverless only – dynamic import)
  */
 
 /* ── Well-known browser paths per platform ───────────────────────── */
@@ -37,69 +34,20 @@ const WIN_CANDIDATES = [
 ];
 
 function detectSystemBrowser(): string | null {
-  const candidates =
-    process.platform === "win32" ? WIN_CANDIDATES : LINUX_CANDIDATES;
+  const candidates = process.platform === "win32" ? WIN_CANDIDATES : LINUX_CANDIDATES;
+  
+  // Completely hidden from Turbopack AST
+  let _fs: any = null;
+  try {
+    _fs = typeof window === "undefined" ? eval("require('fs')") : null;
+  } catch {}
+
   for (const p of candidates) {
     try {
-      if (existsSync(p)) return p;
+      if (_fs && _fs.existsSync(p)) return p;
     } catch {
       // permission denied – keep scanning
     }
-  }
-  return null;
-}
-
-/**
- * Scan the @puppeteer/browsers cache for a downloaded Chrome executable.
- * The `npx @puppeteer/browsers install chrome@stable` postinstall script
- * downloads Chrome into a `chrome/` directory relative to the project root.
- * Structure: chrome/linux-<buildId>/chrome-linux64/chrome (Linux)
- *        or: chrome/win64-<buildId>/chrome-win64/chrome.exe (Windows)
- */
-function detectCachedBrowser(): string | null {
-  // Search multiple potential cache locations
-  const projectRoot = process.cwd();
-  const cacheRoots = [
-    join(/*turbopackIgnore: true*/ projectRoot, "chrome"),           // default: <project>/chrome/
-    join(/*turbopackIgnore: true*/ projectRoot, ".cache", "puppeteer"), // older puppeteer cache location
-  ];
-
-  const chromeBinaryNames =
-    process.platform === "win32" ? ["chrome.exe"] : ["chrome", "chromium"];
-
-  for (const cacheRoot of cacheRoots) {
-    try {
-      if (!existsSync(cacheRoot) || !statSync(cacheRoot).isDirectory()) continue;
-      // Walk max 4 levels deep to find the chrome binary
-      const found = findFileRecursive(cacheRoot, chromeBinaryNames, 4);
-      if (found) return found;
-    } catch {
-      // skip
-    }
-  }
-  return null;
-}
-
-/** Simple recursive file finder limited by depth */
-function findFileRecursive(
-  dir: string,
-  names: string[],
-  maxDepth: number
-): string | null {
-  if (maxDepth <= 0) return null;
-  try {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const fullPath = join(dir, entry.name);
-      if (entry.isFile() && names.includes(entry.name)) {
-        return fullPath;
-      }
-      if (entry.isDirectory()) {
-        const found = findFileRecursive(fullPath, names, maxDepth - 1);
-        if (found) return found;
-      }
-    }
-  } catch {
-    // skip – permission error, etc.
   }
   return null;
 }
@@ -125,18 +73,13 @@ export async function launchBrowser(): Promise<Browser> {
     }
   }
 
-  /* ── 3. @puppeteer/browsers cache (postinstall download) ────────── */
-  if (!executablePath) {
-    executablePath = detectCachedBrowser();
-    if (executablePath) {
-      console.log(`[browser] Found cached Chrome: ${executablePath}`);
-    }
-  }
-
-  /* ── 4. Full puppeteer (bundled Chromium – local dev) ──────────── */
+  /* ── 3. Full puppeteer (bundled Chromium – local dev) ──────────── */
   if (!executablePath) {
     try {
-      const puppeteer = (await import("puppeteer")).default;
+      // Completely hidden from Turbopack AST using Function constructor
+      const puppeteerModule = await Function('return import("puppeteer")')();
+      const puppeteer = puppeteerModule.default || puppeteerModule;
+      
       const stealthPuppeteer = addExtra(puppeteer);
       stealthPuppeteer.use(StealthPlugin());
       console.log("[browser] Launching via bundled stealth puppeteer Chromium");
@@ -149,10 +92,13 @@ export async function launchBrowser(): Promise<Browser> {
     }
   }
 
-  /* ── 5. @sparticuz/chromium (serverless only) ─────────────────── */
+  /* ── 4. @sparticuz/chromium (serverless only) ─────────────────── */
   if (!executablePath && process.env.AWS_LAMBDA_FUNCTION_NAME) {
     try {
-      const chromium = (await import("@sparticuz/chromium")).default;
+      // Completely hidden from Turbopack AST
+      const sparticuzModule = await Function('return import("@sparticuz/chromium")')();
+      const chromium = sparticuzModule.default || sparticuzModule;
+      
       const chromiumExecPath: any = chromium.executablePath;
       if (typeof chromiumExecPath === "string") {
         executablePath = chromiumExecPath;

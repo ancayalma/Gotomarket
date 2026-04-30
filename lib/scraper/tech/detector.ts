@@ -54,13 +54,17 @@ let signatureCache: Record<string, string[]> | null = null;
 function loadSignatures(): Record<string, string[]> {
   if (signatureCache) return signatureCache;
   const configured = (ScraperConfig?.tech?.signaturesPath || "").trim();
+  
+  // Use explicit string concatenation to avoid Next.js NFT from tracing the entire project root
+  const projectRoot = process.cwd();
   const candidatePath = configured
-    ? path.isAbsolute(configured)
-      ? configured
-      : path.resolve(process.cwd(), configured)
-    : path.resolve(process.cwd(), "basaltcrm-app/lib/scraper/tech/signatures.json");
+    ? (configured.startsWith("/") || configured.match(/^[a-zA-Z]:\\/) ? configured : `${projectRoot}/${configured}`)
+    : `${projectRoot}/basaltcrm-app/lib/scraper/tech/signatures.json`;
+    
   try {
-    const raw = fs.readFileSync(candidatePath, "utf-8");
+    // Hide fs from static analysis
+    const _fs = typeof window === 'undefined' ? eval('require')('fs') : fs;
+    const raw = _fs.readFileSync(candidatePath, "utf-8");
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === "object") {
       signatureCache = parsed as Record<string, string[]>;
