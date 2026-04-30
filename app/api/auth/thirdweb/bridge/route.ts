@@ -13,15 +13,20 @@ import { encode } from "next-auth/jwt";
  * reliably.
  */
 export async function GET(req: NextRequest) {
+  // Derive the origin from the actual browser request, not env vars
+  const host = req.headers.get("host") || "localhost:3002";
+  const proto = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const origin = `${proto}://${host}`;
+
   try {
     const token = req.cookies.get("thirdweb_auth_token")?.value;
     if (!token) {
-      return NextResponse.redirect(new URL("/sign-in?error=no_token", req.url));
+      return NextResponse.redirect(new URL("/sign-in?error=no_token", origin));
     }
 
     const authResult = await thirdwebAuth.verifyJWT({ jwt: token });
     if (!authResult.valid || !authResult.parsedJWT.sub) {
-      return NextResponse.redirect(new URL("/sign-in?error=invalid_token", req.url));
+      return NextResponse.redirect(new URL("/sign-in?error=invalid_token", origin));
     }
 
     const address = authResult.parsedJWT.sub;
@@ -74,7 +79,7 @@ export async function GET(req: NextRequest) {
       console.log(`[ThirdwebBridge] Created ${email} (${user.id}) status=${userStatus}`);
 
       if (userStatus === "PENDING") {
-        return NextResponse.redirect(new URL("/register", req.url));
+        return NextResponse.redirect(new URL("/register", origin));
       }
     }
 
@@ -87,7 +92,7 @@ export async function GET(req: NextRequest) {
     const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
     if (!secret) {
       console.error("[ThirdwebBridge] JWT_SECRET not set");
-      return NextResponse.redirect(new URL("/sign-in?error=config", req.url));
+      return NextResponse.redirect(new URL("/sign-in?error=config", origin));
     }
 
     // Minimal JWT payload — only what NextAuth's session callback needs.
@@ -102,7 +107,7 @@ export async function GET(req: NextRequest) {
       maxAge: 8 * 60 * 60,
     });
 
-    const redirectUrl = new URL("/dashboard", req.url);
+    const redirectUrl = new URL("/dashboard", origin);
     const res = NextResponse.redirect(redirectUrl);
 
     const isSecure =
@@ -127,6 +132,6 @@ export async function GET(req: NextRequest) {
     return res;
   } catch (error: any) {
     console.error("[ThirdwebBridge] Error:", error);
-    return NextResponse.redirect(new URL("/sign-in?error=bridge_failed", req.url));
+    return NextResponse.redirect(new URL("/sign-in?error=bridge_failed", origin));
   }
 }
