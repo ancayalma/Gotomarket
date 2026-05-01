@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
 
     // ── No user found and no email to create one ──
     if (!user) {
-      return NextResponse.redirect(new URL("/sign-in?error=no_account", req.url));
+      return NextResponse.redirect(new URL("/sign-in?error=no_account", origin));
     }
 
     // ── Bridge NextAuth session ──
