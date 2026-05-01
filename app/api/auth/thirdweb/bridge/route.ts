@@ -131,7 +131,16 @@ export async function GET(req: NextRequest) {
 
     return res;
   } catch (error: any) {
-    console.error("[ThirdwebBridge] Error:", error);
-    return NextResponse.redirect(new URL("/sign-in?error=bridge_failed", origin));
+    console.error("[ThirdwebBridge] Error:", error?.message, error?.stack);
+    // Return JSON with error details so we can diagnose production issues
+    return NextResponse.json(
+      { 
+        error: "Bridge failed", 
+        message: error?.message,
+        // Only show stack in non-production for security
+        ...(process.env.NODE_ENV !== "production" ? { stack: error?.stack } : {}),
+      },
+      { status: 500 }
+    );
   }
 }
