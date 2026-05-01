@@ -1,19 +1,35 @@
 "use client";
 
 import { client } from "@/lib/thirdweb";
-import { ConnectEmbed, darkTheme, lightTheme, useProfiles, useActiveAccount } from "thirdweb/react";
+import { ConnectEmbed, darkTheme, lightTheme, useProfiles, useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 import { useTheme } from "next-themes";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 import { base } from "thirdweb/chains";
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { KeyRound } from "lucide-react";
 
 export default function ThirdwebLoginEmbed() {
   const account = useActiveAccount();
+  const wallet = useActiveWallet();
   const { data: profiles } = useProfiles({ client });
+  const { disconnect } = useDisconnect();
+  const searchParams = useSearchParams();
   const [bridging, setBridging] = useState(false);
   const bridgeTriggered = useRef(false);
+
+  // On auto-logout (?loggedOut=true), disconnect wallet and clear stale state
+  useEffect(() => {
+    if (searchParams.get("loggedOut") === "true" && wallet) {
+      disconnect(wallet);
+      sessionStorage.removeItem("bridge_attempts");
+      bridgeTriggered.current = false;
+      setBridging(false);
+      // Also clear the thirdweb_auth_token cookie via logout endpoint
+      fetch("/api/auth/thirdweb/logout", { method: "POST" }).catch(() => {});
+    }
+  }, [searchParams, account, disconnect]);
 
   // When account becomes active, poll until the SIWE login (doLogin) has
   // completed and the thirdweb_auth_token cookie is set, THEN redirect
@@ -41,7 +57,16 @@ export default function ThirdwebLoginEmbed() {
         await new Promise((r) => setTimeout(r, 500));
       }
 
-      if (cancelled || bridgeTriggered.current || !loggedIn) return;
+      if (cancelled || bridgeTriggered.current) return;
+      
+      if (!loggedIn) {
+        // SIWE login didn't complete — wallet is connected but not authenticated.
+        // Disconnect so the ConnectEmbed shows the login form again.
+        if (wallet) disconnect(wallet);
+        sessionStorage.removeItem("bridge_attempts");
+        return;
+      }
+      
       bridgeTriggered.current = true;
       setBridging(true);
 
