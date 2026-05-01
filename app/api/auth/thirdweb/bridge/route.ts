@@ -13,24 +13,22 @@ import { encode } from "next-auth/jwt";
  * reliably.
  */
 
-/** Build a redirect URL that works behind reverse proxies (Plesk/nginx). */
-function buildRedirect(req: NextRequest, path: string): URL {
-  const dest = req.nextUrl.clone();
-  dest.pathname = path;
-  dest.search = "";
-  return dest;
+/** Build a redirect URL using NEXTAUTH_URL as the canonical origin. */
+function buildRedirect(path: string): string {
+  const base = process.env.NEXTAUTH_URL || "http://localhost:3002";
+  return `${base.replace(/\/$/, "")}${path}`;
 }
 
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get("thirdweb_auth_token")?.value;
     if (!token) {
-      return NextResponse.redirect(buildRedirect(req, "/sign-in"));
+      return NextResponse.redirect(buildRedirect("/sign-in"));
     }
 
     const authResult = await thirdwebAuth.verifyJWT({ jwt: token });
     if (!authResult.valid || !authResult.parsedJWT.sub) {
-      return NextResponse.redirect(buildRedirect(req, "/sign-in"));
+      return NextResponse.redirect(buildRedirect("/sign-in"));
     }
 
     const address = authResult.parsedJWT.sub;
@@ -82,20 +80,20 @@ export async function GET(req: NextRequest) {
       console.log(`[ThirdwebBridge] Created ${email} (${user.id}) status=${userStatus}`);
 
       if (userStatus === "PENDING") {
-        return NextResponse.redirect(buildRedirect(req, "/register"));
+        return NextResponse.redirect(buildRedirect("/register"));
       }
     }
 
     // ── No user found and no email to create one ──
     if (!user) {
-      return NextResponse.redirect(buildRedirect(req, "/sign-in"));
+      return NextResponse.redirect(buildRedirect("/sign-in"));
     }
 
     // ── Bridge NextAuth session ──
     const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
     if (!secret) {
       console.error("[ThirdwebBridge] JWT_SECRET not set");
-      return NextResponse.redirect(buildRedirect(req, "/sign-in"));
+      return NextResponse.redirect(buildRedirect("/sign-in"));
     }
 
     // Minimal JWT payload — only what NextAuth's session callback needs.
@@ -108,7 +106,7 @@ export async function GET(req: NextRequest) {
       maxAge: 8 * 60 * 60,
     });
 
-    const res = NextResponse.redirect(buildRedirect(req, "/dashboard"));
+    const res = NextResponse.redirect(buildRedirect("/dashboard"));
 
     const isSecure =
       process.env.NEXTAUTH_URL?.startsWith("https://") || !!process.env.VERCEL;
