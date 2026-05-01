@@ -12,27 +12,32 @@ import { encode } from "next-auth/jwt";
  * a fetch), the Set-Cookie headers are processed by the browser
  * reliably.
  */
-export async function GET(req: NextRequest) {
-  // Use the request URL as the base for all redirects
-  const origin = new URL(req.url).origin;
 
+/** Build a redirect URL that works behind reverse proxies (Plesk/nginx). */
+function buildRedirect(req: NextRequest, path: string): URL {
+  const dest = req.nextUrl.clone();
+  dest.pathname = path;
+  dest.search = "";
+  return dest;
+}
+
+export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get("thirdweb_auth_token")?.value;
     if (!token) {
-      return NextResponse.redirect(new URL("/sign-in?error=no_token", origin));
+      return NextResponse.redirect(buildRedirect(req, "/sign-in"));
     }
 
     const authResult = await thirdwebAuth.verifyJWT({ jwt: token });
     if (!authResult.valid || !authResult.parsedJWT.sub) {
-      return NextResponse.redirect(new URL("/sign-in?error=invalid_token", origin));
+      return NextResponse.redirect(buildRedirect(req, "/sign-in"));
     }
 
     const address = authResult.parsedJWT.sub;
 
     // Extract optional profile data from query params
-    const url = new URL(req.url);
-    const email = url.searchParams.get("email")?.trim().toLowerCase() || undefined;
-    const displayName = url.searchParams.get("name") || undefined;
+    const email = req.nextUrl.searchParams.get("email")?.trim().toLowerCase() || undefined;
+    const displayName = req.nextUrl.searchParams.get("name") || undefined;
 
     // ── Case 1: Already linked by address ──
     let user = await prismadb.users.findFirst({
@@ -77,25 +82,23 @@ export async function GET(req: NextRequest) {
       console.log(`[ThirdwebBridge] Created ${email} (${user.id}) status=${userStatus}`);
 
       if (userStatus === "PENDING") {
-        return NextResponse.redirect(new URL("/register", origin));
+        return NextResponse.redirect(buildRedirect(req, "/register"));
       }
     }
 
     // ── No user found and no email to create one ──
     if (!user) {
-      return NextResponse.redirect(new URL("/sign-in?error=no_account", origin));
+      return NextResponse.redirect(buildRedirect(req, "/sign-in"));
     }
 
     // ── Bridge NextAuth session ──
     const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
     if (!secret) {
       console.error("[ThirdwebBridge] JWT_SECRET not set");
-      return NextResponse.redirect(new URL("/sign-in?error=config", origin));
+      return NextResponse.redirect(buildRedirect(req, "/sign-in"));
     }
 
     // Minimal JWT payload — only what NextAuth's session callback needs.
-    // The session callback in auth.ts looks up the full user by email anyway.
-    // Keeping this small avoids ERR_RESPONSE_HEADERS_TOO_BIG.
     const sessionToken = await encode({
       token: {
         email: user.email,
@@ -105,8 +108,7 @@ export async function GET(req: NextRequest) {
       maxAge: 8 * 60 * 60,
     });
 
-    const redirectUrl = new URL("/dashboard", origin);
-    const res = NextResponse.redirect(redirectUrl);
+    const res = NextResponse.redirect(buildRedirect(req, "/dashboard"));
 
     const isSecure =
       process.env.NEXTAUTH_URL?.startsWith("https://") || !!process.env.VERCEL;
@@ -130,14 +132,8 @@ export async function GET(req: NextRequest) {
     return res;
   } catch (error: any) {
     console.error("[ThirdwebBridge] Error:", error?.message, error?.stack);
-    // Return JSON with error details so we can diagnose production issues
     return NextResponse.json(
-      { 
-        error: "Bridge failed", 
-        message: error?.message,
-        // Only show stack in non-production for security
-        ...(process.env.NODE_ENV !== "production" ? { stack: error?.stack } : {}),
-      },
+      { error: "Bridge failed", message: error?.message },
       { status: 500 }
     );
   }
