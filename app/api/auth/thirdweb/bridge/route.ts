@@ -13,10 +13,8 @@ import { encode } from "next-auth/jwt";
  * reliably.
  */
 export async function GET(req: NextRequest) {
-  // Derive the origin from the actual browser request, not env vars
-  const host = req.headers.get("host") || "localhost:3002";
-  const proto = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
-  const origin = `${proto}://${host}`;
+  // Use the request URL as the base for all redirects
+  const origin = new URL(req.url).origin;
 
   try {
     const token = req.cookies.get("thirdweb_auth_token")?.value;
