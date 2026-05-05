@@ -71,7 +71,18 @@ export async function POST(req: Request) {
     });
 
     if (checkexisting) {
-      return new NextResponse("User already exist", { status: 409 });
+      // If the user was pre-created by Thirdweb (has wallet, no team, no password),
+      // allow them to complete registration by upgrading the existing record.
+      const isThirdwebProvisioned = checkexisting.thirdweb_address
+        && !checkexisting.team_id
+        && !checkexisting.password;
+
+      if (!isThirdwebProvisioned) {
+        return new NextResponse("User already exist", { status: 409 });
+      }
+
+      // Thirdweb user completing registration — update in place
+      systemLogger.info(`[Register] Thirdweb-provisioned user ${email} completing registration`);
     }
 
     // Check if team slug exists (simple slugify)
@@ -168,21 +179,41 @@ export async function POST(req: Request) {
       }
     }
 
-    const user = await (prismadb.users as any).create({
-      data: {
-        name,
-        username,
-        email,
-        avatar: avatarUrl,
-        userLanguage: "en",
-        password: hashedPassword,
-        userStatus: initialStatus === "PENDING" ? "PENDING" : "ACTIVE",
-        is_admin: false,
-        is_account_admin: true,
-        termsAccepted: true,
-        termsAcceptedAt: new Date(),
-      },
-    });
+    let user;
+    if (checkexisting?.thirdweb_address && !checkexisting.team_id && !checkexisting.password) {
+      // Upgrade Thirdweb-provisioned user
+      user = await prismadb.users.update({
+        where: { id: checkexisting.id },
+        data: {
+          name,
+          username,
+          avatar: avatarUrl || checkexisting.avatar,
+          userLanguage: "en",
+          password: hashedPassword,
+          userStatus: initialStatus === "PENDING" ? "PENDING" : "ACTIVE",
+          is_account_admin: true,
+          termsAccepted: true,
+          termsAcceptedAt: new Date(),
+        },
+      });
+    } else {
+      // Brand new user
+      user = await (prismadb.users as any).create({
+        data: {
+          name,
+          username,
+          email,
+          avatar: avatarUrl,
+          userLanguage: "en",
+          password: hashedPassword,
+          userStatus: initialStatus === "PENDING" ? "PENDING" : "ACTIVE",
+          is_admin: false,
+          is_account_admin: true,
+          termsAccepted: true,
+          termsAcceptedAt: new Date(),
+        },
+      });
+    }
 
     // Create Team
     const team = await prismadb.team.create({
