@@ -1335,7 +1335,9 @@ model Users {
   user_metrics UserMetrics[]
 
   // Thirdweb Authentication (Dual-Auth Bridge)
-  thirdweb_address String? @unique
+  thirdweb_address String?
+
+  @@index([thirdweb_address])
 }
 
 model UserMetrics {

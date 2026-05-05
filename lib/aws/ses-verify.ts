@@ -68,20 +68,48 @@ export async function verifyEmailIdentity(email: string, creds?: SESCredentials,
  * Checks the current verification status of an email identity.
  */
 export async function getIdentityVerificationStatus(email: string, creds?: SESCredentials): Promise<VerificationStatus> {
-    const client = getClient(creds);
+    const sesClient = getClient(creds);
     try {
         const command = new GetEmailIdentityCommand({
             EmailIdentity: email,
         });
-        const response = await client.send(command);
+        const response = await sesClient.send(command);
 
         // SESv2 returns VerifiedForSendingStatus: boolean
         if (response.VerifiedForSendingStatus) {
             return "SUCCESS";
         }
+
+        // Fallback: check if the parent domain is verified (e.g. basalthq.com covers kpatel@basalthq.com)
+        const domain = email.split("@")[1];
+        if (domain) {
+            try {
+                const domainCmd = new GetEmailIdentityCommand({ EmailIdentity: domain });
+                const domainRes = await sesClient.send(domainCmd);
+                if (domainRes.VerifiedForSendingStatus) {
+                    return "SUCCESS";
+                }
+            } catch {
+                // Domain identity doesn't exist — that's fine, email-level verification required
+            }
+        }
+
         return "PENDING";
     } catch (error: any) {
         if (error.name === "NotFoundException") {
+            // Email identity not found — check if domain covers it
+            const domain = email.split("@")[1];
+            if (domain) {
+                try {
+                    const domainCmd = new GetEmailIdentityCommand({ EmailIdentity: domain });
+                    const domainRes = await getClient(creds).send(domainCmd);
+                    if (domainRes.VerifiedForSendingStatus) {
+                        return "SUCCESS";
+                    }
+                } catch {
+                    // Domain not found either
+                }
+            }
             return "NOT_STARTED";
         }
         console.error("[SES_VERIFY_CHECK]", error);

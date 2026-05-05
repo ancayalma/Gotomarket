@@ -102,8 +102,10 @@ export async function POST(req: Request) {
         return new NextResponse("Error adding existing user to team", { status: 500 });
       }
     } else {
+      // New user creation
+      let user;
       try {
-        const user = await prismadb.users.create({
+        user = await prismadb.users.create({
           data: {
             name,
             username: "",
@@ -120,11 +122,20 @@ export async function POST(req: Request) {
             team_role: role, // Default to MEMBER or provided role
           },
         });
+      } catch (createErr: any) {
+        systemLogger.error("[INVITE_USER] Failed to create user:", createErr?.message || createErr);
+        return NextResponse.json(
+          { error: `Failed to create user: ${createErr?.message || "Unknown database error"}` },
+          { status: 500 }
+        );
+      }
 
-        if (!user) {
-          return new NextResponse("User not created", { status: 500 });
-        }
+      if (!user) {
+        return new NextResponse("User not created", { status: 500 });
+      }
 
+      // Send invitation email (non-blocking — user is already created)
+      try {
         const emailHtml = await render(
           InviteUserEmail({
             invitedByUsername: session.user?.name! || "admin",
@@ -144,27 +155,27 @@ export async function POST(req: Request) {
         });
 
         console.log("Invitation email sent successfully via Unified Relay");
-
-        // Auto-trigger SES email verification for the new user's email
-        try {
-            await verifyEmailIdentity(user.email);
-            console.log(`[SES_VERIFY] Auto-triggered verification for invited user: ${user.email}`);
-        } catch (sesError) {
-            // Non-blocking — verification can be re-triggered from the post-login modal
-            systemLogger.error(`[SES_VERIFY] Failed to auto-trigger for ${user.email}:`, sesError);
-        }
-
-        await logActivity(
-          "Invited User",
-          "User Management",
-          `Invited user ${email} to team ${teamInfo.teamId}`
-        );
-
-        return NextResponse.json(user, { status: 200 });
-      } catch (err) {
-        console.log(err);
-        return new NextResponse("Error creating user or sending email", { status: 500 });
+      } catch (emailErr: any) {
+        // Log but don't fail — user was already created successfully
+        systemLogger.error(`[INVITE_USER] User ${email} created but invitation email failed:`, emailErr?.message || emailErr);
       }
+
+      // Auto-trigger SES email verification for the new user's email
+      try {
+          await verifyEmailIdentity(user.email);
+          console.log(`[SES_VERIFY] Auto-triggered verification for invited user: ${user.email}`);
+      } catch (sesError) {
+          // Non-blocking — verification can be re-triggered from the post-login modal
+          systemLogger.error(`[SES_VERIFY] Failed to auto-trigger for ${user.email}:`, sesError);
+      }
+
+      await logActivity(
+        "Invited User",
+        "User Management",
+        `Invited user ${email} to team ${teamInfo.teamId}`
+      );
+
+      return NextResponse.json(user, { status: 200 });
     }
   } catch (error) {
     systemLogger.error("[USERACTIVATE_POST]", error);
