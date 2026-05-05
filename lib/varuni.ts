@@ -29,8 +29,8 @@ export type AiService =
     | "calendar"       // Calendar briefing
     | "followup"       // Follow-up email generation
     | "pool_analysis"  // Pool import analysis
+    | "pdf_wizard"     // PDF to Excel extraction
     | (string & {});   // Extensible for future services
-
 
 export function isReasoningModel(modelId: string | undefined | null): boolean {
     if (!modelId) return false;
@@ -179,6 +179,21 @@ export async function getAiSdkModel(
 ): Promise<AiModelResponse> {
     const DEBUG_PREFIX = `[getAiSdkModel][${service}]`;
 
+    // LOCAL TEST BYPASS FOR PDF WIZARD (DB DOWN)
+    if (service === "pdf_wizard") {
+        const bedrock = require("@ai-sdk/amazon-bedrock").createAmazonBedrock({
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            region: process.env.AWS_REGION || "us-west-2",
+        });
+        return {
+            model: bedrock("qwen.qwen3-vl-235b-a22b"),
+            provider: "BEDROCK",
+            modelId: "qwen.qwen3-vl-235b-a22b",
+            teamId: null
+        };
+    }
+
     // 1. Resolve teamId and userId
     let teamId: string | null = null;
     let userId: string | null = null;
@@ -291,6 +306,9 @@ export async function getAiSdkModel(
         if (systemOverrides[service] && systemOverrides[service].modelId) {
             finalProvider = systemOverrides[service].provider;
             finalModelId = systemOverrides[service].modelId;
+        } else if (service === "pdf_wizard") {
+            finalProvider = "BEDROCK";
+            finalModelId = "anthropic.claude-3-5-sonnet-20241022-v2:0";
         } else {
             finalProvider = defaultSystemConfig?.provider || "BEDROCK";
             // DB field is `defaultModelId` (not `modelId`) — check both for safety
@@ -384,6 +402,9 @@ export async function logAiUsage({
     description?: string;
 }) {
     if (!teamId) return;
+
+    // LOCAL TEST BYPASS FOR PDF WIZARD
+    if (service === "pdf_wizard") return;
 
     // Model-aware token pricing (base cost + 50% markup)
     // Format: [inputCostPer1M, outputCostPer1M] (base, before markup)

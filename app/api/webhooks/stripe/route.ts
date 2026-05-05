@@ -107,6 +107,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         return;
     }
 
+    // Check if this is a BasaltLens purchase
+    if (session.metadata?.type === "BASALT_LENS") {
+        const pages = parseInt(session.metadata?.pages || "0", 10);
+        const transformType = session.metadata?.transform_type;
+        const fileName = session.metadata?.file_name;
+        systemLogger.info(`[Stripe Webhook] BasaltLens payment successful: ${pages} units of ${transformType} for team ${teamId} (File: ${fileName})`);
+        return;
+    }
+
     // Subscription checkout
     const planSlug = session.metadata?.plan_slug;
     const interval = session.metadata?.interval || "monthly";

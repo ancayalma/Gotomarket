@@ -3,6 +3,19 @@
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 
+// Suppress false-positive React 19 warning about next-themes' inline FOUC-prevention script.
+// next-themes v0.4.x injects a <script> during SSR which is valid, but React 19 warns about it
+// during client hydration. The library is unmaintained; this is the accepted community workaround.
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  const _origConsoleError = console.error;
+  console.error = (...args: unknown[]) => {
+    if (typeof args[0] === "string" && args[0].includes("Encountered a script tag")) {
+      return;
+    }
+    _origConsoleError.apply(console, args);
+  };
+}
+
 export const THEME_PRESETS = [
   "obsidian-gold",
   "midnight-protocol",
