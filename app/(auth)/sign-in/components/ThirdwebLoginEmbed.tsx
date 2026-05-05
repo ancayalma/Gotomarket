@@ -21,15 +21,24 @@ export default function ThirdwebLoginEmbed() {
 
   // On auto-logout (?loggedOut=true), disconnect wallet and clear stale state
   useEffect(() => {
-    if (searchParams.get("loggedOut") === "true" && wallet) {
-      disconnect(wallet);
-      sessionStorage.removeItem("bridge_attempts");
-      bridgeTriggered.current = false;
-      setBridging(false);
-      // Also clear the thirdweb_auth_token cookie via logout endpoint
-      fetch("/api/auth/thirdweb/logout", { method: "POST" }).catch(() => {});
-    }
-  }, [searchParams, account, disconnect]);
+    if (searchParams.get("loggedOut") !== "true") return;
+
+    // Always clear thirdweb cookie regardless of wallet state
+    fetch("/api/auth/thirdweb/logout", { method: "POST" }).catch(() => {});
+
+    // Disconnect wallet if it's still connected
+    if (wallet) disconnect(wallet);
+
+    // Reset bridge state so the user can log in again
+    sessionStorage.removeItem("bridge_attempts");
+    bridgeTriggered.current = false;
+    setBridging(false);
+
+    // Strip the loggedOut param from the URL to prevent re-triggering
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.delete("loggedOut");
+    window.history.replaceState({}, "", newUrl.pathname + newUrl.search);
+  }, [searchParams, wallet, disconnect]);
 
   // When account becomes active, poll until the SIWE login (doLogin) has
   // completed and the thirdweb_auth_token cookie is set, THEN redirect

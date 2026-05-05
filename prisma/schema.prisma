@@ -2679,6 +2679,32 @@ model PageView {
   createdAt DateTime @default(now()) @db.Date
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// BASALT TRANSFORM — AI Document Intelligence History
+// ═══════════════════════════════════════════════════════════════════
+
+model crm_TransformHistory {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  user_id        String?   @db.ObjectId
+  team_id        String?   @db.ObjectId
+  
+  original_name  String
+  transform_type String    // EXCEL, MARKDOWN, JSON, TEXT
+  cost           Float     @default(0)
+  pages          Int       @default(1)
+  
+  s3_key_original String?
+  s3_key_result   String?
+  
+  status         String    @default("COMPLETED") // COMPLETED, FAILED
+  is_saved       Boolean   @default(false)
+  
+  createdAt      DateTime  @default(now()) @db.Date
+  
+  @@index([team_id])
+  @@index([user_id])
+}
+
 model SystemAuthConfig {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   provider     String // "google", "github", "azure-ad"

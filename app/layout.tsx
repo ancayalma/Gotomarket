@@ -115,6 +115,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
+        {/* FOUC prevention: set data-theme before paint so next-themes doesn't need its own <script> */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme")||"obsidian-gold";document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`,
+          }}
+        />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <Script id="microsoft-clarity" strategy="afterInteractive">
