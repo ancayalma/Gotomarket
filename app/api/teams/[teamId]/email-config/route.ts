@@ -144,19 +144,19 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             const triggerVerification = !existingConfig || existingConfig.from_email !== from_email || existingConfig.provider !== "PLATFORM_SES";
             if (triggerVerification) {
                 await verifyEmailIdentity(from_email);
-            } else {
-                const status = await getIdentityVerificationStatus(from_email);
-                if (status === "SUCCESS") verificationStatus = "VERIFIED";
             }
+            // Check status — this now also checks domain-level verification
+            const status = await getIdentityVerificationStatus(from_email);
+            if (status === "SUCCESS") verificationStatus = "VERIFIED";
         } else if (provider === "AWS_SES") {
             if (!finalAwsKey || !finalAwsSecret) return NextResponse.json({ error: "AWS Credentials required" }, { status: 400 });
             const triggerVerification = !existingConfig || existingConfig.from_email !== from_email || existingConfig.provider !== "AWS_SES";
             if (triggerVerification) {
                 await verifyEmailIdentity(from_email, { accessKeyId: finalAwsKey, secretAccessKey: finalAwsSecret, region: aws_region || "us-east-1" });
-            } else {
-                const status = await getIdentityVerificationStatus(from_email, { accessKeyId: finalAwsKey, secretAccessKey: finalAwsSecret, region: aws_region || "us-east-1" });
-                if (status === "SUCCESS") verificationStatus = "VERIFIED";
             }
+            // Check status — this now also checks domain-level verification
+            const status = await getIdentityVerificationStatus(from_email, { accessKeyId: finalAwsKey, secretAccessKey: finalAwsSecret, region: aws_region || "us-east-1" });
+            if (status === "SUCCESS") verificationStatus = "VERIFIED";
         } else if (provider === "RESEND") {
             if (!finalResendKey) return NextResponse.json({ error: "Resend API Key required" }, { status: 400 });
             verificationStatus = "VERIFIED";
