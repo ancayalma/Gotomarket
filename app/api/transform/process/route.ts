@@ -213,7 +213,7 @@ export async function POST(req: Request) {
                 }),
                 messages: [{ role: "user", content: contentPayload }],
                 temperature: 0.1,
-                maxTokens: 16000,
+                maxOutputTokens: 16000,
             });
 
             // Post-process: deduplicate hallucinated form fields
