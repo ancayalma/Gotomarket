@@ -48,7 +48,7 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
             if (currentStatus !== "PENDING") {
                 const updated = await prismadb.teamEmailConfig.update({
                     where: { id: config.id },
-                    data: { verification_status: currentStatus }
+                    data: { verification_status: currentStatus === "SUCCESS" ? "VERIFIED" : currentStatus }
                 });
                 return NextResponse.json(maskConfig(updated));
             }
@@ -75,7 +75,7 @@ export async function GET(req: Request, props: { params: Promise<{ teamId: strin
                 if (currentStatus !== "PENDING") {
                     const updated = await prismadb.teamEmailConfig.update({
                         where: { id: config.id },
-                        data: { verification_status: currentStatus }
+                        data: { verification_status: currentStatus === "SUCCESS" ? "VERIFIED" : currentStatus }
                     });
                     results.push(maskConfig(updated));
                     continue;

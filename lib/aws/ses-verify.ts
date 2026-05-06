@@ -157,10 +157,17 @@ export async function verifyDomainIdentity(domain: string, creds?: SESCredential
             verificationToken: dkimTokens[0] || undefined,
         };
     } catch (error: any) {
-        if (error.name === "AlreadyExistsException") {
-            // Domain already registered — fetch existing DKIM status
-            const status = await getIdentityVerificationStatus(domain, creds);
-            return { dkimTokens: [], verificationToken: undefined };
+        if (error.name === "AlreadyExistsException" || error.Code === "AlreadyExistsException" || error.message?.includes("already exist")) {
+            // Domain already registered — fetch existing DKIM tokens
+            try {
+                const getCmd = new GetEmailIdentityCommand({ EmailIdentity: domain });
+                const getRes = await client.send(getCmd);
+                const existingTokens = getRes.DkimAttributes?.Tokens || [];
+                return { dkimTokens: existingTokens, verificationToken: existingTokens[0] || undefined };
+            } catch (getErr) {
+                console.error("[SES_DOMAIN_FETCH]", getErr);
+                return { dkimTokens: [], verificationToken: undefined };
+            }
         }
         console.error("[SES_DOMAIN_VERIFY]", error);
         throw new Error(`Failed to initiate domain verification: ${error.message}`);
