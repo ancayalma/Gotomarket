@@ -771,22 +771,9 @@ export async function POST(req: Request) {
               }, "OUTREACH");
               messageId = teamMsgId || `team_sent_${Date.now()}`;
             } catch (teamErr: any) {
-              // Team email not configured — for test mode, fall back to system email
-              if (testMode) {
-                systemLogger.warn("[OUTREACH_SEND] Team email failed in test mode, falling back to system email:", teamErr?.message);
-                actualSenderEmail = process.env.SES_FROM_ADDRESS || 'noreply@basalthq.com';
-                const fallbackMsgId = await sendSystemEmail({
-                  to: toEmail,
-                  subject,
-                  text,
-                  html,
-                  from: actualSenderEmail,
-                  replyTo: replyToAddress,
-                });
-                messageId = fallbackMsgId || `test_system_sent_${Date.now()}`;
-              } else {
-                throw teamErr; // Re-throw for real sends — they must use configured email
-              }
+              systemLogger.warn(`[OUTREACH_SEND] Team email failed for ${actualSenderEmail}:`, teamErr?.message);
+              // Gracefully handle email send failures without falling back to the system email
+              throw new Error(`Your outbound email (${actualSenderEmail}) is not fully verified or configured. Please go to Settings > Email and complete the domain verification process before sending outreach.`);
             }
           }
 

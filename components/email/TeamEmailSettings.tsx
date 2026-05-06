@@ -139,7 +139,8 @@ function PurposeConfigForm({
     const [domainDkimTokens, setDomainDkimTokens] = useState<string[]>([]);
     const [domainLoading, setDomainLoading] = useState(false);
 
-    const isDomainEligible = purpose === "GENERAL" && ["INDIVIDUAL_PRO", "ENTERPRISE", "EXEMPT", "TESTING"].includes(planSlug || "");
+    // Domain verification is a core deliverability requirement for AWS SES, so we allow it for all plans
+    const isDomainEligible = purpose === "GENERAL";
 
     // Sync config into form when config changes
     useEffect(() => {
@@ -156,23 +157,32 @@ function PurposeConfigForm({
         }
     }, [config]);
 
-    // Fetch domain info for GENERAL purpose
-    useEffect(() => {
+    const fetchDomainInfo = useCallback(async () => {
         if (!isDomainEligible) return;
-        (async () => {
-            try {
-                const res = await fetch(`/api/teams/${teamId}/email-config/domain`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.domain) {
-                        setDomainInput(data.domain);
-                        setDomainStatus(data.status);
-                        setDomainDkimTokens(data.dkimTokens || []);
+        setDomainLoading(true);
+        try {
+            const res = await fetch(`/api/teams/${teamId}/email-config/domain`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.domain) {
+                    setDomainInput(data.domain);
+                    setDomainStatus(data.status);
+                    setDomainDkimTokens(data.dkimTokens || []);
+                    if (data.status === "VERIFIED") {
+                        toast.success("Domain verified successfully!");
                     }
                 }
-            } catch { /* ignore */ }
-        })();
+            }
+        } catch { /* ignore */ }
+        finally {
+            setDomainLoading(false);
+        }
     }, [teamId, isDomainEligible]);
+
+    // Fetch domain info for GENERAL purpose
+    useEffect(() => {
+        fetchDomainInfo();
+    }, [fetchDomainInfo]);
 
     const handleSave = async () => {
         if (!emailInput || !emailInput.includes("@")) {
@@ -457,7 +467,6 @@ function PurposeConfigForm({
                     <div className="flex items-center gap-2 mb-1">
                         <Globe className="w-4 h-4 text-indigo-500" />
                         <h4 className="text-sm font-semibold">Custom Domain Verification</h4>
-                        <Badge variant="outline" className="text-[10px] border-indigo-500/30 text-indigo-400">Pro / Enterprise</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
                         Verify your domain to send from <strong>any address</strong> under it.
@@ -501,7 +510,12 @@ function PurposeConfigForm({
                         ) : domainStatus === "PENDING_APPROVAL" ? (
                             <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Pending Admin Review</Badge>
                         ) : domainStatus === "DNS_PENDING" ? (
-                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Waiting for DNS</Badge>
+                            <div className="flex items-center gap-2">
+                                <Badge className="h-9 px-3 bg-amber-500/20 text-amber-400 border-amber-500/30">Action Required: Add DNS</Badge>
+                                <Button variant="outline" size="sm" onClick={fetchDomainInfo} disabled={domainLoading} className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+                                    {domainLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Check Status"}
+                                </Button>
+                            </div>
                         ) : domainStatus === "VERIFIED" ? (
                             <Badge className="bg-green-500/20 text-green-400 border-green-500/30"><CheckCircle2 className="w-3 h-3 mr-1" /> Verified</Badge>
                         ) : null}
@@ -512,14 +526,26 @@ function PurposeConfigForm({
                             <p className="text-xs font-semibold text-blue-400 mb-2">DNS Records:</p>
                             <div className="space-y-2">
                                 {domainDkimTokens.map((token, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-[11px] font-mono bg-black/30 p-2 rounded">
-                                        <span className="text-muted-foreground">CNAME</span>
-                                        <span className="text-blue-300 truncate">{token}._domainkey.{domainInput}</span>
-                                        <span className="text-muted-foreground">→</span>
-                                        <span className="text-green-300 truncate">{token}.dkim.amazonses.com</span>
-                                        <button className="ml-auto text-muted-foreground hover:text-white" onClick={() => { navigator.clipboard.writeText(`${token}._domainkey.${domainInput} CNAME ${token}.dkim.amazonses.com`); toast.success("Copied!"); }}>
-                                            <Copy className="w-3 h-3" />
-                                        </button>
+                                    <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-black/30 p-3 rounded border border-white/5">
+                                        <div className="flex items-center gap-2 w-20 shrink-0">
+                                            <Badge variant="outline" className="text-[10px] text-muted-foreground border-white/10">CNAME</Badge>
+                                        </div>
+                                        <div className="flex-1 min-w-0 space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-10">Name:</span>
+                                                <code className="text-xs text-blue-300 truncate flex-1">{token}._domainkey.{domainInput}</code>
+                                                <button className="text-muted-foreground hover:text-white shrink-0 p-1 bg-white/5 rounded" onClick={() => { navigator.clipboard.writeText(`${token}._domainkey.${domainInput}`); toast.success("Copied Name!"); }}>
+                                                    <Copy className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-10">Value:</span>
+                                                <code className="text-xs text-green-300 truncate flex-1">{token}.dkim.amazonses.com</code>
+                                                <button className="text-muted-foreground hover:text-white shrink-0 p-1 bg-white/5 rounded" onClick={() => { navigator.clipboard.writeText(`${token}.dkim.amazonses.com`); toast.success("Copied Value!"); }}>
+                                                    <Copy className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

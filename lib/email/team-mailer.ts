@@ -37,7 +37,7 @@ export async function sendTeamEmail(teamId: string, options: EmailOptions, purpo
 
     // 2. Strict Requirement for Team Configuration
     // To protect the system SES reputation, mass outreach/client emails MUST use the team's own service.
-    if (!config || config.verification_status !== "VERIFIED") {
+    if (!config || (config.verification_status !== "VERIFIED" && config.verification_status !== "SUCCESS")) {
         const errorMsg = `[TeamEmail] Team ${teamId} has not configured a verified email service. Outreach prevented to protect system reputation.`;
         console.error(errorMsg);
         throw new Error("Email service not configured or verified for this team. Please set up your custom mail service in Team Settings.");

@@ -38,14 +38,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
 
         if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
 
-        // Check plan eligibility — only INDIVIDUAL_PRO, ENTERPRISE, EXEMPT, TESTING
         const planSlug = team.assigned_plan?.slug || team.subscription_plan;
-        const eligiblePlans = ["INDIVIDUAL_PRO", "ENTERPRISE", "EXEMPT", "TESTING"];
-        if (!eligiblePlans.includes(planSlug)) {
-            return NextResponse.json({
-                error: "Domain verification is available on Individual Pro and Enterprise plans. Please upgrade to access this feature."
-            }, { status: 403 });
-        }
 
         // 2. Trigger SES domain verification (uses platform credentials)
         const result = await verifyDomainIdentity(cleanDomain);
@@ -66,7 +59,7 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
             custom_domain: cleanDomain,
             domain_verification_token: result.verificationToken || null,
             domain_dkim_tokens: result.dkimTokens,
-            domain_status: "PENDING_APPROVAL",
+            domain_status: "DNS_PENDING",
             domain_requested_at: new Date(),
         };
 
@@ -140,9 +133,9 @@ export async function POST(req: Request, props: { params: Promise<{ teamId: stri
         return NextResponse.json({
             success: true,
             domain: cleanDomain,
-            status: "PENDING_APPROVAL",
+            status: "DNS_PENDING",
             dnsRecords,
-            message: "Your domain verification request has been submitted. Our team will review it and share the DNS records with you shortly."
+            message: "Domain verification initiated! Please add the DNS records below to your domain provider."
         });
 
     } catch (error: any) {
