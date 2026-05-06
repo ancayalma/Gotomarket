@@ -89,6 +89,7 @@
     "amazon-chime-sdk-js": "^3.29.0",
     "amazon-connect-streams": "^2.22.0",
     "aws-crt": "^1.28.1",
+    "base64-js": "^1.5.1",
     "bcryptjs": "^3.0.3",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
