@@ -51,7 +51,8 @@ export const DEFAULT_NAV_STRUCTURE: NavItem[] = [
                 permissions: { feature: "accounts" },
                 children: [
                     { id: "sub_accounts_all", type: "item", label: "All Accounts", href: "/crm/accounts?tab=accounts", iconName: "Building2" },
-                    { id: "sub_accounts_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/accounts?tab=wizard", iconName: "Wand2" }
+                    { id: "sub_accounts_wizard", type: "item", label: "LeadGen Wizard", href: "/crm/accounts?tab=wizard", iconName: "Wand2" },
+                    { id: "sub_accounts_jobs", type: "item", label: "View Jobs", href: "/transform?view=jobs", iconName: "Layers" }
                 ]
             },
             {

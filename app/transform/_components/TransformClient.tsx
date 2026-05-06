@@ -4,11 +4,13 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { UploadCloud, FileText, ChevronRight, CheckCircle2, AlertCircle, Loader2, Play, Download, Settings, TableProperties, Maximize2, Minimize2, X, Pen, Layers, Lock, Unlock, ChevronLeft } from "lucide-react";
+import { UploadCloud, FileText, ChevronRight, CheckCircle2, AlertCircle, Loader2, Play, Download, Settings, TableProperties, Maximize2, Minimize2, X, Pen, Layers, Lock, Unlock, ChevronLeft, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ConversionPicker } from "./ConversionPicker";
+import { DedupModal, GroupAction } from "./DedupModal";
 import { detectDuplicates, buildDuplicateMap, mergeAllDuplicates, type DuplicateGroup } from "@/lib/dedup";
+import { useRouter } from "next/navigation";
 
 type Step = "SELECT_TOOL" | "UPLOAD" | "ANALYZING" | "REVIEW" | "PROCESSING" | "DONE";
 type TransformType = "EXCEL" | "MARKDOWN" | "JSON" | "TEXT" | "CUSTOM";
@@ -35,8 +37,11 @@ export function TransformClient() {
     const [colWidths, setColWidths] = useState<Record<string, number>>({});
     const resizingRef = useRef<{ col: string; startX: number; startW: number } | null>(null);
     const tableRef = useRef<HTMLTableElement>(null);
+    const [showDedupModal, setShowDedupModal] = useState(false);
+    const pendingExportRef = useRef(false);
+    const router = useRouter();
 
-    // Read ?tool= from URL
+    // Read ?tool= and ?view= from URL
     useEffect(() => {
         const tool = searchParams.get("tool");
         if (tool && ["EXCEL", "MARKDOWN", "JSON", "TEXT"].includes(tool)) {
@@ -194,6 +199,47 @@ export function TransformClient() {
     });
 
 
+    // Pre-export: check for duplicates and show modal
+    const initiateExport = () => {
+        if (duplicateGroups.length > 0) {
+            setShowDedupModal(true);
+            return;
+        }
+        handleProcess();
+    };
+
+    const handleDedupConfirm = (actions: Record<string, "merge" | "keep" | "remove_dupes">) => {
+        let updatedData = [...parsedData];
+
+        // Process groups in reverse order to maintain indices
+        const sortedGroups = [...duplicateGroups].sort((a, b) => {
+            const maxA = Math.max(...a.rowIndices);
+            const maxB = Math.max(...b.rowIndices);
+            return maxB - maxA;
+        });
+
+        for (const group of sortedGroups) {
+            const action = actions[group.id] || "keep";
+            if (action === "merge") {
+                // Merge into golden record (keep first, merge fields)
+                const merged = mergeAllDuplicates(updatedData, headers, [group]);
+                updatedData = merged;
+            } else if (action === "remove_dupes") {
+                // Keep first row, remove the rest
+                const [keep, ...removeIndices] = group.rowIndices;
+                updatedData = updatedData.filter((_, idx) => !removeIndices.includes(idx));
+            }
+            // "keep" = do nothing
+        }
+
+        setParsedData(updatedData);
+        setShowDedupModal(false);
+        toast.success("Duplicates resolved. Proceeding to export...");
+
+        // Use timeout to let state update before export
+        setTimeout(() => { handleProcess(); }, 100);
+    };
+
     const handleProcess = async () => {
         if (!file) return;
         setStep("PROCESSING");
@@ -212,43 +258,35 @@ export function TransformClient() {
                 }
             }
 
-            // EXCEL: Export the parsed table directly - no need to re-run AI
-            if (transformType === "EXCEL" && parsedData.length > 0 && headers.length > 0) {
+            // EXCEL: Single-page docs export from parsed table; multi-page use API for full extraction
+            if (transformType === "EXCEL" && parsedData.length > 0 && headers.length > 0 && numPages <= 1) {
                 const ExcelJS = (await import("exceljs")).default;
                 const workbook = new ExcelJS.Workbook();
                 const sheet = workbook.addWorksheet("Extracted Data");
 
-                // Set up columns from headers
                 sheet.columns = headers.map(h => ({
                     header: h.toUpperCase(),
                     key: h,
                     width: Math.max(15, h.length + 5),
                 }));
 
-                // Add all rows from the parsed table
                 parsedData.forEach(row => {
                     const rowObj: Record<string, string> = {};
                     headers.forEach(h => { rowObj[h] = row[h] || ""; });
                     sheet.addRow(rowObj);
                 });
 
-                // Style the header row
-                sheet.getRow(1).font = { bold: true, size: 11 };
-                sheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1A1A1A" } };
                 sheet.getRow(1).font = { bold: true, size: 11, color: { argb: "FFFFFFFF" } };
+                sheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1A1A1A" } };
 
-                // Auto-fit column widths based on content
                 headers.forEach((h, colIdx) => {
                     let maxLen = h.length;
                     parsedData.forEach(row => {
-                        const val = String(row[h] || "");
-                        maxLen = Math.max(maxLen, val.length);
+                        maxLen = Math.max(maxLen, String(row[h] || "").length);
                     });
-                    const col = sheet.getColumn(colIdx + 1);
-                    col.width = Math.min(60, Math.max(12, maxLen + 4));
+                    sheet.getColumn(colIdx + 1).width = Math.min(60, Math.max(12, maxLen + 4));
                 });
 
-                // Alternate row shading
                 for (let i = 2; i <= parsedData.length + 1; i++) {
                     if (i % 2 === 0) {
                         sheet.getRow(i).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F5F5" } };
@@ -338,21 +376,11 @@ export function TransformClient() {
                 throw new Error(err.error || "Failed to process document.");
             }
 
-            const blob = await processRes.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-
-            let ext = ".txt";
-            if (transformType === "MARKDOWN") ext = ".md";
-
-            a.download = `${file.name.replace(/\.[^/.]+$/, "")}_extracted${ext}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
+            const { jobId } = await processRes.json();
+            
             setStep("DONE");
-            toast.success("Document processed successfully!");
+            toast.success("Document added to batch processor!");
+            router.push("/transform/jobs");
         } catch (error: any) {
             toast.error(error.message);
             setStep("REVIEW");
@@ -464,6 +492,20 @@ export function TransformClient() {
                         }}
                     />
                 </div>
+
+                {/* Right: Jobs Toggle */}
+                <div className="flex items-center justify-end gap-2 pr-2 shrink-0">
+                    <button 
+                        onClick={() => router.push("/transform/jobs")}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 text-[11px] font-medium transition-colors border border-white/5"
+                    >
+                        <div className="relative flex items-center justify-center">
+                            <Activity className="w-3.5 h-3.5 text-orange-400" />
+                            <div className="absolute inset-0 bg-orange-400/20 blur-sm rounded-full animate-pulse" />
+                        </div>
+                        Current Jobs
+                    </button>
+                </div>
             </div>
 
             {/* Main Content */}
@@ -488,13 +530,7 @@ export function TransformClient() {
                                         key={t.id}
                                         onClick={() => {
                                             setTransformType(t.id as TransformType);
-                                            const TOOL_CONVERSIONS: Record<string, { from: string; to: string }> = {
-                                                EXCEL: { from: "PDF", to: "XLSX" },
-                                                MARKDOWN: { from: "PDF", to: "MD" },
-                                                JSON: { from: "PDF", to: "JSON" },
-                                                TEXT: { from: "PDF", to: "TXT" },
-                                            };
-                                            setCustomConversion(TOOL_CONVERSIONS[t.id] || null);
+                                            setCustomConversion(null); // Ensure custom conversion is cleared for presets
                                             setStep("UPLOAD");
                                         }}
                                         className="p-5 border border-white/10 bg-white/[0.02] rounded-lg hover:bg-white/[0.06] hover:border-orange-500/40 cursor-pointer transition-all group"
@@ -766,7 +802,7 @@ export function TransformClient() {
                                 </div>
 
                                 <Button
-                                    onClick={handleProcess}
+                                    onClick={initiateExport}
                                     size="sm"
                                     className="h-7 bg-white text-black hover:bg-white/90 text-xs font-medium px-4"
                                 >
@@ -809,6 +845,15 @@ export function TransformClient() {
                 </div>
                 <span>BasaltLens AI</span>
             </div>
+            {/* Dedup Resolution Modal */}
+            <DedupModal
+                open={showDedupModal}
+                onClose={() => setShowDedupModal(false)}
+                onConfirm={handleDedupConfirm}
+                groups={duplicateGroups}
+                parsedData={parsedData}
+                headers={headers}
+            />
         </div>
     );
 }

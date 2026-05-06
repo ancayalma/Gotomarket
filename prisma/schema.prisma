@@ -5029,3 +5029,26 @@ model crm_Email_Thread {
   @@index([message_id])
   @@index([outreach_item])
 }
+
+// -------------------------------------------------------------------
+// TRANSFORM JOBS — Background jobs for document extraction
+// -------------------------------------------------------------------
+
+model crm_Transform_Jobs {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  v               Int?     @map("__v")
+  userId          String?  @db.ObjectId
+  teamId          String?  @db.ObjectId
+  status          String   @default("QUEUED") // QUEUED, PROCESSING, COMPLETED, FAILED
+  fileName        String
+  fileSize        Int
+  transformType   String   // EXCEL, JSON, CUSTOM, etc.
+  progress        Int      @default(0) // 0-100
+  totalPages      Int      @default(1)
+  processedPages  Int      @default(0)
+  resultData      Json?
+  error           String?
+  createdAt       DateTime @default(now()) @db.Date
+  updatedAt       DateTime @updatedAt @db.Date
+}
+
