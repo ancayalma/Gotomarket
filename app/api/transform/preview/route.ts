@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
         const textractResponse = await textract.send(new AnalyzeDocumentCommand({
             Document: { Bytes: imageBuffer },
-            FeatureTypes: ["FORMS", "TABLES"],
+            FeatureTypes: ["FORMS", "TABLES", "LAYOUT"],
         }));
 
         const blocks = textractResponse.Blocks || [];
@@ -115,12 +115,28 @@ export async function POST(req: Request) {
                 let maxRow = 0, maxCol = 0;
 
                 cells.forEach((cell: any) => {
-                    if (cell.BlockType === "CELL") {
+                    if (cell.BlockType === "CELL" || cell.BlockType === "COLUMN_HEADER") {
                         const row = cell.RowIndex || 0;
                         const col = cell.ColumnIndex || 0;
                         maxRow = Math.max(maxRow, row);
                         maxCol = Math.max(maxCol, col);
                         cellGrid[`${row}_${col}`] = getBlockText(cell);
+
+                        // Add bounding box for header row cells (row 1) and COLUMN_HEADER types
+                        if (row === 1 || cell.BlockType === "COLUMN_HEADER") {
+                            const cellBbox = cell.Geometry?.BoundingBox;
+                            if (cellBbox) {
+                                const cellText = getBlockText(cell);
+                                boundingBoxes.push({
+                                    id: `header_${boundingBoxes.length}`,
+                                    label: cellText || `Col ${col}`,
+                                    x: (cellBbox.Left || 0) * 100,
+                                    y: (cellBbox.Top || 0) * 100,
+                                    width: (cellBbox.Width || 0) * 100,
+                                    height: (cellBbox.Height || 0) * 100,
+                                });
+                            }
+                        }
                     }
                 });
 
@@ -142,10 +158,39 @@ export async function POST(req: Request) {
             }
         }
 
-        // ── Step 2: Qwen for intelligent data structuring ──
+        // ── Step 2: Decide data source ──
+        // If Textract found a real table with rows, use it directly (Qwen misclassifies these).
+        // If only form fields or nothing, fall back to Qwen for intelligent structuring.
+
+        const hasTextractTable = tableData.rows.length > 0 && tableData.headers.length > 0;
+
+        if (hasTextractTable) {
+            // Textract found a real table — use it directly, no Qwen needed
+            const responseData: any = {
+                dataType: "TABULAR",
+                tables: [{
+                    tableName: "Extracted Table",
+                    headers: tableData.headers,
+                    rows: tableData.rows,
+                }],
+                boundingBoxes,
+            };
+
+            // If there are also form fields, include them
+            if (keyValuePairs.length > 0) {
+                responseData.dataType = "MIXED";
+                responseData.formFields = keyValuePairs.map(kv => ({
+                    label: kv.key,
+                    value: kv.value,
+                }));
+            }
+
+            return NextResponse.json(responseData);
+        }
+
+        // ── Fallback: Qwen for forms/unstructured docs ──
         const { model, modelId } = await getAiSdkModel("system", "pdf_wizard", true);
 
-        // Build a text summary from Textract raw for Qwen to structure
         const textractSummary = keyValuePairs.length > 0
             ? `Textract detected the following form fields:\n${keyValuePairs.map(kv => `  "${kv.key}": "${kv.value}"`).join("\n")}`
             : "";
@@ -205,7 +250,7 @@ export async function POST(req: Request) {
         // Return Qwen's structured data + Textract's pixel-perfect bounding boxes
         return NextResponse.json({
             ...object,
-            boundingBoxes, // from Textract — pixel-perfect
+            boundingBoxes,
         });
 
     } catch (error: any) {
