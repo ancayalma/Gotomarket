@@ -123,7 +123,7 @@ export async function POST(req: Request) {
             if (isImage || numPages === 1) {
                 const textractRes = await textract.send(new AnalyzeDocumentCommand({
                     Document: { Bytes: buffer },
-                    FeatureTypes: ["FORMS", "TABLES"],
+                    FeatureTypes: ["FORMS", "TABLES", "LAYOUT"],
                 }));
 
                 const blocks = textractRes.Blocks || [];
@@ -192,28 +192,42 @@ export async function POST(req: Request) {
                 text: `Structure this document data into clean, organized output. Use the Textract-extracted data as ground truth. Clean up any OCR artifacts.\n\n${textractContext}`
             });
 
-            const { object, usage } = await generateObject({
+            const { object: rawObject, usage } = await generateObject({
                 model,
                 schema: z.object({
                     dataType: z.enum(["FORM_FIELDS", "TABULAR", "MIXED"]),
                     formFields: z.array(z.object({
-                        label: z.string(),
-                        value: z.string()
+                        label: z.string().default(""),
+                        value: z.string().default("")
                     })).optional(),
                     tables: z.array(z.object({
-                        tableName: z.string(),
+                        tableName: z.string().default("Table"),
                         headers: z.array(z.string()),
                         rows: z.array(z.object({
                             cells: z.array(z.object({
-                                header: z.string(),
-                                value: z.string()
+                                header: z.string().default(""),
+                                value: z.string().default("")
                             }))
                         }))
                     })).optional()
                 }),
                 messages: [{ role: "user", content: contentPayload }],
                 temperature: 0.1,
+                maxTokens: 16000,
             });
+
+            // Post-process: deduplicate hallucinated form fields
+            const object = { ...rawObject };
+            if (object.formFields && object.formFields.length > 0) {
+                const seen = new Set<string>();
+                object.formFields = object.formFields.filter(f => {
+                    if (!f.label && !f.value) return false;
+                    const key = `${f.label}|||${f.value}`;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+            }
 
             logAiUsage({ teamId, userId, service: "pdf_wizard", model: modelId, usage: { promptTokens: (usage as any).inputTokens || 0, completionTokens: (usage as any).outputTokens || 0 }, description: `BasaltLens EXCEL (${numPages} pages)` }).catch(console.error);
 

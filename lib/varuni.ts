@@ -187,9 +187,9 @@ export async function getAiSdkModel(
             region: process.env.AWS_REGION || "us-west-2",
         });
         return {
-            model: bedrock("qwen.qwen3-vl-235b-a22b"),
+            model: bedrock("moonshotai.kimi-k2.5"),
             provider: "BEDROCK",
-            modelId: "qwen.qwen3-vl-235b-a22b",
+            modelId: "moonshotai.kimi-k2.5",
             teamId: null
         };
     }
