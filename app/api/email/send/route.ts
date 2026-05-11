@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { to, subject, text, leadId, contactId, accountId, trackClicks, trackOpens } = body;
+        const { to, subject, text, isHtml, leadId, contactId, accountId, trackClicks, trackOpens } = body;
 
         if (!to || !subject || !text) {
             return new NextResponse("Missing required fields", { status: 400 });
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         const trackingToken = crypto.randomBytes(16).toString("hex");
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-        let processedHtml = text.replace(/\n/g, '<br/>');
+        let processedHtml = isHtml ? text : text.replace(/\n/g, '<br/>');
 
         // 1. CTR Tracking (Link Wrapping)
         if (trackClicks) {
