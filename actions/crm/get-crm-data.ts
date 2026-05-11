@@ -43,13 +43,24 @@ export const getAllCrmData = async () => {
   const accounts = await (prismadb.crm_Accounts as any).findMany({ where: accountsWhere });
   const opportunities = await prismadb.crm_Opportunities.findMany({
     where: whereClause,
-    include: {
+    select: {
+      id: true,
+      name: true,
+      status: true,
+      expected_revenue: true,
+      assigned_to: true,
       assigned_to_user: { select: { avatar: true, name: true } },
     }
   });
-  const leads = await prismadb.crm_Leads.findMany({ where: whereClause });
+  const leads = await prismadb.crm_Leads.findMany({
+    where: whereClause,
+    select: { id: true, firstName: true, lastName: true, company: true, email: true, status: true, assigned_to: true }
+  });
 
-  const contacts = await (prismadb.crm_Contacts as any).findMany({ where: whereClause });
+  const contacts = await (prismadb.crm_Contacts as any).findMany({
+    where: whereClause,
+    select: { id: true, first_name: true, last_name: true, email: true, status: true, assigned_to: true }
+  });
   const contracts = await (prismadb.crm_Contracts as any).findMany({ where: whereClause });
 
   // Shared data might not have team_id?
