@@ -7,22 +7,16 @@ export const getOpportunitiesFullByContactId = async (contactId: string) => {
         has: contactId,
       },
     },
-    include: {
-      assigned_account: {
-        select: {
-          name: true,
-        },
-      },
-      assigned_sales_stage: {
-        select: {
-          name: true,
-        },
-      },
-      assigned_to_user: {
-        select: {
-          name: true,
-        },
-      },
+    select: {
+      id: true,
+      name: true,
+      expected_revenue: true,
+      status: true,
+      close_date: true,
+      created_on: true,
+      assigned_account: { select: { name: true } },
+      assigned_sales_stage: { select: { name: true } },
+      assigned_to_user: { select: { name: true } },
     },
     orderBy: {
       created_on: "desc",

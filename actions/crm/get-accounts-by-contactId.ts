@@ -25,18 +25,14 @@ export const getAccountsByContactId = async (contactId: string) => {
 
   const data = await prismadb.crm_Accounts.findMany({
     where: whereClause,
-    include: {
-      assigned_to_user: {
-        select: {
-          name: true,
-        },
-      },
-      contacts: {
-        select: {
-          first_name: true,
-          last_name: true,
-        },
-      },
+    select: {
+      id: true,
+      name: true,
+      status: true,
+      industry: true,
+      createdAt: true,
+      assigned_to_user: { select: { name: true } },
+      contacts: { select: { first_name: true, last_name: true } },
     },
     orderBy: {
       createdAt: "desc",
