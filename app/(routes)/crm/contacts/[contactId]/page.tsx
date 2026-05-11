@@ -35,24 +35,28 @@ const ContactViewPage = async (props: any) => {
   let isSuperAdmin = false;
 
   if (session?.user?.id) {
-    const user = await prismadb.users.findUnique({
-      where: { id: session.user.id },
-      select: { team_role: true, team_id: true, department_id: true, assigned_modules: true }
-    });
-    isSuperAdmin = user?.team_role === 'SUPER_ADMIN' || user?.team_role === 'OWNER' || user?.team_role === 'PLATFORM_ADMIN';
+    try {
+      const user = await prismadb.users.findUnique({
+        where: { id: session.user.id },
+        select: { team_role: true, team_id: true, department_id: true, assigned_modules: true }
+      });
+      isSuperAdmin = user?.team_role === 'SUPER_ADMIN' || user?.team_role === 'OWNER' || user?.team_role === 'PLATFORM_ADMIN';
 
-    if (isSuperAdmin) {
-      permissions = ['*'];
-    } else if (user) {
-      if (user.assigned_modules && user.assigned_modules.length > 0) {
-        permissions = user.assigned_modules;
-      } else {
-        const contextId = user.department_id || user.team_id;
-        const scope = user.department_id ? 'DEPARTMENT' : 'ORGANIZATION';
-        if (contextId && user.team_role) {
-          permissions = await getEffectiveRoleModules(contextId, user.team_role, scope);
+      if (isSuperAdmin) {
+        permissions = ['*'];
+      } else if (user) {
+        if (user.assigned_modules && user.assigned_modules.length > 0) {
+          permissions = user.assigned_modules;
+        } else {
+          const contextId = user.department_id || user.team_id;
+          const scope = user.department_id ? 'DEPARTMENT' : 'ORGANIZATION';
+          if (contextId && user.team_role) {
+            permissions = await getEffectiveRoleModules(contextId, user.team_role, scope);
+          }
         }
       }
+    } catch (e) {
+      console.error("PERMISSIONS_FETCH_ERROR", e);
     }
   }
 
@@ -60,10 +64,17 @@ const ContactViewPage = async (props: any) => {
 
   const contact = await getContact(contactId);
   
-  // Conditionally fetch data
-  const opportunitiesPromise = hasAccess('contacts.detail.opportunities') ? getOpportunitiesFullByContactId(contactId) : Promise.resolve([]);
-  const documentsPromise = hasAccess('contacts.detail.documents') ? getDocumentsByContactId(contactId) : Promise.resolve([]);
-  const accountsPromise = hasAccess('contacts.view') ? getAccountsByContactId(contactId) : Promise.resolve([]);
+  // Conditionally fetch data with strict 5-second timeouts to prevent Nginx 504s on full table scans
+  const withTimeout = (promise: Promise<any>, ms: number = 5000) => {
+    return Promise.race([
+      promise,
+      new Promise<any[]>((resolve) => setTimeout(() => resolve([]), ms))
+    ]);
+  };
+
+  const opportunitiesPromise = hasAccess('contacts.detail.opportunities') ? withTimeout(getOpportunitiesFullByContactId(contactId)) : Promise.resolve([]);
+  const documentsPromise = hasAccess('contacts.detail.documents') ? withTimeout(getDocumentsByContactId(contactId)) : Promise.resolve([]);
+  const accountsPromise = hasAccess('accounts.view') ? withTimeout(getAccountsByContactId(contactId)) : Promise.resolve([]);
 
   const [opportunities, documents, accounts] = await Promise.all([opportunitiesPromise, documentsPromise, accountsPromise]);
 
