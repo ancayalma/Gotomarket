@@ -144,6 +144,32 @@ export default function Sidebar({ vistaActual, cambiarVista, tema, toggleTema })
                     "La carne más saludable del mundo"
                 </div>
 
+                {/* Enlace a plataforma CRM/WhatsApp */}
+                <a
+                    href="https://grenoucerie-platform.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                        marginTop: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '7px 9px',
+                        background: 'rgba(74,124,63,0.12)',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid rgba(74,124,63,0.3)',
+                        fontSize: '9px',
+                        color: 'var(--brand)',
+                        fontFamily: 'DM Mono, monospace',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s',
+                    }}
+                >
+                    <span>⚡ CRM / WhatsApp / Agentes</span>
+                    <span>↗</span>
+                </a>
+
                 {/* Selector de Tema — pie del sidebar */}
                 <div style={{ marginTop: '12px' }}>
                     <button
