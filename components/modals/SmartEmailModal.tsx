@@ -51,9 +51,12 @@ export function SmartEmailModal({
     const [loading, setLoading] = useState(false);
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
+    const [isHtml, setIsHtml] = useState(false);
+    const [testEmail, setTestEmail] = useState("");
     const [trackClicks, setTrackClicks] = useState(true);
     const [trackOpens, setTrackOpens] = useState(true);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [isTestSuccess, setIsTestSuccess] = useState(false);
 
     const { toast } = useToast();
 
@@ -82,7 +85,7 @@ export function SmartEmailModal({
         });
     };
 
-    const onSend = async () => {
+    const onSend = async (isTest: boolean = false) => {
         if (!subject || !message) {
             toast({
                 variant: "destructive",
@@ -92,31 +95,54 @@ export function SmartEmailModal({
             return;
         }
 
+        const targetEmail = isTest ? testEmail : recipientEmail;
+
+        if (isTest && !testEmail) {
+            toast({
+                variant: "destructive",
+                title: "Missing Information",
+                description: "Please provide a test email address.",
+            });
+            return;
+        }
+
         try {
             setLoading(true);
             await axios.post("/api/email/send", {
-                to: recipientEmail,
+                to: targetEmail,
                 subject,
                 text: message,
-                leadId,
-                contactId,
-                accountId,
-                trackClicks,
-                trackOpens,
+                isHtml,
+                leadId: isTest ? undefined : leadId,
+                contactId: isTest ? undefined : contactId,
+                accountId: isTest ? undefined : accountId,
+                trackClicks: isTest ? false : trackClicks,
+                trackOpens: isTest ? false : trackOpens,
             });
 
-            setIsSuccess(true);
-            toast({
-                title: "Email Sent",
-                description: "Your message is on its way and being tracked.",
-            });
+            if (isTest) {
+                setIsTestSuccess(true);
+                toast({
+                    title: "Test Email Sent",
+                    description: `Sent to ${testEmail}`,
+                });
+                setTimeout(() => {
+                    setIsTestSuccess(false);
+                }, 2000);
+            } else {
+                setIsSuccess(true);
+                toast({
+                    title: "Email Sent",
+                    description: "Your message is on its way and being tracked.",
+                });
 
-            setTimeout(() => {
-                onOpenChange(false);
-                setSubject("");
-                setMessage("");
-                setIsSuccess(false);
-            }, 2000);
+                setTimeout(() => {
+                    onOpenChange(false);
+                    setSubject("");
+                    setMessage("");
+                    setIsSuccess(false);
+                }, 2000);
+            }
         } catch (error) {
             toast({
                 variant: "destructive",
@@ -176,6 +202,28 @@ export function SmartEmailModal({
                                             className="h-10 bg-white/[0.02] border-white/10 focus:border-emerald-500/50 transition-colors"
                                         />
                                     </div>
+                                    <div className="p-3 bg-white/[0.03] rounded-xl border border-white/5 space-y-3 mt-4">
+                                        <Label className="text-xs font-semibold uppercase tracking-wider text-white/40 block">Send a Test Email</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                id="testEmail"
+                                                value={testEmail}
+                                                onChange={(e) => setTestEmail(e.target.value)}
+                                                placeholder="test@example.com"
+                                                className="h-9 bg-white/[0.02] border-white/10 text-xs flex-1 focus:border-emerald-500/50"
+                                            />
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className="h-9 px-4 text-xs font-medium"
+                                                onClick={() => onSend(true)}
+                                                disabled={loading || !testEmail || !subject || !message || isTestSuccess}
+                                            >
+                                                {isTestSuccess ? <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> : <Mail className="h-3.5 w-3.5 mr-1" />}
+                                                Test
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="bg-white/[0.03] rounded-xl p-4 border border-white/5 space-y-4">
@@ -216,16 +264,22 @@ export function SmartEmailModal({
 
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
-                                    <Label htmlFor="message" className="text-xs font-semibold uppercase tracking-wider text-white/40">Message Body</Label>
+                                    <div className="flex items-center gap-4">
+                                        <Label htmlFor="message" className="text-xs font-semibold uppercase tracking-wider text-white/40">Message Body</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Switch id="html-mode" checked={isHtml} onCheckedChange={setIsHtml} className="scale-75" />
+                                            <Label htmlFor="html-mode" className="text-[10px] uppercase text-white/50 cursor-pointer">HTML Mode</Label>
+                                        </div>
+                                    </div>
                                     <Button
                                         variant="ghost"
                                         size="sm"
                                         className="h-7 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 border border-emerald-500/20 rounded-full"
                                         onClick={handleEnhance}
-                                        disabled={isAiLoading || !message}
+                                        disabled={isAiLoading || !message || isHtml}
                                     >
                                         {isAiLoading ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : <Sparkles className="mr-1.5 h-3 w-3" />}
-                                        {isAiLoading ? "OPTIMIZING..." : "OPTIMIZE WITH AI"}
+                                        {isHtml ? "DISABLED IN HTML MODE" : (isAiLoading ? "OPTIMIZING..." : "OPTIMIZE WITH AI")}
                                     </Button>
                                 </div>
                                 <div className="relative">
@@ -258,7 +312,7 @@ export function SmartEmailModal({
                                 Discard Draft
                             </Button>
                             <Button
-                                onClick={onSend}
+                                onClick={() => onSend(false)}
                                 disabled={loading || !subject || !message}
                                 className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-11 px-8 rounded-xl shadow-lg shadow-emerald-500/20"
                             >

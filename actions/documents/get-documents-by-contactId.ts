@@ -1,27 +1,32 @@
 import { prismadb } from "@/lib/prisma";
 
 export const getDocumentsByContactId = async (contactId: string) => {
-  const data = await prismadb.documents.findMany({
-    where: {
-      contactsIDs: {
-        has: contactId,
-      },
-    },
-    include: {
-      created_by: {
-        select: {
-          name: true,
+  try {
+    const data = await prismadb.documents.findMany({
+      where: {
+        contactsIDs: {
+          has: contactId,
         },
       },
-      assigned_to_user: {
-        select: {
-          name: true,
-        },
+      take: 100,
+      select: {
+        id: true,
+        document_name: true,
+        document_file_url: true,
+        document_file_mimeType: true,
+        description: true,
+        date_created: true,
+        createdAt: true,
+        created_by: { select: { name: true } },
+        assigned_to_user: { select: { name: true } },
       },
-    },
-    orderBy: {
-      date_created: "desc",
-    },
-  });
-  return data;
+      orderBy: {
+        date_created: "desc",
+      },
+    });
+    return data;
+  } catch (error) {
+    console.error("GET_DOCS_ERROR", error);
+    return [];
+  }
 };

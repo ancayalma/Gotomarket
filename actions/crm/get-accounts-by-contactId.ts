@@ -23,24 +23,36 @@ export const getAccountsByContactId = async (contactId: string) => {
     whereClause.assigned_to = teamInfo?.userId;
   }
 
-  const data = await prismadb.crm_Accounts.findMany({
-    where: whereClause,
-    include: {
-      assigned_to_user: {
-        select: {
-          name: true,
-        },
+  try {
+    const data = await prismadb.crm_Accounts.findMany({
+      where: whereClause,
+      take: 100,
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        industry: true,
+        createdAt: true,
+        email: true,
+        type: true,
+        billing_city: true,
+        billing_state: true,
+        billing_country: true,
+        employees: true,
+        annual_revenue: true,
+        vat: true,
+        company_id: true,
+        description: true,
+        assigned_to_user: { select: { name: true } },
+        contacts: { select: { first_name: true, last_name: true } },
       },
-      contacts: {
-        select: {
-          first_name: true,
-          last_name: true,
-        },
+      orderBy: {
+        createdAt: "desc",
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-  return data;
+    });
+    return data;
+  } catch (error) {
+    console.error("GET_ACCOUNTS_ERROR", error);
+    return [];
+  }
 };

@@ -31,7 +31,14 @@ interface OppsViewProps {
 
 export async function BasicView({ data }: OppsViewProps) {
   //console.log(data, "data");
-  const users = await prismadb.users.findMany();
+  let users: any[] = [];
+  try {
+    users = await prismadb.users.findMany({
+      select: { id: true, name: true }
+    });
+  } catch (error) {
+    console.error("BASICVIEW_USERS_ERROR", error);
+  }
   if (!data) return <div>Opportunity not found</div>;
   return (
     <div className="pb-3 space-y-5">
@@ -178,7 +185,7 @@ export async function BasicView({ data }: OppsViewProps) {
             <div className="flex flex-col gap-2">
               <div> Tags:</div>
               <div className="flex flex-wrap gap-2">
-                {data.tags.map((tag: string) => (
+                {(data.tags || []).map((tag: string) => (
                   <Badge key={tag} variant={"outline"}>
                     {tag}
                   </Badge>
@@ -346,7 +353,7 @@ export async function BasicView({ data }: OppsViewProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
-              {data.notes.map((note: string) => (
+              {(data.notes || []).map((note: string) => (
                 <p className="text-sm text-muted-foreground" key={note}>
                   {note}
                 </p>

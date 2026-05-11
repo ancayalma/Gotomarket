@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { to, subject, text, leadId, contactId, accountId, trackClicks, trackOpens } = body;
+        const { to, subject, text, isHtml, leadId, contactId, accountId, trackClicks, trackOpens } = body;
 
         if (!to || !subject || !text) {
             return new NextResponse("Missing required fields", { status: 400 });
@@ -25,16 +25,32 @@ export async function POST(req: Request) {
 
         const userId = session.user.id;
         const trackingToken = crypto.randomBytes(16).toString("hex");
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
 
-        let processedHtml = text.replace(/\n/g, '<br/>');
+        let processedHtml = isHtml ? text : text.replace(/\n/g, '<br/>');
 
         // 1. CTR Tracking (Link Wrapping)
         if (trackClicks) {
             processedHtml = processedHtml.replace(
-                /https?:\/\/[^\s<]+/g,
-                (url: string) => `${baseUrl}/api/email/track/click?token=${trackingToken}&url=${encodeURIComponent(url)}`
+                /href=["'](https?:\/\/[^"']+)["']/gi,
+                (match: string, url: string) => `href="${baseUrl}/api/email/track/click?token=${trackingToken}&url=${encodeURIComponent(url)}"`
             );
+            // Fallback for plain text links not in HTML tags if not in HTML mode
+            if (!isHtml) {
+                // To avoid messing up newly added hrefs or tags, we do a basic replace only outside tags,
+                // but since it's tricky, we'll only do it if the string doesn't start with <a 
+                // Alternatively, just let HTML mode handle tags and text mode handle raw URLs.
+                // Since text mode replaces \n with <br/>, raw URLs would just be text. Let's wrap raw URLs in <a> tags.
+                processedHtml = processedHtml.replace(
+                    /(^|[^"'])(https?:\/\/[^\s<]+)/gi,
+                    (match: string, prefix: string, url: string) => {
+                        // Don't wrap if it's already inside an href
+                        if (prefix === '=' || prefix === '"' || prefix === "'") return match;
+                        const trackingUrl = `${baseUrl}/api/email/track/click?token=${trackingToken}&url=${encodeURIComponent(url)}`;
+                        return `${prefix}<a href="${trackingUrl}">${url}</a>`;
+                    }
+                );
+            }
         }
 
         // 2. Open Tracking (Pixel)

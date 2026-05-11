@@ -20,13 +20,13 @@ export const getContact = async (contactId: string) => {
     whereClause.assigned_to = teamInfo?.userId;
   }
 
-  const data = await prismadb.crm_Contacts.findFirst({
-    where: whereClause,
-    include: {
-      assigned_opportunities: true,
-      assigned_documents: true,
-      assigned_accounts: true,
-    },
-  });
-  return data;
+  try {
+    const data = await prismadb.crm_Contacts.findFirst({
+      where: whereClause
+    });
+    return data;
+  } catch (error) {
+    console.error("GET_CONTACT_ERROR", error);
+    return null;
+  }
 };

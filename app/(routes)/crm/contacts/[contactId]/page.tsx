@@ -35,38 +35,79 @@ const ContactViewPage = async (props: any) => {
   let isSuperAdmin = false;
 
   if (session?.user?.id) {
-    const user = await prismadb.users.findUnique({
-      where: { id: session.user.id },
-      select: { team_role: true, team_id: true, department_id: true, assigned_modules: true }
-    });
-    isSuperAdmin = user?.team_role === 'SUPER_ADMIN' || user?.team_role === 'OWNER' || user?.team_role === 'PLATFORM_ADMIN';
+    try {
+      const user = await prismadb.users.findUnique({
+        where: { id: session.user.id },
+        select: { team_role: true, team_id: true, department_id: true, assigned_modules: true }
+      });
+      isSuperAdmin = user?.team_role === 'SUPER_ADMIN' || user?.team_role === 'OWNER' || user?.team_role === 'PLATFORM_ADMIN';
 
-    if (isSuperAdmin) {
-      permissions = ['*'];
-    } else if (user) {
-      if (user.assigned_modules && user.assigned_modules.length > 0) {
-        permissions = user.assigned_modules;
-      } else {
-        const contextId = user.department_id || user.team_id;
-        const scope = user.department_id ? 'DEPARTMENT' : 'ORGANIZATION';
-        if (contextId && user.team_role) {
-          permissions = await getEffectiveRoleModules(contextId, user.team_role, scope);
+      if (isSuperAdmin) {
+        permissions = ['*'];
+      } else if (user) {
+        if (user.assigned_modules && user.assigned_modules.length > 0) {
+          permissions = user.assigned_modules;
+        } else {
+          const contextId = user.department_id || user.team_id;
+          const scope = user.department_id ? 'DEPARTMENT' : 'ORGANIZATION';
+          if (contextId && user.team_role) {
+            permissions = await getEffectiveRoleModules(contextId, user.team_role, scope);
+          }
         }
       }
+    } catch (e) {
+      console.error("PERMISSIONS_FETCH_ERROR", e);
     }
   }
 
   const hasAccess = (perm: string) => isSuperAdmin || permissions.includes('*') || permissions.includes(perm);
 
   const contact = await getContact(contactId);
-  const crmDataPromise = getAllCrmData();
+  
+  // Conditionally fetch data with strict 5-second timeouts to prevent Nginx 504s on full table scans
+  const withTimeout = (promise: Promise<any>, ms: number = 5000) => {
+    return Promise.race([
+      promise,
+      new Promise<any[]>((resolve) => setTimeout(() => resolve([]), ms))
+    ]);
+  };
 
-  // Conditionally fetch data
-  const opportunities = hasAccess('contacts.detail.opportunities') ? await getOpportunitiesFullByContactId(contactId) : [];
-  const documents = hasAccess('contacts.detail.documents') ? await getDocumentsByContactId(contactId) : [];
-  const accounts = hasAccess('contacts.view') ? await getAccountsByContactId(contactId) : [];
+  const opportunitiesPromise = hasAccess('contacts.detail.opportunities') ? withTimeout(getOpportunitiesFullByContactId(contactId)) : Promise.resolve([]);
+  const documentsPromise = hasAccess('contacts.detail.documents') ? withTimeout(getDocumentsByContactId(contactId)) : Promise.resolve([]);
+  const accountsPromise = hasAccess('accounts.view') ? withTimeout(getAccountsByContactId(contactId)) : Promise.resolve([]);
 
-  const crmData = await crmDataPromise;
+  const [opportunities, documents, accounts] = await Promise.all([opportunitiesPromise, documentsPromise, accountsPromise]);
+
+  // Fast metadata fetch to bypass 2.4MB payload from getAllCrmData
+  let saleTypes = [], saleStages = [], users = [], industries = [], campaigns = [];
+  try {
+    [saleTypes, saleStages, users, industries, campaigns] = await Promise.all([
+      prismadb.crm_Opportunities_Type.findMany({ take: 100 }),
+      prismadb.crm_Opportunities_Sales_Stages.findMany({ take: 100 }),
+      prismadb.users.findMany({ 
+        where: { userStatus: "ACTIVE", team_id: currentUserInfo?.teamId },
+        select: { id: true, name: true, email: true } // DO NOT fetch avatar or massive blobs
+      }),
+      prismadb.crm_Industry_Type.findMany({ take: 100 }),
+      prismadb.crm_campaigns.findMany({ take: 100 })
+    ]);
+  } catch (e) {
+    console.error("METADATA_FETCH_ERROR", e);
+  }
+
+  const crmData = {
+    saleTypes,
+    saleStages,
+    users,
+    industries,
+    campaigns,
+    leads: [],
+    contacts: [],
+    accounts: [],
+    opportunities: [],
+    contracts: [],
+    boards: []
+  };
 
   if (!contact) return <div>Contact not found</div>;
 
