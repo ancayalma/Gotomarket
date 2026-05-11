@@ -24,10 +24,10 @@ export const getContact = async (contactId: string) => {
     where: whereClause,
     include: {
       assigned_opportunities: {
-        select: { id: true, name: true, expected_revenue: true, status: true }
+        select: { id: true, name: true, description: true, next_step: true, budget: true, expected_revenue: true, status: true, close_date: true }
       },
       assigned_documents: {
-        select: { id: true, title: true, document_name: true, document_url: true, document_size: true }
+        select: { id: true, document_name: true, document_file_url: true, document_file_mimeType: true }
       },
       assigned_accounts: {
         select: { id: true, name: true, industry: true }
