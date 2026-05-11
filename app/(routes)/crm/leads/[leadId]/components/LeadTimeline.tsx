@@ -85,8 +85,11 @@ export function LeadTimeline({ leadId, leadEmail, leadName, contactId, accountId
     const onSync = async () => {
         try {
             setSyncing(true);
-            await axios.get("/api/gmail/sync?days=7");
-            await axios.get("/api/microsoft/sync?days=7");
+            // Run both syncs concurrently and don't let one failure stop the other
+            await Promise.allSettled([
+                axios.get("/api/gmail/sync?days=7"),
+                axios.get("/api/microsoft/sync?days=7")
+            ]);
             await mutate();
         } catch (error) {
             console.error("Sync failed", error);
