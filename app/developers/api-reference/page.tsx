@@ -289,7 +289,7 @@ export default function ApiReferencePage() {
                                     codeColor="text-orange-200/80"
                                     routes={[
                                         { method: "GET", path: "/api/v1/messages", desc: "List messages (filter by contact, direction)", tryable: true },
-                                        { method: "POST", path: "/api/v1/messages", desc: "Send outbound message (email delivery)", tryable: true, exampleBody: { to: { email: "jane@shop.com" }, subject: "Order Update", body: "Your order has shipped!", channel: "email" } },
+                                        { method: "POST", path: "/api/v1/messages", desc: "Send outbound message (email delivery)", tryable: true, exampleBody: { to: { email: "jane@shop.com" }, from: { email: "sales@yourdomain.com", name: "Your Store" }, subject: "Order Update", body: "<h1>Shipped!</h1>", isHtml: true, channel: "email" } },
                                         { method: "POST", path: "/api/v1/messages/inbound", desc: "Webhook: push customer replies into CRM", tryable: true, exampleBody: { email: "customer@shop.com", body: "Where is my order?", subject: "Question", metadata: { orderId: "ORD-789" } } },
                                         { method: "GET", path: "/api/v1/messages/[messageId]", desc: "Get message with thread context", tryable: true },
                                         { method: "GET", path: "/api/v1/messages/threads/[threadId]", desc: "Full conversation thread", tryable: true },
