@@ -54,12 +54,41 @@ export async function syncGmailForUser(userId: string, days: number = 7) {
 
         let updatedCount = 0;
         for (const [senderEmail, detail] of Array.from(replyDetails.entries())) {
+            let targetId = null;
+            let targetType = "";
+            let targetFirstName = "";
+            let targetLastName = "";
+            let targetCompany = "";
+            let targetTeamId = "";
+            let targetAccountId = "";
+
+            // First check Leads
             const lead = await prismadb.crm_Leads.findFirst({ where: { email: senderEmail } });
-            if (!lead) continue;
+            if (lead) {
+                targetId = lead.id;
+                targetType = "LEAD";
+                targetFirstName = lead.firstName || "";
+                targetLastName = lead.lastName || "";
+                targetCompany = lead.company || "";
+                targetTeamId = lead.team_id || "";
+                targetAccountId = lead.accountsIDs?.[0] || "";
+            } else {
+                // If no lead, check Contacts
+                const contact = await prismadb.crm_Contacts.findFirst({ where: { email: senderEmail } });
+                if (!contact) continue; // Completely unknown sender, skip
+                
+                targetId = contact.id;
+                targetType = "CONTACT";
+                targetFirstName = contact.first_name || "";
+                targetLastName = contact.last_name || "";
+                targetCompany = ""; // contacts don't have direct company string usually
+                targetTeamId = contact.team_id || "";
+                targetAccountId = contact.assigned_accounts?.[0]?.id || "";
+            }
 
             const existingActivity = await prismadb.crm_Lead_Activities.findFirst({
                 where: {
-                    lead: lead.id,
+                    lead: targetId,
                     type: "reply_received",
                     createdAt: { gte: new Date(Date.now() - 48 * 60 * 60 * 1000) }
                 }
@@ -70,16 +99,17 @@ export async function syncGmailForUser(userId: string, days: number = 7) {
                 if (meta?.threadId === detail.threadId) continue;
             }
 
-            await prismadb.crm_Leads.update({
-                where: { id: lead.id },
-                data: { pipeline_stage: "Engage_Human" as any } as any,
-            });
-
-            await ensureContactForLead(lead.id).catch(() => { });
+            if (targetType === "LEAD") {
+                await prismadb.crm_Leads.update({
+                    where: { id: targetId },
+                    data: { pipeline_stage: "Engage_Human" as any } as any,
+                });
+                await ensureContactForLead(targetId).catch(() => { });
+            }
 
             await prismadb.crm_Lead_Activities.create({
                 data: {
-                    lead: lead.id,
+                    lead: targetId,
                     user: userId,
                     type: "reply_received",
                     metadata: {
@@ -94,9 +124,11 @@ export async function syncGmailForUser(userId: string, days: number = 7) {
 
             // ─── Outreach Intelligence: Match reply → Sentiment → Opportunity ───
             try {
-                // Find the outreach item for this lead
+                // Find the outreach item for this lead/contact
                 const outreachItem = await prismadb.crm_Outreach_Items.findFirst({
-                    where: { lead: lead.id, status: { in: ["SENT", "DELIVERED"] } },
+                    where: targetType === "LEAD" 
+                      ? { lead: targetId, status: { in: ["SENT", "DELIVERED"] } }
+                      : { contact_id: targetId, status: { in: ["SENT", "DELIVERED"] } },
                     orderBy: { sentAt: "desc" },
                     select: { id: true, campaign: true, subject: true, account_id: true, contact_id: true },
                 });
@@ -107,8 +139,8 @@ export async function syncGmailForUser(userId: string, days: number = 7) {
                         detail.snippet || "",
                         {
                             originalSubject: outreachItem.subject || undefined,
-                            leadName: [lead.firstName, lead.lastName].filter(Boolean).join(" "),
-                            leadCompany: lead.company || undefined,
+                            leadName: [targetFirstName, targetLastName].filter(Boolean).join(" "),
+                            leadCompany: targetCompany || undefined,
                         },
                         userId
                     );
@@ -128,16 +160,16 @@ export async function syncGmailForUser(userId: string, days: number = 7) {
                     // Update lead outreach status based on sentiment
                     const newStatus = sentiment.sentiment === "POSITIVE" ? "REPLIED_POSITIVE"
                         : sentiment.sentiment === "NEGATIVE" ? "REPLIED_NEGATIVE" : undefined;
-                    if (newStatus) {
+                    if (newStatus && targetType === "LEAD") {
                         await prismadb.crm_Leads.update({
-                            where: { id: lead.id },
+                            where: { id: targetId },
                             data: { outreach_status: newStatus as any },
                         }).catch(() => { });
                     }
 
                     // POSITIVE: Auto-create opportunity
                     if (sentiment.sentiment === "POSITIVE") {
-                        const accountId = outreachItem.account_id || lead.accountsIDs;
+                        const accountId = outreachItem.account_id || targetAccountId;
                         if (accountId) {
                             const account = await prismadb.crm_Accounts.findUnique({
                                 where: { id: accountId },
@@ -147,25 +179,27 @@ export async function syncGmailForUser(userId: string, days: number = 7) {
                             await prismadb.crm_Opportunities.create({
                                 data: {
                                     v: 1,
-                                    name: `Outreach: ${account?.name || lead.company || "Unknown"}`,
+                                    name: `Outreach: ${account?.name || targetCompany || "Unknown"}`,
                                     account: accountId,
-                                    contact: outreachItem.contact_id || undefined,
+                                    contact: outreachItem.contact_id || (targetType === "CONTACT" ? targetId : undefined),
                                     campaign: outreachItem.campaign || undefined,
-                                    lead_id: lead.id,
+                                    lead_id: targetType === "LEAD" ? targetId : undefined,
                                     assigned_to: userId,
-                                    team_id: lead.team_id || undefined,
+                                    team_id: targetTeamId || undefined,
                                     status: "ACTIVE" as any,
                                     lead_source: "Outreach Campaign",
                                     description: `Auto-created from positive reply. AI reasoning: ${sentiment.reasoning}`,
                                 } as any,
                             });
 
-                            await prismadb.crm_Leads.update({
-                                where: { id: lead.id },
-                                data: { pipeline_stage: "Offering" as any },
-                            }).catch(() => { });
+                            if (targetType === "LEAD") {
+                                await prismadb.crm_Leads.update({
+                                    where: { id: targetId },
+                                    data: { pipeline_stage: "Offering" as any },
+                                }).catch(() => { });
+                            }
 
-                            systemLogger.info(`[SYNC_EMAILS] Created opportunity for lead ${lead.id} (POSITIVE reply)`);
+                            systemLogger.info(`[SYNC_EMAILS] Created opportunity for ${targetType} ${targetId} (POSITIVE reply)`);
                         }
                     }
 
@@ -180,7 +214,7 @@ export async function syncGmailForUser(userId: string, days: number = 7) {
                     }
                 }
             } catch (sentimentErr: any) {
-                systemLogger.warn(`[SYNC_EMAILS] Sentiment analysis failed for lead ${lead.id}: ${sentimentErr?.message}`);
+                systemLogger.warn(`[SYNC_EMAILS] Sentiment analysis failed for ${targetType} ${targetId}: ${sentimentErr?.message}`);
             }
 
             updatedCount++;
@@ -231,12 +265,26 @@ export async function syncOutlookForUser(userId: string, days: number = 7) {
 
         let updatedCount = 0;
         for (const [senderEmail, detail] of Array.from(replyDetails.entries())) {
+            let targetId = null;
+            let targetType = "";
+
+            // First check Leads
             const lead = await prismadb.crm_Leads.findFirst({ where: { email: senderEmail } });
-            if (!lead) continue;
+            if (lead) {
+                targetId = lead.id;
+                targetType = "LEAD";
+            } else {
+                // If no lead, check Contacts
+                const contact = await prismadb.crm_Contacts.findFirst({ where: { email: senderEmail } });
+                if (!contact) continue; // Completely unknown sender, skip
+                
+                targetId = contact.id;
+                targetType = "CONTACT";
+            }
 
             const existingActivity = await prismadb.crm_Lead_Activities.findFirst({
                 where: {
-                    lead: lead.id,
+                    lead: targetId,
                     type: "reply_received",
                     createdAt: { gte: new Date(Date.now() - 48 * 60 * 60 * 1000) }
                 }
@@ -247,16 +295,17 @@ export async function syncOutlookForUser(userId: string, days: number = 7) {
                 if (meta?.threadId === detail.threadId || meta?.messageId === detail.messageId) continue;
             }
 
-            await prismadb.crm_Leads.update({
-                where: { id: lead.id },
-                data: { pipeline_stage: "Engage_Human" as any } as any
-            });
-
-            await ensureContactForLead(lead.id).catch(() => { });
+            if (targetType === "LEAD") {
+                await prismadb.crm_Leads.update({
+                    where: { id: targetId },
+                    data: { pipeline_stage: "Engage_Human" as any } as any
+                });
+                await ensureContactForLead(targetId).catch(() => { });
+            }
 
             await prismadb.crm_Lead_Activities.create({
                 data: {
-                    lead: lead.id,
+                    lead: targetId,
                     user: userId,
                     type: "reply_received",
                     metadata: {
