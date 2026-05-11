@@ -90,8 +90,10 @@ export async function GET(req: NextRequest) {
  * Send an outbound message to a contact or lead.
  * Body: {
  *   to: { contactId?, leadId?, email? },
+ *   from?: { email: string, name?: string },
  *   subject: string,
  *   body: string,
+ *   isHtml?: boolean (default: false),
  *   channel: "email" | "sms" | "note" (default: "note"),
  *   conversation_id?: string (auto-generated if omitted),
  *   metadata?: object
@@ -103,7 +105,7 @@ export async function POST(req: NextRequest) {
 
     try {
         const body = await req.json();
-        const { to, subject, body: messageBody, channel, conversation_id, metadata } = body;
+        const { to, subject, body: messageBody, channel, conversation_id, metadata, from, isHtml } = body;
 
         if (!to || (!to.contactId && !to.leadId && !to.email)) {
             return apiError("VALIDATION_ERROR", "Must provide to.contactId, to.leadId, or to.email", 400);
@@ -179,8 +181,10 @@ export async function POST(req: NextRequest) {
             try {
                 await sendEmail({
                     to: recipientEmail,
+                    from: from ? (from.name ? `${from.name} <${from.email}>` : from.email) : undefined,
                     subject: subject || "New Message",
-                    text: messageBody,
+                    text: isHtml ? "Please view this email in an HTML-compatible client." : messageBody,
+                    html: isHtml ? messageBody : undefined,
                 });
 
                 // Update metadata with delivery status
