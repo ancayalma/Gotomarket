@@ -31,9 +31,14 @@ interface OppsViewProps {
 
 export async function BasicView({ data }: OppsViewProps) {
   //console.log(data, "data");
-  const users = await prismadb.users.findMany({
-    select: { id: true, name: true }
-  });
+  let users: any[] = [];
+  try {
+    users = await prismadb.users.findMany({
+      select: { id: true, name: true }
+    });
+  } catch (error) {
+    console.error("BASICVIEW_USERS_ERROR", error);
+  }
   if (!data) return <div>Opportunity not found</div>;
   return (
     <div className="pb-3 space-y-5">
