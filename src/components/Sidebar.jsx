@@ -3,7 +3,8 @@ const navGroups = [
         label: 'MANDO',
         items: [
             { id: 'dashboard', icon: '▣', label: 'Centro de Mando' },
-            { id: 'pipeline',  icon: '⇒', label: 'Pipeline' },
+            { id: 'funnel',    icon: '🔻', label: 'Embudo de Mercado' },
+            { id: 'pipeline',  icon: '⇒', label: 'Pipeline B2B' },
             { id: 'roadmap',   icon: '◈', label: 'Roadmap 90d' },
         ],
     },
@@ -36,7 +37,6 @@ const navGroups = [
 export default function Sidebar({ vistaActual, cambiarVista, tema, toggleTema }) {
     return (
         <nav className="sidebar">
-            {/* Logo */}
             <div className="sidebar-logo">
                 <div className="sidebar-logo-mark">
                     <div className="sidebar-logo-icon">🐸</div>
@@ -44,10 +44,9 @@ export default function Sidebar({ vistaActual, cambiarVista, tema, toggleTema })
                         <div className="sidebar-logo-name">Grenoucerie</div>
                     </div>
                 </div>
-                <div className="sidebar-logo-tag">Operations Center v4.0</div>
+                <div className="sidebar-logo-tag">Marketing CMD v5.0</div>
             </div>
 
-            {/* Nav */}
             <div className="sidebar-nav">
                 {navGroups.map((group) => (
                     <div key={group.label}>
@@ -110,24 +109,23 @@ export default function Sidebar({ vistaActual, cambiarVista, tema, toggleTema })
                 ))}
             </div>
 
-            {/* Status footer */}
             <div className="sidebar-status">
                 <div className="status-row">
                     <span className="status-dot" />
-                    <span>SECRE online</span>
+                    <span>CMO Panel activo</span>
                 </div>
                 <div className="sidebar-kpis">
                     <div className="sidebar-kpi-row">
-                        <span>Revenue YTD</span>
-                        <span className="sidebar-kpi-val">€60K/m</span>
+                        <span>Revenue/mes</span>
+                        <span className="sidebar-kpi-val">€60K</span>
                     </div>
                     <div className="sidebar-kpi-row">
                         <span>Pipeline</span>
                         <span className="sidebar-kpi-val" style={{ color: 'var(--alert)' }}>0 leads</span>
                     </div>
                     <div className="sidebar-kpi-row">
-                        <span>Clientes B2B</span>
-                        <span className="sidebar-kpi-val">~15</span>
+                        <span>Run rate</span>
+                        <span className="sidebar-kpi-val">€720K</span>
                     </div>
                 </div>
                 <div style={{
@@ -144,7 +142,6 @@ export default function Sidebar({ vistaActual, cambiarVista, tema, toggleTema })
                     "La carne más saludable del mundo"
                 </div>
 
-                {/* Enlace a plataforma CRM/WhatsApp */}
                 <a
                     href="https://grenoucerie-platform.vercel.app"
                     target="_blank"
@@ -170,7 +167,6 @@ export default function Sidebar({ vistaActual, cambiarVista, tema, toggleTema })
                     <span>↗</span>
                 </a>
 
-                {/* Selector de Tema — pie del sidebar */}
                 <div style={{ marginTop: '12px' }}>
                     <button
                         onClick={toggleTema}
