@@ -59,14 +59,36 @@ const ContactViewPage = async (props: any) => {
   const hasAccess = (perm: string) => isSuperAdmin || permissions.includes('*') || permissions.includes(perm);
 
   const contact = await getContact(contactId);
-  const crmDataPromise = getAllCrmData();
-
+  
   // Conditionally fetch data
-  const opportunities = hasAccess('contacts.detail.opportunities') ? await getOpportunitiesFullByContactId(contactId) : [];
-  const documents = hasAccess('contacts.detail.documents') ? await getDocumentsByContactId(contactId) : [];
-  const accounts = hasAccess('contacts.view') ? await getAccountsByContactId(contactId) : [];
+  const opportunitiesPromise = hasAccess('contacts.detail.opportunities') ? getOpportunitiesFullByContactId(contactId) : Promise.resolve([]);
+  const documentsPromise = hasAccess('contacts.detail.documents') ? getDocumentsByContactId(contactId) : Promise.resolve([]);
+  const accountsPromise = hasAccess('contacts.view') ? getAccountsByContactId(contactId) : Promise.resolve([]);
 
-  const crmData = await crmDataPromise;
+  const [opportunities, documents, accounts] = await Promise.all([opportunitiesPromise, documentsPromise, accountsPromise]);
+
+  // Fast metadata fetch to bypass 2.4MB payload from getAllCrmData
+  const [saleTypes, saleStages, users, industries, campaigns] = await Promise.all([
+    prismadb.crm_Opportunities_Type.findMany({}),
+    prismadb.crm_Opportunities_Sales_Stages.findMany({}),
+    prismadb.users.findMany({ where: { userStatus: "ACTIVE", team_id: currentUserInfo?.teamId } }),
+    prismadb.crm_Industry_Type.findMany({}),
+    prismadb.crm_campaigns.findMany({})
+  ]);
+
+  const crmData = {
+    saleTypes,
+    saleStages,
+    users,
+    industries,
+    campaigns,
+    leads: [],
+    contacts: [],
+    accounts: [],
+    opportunities: [],
+    contracts: [],
+    boards: []
+  };
 
   if (!contact) return <div>Contact not found</div>;
 
