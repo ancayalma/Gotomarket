@@ -68,16 +68,21 @@ const ContactViewPage = async (props: any) => {
   const [opportunities, documents, accounts] = await Promise.all([opportunitiesPromise, documentsPromise, accountsPromise]);
 
   // Fast metadata fetch to bypass 2.4MB payload from getAllCrmData
-  const [saleTypes, saleStages, users, industries, campaigns] = await Promise.all([
-    prismadb.crm_Opportunities_Type.findMany({ take: 100 }),
-    prismadb.crm_Opportunities_Sales_Stages.findMany({ take: 100 }),
-    prismadb.users.findMany({ 
-      where: { userStatus: "ACTIVE", team_id: currentUserInfo?.teamId },
-      select: { id: true, name: true, email: true } // DO NOT fetch avatar or massive blobs
-    }),
-    prismadb.crm_Industry_Type.findMany({ take: 100 }),
-    prismadb.crm_campaigns.findMany({ take: 100 })
-  ]);
+  let saleTypes = [], saleStages = [], users = [], industries = [], campaigns = [];
+  try {
+    [saleTypes, saleStages, users, industries, campaigns] = await Promise.all([
+      prismadb.crm_Opportunities_Type.findMany({ take: 100 }),
+      prismadb.crm_Opportunities_Sales_Stages.findMany({ take: 100 }),
+      prismadb.users.findMany({ 
+        where: { userStatus: "ACTIVE", team_id: currentUserInfo?.teamId },
+        select: { id: true, name: true, email: true } // DO NOT fetch avatar or massive blobs
+      }),
+      prismadb.crm_Industry_Type.findMany({ take: 100 }),
+      prismadb.crm_campaigns.findMany({ take: 100 })
+    ]);
+  } catch (e) {
+    console.error("METADATA_FETCH_ERROR", e);
+  }
 
   const crmData = {
     saleTypes,
