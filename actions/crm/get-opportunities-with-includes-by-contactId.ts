@@ -7,6 +7,7 @@ export const getOpportunitiesFullByContactId = async (contactId: string) => {
         has: contactId,
       },
     },
+    take: 100,
     select: {
       id: true,
       name: true,

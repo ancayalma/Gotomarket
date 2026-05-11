@@ -25,6 +25,7 @@ export const getAccountsByContactId = async (contactId: string) => {
 
   const data = await prismadb.crm_Accounts.findMany({
     where: whereClause,
+    take: 100,
     select: {
       id: true,
       name: true,

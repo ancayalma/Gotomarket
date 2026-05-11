@@ -7,6 +7,7 @@ export const getDocumentsByContactId = async (contactId: string) => {
         has: contactId,
       },
     },
+    take: 100,
     select: {
       id: true,
       document_name: true,
