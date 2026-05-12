@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const URL_DEFAULT = ''   // se rellena tras el deploy en Railway
+const URL_DEFAULT = 'https://brightbean-studio-web-production-f14e.up.railway.app'   // se rellena tras el deploy en Railway
 
 function useConexion(url) {
     const [estado, setEstado] = useState(url ? 'comprobando' : 'sin-url')
