@@ -1,363 +1,340 @@
 import { useState, useEffect } from 'react'
 
-// ─── Estado de conexión de la herramienta ─────────────────────────────────────
+const URL_DEFAULT = ''   // se rellena tras el deploy en Railway
+
 function useConexion(url) {
-    const [estado, setEstado] = useState('comprobando') // 'online' | 'offline' | 'comprobando'
-
+    const [estado, setEstado] = useState(url ? 'comprobando' : 'sin-url')
     useEffect(() => {
+        if (!url) { setEstado('sin-url'); return }
+        setEstado('comprobando')
         const img = new Image()
-        const timeout = setTimeout(() => setEstado('offline'), 3000)
-
-        img.onload = () => {
-            clearTimeout(timeout)
-            setEstado('online')
-        }
-        img.onerror = () => {
-            clearTimeout(timeout)
-            setEstado('offline')
-        }
+        const timeout = setTimeout(() => setEstado('offline'), 4000)
+        img.onload  = () => { clearTimeout(timeout); setEstado('online') }
+        img.onerror = () => { clearTimeout(timeout); setEstado('offline') }
         img.src = `${url}/favicon.ico?t=${Date.now()}`
-
         return () => clearTimeout(timeout)
     }, [url])
-
     return estado
 }
 
-// ─── Paso de instalación ──────────────────────────────────────────────────────
-function PasoInstalacion({ numero, titulo, comandos, nota }) {
-    return (
-        <div style={{
-            padding: '14px 16px',
-            background: 'var(--bg-elevated)',
-            borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--border)',
-            marginBottom: '10px',
-        }}>
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                marginBottom: comandos ? '10px' : 0,
-            }}>
-                <span style={{
-                    width: '22px',
-                    height: '22px',
-                    borderRadius: '50%',
-                    background: 'var(--brand-glow)',
-                    border: '1px solid var(--border-brand)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    color: 'var(--brand)',
-                    fontFamily: 'DM Mono, monospace',
-                    fontWeight: 700,
-                    flexShrink: 0,
-                }}>
-                    {numero}
-                </span>
-                <span style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: 'var(--text-heading)',
-                    fontFamily: 'Space Grotesk, sans-serif',
-                }}>
-                    {titulo}
-                </span>
-            </div>
-            {comandos && comandos.map((cmd, i) => (
-                <div key={i} style={{
-                    padding: '8px 12px',
-                    background: 'var(--bg-base)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '4px',
-                    fontFamily: 'DM Mono, monospace',
-                    fontSize: '11px',
-                    color: 'var(--pistacho)',
-                    marginBottom: '4px',
-                    letterSpacing: '0.2px',
-                    userSelect: 'all',
-                }}>
-                    $ {cmd}
-                </div>
-            ))}
-            {nota && (
-                <div style={{
-                    marginTop: '8px',
-                    fontSize: '10.5px',
-                    color: 'var(--text-muted)',
-                    fontStyle: 'italic',
-                }}>
-                    💡 {nota}
-                </div>
-            )}
-        </div>
-    )
-}
-
-// ─── Panel principal BrightBean Studio ───────────────────────────────────────
-const URL_BRIGHTBEAN = 'http://localhost:8001'
+const REDES = [
+    { icon: '📸', nombre: 'Instagram', acciones: 'Publicar, Comentarios, DMs, Insights' },
+    { icon: '💼', nombre: 'LinkedIn', acciones: 'Publicar (personal y empresa), Insights' },
+    { icon: '🎵', nombre: 'TikTok', acciones: 'Publicar, Insights' },
+    { icon: '📘', nombre: 'Facebook', acciones: 'Publicar, Comentarios, DMs, Insights' },
+    { icon: '▶️', nombre: 'YouTube', acciones: 'Publicar, Comentarios, Insights' },
+    { icon: '📌', nombre: 'Pinterest', acciones: 'Publicar, Insights' },
+    { icon: '🧵', nombre: 'Threads', acciones: 'Publicar, Comentarios, Insights' },
+    { icon: '🦋', nombre: 'Bluesky', acciones: 'Publicar, Comentarios' },
+]
 
 export default function BrightBean() {
-    const conexion = useConexion(URL_BRIGHTBEAN)
-    const [pestana, setPestana] = useState('instalacion') // 'instalacion' | 'app'
+    const [url, setUrl] = useState(
+        () => localStorage.getItem('brightbean-url') || URL_DEFAULT
+    )
+    const [editando, setEditando] = useState(false)
+    const [urlDraft, setUrlDraft] = useState(url)
+    const conexion = useConexion(url)
 
-    const online = conexion === 'online'
+    const guardarUrl = () => {
+        const limpia = urlDraft.replace(/\/$/, '')
+        setUrl(limpia)
+        localStorage.setItem('brightbean-url', limpia)
+        setEditando(false)
+    }
+
+    const estadoColor = {
+        online: 'var(--ok)',
+        offline: 'var(--alert)',
+        comprobando: 'var(--warn)',
+        'sin-url': 'var(--text-faint)',
+    }[conexion]
+
+    const estadoLabel = {
+        online: 'Activo',
+        offline: 'Sin conexion',
+        comprobando: 'Comprobando...',
+        'sin-url': 'URL no configurada',
+    }[conexion]
 
     return (
         <div className="fade-in">
 
-            {/* ── Header ── */}
+            {/* Header */}
             <div className="page-header">
                 <div className="page-header-inner">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                         <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '10px',
+                            width: '40px', height: '40px', borderRadius: '10px',
                             background: 'linear-gradient(135deg, #10b981, #059669)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '20px',
-                        }}>
-                            📱
-                        </div>
+                        }}>📱</div>
                         <div>
                             <h1 className="page-title">BrightBean Studio</h1>
                             <div className="page-subtitle">
-                                Gestión de redes sociales · Alternativa open-source a Buffer / SocialPilot
+                                Redes sociales · Instagram · LinkedIn · TikTok · Facebook · YouTube · Pinterest
                             </div>
                         </div>
                     </div>
-                    {/* Estado de conexión */}
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px 12px',
-                        background: 'var(--bg-elevated)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius-sm)',
-                        fontSize: '11px',
-                        fontFamily: 'DM Mono, monospace',
-                    }}>
-                        <span style={{
-                            width: '7px', height: '7px',
-                            borderRadius: '50%',
-                            background: online ? 'var(--ok)' : conexion === 'comprobando' ? 'var(--warn)' : 'var(--alert)',
-                            boxShadow: online ? '0 0 6px var(--ok)' : 'none',
-                        }} />
-                        <span style={{ color: online ? 'var(--ok)' : 'var(--text-muted)' }}>
-                            {online ? 'Servidor activo' : conexion === 'comprobando' ? 'Comprobando…' : 'Servidor inactivo'}
-                        </span>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {/* Estado */}
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '6px',
+                            padding: '6px 12px',
+                            background: 'var(--bg-elevated)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '11px',
+                            fontFamily: 'DM Mono, monospace',
+                        }}>
+                            <span style={{
+                                width: '7px', height: '7px', borderRadius: '50%',
+                                background: estadoColor,
+                                boxShadow: conexion === 'online' ? `0 0 6px ${estadoColor}` : 'none',
+                            }} />
+                            <span style={{ color: estadoColor }}>{estadoLabel}</span>
+                        </div>
+
+                        {/* Editar URL */}
+                        <button
+                            onClick={() => { setUrlDraft(url); setEditando(true) }}
+                            style={{
+                                padding: '6px 10px',
+                                background: 'transparent',
+                                border: '1px solid var(--border)',
+                                borderRadius: 'var(--radius-sm)',
+                                color: 'var(--text-muted)',
+                                fontSize: '11px',
+                                fontFamily: 'DM Mono, monospace',
+                                cursor: 'pointer',
+                            }}
+                            title="Cambiar URL del servidor"
+                        >⚙ URL</button>
                     </div>
                 </div>
             </div>
 
-            {/* ── Pestañas ── */}
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
-                {[
-                    { id: 'instalacion', label: '⚙ Instalación', disabled: false },
-                    { id: 'app', label: '🚀 Abrir herramienta', disabled: !online },
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => !tab.disabled && setPestana(tab.id)}
-                        style={{
+            {/* Modal editar URL */}
+            {editando && (
+                <div style={{
+                    marginBottom: '16px',
+                    padding: '16px',
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-brand)',
+                    borderRadius: 'var(--radius-md)',
+                }}>
+                    <div style={{
+                        fontSize: '12px', fontWeight: 600,
+                        color: 'var(--text-heading)',
+                        fontFamily: 'Space Grotesk, sans-serif',
+                        marginBottom: '10px',
+                    }}>URL de BrightBean Studio</div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <input
+                            type="text"
+                            value={urlDraft}
+                            onChange={e => setUrlDraft(e.target.value)}
+                            placeholder="https://brightbean-studio-xxx.up.railway.app"
+                            onKeyDown={e => e.key === 'Enter' && guardarUrl()}
+                            style={{
+                                flex: 1,
+                                padding: '8px 12px',
+                                background: 'var(--bg-base)',
+                                border: '1px solid var(--border)',
+                                borderRadius: 'var(--radius-sm)',
+                                color: 'var(--text-heading)',
+                                fontFamily: 'DM Mono, monospace',
+                                fontSize: '12px',
+                                outline: 'none',
+                            }}
+                        />
+                        <button onClick={guardarUrl} style={{
                             padding: '8px 16px',
+                            background: 'var(--brand-glow)',
+                            border: '1px solid var(--border-brand)',
                             borderRadius: 'var(--radius-sm)',
-                            border: `1px solid ${pestana === tab.id ? 'var(--border-brand)' : 'var(--border)'}`,
-                            background: pestana === tab.id ? 'var(--brand-glow)' : 'transparent',
-                            color: pestana === tab.id ? 'var(--brand)' : tab.disabled ? 'var(--text-faint)' : 'var(--text-muted)',
+                            color: 'var(--brand)',
                             fontSize: '12px',
-                            cursor: tab.disabled ? 'not-allowed' : 'pointer',
                             fontFamily: 'DM Mono, monospace',
-                            transition: 'all 0.2s',
-                        }}
-                    >
-                        {tab.label}
-                        {tab.id === 'app' && !online && (
-                            <span style={{ marginLeft: '6px', fontSize: '9px', color: 'var(--alert)' }}>
-                                (requiere instalación)
-                            </span>
-                        )}
-                    </button>
-                ))}
-            </div>
-
-            {/* ── Contenido: Instalación ── */}
-            {pestana === 'instalacion' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '16px' }}>
-
-                    {/* Pasos de instalación */}
-                    <div>
-                        <div className="card" style={{ marginBottom: '16px' }}>
-                            <div className="section-label">¿Qué es BrightBean Studio?</div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                                Plataforma open-source para gestionar todas tus redes sociales desde un solo lugar.
-                                Programa publicaciones, aprueba contenido y analiza resultados en{' '}
-                                <strong style={{ color: 'var(--text-heading)' }}>
-                                    Instagram, LinkedIn, TikTok, Facebook, YouTube, Pinterest y más
-                                </strong>
-                                {' '}— sin límite de cuentas ni pago mensual.
-                            </div>
-                            <div style={{
-                                marginTop: '12px',
-                                display: 'flex',
-                                gap: '8px',
-                                flexWrap: 'wrap',
-                            }}>
-                                {['Instagram', 'LinkedIn', 'TikTok', 'Facebook', 'YouTube', 'Pinterest', 'Threads', 'Bluesky'].map(red => (
-                                    <span key={red} style={{
-                                        padding: '3px 8px',
-                                        background: 'var(--brand-glow)',
-                                        border: '1px solid var(--border-brand)',
-                                        borderRadius: '20px',
-                                        fontSize: '10px',
-                                        color: 'var(--brand)',
-                                        fontFamily: 'DM Mono, monospace',
-                                    }}>
-                                        {red}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="section-label" style={{ marginBottom: '12px' }}>
-                            Instalación paso a paso (sin Docker)
-                        </div>
-
-                        <PasoInstalacion
-                            numero="1"
-                            titulo="Instalar Python 3.12 (si no lo tienes)"
-                            nota="Descarga desde python.org → Windows installer. Marca 'Add Python to PATH' al instalar."
-                        />
-                        <PasoInstalacion
-                            numero="2"
-                            titulo="Descargar el proyecto"
-                            comandos={[
-                                'git clone https://github.com/brightbeanxyz/brightbean-studio.git',
-                                'cd brightbean-studio',
-                                'copy .env.example .env',
-                            ]}
-                            nota="Si no tienes Git, también puedes descargar el ZIP desde GitHub."
-                        />
-                        <PasoInstalacion
-                            numero="3"
-                            titulo="Configurar base de datos (SQLite — sin instalar nada)"
-                            nota="Abre el archivo .env con el Bloc de Notas y cambia DATABASE_URL=sqlite:///db.sqlite3"
-                        />
-                        <PasoInstalacion
-                            numero="4"
-                            titulo="Instalar dependencias y arrancar"
-                            comandos={[
-                                'python -m venv .venv',
-                                '.venv\\Scripts\\activate',
-                                'pip install -r requirements.txt',
-                                'python manage.py migrate',
-                                'python manage.py createsuperuser',
-                                'python manage.py runserver',
-                            ]}
-                        />
-                        <div style={{
-                            padding: '12px 16px',
-                            background: 'var(--ok-bg)',
-                            border: '1px solid rgba(74,222,128,0.2)',
+                            cursor: 'pointer',
+                        }}>Guardar</button>
+                        <button onClick={() => setEditando(false)} style={{
+                            padding: '8px 12px',
+                            background: 'transparent',
+                            border: '1px solid var(--border)',
                             borderRadius: 'var(--radius-sm)',
-                            fontSize: '11px',
-                            color: 'var(--ok)',
+                            color: 'var(--text-muted)',
+                            fontSize: '12px',
                             fontFamily: 'DM Mono, monospace',
-                        }}>
-                            ✓ Una vez instalado, visita{' '}
-                            <a href="http://localhost:8000" target="_blank" rel="noreferrer"
-                               style={{ color: 'var(--brand)' }}>
-                                http://localhost:8000
-                            </a>
-                            {' '}e inicia sesión con tu usuario creado.
-                        </div>
+                            cursor: 'pointer',
+                        }}>Cancelar</button>
                     </div>
+                    <div style={{
+                        marginTop: '8px',
+                        fontSize: '10.5px',
+                        color: 'var(--text-faint)',
+                        fontFamily: 'DM Mono, monospace',
+                    }}>
+                        Tras el deploy en Railway, copia la URL publica del servicio brightbean-studio-web aqui.
+                    </div>
+                </div>
+            )}
 
-                    {/* Info lateral */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div className="card card-sm">
-                            <div className="section-label">Para qué lo usarás</div>
+            {/* Sin URL configurada */}
+            {!url && !editando && (
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 320px',
+                    gap: '16px',
+                }}>
+                    <div className="card">
+                        <div style={{
+                            padding: '24px',
+                            textAlign: 'center',
+                            color: 'var(--text-muted)',
+                        }}>
+                            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📱</div>
+                            <div style={{
+                                fontSize: '15px', fontWeight: 600,
+                                color: 'var(--text-heading)',
+                                fontFamily: 'Space Grotesk, sans-serif',
+                                marginBottom: '8px',
+                            }}>BrightBean Studio desplegado en Railway</div>
+                            <div style={{ fontSize: '12px', marginBottom: '20px', lineHeight: 1.6 }}>
+                                El deploy esta en curso. Cuando Railway termine,<br/>
+                                copia la URL publica del servicio y configura abajo.
+                            </div>
+                            <button
+                                onClick={() => { setUrlDraft(''); setEditando(true) }}
+                                style={{
+                                    padding: '10px 24px',
+                                    background: 'var(--brand-glow)',
+                                    border: '1px solid var(--border-brand)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    color: 'var(--brand)',
+                                    fontSize: '12px',
+                                    fontFamily: 'DM Mono, monospace',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                }}
+                            >Configurar URL de Railway</button>
+                        </div>
+
+                        <div style={{
+                            marginTop: '16px',
+                            padding: '12px 16px',
+                            background: 'var(--bg-elevated)',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--border)',
+                        }}>
+                            <div className="section-label" style={{ marginBottom: '10px' }}>
+                                Pasos tras el deploy
+                            </div>
                             {[
-                                { icono: '📅', texto: 'Programar posts para Instagram, LinkedIn y TikTok de Grenoucerie' },
-                                { icono: '✅', texto: 'Aprobar contenido antes de publicar' },
-                                { icono: '📊', texto: 'Ver qué contenidos funcionan mejor' },
-                                { icono: '🌍', texto: 'Gestionar cuentas de España Y Francia desde un mismo lugar' },
-                                { icono: '🤖', texto: 'Integrar con tus flujos de IA para contenido automático' },
-                            ].map((item, i) => (
+                                'Railway termina el build (~3-5 min)',
+                                'Ve a tu proyecto en railway.com',
+                                'Copia la URL publica del servicio brightbean-studio-web',
+                                'Pegala en el boton "Configurar URL" de arriba',
+                                'Crea tu cuenta de admin en /setup',
+                            ].map((paso, i) => (
                                 <div key={i} style={{
-                                    display: 'flex',
-                                    gap: '10px',
-                                    padding: '8px 0',
+                                    display: 'flex', gap: '10px',
+                                    padding: '7px 0',
                                     borderBottom: i < 4 ? '1px solid var(--border)' : 'none',
                                     fontSize: '11.5px',
                                     color: 'var(--text-muted)',
-                                    lineHeight: 1.4,
                                 }}>
-                                    <span style={{ flexShrink: 0 }}>{item.icono}</span>
-                                    <span>{item.texto}</span>
+                                    <span style={{
+                                        flexShrink: 0,
+                                        width: '18px', height: '18px',
+                                        borderRadius: '50%',
+                                        background: 'var(--brand-glow)',
+                                        border: '1px solid var(--border-brand)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '10px', color: 'var(--brand)',
+                                        fontFamily: 'DM Mono, monospace', fontWeight: 700,
+                                    }}>{i + 1}</span>
+                                    <span>{paso}</span>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="card card-sm">
-                            <div className="section-label">Alternativas que reemplaza</div>
-                            {[
-                                { nombre: 'Buffer', precio: '$60/mes' },
-                                { nombre: 'SocialPilot', precio: '$86/mes' },
-                                { nombre: 'Sendible', precio: '$89/mes' },
-                                { nombre: 'ContentStudio', precio: '$49/mes' },
-                            ].map((alt, i) => (
-                                <div key={i} style={{
+                        <div style={{ marginTop: '12px' }}>
+                            <a
+                                href="https://railway.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
                                     display: 'flex',
+                                    alignItems: 'center',
                                     justifyContent: 'space-between',
-                                    padding: '7px 0',
-                                    borderBottom: i < 3 ? '1px solid var(--border)' : 'none',
+                                    padding: '10px 14px',
+                                    background: 'rgba(74,124,63,0.08)',
+                                    border: '1px solid rgba(74,124,63,0.25)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    color: 'var(--brand)',
                                     fontSize: '11px',
+                                    fontFamily: 'DM Mono, monospace',
+                                    textDecoration: 'none',
+                                }}
+                            >
+                                <span>⬡ Ver proyecto en Railway</span>
+                                <span>↗</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Panel lateral: redes */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div className="card card-sm">
+                            <div className="section-label">Redes conectables</div>
+                            {REDES.map((red, i) => (
+                                <div key={i} style={{
+                                    display: 'flex', gap: '10px',
+                                    padding: '8px 0',
+                                    borderBottom: i < REDES.length - 1 ? '1px solid var(--border)' : 'none',
                                 }}>
-                                    <span style={{ color: 'var(--text-muted)' }}>{alt.nombre}</span>
-                                    <span style={{
-                                        fontFamily: 'DM Mono, monospace',
-                                        fontSize: '10px',
-                                        color: 'var(--alert)',
-                                        textDecoration: 'line-through',
-                                    }}>{alt.precio}</span>
+                                    <span style={{ flexShrink: 0, fontSize: '14px' }}>{red.icon}</span>
+                                    <div>
+                                        <div style={{
+                                            fontSize: '11px', fontWeight: 600,
+                                            color: 'var(--text-heading)',
+                                            fontFamily: 'Space Grotesk, sans-serif',
+                                        }}>{red.nombre}</div>
+                                        <div style={{
+                                            fontSize: '10px', color: 'var(--text-faint)',
+                                            fontFamily: 'DM Mono, monospace',
+                                        }}>{red.acciones}</div>
+                                    </div>
                                 </div>
                             ))}
-                            <div style={{
-                                marginTop: '10px',
-                                padding: '8px',
-                                background: 'var(--brand-glow)',
-                                borderRadius: 'var(--radius-sm)',
-                                border: '1px solid var(--border-brand)',
-                                textAlign: 'center',
-                                fontSize: '12px',
-                                color: 'var(--brand)',
-                                fontWeight: 700,
-                                fontFamily: 'Space Grotesk, sans-serif',
-                            }}>
-                                BrightBean Studio → €0/mes
-                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ── Contenido: App (iframe) ── */}
-            {pestana === 'app' && online && (
-                <div style={{ position: 'relative' }}>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        marginBottom: '8px',
-                    }}>
+            {/* App activa via iframe */}
+            {url && !editando && (
+                <div>
+                    {conexion === 'offline' && (
+                        <div style={{
+                            marginBottom: '12px',
+                            padding: '10px 14px',
+                            background: 'rgba(239,68,68,0.08)',
+                            border: '1px solid rgba(239,68,68,0.25)',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '11px',
+                            color: 'var(--alert)',
+                            fontFamily: 'DM Mono, monospace',
+                        }}>
+                            ✕ No se puede conectar con {url} — verifica que Railway este activo
+                        </div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                         <a
-                            href={URL_BRIGHTBEAN}
+                            href={url}
                             target="_blank"
                             rel="noreferrer"
                             style={{
@@ -370,22 +347,20 @@ export default function BrightBean() {
                                 fontFamily: 'DM Mono, monospace',
                                 textDecoration: 'none',
                             }}
-                        >
-                            ↗ Abrir en pestaña nueva
-                        </a>
+                        >↗ Abrir en pestana nueva</a>
                     </div>
                     <iframe
-                        src={URL_BRIGHTBEAN}
+                        src={url}
                         title="BrightBean Studio"
                         style={{
                             width: '100%',
-                            height: 'calc(100vh - 240px)',
-                            minHeight: '500px',
+                            height: 'calc(100vh - 220px)',
+                            minHeight: '520px',
                             border: '1px solid var(--border)',
                             borderRadius: 'var(--radius-md)',
                             background: 'var(--bg-card)',
                         }}
-                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation"
                     />
                 </div>
             )}
