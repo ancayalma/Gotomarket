@@ -1,0 +1,124 @@
+import { NextResponse } from "next/server";
+import { prismadb } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
+import NewTaskFromCRMEmail from "@/emails/NewTaskFromCRM";
+import NewTaskFromCRMToWatchersEmail from "@/emails/NewTaskFromCRMToWatchers";
+import sendEmail from "@/lib/sendmail";
+import { render } from "@react-email/render";
+import { systemLogger } from "@/lib/logger";
+
+//Create new task from CRM in project route
+export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+  const body = await req.json();
+  const { title, user, priority, content, account, dueDateAt } = body;
+
+  if (!session) {
+    return new NextResponse("Unauthenticated", { status: 401 });
+  }
+
+  if (!title || !user || !priority || !content || !account) {
+    return new NextResponse("Missing one of the task data ", { status: 400 });
+  }
+
+  try {
+    const task = await prismadb.crm_Accounts_Tasks.create({
+      data: {
+        v: 0,
+        priority: priority,
+        title: title,
+        content,
+        account,
+        dueDateAt,
+        createdBy: user,
+        updatedBy: user,
+        user: user,
+        taskStatus: "ACTIVE",
+      },
+    });
+
+    //Notification to user who is not a task creator or Account watcher
+    if (user !== session.user.id) {
+      try {
+        const notifyRecipient = await prismadb.users.findUnique({
+          where: { id: user },
+        });
+
+        //console.log(notifyRecipient, "notifyRecipient");
+
+        const emailHtml = await render(
+          NewTaskFromCRMEmail({
+            taskFromUser: session.user.name!,
+            username: notifyRecipient?.name!,
+            userLanguage: "en",
+            taskData: task,
+          })
+        );
+
+        await sendEmail({
+          from: process.env.EMAIL_FROM,
+          to: notifyRecipient?.email!,
+          subject: `New task - ${title}.`,
+          text: `New task assigned from ${session.user.name}: ${title}`,
+          html: emailHtml,
+        });
+        //console.log("Email sent to user: ", notifyRecipient?.email!);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    //Notification to user who are account watchers
+    try {
+      const emailRecipients = await prismadb.users.findMany({
+        where: {
+          //Send to all users watching the board except the user who created the comment
+          id: {
+            not: session.user.id,
+          },
+          watching_accountsIDs: {
+            has: account,
+          },
+        },
+      });
+      //Create notifications for every user watching the specific account except the user who created the task
+      for (const userID of emailRecipients) {
+        const user = await prismadb.users.findUnique({
+          where: {
+            id: userID.id,
+          },
+        });
+        console.log("Send email to user: ", user?.email!);
+        const emailHtml = await render(
+          NewTaskFromCRMToWatchersEmail({
+            taskFromUser: session.user.name!,
+            username: user?.name!,
+            userLanguage: "en",
+            taskData: task,
+          })
+        );
+
+        await sendEmail({
+          from: process.env.EMAIL_FROM,
+          to: user?.email!,
+          subject: `New task - ${title}.`,
+          text: `New task created by ${session.user.name}: ${title}`,
+          html: emailHtml,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+    import("@/actions/quests/add-raw-xp")
+      .then((m) => m.addRawXP({ userId: session.user.id, xpAmount: 2, reason: "Created Account Task" }))
+      .catch((e) => systemLogger.warn(`[CREATE_TASK_GAMIFICATION] Failed to award XP: ${e?.message}`));
+
+    return NextResponse.json(task);
+  } catch (error) {
+    systemLogger.error("[NEW_BOARD_POST]", error);
+    return new NextResponse("Initial error", { status: 500 });
+  }
+}

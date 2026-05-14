@@ -1,0 +1,96 @@
+import React, { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import Container from "../../components/ui/Container";
+import SuspenseLoading from "@/components/loadings/suspense";
+import { prismadb } from "@/lib/prisma";
+import { FormSubmissionsView } from "./components/FormSubmissionsView";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const FormSubmissionsPage = async ({ params, searchParams }: { params: Promise<{}>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+        redirect("/");
+    }
+
+    const teamId = (session.user as any).team_id;
+    const userId = session.user.id;
+
+    const searchParamsObj = await searchParams;
+    const formFilter = typeof searchParamsObj.form === 'string' && searchParamsObj.form !== 'all' ? searchParamsObj.form : undefined;
+
+    // Fetch form submissions with form info
+    // Filter by visibility: PUBLIC forms show to all, PRIVATE forms only to creator
+    const submissions = teamId ? await (prismadb as any).formSubmission.findMany({
+        where: {
+            team_id: teamId,
+            ...(formFilter ? { form_id: formFilter } : {}),
+            form: {
+                OR: [
+                    { visibility: "PUBLIC" },
+                    { visibility: "PRIVATE", created_by: userId },
+                ],
+            },
+        },
+        include: {
+            form: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    visibility: true,
+                    created_by: true,
+                },
+            },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+    }) : [];
+
+    // Fetch forms for filter (only forms user can see submissions for)
+    const forms = teamId ? await (prismadb as any).form.findMany({
+        where: {
+            team_id: teamId,
+            OR: [
+                { visibility: "PUBLIC" },
+                { visibility: "PRIVATE", created_by: userId },
+            ],
+        },
+        select: {
+            id: true,
+            name: true,
+            slug: true,
+            visibility: true,
+        },
+        orderBy: { name: "asc" },
+    }) : [];
+
+    return (
+        <Container
+            title="Form Submissions"
+            description="View and manage form submissions from your website forms"
+        >
+            <div className="mb-4">
+                <Link href={`/messages`}>
+                    <Button variant="ghost" size="sm" className="gap-2">
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to Messages
+                    </Button>
+                </Link>
+            </div>
+            <Suspense fallback={<SuspenseLoading />}>
+                <FormSubmissionsView
+                    submissions={submissions}
+                    forms={forms}
+                    initialFormId={typeof (await searchParams).form === 'string' ? (await searchParams).form as string : "all"}
+                />
+            </Suspense>
+        </Container>
+    );
+};
+
+export default FormSubmissionsPage;

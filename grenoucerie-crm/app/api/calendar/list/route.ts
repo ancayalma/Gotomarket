@@ -1,0 +1,73 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getCalendarClientForUser } from "@/lib/gmail";
+import { getGraphClient } from "@/lib/microsoft";
+import { systemLogger } from "@/lib/logger";
+
+/**
+ * GET /api/calendar/list
+ * Returns the list of calendars available for the authenticated user.
+ *
+ * Response: { ok: true, calendars: Array<{ id: string; summary: string; primary?: boolean }> }
+ */
+export async function GET(_req: Request) {
+  try {
+    const session = await getServerSession(authOptions as any);
+    const userId = (session as any)?.user?.id as string | undefined;
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const calendar = await getCalendarClientForUser(userId);
+    let calendars: Array<{ id: string; summary: string; primary?: boolean }> = [];
+
+    if (calendar) {
+      // Google Calendar Logic
+      let pageToken: string | undefined = undefined;
+
+      do {
+        const pageRes: any = await calendar.calendarList.list({
+          maxResults: 250,
+          showHidden: true,
+          pageToken,
+        });
+        pageToken = (pageRes as any).data?.nextPageToken || undefined;
+
+        const items: any[] = Array.isArray((pageRes as any).data?.items) ? (pageRes as any).data.items : [];
+        const batch = items
+          .map((c: any) => ({
+            id: c?.id || "",
+            summary: c?.summary || c?.id || "",
+            primary: !!c?.primary,
+          }))
+          .filter((c: any) => !!c.id);
+
+        calendars = calendars.concat(batch);
+      } while (pageToken);
+
+      return NextResponse.json({ ok: true, calendars, provider: "google" }, { status: 200 });
+    }
+
+    // Fallback to Microsoft
+    const graphClient = await getGraphClient(userId);
+    if (graphClient) {
+      const msCalendars = await graphClient.api('/me/calendars').select('id,name,isDefaultCalendar').get();
+      const items = msCalendars.value || [];
+      const batch = items.map((c: any) => ({
+        id: c.id,
+        summary: c.name || "Calendar",
+        primary: !!c.isDefaultCalendar,
+      }));
+      return NextResponse.json({ ok: true, calendars: batch, provider: "microsoft" }, { status: 200 });
+    }
+
+    return NextResponse.json({ ok: false, connected: false, error: "No calendar provider connected" }, { status: 404 });
+  } catch (e: any) {
+
+    systemLogger.error("[CALENDAR_LIST_GET]", e?.message || e);
+    // Fix: Return the actual error message to the frontend for debugging
+    const errorMessage = e?.response?.data?.error?.message || e?.message || "Failed to list calendars";
+    return new NextResponse(errorMessage, { status: 500 });
+  }
+}

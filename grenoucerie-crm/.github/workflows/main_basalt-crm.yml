@@ -1,0 +1,53 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy  - BasaltCRM
+
+on:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read #This is required for actions/checkout
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Node.js version
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "24.x"
+                  cache: "npm"
+
+            - name: Next.js cache
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ${{ github.workspace }}/.next/cache
+                  key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+                  restore-keys: |
+                      ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+            - name: npm install, build, and test
+              env:
+                  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+                  GOOGLE_ID: ${{ secrets.GOOGLE_ID }}
+                  GOOGLE_SECRET: ${{ secrets.GOOGLE_SECRET }}
+                  # Add Stripe
+                  STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+                  STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+                  STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+                  STRIPE_PRICE_INDIVIDUAL_BASIC_MONTHLY: ${{ secrets.STRIPE_PRICE_INDIVIDUAL_BASIC_MONTHLY }}
+                  STRIPE_PRICE_INDIVIDUAL_BASIC_ANNUAL: ${{ secrets.STRIPE_PRICE_INDIVIDUAL_BASIC_ANNUAL }}
+                  STRIPE_PRICE_INDIVIDUAL_PRO_MONTHLY: ${{ secrets.STRIPE_PRICE_INDIVIDUAL_PRO_MONTHLY }}
+                  STRIPE_PRICE_INDIVIDUAL_PRO_ANNUAL: ${{ secrets.STRIPE_PRICE_INDIVIDUAL_PRO_ANNUAL }}
+                  STRIPE_PRICE_AI_TOPUP: ${{ secrets.STRIPE_PRICE_AI_TOPUP }}
+              run: |
+                  npm install
+                  npx prisma generate
+                  npm run build --if-present
+                  npm run test --if-present

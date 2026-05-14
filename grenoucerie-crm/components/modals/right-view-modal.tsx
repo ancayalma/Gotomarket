@@ -1,0 +1,100 @@
+"use client";
+
+import { ReactNode, useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+
+import * as Dialog from "@radix-ui/react-dialog";
+import { Cross1Icon } from "@radix-ui/react-icons";
+
+type Props = {
+  label?: string | ReactNode;
+  title: string;
+  description: string;
+  width?: string;
+  children: ReactNode;
+  customTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+const RightViewModal = ({
+  label,
+  title,
+  description,
+  width,
+  children,
+  customTrigger = false,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: Props) => {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+  const setOpen = (newOpen: boolean) => {
+    if (isControlled && controlledOnOpenChange) {
+      controlledOnOpenChange(newOpen);
+    } else {
+      setUncontrolledOpen(newOpen);
+    }
+  };
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
+  return (
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger asChild>
+        {customTrigger ? (
+          <div className="cursor-pointer">{label}</div>
+        ) : (
+          <Button className="mb-5">{label}</Button>
+        )}
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay className="data-[state=open]:animate-[dialog-overlay-show_1000ms] data-[state=closed]:animate-[dialog-overlay-hide_1000ms] fixed inset-0 bg-black/50 z-[100]" />
+        <Dialog.Content
+          className={
+            "data-[state=open]:animate-[dialog-content-show_1000ms] data-[state=closed]:animate-[dialog-content-hide_1000ms] fixed top-0 right-0 rounded-md border h-full bg-background shadow-md overflow-hidden z-[100]"
+          }
+        >
+          <div className={`flex flex-col h-full ${width}`}>
+            <div className="flex justify-between w-full">
+              <Dialog.Title className="font-semibold p-3 w-full" asChild>
+                <span className="text-xl md:text-2xl font-black bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent italic tracking-tight uppercase leading-relaxed py-2 px-2">
+                  {title}
+                </span>
+              </Dialog.Title>
+              <Dialog.Close className="flex justify-end text-right w-full pr-5 pt-5">
+                <Cross1Icon className="w-5 h-5 opacity-50 hover:opacity-100" />
+              </Dialog.Close>
+            </div>
+            <Dialog.Description className="text-slate-400 p-3 overflow-auto opacity-75">
+              {description}
+            </Dialog.Description>
+            <div className="flex-grow border p-5 w-full h-full overflow-auto">
+              {children}
+            </div>
+            <div className="flex justify-end w-full p-3">
+              {" "}
+              <Dialog.Close asChild>
+                <Button variant={"destructive"} onClick={() => setOpen(false)}>
+                  Close
+                </Button>
+              </Dialog.Close>
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root >
+  );
+};
+
+export default RightViewModal;

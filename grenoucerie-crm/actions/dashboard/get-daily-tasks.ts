@@ -1,0 +1,48 @@
+"use server";
+
+import { prismadb } from "@/lib/prisma";
+import { getCurrentUserTeamId } from "@/lib/team-utils";
+
+export const getDailyTasks = async () => {
+    const teamInfo = await getCurrentUserTeamId();
+    if (!teamInfo?.userId) return [];
+
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now);
+    sevenDaysFromNow.setDate(now.getDate() + 7);
+    sevenDaysFromNow.setHours(23, 59, 59, 999);
+
+    const whereClause: any = {
+        taskStatus: {
+            not: "COMPLETE",
+        },
+        OR: [
+            { dueDateAt: null },
+            { dueDateAt: { lte: sevenDaysFromNow } }
+        ]
+    };
+
+    
+        // Members see their own tasks
+        whereClause.user = teamInfo.userId;
+    
+
+    const tasks = await prismadb.tasks.findMany({
+        where: whereClause,
+        include: {
+            assigned_section: {
+                select: {
+                    board: true, // Needed for linking
+                    title: true,
+                },
+            },
+        },
+        orderBy: [
+            { dueDateAt: "asc" },
+            { createdAt: "desc" }
+        ],
+    });
+
+    // Sort by priority locally if needed, but date is key
+    return tasks;
+};
