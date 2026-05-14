@@ -1,4 +1,0 @@
-{
-  "i18n-ally.localesPaths": ["locales"],
-  "css.lint.unknownAtRules": "ignore"
-}

@@ -1,4 +1,0 @@
-
-> basaltcrm-app@1.1.8q lint
-> eslint .
-
