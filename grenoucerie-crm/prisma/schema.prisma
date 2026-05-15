@@ -43,13 +43,13 @@ model crm_Accounts {
   updatedBy            String?              
   annual_revenue       String?
   assigned_to          String?              
-  billing_city         String?
+  billing_city  String?
   billing_country      String?
   billing_postal_code  String?
   billing_state        String?
   billing_street       String?
   company_id           String?
-  description          String?
+  description  String?
   email                String?
   employees            String?
   fax                  String?
@@ -69,8 +69,8 @@ model crm_Accounts {
   invoices             Invoices[]
   documentsIDs         String[]             
   assigned_documents   Documents[]
-  contacts             crm_Contacts[]
-  leads                crm_Leads[]
+  contacts             crm_Contacts[]          @relation("ContactsAssignedAccounts")
+  leads                crm_Leads[]             @relation("LeadsAssignedAccounts")
   industry_type        crm_Industry_Type?    @relation(fields: [industry], references: [id])
   opportunities        crm_Opportunities[]
   assigned_to_user     Users?                @relation(fields: [assigned_to], references: [id], onDelete: SetNull)
@@ -93,7 +93,7 @@ model crm_Accounts {
 
   // Account Hierarchy (parent/child companies)
   parent_account_id String?       
-  parent_account    crm_Accounts?  @relation(name: "AccountHierarchy", fields: [parent_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent_account    crm_Accounts?  @relation(name: "AccountHierarchy", fields: [parent_account_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
   child_accounts    crm_Accounts[] @relation(name: "AccountHierarchy")
 
   // Synthesis Layer (AI Memory)
@@ -123,13 +123,13 @@ model crm_Leads {
   description        String?
   lead_source        String?
   refered_by         String?
-  campaign           String?
+  campaign  String?
   status             String?       @default("NEW")
   type               String?       @default("DEMO")
   assigned_to        String?      
   assigned_to_user   Users?        @relation(fields: [assigned_to], references: [id], onDelete: SetNull)
   accountsIDs        String?      
-  assigned_accounts  crm_Accounts?
+  assigned_accounts  crm_Accounts?  @relation("LeadsAssignedAccounts", fields: [accountsIDs], references: [id])
   documentsIDs       String[]     
   assigned_documents Documents[]
 
@@ -142,7 +142,7 @@ model crm_Leads {
   outreach_meeting_link      String?
   outreach_meeting_booked_at DateTime?      
   outreach_first_message_id  String?
-  outreach_open_token        String?
+  outreach_open_token  String?
   outreach_notes             String?
   pipeline_stage             PipelineStage?  @default(Identify)
 
@@ -220,14 +220,14 @@ model crm_Opportunities {
   close_date           DateTime?                      
   contact              String?                        
   created_by           String?                        
-  createdBy            String?                        
+  createdBy  String?
   created_on           DateTime?                       @default(now())
   createdAt            DateTime                        @default(now())
   last_activity        DateTime?                      
   updatedAt            DateTime?                       @updatedAt
   updatedBy            String?                        
   last_activity_by     String?                        
-  currency             String?
+  currency  String?
   description          String?
   expected_revenue     Int                             @default(0)
   name                 String?
@@ -433,7 +433,7 @@ model crm_Outreach_Campaigns {
 
   // Voice AI Scheduling Config
   voice_agent_id          String?
-  voice_start_time        DateTime?
+  voice_start_time  DateTime?
   voice_concurrency_limit Int       @default(1)
   voice_prompt            String?
 
@@ -517,7 +517,7 @@ model crm_Outreach_Items {
 
   // Tracking
   message_id       String?
-  tracking_token   String?
+  tracking_token  String?
   unsubscribe_token String?
 
   // Timestamps
@@ -547,7 +547,7 @@ model crm_Outreach_Items {
 
   // Cross-module links
   account_id String?
-  contact_id String?
+  contact_id  String?
 
   // Error tracking
   error_message String?
@@ -642,16 +642,16 @@ model crm_Contacts {
   id                     String              @id @default(cuid())
   account                String?            
   assigned_to            String?            
-  birthday               String?
+  birthday  String?
   created_by             String?            
-  createdBy              String?            
+  createdBy  String?
   created_on             DateTime?           @default(now())
   cratedAt               DateTime?           @default(now())
   last_activity          DateTime?           @default(now())
   updatedAt              DateTime?           @updatedAt
   updatedBy              String?            
   last_activity_by       String?            
-  description            String?
+  description  String?
   email                  String?
   email_unsubscribed     Boolean?            @default(false)
   email_status           String?             @default("active")
@@ -678,7 +678,7 @@ model crm_Contacts {
   crate_by_user          Users?              @relation(name: "created_contacts", fields: [created_by], references: [id], onDelete: SetNull)
   assigned_opportunities crm_Opportunities[]
   accountsIDs            String?            
-  assigned_accounts      crm_Accounts?
+  assigned_accounts      crm_Accounts?  @relation("ContactsAssignedAccounts", fields: [accountsIDs], references: [id])
   documentsIDs           String[]           
   assigned_documents     Documents[]
 
@@ -921,9 +921,9 @@ model Invoices {
   partner_BIC                   String?
   rossum_status                 String?
   rossum_annotation_id          String?
-  rossum_annotation_url         String?
+  rossum_annotation_url  String?
   rossum_document_id            String?
-  rossum_document_url           String?
+  rossum_document_url  String?
   rossum_annotation_json_url    String?
   rossum_annotation_xml_url     String?
   money_s3_url                  String?
@@ -934,9 +934,9 @@ model Invoices {
   surge_payment_id    String?
   surge_payment_link  String?
   mercury_invoice_id  String?
-  invoice_state_id    String?        
+  invoice_state_id  String?
   assigned_user_id    String?        
-  assigned_account_id String?        
+  assigned_account_id  String?
   visibility          Boolean         @default(true)
   invoice_states      invoice_States? @relation(fields: [invoice_state_id], references: [id])
   users               Users?          @relation(fields: [assigned_user_id], references: [id], onDelete: SetNull)
@@ -988,7 +988,8 @@ model Documents {
   opportunities          crm_Opportunities[]
   contacts               crm_Contacts[]
   tasks                  Tasks[]
-  crm_accounts_tasks     crm_Accounts_Tasks?
+  crm_Accounts_TasksId   String?
+  crm_accounts_tasks     crm_Accounts_Tasks?  @relation("DocumentsAccountsTasks", fields: [crm_Accounts_TasksId], references: [id])
   leads                  crm_Leads[]
   accounts               crm_Accounts[]
   lead_pools             crm_Lead_Pools[]
@@ -1058,9 +1059,9 @@ model Tasks {
 
   // CRM Linkages
   accountId     String?    
-  opportunityId String?    
+  opportunityId  String?
   contactId     String?    
-  leadId        String?    
+  leadId  String?
   //Staus
   taskStatus    taskStatus? @default(ACTIVE)
 
@@ -1085,7 +1086,7 @@ model crm_Accounts_Tasks {
   likes         Int?            @default(0)
   user          String?        
   comments      tasksComments[]
-  documents     Documents[]
+  documents     Documents[]   @relation("DocumentsAccountsTasks")
   assigned_user Users?          @relation(fields: [user], references: [id], onDelete: SetNull)
   //CRM assigments
   account       String?        
@@ -1209,7 +1210,7 @@ model Users {
   // Calendar preferences
   calendar_selected_ids String[]
   default_calendar_id   String?
-  calendar_colors       Json?
+  calendar_colors  Json?
 
   // Team / Partner
   team_id                String?                 
@@ -1327,7 +1328,7 @@ model Team {
   // Hierarchy: Organizations have Departments as children
   team_type   TeamType @default(ORGANIZATION)
   parent_id   String? 
-  parent_team Team?    @relation("TeamHierarchy", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent_team Team?    @relation("TeamHierarchy", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
   departments Team[]   @relation("TeamHierarchy")
 
   // Organization-wide settings (only set on ORGANIZATION type)
@@ -1751,7 +1752,7 @@ model gmail_Tokens {
 
   // Webhook / Sync
   historyId           String?
-  webhook_resource_id String?
+  webhook_resource_id  String?
   webhook_expires_at  DateTime?
 
   assigned_user Users? @relation(fields: [user], references: [id], onDelete: Cascade)
@@ -1771,7 +1772,7 @@ model microsoft_Tokens {
   // Webhook / Sync
   deltaLink               String?
   subscription_id         String?
-  subscription_expires_at DateTime?
+  subscription_expires_at  DateTime?
 
   assigned_user Users? @relation(fields: [user], references: [id], onDelete: Cascade)
 }
@@ -1785,9 +1786,9 @@ model crm_Emails {
 
   // Relations mapped
   lead_id    String?
-  contact_id String?
+  contact_id  String?
   account_id String?
-  team_id    String?
+  team_id  String?
 
   // Metadata
   subject    String?
@@ -1837,7 +1838,7 @@ model TeamEmailConfig {
 
   // AWS SES Specific
   aws_access_key_id     String?
-  aws_secret_access_key String?
+  aws_secret_access_key  String?
   aws_region            String  @default("us-east-1")
 
   // RESEND Specific
@@ -1889,7 +1890,7 @@ model systemServices {
   name            String
   serviceUrl      String?
   serviceId       String?
-  serviceKey      String?
+  serviceKey  String?
   servicePassword String?
   servicePort     String?
   description     String?
@@ -2167,7 +2168,7 @@ model chat_Messages {
   attachments Json?
 
   assigned_session chat_Sessions?  @relation(fields: [session], references: [id])
-  parent_message   chat_Messages?  @relation("ChatMessageChildren", fields: [parent], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent_message   chat_Messages?  @relation("ChatMessageChildren", fields: [parent], references: [id], onDelete: Restrict, onUpdate: Restrict)
   children         chat_Messages[] @relation("ChatMessageChildren")
 }
 
@@ -2276,8 +2277,8 @@ model crm_Lead_Candidates {
   // Relations
   contacts          crm_Contact_Candidates[]
   assigned_pool     crm_Lead_Pools?          @relation(fields: [pool], references: [id])
-  assigned_accounts crm_Accounts?  @relation("LeadCandidatesAssignedAccounts")
   additional_emails String[]
+  assigned_accounts crm_Accounts?  @relation("LeadCandidatesAssignedAccounts", fields: [accountsIDs], references: [id])
 }
 
 model crm_Contact_Candidates {
@@ -2599,7 +2600,7 @@ model SupportTicket {
 model SystemActivity {
   id        String   @id @default(cuid())
   userId    String? 
-  team_id   String? 
+  team_id  String?
   action    String // e.g. "LOGIN_SUCCESS", "RECORD_DELETE", "ROLE_CHANGE"
   resource  String // e.g. "auth", "crm_Leads", "Role"
   details   String? // JSON string or summary
@@ -2628,7 +2629,7 @@ model PageView {
 model crm_TransformHistory {
   id             String    @id @default(cuid())
   user_id        String?  
-  team_id        String?  
+  team_id  String?
   
   original_name  String
   transform_type String    // EXCEL, MARKDOWN, JSON, TEXT
@@ -2718,7 +2719,7 @@ model InternalMessage {
 
   // Relations
   recipients InternalMessageRecipient[]
-  parent     InternalMessage?           @relation("MessageThread", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent     InternalMessage?           @relation("MessageThread", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
   children   InternalMessage[]          @relation("MessageThread")
 
   @@index([team_id, createdAt])
@@ -3527,7 +3528,7 @@ model crm_Cases {
 
   // Parent case for case hierarchies
   parent_case_id String?    
-  parent_case    crm_Cases?  @relation("CaseHierarchy", fields: [parent_case_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent_case    crm_Cases?  @relation("CaseHierarchy", fields: [parent_case_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
   child_cases    crm_Cases[] @relation("CaseHierarchy")
 
   // Email-to-Case
@@ -3628,7 +3629,7 @@ model crm_Live_Chat_Session {
 
   // Contact linkage (if known customer)
   contact_id String?      
-  account_id String?      
+  account_id  String?
 
   // Agent assignment
   agent_id      String?
@@ -3964,7 +3965,7 @@ model KnowledgeCategory {
 
   // Hierarchy
   parent_id String?            
-  parent    KnowledgeCategory?  @relation("KBCategoryHierarchy", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent    KnowledgeCategory?  @relation("KBCategoryHierarchy", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
   children  KnowledgeCategory[] @relation("KBCategoryHierarchy")
 
   articles KnowledgeArticle[]
@@ -4370,9 +4371,9 @@ model crm_Quotes {
   expirationDate DateTime?
 
   accountId     String?
-  contactId     String?
+  contactId  String?
   leadId        String?
-  opportunityId String?
+  opportunityId  String?
   createdBy     String 
   team_id       String 
 
@@ -4478,7 +4479,7 @@ model Tenant_Integrations {
   // Twilio Voice (Outbound Dialing via ElevenLabs + Twilio)
   twilio_enabled      Boolean @default(false)
   twilio_account_sid  String?
-  twilio_auth_token   String?
+  twilio_auth_token  String?
   twilio_phone_number String? // E.164, e.g. "+18444848234"
   voice_agent_name    String? // AI agent display name, e.g. "Sarah"
   elevenlabs_api_key  String? // Tenant's own ElevenLabs API key (optional, overrides platform key)
@@ -4527,7 +4528,7 @@ model crm_Subscriptions {
   last_charge_date    DateTime?
   last_charge_status  String?
   last_transaction_id String?
-  payment_failed_at   DateTime?
+  payment_failed_at  DateTime?
   metadata            Json?
 
   // Billing invoices for this subscription
@@ -4568,7 +4569,7 @@ model crm_BillingInvoice {
   payment_method String? // "CARD", "CRYPTO", "SYSTEM_CREDIT"
   payment_status String    @default("PENDING") // PENDING, PAID, FAILED, REFUNDED, WAIVED
   transaction_id String?
-  paid_at        DateTime?
+  paid_at  DateTime?
 
   // Line items stored as JSON array
   // [{ description: string, quantity: number, unit_price: number, total: number }]
@@ -4636,7 +4637,7 @@ model ContextNode {
   updatedAt DateTime @updatedAt
 
   accountId String?
-  leadId    String?
+  leadId  String?
 
   summary         String?
   lifecycleStatus String?
@@ -4668,11 +4669,11 @@ model KnowledgeSignal {
   sourceUrl  String?
 
   accountId      String?
-  leadId         String?
+  leadId  String?
   outreachItemId String?
-  taskId         String?
+  taskId  String?
   invoiceId      String?
-  subscriptionId String?
+  subscriptionId  String?
 
   account      crm_Accounts?       @relation(fields: [accountId], references: [id])
   lead         crm_Leads?          @relation(fields: [leadId], references: [id])
@@ -4697,7 +4698,7 @@ model VectorEmbedding {
   text String
 
   contextNodeId     String?
-  knowledgeSignalId String?
+  knowledgeSignalId  String?
 
   contextNode     ContextNode?     @relation(fields: [contextNodeId], references: [id])
   knowledgeSignal KnowledgeSignal? @relation(fields: [knowledgeSignalId], references: [id])
@@ -4714,9 +4715,9 @@ model VectorEmbedding {
 model crm_Agentic_Actions {
   id             String    @id @default(cuid())
   campaign_id    String?  
-  opportunity_id String?  
+  opportunity_id  String?
   contact_id     String?  
-  account_id     String?  
+  account_id  String?
   outreach_item_id String?
 
   action_type    String    // SEND_QUOTE, ATTACH_DOC, GENERATE_CONTRACT,
@@ -4729,7 +4730,7 @@ model crm_Agentic_Actions {
 
   requires_human Boolean   @default(false)
   approved_by    String?  
-  approved_at    DateTime?
+  approved_at  DateTime?
   executed_at    DateTime?
   rejected_at    DateTime?
 
@@ -4948,7 +4949,7 @@ model crm_Email_Thread {
 model crm_Transform_Jobs {
   id              String   @id @default(cuid())
   userId          String? 
-  teamId          String? 
+  teamId  String?
   status          String   @default("QUEUED") // QUEUED, PROCESSING, COMPLETED, FAILED
   fileName        String
   fileSize        Int
