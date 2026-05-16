@@ -3,13 +3,22 @@
 @tailwind utilities;
 
 /* ========================================
-   BasaltCRM Landing Design System - Ported from Template
+   Grenoucerie CRM — Sistema de diseño
+   Paleta: pistacho, oliva, verde salvia
    ======================================== */
 :root {
-  --basalt-cyan: #06b6d4;
-  --basalt-cyan-dark: #0891b2;
-  --basalt-cyan-light: #67e8f9;
-  --glow-color: rgba(6, 182, 212, 0.3);
+  /* Colores principales Grenoucerie */
+  --basalt-cyan: #93C572;        /* Pistacho — color primario */
+  --basalt-cyan-dark: #808000;   /* Oliva oscuro */
+  --basalt-cyan-light: #BAB86C;  /* Oliva claro */
+  --glow-color: rgba(147, 197, 114, 0.3); /* Pistacho glow */
+
+  /* Paleta completa */
+  --gren-pistacho: #93C572;
+  --gren-oliva: #808000;
+  --gren-oliva-claro: #BAB86C;
+  --gren-salvia: #9DC183;
+  --gren-salvia-dark: #7a9f62;
 }
 
 /* ========================================
@@ -1542,16 +1551,4 @@ div.headlessui-portal>div {
 /* Force Select and Dropdown triggers to have foreground text when open or focused */
 [data-state="open"]>.SelectValue,
 [data-state="open"]>.DropdownMenuValue {
-  color: hsl(var(--foreground)) !important;
-}
-
-/* Fix for italic text getting clipped when using bg-clip-text */
-.bg-clip-text.italic,
-.italic .bg-clip-text,
-.bg-clip-text i,
-.bg-clip-text em {
-  padding-right: 0.3em;
-  margin-right: -0.3em; /* Negative margin to offset layout shift */
-  padding-left: 0.05em;
-  margin-left: -0.05em;
-}
+  col

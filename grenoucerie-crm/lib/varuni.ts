@@ -1,9 +1,8 @@
-import { createAzure } from "@ai-sdk/azure";
+// Azure y Amazon Bedrock eliminados — Grenoucerie usa OpenRouter / Anthropic directo
 import { createOpenAI } from "@ai-sdk/openai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createMistral } from "@ai-sdk/mistral";
-import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
 import { prismadb } from "@/lib/prisma";
 import { decryptSecret } from "@/lib/encryption";
 import { consumeAiTokens } from "@/lib/ai-tokens";
@@ -106,19 +105,8 @@ async function createProviderModel(
 
     switch (sdkType) {
         case "AZURE": {
-            const effectiveResourceName = resourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
-            const apiVersion = process.env.AZURE_OPENAI_API_VERSION || "2024-02-15-preview";
-
-            if (!effectiveResourceName || !effectiveApiKey) {
-                throw new Error(`Azure OpenAI configuration incomplete (resourceName: ${!!effectiveResourceName}, apiKey: ${!!effectiveApiKey}). Update your team AI config to use a configured provider.`);
-            }
-
-            const azure = createAzure({
-                apiKey: effectiveApiKey,
-                resourceName: effectiveResourceName,
-                apiVersion: apiVersion,
-            });
-            return azure(modelId);
+            // Azure OpenAI eliminado — usa OpenRouter o Anthropic en su lugar
+            throw new Error("Azure OpenAI no disponible en Grenoucerie CRM. Configura tu equipo para usar OpenRouter o Anthropic.");
         }
         case "ANTHROPIC": {
             const anthropic = createAnthropic({
@@ -142,12 +130,8 @@ async function createProviderModel(
             return mistral(modelId);
         }
         case "BEDROCK": {
-            const bedrock = createAmazonBedrock({
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-                region: process.env.AWS_REGION || "us-west-2",
-            });
-            return bedrock(modelId);
+            // Amazon Bedrock eliminado — usa OpenRouter o Anthropic en su lugar
+            throw new Error("Amazon Bedrock no disponible en Grenoucerie CRM. Configura tu equipo para usar OpenRouter o Anthropic.");
         }
         case "OPENAI_COMPATIBLE":
         case "CUSTOM":
@@ -179,17 +163,17 @@ export async function getAiSdkModel(
 ): Promise<AiModelResponse> {
     const DEBUG_PREFIX = `[getAiSdkModel][${service}]`;
 
-    // LOCAL TEST BYPASS FOR PDF WIZARD (DB DOWN)
+    // PDF wizard usa OpenRouter (Bedrock eliminado en Grenoucerie CRM)
     if (service === "pdf_wizard") {
-        const bedrock = require("@ai-sdk/amazon-bedrock").createAmazonBedrock({
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            region: process.env.AWS_REGION || "us-west-2",
+        const openai = createOpenAI({
+            name: "openrouter",
+            apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY,
+            baseURL: "https://openrouter.ai/api/v1",
         });
         return {
-            model: bedrock("moonshotai.kimi-k2.5"),
-            provider: "BEDROCK",
-            modelId: "moonshotai.kimi-k2.5",
+            model: openai("deepseek/deepseek-chat"),
+            provider: "OPENROUTER",
+            modelId: "deepseek/deepseek-chat",
             teamId: null
         };
     }
@@ -457,3 +441,4 @@ export async function logAiUsage({
         console.error("[LOG_AI_USAGE_ERROR]", error);
     }
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              

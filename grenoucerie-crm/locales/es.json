@@ -1,0 +1,69 @@
+{
+  "RootLayout": {
+    "title": "Grenoucerie CRM – Gestión Comercial",
+    "description": "CRM de ventas y seguimiento comercial para Grenoucerie, Francia y Petfood."
+  },
+  "ModuleMenu": {
+    "dashboard": "Inicio",
+    "projects": "Proyectos",
+    "invoices": "Facturas",
+    "reports": "Informes",
+    "settings": "Ajustes",
+    "emails": "Emails"
+  },
+  "Common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "¡Hecho!",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "close": "Cerrar",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "CRM": {
+    "contacts": "Contactos",
+    "leads": "Leads",
+    "accounts": "Cuentas",
+    "opportunities": "Oportunidades",
+    "tasks": "Tareas",
+    "notes": "Notas",
+    "meetings": "Reuniones",
+    "pipeline": "Pipeline",
+    "newContact": "Nuevo contacto",
+    "newLead": "Nuevo lead",
+    "newAccount": "Nueva cuenta",
+    "newOpportunity": "Nueva oportunidad",
+    "assignedTo": "Asignado a",
+    "status": "Estado",
+    "priority": "Prioridad",
+    "market": "Mercado",
+    "spain": "España",
+    "france": "Francia",
+    "petfood": "Petfood"
+  },
+  "Pipeline": {
+    "stage_new": "Nuevo",
+    "stage_qualified": "Calificado",
+    "stage_proposal": "Propuesta",
+    "stage_negotiation": "Negociación",
+    "stage_won": "Ganado",
+    "stage_lost": "Perdido"
+  },
+  "Auth": {
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "register": "Registrarse",
+    "email": "Email",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "welcomeBack": "Bienvenido de nuevo"
+  }
+}

@@ -24,7 +24,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 function getSafeBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_APP_URL;
-  const PRODUCTION_FALLBACK = "https://crm.basalthq.com";
+  const PRODUCTION_FALLBACK = "https://grenoucerie-platform.vercel.app";
 
   if (!envUrl || envUrl.trim() === "") {
     return PRODUCTION_FALLBACK;
@@ -47,37 +47,37 @@ function getSafeBaseUrl(): string {
 
 export async function generateMetadata(): Promise<Metadata> {
   const siteUrl = getSafeBaseUrl();
-  const baseUrl = siteUrl || "https://crm.basalthq.com";
+  const baseUrl = siteUrl || "https://grenoucerie-platform.vercel.app";
 
   return {
     metadataBase: new URL(baseUrl),
     title: {
-      default: "BasaltCRM – The Autonomous AI CRM",
-      template: `%s | BasaltCRM`,
+      default: "Grenoucerie CRM – Gestión Comercial",
+      template: `%s | Grenoucerie CRM`,
     },
-    description: "The autonomous AI sales engine. Automated prospecting, agentic lead generation, zero-latency voice agents, and $0/mo free tools.",
-    keywords: ["AI CRM", "Autonomous Lead Generation", "Sales AI", "Voice AI Agents", "Next.js CRM", "Business Operations", "Lead Finder"],
-    authors: [{ name: "BasaltCRM Team" }],
-    creator: "BasaltCRM",
-    publisher: "BasaltCRM",
+    description: "CRM comercial de Grenoucerie para gestión de leads, contactos y oportunidades en España, Francia y Petfood.",
+    keywords: ["CRM", "Grenoucerie", "ranicultura", "gestión comercial", "leads", "ventas", "Francia"],
+    authors: [{ name: "FEROD 2019 S.L." }],
+    creator: "Grenoucerie / FEROD 2019 S.L.",
+    publisher: "Grenoucerie / FEROD 2019 S.L.",
     formatDetection: {
       email: false,
       address: false,
       telephone: false,
     },
     openGraph: {
-      title: "BasaltCRM – AI Sales & Support Engine",
+      title: "Grenoucerie CRM – AI Sales & Support Engine",
       description: "Automated prospecting, social intelligence, and 24/7 AI agents that never sleep.",
-      url: "https://crm.basalthq.com",
-      siteName: "BasaltCRM",
+      url: "https://grenoucerie-platform.vercel.app",
+      siteName: "Grenoucerie CRM",
       locale: "en_US",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "BasaltCRM – The Autonomous AI CRM",
+      title: "Grenoucerie CRM – The Autonomous AI CRM",
       description: "Automated prospecting, zero-latency voice agents, and free business tools.",
-      creator: "@BasaltHQ",
+      creator: "@Grenoucerie",
     },
     manifest: "/site.webmanifest",
     alternates: {
@@ -89,11 +89,11 @@ export async function generateMetadata(): Promise<Metadata> {
 const orgJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "BasaltCRM",
+  "name": "Grenoucerie CRM",
   "url": "https://crm.basalthq.com",
-  "logo": "https://crm.basalthq.com/BasaltCRM.png",
+  "logo": "https://crm.basalthq.com/Grenoucerie CRM.png",
   "sameAs": [
-    "https://twitter.com/BasaltHQ"
+    "https://twitter.com/Grenoucerie"
   ]
 };
 
@@ -153,5 +153,3 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <SonnerToaster />
       </body>
     </html>
-  );
-}
