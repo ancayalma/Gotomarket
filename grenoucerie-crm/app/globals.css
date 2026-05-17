@@ -1551,4 +1551,5 @@ div.headlessui-portal>div {
 /* Force Select and Dropdown triggers to have foreground text when open or focused */
 [data-state="open"]>.SelectValue,
 [data-state="open"]>.DropdownMenuValue {
-  col
+  color: hsl(var(--foreground)) !important;
+}

@@ -153,3 +153,5 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <SonnerToaster />
       </body>
     </html>
+  );
+}
