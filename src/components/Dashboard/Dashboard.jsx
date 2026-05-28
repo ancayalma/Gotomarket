@@ -1,8 +1,8 @@
 // Dashboard CMO — Centro de Mando Marketing & Ventas
-// Grenoucerie S.L. — Version 5.0
+// Grenoucerie S.L. — Version 6.0 (estrategia v3.0 — 4 gamas)
 import { useState, useEffect } from 'react'
 import { kpis, empresa, gamas } from '../../data/grenoucerie'
-import { useLeads } from '../../hooks/useLeads'
+import { useCRMData } from '../../hooks/useLeads'
 
 const semaforoColor = {
     verde:   'var(--ok)',
@@ -258,7 +258,7 @@ const CANALES_DATA = [
 ]
 
 export default function Dashboard({ cambiarVista }) {
-    const leads = useLeads()
+    const crmData = useCRMData()
     const today = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     const navegarMercado = {
         espana:  () => cambiarVista('espana'),
@@ -277,7 +277,7 @@ export default function Dashboard({ cambiarVista }) {
                             <span>Grenoucerie S.L.</span>
                             <span style={{ color: 'var(--text-faint)' }}>·</span>
                             <span style={{ textTransform: 'capitalize' }}>{today}</span>
-                            {leads.connected && <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: 'var(--ok-bg)', color: 'var(--ok)', border: '1px solid var(--ok)33', fontFamily: 'DM Mono, monospace' }}>● live</span>}
+                            {crmData.connected && <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: 'var(--ok-bg)', color: 'var(--ok)', border: '1px solid var(--ok)33', fontFamily: 'DM Mono, monospace' }}>● live</span>}
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '6px', padding: '5px 12px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '11px', fontFamily: 'DM Mono, monospace', alignItems: 'center' }}>
@@ -290,14 +290,14 @@ export default function Dashboard({ cambiarVista }) {
                 </div>
             </div>
 
-            <AlertaStrip leads={leads} />
+            <AlertaStrip leads={crmData} />
 
             <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '20px', paddingBottom: '2px' }}>
                 <KpiTile label="Facturacion mensual" value="€60K"  sub="meta €65K 90d"      color="var(--ok)"     pulse />
                 <KpiTile label="Facturacion 2025"    value="€379K" sub="+87% vs baseline"   color="var(--brand)"  pulse />
                 <KpiTile label="Run rate 2026"       value="€720K" sub="mercado domestico"  color="var(--ok)"     pulse />
-                <KpiTile label="Leads CRM"           value={String(leads.total)} sub="meta 90d: 50+" color={leads.total > 0 ? 'var(--ok)' : 'var(--alert)'} pulse />
-                <KpiTile label="Pipeline activo"     value={String(leads.byStage.activo || 2)} sub="clientes con pedidos" color="var(--brand)" pulse />
+                <KpiTile label="Leads CRM"           value={String(crmData.total)} sub="meta 90d: 50+" color={crmData.total > 0 ? 'var(--ok)' : 'var(--alert)'} pulse />
+                <KpiTile label="Pipeline activo"     value={String(crmData.byStage.activo || 2)} sub="clientes con pedidos" color="var(--brand)" pulse />
                 <KpiTile label="Instagram"           value="1.043" sub="2.000 en 90d"       color="var(--warn)"  pulse />
                 <KpiTile label="LinkedIn"            value="216"   sub="10K impres./mes"    color="var(--warn)"  pulse />
                 <KpiTile label="Francia"             value="x20"   sub="potencial vs ES"    color="var(--accent)" pulse />
@@ -328,8 +328,8 @@ export default function Dashboard({ cambiarVista }) {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px', marginBottom: '20px' }}>
-                <MiniEmbudo leads={leads} onNavigate={() => cambiarVista('funnel')} />
-                <PipelineMini leads={leads} onNavigate={() => cambiarVista('pipeline')} />
+                <MiniEmbudo leads={crmData} onNavigate={() => cambiarVista('funnel')} />
+                <PipelineMini leads={crmData} onNavigate={() => cambiarVista('pipeline')} />
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>

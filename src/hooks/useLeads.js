@@ -15,7 +15,7 @@ const FALLBACK = {
     connected: false,
 }
 
-export function useLeads() {
+export function useCRMData() {
     const [data, setData] = useState({ ...FALLBACK, loading: isConnected })
 
     useEffect(() => {
