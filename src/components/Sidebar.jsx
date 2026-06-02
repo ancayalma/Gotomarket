@@ -13,6 +13,7 @@ const navGroups = [
         items: [
             { id: 'espana',     icon: '🇪🇸', label: 'España' },
             { id: 'francia',    icon: '🇫🇷', label: 'Francia ×20' },
+            { id: 'franciaPanel', icon: '💰', label: 'Francia €500K', badge: 'live' },
             { id: 'petfood',    icon: '🐾', label: 'Petfood' },
             { id: 'contenidos', icon: '✦', label: 'Contenidos' },
         ],
@@ -22,6 +23,8 @@ const navGroups = [
         items: [
             { id: 'brightbean', icon: '📱', label: 'Redes Sociales', badge: 'nuevo' },
             { id: 'chatwoot',   icon: '💬', label: 'Atención Cliente', badge: 'nuevo' },
+            { id: 'pizarra',    icon: '✏️', label: 'Pizarra Estratégica', badge: 'dibujo' },
+            { id: 'factusol',   icon: '📊', label: 'Factusol Cloud', badge: 'erp' },
         ],
     },
     {
@@ -44,7 +47,7 @@ export default function Sidebar({ vistaActual, cambiarVista, tema, toggleTema })
                         <div className="sidebar-logo-name">Grenoucerie</div>
                     </div>
                 </div>
-                <div className="sidebar-logo-tag">Marketing CMD v5.0</div>
+                <div className="sidebar-logo-tag">Marketing CMD v6.0</div>
             </div>
 
             <div className="sidebar-nav">

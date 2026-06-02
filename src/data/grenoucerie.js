@@ -453,3 +453,89 @@ DATOS: €379K facturación, +87% momentum, 99% trading Vietnam,
 2. SUPUESTOS ASUMIDOS
 3. RIESGO + mitigación
 4. PRÓXIMA ACCIÓN`;
+
+// ============================================================
+//   FRANCIA €500K — Panel operativo (Dashboard interactivo)
+// ============================================================
+export const franciaPanelData = {
+    objetivo_eur: 500000,
+    deadline: '2026-12-31',
+    hermes: {
+        nombre: 'Hermes',
+        estado: 'activo',
+        skills: [
+            'kpi-sync (hourly)',
+            'alerta-deals-parados (L-V 8h)',
+            'wa-touch-secuencia (auto D+7/D+8)',
+            'respuesta-fr-asistida',
+            'brief-viernes 17h',
+            'scraper-fr (Sirene + Web)',
+        ],
+    },
+    modulos: [
+        {
+            id: 'crm',
+            label: 'CRM & Pipeline',
+            icon: '🎯',
+            url: 'https://app.hubspot.com',
+            badge: 'FREE',
+            color: '#2563eb',
+            desc: 'Pipeline Francia · 8 etapas',
+        },
+        {
+            id: 'email',
+            label: 'Campaigns FR',
+            icon: '📧',
+            url: 'https://app.brevo.com',
+            badge: 'FREE',
+            color: '#ea580c',
+            desc: 'Secuencias A/B · 300 emails/día',
+        },
+        {
+            id: 'whatsapp',
+            label: 'WhatsApp',
+            icon: '💬',
+            url: 'https://web.whatsapp.com',
+            badge: 'HERMES',
+            color: '#16a34a',
+            desc: 'Touch 3 automático vía Periskope',
+        },
+        {
+            id: 'social',
+            label: 'Social Media',
+            icon: '📱',
+            url: 'https://app.metricool.com',
+            badge: 'FREE',
+            color: '#7c3aed',
+            desc: 'Programación + analytics RRSS',
+        },
+        {
+            id: 'scraper',
+            label: 'Scraper FR',
+            icon: '🤖',
+            url: null,
+            badge: 'HERMES',
+            color: '#ca8a04',
+            desc: 'Sirene/INSEE · Leads tier 1',
+        },
+        {
+            id: 'datos',
+            label: 'Base de datos',
+            icon: '🗄️',
+            url: 'https://supabase.com/dashboard',
+            badge: 'FREE',
+            color: '#059669',
+            desc: 'kpi_snapshot · leads_fr',
+        },
+    ],
+    pipeline_stages: [
+        { id: 'identificado',  label: 'Lead identificado',   pct: 5 },
+        { id: 'contacto',      label: 'Primer contacto',     pct: 10 },
+        { id: 'respondio',     label: 'Respondió / Interés', pct: 30 },
+        { id: 'muestra_sol',   label: 'Muestra solicitada',  pct: 50 },
+        { id: 'muestra_env',   label: 'Muestra enviada',     pct: 65 },
+        { id: 'negociacion',   label: 'Negociación activa',  pct: 80 },
+        { id: 'verbal',        label: 'Contrato verbal',     pct: 90 },
+        { id: 'cliente_activo',label: 'Cliente FR activo',   pct: 100 },
+    ],
+}

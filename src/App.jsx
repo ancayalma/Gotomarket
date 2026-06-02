@@ -5,6 +5,7 @@ import Pipeline from './components/Pipeline/Pipeline'
 import Funnel from './components/Funnel/Funnel'
 import Contenidos from './components/Contenidos/Contenidos'
 import Francia from './components/Francia/Francia'
+import FranciaPanel from './components/FranciaPanel/FranciaPanel'
 import Espana from './components/Espana/Espana'
 import Petfood from './components/Petfood/Petfood'
 import Stack from './components/Stack/Stack'
@@ -13,6 +14,8 @@ import Roadmap from './components/Roadmap/Roadmap'
 import Conexiones from './components/Conexiones/Conexiones'
 import BrightBean from './components/BrightBean/BrightBean'
 import Chatwoot from './components/Chatwoot/Chatwoot'
+import Factusol from './components/Factusol/Factusol'
+import Pizarra from './components/Pizarra/Pizarra'
 import './index.css'
 
 const VISTAS = {
@@ -23,12 +26,15 @@ const VISTAS = {
     roadmap:    Roadmap,
     espana:     Espana,
     francia:    Francia,
+    franciaPanel: FranciaPanel,
     petfood:    Petfood,
     conexiones: Conexiones,
     stack:      Stack,
     prompt:     Prompt,
     brightbean: BrightBean,
     chatwoot:   Chatwoot,
+    factusol:   Factusol,
+    pizarra:    Pizarra,
 }
 
 export default function App() {
